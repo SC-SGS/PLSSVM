@@ -1,7 +1,7 @@
 #include "CSVM.hpp"
 
 //Einlesen libsvm Dateien
-void CSVM::libsvmParser(string &filename){
+void CSVM::libsvmParser(std::string &filename){
 	unsigned maxsize = 0;
 	std::ifstream file(filename);
 	std::string line;
@@ -45,7 +45,7 @@ void CSVM::libsvmParser(string &filename){
 
 
 //Einlesen ARF Dateien
-void CSVM::arffParser(string &filename){
+void CSVM::arffParser(std::string &filename){
 	std::ifstream file(filename);
 	std::string line, escape = "@";
 	std::stringstream iss;
@@ -74,7 +74,7 @@ void CSVM::arffParser(string &filename){
 
 }
 
-void CSVM::writeModel(string &model_name){
+void CSVM::writeModel(std::string &model_name){
 	int nBSV = 0;
 	int count_pos = 0;
 	int count_neg = 0;
@@ -94,7 +94,7 @@ void CSVM::writeModel(string &model_name){
 	}
 
 	//Model Datei
-	std::ofstream model(model_name, ios::out | ios::trunc);
+	std::ofstream model(model_name, std::ios::out | std::ios::trunc);
 	model << "svm_type c_svc\n";
 	switch(kernel){
 		case 0: model << "kernel_type " << "linear" << "\n";

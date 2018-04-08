@@ -6,8 +6,8 @@ CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, doub
 
 void CSVM::learn()
 {
-	vector<double> q;
-	vector<double> b = value;
+	std::vector<double> q;
+	std::vector<double> b = value;
 #pragma omp parallel sections
 	{
 #pragma omp section // generate q
@@ -39,7 +39,7 @@ void CSVM::learn()
 
 
 
-double CSVM::kernel_function(vector<double>& xi, vector<double>& xj){
+double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
 	switch(kernel){
 		case 0: return xi * xj;
 		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
@@ -65,7 +65,7 @@ double CSVM::kernel_function(double* xi, double* xj, int dim)
 
 
 
-void CSVM::learn(string &filename, string &output_filename) {
+void CSVM::learn(std::string &filename, std::string &output_filename) {
 	auto begin_parse = std::chrono::high_resolution_clock::now();
 	if(filename.size() > 5 && endsWith(filename,  ".arff")){
 		arffParser(filename);

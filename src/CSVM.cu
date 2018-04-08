@@ -7,8 +7,8 @@ int CUDADEVICE = 0;
 CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, double gamma_, double coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){}
 
 void CSVM::learn(){
-	vector<double> q;
-	vector<double> b = value;
+	std::vector<double> q;
+	std::vector<double> b = value;
 	#pragma omp parallel sections
 	{
 	#pragma omp section // generate right side from eguation
@@ -30,7 +30,7 @@ void CSVM::learn(){
 }
 
 
-double CSVM::kernel_function(vector<double>& xi, vector<double>& xj){
+double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
 	switch(kernel){
 		case 0: return xi * xj;
 		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
@@ -67,7 +67,7 @@ void CSVM::loadDataDevice(){
 	cudaFreeHost(col_vec);
 }
 
-void CSVM::learn(string &filename, string &output_filename) {
+void CSVM::learn(std::string &filename, std::string &output_filename) {
 	auto begin_parse = std::chrono::high_resolution_clock::now();
 	if(filename.size() > 5 && endsWith(filename, ".arff")){
 		arffParser(filename);
@@ -101,7 +101,7 @@ void CSVM::learn(string &filename, string &output_filename) {
 
 std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const double eps)
 {
-	static const int dept = Ndatas_data - 1;
+	const int dept = Ndatas_data - 1;
 	dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
 	dim3 block(CUDABLOCK_SIZE, CUDABLOCK_SIZE);
 	double *x_d, *r, *d, *r_d, *q_d;
@@ -124,13 +124,13 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	kernel_q<<<((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
 	switch(kernel){
 		case 0: 
-			kernel_linear<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
+			kernel_linear<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
 			break;
 		case 1: 
-			kernel_poly<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);
+			kernel_poly<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);
 			break;	
 		case 2: 
-			kernel_radial<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma);
+			kernel_radial<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma);
 			break;
 		default: throw std::runtime_error("Can not decide wich kernel!");
 	}
@@ -153,13 +153,13 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	
 		switch(kernel){
 			case 0: 
-				kernel_linear<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1);
+				kernel_linear<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1);
 				break;
 			case 1: 
-				kernel_poly<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1, gamma, coef0, degree);
+				kernel_poly<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1, gamma, coef0, degree);
 				break;
 			case 2: 
-				kernel_radial<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), 1, gamma);
+				kernel_radial<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), 1, gamma);
 				break;
 			default: throw std::runtime_error("Can not decide wich kernel!");
 		}
@@ -175,13 +175,13 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 			cudaDeviceSynchronize();
 			switch(kernel){
 				case 0: 
-					kernel_linear<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
+					kernel_linear<<<grid,block>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
 					break;
 				case 1: 
-					kernel_poly<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);
+					kernel_poly<<<grid,block>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);
 					break;
 				case 2: 
-					kernel_radial<<<grid,block, (BLOCKING_SIZE_THREAD * BLOCKING_SIZE_THREAD + BLOCKING_SIZE_THREAD)  * sizeof(double)>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , -1, gamma);
+					kernel_radial<<<grid,block>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , -1, gamma);
 					break;
 				default: throw std::runtime_error("Can not decide wich kernel!");
 			}
