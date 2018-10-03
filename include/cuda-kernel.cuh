@@ -1,3 +1,6 @@
+#ifndef CUDA_KERNEL_H
+#define CUDA_KERNEL_H
+
 #include "CSVM.hpp"
 __global__ void init(double* vec, double value, int size);
 
@@ -21,3 +24,5 @@ __device__ __forceinline__ double atomicAdd(double* address, double val)
     return __longlong_as_double(old);
 }
 #endif
+
+#endif //CUDA_KERNEL_
