@@ -1,22 +1,25 @@
 cmake_minimum_required(VERSION 3.12.0)
 set(CMAKE_CXX_STANDARD 14) 
 
-option(WITH_CUDA "Compile CUDA svm" ON)
-option(WITH_OPENCL "Compile CUDA svm" ON)
+option(WITH_CUDA "Compile CUDA svm" OFF)
+option(WITH_OPENCL "Compile OPENCL svm" On)
 
 set(CMAKE_MAKEFILE_DEPENDS "CMakeLists.txt")
 
 if(WITH_CUDA)
   project (SupportVectorMachine LANGUAGES CXX CUDA)
   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O0 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
+  #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11  -Xcompiler '-fopenmp' --use_fast_math")
   add_compile_definitions(WITH_CUDA)
 else(WITH_CUDA)
   project (SupportVectorMachine LANGUAGES CXX)
 endif(WITH_CUDA)
 
 if(WITH_OPENCL)
+  find_package(OpenCL REQUIRED)
   add_compile_definitions(WITH_OPENCL)
+  include_directories( ${OPENCL_INCLUDE_DIR} )
 endif(WITH_OPENCL)
 
 find_package(OpenMP)
@@ -46,6 +49,11 @@ endif(WITH_CUDA)
 
 if(WITH_OPENCL)
   set(SOURCES_OCL
+    src/OpenCL/CSVM.cpp
+    src/OpenCL/cuda-kernel.cpp
+    src/OpenCL/svm-kernel.cpp
+    src/OpenCL/kernels/svm-kernel-linear.cl
+    src/OpenCL/kernels/kernel_q.cl
     src/OpenCL/manager/manager.cpp
     src/OpenCL/manager/error_codes.cpp
     src/OpenCL/manager/run_kernel.cpp
@@ -62,12 +70,12 @@ if(WITH_OPENCL)
   set(SOURCES ${SOURCES} ${SOURCES_OCL})
 endif(WITH_OPENCL)
 
-if(!WITH_CUDA AND !WITH_OPENCL)
-  set(SOURCES_CPU
-    src/CPU/CSVM.cpp
-    )
-  set(SOURCES ${SOURCES} ${SOURCES_CPU})
-endif(!WITH_CUDA AND !WITH_OPENCL)
+#if(!WITH_CUDA AND !WITH_OPENCL)
+#  set(SOURCES_CPU
+#    src/CPU/CSVM.cpp
+#    )
+#  set(SOURCES ${SOURCES} ${SOURCES_CPU})
+#endif(!WITH_CUDA AND !WITH_OPENCL)
 
 
 
@@ -78,14 +86,20 @@ if(WITH_OPENCL)
 endif(WITH_OPENCL)
 
 if(WITH_CUDA)
-  add_executable(svm-train-gpu src/main.cpp)
+  add_executable(svm-train-gpu src/small.cpp)
   target_compile_options(svm-train-gpu PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-gpu svm)
 endif(WITH_CUDA)
-add_executable(svm-train-cpu src/main.cpp)
+add_executable(svm-train-cpu src/small.cpp)
 target_compile_options(svm-train-cpu PUBLIC) # -march=native -mtune=native
 target_link_libraries(svm-train-cpu svm)
 
+
+set(SOURCES_TEST test.cpp)
+add_executable(ocl ${SOURCES_TEST} )
+target_link_libraries(ocl OpenCL)
+message (STATUS ${OpenCL_INCLUDE_DIR})
+message (STATUS ${OPENCL_LIBRARIES})
 #set_target_properties(prog PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 

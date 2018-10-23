@@ -24,7 +24,7 @@ void CSVM::learn(){
 	
 	if(info)std::cout << "start CG" << std::endl;
 	//solve minimization
-	q = CG(b,100000000,epsilon);
+	q = CG(b,Nfeatures_data,epsilon);
     alpha.emplace_back(-sum(alpha));
 	bias = value.back() - QA_cost * alpha.back() - (q * alpha);
 }
@@ -122,6 +122,14 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	cudaMalloc((void **) &q_d, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
 	cudaMemset(q_d, 0, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  * sizeof(double));
 	kernel_q<<<((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
+	
+	double temp_q[dept];
+	cudaDeviceSynchronize();
+	cudaMemcpy(&temp_q, q_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
+	std::cout << "q_d: " ;
+	for(int i = 0; i < dept; ++i) std::cout << temp_q[i] << ", ";
+	std::cout  << std::endl;
 	switch(kernel){
 		case 0: 
 			kernel_linear<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
@@ -134,9 +142,19 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 			break;
 		default: throw std::runtime_error("Can not decide wich kernel!");
 	}
-
+	double temp[dept];
+	cudaDeviceSynchronize();
+	cudaMemcpy(&temp, x_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
+	std::cout << "x_d: " ;
+	for(int i = 0; i < dept; ++i) std::cout << temp[i] << ", ";
+	std::cout << std::endl;
 	cudaDeviceSynchronize();
 	cudaMemcpy(r, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+	std::cout << "r_d: ";
+	for(int i = 0; i < dept; ++i) std::cout << r[i] << ", ";
+	std::cout << std::endl;
+	
 	double delta = mult(r, r, dept);	
 	const double delta0 = delta;
 	double alpha_cd, beta;
@@ -167,7 +185,11 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		cudaDeviceSynchronize();
 	
 		cudaMemcpy(d, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		std::cout << "d: " << *d;
 		cudaMemcpy(Ad, Ad_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		std::cout << "Ad: " << *Ad;
 		alpha_cd = delta / mult(d , Ad,  dept);
 		add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
 		if(run%50 == 0){
@@ -195,6 +217,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		delta = mult(r , r, dept);
 		if(delta < eps * eps * delta0) break;
 		beta = -mult(r, Ad, dept) / mult(d, Ad, dept);
+		std::cout << "delta: "<< r << std::endl;
 		add(mult(beta, d, dept),r, d, dept);
 		cudaMemcpy(r_d, d, dept*sizeof(double), cudaMemcpyHostToDevice);
 	}
