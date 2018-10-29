@@ -8,7 +8,7 @@ __global__ void add_mult(double* vec1, double* vec2, double value, int dim);
 
 __global__ void kernel_q(double *q, double *data_d, double *datlast,const int Ncols, const int Nrows);
 
-
+/*
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
 __device__ __forceinline__ double atomicAdd(double* address, double val)
@@ -23,6 +23,6 @@ __device__ __forceinline__ double atomicAdd(double* address, double val)
     } while (assumed != old);
     return __longlong_as_double(old);
 }
-#endif
+#endif*/
 
 #endif //CUDA_KERNEL_

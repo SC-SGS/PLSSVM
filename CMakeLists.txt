@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12.0)
 set(CMAKE_CXX_STANDARD 14) 
 
 option(WITH_CUDA "Compile CUDA svm" OFF)
-option(WITH_OPENCL "Compile OPENCL svm" On)
+option(WITH_OPENCL "Compile OPENCL svm" ON)
 
 set(CMAKE_MAKEFILE_DEPENDS "CMakeLists.txt")
 
@@ -20,6 +20,12 @@ if(WITH_OPENCL)
   find_package(OpenCL REQUIRED)
   add_compile_definitions(WITH_OPENCL)
   include_directories( ${OPENCL_INCLUDE_DIR} )
+
+
+  project (SupportVectorMachine LANGUAGES CXX CUDA)
+  set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O0 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
+  #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -gencode arch=compute_35,code=sm_35 -Xcompiler '-fopenmp' ")
 endif(WITH_OPENCL)
 
 find_package(OpenMP)
@@ -49,10 +55,11 @@ endif(WITH_CUDA)
 
 if(WITH_OPENCL)
   set(SOURCES_OCL
-    src/OpenCL/CSVM.cpp
+    src/OpenCL/CSVM.cu
     src/OpenCL/cuda-kernel.cpp
-    src/OpenCL/svm-kernel.cpp
+    src/OpenCL/svm-kernel.cu
     src/OpenCL/kernels/svm-kernel-linear.cl
+    /home/alexander/Documents/Uni/Hiwi/Bachelor-Code/SVM/src/CUDA/cuda-kernel.cu
     src/OpenCL/kernels/kernel_q.cl
     src/OpenCL/manager/manager.cpp
     src/OpenCL/manager/error_codes.cpp

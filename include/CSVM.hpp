@@ -18,10 +18,22 @@
 
 #include <tuple>
 
+
+#ifdef WITH_OPENCL
+#include "../src/OpenCL/manager/configuration.hpp"
+#include "../src/OpenCL/manager/device.hpp"
+#include "../src/OpenCL/manager/manager.hpp"
+#include "DevicePtrOpenCL.hpp"
+#include <stdexcept>
+#endif
+
 const bool times = 0;
 
-static const unsigned CUDABLOCK_SIZE = 16;
-static const int BLOCKING_SIZE_THREAD = 6;
+// static const unsigned CUDABLOCK_SIZE = 16;
+// static const int BLOCKING_SIZE_THREAD = 6;
+
+static const unsigned CUDABLOCK_SIZE = 7;
+static const int BLOCKING_SIZE_THREAD = 2;
 
 class CSVM
 {
@@ -65,7 +77,16 @@ class CSVM
 
         void loadDataDevice();
 		std::vector<double> CG(const std::vector<double> &b, const int , const double );
-};
+
+
+        #ifdef WITH_OPENCL
+
+	        opencl::manager_t manager{"../platform_configuration.cfg"};
+	        opencl::device_t first_device;
+            cl_kernel kernel_q_cl;
+            cl_kernel svm_kernel_linear;
+        #endif
+    };
 
 #endif // C-SVM_H
 
