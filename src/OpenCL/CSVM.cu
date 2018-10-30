@@ -194,6 +194,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	//TODO
 	init_(((int) dept/1024) + 1, std::min(1024, dept),x,1,dept);
 	init_(1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1,x + dept, 0 , (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+	x_cl.to_device(std::vector<double>(x, x+(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)));
 	// #elif WITH_CUDA
 	init<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,1,dept);
 	init<<< 1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1>>>(x_d + dept, 0 , (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
@@ -202,14 +203,18 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	init_(1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1,x + dept, 0 , (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 	// #endif
 
-
+	cudaDeviceSynchronize();
 	
 	#ifdef WITH_OPENCL
-	//TODO
+	//TODO: richtiges Device einlesen
+	opencl::DevicePtrOpenCL<double> data_cl(first_device, Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1));
+	data_cl.to_device(std::vector<double>(data_d, data_d +  Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)));
+	opencl::DevicePtrOpenCL<double> datlast_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+	datlast_cl.to_device(std::vector<double>(datlast, datlast + dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1));
 	#elif WITH_CUDA
-	//TODO
+	//TODO:
 	#else
-	//TODO
+	//TODO:
 	#endif
 
 	r = new double[(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)];
@@ -218,7 +223,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	///r = b;
 	// #ifdef WITH_OPENCL
 	opencl::DevicePtrOpenCL<double> r_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	//TODO
+	//TODO: init on device
 	init_( 1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), r + dept, 0 ,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 	// #elif WITH_CUDA
 	cudaMallocHost((void **) &r, dept *sizeof(double));
@@ -233,31 +238,33 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 
 
 
+	// #ifdef WITH_OPENCL
+	opencl::DevicePtrOpenCL<double> d_cl(first_device, dept);
+	std::vector<double> toDevice(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0);
+	std::copy(b.begin(), b.begin() + dept, toDevice.begin());
+	r_cl.to_device(std::vector<double>(toDevice));
+	// #elif WITH_CUDA
 	cudaMallocHost((void **) &d, dept *sizeof(double));
-
 	cudaMemcpy(r_d,&b[0], dept * sizeof(double), cudaMemcpyHostToDevice);
-
-
-
-
-
+	// #else
+	//TODO:
+	// #endif
 	
-	cudaMallocManaged((void **) &q_d, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
+
+
+	// #ifdef WITH_OPENCL
 	opencl::DevicePtrOpenCL<double> q_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	
+	//TODO: init on gpu
+	q_cl.to_device(std::vector<double>(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0));
+	// #elif WITH_CUDA
+	cudaMallocManaged((void **) &q_d, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
 	cudaMemset(q_d, 0, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  * sizeof(double));
-	//kernel_q<<<((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
-	//kernel_q_(((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept),q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
-	
+	// #else
+	//TODO:
+	// #endif
+	cudaDeviceSynchronize();
 
-	
-	q_cl.to_device(std::vector<double>(q_d, q_d + dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1));
-	opencl::DevicePtrOpenCL<double> data_cl(first_device, Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1));
-	data_cl.to_device(std::vector<double>(data_d, data_d +  Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)));
-	opencl::DevicePtrOpenCL<double> datlast_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	datlast_cl.to_device(std::vector<double>(datlast, datlast + dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1));
-
-	
+	#ifdef WITH_OPENCL
 
 	{
 		if (!kernel_q_cl) {
@@ -281,107 +288,179 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
     opencl::run_kernel_1d_timed(first_device, kernel_q_cl, grid_size, block_size);
 	}
 
+	//#elif WITH_CUDA
+	kernel_q<<<((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
+	// #else
+	//TODO:
+	// kernel_q_(((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept),q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
+	#endif
 
 
 
+	#ifdef WITH_OPENCL
+	switch(kernel){
+		case 0: 
+			{
+				if (!svm_kernel_linear) {
+					std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
+					std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+					json::node &deviceNode =
+						manager.get_configuration()["PLATFORMS"][first_device.platformName]
+												["DEVICES"][first_device.deviceName];
+					json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+					svm_kernel_linear = manager.build_kernel(kernel_src, first_device, kernelConfig, "kernel_linear");
+				}
+		
+				
+				const int Ncols = Nfeatures_data;
+				const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
+				opencl::apply_arguments(svm_kernel_linear, q_cl.get(), r_cl.get(), x_cl.get(), data_cl.get(), QA_cost , 1/cost, Ncols, Nrows, -1);
+	
+			std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
+			std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
+			
+			opencl::run_kernel_2d_timed(first_device, svm_kernel_linear, grid_size, block_size);
+			}
+			break;
+		case 1: 
+			//TODO: kernel_poly OpenCL
+			std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
+			break;	
+	   case 2: 
+		   //TODO: kernel_radial OpenCL
+			std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
+			break;	
+	   default: throw std::runtime_error("Can not decide wich kernel!");
+   }
 
-	cudaDeviceSynchronize();
-	std::vector<double> q_cl_ret(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
-	q_cl.from_device(q_cl_ret);
-	for(int i = 0; i < q_cl_ret.size(); ++i){
-		q_d[i] = q_cl_ret[i] ;
-	}
-
-
-
-
-
-
-
-	double temp_q[dept];
-	cudaDeviceSynchronize();
-	cudaMemcpy(&temp_q, q_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-	std::cout << "q_d: " ;
-	for(int i = 0; i < dept; ++i) std::cout << temp_q[i] << ", ";
-	std::cout  << std::endl;
+   
+	//  #elif WITH_CUDA
 	switch(kernel){
 		case 0: 
 			kernel_linear<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
 			break;
-		// case 1: 
-		// 	 kernel_poly<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);
-		// 	break;	
-		// case 2: 
-		// 	kernel_radial<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma);
-		// 	break;
+		case 1: 
+		 	// kernel_poly<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);
+		 	break;	
+		case 2: 
+			// kernel_radial<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma);
+			break;
 		default: throw std::runtime_error("Can not decide wich kernel!");
 	}
+	#else
+	//TODO:
+	#endif
+
+	
 
 
-	cudaDeviceSynchronize();
-	cudaMemcpy(r, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+	#ifdef WITH_OPENCL
+		{
+			std::vector<double> ret(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+			r_cl.from_device(ret);
+			std::copy(ret.begin(), ret.begin() + dept, r);
+		}
+	#elif WITH_CUDA
+		cudaDeviceSynchronize();
+		cudaMemcpy(r, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+
+	#else
+		//TODO:
+	#endif
+	
 	
 	
 	double delta = mult(r, r, dept);	
 	const double delta0 = delta;
 	double alpha_cd, beta;
-	double* Ad, *Ad_d;
-	cudaMallocHost((void **) &Ad, dept *sizeof(double));
-	cudaMallocManaged((void **) &Ad_d, (dept +(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  *sizeof(double));
+	double* Ad;
+
+	#ifdef WITH_OPENCL
+		opencl::DevicePtrOpenCL<double> Ad_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+
+	// #elif WITH_CUDA
+		double *Ad_d; 
+		cudaMallocHost((void **) &Ad, dept *sizeof(double));
+		cudaMallocManaged((void **) &Ad_d, (dept +(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  *sizeof(double));
+	#else
+		//TODO:
+	#endif
+	
 
 	int run;
 	for(run = 0; run < imax ; ++run){
 		if(info)std::cout << "Start Iteration: " << run << std::endl;
 		//Ad = A * d
-		cudaMemset(Ad_d, 0, dept * sizeof(double));
-		cudaMemset(r_d + dept, 0, ((CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
+
+
+		
+
+
 
 		cudaDeviceSynchronize();
 
 
 
 
-
-		q_cl.to_device(std::vector<double>(q_d, q_d + dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1));
-		opencl::DevicePtrOpenCL<double> Ad_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-		Ad_cl.to_device(std::vector<double>(Ad_d, Ad_d + dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1));
-		opencl::DevicePtrOpenCL<double> r_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-		r_cl.to_device(std::vector<double>(r_d, r_d + dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1));
-		data_cl.to_device(std::vector<double>(data_d, data_d +  Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)));
-
-		{
-			if (!svm_kernel_linear) {
-				std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
-				std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-				json::node &deviceNode =
-					manager.get_configuration()["PLATFORMS"][first_device.platformName]
-											["DEVICES"][first_device.deviceName];
-				json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-				svm_kernel_linear = manager.build_kernel(kernel_src, first_device, kernelConfig, "kernel_linear");
+		#ifdef WITH_OPENCL
+			{
+				std::vector<double> zeros( dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+				Ad_cl.to_device(zeros);
+				//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
+				std::vector<double> buffer( dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+				r_cl.from_device(buffer);
+				for(int index = dept; index <  dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1; ++index) buffer[index] = 0.0;
+				r_cl.to_device(buffer);
 			}
-	
+		// #elif WITH_CUDA
+			cudaMemset(Ad_d, 0, dept * sizeof(double));
+			cudaMemset(r_d + dept, 0, ((CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
+			cudaDeviceSynchronize();
+
+		#else
+
+		#endif
+
+
+
+		#ifdef WITH_OPENCL
+		switch(kernel){
+			case 0: 
+				{
+					if (!svm_kernel_linear) {
+						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
+						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+						json::node &deviceNode =
+							manager.get_configuration()["PLATFORMS"][first_device.platformName]
+													["DEVICES"][first_device.deviceName];
+						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+						svm_kernel_linear = manager.build_kernel(kernel_src, first_device, kernelConfig, "kernel_linear");
+					}
 			
-			const int Ncols = Nfeatures_data;
-			const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
-			opencl::apply_arguments(svm_kernel_linear, q_cl.get(), Ad_cl.get(), r_cl.get(), data_cl.get(), QA_cost , 1/cost, Ncols, Nrows, 1);
-	
-		// dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
-		// dim3 block(CUDABLOCK_SIZE, CUDABLOCK_SIZE);
-		std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
-		std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
-		std::cout << grid_size[0] << " " << grid_size[1] << std::endl;
+					
+					const int Ncols = Nfeatures_data;
+					const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
+					opencl::apply_arguments(svm_kernel_linear, q_cl.get(), Ad_cl.get(), r_cl.get(), data_cl.get(), QA_cost , 1/cost, Ncols, Nrows, 1);
 		
-		opencl::run_kernel_2d_timed(first_device, svm_kernel_linear, grid_size, block_size);
-		}
-
-		
-
-
-
-
+				std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
+				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
+				
+				opencl::run_kernel_2d_timed(first_device, svm_kernel_linear, grid_size, block_size);
+				}
+				break;
+			case 1: 
+				//TODO: kernel_poly OpenCL
+				std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
+				break;	
+		case 2: 
+			//TODO: kernel_radial OpenCL
+				std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
+				break;	
+		default: throw std::runtime_error("Can not decide wich kernel!");
+	}
 
 	
+		//  #elif WITH_CUDA
 		switch(kernel){
 			case 0: 
 				kernel_linear<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1);
@@ -394,23 +473,50 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 			// 	break;
 			default: throw std::runtime_error("Can not decide wich kernel!");
 		}
+		#else
+		//TODO:
+		#endif
 		
-		cudaDeviceSynchronize();
-		
-		cudaMemcpy(d, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
-		cudaDeviceSynchronize();
-		std::cout << "d: " << *d << std::endl;
-		
+
+
+
+
+
 	
-		cudaMemcpy(Ad, Ad_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
-		cudaDeviceSynchronize();
-		std::vector<double> Ad_cl_ret(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
-		Ad_cl.from_device(Ad_cl_ret);
-		std::cout << "Ad: " << *Ad;
-		for(int i = 0; i < Ad_cl_ret.size(); ++i){
-			//if(Ad_cl_ret[i] != d[i]) std::cerr << "Fehler!!" << std::endl;
-			std::cout << Ad_cl_ret[i] << " " << Ad_d[i] << std::endl;
+
+
+
+
+
+
+
+		#ifdef WITH_OPENCL
+		{
+			std::vector<double> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+			r_cl.from_device(buffer);
+			std::copy(buffer.begin(), buffer.begin()+dept, d);
+
+			Ad_cl.from_device(buffer);
+			std::copy(buffer.begin(), buffer.begin()+dept, Ad);
+
+			std::cout << "Ad: ";
+			for(double & val : std::vector<double>(d, d+dept)) std::cout << val << " "; std::cout << std::endl;
+
 		}
+		//  #elif WITH_CUDA
+		cudaDeviceSynchronize();
+		cudaMemcpy(d, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaMemcpy(Ad, Ad_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+		std::cout << "Ad: ";
+			for(double & val : std::vector<double>(d, d+dept)) std::cout << val << " "; std::cout << std::endl;
+		#else
+
+		#endif
+
+
+		
+
+		
 		alpha_cd = delta / mult(d , Ad,  dept);
 		//add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
 		add_mult_(((int) dept/1024) + 1, std::min(1024, dept),x_d,r_d,alpha_cd,dept);
@@ -441,7 +547,20 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		beta = -mult(r, Ad, dept) / mult(d, Ad, dept);
 		std::cout << "delta: "<< r << std::endl;
 		add(mult(beta, d, dept),r, d, dept);
-		cudaMemcpy(r_d, d, dept*sizeof(double), cudaMemcpyHostToDevice);
+
+		#ifdef WITH_OPENCL
+		{
+			std::vector<double> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0);
+			std::copy(d, d+dept, buffer.begin());
+			r_cl.to_device(buffer);
+
+		}
+		// #elif WITH_CUDA
+			cudaMemcpy(r_d, d, dept*sizeof(double), cudaMemcpyHostToDevice);
+		#else
+
+		#endif
+
 	}
 	if(run == imax) std::clog << "Regard reached maximum number of CG-iterations" << std::endl;
 	alpha.resize(dept);
