@@ -29,11 +29,11 @@
 
 const bool times = 0;
 
-// static const unsigned CUDABLOCK_SIZE = 16;
-// static const int BLOCKING_SIZE_THREAD = 6;
+static const unsigned CUDABLOCK_SIZE = 16;
+static const int BLOCKING_SIZE_THREAD = 6;
 
-static const unsigned CUDABLOCK_SIZE = 7;
-static const int BLOCKING_SIZE_THREAD = 2;
+// static const unsigned CUDABLOCK_SIZE = 7;
+// static const int BLOCKING_SIZE_THREAD = 2;
 
 class CSVM
 {
