@@ -57,9 +57,6 @@ class CSVM
         double bias;
 		double QA_cost;
         std::vector<std::vector<double> > data;
-		double *data_d;
-		double *datlast;
-        double *w_d;
 		size_t Nfeatures_data;
 		size_t Ndatas_data;
         std::vector<double> value;
@@ -80,11 +77,18 @@ class CSVM
 
 
         #ifdef WITH_OPENCL
-
 	        opencl::manager_t manager{"../platform_configuration.cfg"};
 	        opencl::device_t first_device;
             cl_kernel kernel_q_cl;
             cl_kernel svm_kernel_linear;
+            opencl::DevicePtrOpenCL<double>  datlast_cl;
+            opencl::DevicePtrOpenCL<double>  data_cl;
+        #endif
+
+        #ifdef WITH_CUDA
+            double *data_d;
+            double *datlast;
+            double *w_d;
         #endif
     };
 
