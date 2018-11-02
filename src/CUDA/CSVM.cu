@@ -4,11 +4,11 @@
 
 int CUDADEVICE = 0;
 
-CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, double gamma_, double coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){}
+CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){}
 
 void CSVM::learn(){
-	std::vector<double> q;
-	std::vector<double> b = value;
+	std::vector<real_t> q;
+	std::vector<real_t> b = value;
 	#pragma omp parallel sections
 	{
 	#pragma omp section // generate right side from eguation
@@ -30,11 +30,11 @@ void CSVM::learn(){
 }
 
 
-double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
+real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
 	switch(kernel){
 		case 0: return xi * xj;
 		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
-		case 2: {double temp = 0;
+		case 2: {real_t temp = 0;
 			for(int i = 0; i < xi.size(); ++i){
 				temp += (xi-xj)*(xi-xj);
 			}
@@ -46,13 +46,13 @@ double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
 
 
 void CSVM::loadDataDevice(){
-	cudaMalloc((void **) &datlast, (Nfeatures_data + CUDABLOCK_SIZE - 1) * sizeof(double));
-	cudaMemset(datlast, 0, Nfeatures_data + CUDABLOCK_SIZE - 1 * sizeof(double));
-	cudaMemcpy(datlast,&data[Ndatas_data - 1][0], Nfeatures_data * sizeof(double), cudaMemcpyHostToDevice);
-	cudaMalloc((void **) &data_d, Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)* sizeof(double));
+	cudaMalloc((void **) &datlast, (Nfeatures_data + CUDABLOCK_SIZE - 1) * sizeof(real_t));
+	cudaMemset(datlast, 0, Nfeatures_data + CUDABLOCK_SIZE - 1 * sizeof(real_t));
+	cudaMemcpy(datlast,&data[Ndatas_data - 1][0], Nfeatures_data * sizeof(real_t), cudaMemcpyHostToDevice);
+	cudaMalloc((void **) &data_d, Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)* sizeof(real_t));
 
-	double* col_vec;
-	cudaMallocHost((void **) &col_vec, (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)  * sizeof(double));
+	real_t* col_vec;
+	cudaMallocHost((void **) &col_vec, (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)  * sizeof(real_t));
 	
 	#pragma parallel for
 	for(size_t col = 0; col < Nfeatures_data ; ++col){
@@ -62,7 +62,7 @@ void CSVM::loadDataDevice(){
 		for(int i = 0 ; i < + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) ; ++i){
 			col_vec[i + Ndatas_data - 1] = 0;
 		}
-		cudaMemcpy(data_d + col * (Ndatas_data+ (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1), col_vec, (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1) *sizeof(double), cudaMemcpyHostToDevice);
+		cudaMemcpy(data_d + col * (Ndatas_data+ (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1), col_vec, (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1) *sizeof(real_t), cudaMemcpyHostToDevice);
 	}
 	cudaFreeHost(col_vec);
 }
@@ -99,28 +99,28 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 }
 
 
-std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const double eps)
+std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
 {
 	const int dept = Ndatas_data - 1;
 	dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
 	dim3 block(CUDABLOCK_SIZE, CUDABLOCK_SIZE);
-	double *x_d, *r, *d, *r_d, *q_d;
+	real_t *x_d, *r, *d, *r_d, *q_d;
 
-	cudaMalloc((void **) &x_d, (dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)*sizeof(double));
+	cudaMalloc((void **) &x_d, (dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)*sizeof(real_t));
 	init<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,1,dept);
 	init<<< 1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1>>>(x_d + dept, 0 , (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 
 	//r = b - (A * x)
 	///r = b;
-	cudaMallocHost((void **) &r, dept *sizeof(double));
-	cudaMalloc((void **) &r_d, (dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) *sizeof(double));
+	cudaMallocHost((void **) &r, dept *sizeof(real_t));
+	cudaMalloc((void **) &r_d, (dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) *sizeof(real_t));
 	init<<< 1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD)>>>(r_d + dept, 0 ,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	cudaMallocHost((void **) &d, dept *sizeof(double));
+	cudaMallocHost((void **) &d, dept *sizeof(real_t));
 
-	cudaMemcpy(r_d,&b[0], dept * sizeof(double), cudaMemcpyHostToDevice);
+	cudaMemcpy(r_d,&b[0], dept * sizeof(real_t), cudaMemcpyHostToDevice);
 	
-	cudaMalloc((void **) &q_d, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
-	cudaMemset(q_d, 0, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  * sizeof(double));
+	cudaMalloc((void **) &q_d, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(real_t));
+	cudaMemset(q_d, 0, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  * sizeof(real_t));
 	kernel_q<<<((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d, data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
 	switch(kernel){
 		case 0: 
@@ -136,20 +136,20 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	}
  
 	cudaDeviceSynchronize();
-	cudaMemcpy(r, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
-	double delta = mult(r, r, dept);	
-	const double delta0 = delta;
-	double alpha_cd, beta;
-	double* Ad, *Ad_d;
-	cudaMallocHost((void **) &Ad, dept *sizeof(double));
-	cudaMalloc((void **) &Ad_d, (dept +(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  *sizeof(double));
+	cudaMemcpy(r, r_d, dept*sizeof(real_t), cudaMemcpyDeviceToHost);
+	real_t delta = mult(r, r, dept);	
+	const real_t delta0 = delta;
+	real_t alpha_cd, beta;
+	real_t* Ad, *Ad_d;
+	cudaMallocHost((void **) &Ad, dept *sizeof(real_t));
+	cudaMalloc((void **) &Ad_d, (dept +(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  *sizeof(real_t));
 
 	int run;
 	for(run = 0; run < imax ; ++run){
 		if(info)std::cout << "Start Iteration: " << run << std::endl;
 		//Ad = A * d
-		cudaMemset(Ad_d, 0, dept * sizeof(double));
-		cudaMemset(r_d + dept, 0, ((CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
+		cudaMemset(Ad_d, 0, dept * sizeof(real_t));
+		cudaMemset(r_d + dept, 0, ((CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(real_t));
 	
 		switch(kernel){
 			case 0: 
@@ -166,12 +166,12 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		
 		cudaDeviceSynchronize();
 	
-		cudaMemcpy(d, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
-		cudaMemcpy(Ad, Ad_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+		cudaMemcpy(d, r_d, dept*sizeof(real_t), cudaMemcpyDeviceToHost);
+		cudaMemcpy(Ad, Ad_d, dept*sizeof(real_t), cudaMemcpyDeviceToHost);
 		alpha_cd = delta / mult(d , Ad,  dept);
 		add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
 		if(run%50 == 0){
-			cudaMemcpy(r_d, &b[0], dept * sizeof(double), cudaMemcpyHostToDevice);
+			cudaMemcpy(r_d, &b[0], dept * sizeof(real_t), cudaMemcpyHostToDevice);
 			cudaDeviceSynchronize();
 			switch(kernel){
 				case 0: 
@@ -186,7 +186,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 				default: throw std::runtime_error("Can not decide wich kernel!");
 			}
 			cudaDeviceSynchronize();	
-			cudaMemcpy(r, r_d, dept*sizeof(double), cudaMemcpyDeviceToHost);
+			cudaMemcpy(r, r_d, dept*sizeof(real_t), cudaMemcpyDeviceToHost);
 		}else{
 			for(int index = 0; index < dept; ++index){
 				r[index] -= alpha_cd * Ad[index];
@@ -196,14 +196,14 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		if(delta < eps * eps * delta0) break;
 		beta = -mult(r, Ad, dept) / mult(d, Ad, dept);
 		add(mult(beta, d, dept),r, d, dept);
-		cudaMemcpy(r_d, d, dept*sizeof(double), cudaMemcpyHostToDevice);
+		cudaMemcpy(r_d, d, dept*sizeof(real_t), cudaMemcpyHostToDevice);
 	}
 	if(run == imax) std::clog << "Regard reached maximum number of CG-iterations" << std::endl;
 	alpha.resize(dept);
-	std::vector<double> ret_q(dept);
+	std::vector<real_t> ret_q(dept);
 	cudaDeviceSynchronize();
-	cudaMemcpy(&alpha[0],x_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
-	cudaMemcpy(&ret_q[0],q_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
+	cudaMemcpy(&alpha[0],x_d, dept * sizeof(real_t), cudaMemcpyDeviceToHost);
+	cudaMemcpy(&ret_q[0],q_d, dept * sizeof(real_t), cudaMemcpyDeviceToHost);
 	cudaFree(Ad_d);
 	cudaFree(r_d);
 	cudaFree(datlast);

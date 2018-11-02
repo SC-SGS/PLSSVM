@@ -1,20 +1,20 @@
 #include "cuda-kernel.cuh"
 
-__global__ void init(double* vec, double value, int size){
+__global__ void init(real_t* vec, real_t value, int size){
 	int id = blockIdx.x * blockDim.x + threadIdx.x;
 	if(id < size) vec[id] = value;
 }
 
-__global__ void add_mult(double* vec1, double* vec2, double value, int dim){
+__global__ void add_mult(real_t* vec1, real_t* vec2, real_t value, int dim){
 	int id = blockIdx.x * blockDim.x + threadIdx.x;
 	if(id < dim){
 		vec1[id] += vec2[id] * value;
 	}
 }
 
-__global__ void kernel_q(double *q, double *data_d, double *datlast,const int Ncols, const int Nrows){
+__global__ void kernel_q(real_t *q, real_t *data_d, real_t *datlast,const int Ncols, const int Nrows){
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
-		double temp = 0;
+		real_t temp = 0;
 		for(int i = 0; i < Ncols ; ++i){
 			 temp += data_d[i * Nrows + index] * datlast[i];
 		}

@@ -2,13 +2,15 @@
 #define CUDA_KERNEL_H
 
 #include "CSVM.hpp"
-__global__ void init(double* vec, double value, int size);
 
-__global__ void add_mult(double* vec1, double* vec2, double value, int dim);
 
-__global__ void kernel_q(double *q, double *data_d, double *datlast,const int Ncols, const int Nrows);
+__global__ void init(real_t* vec, real_t value, int size);
 
-/*
+__global__ void add_mult(real_t* vec1, real_t* vec2, real_t value, int dim);
+
+__global__ void kernel_q(real_t *q, real_t *data_d, real_t *datlast,const int Ncols, const int Nrows);
+
+
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
 __device__ __forceinline__ double atomicAdd(double* address, double val)
@@ -23,6 +25,6 @@ __device__ __forceinline__ double atomicAdd(double* address, double val)
     } while (assumed != old);
     return __longlong_as_double(old);
 }
-#endif*/
+#endif
 
 #endif //CUDA_KERNEL_

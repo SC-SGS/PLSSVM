@@ -29,51 +29,52 @@
 
 const bool times = 0;
 
+
 static const unsigned CUDABLOCK_SIZE = 16;
-static const int BLOCKING_SIZE_THREAD = 6;
+static const unsigned BLOCKING_SIZE_THREAD = 6;
 
 // static const unsigned CUDABLOCK_SIZE = 7;
-// static const int BLOCKING_SIZE_THREAD = 2;
+// static const unsigned BLOCKING_SIZE_THREAD = 2;
 
 class CSVM
 {
     public:
-        CSVM(double, double, unsigned, double, double, double, bool);
+        CSVM(real_t, real_t, unsigned, real_t, real_t, real_t, bool);
 		void learn(std::string&, std::string&);
         
-		const double& getB() const { return bias; };
+		const real_t& getB() const { return bias; };
         void load_w();
-        std::vector<double> predict(double*, int, int);
+        std::vector<real_t> predict(real_t*, int, int);
     protected:
 
     private:
         const bool info; 
-        double cost;
-        const double epsilon;
+        real_t cost;
+        const real_t epsilon;
         const unsigned kernel;
-        const double degree;
-        double gamma;
-        const double coef0;
-        double bias;
-		double QA_cost;
-        std::vector<std::vector<double> > data;
+        const real_t degree;
+        real_t gamma;
+        const real_t coef0;
+        real_t bias;
+		real_t QA_cost;
+        std::vector<std::vector<real_t> > data;
 		size_t Nfeatures_data;
 		size_t Ndatas_data;
-        std::vector<double> value;
-        std::vector<double> alpha;
+        std::vector<real_t> value;
+        std::vector<real_t> alpha;
 
 
         void learn();
 		
-        double kernel_function(std::vector<double>&, std::vector<double>&);
-        double kernel_function(double*, double*, int);
+        real_t kernel_function(std::vector<real_t>&, std::vector<real_t>&);
+        real_t kernel_function(real_t*, real_t*, int);
 
         void libsvmParser(std::string&);
         void arffParser(std::string&);
         void writeModel(std::string&);
 
         void loadDataDevice();
-		std::vector<double> CG(const std::vector<double> &b, const int , const double );
+		std::vector<real_t> CG(const std::vector<real_t> &b, const int , const real_t );
 
 
         #ifdef WITH_OPENCL
@@ -81,14 +82,14 @@ class CSVM
 	        opencl::device_t first_device;
             cl_kernel kernel_q_cl;
             cl_kernel svm_kernel_linear;
-            opencl::DevicePtrOpenCL<double>  datlast_cl;
-            opencl::DevicePtrOpenCL<double>  data_cl;
+            opencl::DevicePtrOpenCL<real_t>  datlast_cl;
+            opencl::DevicePtrOpenCL<real_t>  data_cl;
         #endif
 
         #ifdef WITH_CUDA
-            double *data_d;
-            double *datlast;
-            double *w_d;
+            real_t *data_d;
+            real_t *datlast;
+            real_t *w_d;
         #endif
     };
 

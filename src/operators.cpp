@@ -4,18 +4,18 @@
 #include <functional>
 
 
-std::vector<double> operator - (const std::vector<double> &vec1,const std::vector<double> &vec2)
+std::vector<real_t> operator - (const std::vector<real_t> &vec1,const std::vector<real_t> &vec2)
 {
-    std::vector<double> result(vec1.size());
+    std::vector<real_t> result(vec1.size());
     for(unsigned i  = 0; i < vec1.size(); ++i){
         result[i] = (vec1[i] - vec2[i]);
     }
     return result;
 }
 
-std::vector<double> operator + (const std::vector<double> &vec1,const std::vector<double> &vec2)
+std::vector<real_t> operator + (const std::vector<real_t> &vec1,const std::vector<real_t> &vec2)
 {
-	std::vector<double> result(vec1.size());
+	std::vector<real_t> result(vec1.size());
     for(unsigned i  = 0; i < vec1.size(); ++i){
 		result[i] = (vec1[i] + vec2[i]);
     }
@@ -23,7 +23,7 @@ std::vector<double> operator + (const std::vector<double> &vec1,const std::vecto
 
 }
 
-std::vector<double>& operator += (std::vector<double> &result,const std::vector<double> &vec2)
+std::vector<real_t>& operator += (std::vector<real_t> &result,const std::vector<real_t> &vec2)
 {
     for(unsigned i  = 0; i < result.size(); ++i){
         result[i] += vec2[i];
@@ -31,7 +31,7 @@ std::vector<double>& operator += (std::vector<double> &result,const std::vector<
     return result;
 }
 
-double* operator += (double* result,const std::vector<double> &vec2)
+real_t* operator += (real_t* result,const std::vector<real_t> &vec2)
 {
     for(unsigned i  = 0; i < vec2.size(); ++i){
         result[i] += vec2[i];
@@ -39,9 +39,9 @@ double* operator += (double* result,const std::vector<double> &vec2)
     return result;
 }
 
-std::vector<double> operator *(const std::vector<std::vector<double> > &matr, const std::vector<double> &vec)
+std::vector<real_t> operator *(const std::vector<std::vector<real_t> > &matr, const std::vector<real_t> &vec)
 {
-    std::vector<double> result(matr.size(),0.0);
+    std::vector<real_t> result(matr.size(),0.0);
     for(unsigned i = 0; i < matr.size(); ++i){
         for(unsigned j = 0; j < vec.size(); ++j){
             result[i] += matr[i][j] * vec[j] ;
@@ -51,25 +51,25 @@ std::vector<double> operator *(const std::vector<std::vector<double> > &matr, co
 }
 
 
-double operator *(const std::vector<double> &vec1,const std::vector<double> &vec2)
+real_t operator *(const std::vector<real_t> &vec1,const std::vector<real_t> &vec2)
 {
-    double result = 0.0;
+    real_t result = 0.0;
     for(unsigned i = 0; i < vec1.size(); ++i){
         result += vec1[i] * vec2[i];
     }
 	return result;
 }
 
-double operator *(double* vec1,const std::vector<double> &vec2)
+real_t operator *(real_t* vec1,const std::vector<real_t> &vec2)
 {
-    double result = 0.0;
+    real_t result = 0.0;
     for(unsigned i = 0; i < vec2.size(); ++i){
         result += vec1[i] * vec2[i];
     }
 	return result;
 }
 
-std::ostream& operator<<(std::ostream &out,const std::vector<std::vector<double> > &matr)
+std::ostream& operator<<(std::ostream &out,const std::vector<std::vector<real_t> > &matr)
 {
     for(unsigned i = 0; i < matr.size(); ++i){
         out << matr[i] << std::endl;
@@ -77,7 +77,7 @@ std::ostream& operator<<(std::ostream &out,const std::vector<std::vector<double>
     return out;
 }
 
-std::ostream& operator<<(std::ostream &out, const std::vector<double> &vec)
+std::ostream& operator<<(std::ostream &out, const std::vector<real_t> &vec)
 {
     for(unsigned i = 0; i < vec.size() ; ++i){
         if(vec[i] != 0 ) out << i << ":" << vec[i] << " ";
@@ -85,7 +85,7 @@ std::ostream& operator<<(std::ostream &out, const std::vector<double> &vec)
     return out;
 }
 
-std::vector<double> operator * (const double& value, std::vector<double> vec)
+std::vector<real_t> operator * (const real_t& value, std::vector<real_t> vec)
 {
     for(unsigned i = 0; i < vec.size(); ++i ){
         vec[i] *= value;
@@ -93,23 +93,23 @@ std::vector<double> operator * (const double& value, std::vector<double> vec)
     return vec;
 }
 
-double operator * (const std::vector<double>&vec1,double* vec2)
+real_t operator * (const std::vector<real_t>&vec1,real_t* vec2)
 {
-	double result = 0.0;
+	real_t result = 0.0;
     for(unsigned i = 0; i < vec1.size(); ++i ){
         result += vec1[i] * vec2[i];
     }
     return result;
 }
 
-std::vector<double> operator * (const std::vector<double>& vec, const double& value)
+std::vector<real_t> operator * (const std::vector<real_t>& vec, const real_t& value)
 {
     return value * vec;
 }
 
-std::vector<std::vector<double> > dot(const std::vector<double>& vec1, const std::vector<double>& vec2)
+std::vector<std::vector<real_t> > dot(const std::vector<real_t>& vec1, const std::vector<real_t>& vec2)
 {
-	std::vector<std::vector<double> > result(vec1.size(),std::vector<double>(vec1.size(),0));
+	std::vector<std::vector<real_t> > result(vec1.size(),std::vector<real_t>(vec1.size(),0));
 	for(unsigned i = 0; i < vec1.size(); ++i)
     {
         for(unsigned j = 0; j < vec1.size(); ++j)
@@ -120,7 +120,7 @@ std::vector<std::vector<double> > dot(const std::vector<double>& vec1, const std
     return result;
 }
 
-std::vector<std::vector<double> >& operator -= (std::vector<std::vector<double>> &result, const std::vector<std::vector<double> > &matr)
+std::vector<std::vector<real_t> >& operator -= (std::vector<std::vector<real_t>> &result, const std::vector<std::vector<real_t> > &matr)
 {
     for(unsigned i = 0; i < result.size(); ++i)
     {
@@ -132,7 +132,7 @@ std::vector<std::vector<double> >& operator -= (std::vector<std::vector<double>>
     return result;
 }
 
-std::vector<std::vector<double> >& operator +=(std::vector<std::vector<double> > &result, const double &value)
+std::vector<std::vector<real_t> >& operator +=(std::vector<std::vector<real_t> > &result, const real_t &value)
 {
     for(unsigned i = 0; i < result.size(); ++i)
     {
@@ -143,7 +143,7 @@ std::vector<std::vector<double> >& operator +=(std::vector<std::vector<double> >
     }
     return result;
 }
-std::vector<double>& operator -= (std::vector<double> &result, const double &value)
+std::vector<real_t>& operator -= (std::vector<real_t> &result, const real_t &value)
 {
     for(unsigned i = 0; i < result.size(); ++i){
         result[i] -= value;
@@ -152,54 +152,54 @@ std::vector<double>& operator -= (std::vector<double> &result, const double &val
 };
 
 
-double sum(std::vector<double> & vec)
+real_t sum(std::vector<real_t> & vec)
 {
-    double result = 0;
+    real_t result = 0;
 	for(unsigned i = 0; i < vec.size(); ++i){
         result += vec[i];
     }
     return result;
 };
 
-double mult(double* vec1,double* vec2,int dim){
-	double result = 0.0;
+real_t mult(real_t* vec1,real_t* vec2,int dim){
+	real_t result = 0.0;
     for(unsigned i = 0; i < dim; ++i){
         result += vec1[i] * vec2[i];
     }
 	return result;
 };
 
-double* mult(double* vec, double val, int dim){
+real_t* mult(real_t* vec, real_t val, int dim){
 	return mult(val,vec, dim);
 };
 
-double* mult (double value, double* vec, int dim){
+real_t* mult (real_t value, real_t* vec, int dim){
 	for(int i = 0; i < dim; ++i){
 		vec[i] *= value;
 	}
 	return vec;
 };
 
-double* add (double* vec, double value, int dim){
+real_t* add (real_t* vec, real_t value, int dim){
 	return add(value, vec, dim);
 };
 
-double* add (double value, double* vec, int dim){
+real_t* add (real_t value, real_t* vec, int dim){
 	for(unsigned i = 0; i < dim; ++i){
 		vec[i] += value;
 	}
 	return vec;
 };
 
-double* add (double* vec1, double* vec2, int dim){
-	double* result =  new double[dim];
+real_t* add (real_t* vec1, real_t* vec2, int dim){
+	real_t* result =  new real_t[dim];
 	for(unsigned i = 0; i < dim; ++i){
 		result[i] = vec1[i] + vec2[i];
 	}
 	return result;
 };
 
-double* add (double* vec1, double* vec2, double* result, int dim){
+real_t* add (real_t* vec1, real_t* vec2, real_t* result, int dim){
 	for(unsigned i = 0; i < dim; ++i){
 		result[i] = vec1[i] + vec2[i];
 	}
@@ -207,7 +207,7 @@ double* add (double* vec1, double* vec2, double* result, int dim){
 };
 
 
-std::vector<double>& operator += (std::vector<double>&vec1, double* vec2){
+std::vector<real_t>& operator += (std::vector<real_t>&vec1, real_t* vec2){
 	for(int i = 0; i < vec1.size(); ++i){
 		vec1[i] += vec2[i];
 	}

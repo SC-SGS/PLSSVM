@@ -2,12 +2,12 @@
 #include <chrono>
 #include <omp.h>  
 
-CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, double gamma_, double coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){}
+CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){}
 
 void CSVM::learn()
 {
-	std::vector<double> q;
-	std::vector<double> b = value;
+	std::vector<real_t> q;
+	std::vector<real_t> b = value;
 #pragma omp parallel sections
 	{
 #pragma omp section // generate q
@@ -39,7 +39,7 @@ void CSVM::learn()
 
 
 
-double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
+real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
 	switch(kernel){
 		case 0: return xi * xj;
 		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
@@ -49,12 +49,12 @@ double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
 	
 }
 
-double CSVM::kernel_function(double* xi, double* xj, int dim)
+real_t CSVM::kernel_function(real_t* xi, real_t* xj, int dim)
 {
 	switch(kernel){
 		case 0: return  mult(xi, xj, dim);
 		case 1: return std::pow(gamma *  mult(xi, xj, dim) + coef0 ,degree);
-		case 2: {double temp = 0;
+		case 2: {real_t temp = 0;
 			for(int i = 0; i < dim; ++i){
 				temp += (xi[i]-xj[i]);
 			}
@@ -88,16 +88,16 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 }
 
 
-std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const double eps)
+std::vector<real_t> CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps)
 {
-	std::vector<double> x(b.size(), 1);
-	double* datlast = &data.back()[0];
+	std::vector<real_t> x(b.size(), 1);
+	real_t* datlast = &data.back()[0];
 	static const size_t dim = data.back().size();
 	static const size_t dept = b.size();
 	
 	//r = b - (A * x)
 	///r = b;
-	double r[dept];
+	real_t r[dept];
 	std::copy(b.begin(), b.end(), r);
 	
 	int bloksize = 64;
@@ -109,7 +109,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 			for(int ii = 0; ii < bloksize && ii + i< dept; ++ii){
 				for(int jj = 0 ; jj < bloksize && jj + j < dept; ++jj){
 					if(ii + i > jj + j ){
-						double temp = kernel_function(&data[ii + i][0], &data[jj + j][0], dim) - kernel_function(datlast, &data[ii + i][0], dim);
+						real_t temp = kernel_function(&data[ii + i][0], &data[jj + j][0], dim) - kernel_function(datlast, &data[ii + i][0], dim);
 						#pragma omp atomic
 						r[jj + j] -= temp;
 						#pragma omp atomic
@@ -123,7 +123,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
 #pragma omp parallel for schedule(dynamic,8)
 	for(int i = 0; i < dept; ++i){
-		double kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) - QA_cost;
+		real_t kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) - QA_cost;
 		#pragma omp atomic
 		r[i] -= kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + 1/cost - (b.size()-i) * kernel_dat_and_cost;
 		for(int j = i + 1; j < dept; ++j){
@@ -134,28 +134,28 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
 	
 	std::cout << "r= b-Ax" <<std::endl;
-	double d[b.size()] = {0};
+	real_t d[b.size()] = {0};
 
 
-	std::memcpy(d,r,dept*sizeof(double));
+	std::memcpy(d,r,dept*sizeof(real_t));
 
 	
-	double delta = mult(r, r, sizeof(r)/sizeof(double));	
-	const double delta0 = delta;
-	double alpha, beta;
+	real_t delta = mult(r, r, sizeof(r)/sizeof(real_t));	
+	const real_t delta0 = delta;
+	real_t alpha, beta;
 
 
 	for(int run = 0; run < imax ; ++run){
 	std::cout << "Start Iteration: " << run << std::endl;
 	//Ad = A * d
-	double Ad[dept] = {0.0} ;
+	real_t Ad[dept] = {0.0} ;
 		
 #pragma omp parallel for collapse(2) schedule(dynamic,8)
 	for (int i = 0; i < b.size(); i += bloksize) {		
 		for (int j = 0; j < b.size(); j += bloksize) {
 
-			double temp_data_i[bloksize][data[0].size()];
-			double temp_data_j[bloksize][data[0].size()];
+			real_t temp_data_i[bloksize][data[0].size()];
+			real_t temp_data_j[bloksize][data[0].size()];
 			for(int ii = 0; ii < bloksize; ++ii){
 				
 				if(ii + i< b.size())std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
@@ -165,7 +165,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 				for(int jj = 0 ; jj < bloksize && jj + j < b.size(); ++jj){
 
 					if(ii + i > jj + j ){
-						double temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
+						real_t temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
 						#pragma omp atomic
 						Ad[jj + j] += temp * d[ii + i];
 						#pragma omp atomic
@@ -180,7 +180,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 		
 #pragma omp parallel for schedule(dynamic,8)
 	for(int i = 0; i < b.size(); ++i){
-		double kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) - QA_cost;
+		real_t kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) - QA_cost;
 		#pragma omp atomic
 		Ad[i] +=  (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + 1/cost - kernel_dat_and_cost) * d[i];
 		for(int j = 0; j < i; ++j){
@@ -192,8 +192,8 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 	}
 
 
-	alpha = delta / mult(d , Ad,  sizeof(d)/sizeof(double));
-	x +=  mult(alpha, d,  sizeof(d)/sizeof(double));
+	alpha = delta / mult(d , Ad,  sizeof(d)/sizeof(real_t));
+	x +=  mult(alpha, d,  sizeof(d)/sizeof(real_t));
 	//r = b - (A * x)
 	///r = b;
 	std::copy(b.begin(), b.end(), r);
@@ -206,7 +206,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 			for(int ii = 0; ii < bloksize && ii + i< b.size(); ++ii){
 				for(int jj = 0 ; jj < bloksize && jj + j < b.size(); ++jj){
 					if(ii + i > jj + j ){
-						double temp = kernel_function(&data[ii + i][0], &data[jj + j][0], dim) - kernel_function(datlast, &data[jj + j][0], dim);
+						real_t temp = kernel_function(&data[ii + i][0], &data[jj + j][0], dim) - kernel_function(datlast, &data[jj + j][0], dim);
 						#pragma omp atomic
 						r[jj + j] -= temp * x[ii + i];
 						#pragma omp atomic
@@ -219,7 +219,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
 #pragma omp parallel for schedule(dynamic,8)
 	for(int i = 0; i < b.size(); ++i){
-		double kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) - QA_cost;
+		real_t kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) - QA_cost;
 		#pragma omp atomic
 		r[i] -=  (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + 1/cost - kernel_dat_and_cost) * x[i];
 		for(int j = 0; j < i; ++j){
@@ -235,7 +235,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 	//break;
 	if(delta < eps * eps * delta0) break;
 	beta = -mult(r, Ad, b.size()) / mult(d, Ad,b.size());
-	add(mult(beta, d,  sizeof(d)/sizeof(double)),r, d, sizeof(d)/sizeof(double) );
+	add(mult(beta, d,  sizeof(d)/sizeof(real_t)),r, d, sizeof(d)/sizeof(real_t) );
 	}
 	
 	return x;

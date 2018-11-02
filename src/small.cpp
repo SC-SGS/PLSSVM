@@ -6,11 +6,11 @@
 int main(int argc, char* argv[])
 {
 	int kernel_type = 0;
-	double degree = 3;
-	double gamma;
-	double coef0 = 0;
-	double cost = 1;
-	double eps = 0.001;
+	real_t degree = 3;
+	real_t gamma;
+	real_t coef0 = 0;
+	real_t cost = 1;
+	real_t eps = 0.001;
     std::string input_file_name("../25x25.txt");
     std::string model_file_name("../25x25.txt.model");
     try{

@@ -1,25 +1,37 @@
   #pragma OPENCL EXTENSION cl_khr_fp64: enable
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
-void AtomicAdd(__global double *val, double delta) {
+// void AtomicAdd(__global double *val, double delta) {
+//     union {
+// 	    double f;
+//     	ulong  i;
+//     } old;
+//     union {
+//     	double f;
+// 		ulong  i;
+//     } new;
+//     do {
+//     	old.f = *val;
+// 		new.f = old.f + delta;
+//     } while (atom_cmpxchg ( (volatile __global ulong *)val, old.i, new.i) != old.i);
+// }
+
+void AtomicAdd(__global float *val, float delta) {
     union {
-	    double f;
-    	ulong  i;
+	    float f;
+    	unsigned  i;
     } old;
     union {
-    	double f;
-		ulong  i;
+    	float f;
+		unsigned  i;
     } new;
     do {
     	old.f = *val;
 		new.f = old.f + delta;
-    } while (atom_cmpxchg ( (volatile __global ulong *)val, old.i, new.i) != old.i);
+    } while (atom_cmpxchg ( (volatile __global unsigned *)val, old.i, new.i) != old.i);
 }
 
 
-
-
-__kernel void kernel_linear(__global double *q, __global double *ret, __global double *d, __global double *data_d,const double QA_cost, const double cost,const int Ncols,const int Nrows,const int add){
-
+__kernel void kernel_linear(__global float *q, __global float *ret, __global float *d, __global float *data_d,const float QA_cost, const float cost,const int Ncols,const int Nrows,const int add){  
 //  const unsigned CUDABLOCK_SIZE = 16;
 //  const int BLOCKING_SIZE_THREAD = 6;
 
@@ -29,12 +41,12 @@ __kernel void kernel_linear(__global double *q, __global double *ret, __global d
 	// int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 	int j =  get_group_id(1) * get_local_size(1) * 6 ;
 
-	// __shared__ double data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-	__local double data_intern_i [16][6];
-	// __shared__ double data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-	__local double data_intern_j [16][6];
-	double matr[6][6] = {};
-	double data_j[6];
+	// __shared__ float data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+	__local float data_intern_i [16][6];
+	// __shared__ float data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+	__local float data_intern_j [16][6];
+	float matr[6][6] = {};
+	float data_j[6];
 	
 	if(i >= j){
 		// i += threadIdx.x * 6;
@@ -65,7 +77,7 @@ __kernel void kernel_linear(__global double *q, __global double *ret, __global d
 			barrier(CLK_GLOBAL_MEM_FENCE);
 			//#pragma unroll(BLOCKING_SIZE_THREAD)
 			for(int x = 0; x < 6; ++x){
-				const double data_i = data_intern_i[get_local_id(0)][x];				
+				const float data_i = data_intern_i[get_local_id(0)][x];				
 			//	#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int y = 0; y < 6; ++y){
 					matr[x][y] += data_i * data_j[y];
@@ -76,7 +88,7 @@ __kernel void kernel_linear(__global double *q, __global double *ret, __global d
 		for(int x = 0; x < 6; ++x){
 			//#pragma unroll(BLOCKING_SIZE_THREAD)
 			for(int y = 0; y < 6; ++y){
-				const double temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
+				const float temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
 				if(i + x > j + y){
 						AtomicAdd(&ret[i + x], temp * d[j + y]);
 					// ret[i+x] = temp * d[j + y];

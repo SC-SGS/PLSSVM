@@ -1,5 +1,5 @@
 #include "svm-kernel.hpp"
-// void kernel_linear(std::tuple<int,int> block, std::tuple<int,int> blockDim,double *q, double *ret, double *d, double *data_d,const double QA_cost, const double cost,const int Ncols,const int Nrows,const int add){
+// void kernel_linear(std::tuple<int,int> block, std::tuple<int,int> blockDim,real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
 // 	int blockDimx = std::get<0>(blockDim);
 // 	int blockDimy = std::get<1>(blockDim);
 // 	for(int blockIdxx = 0; blockIdxx < std::get<0>(block); ++blockIdxx){
@@ -12,10 +12,10 @@
 // 					int j = blockIdxy * blockDimy * BLOCKING_SIZE_THREAD;
 					
 
-// 					/*__shared__*/ double data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 					/*__shared__*/ double data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 					double matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-// 					double data_j[BLOCKING_SIZE_THREAD];
+// 					/*__shared__*/ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+// 					/*__shared__*/ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+// 					real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
+// 					real_t data_j[BLOCKING_SIZE_THREAD];
 
 					
 // 					if(i >= j){
@@ -41,7 +41,7 @@
 // 							//__syncthreads();
 // 							#pragma unroll(BLOCKING_SIZE_THREAD)
 // 							for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-// 								const double data_i = data_intern_i[threadIdxx][x];				
+// 								const real_t data_i = data_intern_i[threadIdxx][x];				
 // 								#pragma unroll(BLOCKING_SIZE_THREAD)
 // 								for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
 // 									matr[x][y] += data_i * data_j[y];
@@ -52,7 +52,7 @@
 // 						for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
 // 							#pragma unroll(BLOCKING_SIZE_THREAD)
 // 							for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
-// 								const double temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
+// 								const real_t temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
 // 								if(i + x > j + y){
 // 									//atomicAdd(&ret[i + x], temp * d[j + y]);
 // 									ret[i + x] += temp * d[j + y];
@@ -76,7 +76,7 @@
 
 
 
-double kernel_function(double* xi, double* xj, int dim)
+real_t kernel_function(real_t* xi, real_t* xj, int dim)
 {
 	switch(0){
 		case 0: return  mult(xi, xj, dim);
@@ -86,13 +86,13 @@ double kernel_function(double* xi, double* xj, int dim)
 
 
 int bloksize = 5;
-void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>> &data, double *datlast, double *q, double *ret, const double *d, const int dim,const double QA_cost, const double cost, const int add){
+void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>> &data, real_t *datlast, real_t *q, real_t *ret, const real_t *d, const int dim,const real_t QA_cost, const real_t cost, const int add){
 	#pragma omp parallel for collapse(2) schedule(dynamic,8)
 	for (int i = 0; i < b.size(); i += bloksize) {		
 		for (int j = 0; j < b.size(); j += bloksize) {
 
-			double temp_data_i[bloksize][data[0].size()];
-			double temp_data_j[bloksize][data[0].size()];
+			real_t temp_data_i[bloksize][data[0].size()];
+			real_t temp_data_j[bloksize][data[0].size()];
 			for(int ii = 0; ii < bloksize; ++ii){
 				
 				if(ii + i< b.size())std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
@@ -102,7 +102,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 				for(int jj = 0 ; jj < bloksize && jj + j < b.size(); ++jj){
 
 					if(ii + i > jj + j ){
-						double temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim) ;
+						real_t temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim) ;
 						#pragma omp atomic
 						ret[jj + j] += temp * d[ii + i];
 						#pragma omp atomic
@@ -118,7 +118,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 						for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
 // 							#pragma unroll(BLOCKING_SIZE_THREAD)
 // 							for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
-// 								const double temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
+// 								const real_t temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
 // 								if(i + x > j + y){
 // 									//atomicAdd(&ret[i + x], temp * d[j + y]);
 // 									ret[i + x] += temp * d[j + y];
@@ -130,7 +130,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 								}
 	#pragma omp parallel for schedule(dynamic,8)
 	for(int i = 0; i < b.size(); ++i){
-		double kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) + QA_cost ;
+		real_t kernel_dat_and_cost =  kernel_function(datlast, &data[i][0], dim) + QA_cost ;
 		#pragma omp atomic
 		ret[i] +=  (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + cost - kernel_dat_and_cost - q[i] - q[i])* add * d[i] ;
 		for(int j = 0; j < i; ++j){
@@ -146,14 +146,14 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 
 
 
-// void kernel_poly(double *q, double *ret, double *d, double *data_d,const double QA_cost, const double cost,const int Ncols,const int Nrows,const int add, const double gamma, const double coef0 ,const double degree){
+// void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma, const real_t coef0 ,const real_t degree){
 // 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
 // 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
-// 	/*__shared__*/ double data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	/*__shared__*/ double data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	double matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-// 	double data_j[BLOCKING_SIZE_THREAD];
+// 	/*__shared__*/ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+// 	/*__shared__*/ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+// 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
+// 	real_t data_j[BLOCKING_SIZE_THREAD];
 
 	
 // 	if(i >= j){
@@ -179,7 +179,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 			//__syncthreads();
 // 			#pragma unroll(BLOCKING_SIZE_THREAD)
 // 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-// 				const double data_i = data_intern_i[threadIdx.x][x];				
+// 				const real_t data_i = data_intern_i[threadIdx.x][x];				
 // 				#pragma unroll(BLOCKING_SIZE_THREAD)
 // 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
 // 					matr[x][y] += data_i * data_j[y];
@@ -190,7 +190,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 		for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
 // 			#pragma unroll(BLOCKING_SIZE_THREAD)
 // 			for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
-// 				const double temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + x] - q[j + y]) * add;
+// 				const real_t temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + x] - q[j + y]) * add;
 // 				if(i + x > j + y){
 // 					atomicAdd(&ret[i + x], temp * d[j + y]);
 // 					atomicAdd(&ret[j + y], temp * d[i + x]);
@@ -202,14 +202,14 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 	}
 // }
 
-// void kernel_radial(double *q, double *ret, double *d, double *data_d,const double QA_cost, const double cost,const int Ncols,const int Nrows,const int add, const double gamma){
+// void kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma){
 // 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
 // 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
-// 	/*__shared__*/ double data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	/*__shared__*/ double data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	double matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-// 	double data_j[BLOCKING_SIZE_THREAD];
+// 	/*__shared__*/ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+// 	/*__shared__*/ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
+// 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
+// 	real_t data_j[BLOCKING_SIZE_THREAD];
 
 	
 // 	if(i >= j){
@@ -235,7 +235,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 			__syncthreads();
 // 			#pragma unroll(BLOCKING_SIZE_THREAD)
 // 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-// 				const double data_i = data_intern_i[threadIdx.x][x];				
+// 				const real_t data_i = data_intern_i[threadIdx.x][x];				
 // 				#pragma unroll(BLOCKING_SIZE_THREAD)
 // 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
 // 					matr[x][y] += (data_i - data_j[y]) * (data_i - data_j[y]) ;
@@ -247,7 +247,7 @@ void kernel_linear(const std::vector<double> &b, std::vector<std::vector<double>
 // 		for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
 // 			#pragma unroll(BLOCKING_SIZE_THREAD)
 // 			for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
-// 				const double temp = (exp(-gamma * matr[x][y]) + QA_cost - q[i + x] - q[j + y]) * add;
+// 				const real_t temp = (exp(-gamma * matr[x][y]) + QA_cost - q[i + x] - q[j + y]) * add;
 // 				if(i + x > j + y){
 // 					atomicAdd(&ret[i + x], temp * d[j + y]);
 // 					atomicAdd(&ret[j + y], temp * d[i + x]);

@@ -15,15 +15,15 @@
 
 int CUDADEVICE = 0;
 
-CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, double gamma_, double coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_), kernel_q_cl(nullptr), svm_kernel_linear(nullptr){
+CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_), kernel_q_cl(nullptr), svm_kernel_linear(nullptr){
 	std::vector<opencl::device_t> &devices = manager.get_devices();
 	first_device = devices[0];
 
 	}
 
 void CSVM::learn(){
-	std::vector<double> q;
-	std::vector<double> b = value;
+	std::vector<real_t> q;
+	std::vector<real_t> b = value;
 	#pragma omp parallel sections
 	{
 	#pragma omp section // generate right side from eguation
@@ -45,11 +45,11 @@ void CSVM::learn(){
 }
 
 
-double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
+real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
 	switch(kernel){
 		case 0: return xi * xj;
 		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
-		case 2: {double temp = 0;
+		case 2: {real_t temp = 0;
 			for(int i = 0; i < xi.size(); ++i){
 				temp += (xi-xj)*(xi-xj);
 			}
@@ -61,14 +61,14 @@ double CSVM::kernel_function(std::vector<double>& xi, std::vector<double>& xj){
 
 
 void CSVM::loadDataDevice(){
-	datlast_cl = opencl::DevicePtrOpenCL<double> (first_device, (Nfeatures_data + CUDABLOCK_SIZE - 1));
-	std::vector<double> datalast(data[Ndatas_data - 1]);
+	datlast_cl = opencl::DevicePtrOpenCL<real_t> (first_device, (Nfeatures_data + CUDABLOCK_SIZE - 1));
+	std::vector<real_t> datalast(data[Ndatas_data - 1]);
 	for(int i = 0; i < CUDABLOCK_SIZE - 1 ; ++i )datalast.push_back( 0.0);
 	datlast_cl.to_device(datalast);
 
 
-	data_cl  = opencl::DevicePtrOpenCL<double>(first_device, Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1));
-	std::vector<double> vec;
+	data_cl  = opencl::DevicePtrOpenCL<real_t>(first_device, Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1));
+	std::vector<real_t> vec;
 	vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
 	// #pragma parallel for 
 	for(size_t col = 0; col < Nfeatures_data ; ++col){
@@ -113,7 +113,7 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 }
 
 
-std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const double eps)
+std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
 {
 	const int dept = Ndatas_data - 1;
 
@@ -122,41 +122,41 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	#elif WITH_CUDA
 	dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
 	dim3 block(CUDABLOCK_SIZE, CUDABLOCK_SIZE);
-	double *x_d, *r_d, *q_d;
+	real_t *x_d, *r_d, *q_d;
 	#else
 	//TODO
 	#endif
 
 
-	double *x, *r, *d;
-	opencl::DevicePtrOpenCL<double> x_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	x = new double[(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)];
+	real_t *x, *r, *d;
+	opencl::DevicePtrOpenCL<real_t> x_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+	x = new real_t[(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)];
 
 	
 	//TODO: init on GPU
 	init_(((int) dept/1024) + 1, std::min(1024, dept),x,1,dept);
 	init_(1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1,x + dept, 0 , (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	x_cl.to_device(std::vector<double>(x, x+(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)));
+	x_cl.to_device(std::vector<real_t>(x, x+(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)));
 	
 
-	r = new double[(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)];
+	r = new real_t[(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)];
 
 	//r = b - (A * x)
 	///r = b;
-	opencl::DevicePtrOpenCL<double> r_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+	opencl::DevicePtrOpenCL<real_t> r_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 	//TODO: init on device
 	init_( 1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), r + dept, 0 ,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 	
 
-	opencl::DevicePtrOpenCL<double> d_cl(first_device, dept);
-	std::vector<double> toDevice(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0);
+	opencl::DevicePtrOpenCL<real_t> d_cl(first_device, dept);
+	std::vector<real_t> toDevice(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0);
 	std::copy(b.begin(), b.begin() + dept, toDevice.begin());
-	r_cl.to_device(std::vector<double>(toDevice));
-	d = new double[dept];
+	r_cl.to_device(std::vector<real_t>(toDevice));
+	d = new real_t[dept];
 
-	opencl::DevicePtrOpenCL<double> q_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+	opencl::DevicePtrOpenCL<real_t> q_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 	//TODO: init on gpu
-	q_cl.to_device(std::vector<double>(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0));
+	q_cl.to_device(std::vector<real_t>(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0));
 
 	{
 		if (!kernel_q_cl) {
@@ -220,21 +220,21 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 
 
 	{
-		std::vector<double> ret(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+		std::vector<real_t> ret(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
 		r_cl.from_device(ret);
 		std::copy(ret.begin(), ret.begin() + dept, r);
 	}
 	
 	
 	
-	double delta = mult(r, r, dept);	
-	const double delta0 = delta;
-	double alpha_cd, beta;
-	double* Ad;
+	real_t delta = mult(r, r, dept);	
+	const real_t delta0 = delta;
+	real_t alpha_cd, beta;
+	real_t* Ad;
 
 
-	opencl::DevicePtrOpenCL<double> Ad_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
-	Ad = new double[dept];
+	opencl::DevicePtrOpenCL<real_t> Ad_cl(first_device, dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+	Ad = new real_t[dept];
 
 	
 
@@ -243,10 +243,10 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		if(info)std::cout << "Start Iteration: " << run << std::endl;
 		//Ad = A * d
 		{
-			std::vector<double> zeros( dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+			std::vector<real_t> zeros( dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 			Ad_cl.to_device(zeros);
 			//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
-			std::vector<double> buffer( dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
+			std::vector<real_t> buffer( dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 			r_cl.from_device(buffer);
 			for(int index = dept; index <  dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1; ++index) buffer[index] = 0.0;
 			r_cl.to_device(buffer);
@@ -293,7 +293,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	
 
 		{
-			std::vector<double> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+			std::vector<real_t> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
 			r_cl.from_device(buffer);
 			std::copy(buffer.begin(), buffer.begin()+dept, d);
 
@@ -313,8 +313,8 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 		
 		
 		//TODO: auf GPU
-		std::vector<double> buffer_r(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
-		std::vector<double> buffer_x(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+		std::vector<real_t> buffer_r(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+		std::vector<real_t> buffer_x(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
 		x_cl.from_device(buffer_x);
 		r_cl.from_device(buffer_r);
 		add_mult_(((int) dept/1024) + 1, std::min(1024, dept),buffer_x.data(),buffer_r.data(),alpha_cd,dept);
@@ -325,7 +325,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 
 
 		if(run%50 == 0){
-			std::vector<double> buffer(b);
+			std::vector<real_t> buffer(b);
 			for(int i = 0; i <  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1; ++ i) buffer.push_back(0.0);
 			r_cl.to_device(buffer);
 
@@ -379,7 +379,7 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 
 
 		{
-			std::vector<double> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0);
+			std::vector<real_t> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0);
 			std::copy(d, d+dept, buffer.begin());
 			r_cl.to_device(buffer);
 
@@ -391,11 +391,11 @@ std::vector<double>CSVM::CG(const std::vector<double> &b,const int imax,  const 
 	
 	
 	alpha.resize(dept);
-	std::vector<double> ret_q(dept);
+	std::vector<real_t> ret_q(dept);
 
 
 	{
-		std::vector<double> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+		std::vector<real_t> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
 		x_cl.from_device(buffer);
 		std::copy(buffer.begin(), buffer.begin() + dept, alpha.begin());
 		q_cl.from_device(buffer);

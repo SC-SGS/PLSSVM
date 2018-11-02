@@ -10,7 +10,7 @@ void CSVM::libsvmParser(std::string &filename){
 	std::stringstream tokens;
 	unsigned index;
 	unsigned i;
-	std::vector<double> vline;
+	std::vector<real_t> vline;
 	std::string token;
 	while (std::getline(file, line))
 	{
@@ -49,7 +49,7 @@ void CSVM::arffParser(std::string &filename){
 	std::ifstream file(filename);
 	std::string line, escape = "@";
 	std::stringstream iss;
-	std::vector<double> vline;
+	std::vector<real_t> vline;
 	std::string token;
 	while (std::getline(file, line, '\n')) {
 		if(line.compare(0, 1, "@") != 0 && line.size() > 1){
