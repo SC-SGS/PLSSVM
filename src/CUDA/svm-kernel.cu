@@ -1,16 +1,18 @@
 #include "svm-kernel.cuh"
 // __global__ void kernel_linear(const real_t *__restrict__ q, real_t * __restrict__ ret, const real_t * __restrict__ d, const real_t * __restrict__ data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
 
-__global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
-	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
+__global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows, const int add, int start_block_x){
+	if(start_block_x != 0)printf("%d\n", start_block_x);
+	start_block_x = 0;
+	int i =  (blockIdx.x + start_block_x)* blockDim.x * BLOCKING_SIZE_THREAD;
 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
-
+	// __syncthreads();
 	__shared__ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
 	__shared__ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
 	real_t data_j[BLOCKING_SIZE_THREAD];
 
-	
+	// __syncthreads();
 	if(i >= j){
 		i += threadIdx.x * BLOCKING_SIZE_THREAD;
 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
@@ -23,7 +25,6 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];  
 					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji];
 				}
-
 			}
 			__syncthreads();
 
@@ -41,6 +42,7 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 				}
 			}
 		}
+		// __syncthreads();
 		#pragma unroll(BLOCKING_SIZE_THREAD)
 		for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
 			#pragma unroll(BLOCKING_SIZE_THREAD)
@@ -57,6 +59,7 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 	}
 }
 
+/*
 __global__ void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma, const real_t coef0 ,const real_t degree){
 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
@@ -170,3 +173,4 @@ __global__ void kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 	}
 }
 
+*/

@@ -6,7 +6,7 @@ int CUDADEVICE = 0;
 int count_gpu = 1;
 
 CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){
-	cudaGetDeviceCount(&count_gpu);
+	// cudaGetDeviceCount(&count_gpu);
 	std::cout << "GPUs found: " << count_gpu << std::endl;
 }
 
@@ -129,12 +129,14 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		cudaMalloc((void **) &q_d[device], (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(real_t));
 		cudaMemset(q_d[device], 0, (dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)  * sizeof(real_t));
 		kernel_q<<<((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d[device], data_d, datlast, Nfeatures_data , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
+		cudaDeviceSynchronize();
 	}
 	switch(kernel){
 		case 0:
 			for(size_t device = 0; device < count_gpu; ++device){
 				cudaSetDevice(device); 
-				kernel_linear<<<grid,block>>>(q_d[device], r_d[device], x_d[device] ,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
+				kernel_linear<<<grid,block>>>(q_d[device], r_d[device], x_d[device] ,data_d, QA_cost, 1/cost, Nfeatures_data , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, 0);
+				cudaDeviceSynchronize();
 			}
 			break;
 	/*	case 1: 
@@ -171,7 +173,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			cudaMemset(r_d[device] + dept, 0, ((CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1) * sizeof(real_t));
 			switch(kernel){
 				case 0: 
-				kernel_linear<<<grid,block>>>(q_d[device], Ad_d[device], r_d[device], data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1);
+				kernel_linear<<<grid,block>>>(q_d[device], Ad_d[device], r_d[device], data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), 1, 0);
+				cudaDeviceSynchronize();
 				break;
 				// case 1: 
 				// kernel_poly<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1, gamma, coef0, degree);
@@ -181,6 +184,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				// break;
 				default: throw std::runtime_error("Can not decide wich kernel!");
 			}
+			cudaDeviceSynchronize();
 		}
 		cudaSetDevice(CUDADEVICE);
 		cudaDeviceSynchronize();
@@ -198,7 +202,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				cudaMemcpy(r_d[device], &b[device], dept * sizeof(real_t), cudaMemcpyHostToDevice);
 				switch(kernel){
 					case 0: 
-						kernel_linear<<<grid,block>>>(q_d[device], r_d[device], x_d[device], data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1);
+						kernel_linear<<<grid,block>>>(q_d[device], r_d[device], x_d[device], data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, 0);
+						cudaDeviceSynchronize();
 						break;
 					/*case 1: 
 						kernel_poly<<<grid,block>>>(q_d, r_d, x_d, data_d, QA_cost, 1/cost, Nfeatures_data, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma, coef0, degree);

@@ -1,5 +1,5 @@
 // #pragma once
-typedef float real_t;
+typedef double real_t;
 // typedef unsigned long resp_int;
 // typedef unsigned long resp_int;
 

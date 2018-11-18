@@ -2,37 +2,37 @@
 
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
-// void AtomicAdd(__global double *source, double delta) {
-//     union {
-// 	    double f;
-//     	ulong i;
-//     } oldVal;
-//     union {
-//     	double f;
-// 		ulong i;
-//     } newVal;
-//     do {
-//     	oldVal.f = *source;
-// 		newVal.f = oldVal.f + delta;
-//     } while (atom_cmpxchg ( (volatile __global ulong *)source, oldVal.i, newVal.i) != oldVal.i);
-// }
-
-
-
-void AtomicAdd(__global float *source, float delta) {
+void AtomicAdd(__global double *source, double delta) {
     union {
-	    float f;
-    	unsigned i;
+	    double f;
+    	ulong i;
     } oldVal;
     union {
-    	float f;
-		unsigned i;
+    	double f;
+		ulong i;
     } newVal;
     do {
     	oldVal.f = *source;
 		newVal.f = oldVal.f + delta;
-    } while (atom_cmpxchg ( (volatile __global unsigned *)source, oldVal.i, newVal.i) != oldVal.i);
+    } while (atom_cmpxchg ( (volatile __global ulong *)source, oldVal.i, newVal.i) != oldVal.i);
 }
+
+
+
+// void AtomicAdd(__global float *source, float delta) {
+//     union {
+// 	    float f;
+//     	unsigned i;
+//     } oldVal;
+//     union {
+//     	float f;
+// 		unsigned i;
+//     } newVal;
+//     do {
+//     	oldVal.f = *source;
+// 		newVal.f = oldVal.f + delta;
+//     } while (atom_cmpxchg ( (volatile __global unsigned *)source, oldVal.i, newVal.i) != oldVal.i);
+// }
 __kernel void kernel_linear(__global real_t *q, __global real_t *ret, __global real_t *d, __global real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){  
 //  const unsigned CUDABLOCK_SIZE = 16;
 //  const int BLOCKING_SIZE_THREAD = 6;
