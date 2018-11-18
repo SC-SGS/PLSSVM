@@ -184,7 +184,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	switch(kernel){
 		case 0: 
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for(int i = 0; i < count_devices; ++i){
 				if (!svm_kernel_linear[i]) {
 					std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
@@ -196,17 +196,22 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
 				}
 		
-				
 				const int Ncols = Nfeatures_data;
 				const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
-				opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, 0);
-	
-				std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
+				// std::vector<size_t> grid_size{((int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1)) * CUDABLOCK_SIZE ,((int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1)) * CUDABLOCK_SIZE};
+				std::vector<size_t> grid_size{ (int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1), (int)((dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) / count_devices)};
+				//TODO: bessere aufteilung (tuning parameter?)
+				// opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, 0);
+				opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, (int)grid_size[1] * i);
+				if(i == count_devices - 1 & count_devices * grid_size[1] != ((int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))) grid_size[1] +=1;
+				grid_size[0] *= CUDABLOCK_SIZE;
+				grid_size[1] *= CUDABLOCK_SIZE;
 				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
 				
 				opencl::run_kernel_2d_timed(devices[i], svm_kernel_linear[i], grid_size, block_size);
 			}
 			break;
+	
 		case 1: 
 			//TODO: kernel_poly OpenCL
 			std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
@@ -221,11 +226,24 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	{
 		std::vector<real_t> ret(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
-		r_cl[CUDADEVICE].from_device(ret); //TODO: merge
+		r_cl[0].from_device(ret); 
 		std::copy(ret.begin(), ret.begin() + dept, r);
+		for(int i = 1; i < count_devices; ++i){
+			r_cl[i].from_device(ret);
+			for(int i = 0; i < dept; ++i){
+				r[i] += ret[i];
+			}
+		}
+		std::vector<real_t> zeros(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 , 0); 
+
+		for(int i = 0; i< dept; ++i) zeros[i] = r[i];
+		for(int i = 0; i < count_devices; ++i) r_cl[i].to_device(zeros);
 	}
 	
-	
+	// for(int i = 0; i < dept; ++i){
+	// 	std::cout << r[i] << "; ";
+	// }
+	std::cout << std::endl;
 	
 	real_t delta = mult(r, r, dept);	
 	const real_t delta0 = delta;
@@ -255,8 +273,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			}
 		}
 
-		
-
 
 		switch(kernel){
 			case 0: 
@@ -274,13 +290,20 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			
 					const int Ncols = Nfeatures_data;
 					const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
-					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), Ad_cl[i].get(), r_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, 0);
-		
-				std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
-				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
-				
-				opencl::run_kernel_2d_timed(devices[i], svm_kernel_linear[i], grid_size, block_size);
-				}
+
+
+					std::vector<size_t> grid_size{ ((int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1)), (int)((dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) / count_devices)};
+					//std::vector<size_t> grid_size{ ((int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1)), (int)((dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))};
+					//TODO: bessere aufteilung (tuning parameter?)
+					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), Ad_cl[i].get(), r_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, (int) grid_size[1] * i);
+					//opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), Ad_cl[i].get(), r_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, 0);
+					if(i == count_devices - 1 & count_devices * grid_size[1] != ((int)(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))) grid_size[1] +=1;
+					grid_size[0] *= CUDABLOCK_SIZE;
+					grid_size[1] *= CUDABLOCK_SIZE;
+					std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
+					
+					opencl::run_kernel_2d_timed(devices[i], svm_kernel_linear[i], grid_size, block_size);
+					}
 				break;
 			case 1: 
 				//TODO: kernel_poly OpenCL
@@ -295,17 +318,60 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	
 
+
+
+		// {
+		// 	std::vector<real_t> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+		// 	r_cl[0].from_device(buffer); 
+		// 	std::copy(buffer.begin(), buffer.begin() + dept, d);
+		// 	for(int i = 1; i < count_devices; ++i){
+		// 		r_cl[i].from_device(buffer);
+		// 		for(int i = 0; i < dept; ++i){
+		// 			d[i] += buffer[i];
+		// 		}
+		// 	}
+		// 	std::vector<real_t> zeros(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 , 0); 
+		// 	for(int i = 0; i< dept; ++i) zeros[i] = d[i];
+		// 	for(int i = 0; i < count_devices; ++i) r_cl[i].to_device(zeros);
+
+		// }
+
+			for(int i = 0; i< dept; ++i) d[i] = r[i];
+
 		{
 			std::vector<real_t> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
-			r_cl[CUDADEVICE].from_device(buffer);
-			std::copy(buffer.begin(), buffer.begin()+dept, d);
-
-			Ad_cl[CUDADEVICE].from_device(buffer);
-			std::copy(buffer.begin(), buffer.begin()+dept, Ad);
+			std::vector<real_t> zeros(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 , 0); 
+			Ad_cl[0].from_device(buffer); 
+			std::copy(buffer.begin(), buffer.begin() + dept, Ad);
+			std::copy(buffer.begin(), buffer.end() , zeros.begin());
+			for(int i = 1; i < count_devices; ++i){
+				Ad_cl[i].from_device(buffer);
+				for(int i = 0; i < dept; ++i){
+					Ad[i] += buffer[i];
+				}
+				for(int i = 0; i < dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1; ++i){
+					zeros[i] += buffer[i];
+				}
+			} 
+			for(int i = 0; i< dept; ++i) zeros[i] = Ad[i];
+			for(int i = 0; i < count_devices; ++i) Ad_cl[i].to_device(zeros);
 
 		}
 
+		// {
+		// 	std::vector<real_t> buffer(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1 );
+		// 	// r_cl[CUDADEVICE].from_device(buffer);
+		// 	// std::copy(buffer.begin(), buffer.begin()+dept, d);
+
+		// 	Ad_cl[CUDADEVICE].from_device(buffer);
+		// 	std::copy(buffer.begin(), buffer.begin()+dept, Ad);
+
+		// }
 		
+		for(int i = 0; i < dept; ++i){
+		std::cout << Ad[i] << "; ";
+		}
+
 		alpha_cd = delta / mult(d , Ad,  dept);
 		
 		//TODO: auf GPU
