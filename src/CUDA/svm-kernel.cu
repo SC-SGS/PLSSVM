@@ -1,5 +1,7 @@
 #include "svm-kernel.cuh"
-__global__ void kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
+// __global__ void kernel_linear(const real_t *__restrict__ q, real_t * __restrict__ ret, const real_t * __restrict__ d, const real_t * __restrict__ data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
+
+__global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
