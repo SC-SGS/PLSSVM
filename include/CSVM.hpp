@@ -80,10 +80,10 @@ class CSVM
         #ifdef WITH_OPENCL
 	        opencl::manager_t manager{"../platform_configuration.cfg"};
 	        opencl::device_t first_device;
-            cl_kernel kernel_q_cl;
-            cl_kernel svm_kernel_linear;
-            opencl::DevicePtrOpenCL<real_t>  datlast_cl;
-            opencl::DevicePtrOpenCL<real_t>  data_cl;
+            std::vector<cl_kernel> kernel_q_cl;
+            std::vector<cl_kernel> svm_kernel_linear;
+            std::vector<opencl::DevicePtrOpenCL<real_t> > datlast_cl;
+            std::vector<opencl::DevicePtrOpenCL<real_t> > data_cl;
         #endif
 
         #ifdef WITH_CUDA
