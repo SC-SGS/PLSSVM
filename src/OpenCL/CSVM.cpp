@@ -21,6 +21,8 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
 	std::vector<opencl::device_t> &devices = manager.get_devices();
 	first_device = devices[0];
 	count_devices = devices.size();
+	svm_kernel_linear.resize(count_devices, nullptr);
+	kernel_q_cl.resize(count_devices, nullptr);
 	std::cout << "GPUs found: " << count_devices << std::endl;
 	}
 
@@ -156,17 +158,17 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	//TODO: init on gpu
 	for(int i = 0; i < count_devices; ++i) q_cl[i].to_device(std::vector<real_t>(dept +  (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1, 0.0));
 
+	#pragma omp parallel for
 	for(int i = 0; i < count_devices; ++i){
-		if (kernel_q_cl.size() <= i) {
+		if (!kernel_q_cl[i]) {
 			std::string kernel_src_file_name{"../src/OpenCL/kernels/kernel_q.cl"};
 			std::string kernel_src = manager.read_src_file(kernel_src_file_name);
 			json::node &deviceNode =
 				manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 										["DEVICES"][devices[i].deviceName];
 			json::node &kernelConfig = deviceNode["KERNELS"]["kernel_q"];
-			kernel_q_cl.emplace_back (manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_q"));
+			kernel_q_cl[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_q");
 		}
-
 		const int Ncols = Nfeatures_data;
 		const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
 		
@@ -182,21 +184,22 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	switch(kernel){
 		case 0: 
+			#pragma omp parallel for
 			for(int i = 0; i < count_devices; ++i){
-				if (svm_kernel_linear.size() <= i) {
+				if (!svm_kernel_linear[i]) {
 					std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 					std::string kernel_src = manager.read_src_file(kernel_src_file_name);
 					json::node &deviceNode =
 						manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 												["DEVICES"][devices[i].deviceName];
 					json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-					svm_kernel_linear.emplace_back( manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear"));
+					svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
 				}
 		
 				
 				const int Ncols = Nfeatures_data;
 				const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
-				opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1);
+				opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, 0);
 	
 				std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
 				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
@@ -257,21 +260,21 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 		switch(kernel){
 			case 0: 
+				#pragma omp parallel for
 				for(int i = 0; i < count_devices; ++i) {
-					if (svm_kernel_linear.size() <= i) {
+					if (!svm_kernel_linear[i]) {
 						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
 						json::node &deviceNode =
 							manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 													["DEVICES"][devices[i].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-						svm_kernel_linear.emplace_back(manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear"));
+						svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
 					}
 			
-					
 					const int Ncols = Nfeatures_data;
 					const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
-					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), Ad_cl[i].get(), r_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, 1);
+					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), Ad_cl[i].get(), r_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, 0);
 		
 				std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
 				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
@@ -324,21 +327,22 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 			switch(kernel){
 			case 0: 
+				#pragma omp parallel for
 				for(int i = 0; i < count_devices; ++i){
-					if (svm_kernel_linear.size() <= i) {
+					if (!svm_kernel_linear[i]) {
 						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
 						json::node &deviceNode =
 							manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 													["DEVICES"][devices[i].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-						svm_kernel_linear.emplace_back(manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear"));
+						svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
 					}
 			
 					
 					const int Ncols = Nfeatures_data;
 					const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
-					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1);
+					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1), 0, 0;
 		
 				std::vector<size_t> grid_size{((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE ,((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) * CUDABLOCK_SIZE};
 				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
