@@ -13,8 +13,10 @@ int main(int argc, char* argv[])
 	real_t eps = 0.001;
     // std::string input_file_name("../25x25.txt");
     // std::string model_file_name("../25x25.txt.model");
-    std::string input_file_name("../5000x2000.txt");
-    std::string model_file_name("../5000x2000.txt.model");
+    // std::string input_file_name("../5000x2000.txt");
+    // std::string model_file_name("../5000x2000.txt.model");
+    std::string model_file_name("../192x192.txt.model");
+    std::string input_file_name("../192x192.txt");
     try{
 		CSVM svm(cost, eps, kernel_type, degree, gamma, coef0, true);
 
