@@ -33,7 +33,7 @@ void AtomicAdd(__global double *source, double delta) {
 // 		newVal.f = oldVal.f + delta;
 //     } while (atom_cmpxchg ( (volatile __global unsigned *)source, oldVal.i, newVal.i) != oldVal.i);
 // }
-__kernel void kernel_linear(__global double *q, __global double *ret, __global double *d, __global double *data_d,const double QA_cost, const double cost,const int Ncols,const int Nrows, const int add, const int start_block_x, const int start_block_y){  
+__kernel void kernel_linear(__global const double *q, __global double *ret, __global const double *d, __global const double *data_d,const double QA_cost, const double cost,const int Ncols,const int Nrows, const int add, const int start_block_x, const int start_block_y){  
 //  const unsigned CUDABLOCK_SIZE = 16;
 //  const int BLOCKING_SIZE_THREAD = 6;
 
