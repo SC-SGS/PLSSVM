@@ -138,14 +138,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	
 	std::vector<real_t> r(dept_all, 0.0);
 
-	//r = new real_t[(dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1)];
-
-	//r = b - (A * x)
-	///r = b;
 	std::vector<opencl::DevicePtrOpenCL<real_t> > r_cl;
 	for(int i = 0; i < count_devices; ++i) r_cl.emplace_back(devices[i], dept_all);
-	//TODO: init on device
-	//init_( 1,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), r + dept, 0 ,(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) - 1);
 	
 
 	std::vector<opencl::DevicePtrOpenCL<real_t> > d_cl;
@@ -209,7 +203,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				grid_size[0] *= CUDABLOCK_SIZE;
 				grid_size[1] *= CUDABLOCK_SIZE;
 				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
-				std::cout << "size: " << grid_size[0] << " " << grid_size[1] << std::endl;
 				opencl::run_kernel_2d_timed(devices[i], svm_kernel_linear[i], grid_size, block_size);
 			}
 			break;
@@ -424,7 +417,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	{
 		std::vector<real_t> buffer(dept_all );
-		// x_cl[CUDADEVICE].from_device(buffer);
 		std::copy(x.begin(), x.begin() + dept, alpha.begin());
 		q_cl[0].from_device(buffer);
 		std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
