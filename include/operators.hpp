@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 
-using real_t = float;
+#include "typedef.hpp"
 
 void mult_vec_vec(real_t *vec1, real_t *vec2, int dim, real_t *result);
 //void mult_vec_scal(real_t *vec1, real_t scal, int dim, real_t *result);
