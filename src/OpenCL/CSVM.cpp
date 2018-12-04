@@ -74,13 +74,13 @@ void CSVM::loadDataDevice(){
 
 	for(int i = 0; i < count_devices; ++i) data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[i], Nfeatures_data * (Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1)));
 	std::vector<real_t> vec;
-	vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
+	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
 	// #pragma parallel for 
 	for(size_t col = 0; col < Nfeatures_data ; ++col){
 		for(size_t row = 0; row < Ndatas_data - 1; ++row){
 			vec.push_back(data[row][col]);
 		}
-		for(int i = 0 ; i < + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) ; ++i){
+		for(int i = 0 ; i < (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) ; ++i){
 			vec.push_back(0.0);
 		}
 	}
@@ -117,9 +117,48 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 
 }
 
+void CSVM::resizeDatalast(const int boundary){
+	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
+	for(int i = 0; i < count_devices; ++i) datlast_cl[i] = opencl::DevicePtrOpenCL<real_t> (devices[i], (Nfeatures_data + CUDABLOCK_SIZE - 1));
+	std::vector<real_t> datalast(data[Ndatas_data - 1]);
+	for(int i = 0; i < boundary - 1 ; ++i )datalast.push_back( 0.0);
+	for(int i = 0; i < count_devices; ++i) datlast_cl[i].to_device(datalast);
+}
+
+void CSVM::resizeData(const int boundary){
+	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
+
+	for(int i = 0; i < count_devices; ++i) data_cl[i] = opencl::DevicePtrOpenCL<real_t>(devices[i], Nfeatures_data * (Ndatas_data - 1 + boundary));
+	std::vector<real_t> vec;
+	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
+	// #pragma parallel for 
+	for(size_t col = 0; col < Nfeatures_data ; ++col){
+		for(size_t row = 0; row < Ndatas_data - 1; ++row){
+			vec.push_back(data[row][col]);
+		}
+		for(int i = 0 ; i < boundary ; ++i){
+			vec.push_back(0.0);
+		}
+	}
+	for(int i = 0; i < count_devices; ++i) data_cl[i].to_device(vec);
+}
+
+
+
+void CSVM::resize(const int old_boundary,const int new_boundary){
+	resizeData(new_boundary);
+	resizeDatalast(new_boundary);
+
+}
 
 std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
 {
+
+	std::cout << "resizeData" << std::endl;
+	resizeData(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD);
+	std::cout << "resizeDatalast" << std::endl;
+	resizeDatalast(CUDABLOCK_SIZE);
+	//exit(1);
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 	const int dept = Ndatas_data - 1;
 	const int boundary_size = CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD - 1;

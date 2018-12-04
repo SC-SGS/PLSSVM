@@ -74,10 +74,16 @@ class CSVM
         void writeModel(std::string&);
 
         void loadDataDevice();
+
+        
+
 		std::vector<real_t> CG(const std::vector<real_t> &b, const int , const real_t );
 
 
         #ifdef WITH_OPENCL
+            void resizeData(int boundary);
+            void resizeDatalast(int boundary);
+            void resize(const int old_boundary,const int new_boundary);
 	        opencl::manager_t manager{"../platform_configuration.cfg"};
 	        opencl::device_t first_device;
             std::vector<cl_kernel> kernel_q_cl;
