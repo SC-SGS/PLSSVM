@@ -41,7 +41,8 @@
         "atomic": "cpp",
         "memory": "cpp",
         "*.cuh": "cpp",
-        "cstddef": "cpp"
+        "cstddef": "cpp",
+        "cstdarg": "cpp"
     },
     "cmake.configureOnOpen": true,
     "C_Cpp.dimInactiveRegions": false

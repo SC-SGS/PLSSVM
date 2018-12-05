@@ -192,6 +192,17 @@ cl_kernel manager_t::build_kernel(const std::string &source, device_t &device,
     build_opts = "-cl-opt-disable"; // -g
   }
 
+  if(kernelConfiguration.contains("THREADBLOCK")){
+    build_opts += " -DBLOCKING_SIZE_THREAD=" + kernelConfiguration["THREADBLOCK"].get();
+  }
+  if(kernelConfiguration.contains("BLOCK")){
+    build_opts += " -DBLOCK=" + kernelConfiguration["BLOCK"].get();
+  }
+  build_opts += " -Dreal_t=" + parameters["INTERNAL_PRECISION"].get();
+  if (verbose) {
+      std::cout << "building with options: " << build_opts
+                << std::endl;
+    }
   // compiling the program
   err = clBuildProgram(program, 0, NULL, build_opts.c_str(), NULL, NULL);
 

@@ -231,7 +231,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 												["DEVICES"][devices[i].deviceName];
 					json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+					kernelConfig.replaceTextAttr("THREADBLOCK", std::to_string(BLOCKING_SIZE_THREAD));
+					kernelConfig.replaceTextAttr("BLOCK", std::to_string(CUDABLOCK_SIZE));
 					svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
+
 				}
 		
 				const int Ncols = Nfeatures_data;
@@ -312,6 +315,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 							manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 													["DEVICES"][devices[i].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+						kernelConfig.replaceTextAttr("THREADBLOCK", std::to_string(BLOCKING_SIZE_THREAD));
+						kernelConfig.replaceTextAttr("BLOCK", std::to_string(CUDABLOCK_SIZE));
 						svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
 					}
 			
@@ -385,6 +390,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 							manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 													["DEVICES"][devices[i].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+						kernelConfig.replaceTextAttr("THREADBLOCK", std::to_string(BLOCKING_SIZE_THREAD));
+						kernelConfig.replaceTextAttr("BLOCK", std::to_string(CUDABLOCK_SIZE));
 						svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
 					}
 			

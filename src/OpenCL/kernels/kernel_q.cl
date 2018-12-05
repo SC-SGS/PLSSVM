@@ -1,4 +1,4 @@
-#include "../include/typedef.hpp"
+//#include "../include/typedef.hpp"
 __kernel void kernel_q(__global real_t *q, __global  real_t *data_d, __global real_t *datlast, const int Ncols, const int Nrows){
 	//int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int index = get_global_id(0); 
