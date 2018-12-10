@@ -30,8 +30,6 @@
 const bool times = 0;
 
 
-static const unsigned CUDABLOCK_SIZE = 16;
-static const unsigned BLOCKING_SIZE_THREAD = 1;
 
 // static const unsigned CUDABLOCK_SIZE = 7;
 // static const unsigned BLOCKING_SIZE_THREAD = 2;

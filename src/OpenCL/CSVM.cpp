@@ -216,6 +216,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	}
 
 
+
 	
 	
 
@@ -260,7 +261,13 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	   default: throw std::runtime_error("Can not decide wich kernel!");
    }
 
-
+	// {
+	// 	std::vector<real_t> temp(dept_all);
+	// 	x_cl[0].from_device(temp);
+	// 	for(auto val : temp) std::cout << val << " ";
+	// 	std::cout << std::endl;
+	// 	// exit(1);
+	// }
 
 	{
 		r_cl[0].from_device(r);
