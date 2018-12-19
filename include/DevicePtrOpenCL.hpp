@@ -108,7 +108,7 @@ public:
     ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE,
                          sizeof(T) * buffer_size, nullptr, &err);
     opencl::check(err, "DevicePtrOpenCL: clCreateBuffer failed");
-    buffer.resize(size, value);
+    buffer.resize(buffer_size, value);
     to_device(buffer);
   }
 
