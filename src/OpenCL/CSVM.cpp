@@ -311,12 +311,16 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			case 0: 
 				#pragma omp parallel for
 				for(int i = 0; i < count_devices; ++i) {
-					if (!svm_kernel_linear[i]) {  //TODO: auskommentieren zum immer neu compilieren
-						// // Resize Beispiel BLOCKING_SIZE_THREAD = device
-						// int old_boundary = CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD;
-						// int new_boundary = CUDABLOCK_SIZE * i;
-						// resize( , CUDABLOCK_SIZE * );
-						// q_cl[i].resize	;		
+					// if (!svm_kernel_linear[i]) {  //TODO: auskommentieren zum immer neu compilieren
+						// Resize Beispiel BLOCKING_SIZE_THREAD = device
+						int old_boundary = CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD;
+						int new_boundary = CUDABLOCK_SIZE * i;
+						resizeData(i , new_boundary);
+						resizeDatalast(i, new_boundary);
+
+						q_cl[i].resize(new_boundary);
+						Ad_cl[i].resize(new_boundary);
+						r_cl[i].resize(new_boundary);		
 
 						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
@@ -327,19 +331,28 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						kernelConfig.replaceTextAttr("THREADBLOCK", std::to_string(BLOCKING_SIZE_THREAD));
 						kernelConfig.replaceTextAttr("BLOCK", std::to_string(CUDABLOCK_SIZE));
 						svm_kernel_linear[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_linear");
-					}
+					// }
 			
 					const int Ncols = Nfeatures_data;
-					const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
+					// const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
+					const int Nrows = dept + new_boundary;
 
-					std::vector<size_t> grid_size{ static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1), static_cast<size_t>((dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) / count_devices) };
+					// std::vector<size_t> grid_size{ static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1), static_cast<size_t>((dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) / count_devices) };
+					std::vector<size_t> grid_size{ static_cast<size_t>(dept/new_boundary + 1), static_cast<size_t>((dept/new_boundary + 1) / count_devices) };
 					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), Ad_cl[i].get(), r_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, (int)grid_size[1] * i);
-					if(i == count_devices - 1 & count_devices * grid_size[1] != (static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))) grid_size[1] +=1;
+					// if(i == count_devices - 1 & count_devices * grid_size[1] != (static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))) grid_size[1] +=1;
+					if(i == count_devices - 1 & count_devices * grid_size[1] != (static_cast<size_t>(dept/new_boundary))) grid_size[1] +=1;
 					grid_size[0] *= CUDABLOCK_SIZE;
 					grid_size[1] *= CUDABLOCK_SIZE;
 					std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
 					
 					opencl::run_kernel_2d_timed(devices[i], svm_kernel_linear[i], grid_size, block_size);
+					//Beispiel zurück sizen für andere Ausführungen
+					q_cl[i].resize(old_boundary);
+					Ad_cl[i].resize(old_boundary);
+					r_cl[i].resize(old_boundary);
+					resizeData(i , old_boundary);
+					resizeDatalast(i, old_boundary);
 
 					}
 				break;
