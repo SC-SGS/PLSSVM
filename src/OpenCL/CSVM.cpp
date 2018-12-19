@@ -118,17 +118,26 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 }
 
 void CSVM::resizeDatalast(const int boundary){
+	for(int device = 0; device < count_devices; ++device) resizeDatalast(device, boundary);
+}
+
+void CSVM::resizeDatalast(const int device, const int boundary){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
-	for(int i = 0; i < count_devices; ++i) datlast_cl[i] = opencl::DevicePtrOpenCL<real_t> (devices[i], (Nfeatures_data + CUDABLOCK_SIZE - 1));
+	datlast_cl[device] = opencl::DevicePtrOpenCL<real_t> (devices[device], (Nfeatures_data + CUDABLOCK_SIZE - 1));
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
 	for(int i = 0; i < boundary - 1 ; ++i )datalast.push_back( 0.0);
-	for(int i = 0; i < count_devices; ++i) datlast_cl[i].to_device(datalast);
+	datlast_cl[device].to_device(datalast);
+
 }
 
 void CSVM::resizeData(const int boundary){
+	for(int device = 0; device < count_devices; ++device) resizeData(device, boundary);
+}
+
+void CSVM::resizeData(const int device, const int boundary){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 
-	for(int i = 0; i < count_devices; ++i) data_cl[i] = opencl::DevicePtrOpenCL<real_t>(devices[i], Nfeatures_data * (Ndatas_data - 1 + boundary));
+	data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1 + boundary));
 	std::vector<real_t> vec;
 	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
 	// #pragma parallel for 
@@ -140,7 +149,7 @@ void CSVM::resizeData(const int boundary){
 			vec.push_back(0.0);
 		}
 	}
-	for(int i = 0; i < count_devices; ++i) data_cl[i].to_device(vec);
+	data_cl[device].to_device(vec);
 }
 
 
@@ -261,14 +270,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	   default: throw std::runtime_error("Can not decide wich kernel!");
    }
 
-	// {
-	// 	std::vector<real_t> temp(dept_all);
-	// 	x_cl[0].from_device(temp);
-	// 	for(auto val : temp) std::cout << val << " ";
-	// 	std::cout << std::endl;
-	// 	// exit(1);
-	// }
-
 	{
 		r_cl[0].from_device(r);
 		for(int i = 1; i < count_devices; ++i){
@@ -315,7 +316,13 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			case 0: 
 				#pragma omp parallel for
 				for(int i = 0; i < count_devices; ++i) {
-					if (!svm_kernel_linear[i]) {
+					if (!svm_kernel_linear[i]) {  //TODO: auskommentieren zum immer neu compilieren
+						// // Resize Beispiel BLOCKING_SIZE_THREAD = device
+						// int old_boundary = CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD;
+						// int new_boundary = CUDABLOCK_SIZE * i;
+						// resize( , CUDABLOCK_SIZE * );
+						// q_cl[i].resize	;		
+
 						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
 						json::node &deviceNode =
