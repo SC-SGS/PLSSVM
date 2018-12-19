@@ -64,8 +64,8 @@ class CSVM
 
         void learn();
 		
-        real_t kernel_function(std::vector<real_t>&, std::vector<real_t>&);
-        real_t kernel_function(real_t*, real_t*, int);
+        inline real_t kernel_function(std::vector<real_t>&, std::vector<real_t>&);
+        inline real_t kernel_function(real_t*, real_t*, int);
 
         void libsvmParser(std::string&);
         void arffParser(std::string&);
@@ -79,9 +79,11 @@ class CSVM
 
 
         #ifdef WITH_OPENCL
-            void resizeData(int boundary);
-            void resizeDatalast(int boundary);
-            void resize(const int old_boundary,const int new_boundary);
+            inline void resizeData(int boundary);
+            inline void resizeData(const int device, int boundary);
+            inline void resizeDatalast(int boundary);
+            inline void resizeDatalast(const int device, int boundary);
+            inline void resize(const int old_boundary,const int new_boundary);
 	        opencl::manager_t manager{"../platform_configuration.cfg"};
 	        opencl::device_t first_device;
             std::vector<cl_kernel> kernel_q_cl;
