@@ -202,7 +202,15 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	   default: throw std::runtime_error("Can not decide wich kernel!");
    }
 
-	
+	{
+	   std::vector<double> buffer(dept );
+	   r_cl[0].from_device(buffer);
+	   for(auto value: buffer){
+		   std::cout << value << " ";
+	   }
+	   std::cout << std::endl;
+   }
+   exit(0);
 		r_cl[0].from_device(r);
 
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
