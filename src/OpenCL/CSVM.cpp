@@ -140,7 +140,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::vector<real_t> toDevice(dept_all, 0.0);
 	std::copy(b.begin(), b.begin() + dept, toDevice.begin());
 	r_cl[0].to_device(std::vector<real_t>(toDevice));
-	r_cl[0].to_device(std::vector<real_t>(zeros));
+	// r_cl[0].to_device(std::vector<real_t>(zeros));
 	d = new real_t[dept];
 
 	std::vector<opencl::DevicePtrOpenCL<real_t> > q_cl;
@@ -210,7 +210,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	   }
 	   std::cout << std::endl;
    }
-   exit(0);
+//    exit(0);
 		r_cl[0].from_device(r);
 
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
