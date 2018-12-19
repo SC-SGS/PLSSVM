@@ -83,7 +83,7 @@ class CSVM
             inline void resizeData(const int device, int boundary);
             inline void resizeDatalast(int boundary);
             inline void resizeDatalast(const int device, int boundary);
-            inline void resize(const int old_boundary,const int new_boundary);
+            // inline void resize(const int old_boundary,const int new_boundary);
 	        opencl::manager_t manager{"../platform_configuration.cfg"};
 	        opencl::device_t first_device;
             std::vector<cl_kernel> kernel_q_cl;

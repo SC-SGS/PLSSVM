@@ -154,11 +154,6 @@ void CSVM::resizeData(const int device, const int boundary){
 
 
 
-void CSVM::resize(const int old_boundary,const int new_boundary){
-	resizeData(new_boundary);
-	resizeDatalast(new_boundary);
-
-}
 
 std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
 {
