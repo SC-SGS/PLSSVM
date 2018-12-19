@@ -95,7 +95,8 @@ public:
     clFinish(device.commandQueue);
   }
 
-  void resize(const size_t size, T value) {
+
+  void resize(const size_t size, T value = static_cast<T>(0.0)) {
     if (!ptr) {
       throw std::runtime_error("DevicePtrOpenCL: buffer not initialized");
     }
