@@ -140,7 +140,6 @@ void CSVM::resizeData(const int device, const int boundary){
 	data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1 + boundary));
 	std::vector<real_t> vec;
 	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
-	// #pragma parallel for 
 	for(size_t col = 0; col < Nfeatures_data ; ++col){
 		for(size_t row = 0; row < Ndatas_data - 1; ++row){
 			vec.push_back(data[row][col]);
@@ -158,10 +157,10 @@ void CSVM::resizeData(const int device, const int boundary){
 std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
 {
 
-	std::cout << "resizeData" << std::endl;
-	resizeData(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD);
-	std::cout << "resizeDatalast" << std::endl;
-	resizeDatalast(CUDABLOCK_SIZE);
+	// std::cout << "resizeData" << std::endl;
+	// resizeData(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD);
+	// std::cout << "resizeDatalast" << std::endl;
+	// resizeDatalast(CUDABLOCK_SIZE);
 	//exit(1);
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 	const int dept = Ndatas_data - 1;
@@ -246,7 +245,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				const int Nrows = dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD);
 				std::vector<size_t> grid_size{ static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1), static_cast<size_t>((dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1) / count_devices) };
 				opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, (int)grid_size[1] * i);
-				if(i == count_devices - 1 & count_devices * grid_size[1] != (static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))) grid_size[1] +=1;
+				if(i == count_devices - 1 & count_devices * grid_size[1] != (static_cast<size_t>(dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1))) grid_size[1]++ ;
 				grid_size[0] *= CUDABLOCK_SIZE;
 				grid_size[1] *= CUDABLOCK_SIZE;
 				std::vector<size_t> block_size{CUDABLOCK_SIZE, CUDABLOCK_SIZE};
