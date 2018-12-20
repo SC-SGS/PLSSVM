@@ -22,20 +22,20 @@ void __attribute__((overloadable)) AtomicAdd(__global double *source, double del
 
 
 
-// void __attribute__((overloadable)) AtomicAdd(__global float *source, float delta) {
-//     union {
-// 	    float f;
-//     	unsigned i;
-//     } oldVal;
-//     union {
-//     	float f;
-// 		unsigned i;
-//     } newVal;
-//     do {
-//     	oldVal.f = *source;
-// 		newVal.f = oldVal.f + delta;
-//     } while (atom_cmpxchg ( (volatile __global unsigned *)source, oldVal.i, newVal.i) != oldVal.i);
-// }
+void __attribute__((overloadable)) AtomicAdd(__global float *source, float delta) {
+    union {
+	    float f;
+    	unsigned i;
+    } oldVal;
+    union {
+    	float f;
+		unsigned i;
+    } newVal;
+    do {
+    	oldVal.f = *source;
+		newVal.f = oldVal.f + delta;
+    } while (atom_cmpxchg ( (volatile __global unsigned *)source, oldVal.i, newVal.i) != oldVal.i);
+}
 __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global const real_t *d, __global const real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows, const int add, const int start_block_x, const int start_block_y){  
 
 	int i =  get_group_id(0) * (get_local_size(0) * INTERNALBLOCK_SIZE);
