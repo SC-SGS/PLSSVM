@@ -45,6 +45,8 @@ __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __gl
 
 	
 	if(i >= j){
+		i += 	get_local_id(0);
+		j += 	get_local_id(1);
 		for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
 			matr += data_d[vec_index + i] * data_d[vec_index + j];
 		}
