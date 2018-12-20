@@ -168,6 +168,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 										["DEVICES"][devices[0].deviceName];
 			json::node &kernelConfig = deviceNode["KERNELS"]["kernel_q"];
+			deviceNode.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 			kernel_q_cl[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_q");
 		}
 		const int Ncols = Nfeatures_data;
@@ -193,6 +194,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 												["DEVICES"][devices[0].deviceName];
 					json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+					kernelConfig.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 					svm_kernel_linear[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
 
 				}
@@ -228,7 +230,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 // 	   std::cout << std::endl;
 //    }
 
-		 r_cl[0].resize(dept_all);
+		r_cl[0].resize(dept_all);
 		r_cl[0].from_device(r);
 
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
@@ -252,8 +254,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
 
 		std::vector<real_t> buffer( dept_all);
+		r_cl[0].resize(dept_all);
 		r_cl[0].from_device(buffer);
 		for(int index = dept; index < dept_all; ++index) buffer[index] = 0.0;
+		r_cl.resize(dept_all);
 		r_cl[0].to_device(buffer);
 	
 
@@ -268,6 +272,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 							manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 													["DEVICES"][devices[0].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+						kernelConfig.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 						svm_kernel_linear[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
 			
 
@@ -299,6 +304,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 		 
 		std::vector<real_t> ret(dept_all);
+		Ad_cl.resize(dept_all);
 		Ad_cl[0].from_device(ret);
 		std::copy(ret.begin(), ret.begin()+dept, Ad);
 		
@@ -307,8 +313,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		
 		//TODO: auf GPU
 		std::vector<real_t> buffer_r(dept_all );
+		r_cl[0].resize(dept_all);
 		r_cl[0].from_device(buffer_r);
 		add_mult_(((int) dept/1024) + 1, std::min(1024, (int) dept),x.data(),buffer_r.data(),alpha_cd,dept);
+		x_cl.resize(dept_all);
 		x_cl[0].to_device(x);
 
 		
@@ -331,6 +339,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 							manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 													["DEVICES"][devices[0].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+						kernelConfig.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 						svm_kernel_linear[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
 					}
 			
@@ -362,6 +371,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	
 	
 			{
+				r_cl.resize(dept_all);
 				r_cl[0].from_device(r);
 				r_cl[0].to_device(r);
 			}
@@ -380,6 +390,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		{
 			std::vector<real_t> buffer(dept_all, 0.0);
 			std::copy(d, d+dept, buffer.begin());
+			r_cl.resize(dept_all);
 			r_cl[0].to_device(buffer);
 
 		}
@@ -396,6 +407,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	{
 		std::vector<real_t> buffer(dept_all );
 		std::copy(x.begin(), x.begin() + dept, alpha.begin());
+		q_cl[0].resize(dept_all);
 		q_cl[0].from_device(buffer);
 		std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
 	}
