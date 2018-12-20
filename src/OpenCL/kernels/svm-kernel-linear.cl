@@ -38,26 +38,33 @@ void __attribute__((overloadable)) AtomicAdd(__global double *source, double del
 // }
 __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global const real_t *d, __global const real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows, const int add, const int start_block_x, const int start_block_y){  
 
-	int i =  get_group_id(0) * get_local_size(0);
-	int j =  get_group_id(1) * get_local_size(1);
+	int i =  get_group_id(0) * (get_local_size(0) * INTERNALBLOCK_SIZE);
+	int j =  get_group_id(1) * (get_local_size(1) * INTERNALBLOCK_SIZE);
 
-	real_t matr = 0.0;
+	__private real_t matr = 0.0;
 
 	
 	if(i >= j){
-		i += 	get_local_id(0);
-		j += 	get_local_id(1);
-		for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
-			matr += data_d[vec_index + i] * data_d[vec_index + j];
-		}
+		i += 	get_local_id(0) * INTERNALBLOCK_SIZE;
+		j += 	get_local_id(1) * INTERNALBLOCK_SIZE;
+		for(int k = 0; k < INTERNALBLOCK_SIZE ; ++k){
+			for(int l = i; l < INTERNALBLOCK_SIZE + i; ++l){
+				matr = 0;
+				for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
+					matr += data_d[vec_index + l] * data_d[vec_index + j];
+				}
 
-		const real_t temp = (matr  + QA_cost - q[i] - q[j]) * add;
-		if(i > j){
-				AtomicAdd(&ret[i], temp * d[j]);
-				AtomicAdd(&ret[j], temp * d[i]);
-		}else if(i == j){
-				AtomicAdd(&ret[j], (temp + cost * add) * d[i]);
+				const real_t temp = (matr  + QA_cost - q[l] - q[j]) * add;
+				// if(l == 23 && j == 22 ) printf("%i:%f ;",j ,temp);
+				if(l > j){
+						AtomicAdd(&ret[l], temp * d[j]);
+						AtomicAdd(&ret[j], temp * d[l]);
+				}else if(l == j){
+						// printf("%i:%f ;",j ,(temp + cost * add) * d[l]);
+						AtomicAdd(&ret[j], (temp + cost * add) * d[l]);
+				}
+			}
+			j++;
 		}
-		
 	}
 }
