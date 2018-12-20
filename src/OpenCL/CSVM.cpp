@@ -168,7 +168,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 										["DEVICES"][devices[0].deviceName];
 			json::node &kernelConfig = deviceNode["KERNELS"]["kernel_q"];
-			deviceNode.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 			kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
 			kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
 			kernel_q_cl[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_q");
@@ -196,7 +195,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 												["DEVICES"][devices[0].deviceName];
 					json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-					deviceNode.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 					kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
 					kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
 					svm_kernel_linear[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
@@ -277,7 +275,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 							manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 													["DEVICES"][devices[0].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-						kernelConfig.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 						kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
 						kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
 						svm_kernel_linear[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
@@ -346,7 +343,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 							manager.get_configuration()["PLATFORMS"][devices[0].platformName]
 													["DEVICES"][devices[0].deviceName];
 						json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-						kernelConfig.replaceTextAttr("INTERNAL_PRECISION", typeid(real_t).name());
 						kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
 						kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
 						svm_kernel_linear[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
