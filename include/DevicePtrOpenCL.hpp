@@ -100,16 +100,18 @@ public:
     if (!ptr) {
       throw std::runtime_error("DevicePtrOpenCL: buffer not initialized");
     }
-    std::vector<T> buffer(buffer_size);
-    from_device(buffer);
-    buffer_size = size;
-    clReleaseMemObject(ptr);
-    cl_int err;
-    ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE,
-                         sizeof(T) * buffer_size, nullptr, &err);
-    opencl::check(err, "DevicePtrOpenCL: resize failed");
-    buffer.resize(buffer_size, value);
-    to_device(buffer);
+    if(size != buffer_size){
+      std::vector<T> buffer(buffer_size);
+      from_device(buffer);
+      buffer_size = size;
+      clReleaseMemObject(ptr);
+      cl_int err;
+      ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE,
+                          sizeof(T) * buffer_size, nullptr, &err);
+      opencl::check(err, "DevicePtrOpenCL: resize failed");
+      buffer.resize(buffer_size, value);
+      to_device(buffer);
+    }
   }
 
 private:
