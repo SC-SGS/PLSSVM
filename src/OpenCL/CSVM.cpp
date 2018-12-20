@@ -20,7 +20,7 @@ int count_devices = 1;
 CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){
 	std::vector<opencl::device_t> &devices = manager.get_devices();
 	first_device = devices[0];
-	// count_devices = devices.size();
+	count_devices = devices.size();
 	svm_kernel_linear.resize(count_devices, nullptr);
 	kernel_q_cl.resize(count_devices, nullptr);
 	std::cout << "GPUs found: " << count_devices << std::endl;
@@ -61,14 +61,14 @@ real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
 
 void CSVM::loadDataDevice(){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
-	datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t> (devices[0], (Nfeatures_data)));
+	for(int i = 0; i < count_devices; ++i) datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t> (devices[i], (Nfeatures_data)));
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
 
-	datlast_cl[0].to_device(datalast);
-	datlast_cl[0].resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+	for(int i = 0; i < count_devices; ++i) datlast_cl[i].to_device(datalast);
+	for(int i = 0; i < count_devices; ++i) datlast_cl[i].resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 
-	data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[0], Nfeatures_data * (Ndatas_data - 1)));
-	resizeData(0,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);	
+	for(int i = 0; i < count_devices; ++i) data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[i], Nfeatures_data * (Ndatas_data - 1)));
+	for(int i = 0; i < count_devices; ++i) resizeData(i,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);	
 		
 }
 
