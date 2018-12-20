@@ -65,15 +65,11 @@ void CSVM::loadDataDevice(){
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
 
 	datlast_cl[0].to_device(datalast);
+	datlast_cl[0].resize(Ndatas_data - 1 + THREADBLOCK_SIZE);
 
 	data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[0], Nfeatures_data * (Ndatas_data - 1)));
-	std::vector<real_t> vec;
-	for(size_t col = 0; col < Nfeatures_data; ++col){
-		for(size_t row = 0; row < Ndatas_data - 1; ++row){
-			vec.push_back(data[row][col]);
-		}
-	}
-	data_cl[0].to_device(vec);
+	resizeData(0,THREADBLOCK_SIZE);	
+		
 }
 
 
@@ -110,11 +106,30 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 
 
 
+void CSVM::resizeData(const int device, const int boundary){
+	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
+
+	data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1 + boundary));
+	std::vector<real_t> vec;
+	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
+	for(size_t col = 0; col < Nfeatures_data ; ++col){
+		for(size_t row = 0; row < Ndatas_data - 1; ++row){
+			vec.push_back(data[row][col]);
+		}
+		for(int i = 0 ; i < boundary ; ++i){
+			vec.push_back(0.0);
+		}
+	}
+	data_cl[device].to_device(vec);
+}
+
+
 
 std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
 {
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 	const size_t dept = Ndatas_data - 1;
+	// const size_t boundary_size = THREADBLOCK_SIZE;
 	const size_t boundary_size = 0;
 	const size_t dept_all = dept + boundary_size;
 	std::vector<real_t> zeros(dept_all, 0.0);
@@ -159,12 +174,14 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			kernel_q_cl[0] = manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_q");
 		}
 		const int Ncols = Nfeatures_data;
-		const int Nrows = dept;
+		const int Nrows = dept + THREADBLOCK_SIZE;
 		
 	  	opencl::apply_arguments(kernel_q_cl[0], q_cl[0].get(), data_cl[0].get(), datlast_cl[0].get(), Ncols , Nrows);
 
-		size_t grid_size = dept;
-		size_t block_size = 1;
+		
+
+		size_t grid_size = ceil(dept / THREADBLOCK_SIZE);
+		size_t block_size = THREADBLOCK_SIZE;
 		opencl::run_kernel_1d_timed(devices[0], kernel_q_cl[0], grid_size, block_size);
 	
 	
@@ -185,6 +202,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				}
 				{
 					std::vector<size_t> grid_size{ dept, dept };
+					q_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					r_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					x_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					resizeData(0,THREADBLOCK_SIZE);
 					opencl::apply_arguments(svm_kernel_linear[0], q_cl[0].get(), r_cl[0].get(), x_cl[0].get(), data_cl[0].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, 0);
 					std::vector<size_t> block_size{1, 1};
 					opencl::run_kernel_2d_timed(devices[0], svm_kernel_linear[0], grid_size, block_size);
@@ -210,7 +231,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	   }
 	   std::cout << std::endl;
    }
-//    exit(0);
+
 		r_cl[0].from_device(r);
 
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
@@ -254,6 +275,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			
 
 					std::vector<size_t> grid_size{ dept, dept };
+					q_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					Ad_cl[0].resize(dept + THREADBLOCK_SIZE);  
+					r_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					resizeData(0,THREADBLOCK_SIZE);
 					opencl::apply_arguments(svm_kernel_linear[0], q_cl[0].get(), Ad_cl[0].get(), r_cl[0].get(), data_cl[0].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, 0);
 					std::vector<size_t> block_size{1, 1};
 					opencl::run_kernel_2d_timed(devices[0], svm_kernel_linear[0], grid_size, block_size);
@@ -295,7 +320,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		if(run%50 == 0){
 			std::vector<real_t> buffer(b);
 			r_cl[0].to_device(buffer);
-			r_cl[0].to_device(zeros);
 
 			switch(kernel){
 			case 0: 
@@ -314,6 +338,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 					{
 					std::vector<size_t> grid_size{ dept, dept };
+					q_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					r_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					x_cl[0].resize(dept + THREADBLOCK_SIZE); 
+					resizeData(0,THREADBLOCK_SIZE);
 					opencl::apply_arguments(svm_kernel_linear[0], q_cl[0].get(), r_cl[0].get(), x_cl[0].get(), data_cl[0].get(), QA_cost , 1/cost, Ncols, Nrows, -1), 0,0;
 					std::vector<size_t> block_size{1, 1};
 					
