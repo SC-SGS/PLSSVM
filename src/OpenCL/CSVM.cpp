@@ -11,6 +11,7 @@
 #include "../src/OpenCL/manager/apply_arguments.hpp"
 #include "../src/OpenCL/manager/run_kernel.hpp"
 
+#include "distribution"
 
 
 
@@ -163,17 +164,17 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	#pragma omp parallel for
 	for(int i = 0; i < count_devices; ++i){
 		if (!kernel_q_cl[i]) {
-			#pragma omp critical //TODO: evtl besser keine Referenz
-			{
 			std::string kernel_src_file_name{"../src/OpenCL/kernels/kernel_q.cl"};
 			std::string kernel_src = manager.read_src_file(kernel_src_file_name);
 			json::node &deviceNode =
 				manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 										["DEVICES"][devices[i].deviceName];
-			json::node &kernelConfig = deviceNode["KERNELS"]["kernel_q"];
-			kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
-			kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
-			kernel_q_cl[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_q");
+			#pragma omp critical //TODO: evtl besser keine Referenz
+			{
+				json::node &kernelConfig = deviceNode["KERNELS"]["kernel_q"];
+				kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
+				kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
+				kernel_q_cl[i] = manager.build_kernel(kernel_src, devices[i], kernelConfig, "kernel_q");
 			}
 		}
 		const int Ncols = Nfeatures_data;
