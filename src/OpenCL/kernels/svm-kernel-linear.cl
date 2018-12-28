@@ -1,8 +1,7 @@
-//#include "../include/typedef.hpp"
 
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
-void __attribute__((overloadable)) AtomicAdd(__global double *source, double delta) {
+static inline void __attribute__((overloadable)) AtomicAdd(__global const double *source, const double delta) {
     union {
 	    double f;
     	ulong i;
@@ -22,7 +21,7 @@ void __attribute__((overloadable)) AtomicAdd(__global double *source, double del
 
 
 
-void __attribute__((overloadable)) AtomicAdd(__global float *source, float delta) {
+static inline void __attribute__((overloadable)) AtomicAdd(__global const float *source, const float delta) {
     union {
 	    float f;
     	unsigned i;
@@ -45,10 +44,8 @@ __kernel void kernel_linear(__global __read_only const real_t *q, __global __rea
 
 	__local real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
 	__local real_t data_intern_j [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
-	__private real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
+	real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
 	real_t data_j[INTERNALBLOCK_SIZE];
-
-	// __private real_t matr = 0.0;
 
 	
 	if(i >= j){
@@ -63,8 +60,8 @@ __kernel void kernel_linear(__global __read_only const real_t *q, __global __rea
 			#pragma unroll INTERNALBLOCK_SIZE
 			for(size_t block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 				const size_t idx = block_id % THREADBLOCK_SIZE; //lastbalancieung //TODO: constexpr
-				if(get_local_id(1) == idx)data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i]; //TODO lastbalance
-				const size_t idx_2 = (block_id + INTERNALBLOCK_SIZE) % THREADBLOCK_SIZE; //lastbalancieung
+				if(get_local_id(1) == idx)data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i]; 
+				const size_t idx_2 = (block_id + INTERNALBLOCK_SIZE) % THREADBLOCK_SIZE; //lastbalancieung //TODO: constexpr
 				if(get_local_id(1) == idx_2)data_intern_j[get_local_id(0)][block_id] = data_d[block_id + vec_index + ij];
 			}
 			barrier(CLK_LOCAL_MEM_FENCE);
@@ -94,10 +91,8 @@ __kernel void kernel_linear(__global __read_only const real_t *q, __global __rea
 				if(l > k){
 					AtomicAdd(&ret[l], temp * d[k]);
 					ret_k += temp * d[l];
-					// AtomicAdd(&ret[k], temp * d[l]);
 				}else if(l == k){
 					ret_k += (temp + cost * add) * d[l];
-					// AtomicAdd(&ret[k], (temp + cost * add) * d[l]);
 				}
 			}
 			AtomicAdd(&ret[k], ret_k);
@@ -128,9 +123,10 @@ __kernel void kernel_linear(__global __read_only const real_t *q, __global __rea
 
 // 				const real_t temp = (matr  + QA_cost - q[l] - q[j]) * add;
 // 				if(l > j){
-// 						ret_k += temp * d[l];
+// 					AtomicAdd(&ret[l], temp * d[j]);
+// 					ret_k += temp * d[l];
 // 				}else if(l == j){
-// 						ret_k += (temp + cost * add) * d[l];
+// 					ret_k += (temp + cost * add) * d[l];
 // 				}
 // 			}
 // 			AtomicAdd(&ret[j], ret_k);
