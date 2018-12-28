@@ -186,7 +186,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	
 		
 
-		size_t grid_size = ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE)) * THREADBLOCK_SIZE;
+		size_t grid_size = static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE)) * THREADBLOCK_SIZE);
 		size_t block_size = THREADBLOCK_SIZE ;
 		opencl::run_kernel_1d_timed(devices[i], kernel_q_cl[i], grid_size, block_size);
 	}
@@ -214,7 +214,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					const int Ncols = Nfeatures_data;
 					const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
 					opencl::apply_arguments(svm_kernel_linear[i], q_cl[i].get(), r_cl[i].get(), x_cl[i].get(), data_cl[i].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, 0);
-					std::vector<size_t> grid_size{ ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))* THREADBLOCK_SIZE,ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)) * THREADBLOCK_SIZE};
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))* THREADBLOCK_SIZE),static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)) * THREADBLOCK_SIZE)};
 					std::vector<size_t> block_size{THREADBLOCK_SIZE, THREADBLOCK_SIZE};
 
 					opencl::run_kernel_2d_timed(devices[i], svm_kernel_linear[i], grid_size, block_size);
@@ -233,7 +233,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	   default: throw std::runtime_error("Can not decide wich kernel!");
    }
 // 	{
-// 	   std::vector<double> buffer(dept_all );
+// 	   std::vector<real_t> buffer(dept_all );
 // 	   r_cl[0].from_device(buffer);
 // 	   for(auto value: buffer){
 // 		   std::cout << value << " ";
@@ -295,7 +295,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					const int Ncols = Nfeatures_data;
 					const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
 					opencl::apply_arguments(svm_kernel_linear[0], q_cl[0].get(), Ad_cl[0].get(), r_cl[0].get(), data_cl[0].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, 0);
-					std::vector<size_t> grid_size{ ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)) * THREADBLOCK_SIZE, ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))  * THREADBLOCK_SIZE};
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)) * THREADBLOCK_SIZE),static_cast<size_t>( ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))  * THREADBLOCK_SIZE)};
 					std::vector<size_t> block_size{THREADBLOCK_SIZE, THREADBLOCK_SIZE};
 
 					opencl::run_kernel_2d_timed(devices[0], svm_kernel_linear[0], grid_size, block_size);
@@ -368,7 +368,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					const int Ncols = Nfeatures_data;
 					const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
 					opencl::apply_arguments(svm_kernel_linear[0], q_cl[0].get(), r_cl[0].get(), x_cl[0].get(), data_cl[0].get(), QA_cost , 1/cost, Ncols, Nrows, -1), 0,0;
-					std::vector<size_t> grid_size{ ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)) * THREADBLOCK_SIZE, ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))  * THREADBLOCK_SIZE};
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)) * THREADBLOCK_SIZE),static_cast<size_t>( ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))  * THREADBLOCK_SIZE)};
 					std::vector<size_t> block_size{THREADBLOCK_SIZE, THREADBLOCK_SIZE};
 					
 					opencl::run_kernel_2d_timed(devices[0], svm_kernel_linear[0], grid_size, block_size);
