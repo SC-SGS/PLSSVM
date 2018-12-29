@@ -12,8 +12,7 @@ class distribution{
         for(real_t value :parameter){
             distr.push_back(value / sum * number_lines);
         }
-
-        distr[number_devices] += std::accumulate(distr.begin(), distr.end(), number_lines, std::minus<real_t>());
+        distr[number_devices-1] += std::accumulate(distr.begin(), distr.end(), number_lines, std::minus<int>());
     }
 
 //TODO: optional
@@ -25,7 +24,7 @@ class distribution{
         return (number_devices <= parameter.size() && std::accumulate(parameter.begin(), parameter.end(), 0) <= 1.0);
     }
 
-    std::vector<real_t>distr;
+    std::vector<int>distr;
 
 
 };
