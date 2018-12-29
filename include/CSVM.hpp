@@ -1,5 +1,4 @@
-#ifndef CSVM_H
-#define CSVM_H
+#pragma once
 #include <vector>
 #include <string>
 #include <fstream>
@@ -99,6 +98,5 @@ class CSVM
         #endif
     };
 
-#endif // C-SVM_H
 
 

@@ -1,5 +1,4 @@
-#ifndef OPERATORS_HPP_INCLUDED
-#define OPERATORS_HPP_INCLUDED
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -39,4 +38,3 @@ real_t* add (real_t*, real_t*, real_t*, int);
 
 bool endsWith(std::string, std::string);
 
-#endif // OPERATORS_HPP_INCLUDED
