@@ -140,8 +140,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	for(int i = 0; i < count_devices; ++i) x_cl.emplace_back( devices[i] , dept_all);
 	for(int i = 0; i < count_devices; ++i) x_cl[i].to_device(x);
 
-	distribution distr = distribution(count_devices,dept, std::vector<real_t>{1,2.5});
-	// distribution distr = distribution(count_devices,dept, std::vector<real_t>(count_devices,1));
+	// distribution distr = distribution(count_devices,dept, std::vector<real_t>{1,2.5});
+	distribution distr = distribution(count_devices,dept, std::vector<real_t>(count_devices,1));
 	
 	std::vector<real_t> r(dept_all, 0.0);
 
