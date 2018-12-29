@@ -39,8 +39,8 @@ static inline void __attribute__((overloadable)) AtomicAdd(__global const float 
 
 __kernel void kernel_linear(__global __read_only const real_t *q, __global __read_write real_t *ret, __global __read_only const real_t *d, __global __read_only const real_t *data_d, __read_only const real_t QA_cost, __read_only const real_t cost,__read_only const int Ncols, __read_only const int Nrows, __read_only const int add, __read_only const int start_block_x, __read_only const int start_block_y){  
 
-	size_t i =  get_group_id(0) * (get_local_size(0) * INTERNALBLOCK_SIZE);
-	size_t j =  get_group_id(1) * (get_local_size(1) * INTERNALBLOCK_SIZE);
+	size_t i =  (get_group_id(0) + start_block_x) * (get_local_size(0) * INTERNALBLOCK_SIZE);
+	size_t j =  (get_group_id(1) + start_block_y) * (get_local_size(1) * INTERNALBLOCK_SIZE);
 
 	__local real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
 	__local real_t data_intern_j [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
