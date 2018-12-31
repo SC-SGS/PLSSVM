@@ -17,6 +17,7 @@
 
 int count_devices = 1;
 
+
 CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){
 	std::vector<opencl::device_t> &devices = manager.get_devices();
 	first_device = devices[0];
@@ -24,6 +25,7 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
 	svm_kernel_linear.resize(count_devices, nullptr);
 	kernel_q_cl.resize(count_devices, nullptr);
 	std::cout << "GPUs found: " << count_devices << std::endl;
+	
 	}
 
 void CSVM::learn(){
@@ -63,13 +65,22 @@ void CSVM::loadDataDevice(){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 	for(int device = 0; device < count_devices; ++device) datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t> (devices[device], (Nfeatures_data)));
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
+	#pragma opm parallel
 	for(int device = 0; device < count_devices; ++device) datlast_cl[device].to_device(datalast);
+	#pragma opm parallel
 	for(int device = 0; device < count_devices; ++device) datlast_cl[device].resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 
 	for(int device = 0; device < count_devices; ++device) data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1)));
-	for(int device = 0; device < count_devices; ++device) resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);	
-		
+	
+	// for(int device = 0; device < count_devices; ++device) resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);	
+	#pragma opm parallel
+	for(int device = 0; device < count_devices; ++device){
+		int start = 0;
+		for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+		loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE , distr.distr[device]*2);
+	}
 }
+
 
 
 void CSVM::learn(std::string &filename, std::string &output_filename) {
@@ -82,6 +93,8 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 
 	auto end_parse = std::chrono::high_resolution_clock::now();
 	if(info){std::clog << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data  <<" in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << " ms eingelesen" << std::endl << std::endl ;}
+	distr = distribution(count_devices,Ndatas_data - 1, std::vector<real_t>(count_devices,1));
+	// distr = distribution(count_devices,Ndatas_data - 1, std::vector<real_t>{1,2.5});
 	loadDataDevice();
 	
 	auto end_gpu = std::chrono::high_resolution_clock::now();
@@ -103,7 +116,22 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 
 
 
+void CSVM::loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines){
+	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 
+	data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1 - start_line + boundary));
+	std::vector<real_t> vec;
+	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
+	for(size_t col = 0; col < Nfeatures_data; ++col){
+		for(size_t row = start_line; row < Ndatas_data - 1; ++row){
+			vec.push_back(data[row][col]);
+		}
+		for(int i = 0 ; i < boundary ; ++i){
+			vec.push_back(0.0);
+		}
+	}
+	data_cl[device].to_device(vec);
+}
 
 void CSVM::resizeData(const int device, const int boundary){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
@@ -139,9 +167,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::vector<opencl::DevicePtrOpenCL<real_t> > x_cl;
 	for(int i = 0; i < count_devices; ++i) x_cl.emplace_back( devices[i] , dept_all);
 	for(int i = 0; i < count_devices; ++i) x_cl[i].to_device(x);
-
-	// distribution distr = distribution(count_devices,dept, std::vector<real_t>{1,2.5});
-	distribution distr = distribution(count_devices,dept, std::vector<real_t>(count_devices,1));
 	
 	std::vector<real_t> r(dept_all, 0.0);
 
@@ -152,6 +177,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::vector<real_t> toDevice(dept_all, 0.0);
 	std::copy(b.begin(), b.begin() + dept, toDevice.begin());
 	r_cl[0].to_device(std::vector<real_t>(toDevice));
+	#pragma opm parallel
 	for(int device = 1; device < count_devices; ++device) r_cl[device].to_device(std::vector<real_t>(zeros));
 	d = new real_t[dept];
 
@@ -161,7 +187,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	for(int device = 0; device < count_devices; ++device) q_cl[device].to_device(std::vector<real_t>(dept_all, 0.0));
 
 	#pragma omp parallel for
-	for(int i = 0; i < count_devices; ++i){
+	// for(int i = 0; i < count_devices; ++i){
+	for(int i = 0; i < 1; ++i){
 		if (!kernel_q_cl[i]) {
 			std::string kernel_src_file_name{"../src/OpenCL/kernels/kernel_q.cl"};
 			std::string kernel_src = manager.read_src_file(kernel_src_file_name);
@@ -187,7 +214,12 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		size_t block_size = THREADBLOCK_SIZE ;
 		opencl::run_kernel_1d_timed(devices[i], kernel_q_cl[i], grid_size, block_size);
 	}
-
+	{
+		std::vector<real_t> buffer(dept_all);
+		q_cl[0].from_device(buffer);
+		#pragma opm parallel
+		for(int device = 1; device < count_devices; ++device) q_cl[device].to_device(buffer);
+	}
 	
 
 	switch(kernel){
@@ -215,16 +247,19 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					x_cl[device].resize(dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE); 
 					// resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 					const int Ncols = Nfeatures_data;
-					const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					int start = 0;
 					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+					const int Nrows = dept - start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+					// loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE , distr.distr[device]*2);
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
+					// loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE , distr.distr[device]*2);
 					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, start);
 					grid_size[0] *= THREADBLOCK_SIZE;
 					grid_size[1] *= THREADBLOCK_SIZE;
 					std::vector<size_t> block_size{THREADBLOCK_SIZE, THREADBLOCK_SIZE};
 
 					opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
+					// exit(0);
 				}	
 			}
 			break;
@@ -241,7 +276,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
    }
 
 
-	 
 
 {
 		r_cl[0].resize(dept_all);
@@ -256,7 +290,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		}
 		for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(r);
 	}
-
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
 	const real_t delta0 = delta;
 	real_t alpha_cd, beta;
@@ -274,8 +307,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		if(info)std::cout << "Start Iteration: " << run << std::endl;
 		//Ad = A * d
 		{
+			#pragma opm parallel
 			for(int device = 0; device < count_devices; ++device) Ad_cl[device].to_device(zeros);
 			//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
+			#pragma opm parallel
 			for(int device = 0; device < count_devices; ++device) {
 				std::vector<real_t> buffer( dept_all);
 				r_cl[device].resize(dept_all);
@@ -308,10 +343,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					r_cl[device].resize(dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE); 
 					// resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 					const int Ncols = Nfeatures_data;
-					const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					int start = 0;
 					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+					const int Nrows = dept - start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), Ad_cl[device].get(), r_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, start);
 					grid_size[0] *= THREADBLOCK_SIZE;
 					grid_size[1] *= THREADBLOCK_SIZE;
@@ -366,7 +401,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		r_cl[0].resize(dept_all);
 		r_cl[0].from_device(buffer_r);
 		add_mult_(((int) dept/1024) + 1, std::min(1024, (int) dept),x.data(),buffer_r.data(),alpha_cd,dept);
+		#pragma opm parallel
 		for(int device = 0; device < count_devices; ++device) x_cl[device].resize(dept_all);
+		#pragma opm parallel
 		for(int device = 0; device < count_devices; ++device) x_cl[device].to_device(x);
 
 		
@@ -378,6 +415,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			buffer.resize(dept_all);
 			r_cl.resize(dept_all);
 			r_cl[0].to_device(buffer);
+			#pragma opm parallel
 			for(int device = 1; device < count_devices; ++device) r_cl[device].to_device(zeros);
 			switch(kernel){
 			case 0: 
@@ -406,11 +444,11 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					x_cl[device].resize(dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE); 
 					// resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 					const int Ncols = Nfeatures_data;
-					const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-
-					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					int start = 0;
 					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+					const int Nrows = dept - start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, start);
 					grid_size[0] *= THREADBLOCK_SIZE;
 					grid_size[1] *= THREADBLOCK_SIZE;
@@ -443,6 +481,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						r[j] += ret[j];
 					}
 				}
+				#pragma opm parallel
 				for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(r);
 			}
 		}else{
@@ -460,7 +499,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		{
 			std::vector<real_t> buffer(dept_all, 0.0);
 			std::copy(d, d+dept, buffer.begin());
+			#pragma opm parallel
 			for(int device = 0; device < count_devices; ++device) r_cl[device].resize(dept_all);
+			#pragma opm parallel
 			for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(buffer);
 
 		}

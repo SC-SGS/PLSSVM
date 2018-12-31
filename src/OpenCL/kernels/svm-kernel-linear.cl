@@ -39,8 +39,10 @@ static inline void __attribute__((overloadable)) AtomicAdd(__global const float 
 
 __kernel void kernel_linear(__global __read_only const real_t *q, __global __read_write real_t *ret, __global __read_only const real_t *d, __global __read_only const real_t *data_d, __read_only const real_t QA_cost, __read_only const real_t cost,__read_only const int Ncols, __read_only const int Nrows, __read_only const int add, __read_only const int start_block_x, __read_only const int start_block_y){  
 
-	size_t i =  (get_group_id(0) + start_block_x) * (get_local_size(0) * INTERNALBLOCK_SIZE);
-	size_t j =  (get_group_id(1) + start_block_y) * (get_local_size(1) * INTERNALBLOCK_SIZE);
+	int i =  (get_group_id(0) + start_block_x) * (get_local_size(0) * INTERNALBLOCK_SIZE);
+	int j =  (get_group_id(1) + start_block_y) * (get_local_size(1) * INTERNALBLOCK_SIZE);
+	int j2 =  get_group_id(1)  * (get_local_size(1) * INTERNALBLOCK_SIZE);
+	// size_t j2 =  j;
 
 	__local real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
 	__local real_t data_intern_j [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
@@ -50,18 +52,22 @@ __kernel void kernel_linear(__global __read_only const real_t *q, __global __rea
 	
 	if(i >= j){
 		i += 	get_local_id(0) * INTERNALBLOCK_SIZE;
-		const size_t ij = j + get_local_id(0) * INTERNALBLOCK_SIZE;
+		const size_t ij = j2 + get_local_id(0) * INTERNALBLOCK_SIZE;
+		// printf("%i, %i, %i\n", start_block_y, i2, ij);
 		j += 	get_local_id(1) * INTERNALBLOCK_SIZE;
 		
-
+		// printf("%u", start_block_y);
+		// if(start_block_y != 0) 	printf("%f , %i\n",data_d[0 + 0 + i - start_block_y], i);
+		// if(start_block_y == 0) 	printf("%f , %i\n",data_d[0 + 0 + i - start_block_y], i);
+		// printf("%i\n", start_block_y);
 		//cache data
-		for(int vec_index = 0; vec_index < Ncols * Nrows; vec_index += Nrows){
+		for(int vec_index = 0; vec_index < Ncols * Nrows; vec_index += Nrows ){
 			barrier(CLK_LOCAL_MEM_FENCE);
 			#pragma unroll INTERNALBLOCK_SIZE
 			for(size_t block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 				const size_t idx = block_id % THREADBLOCK_SIZE; //lastbalancieung //TODO: constexpr
-				if(get_local_id(1) == idx)data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i]; 
-				const size_t idx_2 = (block_id + INTERNALBLOCK_SIZE) % THREADBLOCK_SIZE; //lastbalancieung //TODO: constexpr
+				if(get_local_id(1) == idx)data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i - start_block_y * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE]; 
+				const size_t idx_2 = (block_id + INTERNALBLOCK_SIZE) % THREADBLOCK_SIZE; //lastbalancieung //TODO: constexpr 
 				if(get_local_id(1) == idx_2)data_intern_j[get_local_id(0)][block_id] = data_d[block_id + vec_index + ij];
 			}
 			barrier(CLK_LOCAL_MEM_FENCE);

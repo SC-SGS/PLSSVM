@@ -6,9 +6,11 @@
 
 class distribution{
     public:
+    distribution() = default;
+
     distribution(const size_t number_devices, const size_t number_lines, const std::vector<real_t> parameter){
         if(number_devices != parameter.size()) throw "Distribution error!";
-        real_t sum = std::accumulate(parameter.begin(), parameter.end(), 0);
+        real_t sum = std::accumulate(parameter.begin(), parameter.end(), 0.0);
         for(real_t value :parameter){
             distr.push_back(value / sum * number_lines);
         }

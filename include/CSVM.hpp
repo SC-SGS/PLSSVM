@@ -23,6 +23,7 @@
 #include "../src/OpenCL/manager/device.hpp"
 #include "../src/OpenCL/manager/manager.hpp"
 #include "DevicePtrOpenCL.hpp"
+#include "distribution.hpp"
 #include <stdexcept>
 #endif
 
@@ -78,11 +79,13 @@ class CSVM
 
 
         #ifdef WITH_OPENCL
+            inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines);
             inline void resizeData(int boundary);
             inline void resizeData(const int device, int boundary);
             inline void resizeDatalast(int boundary);
             inline void resizeDatalast(const int device, int boundary);
             // inline void resize(const int old_boundary,const int new_boundary);
+            distribution distr;
 	        opencl::manager_t manager{"../platform_configuration.cfg"};
 	        opencl::device_t first_device;
             std::vector<cl_kernel> kernel_q_cl;
