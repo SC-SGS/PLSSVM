@@ -21,7 +21,7 @@ int count_devices = 1;
 CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){
 	std::vector<opencl::device_t> &devices = manager.get_devices();
 	first_device = devices[0];
-	count_devices = devices.size();
+	// count_devices = devices.size();
 	svm_kernel_linear.resize(count_devices, nullptr);
 	kernel_q_cl.resize(count_devices, nullptr);
 	std::cout << "GPUs found: " << count_devices << std::endl;
@@ -76,7 +76,7 @@ void CSVM::loadDataDevice(){
 	#pragma opm parallel
 	for(int device = 0; device < count_devices; ++device){
 		int start = 0;
-		for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+		for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[i]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
 		loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE , distr.distr[device]*2);
 	}
 }
@@ -192,6 +192,11 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		if (!kernel_q_cl[i]) {
 			std::string kernel_src_file_name{"../src/OpenCL/kernels/kernel_q.cl"};
 			std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+			if (*typeid(real_t).name() == 'f') {
+				manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+			}else if (*typeid(real_t).name() == 'd') {
+				manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+			}
 			json::node &deviceNode =
 				manager.get_configuration()["PLATFORMS"][devices[i].platformName]
 										["DEVICES"][devices[i].deviceName];
@@ -229,6 +234,11 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				if (!svm_kernel_linear[device]) {
 					std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 					std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+					if (*typeid(real_t).name() == 'f') {
+						manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+					}else if (*typeid(real_t).name() == 'd') {
+						manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+					}
 					json::node &deviceNode =
 						manager.get_configuration()["PLATFORMS"][devices[device].platformName]
 												["DEVICES"][devices[device].deviceName];
@@ -248,10 +258,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					// resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 					const int Ncols = Nfeatures_data;
 					int start = 0;
-					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[i]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
 					const int Nrows = dept - start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
 					// loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE , distr.distr[device]*2);
-					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[device]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					// loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE , distr.distr[device]*2);
 					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, start);
 					grid_size[0] *= THREADBLOCK_SIZE;
@@ -326,6 +336,11 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					if (!svm_kernel_linear[device]){
 						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+						if (*typeid(real_t).name() == 'f') {
+							manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+						}else if (*typeid(real_t).name() == 'd') {
+							manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+						}
 						json::node &deviceNode =
 							manager.get_configuration()["PLATFORMS"][devices[device].platformName]
 													["DEVICES"][devices[device].deviceName];
@@ -344,9 +359,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					// resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 					const int Ncols = Nfeatures_data;
 					int start = 0;
-					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[i]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
 					const int Nrows = dept - start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[device]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), Ad_cl[device].get(), r_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, 1, 0, start);
 					grid_size[0] *= THREADBLOCK_SIZE;
 					grid_size[1] *= THREADBLOCK_SIZE;
@@ -424,6 +439,11 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					if (!svm_kernel_linear[device]) {
 						std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
 						std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+						if (*typeid(real_t).name() == 'f') {
+							manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+						}else if (*typeid(real_t).name() == 'd') {
+							manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+						}
 						json::node &deviceNode =
 							manager.get_configuration()["PLATFORMS"][devices[device].platformName]
 													["DEVICES"][devices[device].deviceName];
@@ -445,10 +465,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					// resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 					const int Ncols = Nfeatures_data;
 					int start = 0;
-					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<double>(distr.distr[i]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+					for(int i = 0; i < device; ++i) start += static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[i]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
 					const int Nrows = dept - start * INTERNALBLOCK_SIZE * THREADBLOCK_SIZE + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
 
-					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<double>(dept) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<double>(distr.distr[device]) / static_cast<double>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
+					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<real_t>(distr.distr[device]) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
 					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, -1, 0, start);
 					grid_size[0] *= THREADBLOCK_SIZE;
 					grid_size[1] *= THREADBLOCK_SIZE;
