@@ -75,7 +75,6 @@ void CSVM::loadDataDevice(){
 	// for(int device = 0; device < count_devices; ++device) resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);	
 	#pragma opm parallel
 	for(int device = 0; device < count_devices; ++device){
-		// loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, 0 , distr.distr[device]*2);
 		loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, 0 , Ndatas_data - 1);
 	}
 }
@@ -92,8 +91,6 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 
 	auto end_parse = std::chrono::high_resolution_clock::now();
 	if(info){std::clog << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data  <<" in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << " ms eingelesen" << std::endl << std::endl ;}
-	//distr = distribution(1,Ndatas_data - 1, std::vector<real_t>(count_devices,1));
-	// distr = distribution(count_devices,Ndatas_data - 1, std::vector<real_t>{1,2.5});
 	loadDataDevice();
 	
 	auto end_gpu = std::chrono::high_resolution_clock::now();
@@ -187,7 +184,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::cout << "kernel_q" << std::endl;
 	#pragma omp parallel for
 	for(int device = 0; device < count_devices; ++device){
-	// for(int i = 0; i < 1; ++i){
 		if (!kernel_q_cl[device]) {
 			#pragma omp critical //TODO: evtl besser keine Referenz
 			{
@@ -301,9 +297,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			}
 		}
 		for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(r);
-		// for(auto &val : r) std::cout << val << " ";
-		// std::cout << std::endl;
-		// exit(0);
 	}
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
 	const real_t delta0 = delta;
@@ -406,17 +399,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			for(int device = 0; device < count_devices; ++device) Ad_cl[device].to_device(buffer);
 			// std::cout << std::endl;
 		}
-// 			  {
-// 	   std::vector<real_t> buffer(dept_all );
-// 	   r_cl[0].from_device(buffer);
-// 	   for(auto value: buffer){
-// 		   std::cout << value << " ";
-// 	   }
-// 	   std::cout << std::endl;
-//    }
-
-// exit(0);
-		
+	
 
 		alpha_cd = delta / mult(d , Ad,  dept);
 		
