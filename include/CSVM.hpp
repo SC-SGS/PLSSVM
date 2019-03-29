@@ -90,7 +90,6 @@ class CSVM
 	        opencl::device_t first_device;
             std::vector<cl_kernel> kernel_q_cl;
             std::vector<cl_kernel> svm_kernel_linear;
-            std::vector<cl_kernel> svm_kernel_linear_neu;
             std::vector<opencl::DevicePtrOpenCL<real_t> > datlast_cl;
             std::vector<opencl::DevicePtrOpenCL<real_t> > data_cl;
         #endif
