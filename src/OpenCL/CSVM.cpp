@@ -31,11 +31,18 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
 void CSVM::learn(){
 	std::vector<real_t> q;
 	std::vector<real_t> b = value;
-
-	b.pop_back();
-	b -= value.back();
-
-	QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
+	#pragma omp parallel sections
+	{
+	#pragma omp section // generate right side from eguation
+		{
+			b.pop_back();
+			b -= value.back();
+		}
+		#pragma omp section // generate botom right from A
+		{
+			QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
+		}
+	}
 
 	
 	if(info)std::cout << "start CG" << std::endl;
