@@ -7,7 +7,7 @@ __global__ void init(real_t* vec, real_t value, int size);
 
 __global__ void add_mult(real_t* vec1, real_t* vec2, real_t value, int dim);
 
-__global__ void kernel_q(real_t *q, real_t *data_d, real_t *datlast,const int Ncols, const int Nrows);
+__global__ void kernel_q(real_t *q,  real_t *data_d, real_t *datlast, const int Nrows, const int start, const int end);
 
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600

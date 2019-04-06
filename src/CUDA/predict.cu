@@ -47,7 +47,8 @@ void CSVM::load_w(){
     cudaMalloc((void **) &alpha_d, Nfeatures_data * sizeof(real_t));
     cudaMemcpy(alpha_d, &alpha[0], Nfeatures_data* sizeof(real_t), cudaMemcpyHostToDevice);
 
-    kernel_w<<<((int)Nfeatures_data/1024) + 1,  std::min((int)Nfeatures_data, 1024)>>>(w_d, data_d, alpha_d, Ndatas_data);
+    // TODO:
+    // kernel_w<<<((int)Nfeatures_data/1024) + 1,  std::min((int)Nfeatures_data, 1024)>>>(w_d, data_d, alpha_d, Ndatas_data);
 
     cudaDeviceSynchronize();
     cudaFree(alpha_d);

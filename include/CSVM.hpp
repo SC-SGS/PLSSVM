@@ -78,8 +78,8 @@ class CSVM
 		std::vector<real_t> CG(const std::vector<real_t> &b, const int , const real_t );
 
 
+        inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines);
         #ifdef WITH_OPENCL
-            inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines);
             inline void resizeData(int boundary);
             inline void resizeData(const int device, int boundary);
             inline void resizeDatalast(int boundary);
@@ -95,8 +95,8 @@ class CSVM
         #endif
 
         #ifdef WITH_CUDA
-            real_t *data_d;
-            real_t *datlast;
+            std::vector<real_t *> data_d;
+            std::vector<real_t *> datlast_d;
             real_t *w_d;
         #endif
     };
