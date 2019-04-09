@@ -1,6 +1,8 @@
 #include "CSVM.hpp"
 #include "cuda-kernel.hpp"
 
+
+
 #include "../src/OpenCL/manager/configuration.hpp"
 #include "../src/OpenCL/manager/device.hpp"
 #include "../src/OpenCL/manager/manager.hpp"
@@ -168,8 +170,8 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::fill(x.end() - boundary_size, x.end(), 0.0);
 
 	std::vector<opencl::DevicePtrOpenCL<real_t> > x_cl;
-	for(int i = 0; i < count_devices; ++i) x_cl.emplace_back( devices[i] , dept_all);
-	for(int i = 0; i < count_devices; ++i) x_cl[i].to_device(x);
+	for(int device = 0; device < count_devices; ++device) x_cl.emplace_back( devices[device] , dept_all);
+	for(int device = 0; device < count_devices; ++device) x_cl[device].to_device(x);
 	
 	std::vector<real_t> r(dept_all, 0.0);
 
@@ -237,7 +239,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	switch(kernel){
 		case 0: 
-			#pragma omp parallel for
+			// #pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device){  
 				if (!svm_kernel_linear[device]) {
 					std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
@@ -303,17 +305,17 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				r[j] += ret[j];
 			}
 		}
+
 		for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(r);
 	}
 	real_t delta = mult(r.data(), r.data(), dept); //TODO:	
 	const real_t delta0 = delta;
 	real_t alpha_cd, beta;
-	real_t* Ad;
+	std::vector<real_t> Ad(dept);
 
 
 	std::vector<opencl::DevicePtrOpenCL<real_t> > Ad_cl;
 	for(int device = 0; device < count_devices; ++device) Ad_cl.emplace_back(devices[device], dept_all);
-	Ad = new real_t[dept];
 
 	
 
@@ -402,14 +404,13 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					}
 				// std::cout << Ad[0] << " ";
 			}
-			std::copy(buffer.begin(), buffer.begin()+dept, Ad);
+			std::copy(buffer.begin(), buffer.begin()+dept, Ad.data());
 			for(int device = 0; device < count_devices; ++device) Ad_cl[device].to_device(buffer);
 			// std::cout << std::endl;
 		}
 	
 
-		alpha_cd = delta / mult(d , Ad,  dept);
-		
+		alpha_cd = delta / mult(d , Ad.data(),  dept);
 		//TODO: auf GPU
 		std::vector<real_t> buffer_r(dept_all );
 		r_cl[0].resize(dept_all);
@@ -424,7 +425,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 		
 
-		if(run%50 == 0){
+		if(run%50 == 49){
 			std::vector<real_t> buffer(b);
 			buffer.resize(dept_all);
 			r_cl.resize(dept_all);
@@ -467,7 +468,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 					const int start = device * Ncols / count_devices;
 					const int end = (device + 1) * Ncols / count_devices;
 					std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)))};
-					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost , 1/cost, Ncols, Nrows, -1, start, end);
+					opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost, 1/cost, Ncols, Nrows, -1, start, end);
 					grid_size[0] *= THREADBLOCK_SIZE;
 					grid_size[1] *= THREADBLOCK_SIZE;
 					std::vector<size_t> block_size{THREADBLOCK_SIZE, THREADBLOCK_SIZE};
@@ -510,7 +511,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		
 		delta = mult(r.data() , r.data(), dept); //TODO:
 		if(delta < eps * eps * delta0) break;
-		beta = -mult(r.data(), Ad, dept) / mult(d, Ad, dept); //TODO:
+		beta = -mult(r.data(), Ad.data(), dept) / mult(d, Ad.data(), dept); //TODO:
 		add(mult(beta, d, dept),r.data(), d, dept);//TODO:
 
 
@@ -540,6 +541,6 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		q_cl[0].from_device(buffer);
 		std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
 	}
-	delete[] d, Ad;
+	delete[] d;
 	return ret_q;
 }

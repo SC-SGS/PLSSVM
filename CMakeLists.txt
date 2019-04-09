@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12.0)
-set(CMAKE_CXX_STANDARD 14) 
+#set(CMAKE_CXX_STANDARD 14) 
 
 option(WITH_CUDA "Compile CUDA svm" ON)
 option(WITH_OPENCL "Compile OPENCL svm" ON)
@@ -8,10 +8,17 @@ set(CMAKE_MAKEFILE_DEPENDS "CMakeLists.txt")
 
 if(WITH_CUDA)
   project (SupportVectorMachine LANGUAGES CXX CUDA)
-  set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O0 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
-  #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
+  set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O3 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
+  # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_35,code=sm_35 -Xcompiler '-fopenmp' --use_fast_math")
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11  -Xcompiler '-fopenmp' --use_fast_math")
+  if(APPLE)
+    # We need to add the path to the driver (libcuda.dylib) as an rpath, 
+    # so that the static cuda runtime can find it at runtime.
+    set_property(TARGET particle_test 
+                PROPERTY
+                BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+  endif(APPLE)
 else(WITH_CUDA)
   project (SupportVectorMachine LANGUAGES CXX)
 endif(WITH_CUDA)
@@ -44,6 +51,7 @@ if(WITH_CUDA)
     src/CUDA/CSVM.cu
     src/CUDA/svm-kernel.cu
     src/CUDA/cuda-kernel.cu
+    src/OpenCL/cuda-kernel.cpp #TODO:
     src/CUDA/predict.cu
     )
 endif(WITH_CUDA)
