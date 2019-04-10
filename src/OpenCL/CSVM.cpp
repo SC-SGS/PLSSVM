@@ -239,7 +239,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 
 	switch(kernel){
 		case 0: 
-			// #pragma omp parallel for
+			#pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device){  
 				if (!svm_kernel_linear[device]) {
 					std::string kernel_src_file_name{"../src/OpenCL/kernels/svm-kernel-linear.cl"};
