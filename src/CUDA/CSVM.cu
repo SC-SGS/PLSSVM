@@ -84,13 +84,13 @@ void CSVM::loadDataDevice(){
 	for(int device = 0; device < count_devices; ++device){ gpuErrchk(cudaSetDevice(device));gpuErrchk(cudaMalloc((void **) &datlast_d[device], (Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t)));}
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
 	datalast.resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
-	#pragma opm parallel
+	#pragma opm parallel for
 	for(int device = 0; device < count_devices; ++device) { gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMemcpy(datlast_d[device], datalast.data(), (Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t),cudaMemcpyHostToDevice));}
 	datalast.resize(Ndatas_data - 1);
 	for(int device = 0; device < count_devices; ++device) {gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMalloc((void **) &data_d[device], Nfeatures_data * (Ndatas_data + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t))); }
 
 	
-	#pragma opm parallel
+	#pragma opm parallel for
 	for(int device = 0; device < count_devices; ++device){
 		loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, 0 , Ndatas_data - 1);
 	}
@@ -180,7 +180,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	gpuErrchk(cudaSetDevice(0));
 	gpuErrchk(cudaMemcpy(r_d[0], b.data(), dept * sizeof(real_t), cudaMemcpyHostToDevice));
 	gpuErrchk(cudaMemset(r_d[0] + dept, 0, (dept_all - dept) * sizeof(real_t)));
-	#pragma opm parallel
+	#pragma opm parallel for
 	for(int device = 1; device < count_devices; ++device) { gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMemset(r_d[device] , 0, dept_all * sizeof(real_t)));}
 	d = new real_t[dept];
 
@@ -215,7 +215,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			for(int i = 0; i < dept_all; ++i) buffer[i] += ret[i];
 		} 
 		
-		#pragma opm parallel
+		#pragma opm parallel for
 		for(int device = 0; device < count_devices; ++device) { 
 			gpuErrchk(cudaSetDevice(device));
 			gpuErrchk(cudaMemcpy(q_d[device], buffer.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
@@ -341,7 +341,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		gpuErrchk(cudaMemcpy(buffer_r.data(), r_d[0], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
 		add_mult_(((int) dept/1024) + 1, std::min(1024, (int) dept),x.data(),buffer_r.data(),alpha_cd,dept);
 
-		#pragma opm parallel
+		#pragma opm parallel for
 		for(int device = 0; device < count_devices; ++device) { 
 			gpuErrchk(cudaSetDevice(device));
 			gpuErrchk(cudaMemcpy(x_d[device], x.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
@@ -351,7 +351,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			buffer.resize(dept_all);
 			gpuErrchk(cudaSetDevice(0));
 			gpuErrchk(cudaMemcpy(r_d[0], buffer.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
-			#pragma opm parallel
+			#pragma opm parallel for
 			for(int device = 1; device < count_devices; ++device) { 
 				gpuErrchk(cudaSetDevice(device));
 				gpuErrchk(cudaMemset(r_d[device], 0, dept_all * sizeof(real_t)));
@@ -386,7 +386,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			{
 				gpuErrchk(cudaSetDevice(0));
 				gpuErrchk(cudaMemcpy(r.data(), r_d[0], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
-				#pragma opm parallel
+				#pragma opm parallel for
 				for(int device = 1; device < count_devices; ++device){
 					gpuErrchk(cudaSetDevice(device));
 					std::vector<real_t> ret(dept_all, 0 );
@@ -395,7 +395,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						r[j] += ret[j];
 					}
 				}
-				#pragma opm parallel
+				#pragma opm parallel for
 				for(int device = 0; device < count_devices; ++device) { 
 					gpuErrchk(cudaSetDevice(device));
 					gpuErrchk(cudaMemcpy(r_d[device], r.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
@@ -416,7 +416,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		{
 			std::vector<real_t> buffer(dept_all, 0.0);
 			std::copy(d, d+dept, buffer.begin());
-			#pragma opm parallel
+			#pragma opm parallel for
 			for(int device = 0; device < count_devices; ++device) { 
 				gpuErrchk(cudaSetDevice(device)); 
 				gpuErrchk(cudaMemcpy(r_d[device], buffer.data(), dept_all*sizeof(real_t), cudaMemcpyHostToDevice));
