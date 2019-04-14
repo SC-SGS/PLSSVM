@@ -1,38 +1,63 @@
 #include "CSVM.hpp"
 
+// #include <type_traits>
+
+//   inline real_t storeal_t(const std::string& str, std::size_t* pos = 0) {
+// 	  if constexpr (std::is_same_v<real_t, double>) {
+// 	   return std::stod(str, pos); 
+// 	  }
+// 	  return std::stof(str, pos); 
+// 	}
+
+
+
 //Einlesen libsvm Dateien
 void CSVM::libsvmParser(std::string &filename){
 	unsigned maxsize = 0;
 	std::ifstream file(filename);
 	std::string line;
-	maxsize = 0;
-	std::stringstream iss;
-	std::stringstream tokens;
-	unsigned index;
-	unsigned i;
-	std::vector<real_t> vline;
+	
+	
+	std::vector<std::string> dat;
+    while (std::getline(file, line))
+    {
+		dat.emplace_back(line);
+    }
+	file.close();
+    std::cout << "Read " << dat.size()  << " lines "<< std::endl;
+	data.resize(dat.size());
+	value.resize(dat.size());
+	std::istringstream iss;
 	std::string token;
-	while (std::getline(file, line))
+	std::istringstream tokens;
+	#pragma omp parallel for shared(data), private(token, tokens, iss)
+	for(int i = 0; i < dat.size(); ++i)
 	{
-		iss.str(line);
-		i = 0; 
+		iss.str(dat[i]);
+		std::vector<real_t> vline(maxsize);
 		std::getline(iss, token, ' ');
-		value.emplace_back(std::stod(token,nullptr) > 0 ? 1 : -1);
+
+		int val = stof(token,nullptr) > 0 ? 1 : -1;
+		
 		while (std::getline(iss, token, ' ')){
 			if(token != ""){
 				tokens.str(token);
 				std::getline(tokens, token, ':');
-				index = std::stoul(token,nullptr);
-				while (index > i++) vline.emplace_back(0.0);
+				const int index = std::stoul(token,nullptr);
+				if(index >= vline.size()) vline.resize(index +1);
 				std::getline(tokens, token);	
-				vline.emplace_back(std::stod(token, nullptr));
+				vline[index] = stod(token, nullptr);
 			}
 			tokens.clear();
 		}
 		iss.clear();
-		data.push_back(vline);
-		vline.clear();
-		maxsize = i > maxsize ? i : maxsize;
+		//TODO evtl pushback
+		value[i] = val;
+		data[i] = vline;
+		#pragma omp critical
+		{
+		maxsize = vline.size() > maxsize ? vline.size() : maxsize;
+		}
 	}
 	#pragma omp parallel for
 	for (int i = 0; i < data.size(); ++i) {
