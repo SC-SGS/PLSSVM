@@ -85,7 +85,7 @@ if(WITH_OPENCL)
   target_compile_definitions(svm-OCL PUBLIC WITH_OPENCL)
   target_compile_options(svm-OCL PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-OCL OpenCL)
-  add_executable(svm-train-OCL src/small.cpp)
+  add_executable(svm-train-OCL src/main.cpp)
   target_compile_options(svm-train-OCL PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-OCL svm-OCL)
 endif(WITH_OPENCL)
@@ -93,14 +93,14 @@ endif(WITH_OPENCL)
 if(WITH_CUDA)
   add_library(svm-CUDA SHARED ${SOURCES_CUDA})
   target_compile_definitions(svm-CUDA PUBLIC WITH_CUDA)
-  add_executable(svm-train-CUDA src/small.cpp)
+  add_executable(svm-train-CUDA src/main.cpp)
   target_compile_options(svm-train-CUDA PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-CUDA svm-CUDA)
 endif(WITH_CUDA)
 
 add_library(svm SHARED ${SOURCES})
 target_compile_options(svm PUBLIC) # -march=native -mtune=native
-add_executable(svm-train-cpu src/small.cpp)
+add_executable(svm-train-cpu src/main.cpp)
 target_compile_options(svm-train-cpu PUBLIC) # -march=native -mtune=native
 target_link_libraries(svm-train-cpu svm)
 
