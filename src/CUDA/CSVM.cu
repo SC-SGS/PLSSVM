@@ -133,7 +133,7 @@ void CSVM::loadDataDevice(const int device, const int boundary, const int start_
 	gpuErrchk(cudaSetDevice(device));
 
 	std::vector<real_t> vec;
-	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
+	vec.reserve(Nfeatures_data * (Ndatas_data - start_line + boundary) );
 	for(size_t col = 0; col < Nfeatures_data; ++col){
 		for(size_t row = start_line; row < Ndatas_data - 1; ++row){
 			vec.push_back(data[row][col]);
