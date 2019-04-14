@@ -89,10 +89,13 @@ void CSVM::loadDataDevice(){
 	datalast.resize(Ndatas_data - 1);
 	for(int device = 0; device < count_devices; ++device) {gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMalloc((void **) &data_d[device], Nfeatures_data * (Ndatas_data + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t))); }
 
-	
+	const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+
 	#pragma opm parallel for
 	for(int device = 0; device < count_devices; ++device){
-		loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, 0 , Ndatas_data - 1);
+		gpuErrchk(cudaSetDevice(device));
+
+		gpuErrchk(cudaMemcpy(data_d[device], transformet_data.data(), Nfeatures_data * (Ndatas_data - 1  + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t), cudaMemcpyHostToDevice));
 	}
 }
 
@@ -127,11 +130,7 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 
 }
 
-
-
-void CSVM::loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines){
-	gpuErrchk(cudaSetDevice(device));
-
+std::vector<real_t> CSVM::transform_data(const int start_line, const int boundary){
 	std::vector<real_t> vec;
 	vec.reserve(Nfeatures_data * (Ndatas_data - start_line + boundary) );
 	for(size_t col = 0; col < Nfeatures_data; ++col){
@@ -142,8 +141,12 @@ void CSVM::loadDataDevice(const int device, const int boundary, const int start_
 			vec.push_back(0.0);
 		}
 	}
-	gpuErrchk(cudaMemcpy(data_d[device], vec.data(), Nfeatures_data * (Ndatas_data - start_line + boundary) * sizeof(real_t), cudaMemcpyHostToDevice));
+	return vec;
+
 }
+
+
+
 
 
 

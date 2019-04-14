@@ -77,8 +77,8 @@ class CSVM
 
 		std::vector<real_t> CG(const std::vector<real_t> &b, const int , const real_t );
 
-
-        inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines);
+        std::vector<real_t> transform_data(const int start_line, const int boundary);
+        inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
         #ifdef WITH_OPENCL
             inline void resizeData(int boundary);
             inline void resizeData(const int device, int boundary);
