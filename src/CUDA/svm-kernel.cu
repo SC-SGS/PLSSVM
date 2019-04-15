@@ -17,10 +17,9 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 			__syncthreads();
 			#pragma unroll(INTERNALBLOCK_SIZE)
 			for(size_t block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
-				const size_t idx = 0; //TODO: parallel laden
-				if(blockIdx.x == 180 && blockIdx.y == 0) printf("%i", block_id + vec_index + i);
+				const size_t idx = block_id % THREADBLOCK_SIZE; //TODO: parallel laden
 				if(threadIdx.y == idx) data_intern_i[threadIdx.x][block_id] = data_d[block_id + vec_index + i ]; 
-				const size_t idx_2 = 0; //lastbalancieung //TODO: constexpr 
+				const size_t idx_2 = block_id % THREADBLOCK_SIZE ; //lastbalancieung //TODO: constexpr 
 				if(threadIdx.x == idx_2) data_intern_j[threadIdx.y][block_id] = data_d[block_id + vec_index + j];
 			}
 			__syncthreads();
