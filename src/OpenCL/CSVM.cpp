@@ -81,10 +81,14 @@ void CSVM::loadDataDevice(){
 
 	for(int device = 0; device < count_devices; ++device) data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1)));
 	
-	// for(int device = 0; device < count_devices; ++device) resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);	
+	auto begin_transform = std::chrono::high_resolution_clock::now();
+	const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+	auto end_transform = std::chrono::high_resolution_clock::now();
+	if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_transform-begin_transform).count() << " ms transformiert" << std::endl;}
 	#pragma opm parallel
 	for(int device = 0; device < count_devices; ++device){
-		loadDataDevice(device, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, 0 , Ndatas_data - 1);
+		data_cl[device] = opencl::DevicePtrOpenCL<real_t>( Nfeatures_data * (Ndatas_data - 1  + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) );
+		data_cl[device].to_device(transformet_data);
 	}
 }
 
@@ -153,6 +157,21 @@ void CSVM::resizeData(const int device, const int boundary){
 		}
 	}
 	data_cl[device].to_device(vec);
+}
+
+std::vector<real_t> CSVM::transform_data(const int start_line, const int boundary){
+	std::vector<real_t> vec;
+	vec.reserve(Nfeatures_data * (Ndatas_data - start_line + boundary) );
+	for(size_t col = 0; col < Nfeatures_data; ++col){
+		for(size_t row = 0; row < Ndatas_data - 1; ++row){
+			vec.push_back(data[row][col]);
+		}
+		for(int i = 0 ; i < boundary ; ++i){
+			vec.push_back(0.0);
+		}
+	}
+	return vec;
+
 }
 
 
@@ -402,11 +421,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 				for(int j = 0; j < dept  ; ++j){
 						buffer[j] += ret[j];
 					}
-				// std::cout << Ad[0] << " ";
 			}
 			std::copy(buffer.begin(), buffer.begin()+dept, Ad.data());
 			for(int device = 0; device < count_devices; ++device) Ad_cl[device].to_device(buffer);
-			// std::cout << std::endl;
 		}
 	
 
