@@ -11,16 +11,17 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 	
 	if(i >= j){
 		i += threadIdx.x * INTERNALBLOCK_SIZE;
+		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
 		j += threadIdx.y * INTERNALBLOCK_SIZE;
 		//cache data
 		for(int vec_index = start * Nrows; vec_index < end * Nrows; vec_index += Nrows ){
 			__syncthreads();
 			#pragma unroll(INTERNALBLOCK_SIZE)
 			for(size_t block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
-				const size_t idx = block_id % THREADBLOCK_SIZE; //TODO: parallel laden
+				const size_t idx = block_id % THREADBLOCK_SIZE;
 				if(threadIdx.y == idx) data_intern_i[threadIdx.x][block_id] = data_d[block_id + vec_index + i ]; 
-				const size_t idx_2 = block_id % THREADBLOCK_SIZE ; //lastbalancieung //TODO: constexpr 
-				if(threadIdx.x == idx_2) data_intern_j[threadIdx.y][block_id] = data_d[block_id + vec_index + j];
+				const size_t idx_2 = block_id + INTERNALBLOCK_SIZE % THREADBLOCK_SIZE ;  //TODO: constexpr 
+				if(threadIdx.y == idx_2) data_intern_j[threadIdx.x][block_id] = data_d[block_id + vec_index + ji];
 			}
 			__syncthreads();
 
@@ -39,31 +40,55 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 			}
 		}
 
-		#pragma unroll(INTERNALBLOCK_SIZE) 
-		for(size_t k = j; k < INTERNALBLOCK_SIZE + j; ++k){
-			const real_t q_j = q[k];
-			real_t ret_k = 0.0;
-			#pragma unroll(INTERNALBLOCK_SIZE) 
-			for(size_t l = i; l < INTERNALBLOCK_SIZE + i; ++l){
+		#pragma unroll(INTERNALBLOCK_SIZE)
+		for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
+			#pragma unroll(INTERNALBLOCK_SIZE)
+			for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 				real_t temp;
-				if(start == 0){
-				temp = (matr[k - j][l - i]  + QA_cost - q[l] - q_j) * add;
+				if(start == 0){ // auslagern
+					temp = (matr[x][y]  + QA_cost - q[i + y] - q[j + x]) * add;
 				}else{
-					temp = matr[k - j][l - i] * add;
+					temp = matr[x][y]  * add;
 				}
-				if(l > k){
-					atomicAdd(&ret[l], temp * d[k]);
-					ret_k += temp * d[l];
-				}else if(l == k){
-					if(start == 0){
-						ret_k += (temp + cost * add) * d[l];
+				if(i + x > j + y){
+					atomicAdd(&ret[i + y], temp * d[j + x]);
+					atomicAdd(&ret[j + x], temp * d[i + y]);
+				}else if(i + x == j + y){
+					if(start == 0){  // auslagern
+						atomicAdd(&ret[j + x], (temp + cost * add) * d[i + y]);
 					}else{
-						ret_k += temp * d[l];
+						atomicAdd(&ret[j + x], temp * d[i + y]);
 					}
+					
 				}
 			}
-			atomicAdd(&ret[k], ret_k);
 		}
+
+		// #pragma unroll(INTERNALBLOCK_SIZE) 
+		// for(size_t k = j; k < INTERNALBLOCK_SIZE + j; ++k){
+		// 	const real_t q_j = q[k];
+		// 	// real_t ret_k = 0.0;
+		// 	#pragma unroll(INTERNALBLOCK_SIZE) 
+		// 	for(size_t l = i; l < INTERNALBLOCK_SIZE + i; ++l){
+		// 		// real_t temp;
+		// 		//if(start == 0){
+		// 		//temp = (matr[k - j][l - i]  + QA_cost - q[l] - q_j) * add;
+		// 		//}else{
+		// 		const real_t temp = matr[k - j][l - i] * add;
+		// 		//}
+		// 		if(l > k){
+		// 			atomicAdd(&ret[l], temp * d[k]);
+		// 			atomicAdd(&ret[k], temp * d[l]);
+		// 		}else if(l == k){
+		// 			// if(start == 0){
+		// 				atomicAdd(&ret[k], (temp + cost * add) * d[l]);
+		// 			// }else{
+		// 				// ret_k += temp * d[l];
+		// 			// }
+		// 		}
+		// 	}
+		// 	// atomicAdd(&ret[k], ret_k);
+		// }
 	}
 }
 
