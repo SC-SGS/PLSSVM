@@ -30,53 +30,13 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
 	
 	}
 
-void CSVM::learn(){
-	std::vector<real_t> q;
-	std::vector<real_t> b = value;
-	#pragma omp parallel sections
-	{
-	#pragma omp section // generate right side from eguation
-		{
-			b.pop_back();
-			b -= value.back();
-		}
-		#pragma omp section // generate botom right from A
-		{
-			QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
-		}
-	}
-
-	
-	if(info)std::cout << "start CG" << std::endl;
-	//solve minimization
-	q = CG(b,Nfeatures_data,epsilon);
-    alpha.emplace_back(-sum(alpha));
-	bias = value.back() - QA_cost * alpha.back() - (q * alpha);
-}
-
-
-real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
-	switch(kernel){
-		case 0: return xi * xj;
-		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
-		case 2: {real_t temp = 0;
-			for(int i = 0; i < xi.size(); ++i){
-				temp += (xi-xj)*(xi-xj);
-			}
-			return exp(-gamma * temp);}
-		default: throw std::runtime_error("Can not decide wich kernel!");
-	}
-	
-}
-
-
 void CSVM::loadDataDevice(){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 	for(int device = 0; device < count_devices; ++device) datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t> (devices[device], (Nfeatures_data)));
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
-	#pragma opm parallel
+	#pragma omp parallel
 	for(int device = 0; device < count_devices; ++device) datlast_cl[device].to_device(datalast);
-	#pragma opm parallel
+	#pragma omp parallel
 	for(int device = 0; device < count_devices; ++device) datlast_cl[device].resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 
 	for(int device = 0; device < count_devices; ++device) data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1)));
@@ -85,62 +45,13 @@ void CSVM::loadDataDevice(){
 	const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 	auto end_transform = std::chrono::high_resolution_clock::now();
 	if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_transform-begin_transform).count() << " ms transformiert" << std::endl;}
-	#pragma opm parallel
+	#pragma omp parallel
 	for(int device = 0; device < count_devices; ++device){
-		data_cl[device] = opencl::DevicePtrOpenCL<real_t>( Nfeatures_data * (Ndatas_data - 1  + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) );
+		data_cl[device] = opencl::DevicePtrOpenCL<real_t>( devices[device], Nfeatures_data * (Ndatas_data - 1  + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) );
 		data_cl[device].to_device(transformet_data);
 	}
 }
 
-
-
-void CSVM::learn(std::string &filename, std::string &output_filename) {
-	auto begin_parse = std::chrono::high_resolution_clock::now();
-	if(filename.size() > 5 && endsWith(filename, ".arff")){
-		arffParser(filename);
-	}else{
-		libsvmParser(filename);
-	}
-
-	auto end_parse = std::chrono::high_resolution_clock::now();
-	if(info){std::clog << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data  <<" in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << " ms eingelesen" << std::endl << std::endl ;}
-	loadDataDevice();
-	
-	auto end_gpu = std::chrono::high_resolution_clock::now();
-	
-	if(info) std::clog << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << " ms auf die Gpu geladen" << std::endl << std::endl ;
-
-	learn();
-	auto end_learn = std::chrono::high_resolution_clock::now();
-    if(info) std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << " ms gelernt" << std::endl;
-
-	writeModel(output_filename);
-	auto end_write = std::chrono::high_resolution_clock::now();
-    if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_write-end_learn).count() << " ms geschrieben" << std::endl;
-    }else if(times){
-		std::clog << data.size()<<", "<< Nfeatures_data  <<", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", "<< std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count()<< ", " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_write-end_learn).count() << std::endl;
-	} 
-
-}
-
-
-
-void CSVM::loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines){
-	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
-
-	data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1 - start_line + boundary));
-	std::vector<real_t> vec;
-	//vec.reserve(Ndatas_data + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
-	for(size_t col = 0; col < Nfeatures_data; ++col){
-		for(size_t row = start_line; row < Ndatas_data - 1; ++row){
-			vec.push_back(data[row][col]);
-		}
-		for(int i = 0 ; i < boundary ; ++i){
-			vec.push_back(0.0);
-		}
-	}
-	data_cl[device].to_device(vec);
-}
 
 void CSVM::resizeData(const int device, const int boundary){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
@@ -157,21 +68,6 @@ void CSVM::resizeData(const int device, const int boundary){
 		}
 	}
 	data_cl[device].to_device(vec);
-}
-
-std::vector<real_t> CSVM::transform_data(const int start_line, const int boundary){
-	std::vector<real_t> vec;
-	vec.reserve(Nfeatures_data * (Ndatas_data - start_line + boundary) );
-	for(size_t col = 0; col < Nfeatures_data; ++col){
-		for(size_t row = 0; row < Ndatas_data - 1; ++row){
-			vec.push_back(data[row][col]);
-		}
-		for(int i = 0 ; i < boundary ; ++i){
-			vec.push_back(0.0);
-		}
-	}
-	return vec;
-
 }
 
 
@@ -201,7 +97,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::vector<real_t> toDevice(dept_all, 0.0);
 	std::copy(b.begin(), b.begin() + dept, toDevice.begin());
 	r_cl[0].to_device(std::vector<real_t>(toDevice));
-	#pragma opm parallel
+	#pragma omp parallel
 	for(int device = 1; device < count_devices; ++device) r_cl[device].to_device(std::vector<real_t>(zeros));
 	d = new real_t[dept];
 
@@ -252,7 +148,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			q_cl[device].from_device(ret);
 			for(int i = 0; i < dept_all; ++i) buffer[i] += ret[i];
 		} 
-		#pragma opm parallel
+		#pragma omp parallel
 		for(int device = 0; device < count_devices; ++device) q_cl[device].to_device(buffer);
 	}
 
@@ -343,10 +239,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		if(info)std::cout << "Start Iteration: " << run << std::endl;
 		//Ad = A * d
 		{
-			#pragma opm parallel
+			#pragma omp parallel
 			for(int device = 0; device < count_devices; ++device) Ad_cl[device].to_device(zeros);
 			//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
-			#pragma opm parallel
+			#pragma omp parallel
 			for(int device = 0; device < count_devices; ++device) {
 				std::vector<real_t> buffer( dept_all);
 				r_cl[device].resize(dept_all);
@@ -433,9 +329,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		r_cl[0].resize(dept_all);
 		r_cl[0].from_device(buffer_r);
 		add_mult_(((int) dept/1024) + 1, std::min(1024, (int) dept),x.data(),buffer_r.data(),alpha_cd,dept);
-		#pragma opm parallel
+		#pragma omp parallel
 		for(int device = 0; device < count_devices; ++device) x_cl[device].resize(dept_all);
-		#pragma opm parallel
+		#pragma omp parallel
 		for(int device = 0; device < count_devices; ++device) x_cl[device].to_device(x);
 
 		
@@ -447,7 +343,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			buffer.resize(dept_all);
 			r_cl.resize(dept_all);
 			r_cl[0].to_device(buffer);
-			#pragma opm parallel
+			#pragma omp parallel
 			for(int device = 1; device < count_devices; ++device) r_cl[device].to_device(zeros);
 			switch(kernel){
 			case 0: 
@@ -517,7 +413,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						r[j] += ret[j];
 					}
 				}
-				#pragma opm parallel
+				#pragma omp parallel
 				for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(r);
 			}
 		}else{
@@ -535,9 +431,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		{
 			std::vector<real_t> buffer(dept_all, 0.0);
 			std::copy(d, d+dept, buffer.begin());
-			#pragma opm parallel
+			#pragma omp parallel
 			for(int device = 0; device < count_devices; ++device) r_cl[device].resize(dept_all);
-			#pragma opm parallel
+			#pragma omp parallel
 			for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(buffer);
 
 		}
