@@ -40,20 +40,6 @@ real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
 }
 
 
-std::vector<real_t> CSVM::transform_data(const int start_line, const int boundary){
-	std::vector<real_t> vec(Nfeatures_data * (Ndatas_data - 1 + boundary));
-	#pragma omp parallel for collapse(2)
-	for(size_t col = 0; col < Nfeatures_data; ++col){
-		for(size_t row = 0; row < Ndatas_data - 1; ++row){
-			vec[col * (Ndatas_data - 1 + boundary) + row ] = data[row][col];
-		}
-		// for(int i = 0 ; i < boundary ; ++i){
-		// 	vec[col * (Ndatas_data + boundary) + Ndatas_data - 1 + i ] = 0;
-		// }
-	}
-	return vec;
-
-}
 
 void CSVM::learn(std::string &filename, std::string &output_filename) {
 	auto begin_parse = std::chrono::high_resolution_clock::now();
