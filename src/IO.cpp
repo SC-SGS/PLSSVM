@@ -160,10 +160,7 @@ void CSVM::writeModel(std::string &model_name){
 				#pragma omp flush (count, model)
 			}
 		}
-		
 
-		
-		
 		// Alle SV Klasse -1
 		#pragma omp for nowait
 		for(int i = 0; i < alpha.size(); ++i){
