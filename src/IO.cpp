@@ -138,31 +138,43 @@ void CSVM::writeModel(std::string &model_name){
 	model << "SV\n";
 	model << std::scientific;
 
+	int count = 0;
+
 	#pragma omp parallel
 	{
-		std::stringstream out;
+		std::stringstream out_pos;
+		std::stringstream out_neg;
 		
 		// Alle SV Klasse 1
-		#pragma omp for
+		#pragma omp for nowait
 		for(int i = 0; i < alpha.size(); ++i){
-			if(value[i] > 0) out << alpha[i]  << " " << data[i] << "\n";
+			if(value[i] > 0) out_pos << alpha[i]  << " " << data[i] << "\n";
 		}
 
-		#pragma omp critical
-		model << out.rdbuf();;
-	}
-	#pragma omp parallel
-	{
-		std::stringstream out;
-		
-		// Alle SV Klasse -1
-		#pragma omp for
-		for(int i = 0; i < alpha.size(); ++i){
-			if(value[i] < 0) out << alpha[i]  << " " << data[i] << "\n";
+		#pragma omp task shared(model, count, out_pos)
+		{
+			#pragma omp critical
+			{
+				model << out_pos.rdbuf();
+				count++;
+				#pragma omp flush (count, model)
+			}
 		}
 		
+
+		
+		
+		// Alle SV Klasse -1
+		#pragma omp for nowait
+		for(int i = 0; i < alpha.size(); ++i){
+			if(value[i] < 0) out_neg << alpha[i]  << " " << data[i] << "\n";
+		}
+
+		//Wait for all have writen Klass 1
+		while(count < omp_get_thread_num()) {};
+
 		#pragma omp critical
-		model << out.rdbuf();;
+		model << out_neg.rdbuf();
 	}
 	model.close();
 	
