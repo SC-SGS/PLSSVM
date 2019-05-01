@@ -72,7 +72,7 @@ real_t operator *(real_t* vec1,const std::vector<real_t> &vec2)
 std::ostream& operator<<(std::ostream &out,const std::vector<std::vector<real_t> > &matr)
 {
     for(unsigned i = 0; i < matr.size(); ++i){
-        out << matr[i] << std::endl;
+        out << matr[i] << '\n';
     }
     return out;
 }
