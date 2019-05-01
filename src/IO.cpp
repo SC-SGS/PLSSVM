@@ -138,13 +138,31 @@ void CSVM::writeModel(std::string &model_name){
 	model << "SV\n";
 	model << std::scientific;
 
-	// Alle SV Klasse 1
-	for(int i = 0; i < alpha.size(); ++i){
-		if(value[i] > 0) model << alpha[i]  << " " << data[i] << "\n";
+	#pragma omp parallel
+	{
+		std::stringstream out;
+		
+		// Alle SV Klasse 1
+		#pragma omp for
+		for(int i = 0; i < alpha.size(); ++i){
+			if(value[i] > 0) out << alpha[i]  << " " << data[i] << "\n";
+		}
+
+		#pragma omp critical
+		model << out.rdbuf();;
 	}
-	// Alle SV Klasse -1
-	for(int i = 0; i < alpha.size(); ++i){
-		if(value[i] < 0) model << alpha[i]  << " " << data[i] << "\n";
+	#pragma omp parallel
+	{
+		std::stringstream out;
+		
+		// Alle SV Klasse -1
+		#pragma omp for
+		for(int i = 0; i < alpha.size(); ++i){
+			if(value[i] < 0) out << alpha[i]  << " " << data[i] << "\n";
+		}
+		
+		#pragma omp critical
+		model << out.rdbuf();;
 	}
 	model.close();
 	
