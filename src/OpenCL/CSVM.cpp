@@ -34,9 +34,9 @@ void CSVM::loadDataDevice(){
 	std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 	for(int device = 0; device < count_devices; ++device) datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t> (devices[device], (Nfeatures_data)));
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
-	#pragma omp parallel
+	#pragma omp parallel for
 	for(int device = 0; device < count_devices; ++device) datlast_cl[device].to_device(datalast);
-	#pragma omp parallel
+	#pragma omp parallel for
 	for(int device = 0; device < count_devices; ++device) datlast_cl[device].resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 
 	for(int device = 0; device < count_devices; ++device) data_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], Nfeatures_data * (Ndatas_data - 1)));
@@ -45,7 +45,7 @@ void CSVM::loadDataDevice(){
 	const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 	auto end_transform = std::chrono::high_resolution_clock::now();
 	if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_transform-begin_transform).count() << " ms transformiert" << std::endl;}
-	#pragma omp parallel
+	#pragma omp parallel for
 	for(int device = 0; device < count_devices; ++device){
 		data_cl[device] = opencl::DevicePtrOpenCL<real_t>( devices[device], Nfeatures_data * (Ndatas_data - 1  + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) );
 		data_cl[device].to_device(transformet_data);
@@ -97,7 +97,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	std::vector<real_t> toDevice(dept_all, 0.0);
 	std::copy(b.begin(), b.begin() + dept, toDevice.begin());
 	r_cl[0].to_device(std::vector<real_t>(toDevice));
-	#pragma omp parallel
+	#pragma omp parallel for
 	for(int device = 1; device < count_devices; ++device) r_cl[device].to_device(std::vector<real_t>(zeros));
 	d = new real_t[dept];
 
@@ -239,10 +239,10 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		if(info)std::cout << "Start Iteration: " << run << std::endl;
 		//Ad = A * d
 		{
-			#pragma omp parallel
+			#pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device) Ad_cl[device].to_device(zeros);
 			//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
-			#pragma omp parallel
+			#pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device) {
 				std::vector<real_t> buffer( dept_all);
 				r_cl[device].resize(dept_all);
@@ -343,7 +343,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			buffer.resize(dept_all);
 			r_cl.resize(dept_all);
 			r_cl[0].to_device(buffer);
-			#pragma omp parallel
+			#pragma omp parallel for
 			for(int device = 1; device < count_devices; ++device) r_cl[device].to_device(zeros);
 			switch(kernel){
 			case 0: 
@@ -413,7 +413,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						r[j] += ret[j];
 					}
 				}
-				#pragma omp parallel
+				#pragma omp parallel for
 				for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(r);
 			}
 		}else{
@@ -431,9 +431,9 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		{
 			std::vector<real_t> buffer(dept_all, 0.0);
 			std::copy(d, d+dept, buffer.begin());
-			#pragma omp parallel
+			#pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device) r_cl[device].resize(dept_all);
-			#pragma omp parallel
+			#pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device) r_cl[device].to_device(buffer);
 
 		}

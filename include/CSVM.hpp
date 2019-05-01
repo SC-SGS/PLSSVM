@@ -78,11 +78,11 @@ class CSVM
 		std::vector<real_t> CG(const std::vector<real_t> &b, const int , const real_t );
         
         inline std::vector<real_t> transform_data(const int start_line, const int boundary){
-	std::vector<real_t> vec(Nfeatures_data * (Ndatas_data - 1 + boundary));
-	#pragma omp parallel for collapse(2)
-	for(size_t col = 0; col < Nfeatures_data; ++col){
-		for(size_t row = 0; row < Ndatas_data - 1; ++row){
-			vec[col * (Ndatas_data - 1 + boundary) + row ] = data[row][col];
+            std::vector<real_t> vec(Nfeatures_data * (Ndatas_data - 1 + boundary));
+            #pragma omp parallel for collapse(2)
+            for(size_t col = 0; col < Nfeatures_data; ++col){
+            for(size_t row = 0; row < Ndatas_data - 1; ++row){
+                vec[col * (Ndatas_data - 1 + boundary) + row ] = data[row][col];
 		}
 	}
 	return vec;

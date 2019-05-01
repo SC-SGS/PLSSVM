@@ -48,7 +48,7 @@ void CSVM::loadDataDevice(){
 	for(int device = 0; device < count_devices; ++device) {gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMalloc((void **) &data_d[device], Nfeatures_data * (Ndatas_data + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t))); }
 
 	auto begin_transform = std::chrono::high_resolution_clock::now();
-	const std::vector<real_t>& transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+	const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 	auto end_transform = std::chrono::high_resolution_clock::now();
 	if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_transform-begin_transform).count() << " ms transformiert" << std::endl;}
 	#pragma omp parallel for

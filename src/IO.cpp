@@ -151,15 +151,13 @@ void CSVM::writeModel(std::string &model_name){
 			if(value[i] > 0) out_pos << alpha[i]  << " " << data[i] << "\n";
 		}
 
-		#pragma omp task shared(model, count, out_pos)
+		#pragma omp critical
 		{
-			#pragma omp critical
-			{
-				model << out_pos.rdbuf();
-				count++;
-				#pragma omp flush (count, model)
-			}
+			model << out_pos.rdbuf();
+			count++;
+			#pragma omp flush (count, model)
 		}
+
 
 		// Alle SV Klasse -1
 		#pragma omp for nowait
