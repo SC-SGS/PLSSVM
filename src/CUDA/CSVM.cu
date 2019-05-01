@@ -6,11 +6,6 @@
 int CUDADEVICE = 0;
 
 
-
-
-
-
-
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
@@ -40,114 +35,29 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
 	
 	}
 
-void CSVM::learn(){
-	std::vector<real_t> q;
-	std::vector<real_t> b = value;
-	#pragma omp parallel sections
-	{
-	#pragma omp section // generate right side from eguation
-		{
-			b.pop_back();
-			b -= value.back();
-		}
-		#pragma omp section // generate botom right from A
-		{
-			QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
-		}
-	}
 
-
-	if(info)std::cout << "start CG" << std::endl;
-	//solve minimization
-	q = CG(b,Nfeatures_data,epsilon);
-    alpha.emplace_back(-sum(alpha));
-	bias = value.back() - QA_cost * alpha.back() - (q * alpha);
-}
-
-
-real_t CSVM::kernel_function(std::vector<real_t>& xi, std::vector<real_t>& xj){
-	switch(kernel){
-		case 0: return xi * xj;
-		case 1: return std::pow(gamma * (xi*xj) + coef0 ,degree);
-		case 2: {real_t temp = 0;
-			for(int i = 0; i < xi.size(); ++i){
-				temp += (xi-xj)*(xi-xj);
-			}
-			return exp(-gamma * temp);}
-		default: throw std::runtime_error("Can not decide wich kernel!");
-	}
-	
-}
 
 
 void CSVM::loadDataDevice(){
 	for(int device = 0; device < count_devices; ++device){ gpuErrchk(cudaSetDevice(device));gpuErrchk(cudaMalloc((void **) &datlast_d[device], (Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t)));}
 	std::vector<real_t> datalast(data[Ndatas_data - 1]);
 	datalast.resize(Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
-	#pragma opm parallel for
+	#pragma omp parallel for
 	for(int device = 0; device < count_devices; ++device) { gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMemcpy(datlast_d[device], datalast.data(), (Ndatas_data - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t),cudaMemcpyHostToDevice));}
 	datalast.resize(Ndatas_data - 1);
 	for(int device = 0; device < count_devices; ++device) {gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMalloc((void **) &data_d[device], Nfeatures_data * (Ndatas_data + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t))); }
 
 	auto begin_transform = std::chrono::high_resolution_clock::now();
-	const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+	const std::vector<real_t>& transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 	auto end_transform = std::chrono::high_resolution_clock::now();
 	if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_transform-begin_transform).count() << " ms transformiert" << std::endl;}
-	#pragma opm parallel for
+	#pragma omp parallel for
 	for(int device = 0; device < count_devices; ++device){
 		gpuErrchk(cudaSetDevice(device));
 
 		gpuErrchk(cudaMemcpy(data_d[device], transformet_data.data(), Nfeatures_data * (Ndatas_data - 1  + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t), cudaMemcpyHostToDevice));
 	}
 }
-
-
-
-void CSVM::learn(std::string &filename, std::string &output_filename) {
-	auto begin_parse = std::chrono::high_resolution_clock::now();
-	if(filename.size() > 5 && endsWith(filename, ".arff")){
-		arffParser(filename);
-	}else{
-		libsvmParser(filename);
-	}
-
-	auto end_parse = std::chrono::high_resolution_clock::now();
-	if(info){std::clog << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data  <<" in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << " ms eingelesen" << std::endl << std::endl ;}
-	loadDataDevice();
-	
-	auto end_gpu = std::chrono::high_resolution_clock::now();
-	
-	if(info) std::clog << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << " ms auf die Gpu geladen" << std::endl << std::endl ;
-
-	learn();
-	auto end_learn = std::chrono::high_resolution_clock::now();
-    if(info) std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << " ms gelernt" << std::endl;
-
-	writeModel(output_filename);
-	auto end_write = std::chrono::high_resolution_clock::now();
-    if(info){std::clog << std::endl << data.size()<<" Datenpunkte mit Dimension "<< Nfeatures_data <<" in " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_write-end_learn).count() << " ms geschrieben" << std::endl;
-    }else if(times){
-		std::clog << data.size()<<", "<< Nfeatures_data  <<", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", "<< std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count()<< ", " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " <<std::chrono::duration_cast<std::chrono::milliseconds>(end_write-end_learn).count() << std::endl;
-	} 
-
-}
-
-std::vector<real_t> CSVM::transform_data(const int start_line, const int boundary){
-	std::vector<real_t> vec;
-	vec.reserve(Nfeatures_data * (Ndatas_data - start_line + boundary) );
-	for(size_t col = 0; col < Nfeatures_data; ++col){
-		for(size_t row = 0; row < Ndatas_data - 1; ++row){
-			vec.push_back(data[row][col]);
-		}
-		for(int i = 0 ; i < boundary ; ++i){
-			vec.push_back(0.0);
-		}
-	}
-	return vec;
-
-}
-
-
 
 
 std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const real_t eps)
@@ -182,7 +92,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 	gpuErrchk(cudaSetDevice(0));
 	gpuErrchk(cudaMemcpy(r_d[0], b.data(), dept * sizeof(real_t), cudaMemcpyHostToDevice));
 	gpuErrchk(cudaMemset(r_d[0] + dept, 0, (dept_all - dept) * sizeof(real_t)));
-	#pragma opm parallel for
+	#pragma omp parallel for
 	for(int device = 1; device < count_devices; ++device) { gpuErrchk(cudaSetDevice(device)); gpuErrchk(cudaMemset(r_d[device] , 0, dept_all * sizeof(real_t)));}
 	d = new real_t[dept];
 
@@ -217,7 +127,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			for(int i = 0; i < dept_all; ++i) buffer[i] += ret[i];
 		} 
 		
-		#pragma opm parallel for
+		#pragma omp parallel for
 		for(int device = 0; device < count_devices; ++device) { 
 			gpuErrchk(cudaSetDevice(device));
 			gpuErrchk(cudaMemcpy(q_d[device], buffer.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
@@ -343,7 +253,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		gpuErrchk(cudaMemcpy(buffer_r.data(), r_d[0], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
 		add_mult_(((int) dept/1024) + 1, std::min(1024, (int) dept),x.data(),buffer_r.data(),alpha_cd,dept);
 
-		#pragma opm parallel for
+		#pragma omp parallel for
 		for(int device = 0; device < count_devices; ++device) { 
 			gpuErrchk(cudaSetDevice(device));
 			gpuErrchk(cudaMemcpy(x_d[device], x.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
@@ -353,7 +263,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			buffer.resize(dept_all);
 			gpuErrchk(cudaSetDevice(0));
 			gpuErrchk(cudaMemcpy(r_d[0], buffer.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
-			#pragma opm parallel for
+			#pragma omp parallel for
 			for(int device = 1; device < count_devices; ++device) { 
 				gpuErrchk(cudaSetDevice(device));
 				gpuErrchk(cudaMemset(r_d[device], 0, dept_all * sizeof(real_t)));
@@ -388,7 +298,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 			{
 				gpuErrchk(cudaSetDevice(0));
 				gpuErrchk(cudaMemcpy(r.data(), r_d[0], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
-				#pragma opm parallel for
+				#pragma omp parallel for
 				for(int device = 1; device < count_devices; ++device){
 					gpuErrchk(cudaSetDevice(device));
 					std::vector<real_t> ret(dept_all, 0 );
@@ -397,7 +307,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 						r[j] += ret[j];
 					}
 				}
-				#pragma opm parallel for
+				#pragma omp parallel for
 				for(int device = 0; device < count_devices; ++device) { 
 					gpuErrchk(cudaSetDevice(device));
 					gpuErrchk(cudaMemcpy(r_d[device], r.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
@@ -418,7 +328,7 @@ std::vector<real_t>CSVM::CG(const std::vector<real_t> &b,const int imax,  const 
 		{
 			std::vector<real_t> buffer(dept_all, 0.0);
 			std::copy(d, d+dept, buffer.begin());
-			#pragma opm parallel for
+			#pragma omp parallel for
 			for(int device = 0; device < count_devices; ++device) { 
 				gpuErrchk(cudaSetDevice(device)); 
 				gpuErrchk(cudaMemcpy(r_d[device], buffer.data(), dept_all*sizeof(real_t), cudaMemcpyHostToDevice));
