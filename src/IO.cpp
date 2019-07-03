@@ -1,5 +1,6 @@
 #include "CSVM.hpp"
-
+#include "operators.hpp"
+#include "ittnotify.h"
 // #include <type_traits>
 
 //   inline real_t storeal_t(const std::string& str, std::size_t* pos = 0) {
@@ -100,6 +101,7 @@ void CSVM::arffParser(std::string &filename){
 }
 
 void CSVM::writeModel(std::string &model_name){
+	 __itt_resume();
 	int nBSV = 0;
 	int count_pos = 0;
 	int count_neg = 0;

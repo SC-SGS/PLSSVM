@@ -1,6 +1,7 @@
 #include "CSVM.hpp"
 #include <chrono>
 #include <omp.h>  
+#include "operators.hpp"
 
 CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){}
 

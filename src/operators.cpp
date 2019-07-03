@@ -1,4 +1,8 @@
-#include "operators.hpp"
+//#include "operators.hpp"
+#include <vector>
+#include <iostream>
+
+#include "typedef.hpp"
 #include <algorithm>
 #include <numeric>
 #include <functional>
@@ -69,18 +73,22 @@ real_t operator *(real_t* vec1,const std::vector<real_t> &vec2)
 	return result;
 }
 
+
+std::ostream& operator<<(std::ostream &out, const std::vector<real_t> &vec)
+{
+    char buffer[20];
+    for(unsigned i = 0; i < vec.size() ; ++i){
+        if(vec[i] != 0 ){
+            sprintf(buffer, "%i:%e ",i,vec[i]);
+            out << buffer;
+        } //out << i << ":" << vec[i] << " ";
+    }
+    return out;
+}
 std::ostream& operator<<(std::ostream &out,const std::vector<std::vector<real_t> > &matr)
 {
     for(unsigned i = 0; i < matr.size(); ++i){
         out << matr[i] << '\n';
-    }
-    return out;
-}
-
-std::ostream& operator<<(std::ostream &out, const std::vector<real_t> &vec)
-{
-    for(unsigned i = 0; i < vec.size() ; ++i){
-        if(vec[i] != 0 ) out << i << ":" << vec[i] << " ";
     }
     return out;
 }
@@ -169,10 +177,6 @@ real_t mult(real_t* vec1,real_t* vec2,int dim){
 	return result;
 };
 
-real_t* mult(real_t* vec, real_t val, int dim){
-	return mult(val,vec, dim);
-};
-
 real_t* mult (real_t value, real_t* vec, int dim){
 	for(int i = 0; i < dim; ++i){
 		vec[i] *= value;
@@ -180,9 +184,11 @@ real_t* mult (real_t value, real_t* vec, int dim){
 	return vec;
 };
 
-real_t* add (real_t* vec, real_t value, int dim){
-	return add(value, vec, dim);
+real_t* mult(real_t* vec, real_t val, int dim){
+	return mult(val,vec, dim);
 };
+
+
 
 real_t* add (real_t value, real_t* vec, int dim){
 	for(unsigned i = 0; i < dim; ++i){
@@ -206,6 +212,9 @@ real_t* add (real_t* vec1, real_t* vec2, real_t* result, int dim){
 	return result;
 };
 
+real_t* add (real_t* vec, real_t value, int dim){
+	return add(value, vec, dim);
+};
 
 std::vector<real_t>& operator += (std::vector<real_t>&vec1, real_t* vec2){
 	for(int i = 0; i < vec1.size(); ++i){
