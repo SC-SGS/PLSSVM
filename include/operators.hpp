@@ -112,8 +112,12 @@ inline real_t operator *(real_t* vec1,const std::vector<real_t> &vec2)
 
 inline std::ostream& operator<<(std::ostream &out, const std::vector<real_t> &vec)
 {
+    char buffer[20];
     for(unsigned i = 0; i < vec.size() ; ++i){
-        if(vec[i] != 0 ) out << i << ":" << vec[i] << " ";
+        if(vec[i] != 0 ){
+            sprintf(buffer, "%i:%e ",i,vec[i]);
+            out << buffer;
+        } //out << i << ":" << vec[i] << " ";
     }
     return out;
 }
