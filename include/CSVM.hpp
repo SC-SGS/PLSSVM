@@ -37,7 +37,7 @@ const bool times = 0;
 class CSVM
 {
     public:
-        CSVM(real_t, real_t, unsigned, real_t, real_t, real_t, bool);
+        CSVM(const real_t, const real_t, const unsigned, const real_t, const real_t, const real_t, const bool);
 		void learn(std::string&, std::string&);
         
 		const real_t& getB() const { return bias; };

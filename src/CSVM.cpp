@@ -18,6 +18,7 @@ void CSVM::learn(){
 
 
 	if(info)std::cout << "start CG" << std::endl;
+	
 	//solve minimization
 	q = CG(b,Nfeatures_data,epsilon);
     alpha.emplace_back(-sum(alpha));

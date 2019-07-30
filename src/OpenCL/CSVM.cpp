@@ -20,7 +20,7 @@
 int count_devices = 1;
 
 
-CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_ , bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){
+CSVM::CSVM(const real_t cost_, const real_t epsilon_, const unsigned kernel_, const real_t degree_, const real_t gamma_, const real_t coef0_ , const bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_){
 	std::vector<opencl::device_t> &devices = manager.get_devices();
 	first_device = devices[0];
 	count_devices = devices.size();

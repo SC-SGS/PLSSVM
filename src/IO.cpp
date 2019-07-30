@@ -1,6 +1,7 @@
 #include "CSVM.hpp"
 #include "operators.hpp"
-#include "ittnotify.h"
+#include "omp.h"
+// #include "ittnotify.h"
 // #include <type_traits>
 
 //   inline real_t storeal_t(const std::string& str, std::size_t* pos = 0) {
@@ -101,7 +102,7 @@ void CSVM::arffParser(std::string &filename){
 }
 
 void CSVM::writeModel(std::string &model_name){
-	 __itt_resume();
+	//  __itt_resume();
 	int nBSV = 0;
 	int count_pos = 0;
 	int count_neg = 0;
@@ -119,9 +120,13 @@ void CSVM::writeModel(std::string &model_name){
 		std::cout << "nSV = " << count_pos + count_neg  - nBSV << ", nBSV = " << nBSV << "\n";
 		std::cout << "Total nSV = " << count_pos + count_neg << std::endl;
 	}
-
+	return;
 	//Model Datei
-	std::ofstream model(model_name, std::ios::out | std::ios::trunc);
+	const unsigned int length = 1048576;
+	char buffer[length];
+	std::ofstream model;
+	model.rdbuf()->pubsetbuf(buffer, length);
+	model.open(model_name, std::ios::out | std::ios::trunc);
 	model << "svm_type c_svc\n";
 	switch(kernel){
 		case 0: model << "kernel_type " << "linear" << "\n";
@@ -138,40 +143,113 @@ void CSVM::writeModel(std::string &model_name){
 	model << "label " << "1" << " "<< "-1"<<"\n";
 	model << "nr_sv " << count_pos << " "<< count_neg<<"\n";
 	model << "SV\n";
-	model << std::scientific;
+	// model << std::scientific;
+	model.unsetf(std::ios_base::floatfield);
 
 	int count = 0;
+	const size_t num_threads = 80; //omp_get_max_threads();
+	omp_set_num_threads(num_threads);
+	// auto start = std::chrono::high_resolution_clock::now();
+	// std::vector<char*> out_pos(80, new char[(data[0].size()*20 + 20)* data.size()/ omp_get_num_threads()]);
+	// auto stop = std::chrono::high_resolution_clock::now();
+	// std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count()<< std::endl;
+	// std::vector<char*> out_neg(80, new char[(data[0].size()*20 + 20)* data.size()/ omp_get_num_threads()]);
 
-	#pragma omp parallel
+	#pragma omp parallel shared(count)
 	{
-		std::stringstream out_pos;
-		std::stringstream out_neg;
-		
+		std::string out_pos;
+		out_pos.reserve((data[0].size()*20 + 20)* data.size()/ omp_get_num_threads());
+		std::string out_neg;
+		out_neg.reserve((data[0].size()*20 + 20)* data.size()/ omp_get_num_threads());
+		// char* ptr = out_pos[omp_get_thread_num()];
+		// unsigned long ptr_int = 0;
+		// std::stringstream out_neg;
+		// auto start = std::chrono::high_resolution_clock::now();
 		// Alle SV Klasse 1
 		#pragma omp for nowait
 		for(int i = 0; i < alpha.size(); ++i){
-			if(value[i] > 0) out_pos << alpha[i]  << " " << data[i] << "\n";
-		}
+			if(value[i] > 0){
+				// sprintf(ptr,"%e %n", alpha[i], &ptr_int);
+				// ptr += ptr_int;
+				out_pos += std::to_string(alpha[i]) + ' ';
+				char buffer[20];
+				for(unsigned j = 0; j < data[i].size() ; ++j){
+					if(data[i][j] != 0.0 ){
+						// sprintf(ptr, "%i:%e %n",j,data[i][j], &ptr_int);
+						// ptr += ptr_int;
+						sprintf(buffer, "%i:%e ",j,data[i][j]);
+						// sprintf(buffer, "%i:%i.%ie^0 ",j,(int)data[i][j], static_cast<int>((data[i][j] - (int)data[i][j])*1000000)  );
+						out_pos += buffer;
+					} //out << i << ":" << vec[i] << " ";
+				}
+				out_pos += '\n';
+				//  *ptr = '\n';
+				//  ++ptr;
+				// out_pos << alpha[i]  << " " << buffer << '\n';
+				//  out_pos << alpha[i]  << " " << data[i] << "\n";
 
+			}
+		}
+		// auto stop = std::chrono::high_resolution_clock::now();
+		// std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count()<< std::endl;
 		#pragma omp critical
 		{
-			model << out_pos.rdbuf();
-			count++;
-			#pragma omp flush (count, model)
+			// auto start = std::chrono::high_resolution_clock::now();
+			model << out_pos;
+			#pragma omp flush (model)
+			// auto stop = std::chrono::high_resolution_clock::now();
+			// std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count()<< std::endl;
 		}
 
-
+		#pragma omp atomic
+		count++;
+		// #pragma omp single
+		// {
+		// 	auto start = std::chrono::high_resolution_clock::now();
+		// 	for(auto i : out_pos)
+		// 		model << i;
+		// 	// count++;
+		// 	#pragma omp flush ( model)
+		// 	auto stop = std::chrono::high_resolution_clock::now();
+		// 	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count()<< std::endl;
+		// }
 		// Alle SV Klasse -1
-		#pragma omp for nowait
+		// #pragma omp for schedule(guided)
+		// for(int i = 0; i < alpha.size(); ++i){
+		// 	if(value[i] < 0) out_neg << alpha[i]  << " " << data[i] << "\n";
+		// }
+
+		{
+			// auto start = std::chrono::high_resolution_clock::now();
+		// Alle SV Klasse 1
+		#pragma omp for nowait schedule(guided,4) 
 		for(int i = 0; i < alpha.size(); ++i){
-			if(value[i] < 0) out_neg << alpha[i]  << " " << data[i] << "\n";
+			if(value[i] > 0){
+				out_pos += std::to_string(alpha[i]) + ' ';
+				char buffer[20];
+				for(unsigned j = 0; j < data[i].size() ; ++j){
+					if(data[i][j] != 0.0 ){
+						// sprintf(ptr, "%i:%e %n",j,data[i][j], &ptr_int);
+						// ptr += ptr_int;
+						sprintf(buffer, "%i:%e ",j,data[i][j]);
+						// sprintf(buffer, "%i:%i.%ie^0 ",j,(int)data[i][j], static_cast<int>((data[i][j] - (int)data[i][j])*1000000)  );
+						out_pos += buffer;
+					} //out << i << ":" << vec[i] << " ";
+				}
+				out_pos += '\n';
+
+			}
+		}
+		// auto stop = std::chrono::high_resolution_clock::now();
+		// std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count()<< std::endl;
 		}
 
 		//Wait for all have writen Klass 1
-		while(count < omp_get_thread_num()) {};
+		while(count < num_threads) {};
+		
 
 		#pragma omp critical
-		model << out_neg.rdbuf();
+		model << out_neg;
 	}
 	model.close();
 	
