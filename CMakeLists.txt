@@ -10,7 +10,7 @@ if(WITH_CUDA)
   project (SupportVectorMachine LANGUAGES CXX CUDA)
   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O3 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode=arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_60,code=sm_60 -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_62,code=sm_62 -gencode=arch=compute_70,code=sm_70 -Xcompiler '-fopenmp' --use_fast_math")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_60,code=sm_60 -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_62,code=sm_62 -gencode=arch=compute_70,code=sm_70  -gencode=arch=compute_80,code=sm_80  -gencode=arch=compute_86,code=sm_86 -Xcompiler '-fopenmp' --use_fast_math")
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11  -Xcompiler '-fopenmp' --use_fast_math")
   if(APPLE)
     # We need to add the path to the driver (libcuda.dylib) as an rpath, 
@@ -25,7 +25,8 @@ endif(WITH_CUDA)
 
 if(WITH_OPENCL)
   find_package(OpenCL REQUIRED)
-  include_directories( ${OPENCL_INCLUDE_DIR} )
+  include_directories( ${OpenCL_INCLUDE_DIR} )
+  LINK_DIRECTORIES(${OpenCL_LIBRARY})
 endif(WITH_OPENCL)
 
 find_package(OpenMP)
@@ -87,7 +88,7 @@ if(WITH_OPENCL)
   target_compile_definitions(svm-OCL PUBLIC WITH_OPENCL)
   target_compile_options(svm-OCL PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-OCL OpenCL)
-  add_executable(svm-train-OCL src/small.cpp)
+  add_executable(svm-train-OCL src/main.cpp)
   target_compile_options(svm-train-OCL PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-OCL svm-OCL)
 endif(WITH_OPENCL)
@@ -95,14 +96,14 @@ endif(WITH_OPENCL)
 if(WITH_CUDA)
   add_library(svm-CUDA SHARED ${SOURCES_CUDA})
   target_compile_definitions(svm-CUDA PUBLIC WITH_CUDA)
-  add_executable(svm-train-CUDA src/small.cpp)
+  add_executable(svm-train-CUDA src/main.cpp)
   target_compile_options(svm-train-CUDA PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-CUDA svm-CUDA)
 endif(WITH_CUDA)
 
 add_library(svm SHARED ${SOURCES})
 target_compile_options(svm PUBLIC) # -march=native -mtune=native
-add_executable(svm-train-cpu src/small.cpp)
+add_executable(svm-train-cpu src/main.cpp)
 target_compile_options(svm-train-cpu PUBLIC) # -march=native -mtune=native
 target_link_libraries(svm-train-cpu svm)
 
