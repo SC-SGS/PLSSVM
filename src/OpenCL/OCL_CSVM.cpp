@@ -1,4 +1,4 @@
-#include "CSVM.hpp"
+#include "OCL_CSVM.hpp"
 #include "cuda-kernel.hpp"
 
 #include "../src/OpenCL/manager/configuration.hpp"
@@ -14,7 +14,7 @@
 
 int count_devices = 1;
 
-CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {
+OCL_CSVM::OCL_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
     std::vector<opencl::device_t> &devices = manager.get_devices();
     first_device = devices[0];
     count_devices = devices.size();
@@ -23,7 +23,7 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
     std::cout << "GPUs found: " << count_devices << std::endl;
 }
 
-void CSVM::loadDataDevice() {
+void OCL_CSVM::loadDataDevice() {
     std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
     for (int device = 0; device < count_devices; ++device)
         datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], (num_features)));
@@ -52,7 +52,7 @@ void CSVM::loadDataDevice() {
     }
 }
 
-void CSVM::resizeData(const int device, const int boundary) {
+void OCL_CSVM::resizeData(const int device, const int boundary) {
     std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 
     data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], num_features * (num_data_points - 1 + boundary));
@@ -69,7 +69,7 @@ void CSVM::resizeData(const int device, const int boundary) {
     data_cl[device].to_device(vec);
 }
 
-std::vector<real_t> CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
+std::vector<real_t> OCL_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
     std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
     const size_t dept = num_data_points - 1;
     const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;

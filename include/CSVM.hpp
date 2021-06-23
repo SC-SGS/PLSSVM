@@ -12,19 +12,12 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <string_view>
 
 #include "operators.hpp"
 // #include "typedef.hpp"
 #include <tuple>
 
-#ifdef WITH_OPENCL
-#include "../src/OpenCL/manager/configuration.hpp"
-#include "../src/OpenCL/manager/device.hpp"
-#include "../src/OpenCL/manager/manager.hpp"
-#include "DevicePtrOpenCL.hpp"
-#include "distribution.hpp"
-#include <stdexcept>
-#endif
 
 const bool times = 0;
 
@@ -33,15 +26,15 @@ const bool times = 0;
 
 class CSVM {
   public:
-    CSVM(real_t, real_t, unsigned, real_t, real_t, real_t, bool);
-    void learn(std::string &, std::string &);
+    CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
+    virtual void learn(const std::string_view, const std::string_view);
 
     const real_t &getB() const { return bias; };
-    void load_w();
-    std::vector<real_t> predict(real_t *, int, int);
+    virtual void load_w() = 0;
+    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
+    virtual ~CSVM() = default;
 
   protected:
-  private:
     const bool info;
     real_t cost;
     const real_t epsilon;
@@ -57,7 +50,7 @@ class CSVM {
     std::vector<real_t> value;
     std::vector<real_t> alpha;
 
-    void learn();
+    virtual void learn();
 
     inline real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
     inline real_t kernel_function(real_t *, real_t *, int);
@@ -66,9 +59,9 @@ class CSVM {
     void arffParser(const std::string_view);
     void writeModel(const std::string_view);
 
-    void loadDataDevice();
+    virtual void loadDataDevice() = 0;
 
-    std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t);
+    virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t) = 0;
 
     inline std::vector<real_t> transform_data(const int start_line, const int boundary) {
         std::vector<real_t> vec(num_features * (num_data_points - 1 + boundary));
@@ -81,24 +74,5 @@ class CSVM {
         return vec;
     }
     inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
-#ifdef WITH_OPENCL
-    inline void resizeData(int boundary);
-    inline void resizeData(const int device, int boundary);
-    inline void resizeDatalast(int boundary);
-    inline void resizeDatalast(const int device, int boundary);
-    // inline void resize(const int old_boundary,const int new_boundary);
-    distribution distr;
-    opencl::manager_t manager{"../platform_configuration.cfg"};
-    opencl::device_t first_device;
-    std::vector<cl_kernel> kernel_q_cl;
-    std::vector<cl_kernel> svm_kernel_linear;
-    std::vector<opencl::DevicePtrOpenCL<real_t>> datlast_cl;
-    std::vector<opencl::DevicePtrOpenCL<real_t>> data_cl;
-#endif
-
-#ifdef WITH_CUDA
-    std::vector<real_t *> data_d;
-    std::vector<real_t *> datlast_d;
-    real_t *w_d;
-#endif
 };
+

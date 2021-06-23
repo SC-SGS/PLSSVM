@@ -1,4 +1,4 @@
-#include "CSVM.hpp"
+#include "OCL_CSVM.hpp"
 #include "operators.hpp"
 #include <iostream>
 #include <vector>
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     // std::string model_file_name("../90x90.txt.model");
     // std::string input_file_name("../90x90.txt");
     try {
-        CPU_CSVM svm(cost, eps, kernel_type, degree, gamma, coef0, true);
+        OCL_CSVM svm(cost, eps, kernel_type, degree, gamma, coef0, true);
 
         svm.learn(input_file_name, model_file_name);
 

@@ -1,4 +1,4 @@
-#include "CSVM.hpp"
+#include "CPU_CSVM.hpp"
 #include "operators.hpp"
 #include <iostream>
 #include <vector>

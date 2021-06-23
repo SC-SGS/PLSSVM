@@ -1,4 +1,4 @@
-#include "CSVM.hpp"
+#include "CUDA_CSVM.hpp"
 
 __global__ void kernel_predict(real_t *data_d, real_t *w, int dim, real_t *out) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -22,7 +22,7 @@ __global__ void kernel_w(real_t *w_d, real_t *data_d, real_t *alpha_d, int count
     w_d[index] = temp;
 }
 
-std::vector<real_t> CSVM::predict(real_t *data, int dim, int count) {
+std::vector<real_t> CUDA_CSVM::predict(real_t *data, int dim, int count) {
     real_t *data_d, *out;
     cudaMalloc((void **)&data_d, dim * count * sizeof(real_t));
     cudaMalloc((void **)&out, count * sizeof(real_t));
@@ -39,7 +39,7 @@ std::vector<real_t> CSVM::predict(real_t *data, int dim, int count) {
     return ret;
 }
 
-void CSVM::load_w() {
+void CUDA_CSVM::load_w() {
     cudaMalloc((void **)&w_d, num_features * sizeof(real_t));
     real_t *alpha_d;
     cudaMalloc((void **)&alpha_d, num_features * sizeof(real_t));

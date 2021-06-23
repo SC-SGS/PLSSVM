@@ -1,11 +1,11 @@
-#include "CSVM.hpp"
+#include "CPU_CSVM.hpp"
 #include "operators.hpp"
 #include <chrono>
 #include <omp.h>
 
-CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
+CPU_CSVM::CPU_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
 
-void CSVM::learn() {
+void CPU_CSVM::learn() {
     std::vector<real_t> q;
     std::vector<real_t> b = value;
 #pragma omp parallel sections
@@ -48,7 +48,6 @@ real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
         throw std::runtime_error("Can not decide wich kernel!");
     }
 }
-
 real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {
     switch (kernel) {
     case 0:
@@ -66,8 +65,7 @@ real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {
         throw std::runtime_error("Can not decide wich kernel!");
     }
 }
-
-void CSVM::learn(std::string &filename, std::string &output_filename) {
+void CPU_CSVM::learn(std::string &filename, std::string &output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();
     if (filename.size() > 5 && endsWith(filename, ".arff")) {
         arffParser(filename);
@@ -96,7 +94,7 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
     }
 }
 
-std::vector<real_t> CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
+std::vector<real_t> CPU_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
     std::vector<real_t> x(b.size(), 1);
     real_t *datlast = &data.back()[0];
     static const size_t dim = data.back().size();

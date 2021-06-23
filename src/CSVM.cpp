@@ -41,13 +41,30 @@ real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
         throw std::runtime_error("Can not decide wich kernel!");
     }
 }
+real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {
+    switch (kernel) {
+    case 0:
+        return mult(xi, xj, dim);
+    case 1:
+        return std::pow(gamma * mult(xi, xj, dim) + coef0, degree);
+    case 2: {
+        real_t temp = 0;
+        for (int i = 0; i < dim; ++i) {
+            temp += (xi[i] - xj[i]);
+        }
+        return exp(-gamma * temp * temp);
+    }
+    default:
+        throw std::runtime_error("Can not decide wich kernel!");
+    }
+}
 
-void CSVM::learn(std::string &filename, std::string &output_filename) {
+void CSVM::learn(const std::string_view filename, const std::string_view output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();
-    if (filename.size() > 5 && endsWith(filename, ".arff")) {
-        arffParser(filename);
+    if (filename.size() > 5 && endsWith(filename.data(), ".arff")) {
+        arffParser(filename.data());
     } else {
-        libsvmParser(filename);
+        libsvmParser(filename.data());
     }
 
     auto end_parse = std::chrono::high_resolution_clock::now();

@@ -1,4 +1,4 @@
-#include "CSVM.hpp"
+#include "CUDA_CSVM.hpp"
 #include "cuda-kernel.cuh"
 #include "cuda-kernel.hpp"
 #include "svm-kernel.cuh"
@@ -17,7 +17,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 
 int count_devices = 1;
 
-CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {
+CUDA_CSVM::CUDA_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_){
     gpuErrchk(cudaGetDeviceCount(&count_devices));
     datlast_d = std::vector<real_t *>(count_devices);
     data_d = std::vector<real_t *>(count_devices);
@@ -25,7 +25,7 @@ CSVM::CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real
     std::cout << "GPUs found: " << count_devices << std::endl;
 }
 
-void CSVM::loadDataDevice() {
+void CUDA_CSVM::loadDataDevice() {
     for (int device = 0; device < count_devices; ++device) {
         gpuErrchk(cudaSetDevice(device));
         gpuErrchk(cudaMalloc((void **)&datlast_d[device], (num_data_points - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_t)));
@@ -58,7 +58,7 @@ void CSVM::loadDataDevice() {
     }
 }
 
-std::vector<real_t> CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
+std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
     const size_t dept = num_data_points - 1;
     const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     const size_t dept_all = dept + boundary_size;
