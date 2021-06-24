@@ -36,18 +36,6 @@ void CPU_CSVM::learn() {
     bias = value.back() - QA_cost * alpha.back() - (q * alpha);
 }
 
-real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
-    switch (kernel) {
-    case 0:
-        return xi * xj;
-    case 1:
-        return std::pow(gamma * (xi * xj) + coef0, degree);
-    case 2:
-        return exp(-gamma * (xi - xj) * (xi - xj));
-    default:
-        throw std::runtime_error("Can not decide wich kernel!");
-    }
-}
 real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {
     switch (kernel) {
     case 0:

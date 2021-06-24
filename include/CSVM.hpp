@@ -1,4 +1,6 @@
 #pragma once
+#include "operators.hpp"
+#include "typedef.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -12,12 +14,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <string_view>
-
-#include "operators.hpp"
-// #include "typedef.hpp"
-#include <tuple>
-
 
 const bool times = 0;
 
@@ -75,4 +71,3 @@ class CSVM {
     }
     inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
 };
-

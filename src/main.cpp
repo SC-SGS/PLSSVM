@@ -1,5 +1,4 @@
 #include "CPU_CSVM.hpp"
-#include "operators.hpp"
 #include <chrono>
 #include <iostream>
 #include <random>

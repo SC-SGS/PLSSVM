@@ -6,13 +6,11 @@ class CPU_CSVM : public CSVM {
 
     void learn(std::string &, std::string &);
 
-    void load_w() {}; // TODO: implement load_w
-    std::vector<real_t> predict(real_t *, int, int) {}; //TODO: implement predict
+    void load_w(){};                                   // TODO: implement load_w
+    std::vector<real_t> predict(real_t *, int, int){}; //TODO: implement predict
 
   private:
     std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t);
     void loadDataDevice(){};
     void learn();
-
 };
-

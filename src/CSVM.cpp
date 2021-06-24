@@ -41,23 +41,6 @@ real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
         throw std::runtime_error("Can not decide wich kernel!");
     }
 }
-real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {
-    switch (kernel) {
-    case 0:
-        return mult(xi, xj, dim);
-    case 1:
-        return std::pow(gamma * mult(xi, xj, dim) + coef0, degree);
-    case 2: {
-        real_t temp = 0;
-        for (int i = 0; i < dim; ++i) {
-            temp += (xi[i] - xj[i]);
-        }
-        return exp(-gamma * temp * temp);
-    }
-    default:
-        throw std::runtime_error("Can not decide wich kernel!");
-    }
-}
 
 void CSVM::learn(const std::string_view filename, const std::string_view output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();

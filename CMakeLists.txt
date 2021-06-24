@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.12.0)
 set(CMAKE_CXX_STANDARD 17) 
 
-option(WITH_CUDA "Compile CUDA svm" ON)
-option(WITH_OPENCL "Compile OPENCL svm" ON)
+option(WITH_CUDA "Compile CUDA svm" OFF)
+option(WITH_OPENCL "Compile OPENCL svm" OFF)
 
 set(CMAKE_MAKEFILE_DEPENDS "CMakeLists.txt")
 
@@ -10,7 +10,7 @@ if(WITH_CUDA)
   project (SupportVectorMachine LANGUAGES CXX CUDA)
   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O3 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_60,code=sm_60 -Xcompiler '-fopenmp' --use_fast_math")
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode=arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_60,code=sm_60 -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_62,code=sm_62 -gencode=arch=compute_70,code=sm_70 -Xcompiler '-fopenmp' --use_fast_math")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++17 -gencode arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_60,code=sm_60 -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_62,code=sm_62 -gencode=arch=compute_70,code=sm_70 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_86,code=sm_86  -Xcompiler '-fopenmp' --use_fast_math")
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11  -Xcompiler '-fopenmp' --use_fast_math")
   if(APPLE)
     # We need to add the path to the driver (libcuda.dylib) as an rpath, 
@@ -25,7 +25,7 @@ endif(WITH_CUDA)
 
 if(WITH_OPENCL)
   find_package(OpenCL REQUIRED)
-  include_directories( ${OPENCL_INCLUDE_DIR} )
+  include_directories( ${OpenCL_INCLUDE_DIRS} )
 endif(WITH_OPENCL)
 
 find_package(OpenMP)
@@ -39,29 +39,27 @@ include_directories(include)
 
 
 set(SOURCES
-  src/operators.cpp 
+  src/CSVM.cpp
   src/IO.cpp
-  src/CPU/CSVM.cpp
+  src/CPU/CPU_CSVM.cpp
   )
 
 if(WITH_CUDA)
   set(SOURCES_CUDA 
-    src/operators.cpp 
     src/IO.cpp
-    src/CUDA/CSVM.cu
+    src/CUDA/CUDA_CSVM.cu
     src/CUDA/svm-kernel.cu
     src/CUDA/cuda-kernel.cu
     src/OpenCL/cuda-kernel.cpp #TODO:
     src/CUDA/predict.cu
-    src/CSVM.cpp #TODO: generalisieren
+    src/CSVM.cpp
     )
 endif(WITH_CUDA)
 
 if(WITH_OPENCL)
   set(SOURCES_OCL
-    src/operators.cpp 
     src/IO.cpp
-    src/OpenCL/CSVM.cpp
+    src/OpenCL/OCL_CSVM.cpp
     src/OpenCL/cuda-kernel.cpp
     src/OpenCL/kernels/svm-kernel-linear.cl
     src/OpenCL/kernels/kernel_q.cl
@@ -77,7 +75,7 @@ if(WITH_OPENCL)
     src/OpenCL/manager/json/list_node.cpp
     src/OpenCL/manager/json/node.cpp
     src/OpenCL/manager/json/text_node.cpp
-    src/CSVM.cpp #TODO: generalisieren
+    src/CSVM.cpp
     )
 endif(WITH_OPENCL)
 
@@ -87,7 +85,7 @@ if(WITH_OPENCL)
   target_compile_definitions(svm-OCL PUBLIC WITH_OPENCL)
   target_compile_options(svm-OCL PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-OCL OpenCL)
-  add_executable(svm-train-OCL src/small.cpp)
+  add_executable(svm-train-OCL src/OCL_small.cpp)
   target_compile_options(svm-train-OCL PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-OCL svm-OCL)
   # enable Link Time Optimization (LTO)
@@ -104,7 +102,7 @@ endif(WITH_OPENCL)
 if(WITH_CUDA)
   add_library(svm-CUDA SHARED ${SOURCES_CUDA})
   target_compile_definitions(svm-CUDA PUBLIC WITH_CUDA)
-  add_executable(svm-train-CUDA src/main.cpp)
+  add_executable(svm-train-CUDA src/CUDA_small.cpp)
   target_compile_options(svm-train-CUDA PUBLIC) # -march=native -mtune=native
   target_link_libraries(svm-train-CUDA svm-CUDA)
   # enable Link Time Optimization (LTO)
@@ -129,7 +127,7 @@ else()
   message(STATUS "IPO / LTO not supported: <${lto_error}>")
 endif()
 target_compile_options(svm PUBLIC) # -march=native -mtune=native
-add_executable(svm-train-cpu src/small.cpp)
+add_executable(svm-train-cpu src/CPU_small.cpp)
 # enable Link Time Optimization (LTO)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
