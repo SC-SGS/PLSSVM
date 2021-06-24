@@ -9,7 +9,59 @@
 
 #include <cxxopts.hpp>
 
+#include <string_view>
+
 bool info;
+
+// backend exception
+class svm_backend_error : public std::runtime_error { //TODO: make specific exceptions for whole program -> in separate header
+  public:
+    svm_backend_error(const char *msg) : runtime_error{msg} {}
+};
+
+// available backends
+enum class svm_backend { CPU,
+                         CUDA,
+                         OPENCL };
+
+// factory function
+template <typename... Args>
+std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
+    switch (type) {
+    case svm_backend::CPU:
+#if defined(HAS_CPU_BACKEND)
+        return std::make_unique<CPU_CSVM>(std::forward<Args>(args)...);
+#else
+        throw svm_backend_error{"No CPU backend available!"};
+#endif
+
+    case svm_backend::CUDA:
+#if defined(HAS_CUDA_BACKEND)
+        return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
+#else
+        throw svm_backend_error{"No CUDA backend available!"};
+#endif
+
+    case svm_backend::OPENCL:
+#if defined(HAS_OPENCL_BACKEND)
+        return std::make_unique<OpenCL_CSVM>(std::forward<Args>(args)...);
+#else
+        throw svm_backend_error{"No OpenCL backend available!"};
+#endif
+    }
+}
+// command line parser
+svm_backend parse_backend(std::string_view backend) {
+    if (backend == std::string_view{"cpu"}) {
+        return svm_backend::CPU;
+    } else if (backend == std::string_view{"cuda"}) {
+        return svm_backend::CUDA;
+    } else if (backend == std::string_view{"opencl"}) {
+        return svm_backend::OPENCL;
+    } else {
+        throw std::runtime_error("Illegal command line value!");
+    }
+}
 
 int main(int argc, char *argv[]) {
 
@@ -22,12 +74,13 @@ int main(int argc, char *argv[]) {
         .set_tab_expansion()
         // clang-format off
         .add_options()
-            ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<int>()->default_value("0")) //TODO: as enum and check if in range 0..2
+            ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<int>()->default_value("0")) //TODO: as enum and check if in range 0..2 (like parse_backend) -> kernel_type to enum
             ("d,degree", "degree in kernel function", cxxopts::value<real_t>()->default_value("3"))
             ("g,gamma", "gamma in kernel function (default: 1/num_features)", cxxopts::value<real_t>())
             ("r,coef0", "coef0 in kernel function", cxxopts::value<real_t>()->default_value("0"))
             ("c,cost", "the parameter C", cxxopts::value<real_t>()->default_value("1"))
             ("e,epsilon", "tolerance of termination criterion", cxxopts::value<real_t>()->default_value("0.001"))
+            ("b,backend", "chooses the backend cpu|cuda|opencl", cxxopts::value<std::string>()->default_value("cpu"))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(info))("h,help", "print this helper message", cxxopts::value<bool>())
             ("input", "", cxxopts::value<std::string>(), "training_set_file")("model", "", cxxopts::value<std::string>(), "model_file");
     // clang-format on
@@ -75,9 +128,8 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        // std::unique_ptr<CSVM> svm = make_SVM(backend, result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, degree = result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
-        CPU_CSVM svm(result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
-        svm.learn(input_file_name, model_file_name);
+        std::unique_ptr<CSVM> svm = make_SVM(parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
+        svm->learn(input_file_name, model_file_name);
 
     } catch (std::exception &e) {
         std::cout << "error" << std::endl;
