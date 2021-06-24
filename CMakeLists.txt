@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.14.0)
 set(CMAKE_CXX_STANDARD 17) 
 
 option(WITH_CUDA "Compile CUDA svm" OFF)
@@ -34,9 +34,20 @@ if (OPENMP_FOUND)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+include(FetchContent)
+FetchContent_Declare(cxxopts
+    # Compared to release tag or branch, commit hash avoids network connection
+    # if the local clone already has that particular commit.
+    GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
+    GIT_TAG                 df229cff0d5b96e146f3f11441f714e8e240cad0
+    GIT_SHALLOW             TRUE
+
+set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+)
+FetchContent_MakeAvailable(cxxopts)
 
 include_directories(include)
-
 
 set(SOURCES
   src/CSVM.cpp
@@ -127,7 +138,7 @@ else()
   message(STATUS "IPO / LTO not supported: <${lto_error}>")
 endif()
 target_compile_options(svm PUBLIC) # -march=native -mtune=native
-add_executable(svm-train-cpu src/CPU_small.cpp)
+add_executable(svm-train-cpu src/main.cpp)
 # enable Link Time Optimization (LTO)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
@@ -139,6 +150,8 @@ else()
 endif()
 target_compile_options(svm-train-cpu PUBLIC) # -march=native -mtune=native
 target_link_libraries(svm-train-cpu svm)
+target_include_directories(svm-train-cpu PUBLIC ${cxxopts_SOURCE_DIR}/include)
+add_dependencies(svm-train-cpu cxxopts)
 
 
 

@@ -6,88 +6,77 @@
 
 #include <stdlib.h> /* srand, rand */
 #include <time.h>
-using namespace std;
-bool info = true;
 
-void exit_with_help() {
-    if (info) {
-        std::cerr << "Usage: svm-train [options] training_set_file [model_file]\n";
-        std::cerr << "options:\n";
-        std::cerr << "-t kernel_type : set type of kernel function (default 0)\n";
-        std::cerr << "	0 -- linear: u'*v\n";
-        std::cerr << "	1 -- polynomial: (gamma*u'*v + coef0)^degree\n";
-        std::cerr << "	2 -- radial basis function: exp(-gamma*|u-v|^2)\n";
-        std::cerr << "-d degree : set degree in kernel function (default 3)\n";
-        std::cerr << "-g gamma : set gamma in kernel function (default 1/num_features)\n";
-        std::cerr << "-r coef0 : set coef0 in kernel function (default 0)\n";
-        std::cerr << "-c cost : set the parameter C (default 1)\n";
-        std::cerr << "-e epsilon : set tolerance of termination criterion (default 0.001)\n";
-        std::cerr << "-q : quiet mode (no outputs)" << std::endl;
-    }
-    exit(1);
-}
+#include <cxxopts.hpp>
+
+bool info;
 
 int main(int argc, char *argv[]) {
-    int kernel_type = 0;
-    real_t degree = 3;
-    real_t gamma;
-    real_t coef0 = 0;
-    real_t cost = 1;
-    real_t eps = 0.001;
-    std::string input_file_name, model_file_name;
-    int i = 0;
-    for (i = 1; i < argc; i++) {
-        if (argv[i][0] != '-')
-            break;
-        if (++i >= argc)
-            exit_with_help();
-        switch (argv[i - 1][1]) {
-        case 't':
-            kernel_type = atoi(argv[i]);
-            break;
-        case 'd':
-            degree = atoi(argv[i]);
-            break;
-        case 'g':
-            gamma = atof(argv[i]);
-            if (gamma == 0) {
-                std::cerr << "gamma = 0 is not allowed, it doesnt make any sense!" << std::endl;
-                exit_with_help();
-            }
-            break;
-        case 'r':
-            coef0 = atof(argv[i]);
-            break;
-        case 'c':
-            cost = atof(argv[i]);
-            break;
-        case 'e':
-            eps = atof(argv[i]);
-            break;
-        case 'q':
-            info = false;
-            i--;
-            break;
-        default:
-            std::cerr << "Unknown option: -" << argv[i - 1][1] << std::endl;
-            exit_with_help();
-        }
+
+    cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
+    options
+        .positional_help("training_set_file [model_file]")
+        .show_positional_help();
+    options
+        .set_width(150)
+        .set_tab_expansion()
+        // clang-format off
+        .add_options()
+            ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<int>()->default_value("0")) //TODO: as enum and check if in range 0..2
+            ("d,degree", "degree in kernel function", cxxopts::value<real_t>()->default_value("3"))
+            ("g,gamma", "gamma in kernel function (default: 1/num_features)", cxxopts::value<real_t>())
+            ("r,coef0", "coef0 in kernel function", cxxopts::value<real_t>()->default_value("0"))
+            ("c,cost", "the parameter C", cxxopts::value<real_t>()->default_value("1"))
+            ("e,epsilon", "tolerance of termination criterion", cxxopts::value<real_t>()->default_value("0.001"))
+            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(info))("h,help", "print this helper message", cxxopts::value<bool>())
+            ("input", "", cxxopts::value<std::string>(), "training_set_file")("model", "", cxxopts::value<std::string>(), "model_file");
+    // clang-format on
+
+    cxxopts::ParseResult result;
+    try {
+        options.parse_positional({"input", "model"});
+        result = options.parse(argc, argv);
+    } catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+        std::cout << options.help() << std::endl;
+        exit(1);
+    }
+    info = !info;
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
     }
 
-    if (i >= argc)
-        exit_with_help();
+    int kernel_type = result["kernel_type"].as<int>();
+    real_t gamma;
+    if (result.count("gamma")) {
+        gamma = result["gamma"].as<real_t>();
+        if (gamma == 0) {
+            std::cerr << "gamma = 0 is not allowed, it doesnt make any sense!" << std::endl;
+            std::cout << options.help() << std::endl;
+            exit(1);
+        }
+    } else {
+        gamma = 0;
+    }
 
-    input_file_name = argv[i];
-
-    if (i < argc - 1)
-        model_file_name = argv[i + 1];
-    else {
+    if (!result.count("input")) {
+        std::cerr << "Error missing input file!!" << std::endl;
+        std::cout << options.help() << std::endl;
+        exit(1);
+    }
+    std::string input_file_name = result["input"].as<std::string>();
+    std::string model_file_name;
+    if (result.count("model")) {
+        model_file_name = result["model"].as<std::string>();
+    } else {
         std::size_t found = input_file_name.find_last_of("/\\");
         model_file_name = input_file_name.substr(found + 1) + ".model";
     }
 
     try {
-        CPU_CSVM svm(cost, eps, kernel_type, degree, gamma, coef0, info);
+        // std::unique_ptr<CSVM> svm = make_SVM(backend, result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, degree = result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
+        CPU_CSVM svm(result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
         svm.learn(input_file_name, model_file_name);
 
     } catch (std::exception &e) {
