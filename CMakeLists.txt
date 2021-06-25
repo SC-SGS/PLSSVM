@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.14.0)
-set(CMAKE_CXX_STANDARD 17) 
+set(CMAKE_CXX_STANDARD 17)
 
-set(ENABLE_CPU_BACKEND AUTO CACHE STRING "Enable CPU Backend") 
+set(ENABLE_CPU_BACKEND AUTO CACHE STRING "Enable CPU Backend")
 set_property(CACHE ENABLE_CPU_BACKEND PROPERTY STRINGS AUTO ON OFF)
-set(ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend") 
+set(ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend")
 set_property(CACHE ENABLE_CUDA_BACKEND PROPERTY STRINGS AUTO ON OFF)
-set(ENABLE_OPENCL_BACKEND AUTO CACHE STRING "Enable OpenCL Backend") 
+set(ENABLE_OPENCL_BACKEND AUTO CACHE STRING "Enable OpenCL Backend")
 set_property(CACHE ENABLE_OPENCL_BACKEND PROPERTY STRINGS AUTO ON OFF)
 
 project (SupportVectorMachine LANGUAGES CXX)
@@ -45,7 +45,7 @@ if(ENABLE_OPENCL_BACKEND STREQUAL "AUTO")
 elseif(ENABLE_OPENCL_BACKEND)
 find_package(OpenCL)
   if(OpenCL_FOUND)
-    
+
   else()
     message(FATAL_ERROR "Can not find OPenCL")
   endif()
@@ -90,7 +90,7 @@ set(CPU_SOURCES
   )
 
 
-set(CUDA_SOURCES 
+set(CUDA_SOURCES
     src/CUDA/CUDA_CSVM.cu
     src/CUDA/svm-kernel.cu
     src/CUDA/cuda-kernel.cu
@@ -120,31 +120,34 @@ set(OCL_SOURCES
   src/CSVM.cpp
   )
 
-
-add_executable(svm-train src/main.cpp)
-add_dependencies(svm-train cxxopts)
-target_include_directories(svm-train PUBLIC ${cxxopts_SOURCE_DIR}/include)
+set(EXECUTABLE_NAME svm-train)
+add_executable(${EXECUTABLE_NAME} src/main.cpp)
+add_dependencies(${EXECUTABLE_NAME} cxxopts)
+target_include_directories(${EXECUTABLE_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
 
 if(ENABLE_OPENCL_BACKEND)
-  add_library(svm-OCL SHARED ${CSVM_SOURCES} ${OCL_SOURCES})
-  target_include_directories(svm-OCL SHARED ${OpenCL_INCLUDE_DIRS} )
-  target_compile_definitions(svm-OCL PUBLIC WITH_OPENCL)
-  target_link_libraries(svm-OCL OpenCL)
-  target_compile_definitions(svm-train PUBLIC HAS_OPENCL_BACKEND)
-  target_link_libraries(svm-train svm-OCL)
+  set(OPENCL_BACKEND_LIBRARY_NAME svm-OCL)
+  add_library(${OPENCL_BACKEND_LIBRARY_NAME} SHARED ${CSVM_SOURCES} ${OCL_SOURCES})
+  target_include_directories(${OPENCL_BACKEND_LIBRARY_NAME} SHARED ${OpenCL_INCLUDE_DIRS} )
+  target_compile_definitions(${OPENCL_BACKEND_LIBRARY_NAME} PUBLIC WITH_OPENCL)
+  target_link_libraries(${OPENCL_BACKEND_LIBRARY_NAME} OpenCL)
+  target_compile_definitions(${EXECUTABLE_NAME} PUBLIC HAS_OPENCL_BACKEND)
+  target_link_libraries(${EXECUTABLE_NAME} ${OPENCL_BACKEND_LIBRARY_NAME})
 endif(ENABLE_OPENCL_BACKEND)
 
 if(ENABLE_CUDA_BACKEND)
-  add_library(svm-CUDA SHARED ${CSVM_SOURCES} ${CUDA_SOURCES})
-  target_compile_definitions(svm-CUDA PUBLIC WITH_CUDA)
-  target_compile_definitions(svm-train PUBLIC HAS_CUDA_BACKEND)
-  target_link_libraries(svm-train svm-CUDA)
+  set(CUDA_BACKEND_LIBRARY_NAME svm-CUDA)
+  add_library(${CUDA_BACKEND_LIBRARY_NAME} SHARED ${CSVM_SOURCES} ${CUDA_SOURCES})
+  target_compile_definitions(${CUDA_BACKEND_LIBRARY_NAME} PUBLIC WITH_CUDA)
+  target_compile_definitions(${EXECUTABLE_NAME} PUBLIC HAS_CUDA_BACKEND)
+  target_link_libraries(${EXECUTABLE_NAME} ${CUDA_BACKEND_LIBRARY_NAME})
 endif(ENABLE_CUDA_BACKEND)
 
 if(ENABLE_CPU_BACKEND)
-  add_library(svm-CPU SHARED ${CSVM_SOURCES} ${CPU_SOURCES})
-  target_compile_definitions(svm-train PUBLIC HAS_CPU_BACKEND)
-  target_link_libraries(svm-train svm-CPU)
+  set(CPU_BACKEND_LIBRARY_NAME svm-CPU)
+  add_library(${CPU_BACKEND_LIBRARY_NAME} SHARED ${CSVM_SOURCES} ${CPU_SOURCES})
+  target_compile_definitions(${EXECUTABLE_NAME} PUBLIC HAS_CPU_BACKEND)
+  target_link_libraries(${EXECUTABLE_NAME} ${CPU_BACKEND_LIBRARY_NAME})
 endif(ENABLE_CPU_BACKEND)
 
 
@@ -153,7 +156,7 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
 if(lto_supported)
   message(STATUS "IPO / LTO enabled for svm-train")
-  set_property(TARGET svm-train PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+  set_property(TARGET ${EXECUTABLE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 else()
   message(STATUS "IPO / LTO not supported: <${lto_error}>")
 endif()
