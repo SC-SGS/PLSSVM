@@ -1,4 +1,13 @@
-#include "CPU_CSVM.hpp"
+#if defined(HAS_CPU_BACKEND)
+    #include "CPU_CSVM.hpp"
+#endif
+#if defined(HAS_CUDA_BACKEND)
+    #include "CUDA_CSVM.hpp"
+#endif
+#if defined(HAS_OPENCL_BACKEND)
+    #include "OCL_CSVM.hpp"
+#endif
+
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -28,7 +37,7 @@ enum class svm_backend { CPU,
 template <typename... Args>
 std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
     switch (type) {
-    case svm_backend::CPU:
+    case svm_backend::CPU: //TODO: change to mpi backend
 #if defined(HAS_CPU_BACKEND)
         return std::make_unique<CPU_CSVM>(std::forward<Args>(args)...);
 #else
@@ -43,8 +52,8 @@ std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
 #endif
 
     case svm_backend::OPENCL:
-#if defined(HAS_OPENCL_BACKEND)
-        return std::make_unique<OpenCL_CSVM>(std::forward<Args>(args)...);
+#if defined(HAS_OPENCL_BACKEND) // TODO: einheitlich
+        return std::make_unique<OCL_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No OpenCL backend available!"};
 #endif
