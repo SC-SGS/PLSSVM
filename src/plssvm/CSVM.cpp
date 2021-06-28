@@ -1,5 +1,7 @@
 #include <plssvm/CSVM.hpp>
 
+namespace plssvm {
+
 void CSVM::learn() {
     std::vector<real_t> q;
     std::vector<real_t> b = value;
@@ -77,4 +79,6 @@ void CSVM::learn(const std::string_view filename, const std::string_view output_
     } else if (times) {
         std::clog << data.size() << ", " << num_features << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
     }
+}
+
 }

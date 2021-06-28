@@ -16,6 +16,8 @@
 #include <utility>
 #include <vector>
 
+namespace plssvm {
+
 const bool times = 0;
 
 // static const unsigned CUDABLOCK_SIZE = 7;
@@ -72,3 +74,5 @@ class CSVM {
     }
     inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
 };
+
+}

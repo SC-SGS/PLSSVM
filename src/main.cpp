@@ -13,7 +13,8 @@
 
 #include <string_view>
 
-bool info;
+// TODO: move to separate files
+namespace plssvm {
 
 // backend exception
 class svm_backend_error : public std::runtime_error { //TODO: make specific exceptions for whole program -> in separate header
@@ -65,7 +66,14 @@ svm_backend parse_backend(std::string_view backend) {
     }
 }
 
+}
+
+bool info;
+
 int main(int argc, char *argv[]) {
+
+  // TODO:
+  using real_t = plssvm::real_t;
 
     cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
     options
@@ -130,7 +138,7 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        std::unique_ptr<CSVM> svm = make_SVM(parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
+        std::unique_ptr<plssvm::CSVM> svm = make_SVM(plssvm::parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
         svm->learn(input_file_name, model_file_name);
 
     } catch (std::exception &e) {

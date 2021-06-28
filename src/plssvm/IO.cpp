@@ -8,6 +8,9 @@
 #include <string_view>
 #include <vector>
 
+namespace plssvm {
+
+// TODO: move elsewhere?
 template <typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
 T string_to_floating_point(const std::string &str) {
     if constexpr (std::is_same_v<T, float>) {
@@ -215,6 +218,8 @@ void CSVM::writeModel(const std::string_view model_name) {
         model << out_neg.rdbuf();
     }
     model.close();
+}
+
 }
 
 // writeModel second version, TODO: implement correctly

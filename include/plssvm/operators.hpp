@@ -43,6 +43,8 @@
 #include <numeric>
 #include <functional>
 
+// TODO:
+using real_t = plssvm::real_t;
 
 inline std::vector<real_t> operator - (const std::vector<real_t> &vec1,const std::vector<real_t> &vec2)
 {
@@ -260,6 +262,7 @@ inline std::vector<real_t>& operator += (std::vector<real_t>&vec1, real_t* vec2)
 	return vec1;
 };
 
+namespace plssvm {
 
 inline bool endsWith(std::string mainStr, std::string toMatch)
 {
@@ -270,3 +273,4 @@ inline bool endsWith(std::string mainStr, std::string toMatch)
 	} );
 }
 
+}
