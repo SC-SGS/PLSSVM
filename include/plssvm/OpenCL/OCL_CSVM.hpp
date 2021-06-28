@@ -2,9 +2,9 @@
 
 #include <plssvm/CSVM.hpp>
 
-#include "../../../src/OpenCL/manager/configuration.hpp"
-#include "../../../src/OpenCL/manager/device.hpp"
-#include "../../../src/OpenCL/manager/manager.hpp"
+#include "../../../src/plssvm/OpenCL/manager/configuration.hpp"
+#include "../../../src/plssvm/OpenCL/manager/device.hpp"
+#include "../../../src/plssvm/OpenCL/manager/manager.hpp"
 #include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
 #include <plssvm/distribution.hpp>
 #include <stdexcept>
