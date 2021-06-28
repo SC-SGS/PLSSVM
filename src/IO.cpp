@@ -46,7 +46,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
         // get class
         std::getline(line_iss, token, ' ');
-        value[i] = string_to_floating_point<real_t>(token) > real_t{0.0} ? 1 : -1;
+        value[i] = string_to_floating_point<real_t>(token) > real_t{0.0} ? 1 : -1; //TODO: exception if not?
 
         // get data
         std::vector<real_t> vline(max_size);
@@ -62,6 +62,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
                 }
 
                 // get actual value
+                std::getline(token_iss, token, ':');
                 vline[index] = string_to_floating_point<real_t>(token);
 
                 // restore stream state
