@@ -3,7 +3,7 @@
 #include <plssvm/CUDA/cuda-kernel.hpp>
 #include <plssvm/CUDA/svm-kernel.cuh>
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
 #include "manager/configuration.hpp"
 #include "manager/device.hpp"
 #include "manager/manager.hpp"
@@ -19,7 +19,7 @@ int CUDADEVICE = 0;
 
 CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, double gamma_, double coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_), kernel_q_cl(nullptr), svm_kernel_linear(nullptr) {
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
 
     std::vector<opencl::device_t> &devices = manager.get_devices();
 
@@ -75,7 +75,7 @@ double CSVM::kernel_function(std::vector<double> &xi, std::vector<double> &xj) {
 
 void CSVM::loadDataDevice() {
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     datlast_cl = opencl::DevicePtrOpenCL<double>(first_device, (num_features + CUDABLOCK_SIZE - 1));
     std::vector<double> datalast(data[num_data_points - 1]);
     for (int i = 0; i < CUDABLOCK_SIZE - 1; ++i)
@@ -96,7 +96,7 @@ void CSVM::loadDataDevice() {
     }
     data_cl.to_device(vec);
 
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaMallocManaged((void **)&datlast, (num_features + CUDABLOCK_SIZE - 1) * sizeof(double));
     cudaMemset(datlast, 0, num_features + CUDABLOCK_SIZE - 1 * sizeof(double));
     cudaMemcpy(datlast, &data[num_data_points - 1][0], num_features * sizeof(double), cudaMemcpyHostToDevice);
@@ -135,7 +135,7 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
                   << std::endl;
     }
 
-#ifdef WITH_CUDA
+#ifdef PLSSVM_HAS_CUDA_BACKEND
     cudaSetDevice(CUDADEVICE);
 #endif
     loadDataDevice();
@@ -165,9 +165,9 @@ void CSVM::learn(std::string &filename, std::string &output_filename) {
 std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const double eps) {
     const int dept = num_data_points - 1;
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
 //TODO
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     dim3 grid((int)dept / (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) + 1, (int)dept / (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) + 1);
     dim3 block(CUDABLOCK_SIZE, CUDABLOCK_SIZE);
     double *x_d, *r_d, *q_d;
@@ -177,21 +177,21 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
     double *x, *r, *d;
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     opencl::DevicePtrOpenCL<double> x_cl(first_device, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaMalloc((void **)&x_d, (dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
 #else
 
 #endif
     x = new double[(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1)];
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     //TODO
     init_(((int)dept / 1024) + 1, std::min(1024, dept), x, 1, dept);
     init_(1, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1, x + dept, 0, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
     x_cl.to_device(std::vector<double>(x, x + (dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1)));
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     init<<<((int)dept / 1024) + 1, std::min(1024, dept)>>>(x_d, 1, dept);
     init<<<1, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1>>>(x_d + dept, 0, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
 #else
@@ -205,11 +205,11 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
 //r = b - (A * x)
 ///r = b;
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     opencl::DevicePtrOpenCL<double> r_cl(first_device, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
     //TODO: init on device
     init_(1, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD), r + dept, 0, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaMallocHost((void **)&r, dept * sizeof(double));
     cudaMalloc((void **)&r_d, (dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
     init<<<1, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD)>>>(r_d + dept, 0, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
@@ -219,24 +219,24 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
     init_(1, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD), r + dept, 0, (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
 #endif
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     opencl::DevicePtrOpenCL<double> d_cl(first_device, dept);
     std::vector<double> toDevice(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1, 0.0);
     std::copy(b.begin(), b.begin() + dept, toDevice.begin());
     r_cl.to_device(std::vector<double>(toDevice));
     d = new double[dept];
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaMallocHost((void **)&d, dept * sizeof(double));
     cudaMemcpy(r_d, &b[0], dept * sizeof(double), cudaMemcpyHostToDevice);
 #else
     //TODO:
 #endif
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     opencl::DevicePtrOpenCL<double> q_cl(first_device, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
     //TODO: init on gpu
     q_cl.to_device(std::vector<double>(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1, 0.0));
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaMalloc((void **)&q_d, (dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
     cudaMemset(q_d, 0, (dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
 #else
@@ -244,7 +244,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 #endif
     cudaDeviceSynchronize();
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
 
     {
         if (!kernel_q_cl) {
@@ -267,14 +267,14 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
         opencl::run_kernel_1d_timed(first_device, kernel_q_cl, grid_size, block_size);
     }
 
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     kernel_q<<<((int)dept / CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept)>>>(q_d, data_d, datlast, num_features, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD));
 #else
 //TODO:
 // kernel_q_(((int) dept/CUDABLOCK_SIZE) + 1, std::min((int)CUDABLOCK_SIZE, dept),q_d, data_d, datlast, num_features , dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) );
 #endif
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     switch (kernel) {
     case 0: {
         if (!svm_kernel_linear) {
@@ -308,7 +308,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
         throw std::runtime_error("Can not decide wich kernel!");
     }
 
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     switch (kernel) {
     case 0:
         kernel_linear<<<grid, block>>>(q_d, r_d, x_d, data_d, QA_cost, 1 / cost, num_features, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD), -1);
@@ -326,13 +326,13 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 //TODO:
 #endif
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     {
         std::vector<double> ret(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
         r_cl.from_device(ret);
         std::copy(ret.begin(), ret.begin() + dept, r);
     }
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaDeviceSynchronize();
     cudaMemcpy(r, r_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
 
@@ -345,10 +345,10 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
     double alpha_cd, beta;
     double *Ad;
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     opencl::DevicePtrOpenCL<double> Ad_cl(first_device, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
     Ad = new double[dept];
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     double *Ad_d;
     cudaMallocHost((void **)&Ad, dept * sizeof(double));
     cudaMalloc((void **)&Ad_d, (dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
@@ -361,7 +361,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
         if (info)
             std::cout << "Start Iteration: " << run << std::endl;
 //Ad = A * d
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
         {
             std::vector<double> zeros(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
             Ad_cl.to_device(zeros);
@@ -372,7 +372,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
                 buffer[index] = 0.0;
             r_cl.to_device(buffer);
         }
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
         cudaDeviceSynchronize();
         cudaMemset(Ad_d, 0, dept * sizeof(double));
         cudaMemset(r_d + dept, 0, ((CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1) * sizeof(double));
@@ -382,7 +382,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
 #endif
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
         switch (kernel) {
         case 0: {
             if (!svm_kernel_linear) {
@@ -416,7 +416,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
             throw std::runtime_error("Can not decide wich kernel!");
         }
 
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
         switch (kernel) {
         case 0:
             kernel_linear<<<grid, block>>>(q_d, Ad_d, r_d, data_d, QA_cost, 1 / cost, num_features, dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD), 1);
@@ -434,7 +434,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 //TODO:
 #endif
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
         {
             std::vector<double> buffer(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
             r_cl.from_device(buffer);
@@ -448,7 +448,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
                 std::cout << val << " ";
             std::cout << std::endl;
         }
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
         cudaDeviceSynchronize();
         cudaMemcpy(d, r_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
         cudaMemcpy(Ad, Ad_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
@@ -462,7 +462,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
         alpha_cd = delta / mult(d, Ad, dept);
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
         {
             //TODO: auf GPU
             std::vector<double> buffer_r(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
@@ -477,7 +477,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
             std::cout << std::endl;
         }
 
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
         add_mult<<<((int)dept / 1024) + 1, std::min(1024, dept)>>>(x_d, r_d, alpha_cd, dept);
         cudaDeviceSynchronize();
         std::cout << "x: ";
@@ -520,13 +520,13 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
         std::cout << "delta: " << r << std::endl;
         add(mult(beta, d, dept), r, d, dept);
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
         {
             std::vector<double> buffer(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1, 0.0);
             std::copy(d, d + dept, buffer.begin());
             r_cl.to_device(buffer);
         }
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
         cudaMemcpy(r_d, d, dept * sizeof(double), cudaMemcpyHostToDevice);
 #else
 
@@ -539,7 +539,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
     std::vector<double> ret_q(dept);
     cudaDeviceSynchronize();
 
-#ifdef WITH_OPENCL
+#ifdef PLSSVM_HAS_OPENCL_BACKEND
     {
         std::vector<double> buffer(dept + (CUDABLOCK_SIZE * BLOCKING_SIZE_THREAD) - 1);
         x_cl.from_device(buffer);
@@ -553,7 +553,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
         std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
     }
     delete[] d, Ad;
-#elif WITH_CUDA
+#elif PLSSVM_HAS_CUDA_BACKEND
     cudaMemcpy(&alpha[0], x_d, dept * sizeof(double), cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
     std::cout << "alpha: ";
