@@ -1,4 +1,4 @@
-#include "cuda-kernel.cuh"
+#include <plssvm/CUDA/cuda-kernel.cuh>
 
 __global__ void init(real_t* vec, real_t value, int size){
 	const int id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -25,7 +25,7 @@ __global__ void dot( real_t *a, real_t *b, real_t *c, const int dim ) {
 	const int index = threadIdx.x + blockIdx.x * blockDim.x;
 	if(index < dim){
 		temp[threadIdx.x] = a[index] * b[index];
-		
+
 	}else{
 		temp[threadIdx.x] = 0.0;
 	}
@@ -45,7 +45,7 @@ __global__ void kernel_q_old(real_t *q, real_t *data_d, real_t *datlast,const in
 	for(int i = 0; i < Ncols ; ++i){
 		temp += data_d[i * Nrows + index] * datlast[i];
 	}
-	q[index] = temp;  
+	q[index] = temp;
 }
 __global__ void kernel_q(real_t *q, const real_t *data_d, const real_t *datlast, const int Nrows, const int start, const int end){
 	const int index = blockIdx.x * blockDim.x + threadIdx.x;

@@ -1,4 +1,4 @@
-#include "CSVM.hpp"
+#include <plssvm/CSVM.hpp>
 
 void CSVM::learn() {
     std::vector<real_t> q;

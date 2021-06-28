@@ -1,5 +1,5 @@
 #pragma once
-#include "typedef.hpp"
+#include <plssvm/typedef.hpp>
 #include <functional>
 #include <numeric>
 #include <vector>

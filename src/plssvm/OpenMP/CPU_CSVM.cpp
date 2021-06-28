@@ -1,5 +1,5 @@
-#include "CPU_CSVM.hpp"
-#include "operators.hpp"
+#include <plssvm/OpenMP/CPU_CSVM.hpp>
+#include <plssvm/operators.hpp>
 #include <chrono>
 #include <omp.h>
 

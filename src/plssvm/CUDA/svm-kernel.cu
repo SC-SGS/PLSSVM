@@ -1,4 +1,5 @@
-#include "svm-kernel.cuh"
+#include <plssvm/CUDA/svm-kernel.cuh>
+
 __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d, const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const int start, const int end){
 	int i =  blockIdx.x * blockDim.x * INTERNALBLOCK_SIZE;
 	int j = blockIdx.y * blockDim.y * INTERNALBLOCK_SIZE;
@@ -8,7 +9,7 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 	real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
 	real_t data_j[INTERNALBLOCK_SIZE];
 
-	
+
 	if(i >= j){
 		i += threadIdx.x * INTERNALBLOCK_SIZE;
 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
@@ -19,8 +20,8 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 			#pragma unroll(INTERNALBLOCK_SIZE)
 			for(size_t block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 				const size_t idx = block_id % THREADBLOCK_SIZE;
-				if(threadIdx.y == idx) data_intern_i[threadIdx.x][block_id] = data_d[block_id + vec_index + i ]; 
-				const size_t idx_2 = block_id + INTERNALBLOCK_SIZE % THREADBLOCK_SIZE ;  //TODO: constexpr 
+				if(threadIdx.y == idx) data_intern_i[threadIdx.x][block_id] = data_d[block_id + vec_index + i ];
+				const size_t idx_2 = block_id + INTERNALBLOCK_SIZE % THREADBLOCK_SIZE ;  //TODO: constexpr
 				if(threadIdx.y == idx_2) data_intern_j[threadIdx.x][block_id] = data_d[block_id + vec_index + ji];
 			}
 			__syncthreads();
@@ -59,16 +60,16 @@ __global__ void kernel_linear(const real_t *q, real_t *ret, const real_t *d, con
 					}else{
 						atomicAdd(&ret[j + x], temp * d[i + y]);
 					}
-					
+
 				}
 			}
 		}
 
-		// #pragma unroll(INTERNALBLOCK_SIZE) 
+		// #pragma unroll(INTERNALBLOCK_SIZE)
 		// for(size_t k = j; k < INTERNALBLOCK_SIZE + j; ++k){
 		// 	const real_t q_j = q[k];
 		// 	// real_t ret_k = 0.0;
-		// 	#pragma unroll(INTERNALBLOCK_SIZE) 
+		// 	#pragma unroll(INTERNALBLOCK_SIZE)
 		// 	for(size_t l = i; l < INTERNALBLOCK_SIZE + i; ++l){
 		// 		// real_t temp;
 		// 		//if(start == 0){
@@ -101,7 +102,7 @@ __global__ void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,co
 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
 	real_t data_j[BLOCKING_SIZE_THREAD];
 
-	
+
 	if(i >= j){
 		i += threadIdx.x * BLOCKING_SIZE_THREAD;
 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
@@ -111,8 +112,8 @@ __global__ void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,co
 				#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id){
 					const int data_index = vec_index + block_id;
-					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ]; 
-					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji]; 
+					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];
+					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji];
 				}
 
 			}
@@ -125,7 +126,7 @@ __global__ void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,co
 			__syncthreads();
 			#pragma unroll(BLOCKING_SIZE_THREAD)
 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-				const real_t data_i = data_intern_i[threadIdx.x][x];				
+				const real_t data_i = data_intern_i[threadIdx.x][x];
 				#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
 					matr[x][y] += data_i * data_j[y];
@@ -157,7 +158,7 @@ __global__ void kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
 	real_t data_j[BLOCKING_SIZE_THREAD];
 
-	
+
 	if(i >= j){
 		i += threadIdx.x * BLOCKING_SIZE_THREAD;
 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
@@ -167,8 +168,8 @@ __global__ void kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 				#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id){
 					const int data_index = vec_index + block_id;
-					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ]; 
-					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji]; 
+					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];
+					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji];
 				}
 
 			}
@@ -181,7 +182,7 @@ __global__ void kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 			__syncthreads();
 			#pragma unroll(BLOCKING_SIZE_THREAD)
 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-				const real_t data_i = data_intern_i[threadIdx.x][x];				
+				const real_t data_i = data_intern_i[threadIdx.x][x];
 				#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
 					matr[x][y] += (data_i - data_j[y]) * (data_i - data_j[y]) ;

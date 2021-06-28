@@ -1,7 +1,7 @@
-#include "CUDA_CSVM.hpp"
-#include "cuda-kernel.cuh"
-#include "cuda-kernel.hpp"
-#include "svm-kernel.cuh"
+#include <plssvm/CUDA/CUDA_CSVM.hpp>
+#include <plssvm/CUDA/cuda-kernel.cuh>
+#include <plssvm/CUDA/cuda-kernel.hpp>
+#include <plssvm/CUDA/svm-kernel.cuh>
 
 int CUDADEVICE = 0;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CSVM.hpp"
+#include <plssvm/CSVM.hpp>
 
 
 __global__ void init(real_t* vec, real_t value, int size);

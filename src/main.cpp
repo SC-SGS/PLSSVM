@@ -1,12 +1,6 @@
-#if defined(HAS_CPU_BACKEND)
-    #include "CPU_CSVM.hpp"
-#endif
-#if defined(HAS_CUDA_BACKEND)
-    #include "CUDA_CSVM.hpp"
-#endif
-#if defined(HAS_OPENCL_BACKEND)
-    #include "OCL_CSVM.hpp"
-#endif
+#include <plssvm/core.hpp>
+
+#include <cxxopts.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -16,7 +10,6 @@
 #include <stdlib.h> /* srand, rand */
 #include <time.h>
 
-#include <cxxopts.hpp>
 
 #include <string_view>
 

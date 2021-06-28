@@ -1,12 +1,12 @@
 #pragma once
 
-#include "CSVM.hpp"
+#include <plssvm/CSVM.hpp>
 
-#include "../src/OpenCL/manager/configuration.hpp"
-#include "../src/OpenCL/manager/device.hpp"
-#include "../src/OpenCL/manager/manager.hpp"
-#include "DevicePtrOpenCL.hpp"
-#include "distribution.hpp"
+#include "../../../src/OpenCL/manager/configuration.hpp"
+#include "../../../src/OpenCL/manager/device.hpp"
+#include "../../../src/OpenCL/manager/manager.hpp"
+#include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
+#include <plssvm/distribution.hpp>
 #include <stdexcept>
 
 class OCL_CSVM : public CSVM {

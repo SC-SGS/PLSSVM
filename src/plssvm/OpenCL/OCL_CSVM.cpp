@@ -1,16 +1,16 @@
-#include "OCL_CSVM.hpp"
-#include "cuda-kernel.hpp"
+#include <plssvm/OpenCL/OCL_CSVM.hpp>
+#include <plssvm/CUDA/cuda-kernel.hpp>
 
-#include "../src/OpenCL/manager/configuration.hpp"
-#include "../src/OpenCL/manager/device.hpp"
-#include "../src/OpenCL/manager/manager.hpp"
-#include "DevicePtrOpenCL.hpp"
+#include "manager/configuration.hpp"
+#include "manager/device.hpp"
+#include "manager/manager.hpp"
+#include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
 #include <stdexcept>
 
-#include "../src/OpenCL/manager/apply_arguments.hpp"
-#include "../src/OpenCL/manager/run_kernel.hpp"
+#include "manager/apply_arguments.hpp"
+#include "manager/run_kernel.hpp"
 
-#include "distribution.hpp"
+#include <plssvm/distribution.hpp>
 
 int count_devices = 1;
 

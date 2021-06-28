@@ -1,4 +1,4 @@
-#include "cuda-kernel.hpp"
+#include <plssvm/CUDA/cuda-kernel.hpp>
 
 
 
@@ -30,7 +30,7 @@ void kernel_q_(int block, int blockDim, real_t *q, real_t *data_d, real_t *datla
             for(int i = 0; i < Ncols ; ++i){
                 temp += data_d[i * Nrows + index] * datlast[i];
             }
-            q[index] = temp;  
+            q[index] = temp;
         }
     }
 }

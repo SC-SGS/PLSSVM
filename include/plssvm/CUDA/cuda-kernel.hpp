@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CSVM.hpp"
+#include <plssvm/CSVM.hpp>
 
 void init_(int, int, real_t* vec, real_t value, int size);
 void init_(real_t* vec, real_t value, int size);

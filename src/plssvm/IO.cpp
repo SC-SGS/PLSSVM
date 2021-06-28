@@ -1,5 +1,5 @@
-#include "CSVM.hpp"
-#include "operators.hpp"
+#include <plssvm/CSVM.hpp>
+#include <plssvm/operators.hpp>
 
 #include <fstream>
 #include <iostream>

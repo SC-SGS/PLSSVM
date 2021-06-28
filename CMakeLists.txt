@@ -82,43 +82,42 @@ FetchContent_MakeAvailable(cxxopts)
 include_directories(include)
 
 set(CSVM_SOURCES
-  src/CSVM.cpp
-  src/IO.cpp
+        src/plssvm/CSVM.cpp
+        src/plssvm/IO.cpp
   )
 
 set(CPU_SOURCES
-  src/CPU/CPU_CSVM.cpp
-  )
+        src/plssvm/OpenMP/CPU_CSVM.cpp)
 
 
 set(CUDA_SOURCES
-    src/CUDA/CUDA_CSVM.cu
-    src/CUDA/svm-kernel.cu
-    src/CUDA/cuda-kernel.cu
-    src/OpenCL/cuda-kernel.cpp #TODO:
-    src/CUDA/predict.cu
+        src/plssvm/CUDA/CUDA_CSVM.cu
+        src/plssvm/CUDA/svm-kernel.cu
+        src/plssvm/CUDA/cuda-kernel.cu
+        src/plssvm/OpenCL/cuda-kernel.cpp #TODO:
+        src/plssvm/CUDA/predict.cu
     )
 
 
 set(OCL_SOURCES
-  src/IO.cpp
-  src/OpenCL/OCL_CSVM.cpp
-  src/OpenCL/cuda-kernel.cpp
-  src/OpenCL/kernels/svm-kernel-linear.cl
-  src/OpenCL/kernels/kernel_q.cl
-  src/OpenCL/manager/manager.cpp
-  src/OpenCL/manager/error_codes.cpp
-  src/OpenCL/manager/run_kernel.cpp
-  src/OpenCL/manager/configuration.cpp
-  src/OpenCL/manager/platform_wrapper.cpp
-  src/OpenCL/manager/json/dict_node.cpp
-  src/OpenCL/manager/json/id_node.cpp
-  src/OpenCL/manager/json/json.cpp
-  src/OpenCL/manager/json/json_exception.cpp
-  src/OpenCL/manager/json/list_node.cpp
-  src/OpenCL/manager/json/node.cpp
-  src/OpenCL/manager/json/text_node.cpp
-  src/CSVM.cpp
+        src/plssvm/IO.cpp
+        src/plssvm/OpenCL/OCL_CSVM.cpp
+        src/plssvm/OpenCL/cuda-kernel.cpp
+        src/plssvm/OpenCL/kernels/svm-kernel-linear.cl
+        src/plssvm/OpenCL/kernels/kernel_q.cl
+        src/plssvm/OpenCL/manager/manager.cpp
+        src/plssvm/OpenCL/manager/error_codes.cpp
+        src/plssvm/OpenCL/manager/run_kernel.cpp
+        src/plssvm/OpenCL/manager/configuration.cpp
+        src/plssvm/OpenCL/manager/platform_wrapper.cpp
+        src/plssvm/OpenCL/manager/json/dict_node.cpp
+        src/plssvm/OpenCL/manager/json/id_node.cpp
+        src/plssvm/OpenCL/manager/json/json.cpp
+        src/plssvm/OpenCL/manager/json/json_exception.cpp
+        src/plssvm/OpenCL/manager/json/list_node.cpp
+        src/plssvm/OpenCL/manager/json/node.cpp
+        src/plssvm/OpenCL/manager/json/text_node.cpp
+        src/plssvm/CSVM.cpp
   )
 
 set(EXECUTABLE_NAME svm-train)

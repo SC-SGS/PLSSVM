@@ -1,6 +1,7 @@
 #pragma once
-#include "operators.hpp"
-#include "typedef.hpp"
+#include <plssvm/operators.hpp>
+#include <plssvm/typedef.hpp>
+
 #include <chrono>
 #include <cstdlib>
 #include <cstring>

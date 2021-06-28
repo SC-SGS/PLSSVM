@@ -1,4 +1,4 @@
-#include "CUDA_CSVM.hpp"
+#include <plssvm/CUDA/CUDA_CSVM.hpp>
 
 __global__ void kernel_predict(real_t *data_d, real_t *w, int dim, real_t *out) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;

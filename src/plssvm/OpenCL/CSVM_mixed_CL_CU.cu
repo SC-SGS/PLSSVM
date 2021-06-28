@@ -1,17 +1,17 @@
-#include "CSVM.hpp"
-#include "cuda-kernel.cuh"
-#include "cuda-kernel.hpp"
-#include "svm-kernel.cuh"
+#include <plssvm/CSVM.hpp>
+#include <plssvm/CUDA/cuda-kernel.cuh>
+#include <plssvm/CUDA/cuda-kernel.hpp>
+#include <plssvm/CUDA/svm-kernel.cuh>
+
 #ifdef WITH_OPENCL
-#include "../src/OpenCL/manager/configuration.hpp"
-#include "../src/OpenCL/manager/device.hpp"
-#include "../src/OpenCL/manager/manager.hpp"
-#include "DevicePtrOpenCL.hpp"
+#include "manager/configuration.hpp"
+#include "manager/device.hpp"
+#include "manager/manager.hpp"
+#include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
 #include <stdexcept>
 
-#include "../src/OpenCL/manager/apply_arguments.hpp"
-#include "../src/OpenCL/manager/run_kernel.hpp"
-
+#include "manager/apply_arguments.hpp"
+#include "manager/run_kernel.hpp"
 #endif
 
 using namespace opencl;

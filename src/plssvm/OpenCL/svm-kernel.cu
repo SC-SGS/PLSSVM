@@ -1,4 +1,5 @@
-#include "svm-kernel.cuh"
+#include <plssvm/CUDA/svm-kernel.cuh>
+
 __global__ void kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
@@ -8,7 +9,7 @@ __global__ void kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
 	real_t data_j[BLOCKING_SIZE_THREAD];
 
-	
+
 	if(i >= j){
 		i += threadIdx.x * BLOCKING_SIZE_THREAD;
 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
@@ -18,7 +19,7 @@ __global__ void kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 				#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id){
 					const int data_index = vec_index + block_id;
-					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];  
+					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];
 					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji];
 				}
 
@@ -32,7 +33,7 @@ __global__ void kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d,
 			__syncthreads();
 			#pragma unroll(BLOCKING_SIZE_THREAD)
 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-				const real_t data_i = data_intern_i[threadIdx.x][x];				
+				const real_t data_i = data_intern_i[threadIdx.x][x];
 				#pragma unroll(BLOCKING_SIZE_THREAD)
 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
 					matr[x][y] += data_i * data_j[y];

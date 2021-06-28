@@ -1,8 +1,8 @@
-// //#include "operators.hpp"
+// //#include <plssvm/operators.hpp>
 // #include <vector>
 // #include <iostream>
 
-// #include "typedef.hpp"
+// #include <plssvm/typedef.hpp>
 // #include <algorithm>
 // #include <numeric>
 // #include <functional>

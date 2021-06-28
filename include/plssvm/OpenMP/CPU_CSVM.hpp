@@ -1,5 +1,7 @@
 #pragma once
-#include "CSVM.hpp"
+
+#include <plssvm/CSVM.hpp>
+
 class CPU_CSVM : public CSVM {
   public:
     CPU_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_);
