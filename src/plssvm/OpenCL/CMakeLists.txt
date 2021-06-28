@@ -15,7 +15,7 @@ message(STATUS "OpenCL backend enabled.")
 
 # explicitly set sources
 set(PLSSVM_OpenCL_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/OCL_CSVM.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
   ${CMAKE_CURRENT_LIST_DIR}/cuda-kernel.cpp
   ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
   ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
@@ -38,6 +38,5 @@ set(PLSSVM_OpenCL_BACKEND_LIBRARY_NAME svm-OCL)
 add_library(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SOURCES} ${PLSSVM_OpenCL_SOURCES})
 target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} OpenCL)
-target_compile_definitions(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC WITH_OPENCL) # TODO: remove later
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
 target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME})
