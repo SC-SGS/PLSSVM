@@ -1,12 +1,6 @@
-#if defined(HAS_CPU_BACKEND)
-    #include "CPU_CSVM.hpp"
-#endif
-#if defined(HAS_CUDA_BACKEND)
-    #include "CUDA_CSVM.hpp"
-#endif
-#if defined(HAS_OPENCL_BACKEND)
-    #include "OCL_CSVM.hpp"
-#endif
+#include <plssvm/core.hpp>
+
+#include <cxxopts.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -16,11 +10,11 @@
 #include <stdlib.h> /* srand, rand */
 #include <time.h>
 
-#include <cxxopts.hpp>
 
 #include <string_view>
 
-bool info;
+// TODO: move to separate files
+namespace plssvm {
 
 // backend exception
 class svm_backend_error : public std::runtime_error { //TODO: make specific exceptions for whole program -> in separate header
@@ -38,21 +32,21 @@ template <typename... Args>
 std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
     switch (type) {
     case svm_backend::CPU: //TODO: change to mpi backend
-#if defined(HAS_CPU_BACKEND)
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
         return std::make_unique<CPU_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No CPU backend available!"};
 #endif
 
     case svm_backend::CUDA:
-#if defined(HAS_CUDA_BACKEND)
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
         return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No CUDA backend available!"};
 #endif
 
     case svm_backend::OPENCL:
-#if defined(HAS_OPENCL_BACKEND) // TODO: einheitlich
+#if defined(PLSSVM_HAS_OPENCL_BACKEND) // TODO: einheitlich
         return std::make_unique<OCL_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No OpenCL backend available!"};
@@ -72,7 +66,14 @@ svm_backend parse_backend(std::string_view backend) {
     }
 }
 
+}
+
+bool info;
+
 int main(int argc, char *argv[]) {
+
+  // TODO:
+  using real_t = plssvm::real_t;
 
     cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
     options
@@ -137,7 +138,7 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        std::unique_ptr<CSVM> svm = make_SVM(parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
+        std::unique_ptr<plssvm::CSVM> svm = make_SVM(plssvm::parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
         svm->learn(input_file_name, model_file_name);
 
     } catch (std::exception &e) {
