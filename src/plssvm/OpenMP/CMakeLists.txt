@@ -1,0 +1,24 @@
+# check if OpenMP can be enabled
+find_package(OpenMP)
+
+if(NOT OPENMP_FOUND)
+    if(PLSVM_ENABLE_OpenMP_BACKEND MATCHES "ON")
+        message(FATAL_ERROR "Cannot find requested backend: OpenMP!")
+    endif()
+    if (PLSVM_ENABLE_OpenMP_BACKEND MATCHES "AUTO")
+        message(STATUS "OpenMP backend not found.")
+        return()
+    endif()
+endif()
+message(STATUS "OpenMP backend enabled.")
+
+# explicitly set sources
+set(PLSSVM_OpenMP_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/CPU_CSVM.cpp
+)
+
+# set target properties
+set(PLSSVM_OpenMP_BACKEND_LIBRARY_NAME svm-CPU)
+add_library(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SOURCES} ${PLSSVM_OpenMP_SOURCES})
+target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC HAS_CPU_BACKEND) # TODO: add PLSSVM prefix and rename
+target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME})
