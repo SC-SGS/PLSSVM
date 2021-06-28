@@ -31,21 +31,21 @@ template <typename... Args>
 std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
     switch (type) {
     case svm_backend::CPU: //TODO: change to mpi backend
-#if defined(HAS_CPU_BACKEND)
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
         return std::make_unique<CPU_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No CPU backend available!"};
 #endif
 
     case svm_backend::CUDA:
-#if defined(HAS_CUDA_BACKEND)
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
         return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No CUDA backend available!"};
 #endif
 
     case svm_backend::OPENCL:
-#if defined(HAS_OPENCL_BACKEND) // TODO: einheitlich
+#if defined(PLSSVM_HAS_OPENCL_BACKEND) // TODO: einheitlich
         return std::make_unique<OCL_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No OpenCL backend available!"};

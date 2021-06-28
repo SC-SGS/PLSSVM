@@ -39,5 +39,5 @@ add_library(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SOURCES} ${PLS
 target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} OpenCL)
 target_compile_definitions(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC WITH_OPENCL) # TODO: remove later
-target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC HAS_OPENCL_BACKEND) # TODO: add PLSSVM prefix
+target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
 target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME})
