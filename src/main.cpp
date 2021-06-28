@@ -23,7 +23,7 @@ class svm_backend_error : public std::runtime_error { //TODO: make specific exce
 };
 
 // available backends
-enum class svm_backend { CPU,
+enum class svm_backend { OPENMP,
                          CUDA,
                          OPENCL };
 
@@ -31,11 +31,11 @@ enum class svm_backend { CPU,
 template <typename... Args>
 std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
     switch (type) {
-    case svm_backend::CPU: //TODO: change to mpi backend
+    case svm_backend::OPENMP:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-        return std::make_unique<CPU_CSVM>(std::forward<Args>(args)...);
+        return std::make_unique<OpenMP_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No CPU backend available!"};
+        throw svm_backend_error{"No OpenMP backend available!"};
 #endif
 
     case svm_backend::CUDA:
@@ -55,8 +55,8 @@ std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
 }
 // command line parser
 svm_backend parse_backend(std::string_view backend) {
-    if (backend == std::string_view{"cpu"}) {
-        return svm_backend::CPU;
+    if (backend == std::string_view{"openmp"}) {
+        return svm_backend::OPENMP;
     } else if (backend == std::string_view{"cuda"}) {
         return svm_backend::CUDA;
     } else if (backend == std::string_view{"opencl"}) {

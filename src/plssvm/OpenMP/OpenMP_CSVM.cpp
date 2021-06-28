@@ -1,11 +1,11 @@
-#include <plssvm/OpenMP/CPU_CSVM.hpp>
+#include <plssvm/OpenMP/OpenMP_CSVM.hpp>
 #include <plssvm/operators.hpp>
 #include <chrono>
 #include <omp.h>
 
 namespace plssvm {
 
-CPU_CSVM::CPU_CSVM(real_t cost_,
+OpenMP_CSVM::OpenMP_CSVM(real_t cost_,
                    real_t epsilon_,
                    unsigned kernel_,
                    real_t degree_,
@@ -13,7 +13,7 @@ CPU_CSVM::CPU_CSVM(real_t cost_,
                    real_t coef0_,
                    bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) { }
 
-void CPU_CSVM::learn() {
+void OpenMP_CSVM::learn() {
   std::vector<real_t> q;
   std::vector<real_t> b = value;
 #pragma omp parallel sections
@@ -58,7 +58,7 @@ real_t CSVM::kernel_function(real_t* xi, real_t* xj, int dim) {
     default:throw std::runtime_error("Can not decide wich kernel!");
   }
 }
-void CPU_CSVM::learn(std::string& filename, std::string& output_filename) {
+void OpenMP_CSVM::learn(std::string& filename, std::string& output_filename) {
   auto begin_parse = std::chrono::high_resolution_clock::now();
   if (filename.size() > 5 && endsWith(filename, ".arff")) {
     arffParser(filename);
@@ -95,7 +95,7 @@ void CPU_CSVM::learn(std::string& filename, std::string& output_filename) {
   }
 }
 
-std::vector<real_t> CPU_CSVM::CG(const std::vector<real_t>& b, const int imax, const real_t eps) {
+std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t>& b, const int imax, const real_t eps) {
   std::vector<real_t> x(b.size(), 1);
   real_t* datlast = &data.back()[0];
   static const size_t dim = data.back().size();
