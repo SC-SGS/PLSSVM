@@ -1,4 +1,4 @@
-#include <plssvm/OpenCL/OCL_CSVM.hpp>
+#include <plssvm/OpenCL/OpenCL_CSVM.hpp>
 #include <plssvm/CUDA/cuda-kernel.hpp>
 
 #include "manager/configuration.hpp"
@@ -16,7 +16,7 @@ namespace plssvm {
 
     int count_devices = 1;
 
-    OCL_CSVM::OCL_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_,
+OpenCL_CSVM::OpenCL_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_,
                        bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
         std::vector<opencl::device_t> &devices = manager.get_devices();
         first_device = devices[0];
@@ -26,7 +26,7 @@ namespace plssvm {
         std::cout << "GPUs found: " << count_devices << std::endl;
     }
 
-    void OCL_CSVM::loadDataDevice() {
+    void OpenCL_CSVM::loadDataDevice() {
         std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
         for (int device = 0; device < count_devices; ++device)
             datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], (num_features)));
@@ -60,7 +60,7 @@ namespace plssvm {
         }
     }
 
-    void OCL_CSVM::resizeData(const int device, const int boundary) {
+    void OpenCL_CSVM::resizeData(const int device, const int boundary) {
         std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
 
         data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device],
@@ -78,7 +78,7 @@ namespace plssvm {
         data_cl[device].to_device(vec);
     }
 
-    std::vector<real_t> OCL_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
+    std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
         std::vector<opencl::device_t> &devices = manager.get_devices(); //TODO: header
         const size_t dept = num_data_points - 1;
         const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;

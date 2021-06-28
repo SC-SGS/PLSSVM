@@ -7,7 +7,7 @@
 #include <plssvm/CUDA/CUDA_CSVM.hpp>
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-#include <plssvm/OpenCL/OCL_CSVM.hpp>
+#include <plssvm/OpenCL/OpenCL_CSVM.hpp>
 #endif
 
 #include <plssvm/CSVM.hpp>

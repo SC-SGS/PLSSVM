@@ -47,7 +47,7 @@ std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
 
     case svm_backend::OPENCL:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND) // TODO: einheitlich
-        return std::make_unique<OCL_CSVM>(std::forward<Args>(args)...);
+        return std::make_unique<OpenCL_CSVM>(std::forward<Args>(args)...);
 #else
         throw svm_backend_error{"No OpenCL backend available!"};
 #endif
