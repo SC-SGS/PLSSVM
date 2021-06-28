@@ -36,7 +36,7 @@ void CPU_CSVM::learn() {
     bias = value.back() - QA_cost * alpha.back() - (q * alpha);
 }
 
-real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {
+real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) { //TODO: template
     switch (kernel) {
     case 0:
         return mult(xi, xj, dim);

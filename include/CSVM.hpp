@@ -30,6 +30,10 @@ class CSVM {
     virtual std::vector<real_t> predict(real_t *, int, int) = 0;
     virtual ~CSVM() = default;
 
+    void libsvmParser(const std::string_view);
+    void arffParser(const std::string_view);
+    void writeModel(const std::string_view);
+
   protected:
     const bool info;
     real_t cost;
@@ -50,10 +54,6 @@ class CSVM {
 
     inline real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
     inline real_t kernel_function(real_t *, real_t *, int);
-
-    void libsvmParser(const std::string_view);
-    void arffParser(const std::string_view);
-    void writeModel(const std::string_view);
 
     virtual void loadDataDevice() = 0;
 

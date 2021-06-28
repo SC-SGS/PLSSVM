@@ -162,3 +162,6 @@ if(lto_supported)
 else()
   message(STATUS "IPO / LTO not supported: <${lto_error}>")
 endif()
+
+enable_testing()
+add_subdirectory(tests)
