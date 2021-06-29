@@ -79,7 +79,10 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
                 // get actual value
                 std::getline(token_iss, token, ':');
-                vline[index] = string_to_floating_point<real_t>(token);
+                auto res = fast_float::from_chars(token.data(), token.data() + token.size(), vline[index]);
+                if (res.ec != std::errc{}) {
+                  throw invalid_file_format_exception{fmt::format("Can't parse '{}' to floating point!", token)};
+                }
 
                 // restore stream state
                 token_iss.clear();
