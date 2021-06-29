@@ -16,12 +16,6 @@
 // TODO: move to separate files
 namespace plssvm {
 
-// backend exception
-class svm_backend_error : public std::runtime_error { //TODO: make specific exceptions for whole program -> in separate header
-  public:
-    svm_backend_error(const char *msg) : runtime_error{msg} {}
-};
-
 // available backends
 enum class svm_backend { OPENMP,
                          CUDA,
@@ -35,21 +29,21 @@ std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
         return std::make_unique<OpenMP_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No OpenMP backend available!"};
+        throw unsupported_backend_exception{"No OpenMP backend available!"};
 #endif
 
     case svm_backend::CUDA:
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
         return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No CUDA backend available!"};
+        throw unsupported_backend_exception{"No CUDA backend available!"};
 #endif
 
     case svm_backend::OPENCL:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND) // TODO: einheitlich
         return std::make_unique<OpenCL_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No OpenCL backend available!"};
+        throw unsupported_backend_exception{"No OpenCL backend available!"};
 #endif
     }
 }
