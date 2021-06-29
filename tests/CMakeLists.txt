@@ -9,14 +9,19 @@ set(gtest_force_shared_crt
 FetchContent_MakeAvailable(googletest)
 
 add_executable(
-  hello_test test.cpp ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
-             ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp) # TODO: link against svm
-                                                        # as library
+  hello_test
+  test.cpp ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
+  ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp
+  ${PROJECT_SOURCE_DIR}/src/plssvm/OpenMP/OpenMP_CSVM.cpp) # TODO: link against
+                                                           # svm
+# as library
 target_link_libraries(hello_test gtest_main)
 target_link_libraries(hello_test gmock)
 target_include_directories(hello_test PUBLIC ${GTEST_INCLUDE_DIRS}
                                              ${GMOCK_INCLUDE_DIRS})
 target_include_directories(hello_test PUBLIC ${PROJECT_SOURCE_DIR}/include/)
+target_compile_definitions(hello_test
+                           PRIVATE TESTPATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
 include(GoogleTest)
 gtest_discover_tests(hello_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

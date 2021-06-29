@@ -22,7 +22,7 @@ T string_to_floating_point(const std::string &str) {
     }
 }
 
-//Einlesen libsvm Dateien
+//read libsvm file
 void CSVM::libsvmParser(const std::string_view filename) {
     std::vector<std::string> data_lines;
 
@@ -91,14 +91,13 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
     // update values
     num_data_points = data.size();
-    num_features = max_size; // TODO: umbenennen num_features
-
+    num_features = max_size;
     if (gamma == 0) {
-        gamma = 1. / num_data_points;
+        gamma = 1. / num_features;
     }
 }
 
-//Einlesen ARF Dateien
+//read ARF file
 void CSVM::arffParser(const std::string_view filename) {
     std::ifstream file(filename.data());
     std::string line, escape = "@";
@@ -115,7 +114,7 @@ void CSVM::arffParser(const std::string_view filename) {
             if (vline.size() > 0) {
                 value.push_back(vline.back());
                 vline.pop_back();
-                data.push_back(vline);
+                data.push_back(std::move(vline));
             }
             vline.clear();
         } else {
@@ -124,9 +123,12 @@ void CSVM::arffParser(const std::string_view filename) {
     }
     num_data_points = data.size();
     num_features = data[0].size();
+    if (gamma == 0) {
+        gamma = 1. / num_features;
+    }
 }
 
-void CSVM::writeModel(const std::string_view model_name) {
+void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save number of Datapoint in input file ->  copy input file -> manipulate copy and dont rewrite whole File
     int nBSV = 0;
     int count_pos = 0;
     int count_neg = 0;
@@ -138,7 +140,7 @@ void CSVM::writeModel(const std::string_view model_name) {
         if (alpha[i] == cost)
             ++nBSV;
     }
-    //Terminal Ausgabe
+    //Terminal output
     if (info) {
         std::cout << "Optimization finished \n";
         std::cout << "nu = " << cost << "\n";
@@ -149,7 +151,7 @@ void CSVM::writeModel(const std::string_view model_name) {
         std::cout << "Total nSV = " << count_pos + count_neg << std::endl;
     }
 
-    //Model Datei
+    //Model file
     std::ofstream model(model_name.data(), std::ios::out | std::ios::trunc);
     model << "svm_type c_svc\n";
     switch (kernel) {
@@ -169,7 +171,7 @@ void CSVM::writeModel(const std::string_view model_name) {
               << "\n";
         break;
     default:
-        throw std::runtime_error("Can not decide wich kernel!");
+        throw std::runtime_error("Can not decide which kernel!");
     }
     model << "nr_class 2\n";
     model << "total_sv " << count_pos + count_neg << "\n";
@@ -185,7 +187,7 @@ void CSVM::writeModel(const std::string_view model_name) {
 
     int count = 0;
 
-#pragma omp parallel
+#pragma omp parallel //num_threads(1) //TODO: fix bug. SV complete missing if more then 1 Thread
     {
         std::stringstream out_pos;
         std::stringstream out_neg;
@@ -193,13 +195,14 @@ void CSVM::writeModel(const std::string_view model_name) {
 // Alle SV Klasse 1
 #pragma omp for nowait
         for (int i = 0; i < alpha.size(); ++i) {
+            std::cout << value[i] << std::endl;
             if (value[i] > 0)
                 out_pos << alpha[i] << " " << data[i] << "\n";
         }
 
 #pragma omp critical
         {
-            model << out_pos.rdbuf();
+            model << out_pos.str();
             count++;
 #pragma omp flush(count, model)
         }
@@ -211,17 +214,17 @@ void CSVM::writeModel(const std::string_view model_name) {
                 out_neg << alpha[i] << " " << data[i] << "\n";
         }
 
-        //Wait for all have writen Klass 1
+        //Wait for all have written Class 1
         while (count < omp_get_thread_num()) {
         };
 
 #pragma omp critical
-        model << out_neg.rdbuf();
+        model << out_neg.str();
     }
     model.close();
 }
 
-}
+} // namespace plssvm
 
 // writeModel second version, TODO: implement correctly
 //void CSVM::writeModel(std::string &model_name){
