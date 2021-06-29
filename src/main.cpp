@@ -135,9 +135,11 @@ int main(int argc, char *argv[]) {
         std::unique_ptr<plssvm::CSVM> svm = make_SVM(plssvm::parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
         svm->learn(input_file_name, model_file_name);
 
-    } catch (std::exception &e) {
-        std::cout << "error" << std::endl;
+    } catch (const plssvm::exception &e) {
         std::cerr << e.what() << std::endl;
+        std::cerr << e.loc() << std::endl;
+    } catch (const std::exception& e) {
+      std::cerr << e.what() << std::endl;
     }
     return 0;
 }
