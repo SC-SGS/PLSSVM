@@ -248,7 +248,7 @@ std::vector<double> CSVM::CG(const std::vector<double> &b, const int imax, const
 
     {
         if (!kernel_q_cl) {
-            std::string kernel_src_file_name{"../src/OpenCL/kernels/kernel_q.cl"};
+            std::string kernel_src_file_name{"../src/plssvm/OpenCL/kernels/kernel_q.cl"};
             std::string kernel_src = manager.read_src_file(kernel_src_file_name);
             json::node &deviceNode =
                 manager.get_configuration()["PLATFORMS"][first_device.platformName]

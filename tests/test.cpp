@@ -7,12 +7,14 @@
 #include <string>
 #include <unistd.h>
 
+#include "plssvm/exceptions.hpp"
+
 TEST(IO, libsvmFormat) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
     csvm.libsvmParser(TESTPATH "/data/5x4.libsvm"); //TODO: add comments etc to libsvm test file
-    EXPECT_EQ(csvm.get_num_data_points(), 5);
-    EXPECT_EQ(csvm.get_num_features(), 4);
-    EXPECT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
+    ASSERT_EQ(csvm.get_num_data_points(), 5);
+    ASSERT_EQ(csvm.get_num_features(), 4);
+    ASSERT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
     for (int i = 0; i < csvm.get_num_data_points(); i++) {
         EXPECT_EQ(csvm.get_data()[i].size(), csvm.get_num_features()) << "datapoint: " << i;
     }
@@ -34,9 +36,9 @@ TEST(IO, libsvmFormat) {
 TEST(IO, sparselibsvmFormat) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
     csvm.libsvmParser(TESTPATH "/data/5x4.sparse.libsvm"); //TODO: add comments etc to libsvm test file
-    EXPECT_EQ(csvm.get_num_data_points(), 5);
-    EXPECT_EQ(csvm.get_num_features(), 4);
-    EXPECT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
+    ASSERT_EQ(csvm.get_num_data_points(), 5);
+    ASSERT_EQ(csvm.get_num_features(), 4);
+    ASSERT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
     for (int i = 0; i < csvm.get_num_data_points(); i++) {
         EXPECT_EQ(csvm.get_data()[i].size(), csvm.get_num_features()) << "datapoint: " << i;
     }
@@ -58,9 +60,9 @@ TEST(IO, sparselibsvmFormat) {
 TEST(IO, arffFormat) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
     csvm.arffParser(TESTPATH "/data/5x4.arff"); //TODO: add comments etc to arff test file
-    EXPECT_EQ(csvm.get_num_data_points(), 5);
-    EXPECT_EQ(csvm.get_num_features(), 4);
-    EXPECT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
+    ASSERT_EQ(csvm.get_num_data_points(), 5);
+    ASSERT_EQ(csvm.get_num_features(), 4);
+    ASSERT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
     for (int i = 0; i < csvm.get_num_data_points(); i++) {
         EXPECT_EQ(csvm.get_data()[i].size(), csvm.get_num_features()) << "datapoint: " << i;
     }
@@ -82,9 +84,9 @@ TEST(IO, arffFormat) {
 TEST(IO, arffParserGamma) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
     csvm.arffParser(TESTPATH "/data/5x4.arff"); //TODO: add comments etc to arff test file
-    EXPECT_EQ(csvm.get_num_data_points(), 5);
-    EXPECT_EQ(csvm.get_num_features(), 4);
-    EXPECT_FLOAT_EQ(1.0, csvm.get_gamma());
+    ASSERT_EQ(csvm.get_num_data_points(), 5);
+    ASSERT_EQ(csvm.get_num_features(), 4);
+    ASSERT_FLOAT_EQ(1.0, csvm.get_gamma());
 
     MockCSVM csvm_gammazero(1., 1., 0, 1., 0, 1., false);
     csvm_gammazero.arffParser(TESTPATH "/data/5x4.arff"); //TODO: add comments etc to arff test file
@@ -96,9 +98,9 @@ TEST(IO, arffParserGamma) {
 TEST(IO, libsvmParserGamma) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
     csvm.libsvmParser(TESTPATH "/data/5x4.libsvm"); //TODO: add comments etc to arff test file
-    EXPECT_EQ(csvm.get_num_data_points(), 5);
-    EXPECT_EQ(csvm.get_num_features(), 4);
-    EXPECT_FLOAT_EQ(1.0, csvm.get_gamma());
+    ASSERT_EQ(csvm.get_num_data_points(), 5);
+    ASSERT_EQ(csvm.get_num_features(), 4);
+    ASSERT_FLOAT_EQ(1.0, csvm.get_gamma());
 
     MockCSVM csvm_gammazero(1., 1., 0, 1., 0, 1., false);
     csvm_gammazero.libsvmParser(TESTPATH "/data/5x4.libsvm"); //TODO: add comments etc to arff test file
@@ -131,20 +133,20 @@ TEST(IO, writeModel) {
 
 TEST(IO, libsvmFormatIllFormed) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.arff");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.libsvmParser(TESTPATH "/data/5x4.arff");, plssvm::invalid_file_format_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
 }
 
 TEST(IO, arffFormatIllFormed) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.arffParser(TESTPATH "/data/5x5.libsvm");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.arffParser(TESTPATH "/data/5x4.libsvm");, plssvm::invalid_file_format_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
 }
 
 TEST(IO, libsvmNoneExistingFile) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.ar");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.ar");, plssvm::file_not_found_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
 }
 
 TEST(IO, arffNoneExistingFile) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.arffParser(TESTPATH "/data/5x5.lib");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.arffParser(TESTPATH "/data/5x5.lib");, plssvm::file_not_found_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
 }
