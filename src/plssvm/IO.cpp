@@ -1,5 +1,8 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/operators.hpp>
+#include <plssvm/exceptions.hpp>
+
+#include <fmt/core.h>
 
 #include <fstream>
 #include <iostream>
@@ -28,6 +31,9 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
     {
         std::ifstream file{filename.data()};
+        if (file.fail()) {
+            throw file_not_found_exception{fmt::format("Couldn't find file: '{}'!", filename)};
+        }
         std::string line;
         while (std::getline(file, line)) {
             data_lines.push_back(std::move(line));
@@ -101,6 +107,10 @@ void CSVM::libsvmParser(const std::string_view filename) {
 //Einlesen ARF Dateien
 void CSVM::arffParser(const std::string_view filename) {
     std::ifstream file(filename.data());
+    if (file.fail()) {
+      throw file_not_found_exception{fmt::format("Couldn't find file: '{}'!", filename)};
+    }
+
     std::string line, escape = "@";
     std::istringstream line_iss;
     std::vector<real_t> vline;
