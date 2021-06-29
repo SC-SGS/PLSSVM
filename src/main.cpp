@@ -84,9 +84,11 @@ int main(int argc, char *argv[]) {
             ("r,coef0", "coef0 in kernel function", cxxopts::value<real_t>()->default_value("0"))
             ("c,cost", "the parameter C", cxxopts::value<real_t>()->default_value("1"))
             ("e,epsilon", "tolerance of termination criterion", cxxopts::value<real_t>()->default_value("0.001"))
-            ("b,backend", "chooses the backend cpu|cuda|opencl", cxxopts::value<std::string>()->default_value("cpu"))
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(info))("h,help", "print this helper message", cxxopts::value<bool>())
-            ("input", "", cxxopts::value<std::string>(), "training_set_file")("model", "", cxxopts::value<std::string>(), "model_file");
+            ("b,backend", "chooses the backend openmp|cuda|opencl", cxxopts::value<std::string>()->default_value("openmp"))
+            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(info))
+            ("h,help", "print this helper message", cxxopts::value<bool>())
+            ("input", "", cxxopts::value<std::string>(), "training_set_file")
+            ("model", "", cxxopts::value<std::string>(), "model_file");
     // clang-format on
 
     cxxopts::ParseResult result;
