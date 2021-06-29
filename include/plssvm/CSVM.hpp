@@ -55,8 +55,8 @@ class CSVM {
 
     virtual void learn();
 
-    inline real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
-    inline real_t kernel_function(real_t *, real_t *, int);
+    real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
+    real_t kernel_function(real_t *, real_t *, int);
 
     virtual void loadDataDevice() = 0;
 
