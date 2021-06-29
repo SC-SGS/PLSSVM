@@ -11,3 +11,4 @@
 #endif
 
 #include <plssvm/CSVM.hpp>
+#include <plssvm/exceptions.hpp>
