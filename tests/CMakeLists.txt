@@ -25,6 +25,7 @@ target_compile_definitions(hello_test
 
 target_include_directories(hello_test PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: better?
 target_link_libraries(hello_test fmt::fmt)
+target_include_directories(hello_test PUBLIC ${fast_float_SOURCE_DIR}/include)
 
 include(GoogleTest)
 gtest_discover_tests(hello_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
