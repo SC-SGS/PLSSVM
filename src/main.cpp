@@ -16,12 +16,6 @@
 // TODO: move to separate files
 namespace plssvm {
 
-// backend exception
-class svm_backend_error : public std::runtime_error { //TODO: make specific exceptions for whole program -> in separate header
-  public:
-    svm_backend_error(const char *msg) : runtime_error{msg} {}
-};
-
 // available backends
 enum class svm_backend { OPENMP,
                          CUDA,
@@ -35,21 +29,21 @@ std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
         return std::make_unique<OpenMP_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No OpenMP backend available!"};
+        throw unsupported_backend_exception{"No OpenMP backend available!"};
 #endif
 
     case svm_backend::CUDA:
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
         return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No CUDA backend available!"};
+        throw unsupported_backend_exception{"No CUDA backend available!"};
 #endif
 
     case svm_backend::OPENCL:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND) // TODO: einheitlich
         return std::make_unique<OpenCL_CSVM>(std::forward<Args>(args)...);
 #else
-        throw svm_backend_error{"No OpenCL backend available!"};
+        throw unsupported_backend_exception{"No OpenCL backend available!"};
 #endif
     }
 }
@@ -90,9 +84,11 @@ int main(int argc, char *argv[]) {
             ("r,coef0", "coef0 in kernel function", cxxopts::value<real_t>()->default_value("0"))
             ("c,cost", "the parameter C", cxxopts::value<real_t>()->default_value("1"))
             ("e,epsilon", "tolerance of termination criterion", cxxopts::value<real_t>()->default_value("0.001"))
-            ("b,backend", "chooses the backend cpu|cuda|opencl", cxxopts::value<std::string>()->default_value("cpu"))
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(info))("h,help", "print this helper message", cxxopts::value<bool>())
-            ("input", "", cxxopts::value<std::string>(), "training_set_file")("model", "", cxxopts::value<std::string>(), "model_file");
+            ("b,backend", "chooses the backend openmp|cuda|opencl", cxxopts::value<std::string>()->default_value("openmp"))
+            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(info))
+            ("h,help", "print this helper message", cxxopts::value<bool>())
+            ("input", "", cxxopts::value<std::string>(), "training_set_file")
+            ("model", "", cxxopts::value<std::string>(), "model_file");
     // clang-format on
 
     cxxopts::ParseResult result;
@@ -141,9 +137,11 @@ int main(int argc, char *argv[]) {
         std::unique_ptr<plssvm::CSVM> svm = make_SVM(plssvm::parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
         svm->learn(input_file_name, model_file_name);
 
-    } catch (std::exception &e) {
-        std::cout << "error" << std::endl;
+    } catch (const plssvm::exception &e) {
         std::cerr << e.what() << std::endl;
+        std::cerr << e.loc() << std::endl;
+    } catch (const std::exception& e) {
+      std::cerr << e.what() << std::endl;
     }
     return 0;
 }
