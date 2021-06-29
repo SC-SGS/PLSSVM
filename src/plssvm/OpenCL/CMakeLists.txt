@@ -36,6 +36,8 @@ set(PLSSVM_OpenCL_SOURCES
 # set target properties
 set(PLSSVM_OpenCL_BACKEND_LIBRARY_NAME svm-OCL)
 add_library(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SOURCES} ${PLSSVM_OpenCL_SOURCES})
+target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
+target_link_libraries(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} fmt::fmt)
 target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} OpenCL)
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENCL_BACKEND)

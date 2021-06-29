@@ -18,6 +18,9 @@ target_include_directories(hello_test PUBLIC ${GTEST_INCLUDE_DIRS}
                                              ${GMOCK_INCLUDE_DIRS})
 target_include_directories(hello_test PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 
+target_include_directories(hello_test PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: better?
+target_link_libraries(hello_test fmt::fmt)
+
 include(GoogleTest)
 gtest_discover_tests(hello_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 

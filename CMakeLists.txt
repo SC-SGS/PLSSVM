@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.18)
 
 project (SupportVectorMachine LANGUAGES CXX)
 
-## fetch command line parser library cxxopts
 include(FetchContent)
+
+## fetch command line parser library cxxopts
 FetchContent_Declare(cxxopts
   # Compared to release tag or branch, commit hash avoids network connection
   # if the local clone already has that particular commit.
@@ -15,6 +16,22 @@ FetchContent_Declare(cxxopts
   set(CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 )
 FetchContent_MakeAvailable(cxxopts)
+
+## fetch string formatting library fmt
+set(CMAKE_CXX_FLAGS_OLD ${CMAKE_CXX_FLAGS}) # TODO: better?
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+FetchContent_Declare(fmt
+  GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
+  GIT_TAG                 9e8b86fd2d9806672cc73133d21780dd182bfd24
+  GIT_SHALLOW             TRUE
+
+  set(FMT_TEST OFF CACHE BOOL "" FORCE)
+  set(FMT_DOC OFF CACHE BOOL "" FORCE)
+  set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+)
+FetchContent_MakeAvailable(fmt)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_OLD})
+
 
 ## set C++ standard globally
 set(CMAKE_CXX_STANDARD 17)
@@ -43,6 +60,8 @@ set(PLSSVM_EXECUTABLE_NAME svm-train)
 add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp)
 add_dependencies(${PLSSVM_EXECUTABLE_NAME} cxxopts)
 target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
+#target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: better?
+#target_link_libraries(${PLSSVM_EXECUTABLE_NAME} fmt::fmt)
 
 
 ## check for OpenMP backend
