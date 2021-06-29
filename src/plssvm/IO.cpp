@@ -11,6 +11,8 @@
 #include <string_view>
 #include <vector>
 
+#include <fast_float/fast_float.h>
+
 namespace plssvm {
 
 // TODO: move elsewhere?
@@ -55,7 +57,12 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
         // get class
         std::getline(line_iss, token, ' ');
-        value[i] = string_to_floating_point<real_t>(token) > real_t{0.0} ? 1 : -1; //TODO: exception if not?
+        real_t parsed_value;
+        auto res = fast_float::from_chars(token.data(), token.data() + token.size(), parsed_value);
+        if (res.ec != std::errc{}) {
+          throw invalid_file_format_exception{fmt::format("Can't parse '{}' to floating point!", token)};
+        }
+        value[i] = parsed_value > real_t{0.0} ? 1 : -1; // TODO: exception if not?
 
         // get data
         std::vector<real_t> vline(max_size);
