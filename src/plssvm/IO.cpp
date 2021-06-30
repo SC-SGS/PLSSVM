@@ -33,7 +33,6 @@ void CSVM::libsvmParser(const std::string_view filename) {
             }
         }
     }
-    fmt::print("Read {} lines.", data_lines.size());
 
     value.resize(data_lines.size());
     data.resize(data_lines.size());
@@ -85,6 +84,8 @@ void CSVM::libsvmParser(const std::string_view filename) {
     if (gamma == 0) {
         gamma = 1. / num_features;
     }
+
+    fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
 //read ARF file
