@@ -10,7 +10,6 @@
 #include <string_view>
 #include <vector>
 
-
 namespace plssvm {
 
 // read libsvm file
@@ -94,34 +93,126 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
 // read ARF file
 void CSVM::arffParser(const std::string_view filename) {
-    std::ifstream file(filename.data());
-    if (file.fail()) {
-        throw file_not_found_exception{fmt::format("Couldn't find file: '{}'!", filename)};
-    }
+    std::vector<std::string> data_lines;
+    std::size_t max_size = 0;
+    {
+        std::ifstream file{filename.data()};
+        if (file.fail()) {
+            throw file_not_found_exception{fmt::format("Couldn't find file: '{}'!", filename)};
+        }
+        std::string line;
 
-    std::string line, escape = "@";
-    std::istringstream line_iss;
-    std::vector<real_t> vline;
-    std::string token;
-    while (std::getline(file, line, '\n')) {
-        if (line.compare(0, 1, "@") != 0 && line.size() > 1) {
-            line_iss.str(line);
-            while (std::getline(line_iss, token, ',')) {
-                vline.push_back(util::convert_to<real_t, invalid_file_format_exception>(token));
+        // parse header information
+        while (std::getline(file, line)) {
+            std::string_view trimmed = util::trim_left(line);
+            if (trimmed.empty() || util::starts_with(trimmed, '%')) {
+                // ignore empty lines or comments
+                continue;
+            } else if (util::starts_with(trimmed, "@RELATION")) {
+                // ignore relation
+                continue;
+            } else if (util::starts_with(trimmed, "@ATTRIBUTE")) {
+                // toupper all letters
+                std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
+                if (line.find("NUMERIC") == std::string::npos) {
+                    throw invalid_file_format_exception{fmt::format("Can only use NUMERIC features, but '{}' was given!", line)};
+                }
+                // add a feature
+                ++max_size;
+            } else if (util::starts_with(trimmed, "@DATA")) {
+                // finished reading header -> start parsing data
+                break;
             }
-            line_iss.clear();
-            if (vline.size() > 0) {
-                value.push_back(vline.back());
-                vline.pop_back();
-                data.push_back(std::move(vline));
+        }
+
+        // something went wrong, e.g., no @ATTRIBUTE fields
+        if (max_size == 0) {
+            throw invalid_file_format_exception{"Invalid file format!"};
+        }
+
+        // parse data
+        while (std::getline(file, line)) {
+            std::string_view trimmed = util::trim_left(line);
+            if (trimmed.empty() || util::starts_with(trimmed, '%')) {
+                // ignore empty lines or comments
+                continue;
+            } else if (util::starts_with(trimmed, '@')) {
+                // read @ inside data section
+                throw invalid_file_format_exception{fmt::format("Read @ inside data section!: {}", line)};
+            } else {
+                data_lines.push_back(std::move(line));
             }
-            vline.clear();
-        } else {
-            std::cout << line;
         }
     }
+
+    value.resize(data_lines.size());
+    data.resize(data_lines.size());
+
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < data_lines.size(); ++i) {
+        data[i].resize(max_size - 1);
+    }
+
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < data.size(); ++i) { // TODO: exceptions
+        std::string_view line{util::trim_left(data_lines[i])};
+
+        if (util::starts_with(line, '{')) {
+            // missing closing }
+            if (!util::ends_with(line, '}')) {
+                throw invalid_file_format_exception{"Missing closing '}' for sparse data point description!"};
+            }
+            // sparse line
+            bool is_class_set = false;
+            std::size_t pos = 1;
+            std::size_t next_pos = line.find_first_of(' ', pos);
+            while (next_pos != std::string_view::npos) {
+                // get index
+                const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                pos = next_pos + 1;
+
+                // get value
+                next_pos = line.find_first_of(",}", pos);
+
+                // write parsed value depending on the index
+                if (index == max_size - 1) {
+                    is_class_set = true;
+                    value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{0.0} ? 1 : -1;
+                } else {
+                    data[i][index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                }
+
+                if (next_pos == std::string_view::npos) {
+                    break;
+                }
+                // remove already processes part of the line
+                line.remove_prefix(next_pos + 1);
+                line = util::trim_left(line);
+                pos = 0;
+                next_pos = line.find_first_of(' ');
+            }
+            // no class label found
+            if (!is_class_set) {
+                throw invalid_file_format_exception{"Missing class for data point!"};
+            }
+        } else {
+            // dense line
+            std::size_t pos = 0;
+            for (std::size_t j = 0; j < max_size - 1; ++j) {
+                std::size_t next_pos = line.find_first_of(',', pos);
+                if (next_pos == std::string_view::npos) {
+                    throw invalid_file_format_exception{fmt::format("Invalid number of features! Found {} but should be {}.", j, max_size - 1)};
+                }
+                data[i][j] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                pos = next_pos + 1;
+            }
+            value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{0.0} ? 1 : -1;
+        }
+    }
+
     num_data_points = data.size();
-    num_features = data[0].size();
+    num_features = max_size - 1;
+
     if (gamma == 0) {
         gamma = 1. / num_features;
     }
