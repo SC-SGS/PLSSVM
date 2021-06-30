@@ -108,20 +108,23 @@ void CSVM::arffParser(const std::string_view filename) {
             if (trimmed.empty() || util::starts_with(trimmed, '%')) {
                 // ignore empty lines or comments
                 continue;
-            } else if (util::starts_with(trimmed, "@RELATION")) {
-                // ignore relation
-                continue;
-            } else if (util::starts_with(trimmed, "@ATTRIBUTE")) {
-                // toupper all letters
+            } else {
+                // match arff attribute case insensitive
                 std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
-                if (line.find("NUMERIC") == std::string::npos) {
-                    throw invalid_file_format_exception{fmt::format("Can only use NUMERIC features, but '{}' was given!", line)};
+                trimmed = util::trim_left(line);
+                if (util::starts_with(trimmed, "@RELATION")) {
+                    // ignore relation
+                    continue;
+                } else if (util::starts_with(trimmed, "@ATTRIBUTE")) {
+                    if (line.find("NUMERIC") == std::string::npos) {
+                        throw invalid_file_format_exception{fmt::format("Can only use NUMERIC features, but '{}' was given!", line)};
+                    }
+                    // add a feature
+                    ++max_size;
+                } else if (util::starts_with(trimmed, "@DATA")) {
+                    // finished reading header -> start parsing data
+                    break;
                 }
-                // add a feature
-                ++max_size;
-            } else if (util::starts_with(trimmed, "@DATA")) {
-                // finished reading header -> start parsing data
-                break;
             }
         }
 
