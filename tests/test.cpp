@@ -9,6 +9,8 @@
 
 #include "plssvm/exceptions.hpp"
 
+#include "plssvm/OpenMP/OpenMP_CSVM.hpp"
+
 TEST(IO, libsvmFormat) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
     csvm.libsvmParser(TESTPATH "/data/5x4.libsvm"); //TODO: add comments etc to libsvm test file
@@ -121,6 +123,7 @@ TEST(IO, writeModel) {
 
     EXPECT_THAT(genfile1, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv 0+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
 
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
     std::string model2 = std::tmpnam(nullptr); // TODO: only if openmp backend is available
     MockOpenMP_CSVM csvm2(1., 0.001, 0, 3.0, 0.0, 0.0, false);
     std::string testfile = TESTPATH "/data/5x4.libsvm";
@@ -132,24 +135,76 @@ TEST(IO, writeModel) {
     remove(model2.c_str());
 
     EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*\?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+#else
+#pragma message("Ignore OpenMP backend test")
+#endif
 }
 
 TEST(IO, libsvmFormatIllFormed) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_THROW(csvm.libsvmParser(TESTPATH "/data/5x4.arff");, plssvm::invalid_file_format_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.libsvmParser(TESTPATH "/data/5x4.arff");, plssvm::invalid_file_format_exception);
 }
 
 TEST(IO, arffFormatIllFormed) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_THROW(csvm.arffParser(TESTPATH "/data/5x4.libsvm");, plssvm::invalid_file_format_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.arffParser(TESTPATH "/data/5x4.libsvm");, plssvm::invalid_file_format_exception);
 }
 
 TEST(IO, libsvmNoneExistingFile) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.ar");, plssvm::file_not_found_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.ar");, plssvm::file_not_found_exception);
 }
 
 TEST(IO, arffNoneExistingFile) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_THROW(csvm.arffParser(TESTPATH "/data/5x5.lib");, plssvm::file_not_found_exception); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_THROW(csvm.arffParser(TESTPATH "/data/5x5.lib");, plssvm::file_not_found_exception);
+}
+
+TEST(kernel, linear) {
+    const real_t degree = 0.0;
+    const real_t gamma = 0.0;
+    const real_t coef0 = 0.0;
+    const size_t size = 512;
+    std::vector<real_t> x1(size);
+    std::vector<real_t> x2(size);
+    real_t correct = 0;
+    std::generate(x1.begin(), x1.end(), std::rand);
+    std::generate(x2.begin(), x2.end(), std::rand);
+    for (size_t i = 0; i < size; ++i) {
+        correct += x1[i] * x2[i];
+    }
+
+    MockCSVM csvm(1., 0.001, 0, degree, gamma, coef0, false);
+    real_t result = csvm.kernel_function(x1, x2);
+    real_t result2 = csvm.kernel_function(x1.data(), x2.data(), size);
+
+    EXPECT_DOUBLE_EQ(correct, result);
+    EXPECT_DOUBLE_EQ(correct, result2);
+
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
+    MockOpenMP_CSVM csvm_OpenMP(1., 0.001, 0, degree, gamma, coef0, false);
+    real_t result_OpenMP = csvm_OpenMP.kernel_function(x1, x2);
+    real_t result2_OpenMP = csvm_OpenMP.kernel_function(x1.data(), x2.data(), size);
+
+    EXPECT_DOUBLE_EQ(correct, result_OpenMP);
+    EXPECT_DOUBLE_EQ(correct, result2_OpenMP);
+#endif
+
+#if defined(PLSSVM_HAS_OPENCL_BACKEND)
+    MockOpenCL_CSVM csvm_OpenCL(1., 0.001, 0, degree, gamma, coef0, false);
+    real_t result_OpenCL = csvm_OpenCL.kernel_function(x1, x2);
+    real_t result2_OpenCL = csvm_OpenCL.kernel_function(x1.data(), x2.data(), size);
+
+    EXPECT_DOUBLE_EQ(correct, result_OpenCL);
+    EXPECT_DOUBLE_EQ(correct, result2_OpenCL);
+#endif
+
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
+    MockCUDA_CSVM csvm_CUDA(1., 0.001, 0, degree, gamma, coef0, false);
+    real_t result_CUDA = csvm_CUDA.kernel_function(x1, x2);
+    real_t result2_CUDA = csvm_CUDA.kernel_function(x1.data(), x2.data(), size);
+
+    EXPECT_DOUBLE_EQ(correct, result_CUDA);
+    EXPECT_DOUBLE_EQ(correct, result2_CUDA);
+#endif
 }
