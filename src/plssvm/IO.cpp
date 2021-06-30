@@ -56,7 +56,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
             pos = next_pos + 1;
 
             // get value
-            next_pos = line.find_first_of(',', pos);
+            next_pos = line.find_first_of(' ', pos);
             vline[index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
 
             if (next_pos == std::string_view::npos) {
