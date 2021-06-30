@@ -219,6 +219,8 @@ void CSVM::arffParser(const std::string_view filename) {
     if (gamma == 0) {
         gamma = 1. / num_features;
     }
+
+    fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
 void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save number of Datapoint in input file ->  copy input file -> manipulate copy and dont rewrite whole File
