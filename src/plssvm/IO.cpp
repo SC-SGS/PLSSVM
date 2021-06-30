@@ -1,6 +1,7 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/operators.hpp>
 #include <plssvm/exceptions.hpp>
+#include <plssvm/string_utility.hpp>
 
 #include <fmt/core.h>
 
@@ -14,18 +15,6 @@
 #include <fast_float/fast_float.h>
 
 namespace plssvm {
-
-// TODO: move elsewhere?
-template <typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
-T string_to_floating_point(const std::string &str) {
-    if constexpr (std::is_same_v<T, float>) {
-        return std::stof(str);
-    } else if constexpr (std::is_same_v<T, double>) {
-        return std::stod(str);
-    } else if constexpr (std::is_same_v<T, long double>) {
-        return std::stold(str);
-    }
-}
 
 //read libsvm file
 void CSVM::libsvmParser(const std::string_view filename) {
@@ -57,12 +46,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
         // get class
         std::getline(line_iss, token, ' ');
-        real_t parsed_value;
-        auto res = fast_float::from_chars(token.data(), token.data() + token.size(), parsed_value);
-        if (res.ec != std::errc{}) {
-          throw invalid_file_format_exception{fmt::format("Can't parse '{}' to floating point!", token)};
-        }
-        value[i] = parsed_value > real_t{0.0} ? 1 : -1; // TODO: exception if not?
+        value[i] = util::convert_to<real_t, invalid_file_format_exception>(token) > real_t{0.0} ? 1 : -1;
 
         // get data
         std::vector<real_t> vline(max_size);
@@ -79,10 +63,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
                 // get actual value
                 std::getline(token_iss, token, ':');
-                auto res = fast_float::from_chars(token.data(), token.data() + token.size(), vline[index]);
-                if (res.ec != std::errc{}) {
-                  throw invalid_file_format_exception{fmt::format("Can't parse '{}' to floating point!", token)};
-                }
+                vline[index] = util::convert_to<real_t, invalid_file_format_exception>(token);
 
                 // restore stream state
                 token_iss.clear();
@@ -128,7 +109,7 @@ void CSVM::arffParser(const std::string_view filename) {
         if (line.compare(0, 1, "@") != 0 && line.size() > 1) {
             line_iss.str(line);
             while (std::getline(line_iss, token, ',')) {
-                vline.push_back(string_to_floating_point<real_t>(token));
+                vline.push_back(util::convert_to<real_t>(token));
             }
             line_iss.clear();
             if (vline.size() > 0) {
