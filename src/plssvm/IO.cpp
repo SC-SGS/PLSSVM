@@ -1,22 +1,19 @@
 #include <plssvm/CSVM.hpp>
-#include <plssvm/operators.hpp>
 #include <plssvm/exceptions.hpp>
+#include <plssvm/operators.hpp>
 #include <plssvm/string_utility.hpp>
 
 #include <fmt/core.h>
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <fast_float/fast_float.h>
 
 namespace plssvm {
 
-//read libsvm file
+// read libsvm file
 void CSVM::libsvmParser(const std::string_view filename) {
     std::vector<std::string> data_lines;
 
@@ -41,41 +38,41 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
     #pragma omp parallel for reduction(max:max_size)
     for (std::size_t i = 0; i < data.size(); ++i) {
-      std::string_view line = data_lines[i];
+        std::string_view line = data_lines[i];
 
-      // get class
-      std::size_t pos = line.find_first_of(' ');
-      value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(0, pos)) > real_t{0.0} ? 1 : -1;
-      // value[i] = std::copysign(1.0, util::convert_to<real_t>(line.substr(0, pos)));
+        // get class
+        std::size_t pos = line.find_first_of(' ');
+        value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(0, pos)) > real_t{0.0} ? 1 : -1;
+        // value[i] = std::copysign(1.0, util::convert_to<real_t>(line.substr(0, pos)));
 
-      // get data
-      std::vector<real_t> vline(max_size);
-      std::size_t next_pos = line.find_first_of(':', pos);
-      while (next_pos != std::string_view::npos) {
-        // get index
-        const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-        if (index >= vline.size()) {
-          vline.resize(index + 1);
+        // get data
+        std::vector<real_t> vline(max_size);
+        std::size_t next_pos = line.find_first_of(':', pos);
+        while (next_pos != std::string_view::npos) {
+            // get index
+            const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+            if (index >= vline.size()) {
+                vline.resize(index + 1);
+            }
+            pos = next_pos + 1;
+
+            // get value
+            next_pos = line.find_first_of(',', pos);
+            vline[index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+
+            if (next_pos == std::string_view::npos) {
+                break;
+            }
+            pos = next_pos + 1;
+            next_pos = line.find_first_of(':', pos);
         }
-        pos = next_pos + 1;
-
-        // get value
-        next_pos = line.find_first_of(',', pos);
-        vline[index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-
-        if (next_pos == std::string_view::npos) {
-          break;
-        }
-        pos = next_pos + 1;
-        next_pos = line.find_first_of(':', pos);
-      }
-      max_size = std::max(max_size, vline.size());
-      data[i] = std::move(vline);
+        max_size = std::max(max_size, vline.size());
+        data[i] = std::move(vline);
     }
 
     #pragma omp parallel for
     for (std::size_t i = 0; i < data.size(); ++i) {
-      data[i].resize(max_size);
+        data[i].resize(max_size);
     }
 
     // update values
@@ -84,7 +81,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
     // no features were parsed -> invalid file
     if (num_features == 0) {
-      throw invalid_file_format_exception{fmt::format("Can't parse file '{}'!", filename)};
+        throw invalid_file_format_exception{fmt::format("Can't parse file '{}'!", filename)};
     }
 
     // update gamma
@@ -95,11 +92,11 @@ void CSVM::libsvmParser(const std::string_view filename) {
     fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
-//read ARF file
+// read ARF file
 void CSVM::arffParser(const std::string_view filename) {
     std::ifstream file(filename.data());
     if (file.fail()) {
-      throw file_not_found_exception{fmt::format("Couldn't find file: '{}'!", filename)};
+        throw file_not_found_exception{fmt::format("Couldn't find file: '{}'!", filename)};
     }
 
     std::string line, escape = "@";
@@ -189,27 +186,27 @@ void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save nu
 
     volatile int count = 0;
 
-#pragma omp parallel //num_threads(1) //TODO: fix bug. SV complete missing if more then 1 Thread
+    #pragma omp parallel //num_threads(1) //TODO: fix bug. SV complete missing if more then 1 Thread
     {
         std::stringstream out_pos;
         std::stringstream out_neg;
 
-// Alle SV Klasse 1
-#pragma omp for nowait
+        // Alle SV Klasse 1
+        #pragma omp for nowait
         for (int i = 0; i < alpha.size(); ++i) {
             if (value[i] > 0)
                 out_pos << alpha[i] << " " << data[i] << "\n";
         }
 
-#pragma omp critical
+        #pragma omp critical
         {
             model << out_pos.str();
             count++;
-#pragma omp flush(count, model)
+            #pragma omp flush(count, model)
         }
 
-// Alle SV Klasse -1
-#pragma omp for nowait
+        // Alle SV Klasse -1
+        #pragma omp for nowait
         for (int i = 0; i < alpha.size(); ++i) {
             if (value[i] < 0)
                 out_neg << alpha[i] << " " << data[i] << "\n";
@@ -219,7 +216,7 @@ void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save nu
         while (count < omp_get_num_threads()) {
         };
 
-#pragma omp critical
+        #pragma omp critical
         model << out_neg.str();
     }
     model.close();
