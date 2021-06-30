@@ -141,9 +141,9 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
     }
 
     std::cout << "r= b-Ax" << std::endl;
-    real_t d[b.size()] = {0};
+    std::vector<real_t> d(b.size(), 0.0);
 
-    std::memcpy(d, r, dept * sizeof(real_t));
+    std::memcpy(d.data(), r, dept * sizeof(real_t));
 
     real_t delta = mult(r, r, sizeof(r) / sizeof(real_t));
     const real_t delta0 = delta;
@@ -152,7 +152,7 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
     for (int run = 0; run < imax; ++run) {
         std::cout << "Start Iteration: " << run << std::endl;
         //Ad = A * d
-        real_t Ad[dept] = {0.0};
+        std::vector<real_t> Ad(dept, 0.0);
 
 #pragma omp parallel for collapse(2) schedule(dynamic, 8)
         for (int i = 0; i < b.size(); i += bloksize) {
@@ -195,8 +195,8 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
             }
         }
 
-        alpha = delta / mult(d, Ad, sizeof(d) / sizeof(real_t));
-        x += mult(alpha, d, sizeof(d) / sizeof(real_t));
+        alpha = delta / mult(d.data(), Ad.data(), d.size());
+        x += mult(alpha, d.data(), d.size());
         //r = b - (A * x)
         ///r = b;
         std::copy(b.begin(), b.end(), r);
@@ -236,8 +236,8 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         //break;
         if (delta < eps * eps * delta0)
             break;
-        beta = -mult(r, Ad, b.size()) / mult(d, Ad, b.size());
-        add(mult(beta, d, sizeof(d) / sizeof(real_t)), r, d, sizeof(d) / sizeof(real_t));
+        beta = -mult(r, Ad.data(), b.size()) / mult(d.data(), Ad.data(), d.size());
+        add(mult(beta, d.data(), d.size()), r, d.data(), d.size());
     }
 
     return x;
