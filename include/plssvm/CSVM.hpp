@@ -55,14 +55,14 @@ class CSVM {
 
     virtual void learn();
 
-    inline real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
-    inline real_t kernel_function(real_t *, real_t *, int);
+    real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
+    real_t kernel_function(real_t *, real_t *, int);
 
     virtual void loadDataDevice() = 0;
 
     virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t) = 0;
 
-    inline std::vector<real_t> transform_data(const int start_line, const int boundary) {
+    std::vector<real_t> transform_data(const int start_line, const int boundary) {
         std::vector<real_t> vec(num_features * (num_data_points - 1 + boundary));
 #pragma omp parallel for collapse(2)
         for (size_t col = 0; col < num_features; ++col) {
@@ -72,7 +72,7 @@ class CSVM {
         }
         return vec;
     }
-    inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
+    void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
 };
 
-}
+} // namespace plssvm
