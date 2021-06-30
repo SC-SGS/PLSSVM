@@ -81,6 +81,13 @@ void CSVM::libsvmParser(const std::string_view filename) {
     // update values
     num_data_points = data.size();
     num_features = max_size;
+
+    // no features were parsed -> invalid file
+    if (num_features == 0) {
+      throw invalid_file_format_exception{fmt::format("Can't parse file '{}'!", filename)};
+    }
+
+    // update gamma
     if (gamma == 0) {
         gamma = 1. / num_features;
     }
@@ -103,7 +110,7 @@ void CSVM::arffParser(const std::string_view filename) {
         if (line.compare(0, 1, "@") != 0 && line.size() > 1) {
             line_iss.str(line);
             while (std::getline(line_iss, token, ',')) {
-                vline.push_back(util::convert_to<real_t>(token));
+                vline.push_back(util::convert_to<real_t, invalid_file_format_exception>(token));
             }
             line_iss.clear();
             if (vline.size() > 0) {
