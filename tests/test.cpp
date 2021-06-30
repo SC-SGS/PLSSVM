@@ -131,20 +131,20 @@ TEST(IO, writeModel) {
 
 TEST(IO, libsvmFormatIllFormed) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.arff");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_ANY_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.arff"););
 }
 
 TEST(IO, arffFormatIllFormed) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.arffParser(TESTPATH "/data/5x5.libsvm");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_ANY_THROW(csvm.arffParser(TESTPATH "/data/5x5.sparse.libsvm"););
 }
 
 TEST(IO, libsvmNoneExistingFile) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.ar");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_ANY_THROW(csvm.libsvmParser(TESTPATH "/data/5x5.ar"););
 }
 
 TEST(IO, arffNoneExistingFile) {
     MockCSVM csvm(1., 1., 0, 1., 1., 1., false);
-    EXPECT_ANY_THROW(csvm.arffParser(TESTPATH "/data/5x5.lib");); //TODO: change to EXPECT_THROW(statement,exception_type) if exception is implemented
+    EXPECT_ANY_THROW(csvm.arffParser(TESTPATH "/data/5x5.lib"););
 }
