@@ -27,63 +27,56 @@ void CSVM::libsvmParser(const std::string_view filename) {
         }
         std::string line;
         while (std::getline(file, line)) {
-            data_lines.push_back(std::move(line));
-        }
-    }
-    std::cout << "Read " << data_lines.size() << " lines." << std::endl;
-
-    data.resize(data_lines.size());
-    value.resize(data_lines.size());
-
-    std::istringstream line_iss;
-    std::istringstream token_iss;
-    std::string token;
-    std::size_t max_size = 0;
-
-#pragma omp parallel for shared(data, max_size), private(line_iss, token_iss, token)
-    for (std::size_t i = 0; i < data_lines.size(); ++i) {
-        line_iss.str(data_lines[i]);
-
-        // get class
-        std::getline(line_iss, token, ' ');
-        value[i] = util::convert_to<real_t, invalid_file_format_exception>(token) > real_t{0.0} ? 1 : -1;
-
-        // get data
-        std::vector<real_t> vline(max_size);
-        while (std::getline(line_iss, token, ' ')) {
-            if (!token.empty()) {
-                token_iss.str(token);
-                std::getline(token_iss, token, ':');
-
-                // get index
-                const unsigned long index = std::stoul(token);
-                if (index >= vline.size()) {
-                    vline.resize(index + 1);
-                }
-
-                // get actual value
-                std::getline(token_iss, token, ':');
-                vline[index] = util::convert_to<real_t, invalid_file_format_exception>(token);
-
-                // restore stream state
-                token_iss.clear();
+            std::string_view trimmed = util::trim_left(line);
+            if (!trimmed.empty() && !util::starts_with(trimmed, '#')) {
+                data_lines.push_back(std::move(line));
             }
         }
-        // restore stream state
-        line_iss.clear();
-        data[i] = std::move(vline);
+    }
+    fmt::print("Read {} lines.", data_lines.size());
 
-        // update max_size
-#pragma omp critical
-        {
-            max_size = std::max(max_size, data[i].size());
+    value.resize(data_lines.size());
+    data.resize(data_lines.size());
+
+    std::size_t max_size = 0;
+
+    #pragma omp parallel for reduction(max:max_size)
+    for (std::size_t i = 0; i < data.size(); ++i) {
+      std::string_view line = data_lines[i];
+
+      // get class
+      std::size_t pos = line.find_first_of(' ');
+      value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(0, pos)) > real_t{0.0} ? 1 : -1;
+      // value[i] = std::copysign(1.0, util::convert_to<real_t>(line.substr(0, pos)));
+
+      // get data
+      std::vector<real_t> vline(max_size);
+      std::size_t next_pos = line.find_first_of(':', pos);
+      while (next_pos != std::string_view::npos) {
+        // get index
+        const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+        if (index >= vline.size()) {
+          vline.resize(index + 1);
         }
+        pos = next_pos + 1;
+
+        // get value
+        next_pos = line.find_first_of(',', pos);
+        vline[index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+
+        if (next_pos == std::string_view::npos) {
+          break;
+        }
+        pos = next_pos + 1;
+        next_pos = line.find_first_of(':', pos);
+      }
+      max_size = std::max(max_size, vline.size());
+      data[i] = std::move(vline);
     }
 
-// resize all vectors to the same size
-#pragma omp parallel for
+    #pragma omp parallel for
     for (std::size_t i = 0; i < data.size(); ++i) {
-        data[i].resize(max_size);
+      data[i].resize(max_size);
     }
 
     // update values
