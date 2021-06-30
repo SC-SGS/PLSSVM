@@ -3,7 +3,7 @@
 #include <plssvm/operators.hpp>
 #include <plssvm/string_utility.hpp>
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <iostream>
 #include <string>
@@ -228,92 +228,101 @@ void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save nu
     int count_pos = 0;
     int count_neg = 0;
     for (int i = 0; i < alpha.size(); ++i) {
-        if (value[i] > 0)
+        if (value[i] > 0) {
             ++count_pos;
-        if (value[i] < 0)
+        }
+        if (value[i] < 0) {
             ++count_neg;
-        if (alpha[i] == cost)
+        }
+        if (alpha[i] == cost) {
             ++nBSV;
+        }
     }
-    //Terminal output
+    // terminal output
     if (info) {
-        std::cout << "Optimization finished \n";
-        std::cout << "nu = " << cost << "\n";
-        std::cout << "obj = "
-                  << "\t"
-                  << ", rho " << -bias << "\n";
-        std::cout << "nSV = " << count_pos + count_neg - nBSV << ", nBSV = " << nBSV << "\n";
-        std::cout << "Total nSV = " << count_pos + count_neg << std::endl;
+        fmt::print(
+            "Optimization finished \n"
+            "nu = {}\n"
+            "obj = \t, rho {}\n"
+            "nSV = {}, nBSV = {}\n"
+            "Total nSV = {}\n",
+            cost, -bias, count_pos + count_neg - nBSV, nBSV, count_pos + count_neg);
     }
 
-    //Model file
-    std::ofstream model(model_name.data(), std::ios::out | std::ios::trunc);
-    model << "svm_type c_svc\n";
-    switch (kernel) {
-    case 0:
-        model << "kernel_type "
-              << "linear"
-              << "\n";
-        break;
-    case 1:
-        model << "kernel_type "
-              << "polynomial"
-              << "\n";
-        break;
-    case 2:
-        model << "kernel_type "
-              << "rbf"
-              << "\n";
-        break;
-    default:
-        throw std::runtime_error("Can not decide which kernel!");
-    }
-    model << "nr_class 2\n";
-    model << "total_sv " << count_pos + count_neg << "\n";
-    model << "rho " << -bias << "\n";
-    model << "label "
-          << "1"
-          << " "
-          << "-1"
-          << "\n";
-    model << "nr_sv " << count_pos << " " << count_neg << "\n";
-    model << "SV\n";
-    model << std::scientific;
+    // function to get the kernel name from its ID
+    auto kernel_to_string = [](const auto k) -> std::string_view {
+        switch (k) {
+        case 0:
+            return "linear";
+        case 1:
+            return "polynomial";
+        case 2:
+            return "rbf";
+        default:
+            throw std::runtime_error{fmt::format("Invalid kernel value {}!", k)};
+        }
+    };
+
+    // create model file
+    std::ofstream model{model_name.data(), std::ios::out | std::ios::trunc};
+    model << fmt::format(
+        "svm_type c_svc\n"
+        "kernel_type {}\n"
+        "nr_class 2\n"
+        "total_sv {}\n"
+        "rho {}\n"
+        "label 1 -1\n"
+        "nr_sv {} {}\n"
+        "SV\n",
+        kernel_to_string(kernel), count_pos + count_neg, -bias, count_pos, count_neg);
 
     volatile int count = 0;
-
-    #pragma omp parallel //num_threads(1) //TODO: fix bug. SV complete missing if more then 1 Thread
+    #pragma omp parallel
     {
-        std::stringstream out_pos;
-        std::stringstream out_neg;
+        fmt::memory_buffer out_pos;
+        fmt::memory_buffer out_neg;
 
-        // Alle SV Klasse 1
+        // all support vectors with class 1
         #pragma omp for nowait
-        for (int i = 0; i < alpha.size(); ++i) {
-            if (value[i] > 0)
-                out_pos << alpha[i] << " " << data[i] << "\n";
+        for (std::size_t i = 0; i < alpha.size(); ++i) {
+            if (value[i] > 0) {
+                fmt::format_to(out_pos.begin(), "{}", alpha[i]);
+                for (std::size_t j = 0; j < data[i].size(); ++j) {
+                    if (data[i][j] != 0) {
+                        fmt::format_to(out_pos.begin(), "{}:{:e} ", j, data[i][j]);
+                    }
+                }
+                fmt::format_to(out_pos.begin(), "\n");
+            }
         }
 
         #pragma omp critical
         {
-            model << out_pos.str();
+            model << fmt::to_string(out_pos);
             count++;
             #pragma omp flush(count, model)
         }
 
-        // Alle SV Klasse -1
+        // all support vectors with class -1
         #pragma omp for nowait
-        for (int i = 0; i < alpha.size(); ++i) {
-            if (value[i] < 0)
-                out_neg << alpha[i] << " " << data[i] << "\n";
+        for (std::size_t i = 0; i < alpha.size(); ++i) {
+            if (value[i] < 0) {
+                fmt::format_to(out_neg.begin(), "{}", alpha[i]);
+                for (std::size_t j = 0; j < data[i].size(); ++j) {
+                    if (data[i][j] != 0) {
+                        fmt::format_to(out_neg.begin(), "{}:{:e} ", j, data[i][j]);
+                    }
+                }
+                fmt::format_to(out_neg.begin(), "\n");
+            }
         }
 
-        //Wait for all have written Class 1
+        // wait for all threads to write support vectors for class 1
         while (count < omp_get_num_threads()) {
-        };
+        }
 
         #pragma omp critical
-        model << out_neg.str();
+        model << fmt::to_string(out_neg);
     }
     model.close();
 }
