@@ -208,3 +208,20 @@ TEST(kernel, linear) {
     EXPECT_DOUBLE_EQ(correct, result2_CUDA);
 #endif
 }
+
+TEST(CSVM, transform_data) {
+    MockCSVM csvm(1., 0.001, 0, 3.0, 0.0, 0.0, false);
+    csvm.libsvmParser(TESTPATH "/data/5x4.libsvm");
+    std::vector<real_t> result0 = csvm.transform_data(0);
+    std::vector<real_t> result10 = csvm.transform_data(10);
+
+    EXPECT_EQ(result0.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features()); //TODO: nochmal ünerlegen ob -1 wirklich passt (sollte eigentlich)
+    EXPECT_EQ(result10.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
+
+    for (size_t datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
+        for (size_t feature = 0; feature < csvm.get_num_features(); ++feature) {
+            EXPECT_DOUBLE_EQ(csvm.get_data()[datapoint][feature], result0[datapoint + feature * (csvm.get_num_data_points() - 1)]) << "datapoint: " << datapoint << " feature: " << feature << " at index: " << datapoint + feature * (csvm.get_num_data_points() - 1);
+            EXPECT_DOUBLE_EQ(csvm.get_data()[datapoint][feature], result10[datapoint + feature * (csvm.get_num_data_points() - 1 + 10)]) << "datapoint: " << datapoint << " feature: " << feature << " at index: " << datapoint + feature * (csvm.get_num_data_points() - 1 + 10);
+        }
+    }
+}

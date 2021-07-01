@@ -21,6 +21,7 @@ class MockCSVM : public plssvm::CSVM {
     MOCK_METHOD(void, loadDataDevice, (), (override));
     MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t), (override));
     using plssvm::CSVM::kernel_function;
+    using plssvm::CSVM::transform_data;
     // MOCK_METHOD(real_t, kernel_function, (std::vector<real_t> &, std::vector<real_t> &), (override));
     // MOCK_METHOD(real_t, kernel_function, (real_t *, real_t *, int), (override));
 
