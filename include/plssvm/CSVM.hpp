@@ -62,7 +62,13 @@ class CSVM {
 
     virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t) = 0;
 
-    std::vector<real_t> transform_data(const int start_line, const int boundary) {
+    /**
+     * @brief Transforms the data matrix in SoA, while it ignores the last datapoint and adds boundary places,
+     * @attention boundary values can contain random numbers
+     * @param boundary the number of boundary cells
+     * @return std::vector<real_t> SoA
+     */
+    std::vector<real_t> transform_data(const int boundary) {
         std::vector<real_t> vec(num_features * (num_data_points - 1 + boundary));
 #pragma omp parallel for collapse(2)
         for (size_t col = 0; col < num_features; ++col) {
