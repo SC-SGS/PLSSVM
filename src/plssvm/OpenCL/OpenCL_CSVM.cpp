@@ -16,7 +16,7 @@ namespace plssvm {
 
 int count_devices = 1;
 
-OpenCL_CSVM::OpenCL_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_,
+OpenCL_CSVM::OpenCL_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_,
                          bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
     std::vector<opencl::device_t> &devices = manager.get_devices();
     first_device = devices[0];
@@ -31,10 +31,10 @@ void OpenCL_CSVM::loadDataDevice() {
     for (int device = 0; device < count_devices; ++device)
         datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], (num_features)));
     std::vector<real_t> datalast(data[num_data_points - 1]);
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device)
         datlast_cl[device].to_device(datalast);
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device)
         datlast_cl[device].resize(num_data_points - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 
@@ -51,7 +51,7 @@ void OpenCL_CSVM::loadDataDevice() {
                   << std::chrono::duration_cast<std::chrono::milliseconds>(end_transform - begin_transform).count()
                   << " ms transformiert" << std::endl;
     }
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device) {
         data_cl[device] = opencl::DevicePtrOpenCL<real_t>(devices[device], num_features * (num_data_points - 1 +
                                                                                            THREADBLOCK_SIZE *
@@ -104,7 +104,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
     std::vector<real_t> toDevice(dept_all, 0.0);
     std::copy(b.begin(), b.begin() + dept, toDevice.begin());
     r_cl[0].to_device(std::vector<real_t>(toDevice));
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 1; device < count_devices; ++device)
         r_cl[device].to_device(std::vector<real_t>(zeros));
     d = new real_t[dept];
@@ -116,10 +116,10 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
     for (int device = 0; device < count_devices; ++device)
         q_cl[device].to_device(std::vector<real_t>(dept_all, 0.0));
     std::cout << "kernel_q" << std::endl;
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device) {
         if (!kernel_q_cl[device]) {
-#pragma omp critical //TODO: evtl besser keine Referenz
+            #pragma omp critical //TODO: evtl besser keine Referenz
             {
                 std::string kernel_src_file_name{"../src/plssvm/OpenCL/kernels/kernel_q.cl"};
                 std::string kernel_src = manager.read_src_file(kernel_src_file_name);
@@ -161,14 +161,14 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             for (int i = 0; i < dept_all; ++i)
                 buffer[i] += ret[i];
         }
-#pragma omp parallel
+        #pragma omp parallel
         for (int device = 0; device < count_devices; ++device)
             q_cl[device].to_device(buffer);
     }
 
     switch (kernel) {
-    case 0:
-#pragma omp parallel for
+    case kernel_type::linear:
+        #pragma omp parallel for
         for (int device = 0; device < count_devices; ++device) {
             if (!svm_kernel_linear[device]) {
                 std::string kernel_src_file_name{"../src/plssvm/OpenCL/kernels/svm-kernel-linear.cl"};
@@ -182,7 +182,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                     manager.get_configuration()["PLATFORMS"][devices[device].platformName]
                                                ["DEVICES"][devices[device].deviceName];
                 json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-#pragma omp critical //TODO: evtl besser keine Referenz
+                #pragma omp critical //TODO: evtl besser keine Referenz
                 {
                     kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
                     kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
@@ -218,11 +218,11 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         }
         break;
 
-    case 1:
+    case kernel_type::polynomial:
         //TODO: kernel_poly OpenCL
         std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
         break;
-    case 2:
+    case kernel_type::rbf:
         //TODO: kernel_radial OpenCL
         std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
         break;
@@ -259,11 +259,11 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             std::cout << "Start Iteration: " << run << std::endl;
         //Ad = A * d
         {
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device)
                 Ad_cl[device].to_device(zeros);
-//TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
-#pragma omp parallel for
+            //TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device) {
                 std::vector<real_t> buffer(dept_all);
                 r_cl[device].resize(dept_all);
@@ -274,8 +274,8 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             }
         }
         switch (kernel) {
-        case 0:
-#pragma omp parallel for
+        case kernel_type::linear:
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device) {
                 if (!svm_kernel_linear[device]) {
                     std::string kernel_src_file_name{"../src/plssvm/OpenCL/kernels/svm-kernel-linear.cl"};
@@ -289,7 +289,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                         manager.get_configuration()["PLATFORMS"][devices[device].platformName]
                                                    ["DEVICES"][devices[device].deviceName];
                     json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-#pragma omp critical
+                    #pragma omp critical
                     {
                         kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(INTERNALBLOCK_SIZE));
                         kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(THREADBLOCK_SIZE));
@@ -326,11 +326,11 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                 }
             }
             break;
-        case 1:
+        case kernel_type::polynomial:
             //TODO: kernel_poly OpenCL
             std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
             break;
-        case 2:
+        case kernel_type::rbf:
             //TODO: kernel_radial OpenCL
             std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
             break;
@@ -363,10 +363,10 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         r_cl[0].resize(dept_all);
         r_cl[0].from_device(buffer_r);
         add_mult_(((int)dept / 1024) + 1, std::min(1024, (int)dept), x.data(), buffer_r.data(), alpha_cd, dept);
-#pragma omp parallel
+        #pragma omp parallel
         for (int device = 0; device < count_devices; ++device)
             x_cl[device].resize(dept_all);
-#pragma omp parallel
+        #pragma omp parallel
         for (int device = 0; device < count_devices; ++device)
             x_cl[device].to_device(x);
 
@@ -375,12 +375,12 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             buffer.resize(dept_all);
             r_cl.resize(dept_all);
             r_cl[0].to_device(buffer);
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int device = 1; device < count_devices; ++device)
                 r_cl[device].to_device(zeros);
             switch (kernel) {
-            case 0:
-#pragma omp parallel for
+            case kernel_type::linear:
+                #pragma omp parallel for
                 for (int device = 0; device < count_devices; ++device) {
                     if (!svm_kernel_linear[device]) {
                         std::string kernel_src_file_name{"../src/plssvm/OpenCL/kernels/svm-kernel-linear.cl"};
@@ -394,7 +394,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                             manager.get_configuration()["PLATFORMS"][devices[device].platformName]
                                                        ["DEVICES"][devices[device].deviceName];
                         json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-#pragma omp critical
+                        #pragma omp critical
                         {
                             kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE",
                                                          std::to_string(INTERNALBLOCK_SIZE));
@@ -433,11 +433,11 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                     }
                 }
                 break;
-            case 1:
+            case kernel_type::polynomial:
                 //TODO: kernel_poly OpenCL
                 std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
                 break;
-            case 2:
+            case kernel_type::rbf:
                 //TODO: kernel_radial OpenCL
                 std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
                 break;
@@ -456,7 +456,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                         r[j] += ret[j];
                     }
                 }
-#pragma omp parallel for
+                #pragma omp parallel for
                 for (int device = 0; device < count_devices; ++device)
                     r_cl[device].to_device(r);
             }
@@ -475,10 +475,10 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         {
             std::vector<real_t> buffer(dept_all, 0.0);
             std::copy(d, d + dept, buffer.begin());
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device)
                 r_cl[device].resize(dept_all);
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device)
                 r_cl[device].to_device(buffer);
         }
