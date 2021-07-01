@@ -14,7 +14,7 @@ namespace plssvm {
 
 class OpenCL_CSVM : public CSVM {
   public:
-    OpenCL_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_);
+    OpenCL_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_);
     void load_w(){};                                   // TODO: implement load_w
     std::vector<real_t> predict(real_t *, int, int){}; //TODO: implement predict
 

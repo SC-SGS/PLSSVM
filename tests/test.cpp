@@ -210,7 +210,7 @@ TEST(kernel, linear) {
 }
 
 TEST(CSVM, transform_data) {
-    MockCSVM csvm(1., 0.001, 0, 3.0, 0.0, 0.0, false);
+    MockCSVM csvm(1., 0.001, plssvm::kernel_type::linear, 3.0, 0.0, 0.0, false);
     csvm.libsvmParser(TESTPATH "/data/5x4.libsvm");
     std::vector<real_t> result0 = csvm.transform_data(0);
     std::vector<real_t> result10 = csvm.transform_data(10);
@@ -237,7 +237,7 @@ TEST(learn, comapre_backends) {
     std::vector<real_t> QA_costs;
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    MockOpenMP_CSVM csvm_OpenMP(1., EINPROGRESS, 0, degree, gamma, coef0, false);
+    MockOpenMP_CSVM csvm_OpenMP(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenMP.libsvmParser(TESTPATH "/data/5x4.libsvm");
     csvm_OpenMP.loadDataDevice();
     csvm_OpenMP.learn();
@@ -248,7 +248,7 @@ TEST(learn, comapre_backends) {
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    MockOpenCL_CSVM csvm_OpenCL(1., EINPROGRESS, 0, degree, gamma, coef0, false);
+    MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenCL.libsvmParser(TESTPATH "/data/5x4.libsvm");
     csvm_OpenCL.loadDataDevice();
     csvm_OpenCL.learn();
@@ -260,7 +260,7 @@ TEST(learn, comapre_backends) {
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    MockCUDA_CSVM csvm_CUDA(1., EINPROGRESS, 0, degree, gamma, coef0, false);
+    MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_CUDA.libsvmParser(TESTPATH "/data/5x4.libsvm");
     csvm_CUDA.loadDataDevice();
     csvm_CUDA.learn();
