@@ -68,7 +68,7 @@ set(PLSSVM_SOURCES
 
 ## create main executable
 set(PLSSVM_EXECUTABLE_NAME svm-train)
-add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp)
+add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp ${PLSSVM_SOURCES})
 add_dependencies(${PLSSVM_EXECUTABLE_NAME} cxxopts)
 target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
 target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
