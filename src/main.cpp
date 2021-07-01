@@ -44,6 +44,8 @@ std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
 #else
         throw unsupported_backend_exception{"No OpenCL backend available!"};
 #endif
+    default:
+        throw unsupported_backend_exception{fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(type))};
     }
 }
 // command line parser
