@@ -1,5 +1,6 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/exceptions.hpp>
+#include <plssvm/kernel_types.hpp>
 #include <plssvm/operators.hpp>
 #include <plssvm/string_utility.hpp>
 
@@ -227,11 +228,12 @@ void CSVM::arffParser(const std::string_view filename) {
     fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
-void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save number of Datapoint in input file ->  copy input file -> manipulate copy and dont rewrite whole File
+void CSVM::writeModel(const std::string_view model_name) {
+    // TODO: idea: save number of Datapoint in input file -> copy input file -> manipulate copy and dont rewrite whole File
     int nBSV = 0;
     int count_pos = 0;
     int count_neg = 0;
-    for (int i = 0; i < alpha.size(); ++i) {
+    for (std::size_t i = 0; i < alpha.size(); ++i) {
         if (value[i] > 0) {
             ++count_pos;
         }
@@ -242,6 +244,7 @@ void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save nu
             ++nBSV;
         }
     }
+
     // terminal output
     if (info) {
         fmt::print(
@@ -252,20 +255,6 @@ void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save nu
             "Total nSV = {}\n",
             cost, -bias, count_pos + count_neg - nBSV, nBSV, count_pos + count_neg);
     }
-
-    // function to get the kernel name from its ID
-    auto kernel_to_string = [](const auto k) -> std::string_view {
-        switch (k) {
-        case 0:
-            return "linear";
-        case 1:
-            return "polynomial";
-        case 2:
-            return "rbf";
-        default:
-            throw std::runtime_error{fmt::format("Invalid kernel value {}!", k)};
-        }
-    };
 
     // create model file
     std::ofstream model{model_name.data(), std::ios::out | std::ios::trunc};
@@ -278,7 +267,7 @@ void CSVM::writeModel(const std::string_view model_name) { //TODO: idea: save nu
         "label 1 -1\n"
         "nr_sv {} {}\n"
         "SV\n",
-        kernel_to_string(kernel), count_pos + count_neg, -bias, count_pos, count_neg);
+        static_cast<plssvm::kernel_type>(kernel), count_pos + count_neg, -bias, count_pos, count_neg);
 
     volatile int count = 0;
     #pragma omp parallel
