@@ -70,4 +70,10 @@ class unsupported_backend_exception : public exception {
         : exception{msg, loc} {}
 };
 
+class distribution_exception : public exception {
+  public:
+    explicit distribution_exception(const std::string& msg, source_location loc = source_location::current())
+        : exception{msg, loc} {}
+};
+
 } // namespace plssvm
