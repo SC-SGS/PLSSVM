@@ -46,8 +46,13 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
         // get data
         std::vector<real_t> vline(max_size);
-        std::size_t next_pos = line.find_first_of(':', pos);
-        while (next_pos != std::string_view::npos) {
+        while (true) {
+            std::size_t next_pos = line.find_first_of(':', pos);
+            // no further data points
+            if (next_pos == std::string_view::npos) {
+                break;
+            }
+
             // get index
             const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
             if (index >= vline.size()) {
@@ -58,12 +63,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
             // get value
             next_pos = line.find_first_of(' ', pos);
             vline[index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-
-            if (next_pos == std::string_view::npos) {
-                break;
-            }
-            pos = next_pos + 1;
-            next_pos = line.find_first_of(':', pos);
+            pos = next_pos;
         }
         max_size = std::max(max_size, vline.size());
         data[i] = std::move(vline);
