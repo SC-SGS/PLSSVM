@@ -11,8 +11,8 @@ class OpenMP_CSVM : public CSVM {
 
     virtual void learn(std::string &, std::string &);
 
-    virtual void load_w(){};                                   // TODO: implement load_w
-    virtual std::vector<real_t> predict(real_t *, int, int){}; //TODO: implement predict
+    virtual void load_w(){};                                                // TODO: implement load_w
+    virtual std::vector<real_t> predict(real_t *, int, int) { return {}; }; //TODO: implement predict
     virtual void learn();
 
   protected:
