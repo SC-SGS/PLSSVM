@@ -11,23 +11,23 @@
 namespace json {
 
 json_exception::json_exception(token &t, const std::string &message) {
-  std::stringstream messageStream;
-  messageStream << "error: (line: " << t.lineNumber
-                << ", char: " << t.charNumber << ") at \"" << t.value
-                << "\": ";
-  messageStream << message;
-  this->message = messageStream.str();
+    std::stringstream messageStream;
+    messageStream << "error: (line: " << t.lineNumber
+                  << ", char: " << t.charNumber << ") at \"" << t.value
+                  << "\": ";
+    messageStream << message;
+    this->message = messageStream.str();
 }
 
 json_exception::json_exception(const std::string &message) {
-  std::stringstream messageStream;
-  messageStream << "error: ";
-  messageStream << message;
-  this->message = messageStream.str();
+    std::stringstream messageStream;
+    messageStream << "error: ";
+    messageStream << message;
+    this->message = messageStream.str();
 }
 
 const char *json_exception::what() const throw() {
-  return this->message.c_str();
+    return this->message.c_str();
 }
 
 } // namespace json

@@ -7,7 +7,6 @@
 // #include <numeric>
 // #include <functional>
 
-
 // std::vector<real_t> operator - (const std::vector<real_t> &vec1,const std::vector<real_t> &vec2)
 // {
 //     std::vector<real_t> result(vec1.size());
@@ -54,7 +53,6 @@
 //     return result;
 // }
 
-
 // real_t operator *(const std::vector<real_t> &vec1,const std::vector<real_t> &vec2)
 // {
 //     real_t result = 0.0;
@@ -72,7 +70,6 @@
 //     }
 // 	return result;
 // }
-
 
 // std::ostream& operator<<(std::ostream &out, const std::vector<real_t> &vec)
 // {
@@ -159,7 +156,6 @@
 //     return result;
 // };
 
-
 // real_t sum(std::vector<real_t> & vec)
 // {
 //     real_t result = 0;
@@ -187,8 +183,6 @@
 // real_t* mult(real_t* vec, real_t val, int dim){
 // 	return mult(val,vec, dim);
 // };
-
-
 
 // real_t* add (real_t value, real_t* vec, int dim){
 // 	for(unsigned i = 0; i < dim; ++i){
@@ -222,7 +216,6 @@
 // 	}
 // 	return vec1;
 // };
-
 
 // bool endsWith(std::string mainStr, std::string toMatch)
 // {

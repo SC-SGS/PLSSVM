@@ -10,16 +10,27 @@
 namespace json {
 
 enum class token_type {
-  LBRACE, RBRACE, LBRACKET, RBRACKET, COLON, ID, STRING, COMMA, COMMENT,
-  SINGLELINE, MULTILINECOMMENT, MULTILINECOMMENTSTAR, NONE
+    LBRACE,
+    RBRACE,
+    LBRACKET,
+    RBRACKET,
+    COLON,
+    ID,
+    STRING,
+    COMMA,
+    COMMENT,
+    SINGLELINE,
+    MULTILINECOMMENT,
+    MULTILINECOMMENTSTAR,
+    NONE
 };
 
 class token {
- public:
-  token_type type;
-  std::string value;
-  size_t lineNumber;
-  size_t charNumber;
+  public:
+    token_type type;
+    std::string value;
+    size_t lineNumber;
+    size_t charNumber;
 };
 
-}  // namespace json
+} // namespace json

@@ -34,14 +34,14 @@ CSVM::CSVM(double cost_, double epsilon_, unsigned kernel_, double degree_, doub
 void CSVM::learn() {
     std::vector<double> q;
     std::vector<double> b = value;
-#pragma omp parallel sections
+    #pragma omp parallel sections
     {
-#pragma omp section // generate right side from eguation
+        #pragma omp section // generate right side from eguation
         {
             b.pop_back();
             b -= value.back();
         }
-#pragma omp section // generate botom right from A
+        #pragma omp section // generate botom right from A
         {
             QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
         }

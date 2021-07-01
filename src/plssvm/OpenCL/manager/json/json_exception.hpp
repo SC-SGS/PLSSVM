@@ -13,15 +13,15 @@
 namespace json {
 
 class json_exception : public std::exception {
-private:
-  std::string message;
+  private:
+    std::string message;
 
-public:
-  json_exception(token &t, const std::string &message);
+  public:
+    json_exception(token &t, const std::string &message);
 
-  explicit json_exception(const std::string &message);
+    explicit json_exception(const std::string &message);
 
-  const char *what() const throw() override;
+    const char *what() const throw() override;
 };
 
 } // namespace json

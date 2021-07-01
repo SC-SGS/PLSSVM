@@ -59,13 +59,13 @@ void OpenMP_CSVM::learn(std::string &filename, std::string &output_filename) {
                   << std::endl;
     }
 
-  learn();
-  auto end_learn = std::chrono::high_resolution_clock::now();
-  if (info)
-    std::clog << std::endl
-              << data.size() << " Datenpunkte mit Dimension " << num_features << " in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_parse).count() << " ms gelernt"
-              << std::endl;
+    learn();
+    auto end_learn = std::chrono::high_resolution_clock::now();
+    if (info)
+        std::clog << std::endl
+                  << data.size() << " Datenpunkte mit Dimension " << num_features << " in "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_parse).count() << " ms gelernt"
+                  << std::endl;
 
     writeModel(output_filename);
     auto end_write = std::chrono::high_resolution_clock::now();
@@ -137,7 +137,7 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         //Ad = A * d
         std::vector<real_t> Ad(dept, 0.0);
 
-#pragma omp parallel for collapse(2) schedule(dynamic, 8)
+        #pragma omp parallel for collapse(2) schedule(dynamic, 8)
         for (int i = 0; i < b.size(); i += bloksize) {
             for (int j = 0; j < b.size(); j += bloksize) {
 

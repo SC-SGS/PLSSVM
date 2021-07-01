@@ -70,22 +70,22 @@ std::map<cl_int, std::string> error_map{
     {-72, "CL_MAX_SIZE_RESTRICTION_EXCEEDED"}};
 
 void report_error(cl_int err) {
-  auto it = error_map.find(err);
-  if (it != error_map.end()) {
-    std::cout << it->second << "(" << it->first << ")";
-  } else {
-    std::cout << err << " (proprietary error)";
-  }
+    auto it = error_map.find(err);
+    if (it != error_map.end()) {
+        std::cout << it->second << "(" << it->first << ")";
+    } else {
+        std::cout << err << " (proprietary error)";
+    }
 }
 
 std::string resolve_error(cl_int err) {
-  auto it = error_map.find(err);
-  if (it != error_map.end()) {
-    return it->second + std::string("(") + std::to_string(it->first) +
-           std::string(")");
-  } else {
-    return std::to_string(err) + std::string("(proprietary error)");
-  }
+    auto it = error_map.find(err);
+    if (it != error_map.end()) {
+        return it->second + std::string("(") + std::to_string(it->first) +
+               std::string(")");
+    } else {
+        return std::to_string(err) + std::string("(proprietary error)");
+    }
 }
 
 } // namespace opencl

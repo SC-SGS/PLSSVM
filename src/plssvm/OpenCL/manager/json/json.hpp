@@ -17,29 +17,29 @@
 namespace json {
 
 class json : public dict_node {
-private:
-  std::string fileName;
+  private:
+    std::string fileName;
 
-  std::vector<token> tokenize(const std::string &input);
+    std::vector<token> tokenize(const std::string &input);
 
-public:
-  explicit json(const std::string &fileName);
+  public:
+    explicit json(const std::string &fileName);
 
-  json();
+    json();
 
-  json(const json &original);
+    json(const json &original);
 
-  virtual json *clone();
+    virtual json *clone();
 
-  void clear();
+    void clear();
 
-  void serialize(const std::string &outFileName);
+    void serialize(const std::string &outFileName);
 
-  void deserialize(std::string content);
+    void deserialize(std::string content);
 
-  void deserializeFromString(const std::string &content);
+    void deserializeFromString(const std::string &content);
 
-  using dict_node::serialize;
+    using dict_node::serialize;
 };
 
 } // namespace json
