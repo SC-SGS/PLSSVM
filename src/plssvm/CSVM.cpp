@@ -5,14 +5,14 @@ namespace plssvm {
 void CSVM::learn() {
     std::vector<real_t> q;
     std::vector<real_t> b = value;
-#pragma omp parallel sections
+    #pragma omp parallel sections
     {
-#pragma omp section // generate right side from eguation
+        #pragma omp section // generate right side from eguation
         {
             b.pop_back();
             b -= value.back();
         }
-#pragma omp section // generate botom right from A
+        #pragma omp section // generate botom right from A
         {
             QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
         }
@@ -26,13 +26,31 @@ void CSVM::learn() {
     bias = value.back() - QA_cost * alpha.back() - (q * alpha);
 }
 
+real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) { //TODO: kernel as template
+    switch (kernel) {
+    case kernel_type::linear:
+        return mult(xi, xj, dim);
+    case kernel_type::polynomial:
+        return std::pow(gamma * mult(xi, xj, dim) + coef0, degree);
+    case kernel_type::rbf: {
+        real_t temp = 0;
+        for (int i = 0; i < dim; ++i) {
+            temp += (xi[i] - xj[i]);
+        }
+        return exp(-gamma * temp * temp);
+    }
+    default:
+        throw std::runtime_error("Can not decide wich kernel!");
+    }
+}
+
 real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
     switch (kernel) {
-    case 0:
+    case kernel_type::linear:
         return xi * xj;
-    case 1:
+    case kernel_type::polynomial:
         return std::pow(gamma * (xi * xj) + coef0, degree);
-    case 2: {
+    case kernel_type::rbf: {
         real_t temp = 0;
         for (int i = 0; i < xi.size(); ++i) {
             temp += (xi - xj) * (xi - xj);
@@ -81,4 +99,4 @@ void CSVM::learn(const std::string_view filename, const std::string_view output_
     }
 }
 
-}
+} // namespace plssvm

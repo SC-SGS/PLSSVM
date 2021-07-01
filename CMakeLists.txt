@@ -32,6 +32,17 @@ FetchContent_Declare(fmt
 FetchContent_MakeAvailable(fmt)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_OLD})
 
+## fetch float parsing library fast_float
+FetchContent_Declare(fast_float
+  GIT_REPOSITORY          https://github.com/fastfloat/fast_float
+  GIT_TAG                 8159e8bcf63c1b92f5a51fb550f966e56624b209
+  GIT_SHALLOW             TRUE
+
+  set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
+  set(FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
+)
+FetchContent_MakeAvailable(fast_float)
+
 
 ## set C++ standard globally
 set(CMAKE_CXX_STANDARD 17)
@@ -60,6 +71,7 @@ set(PLSSVM_EXECUTABLE_NAME svm-train)
 add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp)
 add_dependencies(${PLSSVM_EXECUTABLE_NAME} cxxopts)
 target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
+target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
 #target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: better?
 #target_link_libraries(${PLSSVM_EXECUTABLE_NAME} fmt::fmt)
 

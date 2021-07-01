@@ -1,6 +1,7 @@
 #pragma once
 
 #include <plssvm/CSVM.hpp>
+#include <plssvm/kernel_types.hpp>
 
 #include "../../../src/plssvm/OpenCL/manager/configuration.hpp"
 #include "../../../src/plssvm/OpenCL/manager/device.hpp"
