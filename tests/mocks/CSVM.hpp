@@ -4,7 +4,7 @@
 #include "plssvm/OpenCL/OpenCL_CSVM.hpp"
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-#include "plssvm/OpenMP/CUDA_CSVM.hpp"
+#include "plssvm/CUDA/CUDA_CSVM.hpp"
 #endif
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
 #include "plssvm/OpenMP/OpenMP_CSVM.hpp"
@@ -65,7 +65,7 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
 class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
   public:
-    MockOpenCL_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : plssvm::OpenCL_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    MockOpenCL_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : plssvm::OpenCL_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
     // MOCK_METHOD(void, load_w, (), (override));
     MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, (), (override));
@@ -97,7 +97,7 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
 class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
   public:
-    MockCUDA_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : plssvm::CUDA_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    MockCUDA_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : plssvm::CUDA_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
     // MOCK_METHOD(void, load_w, (), (override));
     MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, (), (override));
