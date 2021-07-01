@@ -7,7 +7,6 @@ getestet mit: `nvvc 9.0`, `g++ 6.3`, `cmake 3.10.1`
 	4. make
 	5. cd ..
 
-oder `./build.sh`
 
 ## RUN
 
