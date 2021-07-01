@@ -310,7 +310,7 @@ void CSVM::writeModel(const std::string_view model_name) {
         static_cast<plssvm::kernel_type>(kernel), count_pos + count_neg, -bias, count_pos, count_neg);
 
     volatile int count = 0;
-    #pragma omp parallel
+    #pragma omp parallel num_threads(1)
     {
         fmt::memory_buffer out_pos;
         fmt::memory_buffer out_neg;
@@ -319,13 +319,13 @@ void CSVM::writeModel(const std::string_view model_name) {
         #pragma omp for nowait
         for (std::size_t i = 0; i < alpha.size(); ++i) {
             if (value[i] > 0) {
-                fmt::format_to(out_pos.begin(), "{}", alpha[i]);
+                fmt::format_to(std::back_inserter(out_pos), "{} ", alpha[i]);
                 for (std::size_t j = 0; j < data[i].size(); ++j) {
                     if (data[i][j] != 0) {
-                        fmt::format_to(out_pos.begin(), "{}:{:e} ", j, data[i][j]);
+                        fmt::format_to(std::back_inserter(out_pos), "{}:{:e} ", j, data[i][j]);
                     }
                 }
-                fmt::format_to(out_pos.begin(), "\n");
+                fmt::format_to(std::back_inserter(out_pos), "\n");
             }
         }
 
@@ -340,13 +340,13 @@ void CSVM::writeModel(const std::string_view model_name) {
         #pragma omp for nowait
         for (std::size_t i = 0; i < alpha.size(); ++i) {
             if (value[i] < 0) {
-                fmt::format_to(out_neg.begin(), "{}", alpha[i]);
+                fmt::format_to(std::back_inserter(out_neg), "{} ", alpha[i]);
                 for (std::size_t j = 0; j < data[i].size(); ++j) {
                     if (data[i][j] != 0) {
-                        fmt::format_to(out_neg.begin(), "{}:{:e} ", j, data[i][j]);
+                        fmt::format_to(std::back_inserter(out_neg), "{}:{:e} ", j, data[i][j]);
                     }
                 }
-                fmt::format_to(out_neg.begin(), "\n");
+                fmt::format_to(std::back_inserter(out_neg), "\n");
             }
         }
 
