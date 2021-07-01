@@ -38,7 +38,7 @@ void OpenMP_CSVM::learn() {
 
     std::cout << "start CG" << std::endl;
     //solve minimization
-    alpha = CG(b, 1000, epsilon);
+    alpha = CG(b, num_features, epsilon);
 
     alpha.emplace_back(-sum(alpha));
     bias = value.back() - QA_cost * alpha.back() - (q * alpha);
