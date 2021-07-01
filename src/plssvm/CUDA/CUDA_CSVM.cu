@@ -53,7 +53,7 @@ void CUDA_CSVM::loadDataDevice() {
     }
 
     auto begin_transform = std::chrono::high_resolution_clock::now();
-    const std::vector<real_t> transformet_data = transform_data(0, THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+    const std::vector<real_t> transformet_data = transform_data( THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
     auto end_transform = std::chrono::high_resolution_clock::now();
     if (info) {
         std::clog << std::endl

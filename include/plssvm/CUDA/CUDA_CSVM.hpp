@@ -12,7 +12,7 @@ class CUDA_CSVM : public CSVM {
     void load_w();
     std::vector<real_t> predict(real_t *, int, int);
 
-  private:
+  protected:
     std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t);
 
     std::vector<real_t *> data_d;
