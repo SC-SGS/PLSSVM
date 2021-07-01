@@ -37,8 +37,13 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     // MOCK_METHOD(void, load_w, (), (override));
     MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, (), (override));
-    MOCK_METHOD(void, loadDataDevice, (), (override));
-    MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t), (override));
+    using plssvm::OpenMP_CSVM::alpha;
+    using plssvm::OpenMP_CSVM::bias;
+    using plssvm::OpenMP_CSVM::QA_cost;
+
+    using plssvm::OpenMP_CSVM::CG;
+    using plssvm::OpenMP_CSVM::learn;
+    using plssvm::OpenMP_CSVM::loadDataDevice;
 
     using plssvm::OpenMP_CSVM::kernel_function;
 
@@ -69,8 +74,13 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
     // MOCK_METHOD(void, load_w, (), (override));
     MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, (), (override));
-    MOCK_METHOD(void, loadDataDevice, (), (override));
-    MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t), (override));
+    using plssvm::OpenCL_CSVM::alpha;
+    using plssvm::OpenCL_CSVM::bias;
+    using plssvm::OpenCL_CSVM::QA_cost;
+
+    using plssvm::OpenCL_CSVM::CG;
+    using plssvm::OpenCL_CSVM::learn;
+    using plssvm::OpenCL_CSVM::loadDataDevice;
 
     using plssvm::OpenCL_CSVM::kernel_function;
 
@@ -101,8 +111,13 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     // MOCK_METHOD(void, load_w, (), (override));
     MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, (), (override));
-    MOCK_METHOD(void, loadDataDevice, (), (override));
-    MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t), (override));
+    using plssvm::CUDA_CSVM::alpha;
+    using plssvm::CUDA_CSVM::bias;
+    using plssvm::CUDA_CSVM::QA_cost;
+
+    using plssvm::CUDA_CSVM::CG;
+    using plssvm::CUDA_CSVM::learn;
+    using plssvm::CUDA_CSVM::loadDataDevice;
 
     using plssvm::CUDA_CSVM::kernel_function;
 

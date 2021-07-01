@@ -225,3 +225,59 @@ TEST(CSVM, transform_data) {
         }
     }
 }
+
+TEST(learn, comapre_backends) {
+    const real_t degree = 0.0;
+    const real_t gamma = 0.0;
+    const real_t coef0 = 0.0;
+    const real_t eps = 0.001;
+    std::vector<std::vector<real_t>> alphas;
+
+    std::vector<real_t> biass;
+    std::vector<real_t> QA_costs;
+
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
+    MockOpenMP_CSVM csvm_OpenMP(1., EINPROGRESS, 0, degree, gamma, coef0, false);
+    csvm_OpenMP.libsvmParser(TESTPATH "/data/5x4.libsvm");
+    csvm_OpenMP.loadDataDevice();
+    csvm_OpenMP.learn();
+    ASSERT_EQ(csvm_OpenMP.get_num_data_points(), csvm_OpenMP.alpha.size());
+    alphas.push_back(csvm_OpenMP.alpha);
+    QA_costs.push_back(csvm_OpenMP.QA_cost);
+    biass.push_back(csvm_OpenMP.bias);
+#endif
+
+#if defined(PLSSVM_HAS_OPENCL_BACKEND)
+    MockOpenCL_CSVM csvm_OpenCL(1., EINPROGRESS, 0, degree, gamma, coef0, false);
+    csvm_OpenCL.libsvmParser(TESTPATH "/data/5x4.libsvm");
+    csvm_OpenCL.loadDataDevice();
+    csvm_OpenCL.learn();
+    ASSERT_EQ(csvm_OpenCL.get_num_data_points(), csvm_OpenCL.alpha.size());
+    alphas.push_back(csvm_OpenCL.alpha);
+    QA_costs.push_back(csvm_OpenCL.QA_cost);
+    biass.push_back(csvm_OpenCL.bias);
+
+#endif
+
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
+    MockCUDA_CSVM csvm_CUDA(1., EINPROGRESS, 0, degree, gamma, coef0, false);
+    csvm_CUDA.libsvmParser(TESTPATH "/data/5x4.libsvm");
+    csvm_CUDA.loadDataDevice();
+    csvm_CUDA.learn();
+    ASSERT_EQ(csvm_CUDA.get_num_data_points(), csvm_CUDA.alpha.size());
+    alphas.push_back(csvm_CUDA.alpha);
+    QA_costs.push_back(csvm_CUDA.QA_cost);
+    biass.push_back(csvm_CUDA.bias);
+#endif
+
+    ASSERT_EQ(alphas.size(), biass.size());
+    ASSERT_EQ(alphas.size(), QA_costs.size());
+    for (size_t svm = 1; svm < alphas.size(); ++svm) {
+        EXPECT_DOUBLE_EQ(biass[0], biass[svm]) << "svm: " << svm;
+        EXPECT_DOUBLE_EQ(QA_costs[0], QA_costs[svm]) << "svm: " << svm;
+        ASSERT_EQ(alphas[0].size(), alphas[svm].size()) << "svm: " << svm;
+        for (size_t index = 0; index < alphas[0].size(); ++index) {
+            EXPECT_DOUBLE_EQ(alphas[0][index], alphas[svm][index]) << "svm: " << svm << " index: " << index;
+        }
+    }
+}
