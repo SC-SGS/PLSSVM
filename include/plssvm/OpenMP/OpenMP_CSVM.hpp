@@ -1,12 +1,13 @@
 #pragma once
 
 #include <plssvm/CSVM.hpp>
+#include <plssvm/kernel_types.hpp>
 
 namespace plssvm {
 
 class OpenMP_CSVM : public CSVM {
   public:
-    OpenMP_CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_);
+    OpenMP_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_);
 
     virtual void learn(std::string &, std::string &);
 

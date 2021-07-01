@@ -10,7 +10,6 @@
 #include <stdlib.h> /* srand, rand */
 #include <time.h>
 
-
 #include <string_view>
 
 // TODO: move to separate files
@@ -60,14 +59,14 @@ svm_backend parse_backend(std::string_view backend) {
     }
 }
 
-}
+} // namespace plssvm
 
 bool info;
 
 int main(int argc, char *argv[]) {
 
-  // TODO:
-  using real_t = plssvm::real_t;
+    // TODO:
+    using real_t = plssvm::real_t;
 
     cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
     options
@@ -106,7 +105,7 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
 
-    int kernel_type = result["kernel_type"].as<int>();
+    plssvm::kernel_type kernel_type = static_cast<plssvm::kernel_type>(result["kernel_type"].as<int>());
     real_t gamma;
     if (result.count("gamma")) {
         gamma = result["gamma"].as<real_t>();
@@ -140,8 +139,8 @@ int main(int argc, char *argv[]) {
     } catch (const plssvm::exception &e) {
         std::cerr << e.what() << std::endl;
         std::cerr << e.loc() << std::endl;
-    } catch (const std::exception& e) {
-      std::cerr << e.what() << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
     }
     return 0;
 }

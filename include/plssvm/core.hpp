@@ -12,3 +12,4 @@
 
 #include <plssvm/CSVM.hpp>
 #include <plssvm/exceptions.hpp>
+#include <plssvm/kernel_types.hpp>

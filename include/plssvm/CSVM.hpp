@@ -1,4 +1,5 @@
 #pragma once
+#include <plssvm/kernel_types.hpp>
 #include <plssvm/operators.hpp>
 #include <plssvm/typedef.hpp>
 
@@ -25,7 +26,7 @@ const bool times = 0;
 
 class CSVM {
   public:
-    CSVM(real_t cost_, real_t epsilon_, unsigned kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
+    CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) : cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
     virtual void learn(const std::string_view, const std::string_view);
 
     const real_t &getB() const { return bias; };
@@ -41,7 +42,7 @@ class CSVM {
     const bool info;
     real_t cost;
     const real_t epsilon;
-    const unsigned kernel;
+    const kernel_type kernel;
     const real_t degree;
     real_t gamma;
     const real_t coef0;
@@ -64,7 +65,7 @@ class CSVM {
 
     inline std::vector<real_t> transform_data(const int start_line, const int boundary) {
         std::vector<real_t> vec(num_features * (num_data_points - 1 + boundary));
-#pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2)
         for (size_t col = 0; col < num_features; ++col) {
             for (size_t row = 0; row < num_data_points - 1; ++row) {
                 vec[col * (num_data_points - 1 + boundary) + row] = data[row][col];
@@ -75,4 +76,4 @@ class CSVM {
     inline void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
 };
 
-}
+} // namespace plssvm
