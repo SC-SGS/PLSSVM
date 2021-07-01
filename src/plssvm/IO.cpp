@@ -91,7 +91,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
     fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
-// read ARF file
+// read ARFF file
 void CSVM::arffParser(const std::string_view filename) {
     std::vector<std::string> data_lines;
     std::size_t max_size = 0;
@@ -102,14 +102,14 @@ void CSVM::arffParser(const std::string_view filename) {
         }
         std::string line;
 
-        // parse header information
+        // read and parse header information
         while (std::getline(file, line)) {
             std::string_view trimmed = util::trim_left(line);
             if (trimmed.empty() || util::starts_with(trimmed, '%')) {
                 // ignore empty lines or comments
                 continue;
             } else {
-                // match arff attribute case insensitive
+                // match arff properties case insensitive
                 std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
                 trimmed = util::trim_left(line);
                 if (util::starts_with(trimmed, "@RELATION")) {
@@ -128,12 +128,12 @@ void CSVM::arffParser(const std::string_view filename) {
             }
         }
 
-        // something went wrong, e.g., no @ATTRIBUTE fields
+        // something went wrong, i.e. no @ATTRIBUTE fields
         if (max_size == 0) {
             throw invalid_file_format_exception{"Invalid file format!"};
         }
 
-        // parse data
+        // read data
         while (std::getline(file, line)) {
             std::string_view trimmed = util::trim_left(line);
             if (trimmed.empty() || util::starts_with(trimmed, '%')) {
@@ -157,9 +157,10 @@ void CSVM::arffParser(const std::string_view filename) {
     }
 
     #pragma omp parallel for
-    for (std::size_t i = 0; i < data.size(); ++i) { // TODO: exceptions
+    for (std::size_t i = 0; i < data.size(); ++i) {
         std::string_view line{util::trim_left(data_lines[i])};
 
+        // parse sparse or dense data point definition
         if (util::starts_with(line, '{')) {
             // missing closing }
             if (!util::ends_with(line, '}')) {
@@ -168,8 +169,13 @@ void CSVM::arffParser(const std::string_view filename) {
             // sparse line
             bool is_class_set = false;
             std::size_t pos = 1;
-            std::size_t next_pos = line.find_first_of(' ', pos);
-            while (next_pos != std::string_view::npos) {
+            while (true) {
+                std::size_t next_pos = line.find_first_of(' ', pos);
+                // no further data points
+                if (next_pos == std::string_view::npos) {
+                    break;
+                }
+
                 // get index
                 const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                 pos = next_pos + 1;
@@ -185,14 +191,10 @@ void CSVM::arffParser(const std::string_view filename) {
                     data[i][index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                 }
 
-                if (next_pos == std::string_view::npos) {
-                    break;
-                }
                 // remove already processes part of the line
                 line.remove_prefix(next_pos + 1);
                 line = util::trim_left(line);
                 pos = 0;
-                next_pos = line.find_first_of(' ');
             }
             // no class label found
             if (!is_class_set) {
@@ -213,9 +215,11 @@ void CSVM::arffParser(const std::string_view filename) {
         }
     }
 
+    // update values
     num_data_points = data.size();
     num_features = max_size - 1;
 
+    // update gamma
     if (gamma == 0) {
         gamma = 1. / num_features;
     }
