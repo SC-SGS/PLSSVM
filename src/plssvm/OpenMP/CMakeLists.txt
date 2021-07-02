@@ -18,7 +18,7 @@ set(PLSSVM_OpenMP_SOURCES
 )
 
 # set target properties
-set(PLSSVM_OpenMP_BACKEND_LIBRARY_NAME svm-CPU)
+set(PLSSVM_OpenMP_BACKEND_LIBRARY_NAME svm-OpenMP)
 add_library(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OpenMP_SOURCES})
 target_include_directories(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
 target_include_directories(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)

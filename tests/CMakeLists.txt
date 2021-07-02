@@ -27,8 +27,8 @@ target_include_directories(hello_test PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: 
 target_link_libraries(hello_test fmt::fmt)
 target_include_directories(hello_test PUBLIC ${fast_float_SOURCE_DIR}/include)
 
-if(TARGET svm-CPU)
-  target_link_libraries(hello_test svm-CPU)
+if(TARGET svm-OpenMP)
+  target_link_libraries(hello_test svm-OpenMP)
   target_compile_definitions(hello_test PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
 endif()
 if(TARGET svm-OCL)
