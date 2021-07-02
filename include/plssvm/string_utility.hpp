@@ -1,14 +1,24 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Implements utility functions for string manipulation and conversion.
+ */
+
 #pragma once
 
-#include <fast_float/fast_float.h>
-#include <fmt/core.h>
+#include <fast_float/fast_float.h>  // fast_float::from_chars (floating points)
+#include <fmt/core.h>               // fmt::format
 
-#include <charconv>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <type_traits>
+#include <algorithm>     // std::min
+#include <charconv>      // std::from_chars (integral types)
+#include <stdexcept>     // std::runtime_error
+#include <string>        // std::char_traits
+#include <string_view>   // std::string_view
+#include <system_error>  // std:errc
+#include <type_traits>   // std::is_floating_point_v, std::is_integral_v, std::is_same_v
 
 namespace plssvm::util {
 
@@ -26,7 +36,7 @@ bool ends_with(const std::string_view str, const char end) noexcept {
 }
 
 std::string_view trim_left(const std::string_view str) noexcept {
-    std::size_t pos = std::min(str.find_first_not_of(' '), str.size());
+    std::string_view::size_type pos = std::min(str.find_first_not_of(' '), str.size());
     return str.substr(pos);
 }
 
