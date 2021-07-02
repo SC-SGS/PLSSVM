@@ -60,7 +60,7 @@ __global__ void kernel_q(real_t *q,
     for (int i = start; i < end; ++i) {
         temp += data_d[i * Nrows + index] * datlast[i];
     }
-    q[index] = temp; //TODO: nachschauen += ?
+    q[index] = temp;  //TODO: nachschauen += ?
 }
 
-} // namespace plssvm
+}  // namespace plssvm

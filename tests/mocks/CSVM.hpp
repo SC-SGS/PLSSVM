@@ -62,7 +62,7 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     }
 };
 #else
-#pragma message("Ignore OpenMP backend test")
+    #pragma message("Ignore OpenMP backend test")
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
@@ -97,7 +97,7 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
     }
 };
 #else
-#pragma message("Ignore OpenCL backend Test")
+    #pragma message("Ignore OpenCL backend Test")
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
@@ -130,5 +130,5 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     }
 };
 #else
-#pragma message("Ignore CUDA backend Test")
+    #pragma message("Ignore CUDA backend Test")
 #endif

@@ -3,8 +3,7 @@
 namespace plssvm {
 
 __global__ void
-kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d, const real_t QA_cost,
-              const real_t cost, const int Ncols, const int Nrows, const int add, const int start, const int end) {
+kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add, const int start, const int end) {
     int i = blockIdx.x * blockDim.x * INTERNALBLOCK_SIZE;
     int j = blockIdx.y * blockDim.y * INTERNALBLOCK_SIZE;
 
@@ -25,7 +24,7 @@ kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_
                 const size_t idx = block_id % THREADBLOCK_SIZE;
                 if (threadIdx.y == idx)
                     data_intern_i[threadIdx.x][block_id] = data_d[block_id + vec_index + i];
-                const size_t idx_2 = block_id + INTERNALBLOCK_SIZE % THREADBLOCK_SIZE; //TODO: constexpr
+                const size_t idx_2 = block_id + INTERNALBLOCK_SIZE % THREADBLOCK_SIZE;  //TODO: constexpr
                 if (threadIdx.y == idx_2)
                     data_intern_j[threadIdx.x][block_id] = data_d[block_id + vec_index + ji];
             }
@@ -51,7 +50,7 @@ kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_
 #pragma unroll(INTERNALBLOCK_SIZE)
             for (int y = 0; y < INTERNALBLOCK_SIZE; ++y) {
                 real_t temp;
-                if (start == 0) { // auslagern
+                if (start == 0) {  // auslagern
                     temp = (matr[x][y] + QA_cost - q[i + y] - q[j + x]) * add;
                 } else {
                     temp = matr[x][y] * add;
@@ -60,7 +59,7 @@ kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_
                     atomicAdd(&ret[i + y], temp * d[j + x]);
                     atomicAdd(&ret[j + x], temp * d[i + y]);
                 } else if (i + x == j + y) {
-                    if (start == 0) { // auslagern
+                    if (start == 0) {  // auslagern
                         atomicAdd(&ret[j + x], (temp + cost * add) * d[i + y]);
                     } else {
                         atomicAdd(&ret[j + x], temp * d[i + y]);
@@ -98,9 +97,7 @@ kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_
 }
 
 __global__ void
-kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost,
-            const int Ncols, const int Nrows, const int add, const real_t gamma, const real_t coef0,
-            const real_t degree) {
+kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add, const real_t gamma, const real_t coef0, const real_t degree) {
     int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
     int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
@@ -157,8 +154,7 @@ kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_c
 }
 
 __global__ void
-kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost,
-              const int Ncols, const int Nrows, const int add, const real_t gamma) {
+kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add, const real_t gamma) {
     int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
     int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
@@ -215,4 +211,4 @@ kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA
     }
 }
 
-} // namespace plssvm
+}  // namespace plssvm

@@ -34,7 +34,7 @@ void OpenCL_CSVM::loadDataDevice() {
     #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device)
         datlast_cl[device].to_device(datalast);
-        #pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device)
         datlast_cl[device].resize(num_data_points - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
 
@@ -252,8 +252,8 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device)
                 Ad_cl[device].to_device(zeros);
-                //TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
-                #pragma omp parallel for
+            //TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device) {
                 std::vector<real_t> buffer(dept_all);
                 r_cl[device].resize(dept_all);
@@ -346,7 +346,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         #pragma omp parallel
         for (int device = 0; device < count_devices; ++device)
             x_cl[device].resize(dept_all);
-            #pragma omp parallel
+        #pragma omp parallel
         for (int device = 0; device < count_devices; ++device)
             x_cl[device].to_device(x);
 
@@ -448,7 +448,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device)
                 r_cl[device].resize(dept_all);
-                #pragma omp parallel for
+            #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device)
                 r_cl[device].to_device(buffer);
         }

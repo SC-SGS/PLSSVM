@@ -3,8 +3,7 @@
 namespace plssvm {
 
 __global__ void
-kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost,
-              const int Ncols, const int Nrows, const int add) {
+kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add) {
     int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
     int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
@@ -64,4 +63,4 @@ kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA
     }
 }
 
-} // namespace plssvm
+}  // namespace plssvm

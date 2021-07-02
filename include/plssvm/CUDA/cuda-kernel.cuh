@@ -23,7 +23,7 @@ __global__ void kernel_q(real_t *q,
 #else
 __device__ __forceinline__ double atomicAdd(double *address, double val) {
     unsigned long long int *address_as_ull =
-        (unsigned long long int *)address;
+        (unsigned long long int *) address;
     unsigned long long int old = *address_as_ull, assumed;
     do {
         assumed = old;
@@ -33,4 +33,4 @@ __device__ __forceinline__ double atomicAdd(double *address, double val) {
 }
 #endif
 
-} // namespace plssvm
+}  // namespace plssvm
