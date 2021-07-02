@@ -26,7 +26,7 @@ set(PLSSVM_CUDA_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/CUDA_CSVM.cu
   ${CMAKE_CURRENT_LIST_DIR}/svm-kernel.cu
   ${CMAKE_CURRENT_LIST_DIR}/cuda-kernel.cu
-  ${CMAKE_CURRENT_LIST_DIR}/../OpenCL/cuda-kernel.cpp # TODO: fix include
+  ${CMAKE_CURRENT_LIST_DIR}/cuda-kernel.cpp # TODO: remove if add_mult_ is on gpu again
   ${CMAKE_CURRENT_LIST_DIR}/predict.cu
 )
 

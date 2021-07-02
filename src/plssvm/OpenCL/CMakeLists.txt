@@ -16,7 +16,6 @@ message(STATUS "OpenCL backend enabled.")
 # explicitly set sources
 set(PLSSVM_OpenCL_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/cuda-kernel.cpp
   ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
   ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
   ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
