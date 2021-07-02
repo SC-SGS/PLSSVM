@@ -43,8 +43,8 @@ class source_location {
 
 class exception : public std::runtime_error {
   public:
-    explicit exception(const std::string &msg, source_location loc = source_location::current())
-        : std::runtime_error{msg}, loc_{loc} {}
+    explicit exception(const std::string &msg, source_location loc = source_location::current()) :
+        std::runtime_error{ msg }, loc_{ loc } {}
 
     [[nodiscard]] const source_location &loc() const noexcept { return loc_; }
 
@@ -54,26 +54,26 @@ class exception : public std::runtime_error {
 
 class file_not_found_exception : public exception {
   public:
-    explicit file_not_found_exception(const std::string &msg, source_location loc = source_location::current())
-        : exception{msg, loc} {}
+    explicit file_not_found_exception(const std::string &msg, source_location loc = source_location::current()) :
+        exception{ msg, loc } {}
 };
 
 class invalid_file_format_exception : public exception {
   public:
-    explicit invalid_file_format_exception(const std::string &msg, source_location loc = source_location::current())
-        : exception{msg, loc} {}
+    explicit invalid_file_format_exception(const std::string &msg, source_location loc = source_location::current()) :
+        exception{ msg, loc } {}
 };
 
 class unsupported_backend_exception : public exception {
   public:
-    explicit unsupported_backend_exception(const std::string &msg, source_location loc = source_location::current())
-        : exception{msg, loc} {}
+    explicit unsupported_backend_exception(const std::string &msg, source_location loc = source_location::current()) :
+        exception{ msg, loc } {}
 };
 
 class distribution_exception : public exception {
   public:
-    explicit distribution_exception(const std::string& msg, source_location loc = source_location::current())
-        : exception{msg, loc} {}
+    explicit distribution_exception(const std::string &msg, source_location loc = source_location::current()) :
+        exception{ msg, loc } {}
 };
 
-} // namespace plssvm
+}  // namespace plssvm

@@ -107,7 +107,7 @@ inline std::ostream &operator<<(std::ostream &out, const std::vector<real_t> &ve
         if (vec[i] != 0) {
             sprintf(buffer, "%i:%e ", i, vec[i]);
             out << buffer;
-        } //out << i << ":" << vec[i] << " ";
+        }  //out << i << ":" << vec[i] << " ";
     }
     return out;
 }
@@ -237,10 +237,9 @@ namespace plssvm {
 
 inline bool endsWith(std::string mainStr, std::string toMatch) {
     auto it = toMatch.begin();
-    return mainStr.size() >= toMatch.size() &&
-           std::all_of(std::next(mainStr.begin(), mainStr.size() - toMatch.size()), mainStr.end(), [&it](const char &c) {
+    return mainStr.size() >= toMatch.size() && std::all_of(std::next(mainStr.begin(), mainStr.size() - toMatch.size()), mainStr.end(), [&it](const char &c) {
                return ::tolower(c) == ::tolower(*(it++));
            });
 }
 
-} // namespace plssvm
+}  // namespace plssvm

@@ -23,4 +23,4 @@ void kernel_linear(const std::vector<real_t> &b,
                    const real_t cost,
                    const int add);
 
-} // namespace plssvm
+}  // namespace plssvm

@@ -132,4 +132,4 @@ class dict_node : public node {
     std::vector<std::string> &keys() override;
 };
 
-} // namespace json
+}  // namespace json

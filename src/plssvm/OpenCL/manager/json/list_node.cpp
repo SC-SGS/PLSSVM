@@ -15,7 +15,8 @@
 
 namespace json {
 
-list_node::list_node() : list() {}
+list_node::list_node() :
+    list() {}
 
 list_node::list_node(const list_node &original) {
     for (auto &element : original.list) {
@@ -219,7 +220,7 @@ node &list_node::addIdValue(const bool &value) {
 // returns created dict node
 node &list_node::addDictValue() {
     auto dictNode = std::unique_ptr<dict_node>(new dict_node());
-    auto &reference = *dictNode; // because dictNode will be invalidated
+    auto &reference = *dictNode;  // because dictNode will be invalidated
     this->addValue(std::move(dictNode));
     return reference;
 }
@@ -227,7 +228,7 @@ node &list_node::addDictValue() {
 // returns created dict node
 node &list_node::addListValue() {
     auto listNode = std::unique_ptr<list_node>(new list_node());
-    auto &reference = *listNode; // because listNode will be invalidated
+    auto &reference = *listNode;  // because listNode will be invalidated
     this->addValue(std::move(listNode));
     return reference;
 }
@@ -245,4 +246,4 @@ std::unique_ptr<node> list_node::erase(node &n) {
     throw json_exception("erase(node): node not found");
 }
 
-} // namespace json
+}  // namespace json

@@ -9,34 +9,34 @@
 #include <ostream>
 #include <stdexcept>
 #ifndef _MSC_VER
-#if __cplusplus < 201103
-#define CONSTEXPR11_TN
-#define CONSTEXPR14_TN
-#define NOEXCEPT_TN
-#elif __cplusplus < 201402
-#define CONSTEXPR11_TN constexpr
-#define CONSTEXPR14_TN
-#define NOEXCEPT_TN noexcept
-#else
-#define CONSTEXPR11_TN constexpr
-#define CONSTEXPR14_TN constexpr
-#define NOEXCEPT_TN noexcept
-#endif
-#else // _MSC_VER
-#if _MSC_VER < 1900
-#define CONSTEXPR11_TN
-#define CONSTEXPR14_TN
-#define NOEXCEPT_TN
-#elif _MSC_VER < 2000
-#define CONSTEXPR11_TN constexpr
-#define CONSTEXPR14_TN
-#define NOEXCEPT_TN noexcept
-#else
-#define CONSTEXPR11_TN constexpr
-#define CONSTEXPR14_TN constexpr
-#define NOEXCEPT_TN noexcept
-#endif
-#endif // _MSC_VER
+    #if __cplusplus < 201103
+        #define CONSTEXPR11_TN
+        #define CONSTEXPR14_TN
+        #define NOEXCEPT_TN
+    #elif __cplusplus < 201402
+        #define CONSTEXPR11_TN constexpr
+        #define CONSTEXPR14_TN
+        #define NOEXCEPT_TN noexcept
+    #else
+        #define CONSTEXPR11_TN constexpr
+        #define CONSTEXPR14_TN constexpr
+        #define NOEXCEPT_TN    noexcept
+    #endif
+#else  // _MSC_VER
+    #if _MSC_VER < 1900
+        #define CONSTEXPR11_TN
+        #define CONSTEXPR14_TN
+        #define NOEXCEPT_TN
+    #elif _MSC_VER < 2000
+        #define CONSTEXPR11_TN constexpr
+        #define CONSTEXPR14_TN
+        #define NOEXCEPT_TN noexcept
+    #else
+        #define CONSTEXPR11_TN constexpr
+        #define CONSTEXPR14_TN constexpr
+        #define NOEXCEPT_TN    noexcept
+    #endif
+#endif  // _MSC_VER
 
 class static_string {
     const char *const p_;
@@ -46,12 +46,9 @@ class static_string {
     typedef const char *const_iterator;
 
     template <std::size_t N>
-    CONSTEXPR11_TN static_string(const char (&a)[N]) NOEXCEPT_TN : p_(a),
-                                                                   sz_(N - 1) {}
+    CONSTEXPR11_TN static_string(const char (&a)[N]) NOEXCEPT_TN : p_(a), sz_(N - 1) {}
 
-    CONSTEXPR11_TN static_string(const char *p, std::size_t N) NOEXCEPT_TN
-        : p_(p),
-          sz_(N) {}
+    CONSTEXPR11_TN static_string(const char *p, std::size_t N) NOEXCEPT_TN : p_(p), sz_(N) {}
 
     CONSTEXPR11_TN const char *data() const NOEXCEPT_TN { return p_; }
     CONSTEXPR11_TN std::size_t size() const NOEXCEPT_TN { return sz_; }
@@ -75,11 +72,11 @@ CONSTEXPR14_TN static_string type_name() {
     return static_string(p.data() + 31, p.size() - 31 - 1);
 #elif defined(__GNUC__)
     static_string p = __PRETTY_FUNCTION__;
-#if __cplusplus < 201402
+    #if __cplusplus < 201402
     return static_string(p.data() + 36, p.size() - 36 - 1);
-#else
+    #else
     return static_string(p.data() + 46, p.size() - 46 - 1);
-#endif
+    #endif
 #elif defined(_MSC_VER)
     static_string p = __FUNCSIG__;
     return static_string(p.data() + 38, p.size() - 38 - 7);

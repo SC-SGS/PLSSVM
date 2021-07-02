@@ -42,4 +42,4 @@ class json : public dict_node {
     using dict_node::serialize;
 };
 
-} // namespace json
+}  // namespace json

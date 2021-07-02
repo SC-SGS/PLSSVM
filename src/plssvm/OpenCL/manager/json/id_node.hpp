@@ -21,7 +21,7 @@ class id_node : public node {
     //  bool isNumber;
     //  InternalIDType internalType;
     bool isDouble;
-    double doubleValue; // only used for number types
+    double doubleValue;  // only used for number types
     bool isUnsigned;
     uint64_t unsignedValue;
     bool isSigned;
@@ -68,4 +68,4 @@ class id_node : public node {
     node *clone() override;
 };
 
-} // namespace json
+}  // namespace json

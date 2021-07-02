@@ -11,7 +11,8 @@
 
 namespace json {
 
-node::node() : orderedKeyIndex(0), parent(nullptr) {}
+node::node() :
+    orderedKeyIndex(0), parent(nullptr) {}
 
 node &node::operator=(const node &right) {
     // members of this base class are actually copied
@@ -268,7 +269,7 @@ std::vector<std::string> &node::keys() {
     throw json_exception("keys() is only implemented for dict nodes");
 }
 
-} // namespace json
+}  // namespace json
 
 std::ostream &operator<<(std::ostream &stream, json::node &n) {
     n.serialize(stream, 0);

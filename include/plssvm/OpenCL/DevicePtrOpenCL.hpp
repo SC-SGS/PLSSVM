@@ -13,13 +13,13 @@ namespace opencl {
 template <class T>
 class DevicePtrOpenCL {
   public:
-    DevicePtrOpenCL() : ptr(nullptr), buffer_size(0){};
+    DevicePtrOpenCL() :
+        ptr(nullptr), buffer_size(0){};
 
-    DevicePtrOpenCL(device_t &device, const int buffer_size)
-        : device(device), buffer_size(buffer_size) {
+    DevicePtrOpenCL(device_t &device, const int buffer_size) :
+        device(device), buffer_size(buffer_size) {
         cl_int err;
-        ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE,
-                             sizeof(T) * buffer_size, nullptr, &err);
+        ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE, sizeof(T) * buffer_size, nullptr, &err);
         opencl::check(err, "DevicePtrOpenCL: clCreateBuffer failed");
     }
     DevicePtrOpenCL(const DevicePtrOpenCL &other) = delete;
@@ -61,9 +61,7 @@ class DevicePtrOpenCL {
                 "buffer sizes don't match");
         }
         cl_int err;
-        err = clEnqueueWriteBuffer(device.commandQueue, ptr, CL_TRUE, 0,
-                                   sizeof(T) * buffer_size, data.data(), 0, nullptr,
-                                   nullptr);
+        err = clEnqueueWriteBuffer(device.commandQueue, ptr, CL_TRUE, 0, sizeof(T) * buffer_size, data.data(), 0, nullptr, nullptr);
         opencl::check(err, "DevicePtrOpenCL: clEnqueueWriteBuffer failed");
         clFinish(device.commandQueue);
     }
@@ -78,9 +76,7 @@ class DevicePtrOpenCL {
                 "buffer sizes don't match");
         }
         cl_int err;
-        err = clEnqueueReadBuffer(device.commandQueue, ptr, CL_TRUE, 0,
-                                  sizeof(T) * buffer_size, data.data(), 0, nullptr,
-                                  nullptr);
+        err = clEnqueueReadBuffer(device.commandQueue, ptr, CL_TRUE, 0, sizeof(T) * buffer_size, data.data(), 0, nullptr, nullptr);
         opencl::check(err, "DevicePtrOpenCL: clEnqueueReadBuffer failed");
         clFinish(device.commandQueue);
     }
@@ -90,8 +86,7 @@ class DevicePtrOpenCL {
             throw std::runtime_error("DevicePtrOpenCL: buffer not initialized");
         }
         cl_int err;
-        err = clEnqueueFillBuffer(device.commandQueue, ptr, &value, sizeof(value),
-                                  0, buffer_size * sizeof(T), 0, nullptr, nullptr);
+        err = clEnqueueFillBuffer(device.commandQueue, ptr, &value, sizeof(value), 0, buffer_size * sizeof(T), 0, nullptr, nullptr);
         opencl::check(err, "DevicePtrOpenCL: clEnqueueFillBuffer failed");
         clFinish(device.commandQueue);
     }
@@ -106,8 +101,7 @@ class DevicePtrOpenCL {
             buffer_size = size;
             clReleaseMemObject(ptr);
             cl_int err;
-            ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE,
-                                 sizeof(T) * buffer_size, nullptr, &err);
+            ptr = clCreateBuffer(device.context, CL_MEM_READ_WRITE, sizeof(T) * buffer_size, nullptr, &err);
             opencl::check(err, "DevicePtrOpenCL: resize failed");
             buffer.resize(buffer_size, value);
             to_device(buffer);
@@ -119,4 +113,4 @@ class DevicePtrOpenCL {
     cl_mem ptr;
     size_t buffer_size;
 };
-} // namespace opencl
+}  // namespace opencl

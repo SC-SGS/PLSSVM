@@ -33,4 +33,4 @@ class token {
     size_t charNumber;
 };
 
-} // namespace json
+}  // namespace json

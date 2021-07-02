@@ -27,7 +27,7 @@ class manager_t {
     // linear device list
     std::vector<device_t> devices;
 
-    cl_uint overallDeviceCount; // devices over all platforms
+    cl_uint overallDeviceCount;  // devices over all platforms
 
     bool verbose;
 
@@ -46,9 +46,7 @@ class manager_t {
                       std::map<cl_platform_id, std::vector<cl_kernel>> &kernels);
 
     // for a single device
-    cl_kernel build_kernel(const std::string &source, device_t &device,
-                           json::node &kernelConfiguration,
-                           const std::string &kernel_name);
+    cl_kernel build_kernel(const std::string &source, device_t &device, json::node &kernelConfiguration, const std::string &kernel_name);
 
     void configure(bool useConfiguration = false);
 
@@ -56,11 +54,7 @@ class manager_t {
                             configuration_t &configuration,
                             bool useConfiguration);
 
-    void configure_device(cl_device_id deviceId, json::node &devicesNode,
-                          std::vector<cl_device_id> &filteredDeviceIds,
-                          std::vector<std::string> &filteredDeviceNames,
-                          std::map<std::string, size_t> &countLimitMap,
-                          bool useConfiguration);
+    void configure_device(cl_device_id deviceId, json::node &devicesNode, std::vector<cl_device_id> &filteredDeviceIds, std::vector<std::string> &filteredDeviceNames, std::map<std::string, size_t> &countLimitMap, bool useConfiguration);
 
     configuration_t &get_configuration();
 
@@ -80,4 +74,4 @@ inline void check(cl_int err, const std::string &message) {
     }
 }
 
-} // namespace opencl
+}  // namespace opencl

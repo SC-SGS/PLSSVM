@@ -16,9 +16,7 @@ class platform_wrapper_t {
     std::vector<std::string> deviceNames;
     std::vector<cl_command_queue> commandQueues;
 
-    platform_wrapper_t(cl_platform_id platformId, char (&platformName)[128],
-                       const std::vector<cl_device_id> &deviceIds,
-                       const std::vector<std::string> &deviceName);
+    platform_wrapper_t(cl_platform_id platformId, char (&platformName)[128], const std::vector<cl_device_id> &deviceIds, const std::vector<std::string> &deviceName);
 
     platform_wrapper_t(const platform_wrapper_t &original);
 
@@ -28,4 +26,4 @@ class platform_wrapper_t {
 
     size_t getDeviceCount();
 };
-} // namespace opencl
+}  // namespace opencl

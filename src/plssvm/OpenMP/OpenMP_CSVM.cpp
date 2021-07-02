@@ -11,26 +11,27 @@ OpenMP_CSVM::OpenMP_CSVM(real_t cost_,
                          real_t degree_,
                          real_t gamma_,
                          real_t coef0_,
-                         bool info_) : CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+                         bool info_) :
+    CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
 
 void OpenMP_CSVM::learn() {
     std::vector<real_t> q;
     std::vector<real_t> b = value;
     #pragma omp parallel sections
     {
-        #pragma omp section // generate q
+        #pragma omp section  // generate q
         {
             q.reserve(data.size());
             for (int i = 0; i < data.size() - 1; ++i) {
                 q.emplace_back(kernel_function(data.back(), data[i]));
             }
         }
-        #pragma omp section // generate right side from eguation
+        #pragma omp section  // generate right side from eguation
         {
             b.pop_back();
             b -= value.back();
         }
-        #pragma omp section // generate botom right from A
+        #pragma omp section  // generate botom right from A
         {
             QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
         }
@@ -97,7 +98,6 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
     #pragma omp parallel for collapse(2) schedule(dynamic, 8)
     for (int i = 1; i < (dept + bloksize); i = i + bloksize) {
         for (int j = 0; j < (dept + bloksize); j = j + bloksize) {
-
             for (int ii = 0; ii < bloksize && ii + i < dept; ++ii) {
                 for (int jj = 0; jj < bloksize && jj + j < dept; ++jj) {
                     if (ii + i > jj + j) {
@@ -140,11 +140,9 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         #pragma omp parallel for collapse(2) schedule(dynamic, 8)
         for (int i = 0; i < b.size(); i += bloksize) {
             for (int j = 0; j < b.size(); j += bloksize) {
-
                 real_t temp_data_i[bloksize][data[0].size()];
                 real_t temp_data_j[bloksize][data[0].size()];
                 for (int ii = 0; ii < bloksize; ++ii) {
-
                     if (ii + i < b.size())
                         std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
                     if (ii + j < b.size())
@@ -152,7 +150,6 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
                 }
                 for (int ii = 0; ii < bloksize && ii + i < b.size(); ++ii) {
                     for (int jj = 0; jj < bloksize && jj + j < b.size(); ++jj) {
-
                         if (ii + i > jj + j) {
                             real_t temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
                             #pragma omp atomic
@@ -187,7 +184,6 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         #pragma omp parallel for collapse(2) schedule(dynamic, 8)
         for (int i = 0; i < (b.size() + bloksize); i += bloksize) {
             for (int j = 0; j < (b.size() + bloksize); j += bloksize) {
-
                 for (int ii = 0; ii < bloksize && ii + i < b.size(); ++ii) {
                     for (int jj = 0; jj < bloksize && jj + j < b.size(); ++jj) {
                         if (ii + i > jj + j) {
@@ -226,4 +222,4 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
     return x;
 }
 
-} // namespace plssvm
+}  // namespace plssvm

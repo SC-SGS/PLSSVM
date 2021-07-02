@@ -9,22 +9,20 @@
 namespace opencl {
 
 platform_wrapper_t::platform_wrapper_t(
-    cl_platform_id platformId, char (&platformName)[128],
-    const std::vector<cl_device_id> &deviceIds,
-    const std::vector<std::string> &deviceNames)
-    : platformId(platformId), deviceIds(deviceIds), deviceNames(deviceNames) {
+    cl_platform_id platformId, char (&platformName)[128], const std::vector<cl_device_id> &deviceIds, const std::vector<std::string> &deviceNames) :
+    platformId(platformId), deviceIds(deviceIds), deviceNames(deviceNames) {
     for (size_t i = 0; i < 128; i++) {
         this->platformName[i] = platformName[i];
     }
 
     cl_int err = CL_SUCCESS;
     // Create OpenCL context
-    cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM,
-                                           (cl_context_properties)platformId, 0};
+    cl_context_properties properties[3] = { CL_CONTEXT_PLATFORM,
+                                            (cl_context_properties) platformId,
+                                            0 };
 
     this->context =
-        clCreateContext(properties, (cl_uint)this->deviceIds.size(),
-                        this->deviceIds.data(), nullptr, nullptr, &err);
+        clCreateContext(properties, (cl_uint) this->deviceIds.size(), this->deviceIds.data(), nullptr, nullptr, &err);
 
     if (err != CL_SUCCESS) {
         std::stringstream errorString;
@@ -45,9 +43,8 @@ platform_wrapper_t::platform_wrapper_t(
             throw manager_error(errorString.str());
         }
 
-        char deviceName[128] = {0};
-        err = clGetDeviceInfo(this->deviceIds[i], CL_DEVICE_NAME,
-                              128 * sizeof(char), &deviceName, nullptr);
+        char deviceName[128] = { 0 };
+        err = clGetDeviceInfo(this->deviceIds[i], CL_DEVICE_NAME, 128 * sizeof(char), &deviceName, nullptr);
 
         if (err != CL_SUCCESS) {
             std::stringstream errorString;
@@ -59,10 +56,8 @@ platform_wrapper_t::platform_wrapper_t(
     }
 }
 
-platform_wrapper_t::platform_wrapper_t(const platform_wrapper_t &original)
-    : platformId(original.platformId), context(original.context),
-      deviceIds(original.deviceIds), deviceNames(original.deviceNames),
-      commandQueues(original.commandQueues) {
+platform_wrapper_t::platform_wrapper_t(const platform_wrapper_t &original) :
+    platformId(original.platformId), context(original.context), deviceIds(original.deviceIds), deviceNames(original.deviceNames), commandQueues(original.commandQueues) {
     for (size_t i = 0; i < 128; i++) {
         platformName[i] = original.platformName[i];
     }
@@ -113,4 +108,4 @@ platform_wrapper_t::~platform_wrapper_t() {
 }
 
 size_t platform_wrapper_t::getDeviceCount() { return this->deviceIds.size(); }
-} // namespace opencl
+}  // namespace opencl

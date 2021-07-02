@@ -40,14 +40,14 @@ T convert_to(std::string_view str) {
         T val;
         auto res = fast_float::from_chars(str.data(), str.data() + str.size(), val);
         if (res.ec != std::errc{}) {
-            throw Exception{fmt::format("Can't convert '{}' to a floating point value!", str)};
+            throw Exception{ fmt::format("Can't convert '{}' to a floating point value!", str) };
         }
         return val;
     } else if constexpr (std::is_integral_v<T>) {
         T val;
         auto res = std::from_chars(str.data(), str.data() + str.size(), val);
         if (res.ec != std::errc{}) {
-            throw Exception{fmt::format("Can't convert '{}' to an integral value!", str)};
+            throw Exception{ fmt::format("Can't convert '{}' to an integral value!", str) };
         }
         return val;
     } else {
@@ -55,4 +55,4 @@ T convert_to(std::string_view str) {
     }
 }
 
-} // namespace plssvm::util
+}  // namespace plssvm::util

@@ -20,4 +20,4 @@ class CUDA_CSVM : public CSVM {
     real_t *w_d;
 };
 
-} // namespace plssvm
+}  // namespace plssvm

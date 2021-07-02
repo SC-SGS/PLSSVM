@@ -30,4 +30,4 @@ const char *json_exception::what() const throw() {
     return this->message.c_str();
 }
 
-} // namespace json
+}  // namespace json

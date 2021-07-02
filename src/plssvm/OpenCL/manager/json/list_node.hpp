@@ -74,4 +74,4 @@ class list_node : public node {
     std::unique_ptr<node> erase(node &node) override;
 };
 
-} // namespace json
+}  // namespace json

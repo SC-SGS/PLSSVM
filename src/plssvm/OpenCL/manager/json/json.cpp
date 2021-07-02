@@ -13,9 +13,11 @@
 
 namespace json {
 
-json::json() : fileName("") {}
+json::json() :
+    fileName("") {}
 
-json::json(const std::string &fileName) : fileName(fileName) {
+json::json(const std::string &fileName) :
+    fileName(fileName) {
     std::ifstream file;
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
@@ -48,7 +50,8 @@ json::json(const std::string &fileName) : fileName(fileName) {
     }
 }
 
-json::json(const json &original) : dict_node(original) { this->fileName = original.fileName; }
+json::json(const json &original) :
+    dict_node(original) { this->fileName = original.fileName; }
 
 std::vector<token> json::tokenize(const std::string &input) {
     std::vector<token> stream;
@@ -134,17 +137,15 @@ std::vector<token> json::tokenize(const std::string &input) {
                 t.value.push_back(input[i]);
             }
         } else if (state == token_type::ID) {
-            if (input[i] == '{' || input[i] == '}' || input[i] == '[' || input[i] == ']' ||
-                input[i] == ':' || input[i] == ',' || input[i] == ' ' || input[i] == '\t' ||
-                input[i] == '\r' || input[i] == '\n') {
+            if (input[i] == '{' || input[i] == '}' || input[i] == '[' || input[i] == ']' || input[i] == ':' || input[i] == ',' || input[i] == ' ' || input[i] == '\t' || input[i] == '\r' || input[i] == '\n') {
                 stream.push_back(t);
                 state = token_type::NONE;
 
                 if (input[i] == '\n') {
-                    lineNumber -= 1; // as the char will be reprocessed
+                    lineNumber -= 1;  // as the char will be reprocessed
                 }
 
-                i -= 1; // revert by one
+                i -= 1;  // revert by one
 
             } else {
                 t.value.push_back(input[i]);
@@ -229,4 +230,4 @@ void json::deserializeFromString(const std::string &content) {
     }
 }
 
-} // namespace json
+}  // namespace json

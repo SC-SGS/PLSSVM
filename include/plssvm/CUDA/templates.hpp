@@ -31,7 +31,7 @@ inline void cuda_malloc(T data) {
 
 template <typename T, typename S, std::enable_if_t<std::is_integral<S>::value, int> = 0>
 inline void cuda_malloc(T *&ptr, const S size) {
-    gpuErrchk(cudaMalloc((void **)&ptr, size * sizeof(T)));
+    gpuErrchk(cudaMalloc((void **) &ptr, size * sizeof(T)));
 }
 
 // CUDA memset
@@ -156,4 +156,4 @@ inline void cuda_device_synchronize() {
     gpuErrchk(cudaDeviceSynchronize());
 }
 
-} // namespace plssvm
+}  // namespace plssvm

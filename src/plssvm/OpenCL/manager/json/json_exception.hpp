@@ -24,4 +24,4 @@ class json_exception : public std::exception {
     const char *what() const throw() override;
 };
 
-} // namespace json
+}  // namespace json

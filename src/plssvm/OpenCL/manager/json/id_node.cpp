@@ -14,17 +14,17 @@
 
 namespace json {
 
-id_node::id_node()
-    : value(),
-      //        internalType(InternalIDType::ID),
-      isDouble(false),
-      doubleValue(0.0),
-      isUnsigned(false),
-      unsignedValue(0),
-      isSigned(false),
-      signedValue(0),
-      isBool(false),
-      boolValue(false) {}
+id_node::id_node() :
+    value(),
+    //        internalType(InternalIDType::ID),
+    isDouble(false),
+    doubleValue(0.0),
+    isUnsigned(false),
+    unsignedValue(0),
+    isSigned(false),
+    signedValue(0),
+    isBool(false),
+    boolValue(false) {}
 
 node &id_node::operator=(const node &right) {
     const id_node &idNode = dynamic_cast<const id_node &>(right);
@@ -196,4 +196,4 @@ node *id_node::clone() {
     return newNode;
 }
 
-} // namespace json
+}  // namespace json

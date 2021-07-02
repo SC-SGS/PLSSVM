@@ -22,4 +22,4 @@ class configuration_t : public json::json {
     from_string(std::string &parameters_string);
 };
 
-} // namespace opencl
+}  // namespace opencl

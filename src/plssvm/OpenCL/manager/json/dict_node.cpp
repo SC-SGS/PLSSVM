@@ -158,10 +158,10 @@ void dict_node::parseAttributes(std::vector<token>::iterator &stream_it,
                 throw json_exception((*stream_it), "expected \",\" or \"}\"");
             }
         }
-    } // namespace json
+    }  // namespace json
 
     throw json_exception("unexpected end-of-file");
-} // namespace json
+}  // namespace json
 
 node &dict_node::operator[](const std::string &key) {
     if (this->attributes.count(key) == 0) {
@@ -296,7 +296,7 @@ node &dict_node::addIDAttr(const std::string &name, const bool &value) {
 // returns created dict node
 node &dict_node::addDictAttr(const std::string &name) {
     auto dictNode = std::unique_ptr<dict_node>(new dict_node());
-    auto &reference = *dictNode; // because dictNode will be invalidated
+    auto &reference = *dictNode;  // because dictNode will be invalidated
     this->addAttribute(name, std::move(dictNode));
     return reference;
 }
@@ -304,7 +304,7 @@ node &dict_node::addDictAttr(const std::string &name) {
 // returns created list node
 node &dict_node::addListAttr(const std::string &name) {
     auto listNode = std::unique_ptr<list_node>(new list_node());
-    auto &reference = *listNode; // because listNode will be invalidated
+    auto &reference = *listNode;  // because listNode will be invalidated
     this->addAttribute(name, std::move(listNode));
     return reference;
 }
@@ -436,4 +436,4 @@ std::unique_ptr<node> dict_node::erase(node &n) {
 
 std::vector<std::string> &dict_node::keys() { return this->keyOrder; }
 
-} // namespace json
+}  // namespace json

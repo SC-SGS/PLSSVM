@@ -5,10 +5,11 @@
 
 namespace opencl {
 
-configuration_t::configuration_t() : json::json() {}
+configuration_t::configuration_t() :
+    json::json() {}
 
-configuration_t::configuration_t(const std::string &file_name)
-    : json::json(file_name) {}
+configuration_t::configuration_t(const std::string &file_name) :
+    json::json(file_name) {}
 
 configuration_t *configuration_t::clone() {
     return dynamic_cast<configuration_t *>(new configuration_t(*this));
@@ -35,4 +36,4 @@ configuration_t::from_string(std::string &parameters_string) {
     return parameters;
 }
 
-} // namespace opencl
+}  // namespace opencl

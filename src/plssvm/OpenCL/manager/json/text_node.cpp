@@ -13,16 +13,16 @@
 
 namespace json {
 
-text_node::text_node()
-    : value(),
-      isDouble(false),
-      doubleValue(0.0),
-      isUnsigned(false),
-      unsignedValue(0),
-      isSigned(false),
-      signedValue(0),
-      isBool(false),
-      boolValue(false) {}
+text_node::text_node() :
+    value(),
+    isDouble(false),
+    doubleValue(0.0),
+    isUnsigned(false),
+    unsignedValue(0),
+    isSigned(false),
+    signedValue(0),
+    isBool(false),
+    boolValue(false) {}
 
 node &text_node::operator=(const node &right) {
     const text_node &textNode = dynamic_cast<const text_node &>(right);
@@ -225,4 +225,4 @@ node *text_node::clone() {
     return newNode;
 }
 
-} // namespace json
+}  // namespace json

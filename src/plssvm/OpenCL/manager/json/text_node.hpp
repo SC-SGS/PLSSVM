@@ -18,7 +18,7 @@ class text_node : public node {
     std::string value;
 
     bool isDouble;
-    double doubleValue; // only used for number types
+    double doubleValue;  // only used for number types
     bool isUnsigned;
     uint64_t unsignedValue;
     bool isSigned;
@@ -65,4 +65,4 @@ class text_node : public node {
     node *clone() override;
 };
 
-} // namespace json
+}  // namespace json

@@ -19,11 +19,11 @@ void apply_arguments(cl_kernel kernel, T first_arg, Ts... remaining_args) {
           "error applying argument " + std::to_string(arg_num) + " to kernel");
     detail::apply_arguments<arg_num + 1>(kernel, remaining_args...);
 }
-} // namespace detail
+}  // namespace detail
 
 template <typename... Ts>
 void apply_arguments(cl_kernel kernel, Ts... args) {
     detail::apply_arguments<0>(kernel, args...);
 }
 
-} // namespace opencl
+}  // namespace opencl

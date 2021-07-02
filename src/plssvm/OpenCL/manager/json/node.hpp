@@ -190,6 +190,6 @@ class node {
     virtual std::vector<std::string> &keys();
 };
 
-} // namespace json
+}  // namespace json
 
 std::ostream &operator<<(std::ostream &stream, json::node &n);
