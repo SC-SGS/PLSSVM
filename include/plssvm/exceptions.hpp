@@ -9,7 +9,9 @@
 
 #pragma once
 
-#include <stdexcept>
+#include <ostream>      // std::ostream
+#include <stdexcept>    // std::runtime_error
+#include <string_view>  // std::string_view
 
 namespace plssvm {
 
