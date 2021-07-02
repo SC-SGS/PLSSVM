@@ -11,23 +11,55 @@
 #include <string_view>
 #include <vector>
 
+#include <fcntl.h>     // open, O_RDONLY
+#include <sys/mman.h>  // mmap
+#include <sys/stat.h>  // fstat
+#include <unistd.h>    // close
+
 namespace plssvm {
 
 // read libsvm file
 void CSVM::libsvmParser(const std::string_view filename) {
-    std::vector<std::string> data_lines;
+    std::vector<std::string_view> data_lines;
+    void *buffer;
 
     {
-        std::ifstream file{ filename.data() };
-        if (file.fail()) {
-            throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
+        // memory map file
+        int fd = open(filename.data(), O_RDONLY);
+        struct stat attr;
+        if (fstat(fd, &attr) == -1) {
+            throw file_not_found_exception{ fmt::format("Couldn't find file: {}!", filename) };
         }
-        std::string line;
-        while (std::getline(file, line)) {
-            std::string_view trimmed = util::trim_left(line);
-            if (!trimmed.empty() && !util::starts_with(trimmed, '#')) {
-                data_lines.push_back(std::move(line));
+        buffer = mmap(0, attr.st_size, PROT_READ, MAP_SHARED, fd, 0);
+        if (buffer == MAP_FAILED) {
+            throw file_not_found_exception{ fmt::format("Couldn't memory map file: {}!", filename) };
+        }
+
+        /*
+            std::FILE* file = std::fopen(filename.data(), "rb");
+            std::fseek(file, 0, SEEK_END);
+            auto size = std::ftell(file);
+            std::rewind(file);
+            str.resize(size);
+            std::fread(str.data(), 1, size, file);
+            std::fclose(file);
+        */
+        std::string_view buffer_view{ static_cast<char *>(buffer), static_cast<std::string_view::size_type>(attr.st_size) };
+        std::size_t pos = 0;
+        while (true) {
+            std::size_t next_pos = buffer_view.find_first_of('\n', pos);
+            if (next_pos == std::string::npos) {
+                break;
             }
+            std::string_view sv = util::trim_left(std::string_view{ buffer_view.data() + pos, next_pos - pos });
+            if (!sv.empty() && !util::starts_with(sv, '#')) {
+                data_lines.push_back(sv);
+            }
+            pos = next_pos + 1;
+        }
+        std::string_view sv = util::trim_left(std::string_view{ buffer_view.data() + pos, buffer_view.size() - pos });
+        if (!sv.empty() && !util::starts_with(sv, '#')) {
+            data_lines.push_back(sv);
         }
     }
 
