@@ -235,11 +235,11 @@ inline std::vector<real_t> &operator+=(std::vector<real_t> &vec1, real_t *vec2) 
 
 namespace plssvm {
 
-inline bool endsWith(std::string mainStr, std::string toMatch) {
-    auto it = toMatch.begin();
-    return mainStr.size() >= toMatch.size() && std::all_of(std::next(mainStr.begin(), mainStr.size() - toMatch.size()), mainStr.end(), [&it](const char &c) {
-               return ::tolower(c) == ::tolower(*(it++));
-           });
-}
+//inline bool endsWith(std::string mainStr, std::string toMatch) {
+//    auto it = toMatch.begin();
+//    return mainStr.size() >= toMatch.size() && std::all_of(std::next(mainStr.begin(), mainStr.size() - toMatch.size()), mainStr.end(), [&it](const char &c) {
+//               return ::tolower(c) == ::tolower(*(it++));
+//           });
+//}
 
 }  // namespace plssvm
