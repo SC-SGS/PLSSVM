@@ -55,7 +55,7 @@ namespace plssvm::util {
  * @param[in] c the character to match against the last character of @p str
  * @return `true` if @p str ends with the character @p c, otherwise `false` (`[[nodiscard]]`)
  */
-bool ends_with(const std::string_view str, const char c) noexcept {
+[[nodiscard]] inline bool ends_with(const std::string_view str, const char c) noexcept {
     return !str.empty() && std::char_traits<char>::eq(str.back(), c);
 }
 
