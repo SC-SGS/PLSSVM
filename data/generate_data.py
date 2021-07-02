@@ -22,20 +22,20 @@ from mpl_toolkits.mplot3d import Axes3D
 # parse command line arguments
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--output", help="the output file to write the data to (without extension)", required=True)
+parser.add_argument("--output", help="the output file to write the samples to (without extension)", required=True)
 parser.add_argument("--format", help="the file format; either arff or libsvm", required=True)
-parser.add_argument("--samples", help="the number of samples to generate", required=True, type=int)
-parser.add_argument("--features", help="the number of features per data point", required=True, type=int)
-parser.add_argument("--plot", help="plot data points; only possible if 0 < samples <= 2000 and 1 < features <= 3",
-                    action="store_true")
-
 parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
                     required=True)
+parser.add_argument("--samples", help="the number of training samples to generate", required=True, type=int)
+parser.add_argument("--samples_test", help="the number of test samples to generate; default: 0", type=int, default=0) # TODO: implement
+parser.add_argument("--features", help="the number of features per data point", required=True, type=int)
+parser.add_argument("--plot", help="plot training samples; only possible if 0 < samples <= 2000 and 1 < features <= 3",
+                    action="store_true")
 
 args = parser.parse_args()
 
 # check for valid command line arguments
-if args.samples <= 0 or args.features <= 0:
+if args.samples <= 0 or args.samples_test <= 0 or args.features <= 0:
     raise RuntimeError("Number of samples and/or features cannot be 0 or negative!")
 if args.plot and (args.samples > 2000 and (args.features != 2 or args.features != 3)):
     raise RuntimeError("Invalid number of samples and/or features for plotting!")
