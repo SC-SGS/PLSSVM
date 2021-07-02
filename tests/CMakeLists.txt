@@ -9,39 +9,39 @@ set(gtest_force_shared_crt
 FetchContent_MakeAvailable(googletest)
 
 add_executable(
-  hello_test
+  main_tests
   test.cpp ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
   ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp
   ${PROJECT_SOURCE_DIR}/src/plssvm/OpenMP/OpenMP_CSVM.cpp) # TODO: link against
                                                            # svm
 # as library
-target_link_libraries(hello_test gtest_main)
-target_link_libraries(hello_test gmock)
-target_include_directories(hello_test PUBLIC ${GTEST_INCLUDE_DIRS}
+target_link_libraries(main_tests gtest_main)
+target_link_libraries(main_tests gmock)
+target_include_directories(main_tests PUBLIC ${GTEST_INCLUDE_DIRS}
                                              ${GMOCK_INCLUDE_DIRS})
-target_include_directories(hello_test PUBLIC ${PROJECT_SOURCE_DIR}/include/)
-target_compile_definitions(hello_test
+target_include_directories(main_tests PUBLIC ${PROJECT_SOURCE_DIR}/include/)
+target_compile_definitions(main_tests
                            PRIVATE TESTPATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_include_directories(hello_test PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: better?
-target_link_libraries(hello_test fmt::fmt)
-target_include_directories(hello_test PUBLIC ${fast_float_SOURCE_DIR}/include)
+target_include_directories(main_tests PUBLIC ${fmt_SOURCE_DIR}/include) # TODO: better?
+target_link_libraries(main_tests fmt::fmt)
+target_include_directories(main_tests PUBLIC ${fast_float_SOURCE_DIR}/include)
 
 if(TARGET svm-OpenMP)
-  target_link_libraries(hello_test svm-OpenMP)
-  target_compile_definitions(hello_test PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
+  target_link_libraries(main_tests svm-OpenMP)
+  target_compile_definitions(main_tests PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
 endif()
 if(TARGET svm-OCL)
-  target_link_libraries(hello_test svm-OCL)
-  target_compile_definitions(hello_test PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
+  target_link_libraries(main_tests svm-OCL)
+  target_compile_definitions(main_tests PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
 
 endif()
 if(TARGET svm-CUDA)
-  target_link_libraries(hello_test svm-CUDA)
-  target_compile_definitions(hello_test PUBLIC PLSSVM_HAS_CUDA_BACKEND)
+  target_link_libraries(main_tests svm-CUDA)
+  target_compile_definitions(main_tests PUBLIC PLSSVM_HAS_CUDA_BACKEND)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(hello_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+gtest_discover_tests(main_tests WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_test(NAME Parameter COMMAND svm-train --help)
