@@ -24,16 +24,19 @@ void CSVM::libsvmParser(const std::string &filename) {
 void CSVM::libsvmParser(const std::string_view filename) {
     std::vector<std::string_view> data_lines;
     void *buffer;
+    int fd;
 
     {
         // memory map file
-        int fd = open(filename.data(), O_RDONLY);
+        fd = open(filename.data(), O_RDONLY);
         struct stat attr;
         if (fstat(fd, &attr) == -1) {
+            close(fd);
             throw file_not_found_exception{ fmt::format("Couldn't find file: {}!", filename) };
         }
         buffer = mmap(0, attr.st_size, PROT_READ, MAP_SHARED, fd, 0);
         if (buffer == MAP_FAILED) {
+            close(fd);
             throw file_not_found_exception{ fmt::format("Couldn't memory map file: {}!", filename) };
         }
 
@@ -121,6 +124,8 @@ void CSVM::libsvmParser(const std::string_view filename) {
             }
         }
     }
+
+    close(fd);
 
     // rethrow if an exception occurred inside the parallel region
     if (parallel_exception) {
