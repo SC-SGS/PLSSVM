@@ -76,8 +76,11 @@ void CSVM::libsvmParser(const std::string_view filename) {
                 data[i] = std::move(vline);
             } catch (const std::exception &e) {
                 // catch first exception and store it
-                if (!parallel_exception) {
-                    parallel_exception = std::current_exception();
+                #pragma omp critical
+                {
+                    if (!parallel_exception) {
+                        parallel_exception = std::current_exception();
+                    }
                 }
                 // cancel parallel execution, needs env variable OMP_CANCELLATION=true
                 #pragma omp cancel for
@@ -242,8 +245,11 @@ void CSVM::arffParser(const std::string_view filename) {
                 }
             } catch (const std::exception &e) {
                 // catch first exception and store it
-                if (!parallel_exception) {
-                    parallel_exception = std::current_exception();
+                #pragma omp critical
+                {
+                    if (!parallel_exception) {
+                        parallel_exception = std::current_exception();
+                    }
                 }
                 // cancel parallel execution, needs env variable OMP_CANCELLATION=true
                 #pragma omp cancel for
