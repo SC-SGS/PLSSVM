@@ -99,14 +99,22 @@ endif()
 
 
 ## enable Link Time Optimization (LTO)
-include(CheckIPOSupported)
-check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
-if(lto_supported)
-  message(STATUS "IPO / LTO enabled.")
-  set_property(TARGET ${PLSSVM_EXECUTABLE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-else()
-  message(STATUS "IPO / LTO not supported: <${lto_error}>")
+option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON) # TODO: default ON/OFF?
+if(PLSSVM_ENABLE_LTO)
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
+  if(lto_supported)
+    message(STATUS "IPO / LTO enabled.")
+    set_property(TARGET ${PLSSVM_EXECUTABLE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+  else()
+    message(STATUS "IPO / LTO not supported: <${lto_error}>")
+  endif()
 endif()
 
-enable_testing()
-add_subdirectory(tests)
+
+## enable testing
+option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON) # TODO: default ON/OFF?
+if(PLSSVM_ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
