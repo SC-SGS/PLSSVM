@@ -22,9 +22,13 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/exceptions.hpp>
 #include <plssvm/kernel_types.hpp>
+#include <plssvm/version.hpp>
 
 /// The main namespace containing all API functions.
 namespace plssvm {};
 
 /// Utility namespace containing internal utility functions or classes.
 namespace plssvm::util {};
+
+/// Namespace containing versioning information.
+namespace plssvm::version {};
