@@ -15,21 +15,21 @@ message(STATUS "OpenCL backend enabled.")
 
 # explicitly set sources
 set(PLSSVM_OpenCL_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
-  ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
-  ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/run_kernel.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/configuration.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/platform_wrapper.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/dict_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/id_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/json.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/json_exception.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/list_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/text_node.cpp
+    OpenCL_CSVM.cpp
+    kernels/svm-kernel-linear.cl
+    kernels/kernel_q.cl
+    manager/manager.cpp
+    manager/error_codes.cpp
+    manager/run_kernel.cpp
+    manager/configuration.cpp
+    manager/platform_wrapper.cpp
+    manager/json/dict_node.cpp
+    manager/json/id_node.cpp
+    manager/json/json.cpp
+    manager/json/json_exception.cpp
+    manager/json/list_node.cpp
+    manager/json/node.cpp
+    manager/json/text_node.cpp
 )
 
 # set target properties
