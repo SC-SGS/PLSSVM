@@ -7,7 +7,7 @@
 #include <string>
 #include <unistd.h>
 
-#include "plssvm/exceptions.hpp"
+#include "plssvm/exceptions/exceptions.hpp"
 
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 

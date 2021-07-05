@@ -1,6 +1,6 @@
 #pragma once
 
-#include <plssvm/exceptions.hpp>
+#include <plssvm/exceptions/exceptions.hpp>
 #include <plssvm/typedef.hpp>
 
 #include <fmt/core.h>
