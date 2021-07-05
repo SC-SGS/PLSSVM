@@ -1,8 +1,8 @@
 #include <chrono>
 #include <omp.h>
 #include <plssvm/backends/OpenMP/OpenMP_CSVM.hpp>
+#include <plssvm/detail/operators.hpp>
 #include <plssvm/detail/string_utility.hpp>
-#include <plssvm/operators.hpp>
 
 namespace plssvm {
 
