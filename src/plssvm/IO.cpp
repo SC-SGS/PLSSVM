@@ -1,6 +1,6 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/detail/string_utility.hpp>
-#include <plssvm/exceptions.hpp>
+#include <plssvm/exceptions/exceptions.hpp>
 #include <plssvm/kernel_types.hpp>
 #include <plssvm/operators.hpp>
 

@@ -20,7 +20,7 @@
 #endif
 
 #include <plssvm/CSVM.hpp>
-#include <plssvm/exceptions.hpp>
+#include <plssvm/exceptions/exceptions.hpp>
 #include <plssvm/kernel_types.hpp>
 #include <plssvm/version/version.hpp>
 
