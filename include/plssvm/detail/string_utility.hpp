@@ -20,7 +20,7 @@
 #include <system_error>  // std:errc
 #include <type_traits>   // std::is_floating_point_v, std::is_integral_v, std::is_arithmetic_v
 
-namespace plssvm::util {
+namespace plssvm::detail {
 
 /**
  * @brief Checks if the string @p str starts with the prefix @p sv.
@@ -108,4 +108,4 @@ template <typename T, typename Exception = std::runtime_error>
     }
 }
 
-}  // namespace plssvm::util
+}  // namespace plssvm::detail

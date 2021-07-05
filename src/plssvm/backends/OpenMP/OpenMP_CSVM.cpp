@@ -1,8 +1,8 @@
 #include <chrono>
 #include <omp.h>
 #include <plssvm/backends/OpenMP/OpenMP_CSVM.hpp>
+#include <plssvm/detail/string_utility.hpp>
 #include <plssvm/operators.hpp>
-#include <plssvm/string_utility.hpp>
 
 namespace plssvm {
 
@@ -48,7 +48,7 @@ void OpenMP_CSVM::learn() {
 
 void OpenMP_CSVM::learn(std::string &filename, std::string &output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();
-    if (filename.size() > 5 && util::ends_with(filename, ".arff")) {
+    if (filename.size() > 5 && detail::ends_with(filename, ".arff")) {
         arffParser(filename);
     } else {
         libsvmParser(filename);
