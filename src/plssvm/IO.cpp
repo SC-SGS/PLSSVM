@@ -1,5 +1,4 @@
 #include <plssvm/CSVM.hpp>
-#include <plssvm/detail/file.hpp>
 #include <plssvm/detail/operators.hpp>
 #include <plssvm/detail/string_utility.hpp>
 #include <plssvm/exceptions/exceptions.hpp>
