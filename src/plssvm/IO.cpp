@@ -289,7 +289,7 @@ void CSVM::writeModel(const std::string &model_name) {
         count_neg);
 
     volatile int count = 0;
-    #pragma omp parallel num_threads(1)
+    #pragma omp parallel
     {
         fmt::memory_buffer out_pos;
         fmt::memory_buffer out_neg;
