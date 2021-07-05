@@ -22,7 +22,7 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/exceptions.hpp>
 #include <plssvm/kernel_types.hpp>
-#include <plssvm/version.hpp>
+#include <plssvm/version/version.hpp>
 
 /// The main namespace containing all API functions.
 namespace plssvm {};

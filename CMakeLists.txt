@@ -6,8 +6,8 @@ project (SupportVectorMachine
          DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
 ## configure version file
-set(CONFIG_IN ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version.hpp.in)
-set(CONFIG_OUT ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version.hpp)
+set(CONFIG_IN include/plssvm/version/version.hpp.in)
+set(CONFIG_OUT include/plssvm/version/version.hpp)
 configure_file(${CONFIG_IN} ${CONFIG_OUT} @ONLY)
 
 include(FetchContent)
