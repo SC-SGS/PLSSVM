@@ -27,8 +27,8 @@
 /// The main namespace containing all API functions.
 namespace plssvm {};
 
-/// Utility namespace containing internal utility functions or classes.
-namespace plssvm::util {};
+/// Namespace containing implementation details and **should not** be directly used by users.
+namespace plssvm::detail {};
 
 /// Namespace containing versioning information.
 namespace plssvm::version {};

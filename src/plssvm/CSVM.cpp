@@ -1,5 +1,5 @@
 #include <plssvm/CSVM.hpp>
-#include <plssvm/string_utility.hpp>
+#include <plssvm/detail/string_utility.hpp>
 
 namespace plssvm {
 
@@ -65,7 +65,7 @@ real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
 
 void CSVM::learn(const std::string &filename, const std::string &output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();
-    if (filename.size() > 5 && util::ends_with(filename.data(), ".arff")) {
+    if (filename.size() > 5 && detail::ends_with(filename.data(), ".arff")) {
         arffParser(filename.data());
     } else {
         libsvmParser(filename.data());
