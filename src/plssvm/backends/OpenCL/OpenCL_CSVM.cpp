@@ -10,8 +10,6 @@
 #include "manager/apply_arguments.hpp"
 #include "manager/run_kernel.hpp"
 
-#include <plssvm/distribution.hpp>
-
 namespace plssvm {
 
 int count_devices = 1;

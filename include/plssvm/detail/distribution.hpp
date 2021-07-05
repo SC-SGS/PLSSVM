@@ -9,7 +9,7 @@
 #include <numeric>
 #include <vector>
 
-namespace plssvm {
+namespace plssvm::detail {
 
 class distribution {
   public:
@@ -38,4 +38,4 @@ class distribution {
     std::vector<int> distr;
 };
 
-}  // namespace plssvm
+}  // namespace plssvm::detail

@@ -7,7 +7,6 @@
 #include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"
 #include "../../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
 #include <plssvm/backends/OpenCL/DevicePtrOpenCL.hpp>
-#include <plssvm/distribution.hpp>
 #include <stdexcept>
 
 namespace plssvm {
@@ -26,7 +25,6 @@ class OpenCL_CSVM : public CSVM {
     void resizeDatalast(int boundary);
     void resizeDatalast(const int device, int boundary);
     // inline void resize(const int old_boundary,const int new_boundary);
-    distribution distr;
     opencl::manager_t manager{ "../platform_configuration.cfg" };
     opencl::device_t first_device;
     std::vector<cl_kernel> kernel_q_cl;
