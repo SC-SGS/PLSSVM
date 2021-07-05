@@ -63,7 +63,7 @@ real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
     }
 }
 
-void CSVM::learn(const std::string_view filename, const std::string_view output_filename) {
+void CSVM::learn(const std::string &filename, const std::string &output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();
     if (filename.size() > 5 && util::ends_with(filename.data(), ".arff")) {
         arffParser(filename.data());
