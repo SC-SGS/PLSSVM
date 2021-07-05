@@ -1,4 +1,4 @@
-#include <plssvm/svm-kernel.hpp>
+#include <plssvm/backends/OpenCL/svm-kernel.hpp>
 // void kernel_linear(std::tuple<int,int> block, std::tuple<int,int> blockDim,real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
 // 	int blockDimx = std::get<0>(blockDim);
 // 	int blockDimy = std::get<1>(blockDim);
