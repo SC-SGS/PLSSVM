@@ -1,4 +1,4 @@
-#include <plssvm/CUDA/cuda-kernel.cuh>
+#include <plssvm/backends/CUDA/cuda-kernel.cuh>
 
 namespace plssvm {
 

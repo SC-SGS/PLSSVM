@@ -9,7 +9,7 @@
 
 #include "plssvm/exceptions.hpp"
 
-#include "plssvm/OpenMP/OpenMP_CSVM.hpp"
+#include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 
 TEST(IO, libsvmFormat) {
     MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);

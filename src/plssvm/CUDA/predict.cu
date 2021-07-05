@@ -1,4 +1,4 @@
-#include <plssvm/CUDA/CUDA_CSVM.hpp>
+#include <plssvm/backends/CUDA/CUDA_CSVM.hpp>
 
 namespace plssvm {
 
