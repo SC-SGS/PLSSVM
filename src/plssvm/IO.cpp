@@ -291,8 +291,8 @@ void CSVM::writeModel(const std::string &model_name) {
     volatile int count = 0;
     #pragma omp parallel
     {
-        fmt::memory_buffer out_pos;
-        fmt::memory_buffer out_neg;
+        std::string out_pos;
+        std::string out_neg;
 
         // all support vectors with class 1
         #pragma omp for nowait
@@ -304,13 +304,13 @@ void CSVM::writeModel(const std::string &model_name) {
                         fmt::format_to(std::back_inserter(out_pos), "{}:{:e} ", j, data[i][j]);
                     }
                 }
-                fmt::format_to(std::back_inserter(out_pos), "\n");
+                out_pos.push_back('\n');
             }
         }
 
         #pragma omp critical
         {
-            model << fmt::to_string(out_pos);
+            model.write(out_pos.data(), static_cast<std::streamsize>(out_pos.size()));
             count++;
             #pragma omp flush(count, model)
         }
@@ -325,7 +325,7 @@ void CSVM::writeModel(const std::string &model_name) {
                         fmt::format_to(std::back_inserter(out_neg), "{}:{:e} ", j, data[i][j]);
                     }
                 }
-                fmt::format_to(std::back_inserter(out_neg), "\n");
+                out_neg.push_back('\n');
             }
         }
 
@@ -334,7 +334,7 @@ void CSVM::writeModel(const std::string &model_name) {
         }
 
         #pragma omp critical
-        model << fmt::to_string(out_neg);
+        model.write(out_pos.data(), static_cast<std::streamsize>(out_neg.size()));
     }
     model.close();
 }
