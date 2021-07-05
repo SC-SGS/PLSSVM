@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-namespace plssvm {
+namespace plssvm::detail {
 
 class file {
   public:
@@ -88,14 +88,14 @@ class file {
             if (next_pos == std::string::npos) {
                 break;
             }
-            std::string_view sv = detail::trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
-            if (!sv.empty() && !detail::starts_with(sv, comment)) {
+            std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
+            if (!sv.empty() && !starts_with(sv, comment)) {
                 lines_.push_back(sv);
             }
             pos = next_pos + 1;
         }
-        std::string_view sv = detail::trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
-        if (!sv.empty() && !detail::starts_with(sv, comment)) {
+        std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
+        if (!sv.empty() && !starts_with(sv, comment)) {
             lines_.push_back(sv);
         }
     }
@@ -106,6 +106,6 @@ class file {
     std::vector<std::string_view> lines_{};
 };
 
-}  // namespace plssvm
+}  // namespace plssvm::detail
 
 #undef PLSSVM_HAS_MEMORY_MAPPING

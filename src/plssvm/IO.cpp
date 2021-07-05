@@ -1,8 +1,8 @@
 #include <plssvm/CSVM.hpp>
+#include <plssvm/detail/file.hpp>
 #include <plssvm/detail/operators.hpp>
 #include <plssvm/detail/string_utility.hpp>
 #include <plssvm/exceptions/exceptions.hpp>
-#include <plssvm/file.hpp>
 #include <plssvm/kernel_types.hpp>
 
 #include <fmt/format.h>
@@ -15,7 +15,7 @@ namespace plssvm {
 
 // read libsvm file
 void CSVM::libsvmParser(const std::string &filename) {
-    file f{ filename, '#' };
+    detail::file f{ filename, '#' };
 
     value.resize(f.num_lines());
     data.resize(f.num_lines());
@@ -102,7 +102,7 @@ void CSVM::libsvmParser(const std::string &filename) {
 
 // read ARFF file
 void CSVM::arffParser(const std::string &filename) {
-    file f{ filename, '%' };
+    detail::file f{ filename, '%' };
     std::size_t max_size = 0;
 
     // parse arff header
