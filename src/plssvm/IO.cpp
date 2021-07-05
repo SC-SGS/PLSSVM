@@ -1,87 +1,35 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/exceptions.hpp>
+#include <plssvm/file.hpp>
 #include <plssvm/kernel_types.hpp>
 #include <plssvm/operators.hpp>
 #include <plssvm/string_utility.hpp>
 
 #include <fmt/format.h>
 
-#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <fcntl.h>     // open, O_RDONLY
-#include <sys/mman.h>  // mmap
-#include <sys/stat.h>  // fstat
-#include <unistd.h>    // close
-
 namespace plssvm {
 
 // read libsvm file
-void CSVM::libsvmParser(const std::string &filename) {
-    std::vector<std::string> data_lines;
 void CSVM::libsvmParser(const std::string_view filename) {
-    std::vector<std::string_view> data_lines;
-    void *buffer;
-    int fd;
+    file f{ filename, '#' };
 
-    {
-        // memory map file
-        fd = open(filename.data(), O_RDONLY);
-        struct stat attr;
-        if (fstat(fd, &attr) == -1) {
-            close(fd);
-            throw file_not_found_exception{ fmt::format("Couldn't find file: {}!", filename) };
-        }
-        buffer = mmap(0, attr.st_size, PROT_READ, MAP_SHARED, fd, 0);
-        if (buffer == MAP_FAILED) {
-            close(fd);
-            throw file_not_found_exception{ fmt::format("Couldn't memory map file: {}!", filename) };
-        }
-
-        /*
-            std::FILE* file = std::fopen(filename.data(), "rb");
-            std::fseek(file, 0, SEEK_END);
-            auto size = std::ftell(file);
-            std::rewind(file);
-            str.resize(size);
-            std::fread(str.data(), 1, size, file);
-            std::fclose(file);
-        */
-        std::string_view buffer_view{ static_cast<char *>(buffer), static_cast<std::string_view::size_type>(attr.st_size) };
-        std::size_t pos = 0;
-        while (true) {
-            std::size_t next_pos = buffer_view.find_first_of('\n', pos);
-            if (next_pos == std::string::npos) {
-                break;
-            }
-            std::string_view sv = util::trim_left(std::string_view{ buffer_view.data() + pos, next_pos - pos });
-            if (!sv.empty() && !util::starts_with(sv, '#')) {
-                data_lines.push_back(sv);
-            }
-            pos = next_pos + 1;
-        }
-        std::string_view sv = util::trim_left(std::string_view{ buffer_view.data() + pos, buffer_view.size() - pos });
-        if (!sv.empty() && !util::starts_with(sv, '#')) {
-            data_lines.push_back(sv);
-        }
-    }
-
-    value.resize(data_lines.size());
-    data.resize(data_lines.size());
+    value.resize(f.num_lines());
+    data.resize(f.num_lines());
 
     std::size_t max_size = 0;
     std::exception_ptr parallel_exception;
 
     #pragma omp parallel
     {
-        #pragma omp for reduction(max \
-                                  : max_size)
+        #pragma omp for reduction(max:max_size)
         for (std::size_t i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
-                std::string_view line = data_lines[i];
+                std::string_view line = f.line(i);
 
                 // get class
                 std::size_t pos = line.find_first_of(' ');
@@ -125,8 +73,6 @@ void CSVM::libsvmParser(const std::string_view filename) {
         }
     }
 
-    close(fd);
-
     // rethrow if an exception occurred inside the parallel region
     if (parallel_exception) {
         std::rethrow_exception(parallel_exception);
@@ -155,67 +101,42 @@ void CSVM::libsvmParser(const std::string_view filename) {
 }
 
 // read ARFF file
-void CSVM::arffParser(const std::string &filename) {
-    std::vector<std::string> data_lines;
+void CSVM::arffParser(const std::string_view filename) {
+    file f{ filename, '%' };
     std::size_t max_size = 0;
+
+    // parse arff header
+    std::size_t header = 0;
     {
-        std::ifstream file{ filename.data() };
-        if (file.fail()) {
-            throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
-        }
-        std::string line;
-
-        // read and parse header information
-        while (std::getline(file, line)) {
-            std::string_view trimmed = util::trim_left(line);
-            if (trimmed.empty() || util::starts_with(trimmed, '%')) {
-                // ignore empty lines or comments
+        for (; header < f.num_lines(); ++header) {
+            std::string line{ f.line(header) };
+            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
+            if (util::starts_with(line, "@RELATION")) {
+                // ignore relation
                 continue;
-            } else {
-                // match arff properties case insensitive
-                std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
-                trimmed = util::trim_left(line);
-                if (util::starts_with(trimmed, "@RELATION")) {
-                    // ignore relation
-                    continue;
-                } else if (util::starts_with(trimmed, "@ATTRIBUTE")) {
-                    if (line.find("NUMERIC") == std::string::npos) {
-                        throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", line) };
-                    }
-                    // add a feature
-                    ++max_size;
-                } else if (util::starts_with(trimmed, "@DATA")) {
-                    // finished reading header -> start parsing data
-                    break;
+            } else if (util::starts_with(line, "@ATTRIBUTE")) {
+                if (line.find("NUMERIC") == std::string::npos) {
+                    throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", line) };
                 }
-            }
-        }
-
-        // something went wrong, i.e. no @ATTRIBUTE fields
-        if (max_size == 0) {
-            throw invalid_file_format_exception{ "Invalid file format!" };
-        }
-
-        // read data
-        while (std::getline(file, line)) {
-            std::string_view trimmed = util::trim_left(line);
-            if (trimmed.empty() || util::starts_with(trimmed, '%')) {
-                // ignore empty lines or comments
-                continue;
-            } else if (util::starts_with(trimmed, '@')) {
-                // read @ inside data section
-                throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: {}", line) };
-            } else {
-                data_lines.push_back(std::move(line));
+                // add a feature
+                ++max_size;
+            } else if (util::starts_with(line, "@DATA")) {
+                // finished reading header -> start parsing data
+                break;
             }
         }
     }
 
-    value.resize(data_lines.size());
-    data.resize(data_lines.size());
+    // something went wrong, i.e. no @ATTRIBUTE fields
+    if (max_size == 0) {
+        throw invalid_file_format_exception{ "Invalid file format!" };
+    }
+
+    value.resize(f.num_lines() - (header + 1));
+    data.resize(f.num_lines() - (header + 1));
 
     #pragma omp parallel for
-    for (std::size_t i = 0; i < data_lines.size(); ++i) {
+    for (std::size_t i = 0; i < data.size(); ++i) {
         data[i].resize(max_size - 1);
     }
 
@@ -227,7 +148,12 @@ void CSVM::arffParser(const std::string &filename) {
         for (std::size_t i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
-                std::string_view line{ util::trim_left(data_lines[i]) };
+                std::string_view line = f.line(i + header + 1);
+                //
+                if (util::starts_with(line, '@')) {
+                    // read @ inside data section
+                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: {}", line) };
+                }
 
                 // parse sparse or dense data point definition
                 if (util::starts_with(line, '{')) {
@@ -313,7 +239,7 @@ void CSVM::arffParser(const std::string &filename) {
     fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
-void CSVM::writeModel(const std::string &model_name) {
+void CSVM::writeModel(const std::string_view model_name) {
     // TODO: idea: save number of Datapoint in input file -> copy input file -> manipulate copy and dont rewrite whole File
     int nBSV = 0;
     int count_pos = 0;
