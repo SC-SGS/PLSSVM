@@ -1,7 +1,7 @@
 #pragma once
 
-#include <plssvm/exceptions.hpp>
-#include <plssvm/string_utility.hpp>
+#include <plssvm/detail/string_utility.hpp>
+#include <plssvm/exceptions/exceptions.hpp>
 
 #include <fmt/format.h>
 
@@ -88,14 +88,14 @@ class file {
             if (next_pos == std::string::npos) {
                 break;
             }
-            std::string_view sv = util::trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
-            if (!sv.empty() && !util::starts_with(sv, comment)) {
+            std::string_view sv = detail::trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
+            if (!sv.empty() && !detail::starts_with(sv, comment)) {
                 lines_.push_back(sv);
             }
             pos = next_pos + 1;
         }
-        std::string_view sv = util::trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
-        if (!sv.empty() && !util::starts_with(sv, comment)) {
+        std::string_view sv = detail::trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
+        if (!sv.empty() && !detail::starts_with(sv, comment)) {
             lines_.push_back(sv);
         }
     }
