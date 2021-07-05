@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <fmt/format.h>  // fmt::format
+
 #include <ostream>      // std::ostream
 #include <stdexcept>    // std::runtime_error
 #include <string_view>  // std::string_view
@@ -67,27 +69,6 @@ class source_location {
      */
     [[nodiscard]] int column() const noexcept { return column_; }
 
-    /**
-     * @brief Output-operator overload for convenient printing of the source location information attached to a `plssvm::exception` denoted by @p loc.
-     * @details Example output of the source location information:
-     * @code
-     * Exception thrown:
-     *   in file      /home/user_name/code/main.cpp
-     *   in function  foo
-     *   @ line       42
-     * @endcode
-     * @param[inout] out the output-stream to write the source location information to
-     * @param[in] loc the source location information
-     * @return the output-stream
-     */
-    friend std::ostream &operator<<(std::ostream &out, const source_location &loc) {
-        out << "Exception thrown:" << '\n';
-        out << "  in file      " << loc.file_name() << '\n';
-        out << "  in function  " << loc.function_name() << '\n';
-        out << "  @ line       " << loc.line() << '\n';
-        return out;
-    }
-
   private:
     std::string_view function_name_ = "unknown";
     std::string_view file_name_ = "unknown";
@@ -104,10 +85,11 @@ class exception : public std::runtime_error {
     /**
      * @brief Construct a new exception forwarding the exception message to [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error).
      * @param[in] msg the exception's `what()` message
+     * @param[in] class_name the name of the thrown exception class
      * @param[in] loc the exception's call side information
      */
-    explicit exception(const std::string &msg, source_location loc = source_location::current()) :
-        std::runtime_error{ msg }, loc_{ loc } {}
+    explicit exception(const std::string &msg, const std::string_view class_name = "exception", source_location loc = source_location::current()) :
+        std::runtime_error{ msg }, class_name_{ class_name }, loc_{ loc } {}
 
     /**
      * @brief Returns the information of the call side where the exception was thrown.
@@ -115,7 +97,27 @@ class exception : public std::runtime_error {
      */
     [[nodiscard]] const source_location &loc() const noexcept { return loc_; }
 
+    /**
+     * @brief Returns a sting containing the exception's `what()` message, the name of the thrown exception class and information about the call
+     *        side where the exception has been thrown.
+     * @return the exception's `what()` message including source location information
+     */
+    [[nodiscard]] std::string what_with_loc() const {
+        return fmt::format(
+            "{}\n"
+            "{} thrown:\n"
+            "  in file      {}\n"
+            "  in function  {}\n"
+            "  @ line       {}",
+            this->what(),
+            class_name_,
+            loc_.file_name(),
+            loc_.function_name(),
+            loc_.line());
+    }
+
   private:
+    const std::string_view class_name_;
     source_location loc_;
 };
 
@@ -130,7 +132,7 @@ class file_not_found_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit file_not_found_exception(const std::string &msg, source_location loc = source_location::current()) :
-        exception{ msg, loc } {}
+        exception{ msg, "file_not_found_exception", loc } {}
 };
 
 /**
@@ -145,7 +147,7 @@ class invalid_file_format_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit invalid_file_format_exception(const std::string &msg, source_location loc = source_location::current()) :
-        exception{ msg, loc } {}
+        exception{ msg, "invalid_file_format_exception", loc } {}
 };
 
 /**
@@ -159,7 +161,7 @@ class unsupported_backend_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit unsupported_backend_exception(const std::string &msg, source_location loc = source_location::current()) :
-        exception{ msg, loc } {}
+        exception{ msg, "unsupported_backend_exception", loc } {}
 };
 
 /**
@@ -173,7 +175,7 @@ class distribution_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit distribution_exception(const std::string &msg, source_location loc = source_location::current()) :
-        exception{ msg, loc } {}
+        exception{ msg, "distribution_exception", loc } {}
 };
 
 }  // namespace plssvm
