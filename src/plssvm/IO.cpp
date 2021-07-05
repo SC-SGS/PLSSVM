@@ -334,7 +334,7 @@ void CSVM::writeModel(const std::string &model_name) {
         }
 
         #pragma omp critical
-        model.write(out_pos.data(), static_cast<std::streamsize>(out_neg.size()));
+        model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
     }
     model.close();
 }
