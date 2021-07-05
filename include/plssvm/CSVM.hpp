@@ -1,6 +1,6 @@
 #pragma once
+#include <plssvm/detail/operators.hpp>
 #include <plssvm/kernel_types.hpp>
-#include <plssvm/operators.hpp>
 #include <plssvm/typedef.hpp>
 
 #include <chrono>
