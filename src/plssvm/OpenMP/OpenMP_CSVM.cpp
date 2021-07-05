@@ -1,6 +1,6 @@
 #include <chrono>
 #include <omp.h>
-#include <plssvm/OpenMP/OpenMP_CSVM.hpp>
+#include <plssvm/backends/OpenMP/OpenMP_CSVM.hpp>
 #include <plssvm/operators.hpp>
 #include <plssvm/string_utility.hpp>
 
