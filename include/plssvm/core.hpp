@@ -10,19 +10,19 @@
 #pragma once
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    #include <plssvm/backends/OpenMP/OpenMP_CSVM.hpp>
+    #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    #include <plssvm/backends/CUDA/CUDA_CSVM.hpp>
+    #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    #include <plssvm/backends/OpenCL/OpenCL_CSVM.hpp>
+    #include "plssvm/backends/OpenCL/OpenCL_CSVM.hpp"
 #endif
 
-#include <plssvm/CSVM.hpp>
-#include <plssvm/exceptions/exceptions.hpp>
-#include <plssvm/kernel_types.hpp>
-#include <plssvm/version/version.hpp>
+#include "plssvm/CSVM.hpp"
+#include "plssvm/exceptions/exceptions.hpp"
+#include "plssvm/kernel_types.hpp"
+#include "plssvm/version/version.hpp"
 
 /// The main namespace containing all API functions.
 namespace plssvm {};

@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <fast_float/fast_float.h>  // fast_float::from_chars (floating points)
-#include <fmt/core.h>               // fmt::format
+#include "fast_float/fast_float.h"  // fast_float::from_chars (floating points)
+#include "fmt/core.h"               // fmt::format
 
 #include <algorithm>     // std::min
 #include <charconv>      // std::from_chars (integral types)

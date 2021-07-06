@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include <plssvm/exceptions/source_location.hpp>
+#include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <fmt/format.h>  // fmt::format
+#include "fmt/core.h"  // fmt::format
 
-#include <ostream>      // std::ostream
 #include <stdexcept>    // std::runtime_error
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm {

@@ -6,7 +6,7 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/typedef.hpp"                // plssvm::real_t
 
-#include "fmt/format.h"  // fmt::format, fmt::print, fmt::format_to
+#include "fmt/core.h"  // fmt::format, fmt::print, fmt::format_to
 
 #include <algorithm>    // std::max, std::transform
 #include <cctype>       // std::toupper

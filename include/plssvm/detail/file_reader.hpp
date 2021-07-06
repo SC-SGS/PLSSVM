@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <plssvm/detail/string_utility.hpp>  // plssvm::detail::starts_with, plssvm::detail::trim_left
-#include <plssvm/exceptions/exceptions.hpp>  // plssvm::file_not_found_exception
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception
 
-#include <fmt/core.h>  // fmt::format
+#include "fmt/core.h"  // fmt::format
 
 // check if memory mapping can be supported
 #if __has_include(<fcntl.h>) && __has_include(<sys/mman.h>) && __has_include(<sys/stat.h>) && __has_include(<unistd.h>)
