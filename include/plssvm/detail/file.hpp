@@ -4,7 +4,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief Implements a file class responsible for reading the input file and parsing it into lines.
+ * @brief Implements a file reader class responsible for reading the input file and parsing it into lines.
  */
 
 #pragma once
@@ -17,7 +17,7 @@
 // check if memory mapping can be supported
 #if __has_include(<fcntl.h>) && __has_include(<sys/mman.h>) && __has_include(<sys/stat.h>) && __has_include(<unistd.h>)
     #include <fcntl.h>     // open, O_RDONLY
-    #include <sys/mman.h>  // mmap
+    #include <sys/mman.h>  // mmap, munmap
     #include <sys/stat.h>  // fstat
     #include <unistd.h>    // close
 
@@ -35,11 +35,11 @@
 namespace plssvm::detail {
 
 /**
- * @brief The `plssvm::detail::file` class is responsible for reading a file and splitting it into its lines.
+ * @brief The `plssvm::detail::file_reader` class is responsible for reading a file and splitting it into its lines.
  * @details If the necessary headers are present, the class tries to memory map the given file. If this fails or if the headers are not present,
  *          the file is read as one blob using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_ifstream).
  */
-class file {
+class file_reader {
   public:
     /**
      * @brief Reads the file denoted by @p filename (possibly using memory mapped IO) and splits it into lines, ignoring empty lines and lines starting with
@@ -47,7 +47,7 @@ class file {
      * @param[in] filename the file to read and split into lines
      * @param[in] comment the character used to denote comments
      */
-    file(const std::string_view filename, const char comment) {
+    file_reader(const std::string_view filename, const char comment) {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
         // headers for memory mapped IO are present -> try it
         this->open_memory_mapped_file(filename);
@@ -60,16 +60,20 @@ class file {
     }
 
     /**
-     * @brief Close the file descriptor used by the memory mapped IO operations or delete the allocated buffer.
+     * @brief Unmap the file and close the file descriptor used by the memory mapped IO operations or delete the allocated buffer.
      */
-    ~file() {
+    ~file_reader() {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
-        // close file descriptor
-        close(file_descriptor_);
-#else
+        if (must_unmap_file_) {
+            // unmap file
+            munmap(file_content_, num_bytes_);
+            // close file descriptor
+            close(file_descriptor_);
+        }
+        file_content_ = nullptr;
+#endif
         // delete allocated buffer (deleting nullptr is a no-op)
         delete[] file_content_;
-#endif
     }
 
     /**
@@ -94,6 +98,7 @@ class file {
     /*
      * Try to read the file using memory mapped IO.
      */
+#if defined(PLSSVM_HAS_MEMORY_MAPPING)
     void open_memory_mapped_file(const std::string_view filename) {
         // open the file
         file_descriptor_ = open(filename.data(), O_RDONLY);
@@ -111,10 +116,13 @@ class file {
             close(file_descriptor_);
             std::cerr << "Memory mapping failed, falling back to std::ifstream." << std::endl;
             this->open_file(filename);
+        } else {
+            // set size
+            num_bytes_ = attr.st_size;
+            must_unmap_file_ = true;
         }
-        // set size
-        num_bytes_ = attr.st_size;
     }
+#endif
 
     /*
      * Read the file using a normal std::ifstream.
@@ -163,7 +171,10 @@ class file {
         }
     }
 
+#if defined(PLSSVM_HAS_MEMORY_MAPPING)
     int file_descriptor_ = 0;
+    bool must_unmap_file_ = false;
+#endif
     char *file_content_ = nullptr;
     std::size_t num_bytes_ = 0;
     std::vector<std::string_view> lines_{};

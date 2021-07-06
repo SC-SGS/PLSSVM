@@ -15,7 +15,7 @@ namespace plssvm {
 
 // read libsvm file
 void CSVM::libsvmParser(const std::string &filename) {
-    detail::file f{ filename, '#' };
+    detail::file_reader f{ filename, '#' };
 
     value.resize(f.num_lines());
     data.resize(f.num_lines());
@@ -102,7 +102,7 @@ void CSVM::libsvmParser(const std::string &filename) {
 
 // read ARFF file
 void CSVM::arffParser(const std::string &filename) {
-    detail::file f{ filename, '%' };
+    detail::file_reader f{ filename, '%' };
     std::size_t max_size = 0;
 
     // parse arff header
