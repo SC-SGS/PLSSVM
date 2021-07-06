@@ -1,3 +1,12 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Implements constants to query the current library version.
+ */
+
 #pragma once
 
 #include <string_view>  // std::string_view

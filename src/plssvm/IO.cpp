@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/CSVM.hpp"
 
 #include "plssvm/detail/file_reader.hpp"     // plssvm::detail::file_reader
