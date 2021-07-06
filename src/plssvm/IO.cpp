@@ -1,15 +1,24 @@
-#include <plssvm/CSVM.hpp>
-#include <plssvm/detail/file_reader.hpp>
-#include <plssvm/detail/operators.hpp>
-#include <plssvm/detail/string_utility.hpp>
-#include <plssvm/exceptions/exceptions.hpp>
-#include <plssvm/kernel_types.hpp>
+#include "plssvm/CSVM.hpp"
 
-#include <fmt/format.h>
+#include "plssvm/detail/file_reader.hpp"     // plssvm::detail::file_reader
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::convert_to, plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/typedef.hpp"                // plssvm::real_t
 
-#include <string>
-#include <string_view>
-#include <vector>
+#include "fmt/format.h"  // fmt::format, fmt::print, fmt::format_to
+
+#include <algorithm>    // std::max, std::transform
+#include <cctype>       // std::toupper
+#include <cstddef>      // std::size_t
+#include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
+#include <iterator>     // std::back_inserter
+#include <omp.h>        // omp_get_num_threads # TODO: get rid of it?
+#include <ostream>      // std::ofstream, std::ios::out, std::ios::trunc
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -89,7 +98,7 @@ void CSVM::libsvmParser(const std::string &filename) {
 
     // no features were parsed -> invalid file
     if (num_features == 0) {
-        throw std::runtime_error{ fmt::format("Can't parse file '{}'!", filename) };
+        throw invalid_file_format_exception{ fmt::format("Can't parse file '{}'!", filename) };
     }
 
     // update gamma
