@@ -12,13 +12,12 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/typedef.hpp"                // plssvm::real_t
 
-#include "fmt/core.h"  // fmt::format, fmt::print, fmt::format_to
+#include "fmt/core.h"  // fmt::format, fmt::print
 
 #include <algorithm>    // std::max, std::transform
 #include <cctype>       // std::toupper
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
-#include <iterator>     // std::back_inserter
 #include <omp.h>        // omp_get_num_threads # TODO: get rid of it?
 #include <ostream>      // std::ofstream, std::ios::out, std::ios::trunc
 #include <string>       // std::string
@@ -303,23 +302,28 @@ void CSVM::writeModel(const std::string &model_name) {
         count_pos,
         count_neg);
 
+    // format one output-line
+    auto format_libsmv_line = [](real_t a, const std::vector<real_t> &d) -> std::string {
+        std::string line;
+        line += fmt::format("{} ", a);
+        for (std::size_t j = 0; j < d.size(); ++j) {
+            if (d[j] != 0.0) {
+                line += fmt::format("{}:{:e} ", j, d[j]);
+            }
+        }
+        line.push_back('\n');
+        return line;
+    };
+
     volatile int count = 0;
     #pragma omp parallel
     {
-        std::string out_pos;
-        std::string out_neg;
-
         // all support vectors with class 1
+        std::string out_pos;
         #pragma omp for nowait
         for (std::size_t i = 0; i < alpha.size(); ++i) {
             if (value[i] > 0) {
-                fmt::format_to(std::back_inserter(out_pos), "{} ", alpha[i]);
-                for (std::size_t j = 0; j < data[i].size(); ++j) {
-                    if (data[i][j] != 0) {
-                        fmt::format_to(std::back_inserter(out_pos), "{}:{:e} ", j, data[i][j]);
-                    }
-                }
-                out_pos.push_back('\n');
+                out_pos += format_libsmv_line(alpha[i], data[i]);
             }
         }
 
@@ -331,16 +335,11 @@ void CSVM::writeModel(const std::string &model_name) {
         }
 
         // all support vectors with class -1
+        std::string out_neg;
         #pragma omp for nowait
         for (std::size_t i = 0; i < alpha.size(); ++i) {
             if (value[i] < 0) {
-                fmt::format_to(std::back_inserter(out_neg), "{} ", alpha[i]);
-                for (std::size_t j = 0; j < data[i].size(); ++j) {
-                    if (data[i][j] != 0) {
-                        fmt::format_to(std::back_inserter(out_neg), "{}:{:e} ", j, data[i][j]);
-                    }
-                }
-                out_neg.push_back('\n');
+                out_neg += format_libsmv_line(alpha[i], data[i]);
             }
         }
 
@@ -351,7 +350,6 @@ void CSVM::writeModel(const std::string &model_name) {
         #pragma omp critical
         model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
     }
-    model.close();
 }
 
 }  // namespace plssvm
