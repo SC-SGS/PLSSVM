@@ -1,9 +1,8 @@
 #pragma once
 
-#include "plssvm/backends/CUDA/CUDA_exceptions.hpp"
-#include "plssvm/exceptions/source_location.hpp"
+#include "plssvm/backends/CUDA/CUDA_exceptions.hpp"  // plssvm::cuda_backend_exception
 
-#include "fmt/core.h"
+#include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <utility>    // std::move, std::swap, std::exchange
