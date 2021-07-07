@@ -291,11 +291,11 @@ TEST(learn, comapre_backends) {
     ASSERT_EQ(alphas.size(), biass.size());
     ASSERT_EQ(alphas.size(), QA_costs.size());
     for (size_t svm = 1; svm < alphas.size(); ++svm) {
-        EXPECT_DOUBLE_EQ(biass[0], biass[svm]) << "svm: " << svm;
+        EXPECT_NEAR(biass[0], biass[svm],1e-2) << "svm: " << svm;
         EXPECT_DOUBLE_EQ(QA_costs[0], QA_costs[svm]) << "svm: " << svm;
         ASSERT_EQ(alphas[0].size(), alphas[svm].size()) << "svm: " << svm;
         for (size_t index = 0; index < alphas[0].size(); ++index) {
-            EXPECT_DOUBLE_EQ(alphas[0][index], alphas[svm][index]) << "svm: " << svms[svm] << " index: " << index;
+            EXPECT_NEAR(alphas[0][index], alphas[svm][index], 1e-2) << "svm: " << svms[svm] << " index: " << index;
         }
     }
 }
@@ -409,7 +409,7 @@ TEST(learn, kernel_linear) {
 
     std::vector<opencl::device_t> &devices = csvm_OpenCL.manager.get_devices();
 
-    std::string kernel_src_file_name{ "../src/plssvm/OpenCL/kernels/svm-kernel-linear_debug.cl" };
+    std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear_debug.cl" };
     std::string kernel_src = csvm_OpenCL.manager.read_src_file(kernel_src_file_name);
     if (*typeid(real_t).name() == 'f') {
         csvm_OpenCL.manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");

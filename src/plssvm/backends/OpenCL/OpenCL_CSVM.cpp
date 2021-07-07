@@ -93,7 +93,7 @@ std::vector<real_t> OpenCL_CSVM::generate_q() {
         if (!kernel_q_cl[device]) {
             #pragma omp critical  //TODO: evtl besser keine Referenz
             {
-                std::string kernel_src_file_name{ "../src/plssvm/OpenCL/kernels/kernel_q.cl" };
+                std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/kernel_q.cl" };
                 std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                 if (*typeid(real_t).name() == 'f') {
                     manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
@@ -188,7 +188,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device) {
                 if (!svm_kernel_linear[device]) {
-                    std::string kernel_src_file_name{ "../src/plssvm/OpenCL/kernels/svm-kernel-linear.cl" };
+                    std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
                     std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                     if (*typeid(real_t).name() == 'f') {
                         manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
@@ -289,7 +289,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                 #pragma omp parallel for
                 for (int device = 0; device < count_devices; ++device) {
                     if (!svm_kernel_linear[device]) {
-                        std::string kernel_src_file_name{ "../src/plssvm/OpenCL/kernels/svm-kernel-linear.cl" };
+                        std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
                         std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                         if (*typeid(real_t).name() == 'f') {
                             manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
@@ -385,7 +385,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
                     #pragma omp parallel for
                     for (int device = 0; device < count_devices; ++device) {
                         if (!svm_kernel_linear[device]) {
-                            std::string kernel_src_file_name{ "../src/plssvm/OpenCL/kernels/svm-kernel-linear.cl" };
+                            std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
                             std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                             if (*typeid(real_t).name() == 'f') {
                                 manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
