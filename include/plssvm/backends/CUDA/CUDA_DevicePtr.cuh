@@ -44,8 +44,8 @@ class device_ptr {
     device_ptr() = default;
     device_ptr(const size_type size, const int device = 0) :
         device_{ device }, size_{ size } {
-        if (device_ < 0) {
-            throw plssvm::cuda_backend_exception{ fmt::format("Device ID must not be negative but is {}!", device_) };
+        if (device_ < 0 || device_ >= static_cast<int>(get_device_count())) {
+            throw plssvm::cuda_backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device_) };
         }
         PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, size_ * sizeof(value_type)));
