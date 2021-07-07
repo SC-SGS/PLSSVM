@@ -21,9 +21,13 @@ class MockCSVM : public plssvm::CSVM {
     MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     MOCK_METHOD(void, learn, (), (override));
     MOCK_METHOD(void, loadDataDevice, (), (override));
-    MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t), (override));
+    MOCK_METHOD(std::vector<real_t>, generate_q, (), (override));
+    MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &), (override));
+    using plssvm::CSVM::cost;
+    using plssvm::CSVM::data;
     using plssvm::CSVM::kernel_function;
     using plssvm::CSVM::transform_data;
+    using plssvm::CSVM::value;
 
     const real_t get_num_data_points() const { return num_data_points; }
     const real_t get_num_features() const { return num_features; }
@@ -46,6 +50,7 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     using plssvm::OpenMP_CSVM::learn;
     using plssvm::OpenMP_CSVM::loadDataDevice;
 
+    using plssvm::OpenMP_CSVM::generate_q;
     using plssvm::OpenMP_CSVM::kernel_function;
 
     const real_t get_num_data_points() const {
@@ -62,7 +67,7 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     }
 };
 #else
-    #pragma message("Ignore OpenMP backend test")
+#pragma message("Ignore OpenMP backend test")
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
@@ -81,7 +86,12 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
     using plssvm::OpenCL_CSVM::learn;
     using plssvm::OpenCL_CSVM::loadDataDevice;
 
+    using plssvm::OpenCL_CSVM::cost;
+    using plssvm::OpenCL_CSVM::data;
+    using plssvm::OpenCL_CSVM::data_cl;
+    using plssvm::OpenCL_CSVM::generate_q;
     using plssvm::OpenCL_CSVM::kernel_function;
+    using plssvm::OpenCL_CSVM::manager;
 
     const real_t get_num_data_points() const {
         return num_data_points;
@@ -97,7 +107,7 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
     }
 };
 #else
-    #pragma message("Ignore OpenCL backend Test")
+#pragma message("Ignore OpenCL backend Test")
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
@@ -111,6 +121,7 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     using plssvm::CUDA_CSVM::alpha;
     using plssvm::CUDA_CSVM::bias;
     using plssvm::CUDA_CSVM::CG;
+    using plssvm::CUDA_CSVM::generate_q;
     using plssvm::CUDA_CSVM::kernel_function;
     using plssvm::CUDA_CSVM::learn;
     using plssvm::CUDA_CSVM::loadDataDevice;
@@ -130,5 +141,5 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     }
 };
 #else
-    #pragma message("Ignore CUDA backend Test")
+#pragma message("Ignore CUDA backend Test")
 #endif

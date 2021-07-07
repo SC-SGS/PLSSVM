@@ -32,8 +32,9 @@ void OpenCL_CSVM::loadDataDevice() {
         datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], (num_features)));
     std::vector<real_t> datalast(data[num_data_points - 1]);
     #pragma omp parallel for
-    for (int device = 0; device < count_devices; ++device)
+    for (int device = 0; device < count_devices; ++device) {
         datlast_cl[device].to_device(datalast);
+    }
     #pragma omp parallel for
     for (int device = 0; device < count_devices; ++device)
         datlast_cl[device].resize(num_data_points - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
@@ -76,36 +77,11 @@ void OpenCL_CSVM::resizeData(const int device, const int boundary) {
     data_cl[device].to_device(vec);
 }
 
-std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
+std::vector<real_t> OpenCL_CSVM::generate_q() {
     std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
     const size_t dept = num_data_points - 1;
     const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     const size_t dept_all = dept + boundary_size;
-    std::vector<real_t> zeros(dept_all, 0.0);
-
-    real_t *d;
-    std::vector<real_t> x(dept_all, 1.0);
-    std::fill(x.end() - boundary_size, x.end(), 0.0);
-
-    std::vector<opencl::DevicePtrOpenCL<real_t>> x_cl;
-    for (int device = 0; device < count_devices; ++device)
-        x_cl.emplace_back(devices[device], dept_all);
-    for (int device = 0; device < count_devices; ++device)
-        x_cl[device].to_device(x);
-
-    std::vector<real_t> r(dept_all, 0.0);
-
-    std::vector<opencl::DevicePtrOpenCL<real_t>> r_cl;
-    for (int device = 0; device < count_devices; ++device)
-        r_cl.emplace_back(devices[device], dept_all);
-
-    std::vector<real_t> toDevice(dept_all, 0.0);
-    std::copy(b.begin(), b.begin() + dept, toDevice.begin());
-    r_cl[0].to_device(std::vector<real_t>(toDevice));
-    #pragma omp parallel for
-    for (int device = 1; device < count_devices; ++device)
-        r_cl[device].to_device(std::vector<real_t>(zeros));
-    d = new real_t[dept];
 
     std::vector<opencl::DevicePtrOpenCL<real_t>> q_cl;
     for (int device = 0; device < count_devices; ++device)
@@ -149,18 +125,64 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         size_t block_size = THREADBLOCK_SIZE;
         opencl::run_kernel_1d_timed(devices[device], kernel_q_cl[device], grid_size, block_size);
     }
+
+    std::vector<real_t> q(dept_all);
+    q_cl[0].from_device(q);  //TODO:
+    std::vector<real_t> ret(dept);
+    for (int device = 1; device < count_devices; ++device) {
+        q_cl[device].from_device(ret);
+        for (int i = 0; i < dept; ++i)
+            q[i] += ret[i];
+    }
+    q.resize(dept);
+    return q;
+}
+
+std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q) {
+    std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
+    const size_t dept = num_data_points - 1;
+    const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+    const size_t dept_all = dept + boundary_size;
+    std::vector<real_t> zeros(dept_all, 0.0);
+
+    real_t *d;
+    std::vector<real_t> x(dept_all, 1.0);
+    std::fill(x.end() - boundary_size, x.end(), 0.0);
+
+    std::vector<opencl::DevicePtrOpenCL<real_t>> x_cl;
+    for (int device = 0; device < count_devices; ++device)
+        x_cl.emplace_back(devices[device], dept_all);
+    for (int device = 0; device < count_devices; ++device)
+        x_cl[device].to_device(x);
+
+    std::vector<real_t> r(dept_all, 0.0);
+
+    std::vector<opencl::DevicePtrOpenCL<real_t>> r_cl;
+    for (int device = 0; device < count_devices; ++device)
+        r_cl.emplace_back(devices[device], dept_all);
+
     {
-        std::vector<real_t> buffer(dept_all);
-        q_cl[0].from_device(buffer);  //TODO:
-        std::vector<real_t> ret(dept_all);
-        for (int device = 1; device < count_devices; ++device) {
-            q_cl[device].from_device(ret);
-            for (int i = 0; i < dept_all; ++i)
-                buffer[i] += ret[i];
-        }
-        #pragma omp parallel
-        for (int device = 0; device < count_devices; ++device)
-            q_cl[device].to_device(buffer);
+        std::vector<real_t> toDevice(dept_all, 0.0);
+        std::copy(b.begin(), b.begin() + dept, toDevice.begin());
+        r_cl[0].to_device(std::vector<real_t>(toDevice));
+    }
+    #pragma omp parallel for
+    for (int device = 1; device < count_devices; ++device)
+        r_cl[device].to_device(std::vector<real_t>(zeros));
+    d = new real_t[dept];
+
+    std::vector<opencl::DevicePtrOpenCL<real_t>> q_cl;
+    for (int device = 0; device < count_devices; ++device)
+        {q_cl.emplace_back(devices[device], q.size());}
+
+    #pragma omp parallel
+    for (int device = 0; device < count_devices; ++device) {
+        q_cl[device].to_device(q);
+
+    }
+
+    for (int device = 0; device < count_devices; ++device) {
+        q_cl[device].resize(dept_all);
     }
 
     switch (kernel) {
@@ -250,8 +272,9 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         //Ad = A * d
         {
             #pragma omp parallel for
-            for (int device = 0; device < count_devices; ++device)
+            for (int device = 0; device < count_devices; ++device) {
                 Ad_cl[device].to_device(zeros);
+            }
             //TODO: effizienter auf der GPU implementieren (evtl clEnqueueFillBuffer )
             #pragma omp parallel for
             for (int device = 0; device < count_devices; ++device) {
@@ -344,8 +367,9 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         r_cl[0].from_device(buffer_r);
         add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), buffer_r.data(), alpha_cd, dept);
         #pragma omp parallel
-        for (int device = 0; device < count_devices; ++device)
+        for (int device = 0; device < count_devices; ++device) {
             x_cl[device].resize(dept_all);
+        }
         #pragma omp parallel
         for (int device = 0; device < count_devices; ++device)
             x_cl[device].to_device(x);
@@ -446,11 +470,13 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
             std::vector<real_t> buffer(dept_all, 0.0);
             std::copy(d, d + dept, buffer.begin());
             #pragma omp parallel for
-            for (int device = 0; device < count_devices; ++device)
+            for (int device = 0; device < count_devices; ++device) {
                 r_cl[device].resize(dept_all);
+            }
             #pragma omp parallel for
-            for (int device = 0; device < count_devices; ++device)
+            for (int device = 0; device < count_devices; ++device) {
                 r_cl[device].to_device(buffer);
+            }
         }
     }
     if (run == imax)
@@ -467,7 +493,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
         std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
     }
     delete[] d;
-    return ret_q;
+    return alpha;
 }
 
 }  // namespace plssvm

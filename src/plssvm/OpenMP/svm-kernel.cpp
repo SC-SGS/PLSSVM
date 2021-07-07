@@ -79,14 +79,14 @@ real_t kernel_function(real_t *xi, real_t *xj, int dim) {
     }
 }
 
-int bloksize = 5;
+constexpr int bloksize = 64;
 
-void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>> &data, real_t *datlast, real_t *q, real_t *ret, const real_t *d, const int dim, const real_t QA_cost, const real_t cost, const int add) {
+void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>> &data, real_t *datlast, const real_t *q, std::vector<real_t> &ret, const real_t *d, const int dim, const real_t QA_cost, const real_t cost, const int add) {
     #pragma omp parallel for collapse(2) schedule(dynamic, 8)
     for (int i = 0; i < b.size(); i += bloksize) {
         for (int j = 0; j < b.size(); j += bloksize) {
-            real_t temp_data_i[bloksize][data[0].size()];
-            real_t temp_data_j[bloksize][data[0].size()];
+            real_t temp_data_i[bloksize][data[0].size()];  //TODO:
+            real_t temp_data_j[bloksize][data[0].size()];  //TODO:
             for (int ii = 0; ii < bloksize; ++ii) {
                 if (ii + i < b.size())
                     std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
@@ -98,39 +98,25 @@ void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>
                     if (ii + i > jj + j) {
                         real_t temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
                         #pragma omp atomic
-                        ret[jj + j] += temp * d[ii + i];
+                        ret[jj + j] += temp * d[ii + i] * add;
                         #pragma omp atomic
-                        ret[ii + i] += temp * d[jj + j];
+                        ret[ii + i] += temp * d[jj + j] * add;
                     }
                 }
             }
         }
     }
 
-    // 						#pragma unroll(BLOCKING_SIZE_THREAD)
-    // 						for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-    // 							#pragma unroll(BLOCKING_SIZE_THREAD)
-    // 							for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
-    // 								const real_t temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
-    // 								if(i + x > j + y){
-    // 									//atomicAdd(&ret[i + x], temp * d[j + y]);
-    // 									ret[i + x] += temp * d[j + y];
-    // 									//atomicAdd(&ret[j + y], temp * d[i + x]);
-    // 									ret[j + y] += temp * d[i + x];
-    // 								}else if(i + x == j + y){
-    // 									//atomicAdd(&ret[j + y], (temp + cost * add) * d[i + x]);
-    // 									ret[j + y]+= (temp + cost * add) * d[i + x];
-    // 								}
     #pragma omp parallel for schedule(dynamic, 8)
     for (int i = 0; i < b.size(); ++i) {
-        real_t kernel_dat_and_cost = kernel_function(datlast, &data[i][0], dim) + QA_cost;
+        real_t kernel_dat_and_cost = kernel_function(datlast, &data[i][0], dim) - QA_cost;
         #pragma omp atomic
-        ret[i] += (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + cost - kernel_dat_and_cost - q[i] - q[i]) * add * d[i];
+        ret[i] += (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + cost - kernel_dat_and_cost) * d[i] * add;
         for (int j = 0; j < i; ++j) {
             #pragma omp atomic
-            ret[j] += (kernel_dat_and_cost - q[i] - q[j]) * add * d[i];
+            ret[j] -= kernel_dat_and_cost * add * d[i];
             #pragma omp atomic
-            ret[i] += (kernel_dat_and_cost - q[i] - q[j]) * add * d[j];
+            ret[i] -= kernel_dat_and_cost * add * d[j];
         }
     }
 }

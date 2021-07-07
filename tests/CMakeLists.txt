@@ -33,6 +33,7 @@ if(TARGET svm-OpenMP)
 endif()
 if(TARGET svm-OCL)
   target_link_libraries(main_tests svm-OCL)
+  target_include_directories(main_tests PUBLIC ${PROJECT_SOURCE_DIR}/src/plssvm/OpenCL)
   target_compile_definitions(main_tests PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
 
 endif()

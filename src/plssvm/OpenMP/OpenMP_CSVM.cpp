@@ -3,6 +3,7 @@
 #include <plssvm/OpenMP/OpenMP_CSVM.hpp>
 #include <plssvm/operators.hpp>
 #include <plssvm/string_utility.hpp>
+#include <plssvm/svm-kernel.hpp>
 
 namespace plssvm {
 
@@ -15,121 +16,39 @@ OpenMP_CSVM::OpenMP_CSVM(real_t cost_,
                          bool info_) :
     CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
 
-void OpenMP_CSVM::learn() {
+std::vector<real_t> OpenMP_CSVM::generate_q() {
     std::vector<real_t> q;
-    std::vector<real_t> b = value;
-    #pragma omp parallel sections
-    {
-        #pragma omp section  // generate q
-        {
-            q.reserve(data.size());
-            for (int i = 0; i < data.size() - 1; ++i) {
-                q.emplace_back(kernel_function(data.back(), data[i]));
-            }
-        }
-        #pragma omp section  // generate right side from eguation
-        {
-            b.pop_back();
-            b -= value.back();
-        }
-        #pragma omp section  // generate botom right from A
-        {
-            QA_cost = kernel_function(data.back(), data.back()) + 1 / cost;
-        }
+    if (info){
+        std::cout << "kernel_q" << std::endl;}
+    q.reserve(data.size());
+    for (int i = 0; i < data.size() - 1; ++i) {
+        q.emplace_back(kernel_function(data.back(), data[i]));
     }
-
-    std::cout << "start CG" << std::endl;
-    //solve minimization
-    alpha = CG(b, num_features, epsilon);
-
-    alpha.emplace_back(-sum(alpha));
-    bias = value.back() - QA_cost * alpha.back() - (q * alpha);
+    return q;
 }
 
-void OpenMP_CSVM::learn(std::string &filename, std::string &output_filename) {
-    auto begin_parse = std::chrono::high_resolution_clock::now();
-    if (filename.size() > 5 && util::ends_with(filename, ".arff")) {
-        arffParser(filename);
-    } else {
-        libsvmParser(filename);
-    }
-    auto end_parse = std::chrono::high_resolution_clock::now();
-    if (info) {
-        std::clog << data.size() << " Datenpunkte mit Dimension " << num_features << " in "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count()
-                  << " ms eingelesen" << std::endl
-                  << std::endl;
-    }
-
-    learn();
-    auto end_learn = std::chrono::high_resolution_clock::now();
-    if (info)
-        std::clog << std::endl
-                  << data.size() << " Datenpunkte mit Dimension " << num_features << " in "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_parse).count() << " ms gelernt"
-                  << std::endl;
-
-    writeModel(output_filename);
-    auto end_write = std::chrono::high_resolution_clock::now();
-    if (info) {
-        std::clog << std::endl
-                  << data.size() << " Datenpunkte mit Dimension " << num_features << " in "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << " geschrieben"
-                  << std::endl;
-    } else if (times) {
-        std::clog << data.size() << ", " << num_features << ", " << 0 << ", "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_parse).count() << ", "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
-    }
-}
-
-std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps) {
+std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q) {
     std::vector<real_t> x(b.size(), 1);
     real_t *datlast = &data.back()[0];
     static const size_t dim = data.back().size();
     static const size_t dept = b.size();
 
+    assert(dim == num_features);
+    assert(dept == num_data_points - 1);
     //r = b - (A * x)
     ///r = b;
-    real_t r[dept];
-    std::copy(b.begin(), b.end(), r);
+    std::vector<real_t> r(b);
 
-    int bloksize = 64;
+    std::vector<real_t> ones(b.size(), 1.0);
 
-    #pragma omp parallel for collapse(2) schedule(dynamic, 8)
-    for (int i = 1; i < (dept + bloksize); i = i + bloksize) {
-        for (int j = 0; j < (dept + bloksize); j = j + bloksize) {
-            for (int ii = 0; ii < bloksize && ii + i < dept; ++ii) {
-                for (int jj = 0; jj < bloksize && jj + j < dept; ++jj) {
-                    if (ii + i > jj + j) {
-                        real_t temp = kernel_function(&data[ii + i][0], &data[jj + j][0], dim) - kernel_function(datlast, &data[ii + i][0], dim);
-                        #pragma omp atomic
-                        r[jj + j] -= temp;
-                        #pragma omp atomic
-                        r[ii + i] -= temp;
-                    }
-                }
-            }
-        }
-    }
-
-    #pragma omp parallel for schedule(dynamic, 8)
-    for (int i = 0; i < dept; ++i) {
-        real_t kernel_dat_and_cost = kernel_function(datlast, &data[i][0], dim) - QA_cost;
-        #pragma omp atomic
-        r[i] -= kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + 1 / cost - (b.size() - i) * kernel_dat_and_cost;
-        for (int j = i + 1; j < dept; ++j) {
-            #pragma omp atomic
-            r[j] = r[j] + kernel_dat_and_cost;
-        }
-    }
+    kernel_linear(b, data, datlast, q.data(), r, ones.data(), dim, QA_cost, 1 / cost, -1);  // TODO: other kernels
 
     std::cout << "r= b-Ax" << std::endl;
     std::vector<real_t> d(b.size(), 0.0);
 
-    std::memcpy(d.data(), r, dept * sizeof(real_t));
-
-    real_t delta = mult(r, r, sizeof(r) / sizeof(real_t));
+    std::memcpy(d.data(), r.data(), dept * sizeof(real_t));
+    // delta \gets r^Tr
+    real_t delta = mult(r.data(), r.data(), r.size());
     const real_t delta0 = delta;
     real_t alpha, beta;
 
@@ -138,86 +57,22 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         //Ad = A * d
         std::vector<real_t> Ad(dept, 0.0);
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 8)
-        for (int i = 0; i < b.size(); i += bloksize) {
-            for (int j = 0; j < b.size(); j += bloksize) {
-                real_t temp_data_i[bloksize][data[0].size()];
-                real_t temp_data_j[bloksize][data[0].size()];
-                for (int ii = 0; ii < bloksize; ++ii) {
-                    if (ii + i < b.size())
-                        std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
-                    if (ii + j < b.size())
-                        std::copy(data[ii + j].begin(), data[ii + j].end(), temp_data_j[ii]);
-                }
-                for (int ii = 0; ii < bloksize && ii + i < b.size(); ++ii) {
-                    for (int jj = 0; jj < bloksize && jj + j < b.size(); ++jj) {
-                        if (ii + i > jj + j) {
-                            real_t temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
-                            #pragma omp atomic
-                            Ad[jj + j] += temp * d[ii + i];
-                            #pragma omp atomic
-                            Ad[ii + i] += temp * d[jj + j];
-                        }
-                    }
-                }
-            }
-        }
-
-        #pragma omp parallel for schedule(dynamic, 8)
-        for (int i = 0; i < b.size(); ++i) {
-            real_t kernel_dat_and_cost = kernel_function(datlast, &data[i][0], dim) - QA_cost;
-            #pragma omp atomic
-            Ad[i] += (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + 1 / cost - kernel_dat_and_cost) * d[i];
-            for (int j = 0; j < i; ++j) {
-                #pragma omp atomic
-                Ad[j] -= kernel_dat_and_cost * d[i];
-                #pragma omp atomic
-                Ad[i] -= kernel_dat_and_cost * d[j];
-            }
-        }
+        kernel_linear(b, data, datlast, q.data(), Ad, d.data(), dim, QA_cost, 1 / cost, 1);  // TODO: other kernels
 
         alpha = delta / mult(d.data(), Ad.data(), d.size());
         x += mult(alpha, d.data(), d.size());
         //r = b - (A * x)
         ///r = b;
-        std::copy(b.begin(), b.end(), r);
+        std::copy(b.begin(), b.end(), r.begin());
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 8)
-        for (int i = 0; i < (b.size() + bloksize); i += bloksize) {
-            for (int j = 0; j < (b.size() + bloksize); j += bloksize) {
-                for (int ii = 0; ii < bloksize && ii + i < b.size(); ++ii) {
-                    for (int jj = 0; jj < bloksize && jj + j < b.size(); ++jj) {
-                        if (ii + i > jj + j) {
-                            real_t temp = kernel_function(&data[ii + i][0], &data[jj + j][0], dim) - kernel_function(datlast, &data[jj + j][0], dim);
-                            #pragma omp atomic
-                            r[jj + j] -= temp * x[ii + i];
-                            #pragma omp atomic
-                            r[ii + i] -= temp * x[jj + j];
-                        }
-                    }
-                }
-            }
-        }
+        kernel_linear(b, data, datlast, q.data(), r, x.data(), dim, QA_cost, 1 / cost, -1);  // TODO: other kernels
 
-        #pragma omp parallel for schedule(dynamic, 8)
-        for (int i = 0; i < b.size(); ++i) {
-            real_t kernel_dat_and_cost = kernel_function(datlast, &data[i][0], dim) - QA_cost;
-            #pragma omp atomic
-            r[i] -= (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(datlast, &data[i][0], dim) + 1 / cost - kernel_dat_and_cost) * x[i];
-            for (int j = 0; j < i; ++j) {
-                #pragma omp atomic
-                r[j] += kernel_dat_and_cost * x[i];
-                #pragma omp atomic
-                r[i] += kernel_dat_and_cost * x[j];
-            }
-        }
-
-        delta = mult(r, r, b.size());
+        delta = mult(r.data(), r.data(), r.size());
         //break;
         if (delta < eps * eps * delta0)
             break;
-        beta = -mult(r, Ad.data(), b.size()) / mult(d.data(), Ad.data(), d.size());
-        add(mult(beta, d.data(), d.size()), r, d.data(), d.size());
+        beta = -mult(r.data(), Ad.data(), b.size()) / mult(d.data(), Ad.data(), d.size());
+        add(mult(beta, d.data(), d.size()), r.data(), d.data(), d.size());
     }
 
     return x;

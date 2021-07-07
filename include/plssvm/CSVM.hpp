@@ -59,10 +59,11 @@ class CSVM {
 
     real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
     real_t kernel_function(real_t *, real_t *, int);
+    virtual std::vector<real_t> generate_q() = 0;
 
     virtual void loadDataDevice() = 0;
 
-    virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t) = 0;
+    virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &q) = 0;
 
     /**
      * @brief Transforms the data matrix in SoA, while it ignores the last datapoint and adds boundary places,

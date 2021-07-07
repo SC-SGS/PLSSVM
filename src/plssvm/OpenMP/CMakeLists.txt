@@ -15,6 +15,7 @@ message(STATUS "OpenMP backend enabled.")
 # explicitly set sources
 set(PLSSVM_OpenMP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/OpenMP_CSVM.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/svm-kernel.cpp
 )
 
 # set target properties

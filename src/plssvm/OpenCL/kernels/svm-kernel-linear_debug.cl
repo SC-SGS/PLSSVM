@@ -37,21 +37,21 @@ void __attribute__((overloadable)) AtomicAdd(__global float *source, float delta
     } while (atom_cmpxchg ( (volatile __global unsigned *)source, oldVal.i, newVal.i) != oldVal.i);
 }
 
-
-__kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add){  
+__kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add, const int start, const int end){
+// __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add){
 	int i =  get_group_id(0) * (get_local_size(0) * INTERNALBLOCK_SIZE);
 	int j =  get_group_id(1) * (get_local_size(1) * INTERNALBLOCK_SIZE);
 
 	__private real_t matr = 0.0;
 
-	
+
 	if(i >= j){
 		i += 	get_local_id(0) * INTERNALBLOCK_SIZE;
 		j += 	get_local_id(1) * INTERNALBLOCK_SIZE;
-		#pragma unroll(INTERNALBLOCK_SIZE) 
+		#pragma unroll(INTERNALBLOCK_SIZE)
 		for(int k = 0; k < INTERNALBLOCK_SIZE ; ++k){
 			real_t ret_k = 0;
-			#pragma unroll(INTERNALBLOCK_SIZE) 
+			#pragma unroll(INTERNALBLOCK_SIZE)
 			for(int l = i; l < INTERNALBLOCK_SIZE + i; ++l){
 				matr = 0.0;
 				for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){

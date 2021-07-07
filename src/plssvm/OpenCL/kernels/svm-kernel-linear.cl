@@ -38,10 +38,10 @@ static inline void __attribute__((overloadable)) AtomicAdd(__global const float 
 
 
 
-__kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add, const int start, const int end){  
+__kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add, const int start, const int end){
 
-	int i =  get_group_id(0)  * (get_local_size(0) * INTERNALBLOCK_SIZE);
-	int j =  get_group_id(1)  * (get_local_size(1) * INTERNALBLOCK_SIZE);
+	int i = get_group_id(0)  * (get_local_size(0) * INTERNALBLOCK_SIZE);
+	int j = get_group_id(1)  * (get_local_size(1) * INTERNALBLOCK_SIZE);
 	// size_t j2 =  j;
 
 	__local real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
@@ -49,18 +49,18 @@ __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __gl
 	real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
 	real_t data_j[INTERNALBLOCK_SIZE];
 
-	
+
 	if(i >= j){
-		i += 	get_local_id(0) * INTERNALBLOCK_SIZE;
-		j += 	get_local_id(1) * INTERNALBLOCK_SIZE;
+		i += get_local_id(0) * INTERNALBLOCK_SIZE;
+		j += get_local_id(1) * INTERNALBLOCK_SIZE;
 		//cache data
 		for(int vec_index = start * Nrows; vec_index < end * Nrows; vec_index += Nrows ){
 			barrier(CLK_LOCAL_MEM_FENCE);
 			#pragma unroll INTERNALBLOCK_SIZE
 			for(size_t block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 				const size_t idx = 0; //TODO: parallel laden
-				if(get_local_id(1) == idx) data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i ]; 
-				const size_t idx_2 = 0; //lastbalancieung //TODO: constexpr 
+				if(get_local_id(1) == idx) data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i ];
+				const size_t idx_2 = 0; //lastbalancieung //TODO: constexpr
 				if(get_local_id(0) == idx_2) data_intern_j[get_local_id(1)][block_id] = data_d[block_id + vec_index + j];
 			}
 			barrier(CLK_LOCAL_MEM_FENCE);
@@ -69,7 +69,7 @@ __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __gl
 			for(size_t data_index = 0; data_index < INTERNALBLOCK_SIZE; ++data_index){
 				data_j[data_index] = data_intern_j[get_local_id(1)][data_index];
 			}
-			
+
 			#pragma unroll INTERNALBLOCK_SIZE
 			for(size_t l = 0; l < INTERNALBLOCK_SIZE; ++l){
 				const real_t data_i =  data_intern_i[get_local_id(0)][l];
@@ -80,11 +80,11 @@ __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __gl
 			}
 		}
 
-		#pragma unroll(INTERNALBLOCK_SIZE) 
+		#pragma unroll(INTERNALBLOCK_SIZE)
 		for(size_t k = j; k < INTERNALBLOCK_SIZE + j; ++k){
 			const real_t q_j = q[k];
 			real_t ret_k = 0.0;
-			#pragma unroll(INTERNALBLOCK_SIZE) 
+			#pragma unroll(INTERNALBLOCK_SIZE)
 			for(size_t l = i; l < INTERNALBLOCK_SIZE + i; ++l){
 				real_t temp;
 				if(start == 0){
@@ -108,20 +108,20 @@ __kernel void kernel_linear(__global const real_t *q, __global real_t *ret, __gl
 	}
 }
 
-// __kernel void kernel_linear(__global  const real_t *q, __global __read_write real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add,  const int start_block_x,  const int start_block_y){  
+// __kernel void kernel_linear(__global  const real_t *q, __global __read_write real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add,  const int start_block_x,  const int start_block_y){
 // 	int i =  get_group_id(0) * (get_local_size(0) * INTERNALBLOCK_SIZE);
 // 	int j =  get_group_id(1) * (get_local_size(1) * INTERNALBLOCK_SIZE);
 
 // 	__private real_t matr = 0.0;
 
-	
+
 // 	if(i >= j){
 // 		i += 	get_local_id(0) * INTERNALBLOCK_SIZE;
 // 		j += 	get_local_id(1) * INTERNALBLOCK_SIZE;
-// 		#pragma unroll(INTERNALBLOCK_SIZE) 
+// 		#pragma unroll(INTERNALBLOCK_SIZE)
 // 		for(int k = 0; k < INTERNALBLOCK_SIZE ; ++k){
 // 			real_t ret_k = 0;
-// 			#pragma unroll(INTERNALBLOCK_SIZE) 
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
 // 			for(int l = i; l < INTERNALBLOCK_SIZE + i; ++l){
 // 				matr = 0;
 // 				for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){

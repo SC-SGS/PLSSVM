@@ -8,6 +8,10 @@ void CSVM::learn() {
     std::vector<real_t> b = value;
     #pragma omp parallel sections
     {
+        #pragma omp section  // generate q
+        {
+            q = generate_q();
+        }
         #pragma omp section  // generate right side from eguation
         {
             b.pop_back();
@@ -22,7 +26,7 @@ void CSVM::learn() {
     if (info)
         std::cout << "start CG" << std::endl;
     //solve minimization
-    q = CG(b, num_features, epsilon);
+    alpha = CG(b, num_features, epsilon, q);
     alpha.emplace_back(-sum(alpha));
     bias = value.back() - QA_cost * alpha.back() - (q * alpha);
 }
