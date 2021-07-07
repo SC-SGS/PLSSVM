@@ -70,6 +70,9 @@ std::vector<real_t> CUDA_CSVM::generate_q() {
     if (info)
         std::cout << "kernel_q" << std::endl;
 
+    const size_t dept = num_data_points - 1;
+    const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+    const size_t dept_all = dept + boundary_size;
     const int Ncols = num_features;
     const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
 
