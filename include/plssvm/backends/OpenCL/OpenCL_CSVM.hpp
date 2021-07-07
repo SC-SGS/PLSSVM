@@ -3,11 +3,10 @@
 #include <plssvm/CSVM.hpp>
 #include <plssvm/kernel_types.hpp>
 
-#include "../../../src/plssvm/OpenCL/manager/configuration.hpp"
-#include "../../../src/plssvm/OpenCL/manager/device.hpp"
-#include "../../../src/plssvm/OpenCL/manager/manager.hpp"
-#include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
-#include <plssvm/distribution.hpp>
+#include "../../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
+#include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"
+#include "../../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
+#include <plssvm/backends/OpenCL/DevicePtrOpenCL.hpp>
 #include <stdexcept>
 
 namespace plssvm {
@@ -27,7 +26,6 @@ class OpenCL_CSVM : public CSVM {
     void resizeDatalast(const int device, int boundary);
     std::vector<real_t> generate_q();
     // inline void resize(const int old_boundary,const int new_boundary);
-    distribution distr;
     opencl::manager_t manager{ "../platform_configuration.cfg" };
     opencl::device_t first_device;
     std::vector<cl_kernel> kernel_q_cl;

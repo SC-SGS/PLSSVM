@@ -1,16 +1,14 @@
-#include <plssvm/CUDA/cuda-kernel.hpp>
-#include <plssvm/OpenCL/OpenCL_CSVM.hpp>
+#include <plssvm/backends/CUDA/cuda-kernel.hpp>
+#include <plssvm/backends/OpenCL/OpenCL_CSVM.hpp>
 
 #include "manager/configuration.hpp"
 #include "manager/device.hpp"
 #include "manager/manager.hpp"
-#include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
+#include <plssvm/backends/OpenCL/DevicePtrOpenCL.hpp>
 #include <stdexcept>
 
 #include "manager/apply_arguments.hpp"
 #include "manager/run_kernel.hpp"
-
-#include <plssvm/distribution.hpp>
 
 namespace plssvm {
 

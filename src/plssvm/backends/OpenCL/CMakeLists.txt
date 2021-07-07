@@ -16,7 +16,6 @@ message(STATUS "OpenCL backend enabled.")
 # explicitly set sources
 set(PLSSVM_OpenCL_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/../CUDA/cuda-kernel.cpp #TODO: add_mult_ on GPU
   ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
   ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
   ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
@@ -31,6 +30,7 @@ set(PLSSVM_OpenCL_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/manager/json/list_node.cpp
   ${CMAKE_CURRENT_LIST_DIR}/manager/json/node.cpp
   ${CMAKE_CURRENT_LIST_DIR}/manager/json/text_node.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../CUDA/cuda-kernel.cpp # TODO: remove after moved to GPU
 )
 
 # set target properties

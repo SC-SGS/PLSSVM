@@ -12,7 +12,7 @@ add_executable(
   main_tests
   test.cpp ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
   ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/OpenMP/OpenMP_CSVM.cpp) # TODO: link against
+  ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenMP/OpenMP_CSVM.cpp) # TODO: link against
                                                            # svm
 # as library
 target_link_libraries(main_tests gtest_main)
@@ -33,7 +33,7 @@ if(TARGET svm-OpenMP)
 endif()
 if(TARGET svm-OCL)
   target_link_libraries(main_tests svm-OCL)
-  target_include_directories(main_tests PUBLIC ${PROJECT_SOURCE_DIR}/src/plssvm/OpenCL)
+  target_include_directories(main_tests PUBLIC ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenCL)
   target_compile_definitions(main_tests PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
 
 endif()

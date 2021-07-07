@@ -138,8 +138,7 @@ int main(int argc, char *argv[]) {
         svm->learn(input_file_name, model_file_name);
 
     } catch (const plssvm::exception &e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << e.loc() << std::endl;
+        std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
     }

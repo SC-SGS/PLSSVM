@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../../src/plssvm/OpenCL/manager/device.hpp"
-#include "../../../src/plssvm/OpenCL/manager/manager.hpp"
+#include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"
+#include "../../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
 #include <CL/cl.h>
 #include <iostream>
 #include <sstream>

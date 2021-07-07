@@ -5,6 +5,11 @@ project (SupportVectorMachine
          LANGUAGES CXX
          DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
+## configure version file
+set(CONFIG_IN ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in)
+set(CONFIG_OUT ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp)
+configure_file(${CONFIG_IN} ${CONFIG_OUT} @ONLY)
+
 include(FetchContent)
 
 ## fetch command line parser library cxxopts
@@ -83,21 +88,21 @@ target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${fast_float_SOURCE_
 set(PLSVM_ENABLE_OpenMP_BACKEND AUTO CACHE STRING "Enable OpenMP Backend")
 set_property(CACHE PLSVM_ENABLE_OpenMP_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if(PLSVM_ENABLE_OpenMP_BACKEND MATCHES "AUTO" OR PLSVM_ENABLE_OpenMP_BACKEND)
-  add_subdirectory(src/plssvm/OpenMP)
+  add_subdirectory(src/plssvm/backends/OpenMP)
 endif()
 
 ## check for CUDA backend
 set(PLSSVM_ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend")
 set_property(CACHE PLSSVM_ENABLE_CUDA_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_CUDA_BACKEND)
-  add_subdirectory(src/plssvm/CUDA)
+  add_subdirectory(src/plssvm/backends/CUDA)
 endif()
 
 ## check for OpenCL backend
 set(PLSSVM_ENABLE_OPENCL_BACKEND AUTO CACHE STRING "Enable OpenCL Backend")
 set_property(CACHE PLSSVM_ENABLE_OPENCL_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_OPENCL_BACKEND)
-  add_subdirectory(src/plssvm/OpenCL)
+  add_subdirectory(src/plssvm/backends/OpenCL)
 endif()
 
 

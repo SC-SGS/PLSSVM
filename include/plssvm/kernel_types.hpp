@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <fmt/ostream.h>  // use operator<< to enable fmt::format with custom type
+#include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
 #include <ostream>      // std::ostream
 #include <string_view>  // std::string_view

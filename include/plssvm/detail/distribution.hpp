@@ -1,6 +1,6 @@
 #pragma once
 
-#include <plssvm/exceptions.hpp>
+#include <plssvm/exceptions/exceptions.hpp>
 #include <plssvm/typedef.hpp>
 
 #include <fmt/core.h>
@@ -9,7 +9,7 @@
 #include <numeric>
 #include <vector>
 
-namespace plssvm {
+namespace plssvm::detail {
 
 class distribution {
   public:
@@ -38,4 +38,4 @@ class distribution {
     std::vector<int> distr;
 };
 
-}  // namespace plssvm
+}  // namespace plssvm::detail

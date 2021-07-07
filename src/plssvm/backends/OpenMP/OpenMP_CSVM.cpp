@@ -1,10 +1,9 @@
 #include <chrono>
 #include <omp.h>
-#include <plssvm/OpenMP/OpenMP_CSVM.hpp>
-#include <plssvm/operators.hpp>
-#include <plssvm/string_utility.hpp>
-#include <plssvm/svm-kernel.hpp>
-
+#include <plssvm/backends/OpenMP/OpenMP_CSVM.hpp>
+#include <plssvm/detail/operators.hpp>
+#include <plssvm/detail/string_utility.hpp>
+#include <plssvm/backends/OpenMP/svm-kernel.hpp>
 namespace plssvm {
 
 OpenMP_CSVM::OpenMP_CSVM(real_t cost_,

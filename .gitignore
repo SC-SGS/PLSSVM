@@ -1,0 +1,71 @@
+# C++ ================================
+Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+# CMake ================================
+bin/
+build*/
+cmake-build*/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+
+# IDEs ================================
+.idea/
+.vscode/
+
+
+# Project related ================================
+
+# generated documentation
+!docs/
+docs/*
+!docs/CMakeLists.txt
+!docs/Doxyfile.in
+
+# auto-generated version header
+include/plssvm/version/version.hpp
+
+# data folder
+!data/
+data/*
+!data/generate_data.py

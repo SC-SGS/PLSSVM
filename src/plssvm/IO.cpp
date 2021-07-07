@@ -1,55 +1,54 @@
-#include <plssvm/CSVM.hpp>
-#include <plssvm/exceptions.hpp>
-#include <plssvm/kernel_types.hpp>
-#include <plssvm/operators.hpp>
-#include <plssvm/string_utility.hpp>
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
 
-#include <fmt/format.h>
+#include "plssvm/CSVM.hpp"
 
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <vector>
+#include "plssvm/detail/file_reader.hpp"     // plssvm::detail::file_reader
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::convert_to, plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/typedef.hpp"                // plssvm::real_t
+
+#include "fmt/core.h"  // fmt::format, fmt::print
+
+#include <algorithm>    // std::max, std::transform
+#include <cctype>       // std::toupper
+#include <cstddef>      // std::size_t
+#include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
+#include <omp.h>        // omp_get_num_threads # TODO: get rid of it?
+#include <ostream>      // std::ofstream, std::ios::out, std::ios::trunc
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm {
 
 // read libsvm file
-void CSVM::libsvmParser(const std::string_view filename) {
-    std::vector<std::string> data_lines;
+void CSVM::libsvmParser(const std::string &filename) {
+    detail::file_reader f{ filename, '#' };
 
-    {
-        std::ifstream file{ filename.data() };
-        if (file.fail()) {
-            throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
-        }
-        std::string line;
-        while (std::getline(file, line)) {
-            std::string_view trimmed = util::trim_left(line);
-            if (!trimmed.empty() && !util::starts_with(trimmed, '#')) {
-                data_lines.push_back(std::move(line));
-            }
-        }
-    }
-
-    value.resize(data_lines.size());
-    data.resize(data_lines.size());
+    value.resize(f.num_lines());
+    data.resize(f.num_lines());
 
     std::size_t max_size = 0;
     std::exception_ptr parallel_exception;
 
     #pragma omp parallel
     {
-        #pragma omp for reduction(max \
-                                  : max_size)
+        #pragma omp for reduction(max:max_size)
         for (std::size_t i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
-                std::string_view line = data_lines[i];
+                std::string_view line = f.line(i);
 
                 // get class
                 std::size_t pos = line.find_first_of(' ');
-                value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(0, pos)) > real_t{ 0.0 } ? 1 : -1;
-                // value[i] = std::copysign(1.0, util::convert_to<real_t>(line.substr(0, pos)));
+                value[i] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(0, pos)) > real_t{ 0.0 } ? 1 : -1;
+                // value[i] = std::copysign(1.0, detail::convert_to<real_t>(line.substr(0, pos)));
 
                 // get data
                 std::vector<real_t> vline(max_size);
@@ -61,7 +60,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
                     }
 
                     // get index
-                    const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                    const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                     if (index >= vline.size()) {
                         vline.resize(index + 1);
                     }
@@ -69,7 +68,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
                     // get value
                     next_pos = line.find_first_of(' ', pos);
-                    vline[index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                    vline[index] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                     pos = next_pos;
                 }
                 max_size = std::max(max_size, vline.size());
@@ -104,7 +103,7 @@ void CSVM::libsvmParser(const std::string_view filename) {
 
     // no features were parsed -> invalid file
     if (num_features == 0) {
-        throw std::runtime_error{ fmt::format("Can't parse file '{}'!", filename) };
+        throw invalid_file_format_exception{ fmt::format("Can't parse file '{}'!", filename) };
     }
 
     // update gamma
@@ -116,67 +115,42 @@ void CSVM::libsvmParser(const std::string_view filename) {
 }
 
 // read ARFF file
-void CSVM::arffParser(const std::string_view filename) {
-    std::vector<std::string> data_lines;
+void CSVM::arffParser(const std::string &filename) {
+    detail::file_reader f{ filename, '%' };
     std::size_t max_size = 0;
+
+    // parse arff header
+    std::size_t header = 0;
     {
-        std::ifstream file{ filename.data() };
-        if (file.fail()) {
-            throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
-        }
-        std::string line;
-
-        // read and parse header information
-        while (std::getline(file, line)) {
-            std::string_view trimmed = util::trim_left(line);
-            if (trimmed.empty() || util::starts_with(trimmed, '%')) {
-                // ignore empty lines or comments
+        for (; header < f.num_lines(); ++header) {
+            std::string line{ f.line(header) };
+            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
+            if (detail::starts_with(line, "@RELATION")) {
+                // ignore relation
                 continue;
-            } else {
-                // match arff properties case insensitive
-                std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
-                trimmed = util::trim_left(line);
-                if (util::starts_with(trimmed, "@RELATION")) {
-                    // ignore relation
-                    continue;
-                } else if (util::starts_with(trimmed, "@ATTRIBUTE")) {
-                    if (line.find("NUMERIC") == std::string::npos) {
-                        throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", line) };
-                    }
-                    // add a feature
-                    ++max_size;
-                } else if (util::starts_with(trimmed, "@DATA")) {
-                    // finished reading header -> start parsing data
-                    break;
+            } else if (detail::starts_with(line, "@ATTRIBUTE")) {
+                if (line.find("NUMERIC") == std::string::npos) {
+                    throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", line) };
                 }
-            }
-        }
-
-        // something went wrong, i.e. no @ATTRIBUTE fields
-        if (max_size == 0) {
-            throw invalid_file_format_exception{ "Invalid file format!" };
-        }
-
-        // read data
-        while (std::getline(file, line)) {
-            std::string_view trimmed = util::trim_left(line);
-            if (trimmed.empty() || util::starts_with(trimmed, '%')) {
-                // ignore empty lines or comments
-                continue;
-            } else if (util::starts_with(trimmed, '@')) {
-                // read @ inside data section
-                throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: {}", line) };
-            } else {
-                data_lines.push_back(std::move(line));
+                // add a feature
+                ++max_size;
+            } else if (detail::starts_with(line, "@DATA")) {
+                // finished reading header -> start parsing data
+                break;
             }
         }
     }
 
-    value.resize(data_lines.size());
-    data.resize(data_lines.size());
+    // something went wrong, i.e. no @ATTRIBUTE fields
+    if (max_size == 0) {
+        throw invalid_file_format_exception{ "Invalid file format!" };
+    }
+
+    value.resize(f.num_lines() - (header + 1));
+    data.resize(f.num_lines() - (header + 1));
 
     #pragma omp parallel for
-    for (std::size_t i = 0; i < data_lines.size(); ++i) {
+    for (std::size_t i = 0; i < data.size(); ++i) {
         data[i].resize(max_size - 1);
     }
 
@@ -188,12 +162,17 @@ void CSVM::arffParser(const std::string_view filename) {
         for (std::size_t i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
-                std::string_view line{ util::trim_left(data_lines[i]) };
+                std::string_view line = f.line(i + header + 1);
+                //
+                if (detail::starts_with(line, '@')) {
+                    // read @ inside data section
+                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: {}", line) };
+                }
 
                 // parse sparse or dense data point definition
-                if (util::starts_with(line, '{')) {
+                if (detail::starts_with(line, '{')) {
                     // missing closing }
-                    if (!util::ends_with(line, '}')) {
+                    if (!detail::ends_with(line, '}')) {
                         throw invalid_file_format_exception{ "Missing closing '}' for sparse data point description!" };
                     }
                     // sparse line
@@ -207,7 +186,7 @@ void CSVM::arffParser(const std::string_view filename) {
                         }
 
                         // get index
-                        const auto index = util::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
 
                         // get value
@@ -216,14 +195,14 @@ void CSVM::arffParser(const std::string_view filename) {
                         // write parsed value depending on the index
                         if (index == max_size - 1) {
                             is_class_set = true;
-                            value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{ 0.0 } ? 1 : -1;
+                            value[i] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{ 0.0 } ? 1 : -1;
                         } else {
-                            data[i][index] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            data[i][index] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
                         // remove already processes part of the line
                         line.remove_prefix(next_pos + 1);
-                        line = util::trim_left(line);
+                        line = detail::trim_left(line);
                         pos = 0;
                     }
                     // no class label found
@@ -238,10 +217,10 @@ void CSVM::arffParser(const std::string_view filename) {
                         if (next_pos == std::string_view::npos) {
                             throw invalid_file_format_exception{ fmt::format("Invalid number of features! Found {} but should be {}.", j, max_size - 1) };
                         }
-                        data[i][j] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        data[i][j] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
                     }
-                    value[i] = util::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{ 0.0 } ? 1 : -1;
+                    value[i] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{ 0.0 } ? 1 : -1;
                 }
             } catch (const std::exception &e) {
                 // catch first exception and store it
@@ -274,7 +253,7 @@ void CSVM::arffParser(const std::string_view filename) {
     fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
-void CSVM::writeModel(const std::string_view model_name) {
+void CSVM::writeModel(const std::string &model_name) {
     // TODO: idea: save number of Datapoint in input file -> copy input file -> manipulate copy and dont rewrite whole File
     int nBSV = 0;
     int count_pos = 0;
@@ -323,44 +302,44 @@ void CSVM::writeModel(const std::string_view model_name) {
         count_pos,
         count_neg);
 
-    volatile int count = 0;
-    #pragma omp parallel num_threads(1)
-    {
-        fmt::memory_buffer out_pos;
-        fmt::memory_buffer out_neg;
+    // format one output-line
+    auto format_libsmv_line = [](real_t a, const std::vector<real_t> &d) -> std::string {
+        std::string line;
+        line += fmt::format("{} ", a);
+        for (std::size_t j = 0; j < d.size(); ++j) {
+            if (d[j] != 0.0) {
+                line += fmt::format("{}:{:e} ", j, d[j]);
+            }
+        }
+        line.push_back('\n');
+        return line;
+    };
 
+    volatile int count = 0;
+    #pragma omp parallel
+    {
         // all support vectors with class 1
+        std::string out_pos;
         #pragma omp for nowait
         for (std::size_t i = 0; i < alpha.size(); ++i) {
             if (value[i] > 0) {
-                fmt::format_to(std::back_inserter(out_pos), "{} ", alpha[i]);
-                for (std::size_t j = 0; j < data[i].size(); ++j) {
-                    if (data[i][j] != 0) {
-                        fmt::format_to(std::back_inserter(out_pos), "{}:{:e} ", j, data[i][j]);
-                    }
-                }
-                fmt::format_to(std::back_inserter(out_pos), "\n");
+                out_pos += format_libsmv_line(alpha[i], data[i]);
             }
         }
 
         #pragma omp critical
         {
-            model << fmt::to_string(out_pos);
+            model.write(out_pos.data(), static_cast<std::streamsize>(out_pos.size()));
             count++;
             #pragma omp flush(count, model)
         }
 
         // all support vectors with class -1
+        std::string out_neg;
         #pragma omp for nowait
         for (std::size_t i = 0; i < alpha.size(); ++i) {
             if (value[i] < 0) {
-                fmt::format_to(std::back_inserter(out_neg), "{} ", alpha[i]);
-                for (std::size_t j = 0; j < data[i].size(); ++j) {
-                    if (data[i][j] != 0) {
-                        fmt::format_to(std::back_inserter(out_neg), "{}:{:e} ", j, data[i][j]);
-                    }
-                }
-                fmt::format_to(std::back_inserter(out_neg), "\n");
+                out_neg += format_libsmv_line(alpha[i], data[i]);
             }
         }
 
@@ -369,9 +348,8 @@ void CSVM::writeModel(const std::string_view model_name) {
         }
 
         #pragma omp critical
-        model << fmt::to_string(out_neg);
+        model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
     }
-    model.close();
 }
 
 }  // namespace plssvm

@@ -1,6 +1,6 @@
 #pragma once
+#include <plssvm/detail/operators.hpp>
 #include <plssvm/kernel_types.hpp>
-#include <plssvm/operators.hpp>
 #include <plssvm/typedef.hpp>
 
 #include <chrono>
@@ -12,7 +12,6 @@
 #include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -28,16 +27,16 @@ class CSVM {
   public:
     CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
         cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
-    virtual void learn(const std::string_view, const std::string_view);
+    virtual void learn(const std::string &, const std::string &);
 
     const real_t &getB() const { return bias; };
     virtual void load_w() = 0;
     virtual std::vector<real_t> predict(real_t *, int, int) = 0;
     virtual ~CSVM() = default;
 
-    void libsvmParser(const std::string_view);
-    void arffParser(const std::string_view);
-    void writeModel(const std::string_view);
+    void libsvmParser(const std::string &);
+    void arffParser(const std::string &);
+    void writeModel(const std::string &);
 
   protected:
     const bool info;

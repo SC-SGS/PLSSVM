@@ -1,7 +1,7 @@
-#include <plssvm/CUDA/CUDA_CSVM.hpp>
-#include <plssvm/CUDA/cuda-kernel.cuh>
-#include <plssvm/CUDA/cuda-kernel.hpp>
-#include <plssvm/CUDA/svm-kernel.cuh>
+#include <plssvm/backends/CUDA/CUDA_CSVM.hpp>
+#include <plssvm/backends/CUDA/cuda-kernel.cuh>
+#include <plssvm/backends/CUDA/cuda-kernel.hpp>
+#include <plssvm/backends/CUDA/svm-kernel.cuh>
 
 namespace plssvm {
 

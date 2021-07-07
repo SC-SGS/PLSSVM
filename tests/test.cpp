@@ -8,22 +8,23 @@
 #include <string>
 #include <unistd.h>
 
-#include "plssvm/exceptions.hpp"
+#include "plssvm/exceptions/exceptions.hpp"
 
-#include "plssvm/OpenMP/OpenMP_CSVM.hpp"
+#include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 #include <plssvm/kernel_types.hpp>
-#include <plssvm/svm-kernel.hpp>
+#include <plssvm/backends/OpenMP/svm-kernel.hpp>
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     #include "manager/configuration.hpp"
     #include "manager/device.hpp"
     #include "manager/manager.hpp"
-    #include <plssvm/OpenCL/DevicePtrOpenCL.hpp>
+    #include <plssvm/backends/OpenCL/DevicePtrOpenCL.hpp>
     #include <stdexcept>
 
     #include "manager/apply_arguments.hpp"
     #include "manager/run_kernel.hpp"
 #endif
+
 
 TEST(IO, libsvmFormat) {
     MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);

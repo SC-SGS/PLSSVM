@@ -1,0 +1,46 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Implements constants to query the current library version.
+ */
+
+#pragma once
+
+#include <string_view>  // std::string_view
+
+namespace plssvm::version {
+
+/**
+ * @brief The name of the library.
+ * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
+ */
+inline constexpr std::string_view name = "@PROJECT_NAME@";
+
+/**
+ * @brief The current version of the library in the form: "major.minor.patch".
+ * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
+ */
+inline constexpr std::string_view string = "@PROJECT_VERSION@";
+
+/**
+ * @brief The current major version of the library.
+ * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
+ */
+inline constexpr int major = @PROJECT_VERSION_MAJOR@;
+
+/**
+ * @brief The current minor version of the library.
+ * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
+ */
+inline constexpr int minor = @PROJECT_VERSION_MINOR@;
+
+/**
+ * @brief The current patch version of the library.
+ * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
+ */
+inline constexpr int patch = @PROJECT_VERSION_PATCH@;
+
+}  // namespace plssvm::version
