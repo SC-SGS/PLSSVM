@@ -277,7 +277,7 @@ TEST(learn, comapre_backends) {
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
-    csvm_CUDA.libsvmParser(TESTPATH "/data/5x4.libsvm");
+    csvm_CUDA.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_CUDA.loadDataDevice();
     csvm_CUDA.learn();
     ASSERT_EQ(csvm_CUDA.get_num_data_points(), csvm_CUDA.alpha.size());
@@ -335,7 +335,7 @@ TEST(learn, q) {
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
-    csvm_CUDA.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm_CUDA.parse_libsvm(TESTPATH "/data/500x200.libsvm");
     csvm_CUDA.loadDataDevice();
     qs.emplace_back(csvm_CUDA.generate_q());
     svms.emplace_back("cuda");
