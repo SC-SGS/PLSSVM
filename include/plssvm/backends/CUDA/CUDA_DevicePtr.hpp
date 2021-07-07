@@ -1,26 +1,35 @@
 #pragma once
 
-#include "CUDA_exceptions.hpp"
+#include "plssvm/backends/CUDA/CUDA_exceptions.hpp"
+#include "plssvm/exceptions/source_location.hpp"
 
 #include "fmt/core.h"
 
 #include <algorithm>  // std::min
 #include <utility>    // std::move, std::swap, std::exchange
 
+#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::detail::cuda::assert((err));
+
 // TODO: correct namespace
 namespace plssvm::detail::cuda {
 
-std::size_t get_device_count() {
+inline void assert(const cudaError_t code) {
+    if (code != cudaSuccess) {
+        throw cuda_backend_exception{ fmt::format("CUDA assert {}: {}", cudaGetErrorName(code), cudaGetErrorString(code)) };
+    }
+}
+
+[[nodiscard]] inline std::size_t get_device_count() {
     int count;
-    cudaGetDeviceCount(&count);
+    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceCount(&count));
     return static_cast<std::size_t>(count);
 }
 
-void device_synchronize() {
-    cudaDeviceSynchronize();
+inline void device_synchronize() {
+    PLSSVM_CUDA_ERROR_CHECK(cudaDeviceSynchronize());
 }
-void peek_at_last_error() {
-    cudaPeekAtLastError();
+inline void peek_at_last_error() {
+    PLSSVM_CUDA_ERROR_CHECK(cudaPeekAtLastError());
 }
 
 template <typename T>
@@ -39,8 +48,8 @@ class device_ptr {
         if (device_ < 0) {
             throw plssvm::cuda_backend_exception{ fmt::format("Device ID must not be negative but is {}!", device_) };
         }
-        cudaSetDevice(device_);
-        cudaMalloc(static_cast<void **>(data_), size_ * sizeof(value_type));
+        PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
+        PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, size_ * sizeof(value_type)));
     }
 
     device_ptr(const device_ptr &) = delete;
@@ -57,8 +66,8 @@ class device_ptr {
     }
 
     ~device_ptr() {
-        cudaSetDevice(device_);
-        cudaFree(data_);
+        PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
+        PLSSVM_CUDA_ERROR_CHECK(cudaFree(data_));
     }
 
     void swap(device_ptr &other) noexcept {
@@ -94,9 +103,9 @@ class device_ptr {
         if (pos >= size_) {
             throw cuda_backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
         }
-        cudaSetDevice(device_);
+        PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         const size_type rcount = std::min(count, size_ - pos);
-        cudaMemset(data_ + pos, value, rcount * sizeof(value_type));
+        PLSSVM_CUDA_ERROR_CHECK(cudaMemset(data_ + pos, value, rcount * sizeof(value_type)));
     }
 
     void memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos = 0, const size_type count = size_) {
@@ -107,9 +116,9 @@ class device_ptr {
         this->memcpy_to_device(data_to_copy.data(), pos, count);
     }
     void memcpy_to_device(const_pointer data_to_copy, const size_type pos = 0, const size_type count = size_) {
-        cudaSetDevice(device_);
+        PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         const size_type rcount = std::min(count, size_ - pos);
-        cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice);
+        PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice));
     }
 
     void memcpy_to_host(std::vector<value_type> &buffer, const size_type pos = 0, const size_type count = size_) {
@@ -120,9 +129,9 @@ class device_ptr {
         this->memcpy_to_host(buffer.data(), pos, size);
     }
     void mempcy_to_host(pointer buffer, const size_type pos = 0, const size_type count = size_) {
-        cudaSetDevice(device_);
+        PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         const size_type rcount = std::min(count, size_ - pos);
-        cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost);
+        PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost));
     }
 
   private:
@@ -130,5 +139,7 @@ class device_ptr {
     pointer data_ = nullptr;
     size_type size_ = 0;
 };
+
+#undef PLSSVM_CUDA_ERROR_CHECK
 
 }  // namespace plssvm::detail::cuda
