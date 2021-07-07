@@ -18,28 +18,38 @@
 
 namespace plssvm {
 
-static int times = 0;
-
 template <typename T>
 class CSVM {
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
   public:
-    CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
-    virtual void learn(const std::string &, const std::string &);
+    using real_type = T;
+    using index_type = std::size_t;
+
+    CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_ = true) :
+        cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), print_info_(info_) {}
+
+    /**************************************************************************************************************************************/
+    /**                                                          IO functions                                                            **/
+    /**************************************************************************************************************************************/
+    void parse_libsvm(const std::string &filename);
+    void parse_arff(const std::string &filename);
+    void parse_file(const std::string &filename);
+    void write_model(const std::string &filename);
+
+    virtual void learn(const std::string &input_filename, const std::string &model_filename);
 
     const real_t &getB() const { return bias; };
     virtual void load_w() = 0;
     virtual std::vector<real_t> predict(real_t *, int, int) = 0;
     virtual ~CSVM() = default;
 
-    void libsvmParser(const std::string &);
-    void arffParser(const std::string &);
-    void writeModel(const std::string &);
+    //    void libsvmParser(const std::string &);
+    //    void arffParser(const std::string &);
+    //    void writeModel(const std::string &);
 
   protected:
-    const bool info;
+    const bool print_info_;
     real_t cost;
     const real_t epsilon;
     const kernel_type kernel;

@@ -12,7 +12,8 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/typedef.hpp"                // plssvm::real_t
 
-#include "fmt/core.h"  // fmt::format, fmt::print
+#include "fmt/chrono.h"  // format std::chrono
+#include "fmt/core.h"    // fmt::format, fmt::print
 
 #include <algorithm>    // std::max, std::transform
 #include <cctype>       // std::toupper
@@ -27,9 +28,21 @@
 
 namespace plssvm {
 
-// read libsvm file
+// read and parse file
 template <typename T>
-void CSVM<T>::libsvmParser(const std::string &filename) {
+void CSVM<T>::parse_file(const std::string &filename) {
+    if (detail::ends_with(filename, ".arff")) {
+        parse_arff(filename);
+    } else {
+        parse_libsvm(filename);
+    }
+}
+
+// read and parse a libsvm file
+template <typename T>
+void CSVM<T>::parse_libsvm(const std::string &filename) {
+    auto start_time = std::chrono::steady_clock::now();
+
     detail::file_reader f{ filename, '#' };
 
     value.resize(f.num_lines());
@@ -112,12 +125,20 @@ void CSVM<T>::libsvmParser(const std::string &filename) {
         gamma = 1. / num_features;
     }
 
-    fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Read {} data points with {} features in {} using the libsvm parser.\n",
+                   num_data_points,
+                   num_features,
+                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
 }
 
-// read ARFF file
+// read and parse an ARFF file
 template <typename T>
-void CSVM<T>::arffParser(const std::string &filename) {
+void CSVM<T>::parse_arff(const std::string &filename) {
+    auto start_time = std::chrono::steady_clock::now();
+
     detail::file_reader f{ filename, '%' };
     std::size_t max_size = 0;
 
@@ -252,12 +273,19 @@ void CSVM<T>::arffParser(const std::string &filename) {
         gamma = 1. / num_features;
     }
 
-    fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Read {} data points with {} features in {} using the arff parser.\n",
+                   num_data_points,
+                   num_features,
+                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
 }
 
 template <typename T>
-void CSVM<T>::writeModel(const std::string &model_name) {
-    // TODO: idea: save number of Datapoint in input file -> copy input file -> manipulate copy and dont rewrite whole File
+void CSVM<T>::write_model(const std::string &model_name) {
+    auto start_time = std::chrono::steady_clock::now();
+
     int nBSV = 0;
     int count_pos = 0;
     int count_neg = 0;
@@ -274,18 +302,21 @@ void CSVM<T>::writeModel(const std::string &model_name) {
     }
 
     // terminal output
-    if (info) {
+    if (print_info_) {
         fmt::print(
-            "Optimization finished \n"
-            "nu = {}\n"
-            "obj = \t, rho {}\n"
-            "nSV = {}, nBSV = {}\n"
-            "Total nSV = {}\n",
-            cost,
-            -bias,
+            "Optimization finished\n"
+            "kernel type: {}\n"
+            "#support vectors: {}\n"
+            "#bounded support vectors: {}\n"
+            "total # support vectors: {}\n"
+            "nu: {}\n"
+            "rho: {}\n",
+            kernel,
             count_pos + count_neg - nBSV,
             nBSV,
-            count_pos + count_neg);
+            count_pos + count_neg,
+            cost,
+            -bias);
     }
 
     // create model file
@@ -299,7 +330,7 @@ void CSVM<T>::writeModel(const std::string &model_name) {
         "label 1 -1\n"
         "nr_sv {} {}\n"
         "SV\n",
-        static_cast<plssvm::kernel_type>(kernel),
+        kernel,
         count_pos + count_neg,
         -bias,
         count_pos,
@@ -352,6 +383,13 @@ void CSVM<T>::writeModel(const std::string &model_name) {
 
         #pragma omp critical
         model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Wrote model file with {} support vectors in {}.\n",
+                   count_pos + count_neg,
+                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
 

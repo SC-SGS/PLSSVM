@@ -24,7 +24,7 @@ void CSVM<T>::learn() {
         }
     }
 
-    if (info)
+    if (print_info_)
         std::cout << "start CG" << std::endl;
     //solve minimization
     alpha = CG(b, num_features, epsilon, q);
@@ -71,41 +71,35 @@ real_t CSVM<T>::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj
 }
 
 template <typename T>
-void CSVM<T>::learn(const std::string &filename, const std::string &output_filename) {
-    auto begin_parse = std::chrono::high_resolution_clock::now();
-    if (filename.size() > 5 && detail::ends_with(filename.data(), ".arff")) {
-        arffParser(filename.data());
-    } else {
-        libsvmParser(filename.data());
-    }
+void CSVM<T>::learn(const std::string &input_filename, const std::string &model_filename) {
+    // parse data file
+    this->parse_file(input_filename);
 
-    auto end_parse = std::chrono::high_resolution_clock::now();
-    if (info) {
-        std::clog << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << " ms eingelesen" << std::endl
-                  << std::endl;
-    }
+    //    auto end_parse = std::chrono::high_resolution_clock::now();
+    //    if (info) {
+    //        std::clog << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << " ms eingelesen" << std::endl
+    //                  << std::endl;
+    //    }
     loadDataDevice();
 
-    auto end_gpu = std::chrono::high_resolution_clock::now();
-
-    if (info)
-        std::clog << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << " ms auf die Gpu geladen" << std::endl
-                  << std::endl;
+    //    auto end_gpu = std::chrono::high_resolution_clock::now();
+    //
+    //    if (info)
+    //        std::clog << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << " ms auf die Gpu geladen" << std::endl
+    //                  << std::endl;
 
     learn();
-    auto end_learn = std::chrono::high_resolution_clock::now();
-    if (info)
-        std::clog << std::endl
-                  << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << " ms gelernt" << std::endl;
+    //    auto end_learn = std::chrono::high_resolution_clock::now();
+    //    if (info)
+    //        std::clog << std::endl
+    //                  << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << " ms gelernt" << std::endl;
 
-    writeModel(output_filename);
-    auto end_write = std::chrono::high_resolution_clock::now();
-    if (info) {
-        std::clog << std::endl
-                  << data.size() << " Datenpunkte mit Dimension " << num_features << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << " ms geschrieben" << std::endl;
-    } else if (times) {
-        std::clog << data.size() << ", " << num_features << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
-    }
+    // write results to model file
+    write_model(model_filename);
+
+    //    if (true) {  // TODO: check
+    //        std::clog << data.size() << ", " << num_features << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
+    //    }
 }
 
 // explicitly instantiate template class

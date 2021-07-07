@@ -17,7 +17,7 @@ OpenMP_CSVM::OpenMP_CSVM(real_t cost_,
 
 std::vector<real_t> OpenMP_CSVM::generate_q() {
     std::vector<real_t> q;
-    if (info) {
+    if (print_info_) {
         std::cout << "kernel_q" << std::endl;
     }
     q.reserve(data.size());

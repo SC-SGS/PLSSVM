@@ -44,7 +44,7 @@ void OpenCL_CSVM::loadDataDevice() {
     auto begin_transform = std::chrono::high_resolution_clock::now();
     const std::vector<real_t> transformet_data = transform_data(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
     auto end_transform = std::chrono::high_resolution_clock::now();
-    if (info) {
+    if (print_info_) {
         std::clog << std::endl
                   << data.size() << " Datenpunkte mit Dimension " << num_features << " in "
                   << std::chrono::duration_cast<std::chrono::milliseconds>(end_transform - begin_transform).count()
@@ -265,7 +265,7 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
 
     int run;
     for (run = 0; run < imax; ++run) {
-        if (info)
+        if (print_info_)
             std::cout << "Start Iteration: " << run << std::endl;
         //Ad = A * d
         {
