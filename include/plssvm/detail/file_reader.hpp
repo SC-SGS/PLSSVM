@@ -90,7 +90,7 @@ class file_reader {
      * @return the line without leading whitespaces
      */
     [[nodiscard]] std::string_view line(const std::size_t pos) const {
-        assert((pos < this->num_lines) && "Out-of-bounce access!");
+        assert((pos < this->num_lines()) && "Out-of-bounce access!");
         return lines_[pos];
     }
 
