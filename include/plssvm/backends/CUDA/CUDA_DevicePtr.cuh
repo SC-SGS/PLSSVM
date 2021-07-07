@@ -7,12 +7,12 @@
 #include <algorithm>  // std::min
 #include <utility>    // std::move, std::swap, std::exchange
 
-#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::detail::cuda::assert((err));
+#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::detail::cuda::gpu_assert((err));
 
 // TODO: correct namespace
 namespace plssvm::detail::cuda {
 
-inline void assert(const cudaError_t code) {
+inline void gpu_assert(const cudaError_t code) {
     if (code != cudaSuccess) {
         throw cuda_backend_exception{ fmt::format("CUDA assert {}: {}", cudaGetErrorName(code), cudaGetErrorString(code)) };
     }
@@ -54,7 +54,7 @@ class device_ptr {
     device_ptr(const device_ptr &) = delete;
     device_ptr(device_ptr &&other) noexcept :
         device_{ std::exchange(other.device_, 0) },
-        data_{ std::exchnage(other.data_, nullptr) },
+        data_{ std::exchange(other.data_, nullptr) },
         size_{ std::exchange(other.size_, 0) } {}
 
     device_ptr &operator=(const device_ptr &) = delete;
@@ -98,36 +98,51 @@ class device_ptr {
         return device_;
     }
 
-    void memset(const value_type value, const size_type pos = 0, const size_type count = size_) {
+    void memset(const value_type value, const size_type pos = 0) {
+        this->memset(value, pos, size_);
+    }
+    void memset(const value_type value, const size_type pos, const size_type count) {
         if (pos >= size_) {
-            throw cuda_backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+            throw plssvm::cuda_backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
         }
         PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         const size_type rcount = std::min(count, size_ - pos);
         PLSSVM_CUDA_ERROR_CHECK(cudaMemset(data_ + pos, value, rcount * sizeof(value_type)));
     }
 
-    void memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos = 0, const size_type count = size_) {
+    void memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos = 0) {
+        this->memcpy_to_device(data_to_copy, pos, size_);
+    }
+    void memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
         const size_type rcount = std::min(count, size_ - pos);
         if (data_to_copy.size() < rcount) {
-            throw cuda_backend_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
+            throw plssvm::cuda_backend_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
         }
         this->memcpy_to_device(data_to_copy.data(), pos, count);
     }
-    void memcpy_to_device(const_pointer data_to_copy, const size_type pos = 0, const size_type count = size_) {
+    void memcpy_to_device(const_pointer data_to_copy, const size_type pos = 0) {
+        this->memcpy_to_device(data_to_copy, pos, size_);
+    }
+    void memcpy_to_device(const_pointer data_to_copy, const size_type pos, const size_type count) {
         PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         const size_type rcount = std::min(count, size_ - pos);
         PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice));
     }
 
-    void memcpy_to_host(std::vector<value_type> &buffer, const size_type pos = 0, const size_type count = size_) {
+    void memcpy_to_host(std::vector<value_type> &buffer, const size_type pos = 0) {
+        this->memcpy_to_host(buffer, pos, size_);
+    }
+    void memcpy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) {
         const size_type rcount = std::min(count, size_ - pos);
         if (buffer.size() < rcount) {
-            throw cuda_backend_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
+            throw plssvm::cuda_backend_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
         }
-        this->memcpy_to_host(buffer.data(), pos, size);
+        this->memcpy_to_host(buffer.data(), pos, size_);
     }
-    void mempcy_to_host(pointer buffer, const size_type pos = 0, const size_type count = size_) {
+    void memcpy_to_host(pointer buffer, const size_type pos = 0) {
+        this->memcpy_to_host(buffer, pos, size_);
+    }
+    void memcpy_to_host(pointer buffer, const size_type pos, const size_type count) {
         PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
         const size_type rcount = std::min(count, size_ - pos);
         PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost));
