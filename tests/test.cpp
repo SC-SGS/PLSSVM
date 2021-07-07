@@ -11,8 +11,8 @@
 #include "plssvm/exceptions/exceptions.hpp"
 
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
-#include <plssvm/kernel_types.hpp>
 #include <plssvm/backends/OpenMP/svm-kernel.hpp>
+#include <plssvm/kernel_types.hpp>
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     #include "manager/configuration.hpp"
@@ -24,7 +24,6 @@
     #include "manager/apply_arguments.hpp"
     #include "manager/run_kernel.hpp"
 #endif
-
 
 TEST(IO, libsvmFormat) {
     MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
@@ -291,7 +290,7 @@ TEST(learn, comapre_backends) {
     ASSERT_EQ(alphas.size(), biass.size());
     ASSERT_EQ(alphas.size(), QA_costs.size());
     for (size_t svm = 1; svm < alphas.size(); ++svm) {
-        EXPECT_NEAR(biass[0], biass[svm],1e-2) << "svm: " << svm;
+        EXPECT_NEAR(biass[0], biass[svm], 1e-2) << "svm: " << svm;
         EXPECT_DOUBLE_EQ(QA_costs[0], QA_costs[svm]) << "svm: " << svm;
         ASSERT_EQ(alphas[0].size(), alphas[svm].size()) << "svm: " << svm;
         for (size_t index = 0; index < alphas[0].size(); ++index) {
