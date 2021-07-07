@@ -15,7 +15,7 @@ namespace plssvm {
 int count_devices = 1;
 
 OpenCL_CSVM::OpenCL_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-    CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
+    CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
     std::vector<opencl::device_t> &devices = manager.get_devices();
     first_device = devices[0];
     count_devices = devices.size();
@@ -170,13 +170,13 @@ std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax
     d = new real_t[dept];
 
     std::vector<opencl::DevicePtrOpenCL<real_t>> q_cl;
-    for (int device = 0; device < count_devices; ++device)
-        {q_cl.emplace_back(devices[device], q.size());}
+    for (int device = 0; device < count_devices; ++device) {
+        q_cl.emplace_back(devices[device], q.size());
+    }
 
     #pragma omp parallel
     for (int device = 0; device < count_devices; ++device) {
         q_cl[device].to_device(q);
-
     }
 
     for (int device = 0; device < count_devices; ++device) {

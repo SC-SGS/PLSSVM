@@ -21,7 +21,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 int count_devices = 1;
 
 CUDA_CSVM::CUDA_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-    CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
+    CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
     gpuErrchk(cudaGetDeviceCount(&count_devices));
     datlast_d = std::vector<real_t *>(count_devices);
     data_d = std::vector<real_t *>(count_devices);
@@ -98,22 +98,20 @@ std::vector<real_t> CUDA_CSVM::generate_q() {
     }
     gpuErrchk(cudaDeviceSynchronize());
 
-        std::vector<real_t> q(dept);
-        gpuErrchk(cudaSetDevice(0));
-        gpuErrchk(cudaMemcpy(q.data(), q_d[0], dept * sizeof(real_t), cudaMemcpyDeviceToHost));
-        std::vector<real_t> ret(dept_all);
-        for (int device = 1; device < count_devices; ++device) {
-            gpuErrchk(cudaSetDevice(device));
-            gpuErrchk(cudaMemcpy(ret.data(), q_d[device], dept * sizeof(real_t), cudaMemcpyDeviceToHost));
-            for (int i = 0; i < dept; ++i)
-                q[i] += ret[i];
-        }
+    std::vector<real_t> q(dept);
+    gpuErrchk(cudaSetDevice(0));
+    gpuErrchk(cudaMemcpy(q.data(), q_d[0], dept * sizeof(real_t), cudaMemcpyDeviceToHost));
+    std::vector<real_t> ret(dept_all);
+    for (int device = 1; device < count_devices; ++device) {
+        gpuErrchk(cudaSetDevice(device));
+        gpuErrchk(cudaMemcpy(ret.data(), q_d[device], dept * sizeof(real_t), cudaMemcpyDeviceToHost));
+        for (int i = 0; i < dept; ++i)
+            q[i] += ret[i];
+    }
     return q;
-
 }
 
-
-std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q ) {
+std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q) {
     const size_t dept = num_data_points - 1;
     const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     const size_t dept_all = dept + boundary_size;
@@ -146,15 +144,11 @@ std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, 
     }
     d = new real_t[dept];
 
-
-
     const int Ncols = num_features;
     const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     gpuErrchk(cudaDeviceSynchronize());
 
-
-
-        std::vector<real_t *> q_d(count_devices);
+    std::vector<real_t *> q_d(count_devices);
     for (int device = 0; device < count_devices; ++device) {
         gpuErrchk(cudaSetDevice(device));
         gpuErrchk(cudaMalloc((void **) &q_d[device], dept_all * sizeof(real_t)));
@@ -163,7 +157,6 @@ std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, 
         gpuErrchk(cudaDeviceSynchronize());
         gpuErrchk(cudaMemcpy(q_d[device], q.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
     }
-
 
     gpuErrchk(cudaDeviceSynchronize());
 

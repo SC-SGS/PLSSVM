@@ -18,12 +18,12 @@
 
 namespace plssvm {
 
-const bool times = 0;
+static int times = 0;
 
-// static const unsigned CUDABLOCK_SIZE = 7;
-// static const unsigned BLOCKING_SIZE_THREAD = 2;
-
+template <typename T>
 class CSVM {
+    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
+
   public:
     CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
         cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
@@ -82,5 +82,8 @@ class CSVM {
     }
     void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
 };
+
+extern template class CSVM<float>;
+extern template class CSVM<double>;
 
 }  // namespace plssvm

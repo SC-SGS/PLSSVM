@@ -21,8 +21,8 @@ enum class svm_backend { OPENMP,
                          OPENCL };
 
 // factory function
-template <typename... Args>
-std::unique_ptr<CSVM> make_SVM(const svm_backend type, Args... args) {
+template <typename T, typename... Args>
+std::unique_ptr<CSVM<T>> make_SVM(const svm_backend type, Args... args) {
     switch (type) {
         case svm_backend::OPENMP:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        std::unique_ptr<plssvm::CSVM> svm = make_SVM(plssvm::parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
+        auto svm = plssvm::make_SVM<real_t>(plssvm::parse_backend(result["backend"].as<std::string>()), result["cost"].as<real_t>(), result["epsilon"].as<real_t>(), kernel_type, result["degree"].as<real_t>(), gamma, result["coef0"].as<real_t>(), info);
         svm->learn(input_file_name, model_file_name);
 
     } catch (const plssvm::exception &e) {

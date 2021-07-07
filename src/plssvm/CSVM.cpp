@@ -3,7 +3,8 @@
 
 namespace plssvm {
 
-void CSVM::learn() {
+template <typename T>
+void CSVM<T>::learn() {
     std::vector<real_t> q;
     std::vector<real_t> b = value;
     #pragma omp parallel sections
@@ -31,7 +32,8 @@ void CSVM::learn() {
     bias = value.back() - QA_cost * alpha.back() - (q * alpha);
 }
 
-real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {  //TODO: kernel as template
+template <typename T>
+real_t CSVM<T>::kernel_function(real_t *xi, real_t *xj, int dim) {  //TODO: kernel as template
     switch (kernel) {
         case kernel_type::linear:
             return mult(xi, xj, dim);
@@ -49,7 +51,8 @@ real_t CSVM::kernel_function(real_t *xi, real_t *xj, int dim) {  //TODO: kernel 
     }
 }
 
-real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
+template <typename T>
+real_t CSVM<T>::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
     switch (kernel) {
         case kernel_type::linear:
             return xi * xj;
@@ -67,7 +70,8 @@ real_t CSVM::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
     }
 }
 
-void CSVM::learn(const std::string &filename, const std::string &output_filename) {
+template <typename T>
+void CSVM<T>::learn(const std::string &filename, const std::string &output_filename) {
     auto begin_parse = std::chrono::high_resolution_clock::now();
     if (filename.size() > 5 && detail::ends_with(filename.data(), ".arff")) {
         arffParser(filename.data());
@@ -103,5 +107,9 @@ void CSVM::learn(const std::string &filename, const std::string &output_filename
         std::clog << data.size() << ", " << num_features << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
     }
 }
+
+// explicitly instantiate template class
+template class CSVM<float>;
+template class CSVM<double>;
 
 }  // namespace plssvm

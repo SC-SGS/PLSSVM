@@ -1,9 +1,9 @@
 #include <chrono>
 #include <omp.h>
 #include <plssvm/backends/OpenMP/OpenMP_CSVM.hpp>
+#include <plssvm/backends/OpenMP/svm-kernel.hpp>
 #include <plssvm/detail/operators.hpp>
 #include <plssvm/detail/string_utility.hpp>
-#include <plssvm/backends/OpenMP/svm-kernel.hpp>
 namespace plssvm {
 
 OpenMP_CSVM::OpenMP_CSVM(real_t cost_,
@@ -13,12 +13,13 @@ OpenMP_CSVM::OpenMP_CSVM(real_t cost_,
                          real_t gamma_,
                          real_t coef0_,
                          bool info_) :
-    CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
 
 std::vector<real_t> OpenMP_CSVM::generate_q() {
     std::vector<real_t> q;
-    if (info){
-        std::cout << "kernel_q" << std::endl;}
+    if (info) {
+        std::cout << "kernel_q" << std::endl;
+    }
     q.reserve(data.size());
     for (int i = 0; i < data.size() - 1; ++i) {
         q.emplace_back(kernel_function(data.back(), data[i]));

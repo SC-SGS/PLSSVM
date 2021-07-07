@@ -28,7 +28,8 @@
 namespace plssvm {
 
 // read libsvm file
-void CSVM::libsvmParser(const std::string &filename) {
+template <typename T>
+void CSVM<T>::libsvmParser(const std::string &filename) {
     detail::file_reader f{ filename, '#' };
 
     value.resize(f.num_lines());
@@ -115,7 +116,8 @@ void CSVM::libsvmParser(const std::string &filename) {
 }
 
 // read ARFF file
-void CSVM::arffParser(const std::string &filename) {
+template <typename T>
+void CSVM<T>::arffParser(const std::string &filename) {
     detail::file_reader f{ filename, '%' };
     std::size_t max_size = 0;
 
@@ -253,7 +255,8 @@ void CSVM::arffParser(const std::string &filename) {
     fmt::print("Read {} data points with {} features.\n", num_data_points, num_features);
 }
 
-void CSVM::writeModel(const std::string &model_name) {
+template <typename T>
+void CSVM<T>::writeModel(const std::string &model_name) {
     // TODO: idea: save number of Datapoint in input file -> copy input file -> manipulate copy and dont rewrite whole File
     int nBSV = 0;
     int count_pos = 0;
@@ -351,5 +354,9 @@ void CSVM::writeModel(const std::string &model_name) {
         model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
     }
 }
+
+// explicitly instantiate template class
+template class CSVM<float>;
+template class CSVM<double>;
 
 }  // namespace plssvm
