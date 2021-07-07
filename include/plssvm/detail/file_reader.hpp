@@ -78,7 +78,7 @@ class file_reader {
 
     /**
      * @brief Return the number of parsed lines.
-     * @detail All empty lines or lines starting with a comment are ignored.
+     * @details All empty lines or lines starting with a comment are ignored.
      * @return the number of lines after preprocessing (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t num_lines() const noexcept {
