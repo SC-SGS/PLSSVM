@@ -3,6 +3,9 @@
 #include <plssvm/kernel_types.hpp>
 #include <plssvm/typedef.hpp>
 
+#include "fmt/chrono.h"  // format std::chrono
+#include "fmt/core.h"    // fmt::print
+
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
