@@ -42,7 +42,7 @@ class device_ptr {
     using size_type = std::size_t;
 
     device_ptr() = default;
-    device_ptr(const int device, const size_type size) :
+    device_ptr(const size_type size, const int device = 0) :
         device_{ device }, size_{ size } {
         if (device_ < 0) {
             throw plssvm::cuda_backend_exception{ fmt::format("Device ID must not be negative but is {}!", device_) };
