@@ -15,47 +15,14 @@
 // TODO: move to separate files
 namespace plssvm {
 
-// available backends
-enum class svm_backend { OPENMP,
-                         CUDA,
-                         OPENCL };
-
-// factory function
-template <typename T, typename... Args>
-std::unique_ptr<CSVM<T>> make_SVM(const svm_backend type, Args... args) {
-    switch (type) {
-        case svm_backend::OPENMP:
-#if defined(PLSSVM_HAS_OPENMP_BACKEND)
-            return std::make_unique<OpenMP_CSVM<T>>(std::forward<Args>(args)...);
-#else
-            throw unsupported_backend_exception{ "No OpenMP backend available!" };
-#endif
-
-        case svm_backend::CUDA:
-#if defined(PLSSVM_HAS_CUDA_BACKEND)
-            return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
-#else
-            throw unsupported_backend_exception{ "No CUDA backend available!" };
-#endif
-
-        case svm_backend::OPENCL:
-#if defined(PLSSVM_HAS_OPENCL_BACKEND)  // TODO: einheitlich
-            return std::make_unique<OpenCL_CSVM>(std::forward<Args>(args)...);
-#else
-            throw unsupported_backend_exception{ "No OpenCL backend available!" };
-#endif
-        default:
-            throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(type)) };
-    }
-}
 // command line parser
-svm_backend parse_backend(std::string_view backend) {
+backend_type parse_backend(std::string_view backend) {
     if (backend == std::string_view{ "openmp" }) {
-        return svm_backend::OPENMP;
+        return backend_type::openmp;
     } else if (backend == std::string_view{ "cuda" }) {
-        return svm_backend::CUDA;
+        return backend_type::cuda;
     } else if (backend == std::string_view{ "opencl" }) {
-        return svm_backend::OPENCL;
+        return backend_type::opencl;
     } else {
         throw std::runtime_error("Illegal command line value!");
     }
