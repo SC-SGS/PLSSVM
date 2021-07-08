@@ -15,6 +15,7 @@
 #include "plssvm/backend_types.hpp"
 #include "plssvm/exceptions/exceptions.hpp"
 #include "plssvm/kernel_types.hpp"
+#include "plssvm/parameter.hpp"
 #include "plssvm/version/version.hpp"
 
 /// The main namespace containing all API functions.

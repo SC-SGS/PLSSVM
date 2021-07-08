@@ -2,6 +2,7 @@
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "fmt/core.h"  // fmt::format
 
@@ -47,4 +48,10 @@ std::unique_ptr<CSVM<T>> make_SVM(const backend_type type, Args... args) {
             throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(type)) };
     }
 }
+
+template <typename T>
+std::unique_ptr<CSVM<T>> make_SVM(const parameter<T> &params) {
+    return make_SVM<T>(params.backend, params.cost, params.epsilon, params.kernel, params.degree, params.gamma, params.coef0, params.print_info);
+}
+
 }  // namespace plssvm
