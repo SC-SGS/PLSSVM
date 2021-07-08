@@ -50,7 +50,7 @@ void CSVM<T>::learn() {
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
-        fmt::print("Solved minimization problem using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+        fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
 
