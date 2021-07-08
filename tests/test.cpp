@@ -337,7 +337,7 @@ TEST(learn, q) {
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_CUDA.parse_libsvm(TESTPATH "/data/500x200.libsvm");
-    csvm_CUDA.loadDataDevice();
+    csvm_CUDA.setup_data_on_device();
     qs.emplace_back(csvm_CUDA.generate_q());
     svms.emplace_back("cuda");
 
