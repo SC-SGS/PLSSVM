@@ -1,6 +1,7 @@
 #pragma once
 
 #include <plssvm/CSVM.hpp>
+#include <plssvm/typedef.hpp>
 
 namespace plssvm {
 
