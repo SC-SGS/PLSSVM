@@ -17,9 +17,9 @@ class MockCSVM : public plssvm::CSVM<real_t> {
   public:
     MockCSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
         plssvm::CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
-    MOCK_METHOD(void, load_w, (), (override));
-    MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
-    MOCK_METHOD(void, learn, ());
+    // MOCK_METHOD(void, load_w, (), (override));
+    // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
+    // MOCK_METHOD(void, learn, ());
     MOCK_METHOD(void, loadDataDevice, (), (override));
     MOCK_METHOD(std::vector<real_t>, generate_q, (), (override));
     MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &), (override));
@@ -40,8 +40,8 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     MockOpenMP_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
         plssvm::OpenMP_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
     // MOCK_METHOD(void, load_w, (), (override));
-    MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
-    // MOCK_METHOD(void, learn, (), (override));
+    // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
+    // MOCK_METHOD(void, learn, ());
     using plssvm::OpenMP_CSVM::alpha;
     using plssvm::OpenMP_CSVM::bias;
     using plssvm::OpenMP_CSVM::QA_cost;
@@ -76,8 +76,8 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
     MockOpenCL_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
         plssvm::OpenCL_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
     // MOCK_METHOD(void, load_w, (), (override));
-    MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
-    // MOCK_METHOD(void, learn, (), (override));
+    // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
+    // MOCK_METHOD(void, learn, ());
     using plssvm::OpenCL_CSVM::alpha;
     using plssvm::OpenCL_CSVM::bias;
     using plssvm::OpenCL_CSVM::QA_cost;
@@ -116,8 +116,8 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     MockCUDA_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
         plssvm::CUDA_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
     // MOCK_METHOD(void, load_w, (), (override));
-    MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
-    // MOCK_METHOD(void, learn, (), (override));
+    // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
+    // MOCK_METHOD(void, learn, ());
     using plssvm::CUDA_CSVM::alpha;
     using plssvm::CUDA_CSVM::bias;
     using plssvm::CUDA_CSVM::CG;

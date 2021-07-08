@@ -55,41 +55,32 @@ class CSVM {
     /**************************************************************************************************************************************/
     /**                                                             predict                                                              **/
     /**************************************************************************************************************************************/
-    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
+    // TODO: protected?
+    //    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
 
-    const real_t &getB() const { return bias; };
-    virtual void load_w() = 0;
+    /**************************************************************************************************************************************/
+    /**                                                              getter                                                              **/
+    /**************************************************************************************************************************************/
+    // TODO: other getter?
+    //    [[nodiscard]] real_type get_bias() const noexcept { return bias_; };
 
   protected:
     // pure virtual, must be implemented by all subclasses
     virtual void loadDataDevice() = 0;
     virtual std::vector<real_t> generate_q() = 0;
     virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &q) = 0;
+    //    virtual void load_w() = 0;
 
-    const bool print_info_;
-    real_t cost;
-    const real_t epsilon;
-    const kernel_type kernel;
-    const real_t degree;
-    real_t gamma;
-    const real_t coef0;
-    real_t bias;
-    real_t QA_cost;
-    std::vector<std::vector<real_t>> data;
-    size_t num_features;
-    size_t num_data_points;
-    std::vector<real_t> value;
-    std::vector<real_t> alpha;
-
+    // kernel functions: linear, polynomial, rbf
     real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
     real_t kernel_function(real_t *, real_t *, int);
 
     /**
-     * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
-     * @param[in] boundary the number of boundary cells
-     * @attention boundary values can contain random numbers
-     * @return an 1D vector in a SoA layout
-     */
+ * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
+ * @param[in] boundary the number of boundary cells
+ * @attention boundary values can contain random numbers
+ * @return an 1D vector in a SoA layout
+ */
     std::vector<real_type> transform_data(const size_type boundary) {
         auto start_time = std::chrono::steady_clock::now();
 
@@ -107,6 +98,21 @@ class CSVM {
         }
         return vec;
     }
+
+    const bool print_info_;
+    real_t cost;
+    const real_t epsilon;
+    const kernel_type kernel;
+    const real_t degree;
+    real_t gamma;
+    const real_t coef0;
+    real_t bias;
+    real_t QA_cost;
+    std::vector<std::vector<real_t>> data;
+    size_t num_features;
+    size_t num_data_points;
+    std::vector<real_t> value;
+    std::vector<real_t> alpha;
 };
 
 extern template class CSVM<float>;
