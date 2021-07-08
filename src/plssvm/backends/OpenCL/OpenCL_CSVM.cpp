@@ -25,7 +25,7 @@ OpenCL_CSVM::OpenCL_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, rea
     std::cout << "GPUs found: " << count_devices << std::endl;
 }
 
-void OpenCL_CSVM::loadDataDevice() {
+void OpenCL_CSVM::setup_data_on_device() {
     std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
     for (int device = 0; device < count_devices; ++device)
         datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_t>(devices[device], (num_features_)));

@@ -72,8 +72,8 @@ void CSVM<T>::learn(const std::string &input_filename, const std::string &model_
     // parse data file
     parse_file(input_filename);
 
-    // load all necessary data onto the device
-    loadDataDevice();
+    // setup the data on the device
+    setup_data_on_device();
 
     // learn model
     learn();

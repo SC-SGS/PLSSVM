@@ -56,12 +56,12 @@ class CSVM {
 
   protected:
     // pure virtual, must be implemented by all subclasses
-    virtual void loadDataDevice() = 0;
+    virtual void setup_data_on_device() = 0;
     virtual std::vector<real_type> generate_q() = 0;
     virtual std::vector<real_type> CG(const std::vector<real_type> &b, const int, const real_type, const std::vector<real_type> &q) = 0;
-    //    virtual void load_w() = 0;
+    //    virtual void load_w() = 0; // TODO: implemented together with predict
 
-    // kernel functions: linear, polynomial, rbf
+    // kernel functions: linear, polynomial, rbf // TODO: move somewhere else?
     real_type kernel_function(const std::vector<real_type> &, const std::vector<real_type> &);
     real_type kernel_function(const real_type *, const real_type *, size_type);
 

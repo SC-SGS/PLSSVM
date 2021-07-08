@@ -30,7 +30,7 @@ CUDA_CSVM::CUDA_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t 
     std::cout << "GPUs found: " << count_devices << std::endl;
 }
 
-void CUDA_CSVM::loadDataDevice() {
+void CUDA_CSVM::setup_data_on_device() {
     for (int device = 0; device < count_devices; ++device) {
         gpuErrchk(cudaSetDevice(device));
         gpuErrchk(cudaMalloc((void **) &datlast_d[device],

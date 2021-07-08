@@ -22,7 +22,7 @@ class MockCSVM : public plssvm::CSVM<real_t> {
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    MOCK_METHOD(void, loadDataDevice, (), (override));
+    MOCK_METHOD(void, setup_data_on_device, (), (override));
     MOCK_METHOD(std::vector<real_t>, generate_q, (), (override));
     MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &), (override));
     using plssvm::CSVM<real_t>::cost_;
@@ -50,7 +50,7 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
 
     using plssvm::OpenMP_CSVM::CG;
     using plssvm::OpenMP_CSVM::learn;
-    using plssvm::OpenMP_CSVM::loadDataDevice;
+    using plssvm::OpenMP_CSVM::setup_data_on_device;
 
     using plssvm::OpenMP_CSVM::generate_q;
     using plssvm::OpenMP_CSVM::kernel_function;
@@ -86,7 +86,7 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
 
     using plssvm::OpenCL_CSVM::CG;
     using plssvm::OpenCL_CSVM::learn;
-    using plssvm::OpenCL_CSVM::loadDataDevice;
+    using plssvm::OpenCL_CSVM::setup_data_on_device;
 
     using plssvm::OpenCL_CSVM::cost_;
     using plssvm::OpenCL_CSVM::data_;
@@ -126,8 +126,8 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     using plssvm::CUDA_CSVM::generate_q;
     using plssvm::CUDA_CSVM::kernel_function;
     using plssvm::CUDA_CSVM::learn;
-    using plssvm::CUDA_CSVM::loadDataDevice;
     using plssvm::CUDA_CSVM::QA_cost_;
+    using plssvm::CUDA_CSVM::setup_data_on_device;
 
     const real_t get_num_data_points() const {
         return num_data_points_;

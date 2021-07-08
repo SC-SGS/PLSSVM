@@ -255,7 +255,7 @@ TEST(learn, comapre_backends) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     MockOpenMP_CSVM csvm_OpenMP(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenMP.parse_libsvm(TESTPATH "/data/5x4.libsvm");
-    csvm_OpenMP.loadDataDevice();
+    csvm_OpenMP.setup_data_on_device();
     csvm_OpenMP.learn();
     ASSERT_EQ(csvm_OpenMP.get_num_data_points(), csvm_OpenMP.alpha_.size());
     alphas.push_back(csvm_OpenMP.alpha_);
@@ -267,7 +267,7 @@ TEST(learn, comapre_backends) {
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/5x4.libsvm");
-    csvm_OpenCL.loadDataDevice();
+    csvm_OpenCL.setup_data_on_device();
     csvm_OpenCL.learn();
     ASSERT_EQ(csvm_OpenCL.get_num_data_points(), csvm_OpenCL.alpha_.size());
     alphas.push_back(csvm_OpenCL.alpha_);
@@ -279,7 +279,7 @@ TEST(learn, comapre_backends) {
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_CUDA.parse_libsvm(TESTPATH "/data/5x4.libsvm");
-    csvm_CUDA.loadDataDevice();
+    csvm_CUDA.setup_data_on_device();
     csvm_CUDA.learn();
     ASSERT_EQ(csvm_CUDA.get_num_data_points(), csvm_CUDA.alpha_.size());
     alphas.push_back(csvm_CUDA.alpha_);
@@ -322,7 +322,7 @@ TEST(learn, q) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     MockOpenMP_CSVM csvm_OpenMP(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenMP.parse_libsvm(TESTPATH "/data/500x200.libsvm");
-    csvm_OpenMP.loadDataDevice();
+    csvm_OpenMP.setup_data_on_device();
     qs.emplace_back(csvm_OpenMP.generate_q());
     svms.emplace_back("openmp");
 #endif
@@ -330,7 +330,7 @@ TEST(learn, q) {
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/500x200.libsvm");
-    csvm_OpenCL.loadDataDevice();
+    csvm_OpenCL.setup_data_on_device();
     qs.emplace_back(csvm_OpenCL.generate_q());
     svms.emplace_back("opencl");
 #endif
@@ -405,7 +405,7 @@ TEST(learn, kernel_linear) {
     const size_t boundary_size = plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
     MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/500x200.libsvm");
-    csvm_OpenCL.loadDataDevice();
+    csvm_OpenCL.setup_data_on_device();
 
     std::vector<opencl::device_t> &devices = csvm_OpenCL.manager.get_devices();
 
@@ -455,8 +455,8 @@ TEST(learn, kernel_linear) {
     // #endif
     // #if defined(PLSSVM_HAS_CUDA_BACKEND) //TODO: Test for CUDA kernel
     //     MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
-    //     csvm_CUDA.libsvmParser(TESTPATH "/data/5x4.libsvm");
-    //     csvm_CUDA.loadDataDevice();
+    //     csvm_CUDA.parse_libsvm(TESTPATH "/data/5x4.libsvm");
+    //     csvm_CUDA.setup_data_on_device();
     //     svms.emplace_back("cuda");
 
     // #endif

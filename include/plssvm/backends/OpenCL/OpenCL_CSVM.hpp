@@ -19,7 +19,7 @@ class OpenCL_CSVM : public CSVM<real_t> {
     std::vector<real_t> predict(real_t *, int, int) { return {}; };  //TODO: implement predict
 
   protected:
-    virtual void loadDataDevice();
+    void setup_data_on_device() override;
     std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &);
     void resizeData(int boundary);
     void resizeData(const int device, int boundary);

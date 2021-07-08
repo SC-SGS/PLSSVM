@@ -15,7 +15,9 @@ class OpenMP_CSVM : public CSVM<real_t> {
 
   protected:
     virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &q);
-    void loadDataDevice(){};
+    void setup_data_on_device() override{
+        // OpenMP device is the CPU -> no special load functions
+    };
     std::vector<real_t> generate_q();
 };
 
