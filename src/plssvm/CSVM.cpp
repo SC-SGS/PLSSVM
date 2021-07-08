@@ -53,7 +53,7 @@ void CSVM<T>::learn() {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
-
+// TODO: kernel function OpenMP <-> CUDA <-> CSVM
 template <typename T>
 auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {
     switch (kernel_) {
