@@ -2,6 +2,7 @@
 
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 
+#include <cstddef>      // std::size_t
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
