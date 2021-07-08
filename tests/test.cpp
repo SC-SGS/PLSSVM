@@ -397,7 +397,8 @@ TEST(learn, kernel_linear) {
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     rs.emplace_back(std::vector<real_t>(dept, 0.0));
-    plssvm::kernel_linear(rs.back(), csvm.data_, &csvm.data_.back()[0], q.data(), rs.back(), x.data(), csvm.get_num_features(), QA_cost, 1 / csvm.cost_, sgn);
+    plssvm::kernel_linear(csvm.data_, rs.back(), x, QA_cost, 1 / csvm.cost_, sgn);
+// plssvm::kernel_linear(rs.back(), csvm.data_, &csvm.data_.back()[0], q.data(), rs.back(), x.data(), csvm.get_num_features(), QA_cost, 1 / csvm.cost_, sgn);
     svms.emplace_back("openmp");
 #endif
 
