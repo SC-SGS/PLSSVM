@@ -365,7 +365,7 @@ std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, 
     gpuErrchk(cudaDeviceSynchronize());
     {
         std::vector<real_t> buffer(dept_all);
-        std::copy(x.begin(), x.begin() + dept, alpha.begin());
+        std::copy(x.begin(), x.begin() + dept, alpha_.begin());
         gpuErrchk(cudaSetDevice(0));
         gpuErrchk(cudaMemcpy(buffer.data(), q_d[0], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
         std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
