@@ -2,6 +2,7 @@
 
 #include <plssvm/CSVM.hpp>
 #include <plssvm/kernel_types.hpp>
+#include <plssvm/typedef.hpp>
 
 #include "../../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
 #include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"

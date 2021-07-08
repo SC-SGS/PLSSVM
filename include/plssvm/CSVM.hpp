@@ -1,23 +1,14 @@
 #pragma once
-#include <plssvm/detail/operators.hpp>
-#include <plssvm/kernel_types.hpp>
+
+#include <plssvm/kernel_types.hpp>  // plssvm::kernel_type
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
 
-#include <chrono>  // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
-#include <math.h>
-#include <omp.h>
-#include <sstream>
-#include <stdlib.h>
-#include <string>  // std::string
-#include <tuple>
+#include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
+#include <string>       // std::string
 #include <type_traits>  // std::is_same_v
-#include <utility>
-#include <vector>  // std::vector
+#include <vector>       // std::vector
 
 namespace plssvm {
 

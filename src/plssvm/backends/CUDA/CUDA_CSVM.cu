@@ -2,6 +2,7 @@
 #include <plssvm/backends/CUDA/cuda-kernel.cuh>
 #include <plssvm/backends/CUDA/cuda-kernel.hpp>
 #include <plssvm/backends/CUDA/svm-kernel.cuh>
+#include <plssvm/detail/operators.hpp>
 
 namespace plssvm {
 

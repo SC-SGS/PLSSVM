@@ -2,6 +2,7 @@
 
 #include <plssvm/CSVM.hpp>
 #include <plssvm/kernel_types.hpp>
+#include <plssvm/typedef.hpp>
 
 namespace plssvm {
 

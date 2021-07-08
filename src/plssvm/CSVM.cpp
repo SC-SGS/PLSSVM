@@ -1,6 +1,13 @@
 #include <plssvm/CSVM.hpp>
 
+#include "plssvm/detail/operators.hpp"
+
 #include "fmt/core.h"  // fmt::print
+
+#include <cassert>  // assert
+#include <cmath>    // std::pow, std::exp
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm {
 
@@ -44,19 +51,19 @@ auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const si
             return std::pow(gamma_ * mult(xi, xj, dim) + coef0_, degree_);
         case kernel_type::rbf: {
             real_type temp = 0;
-            for (int i = 0; i < dim; ++i) {
-                temp += (xi[i] - xj[i]);
+            for (size_type i = 0; i < dim; ++i) {
+                temp += xi[i] - xj[i];
             }
-            return exp(-gamma_ * temp * temp);
+            return std::exp(-gamma_ * temp * temp);
         }
         default:
-            throw std::runtime_error("Can not decide which kernel!");
+            throw std::runtime_error{ "Can not decide which kernel!" };
     }
 }
 
 template <typename T>
 auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
-    // TODO: check sizes?
+    assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
     return kernel_function(xi.data(), xj.data(), xi.size());
 }
 

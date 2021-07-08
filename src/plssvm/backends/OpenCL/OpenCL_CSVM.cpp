@@ -1,5 +1,6 @@
 #include <plssvm/backends/CUDA/cuda-kernel.hpp>
 #include <plssvm/backends/OpenCL/OpenCL_CSVM.hpp>
+#include <plssvm/detail/operators.hpp>
 
 #include "manager/configuration.hpp"
 #include "manager/device.hpp"
