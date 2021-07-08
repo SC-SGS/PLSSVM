@@ -97,6 +97,9 @@ class parameter {
         // parse backend_type and cast the value to the respective enum
         backend = result["backend"].as<backend_type>();
 
+        // parse print info
+        print_info = !print_info;
+
         // parse input data filename
         if (!result.count("input")) {
             fmt::print(stderr, "Error missing input file!");
@@ -120,7 +123,7 @@ class parameter {
     real_type cost = 1.0;
     real_type epsilon = 0.001;
     backend_type backend = backend_type::openmp;
-    bool print_info = true;
+    bool print_info = false;
 
     std::string input_filename;
     std::string model_filename;
