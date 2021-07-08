@@ -300,27 +300,8 @@ void CSVM<T>::write_model(const std::string &model_name) {
         }
     }
 
-    // terminal output
-    if (print_info_) {
-        fmt::print(
-            "\nOptimization finished\n"
-            "  kernel type: {}\n"
-            "  # support vectors: {}\n"
-            "  # bounded support vectors: {}\n"
-            "  total # support vectors: {}\n"
-            "  nu: {}\n"
-            "  rho: {}\n\n",
-            kernel_,
-            count_pos + count_neg - nBSV,
-            nBSV,
-            count_pos + count_neg,
-            cost_,
-            -bias_);
-    }
-
-    // create model file
-    std::ofstream model{ model_name.data(), std::ios::out | std::ios::trunc };
-    model << fmt::format(
+    // create libsvm model header
+    std::string libsvm_model_header = fmt::format(
         "svm_type c_svc\n"
         "kernel_type {}\n"
         "nr_class 2\n"
@@ -334,6 +315,15 @@ void CSVM<T>::write_model(const std::string &model_name) {
         -bias_,
         count_pos,
         count_neg);
+
+    // terminal output
+    if (print_info_) {
+        fmt::print("\nOptimization finished\n{}\n", libsvm_model_header);
+    }
+
+    // create model file
+    std::ofstream model{ model_name.data(), std::ios::out | std::ios::trunc };
+    model << libsvm_model_header;
 
     // format one output-line
     auto format_libsmv_line = [](real_type a, const std::vector<real_type> &d) -> std::string {
