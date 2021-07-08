@@ -10,7 +10,6 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::convert_to, plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/typedef.hpp"                // plssvm::real_t
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::format, fmt::print
@@ -18,7 +17,6 @@
 #include <algorithm>    // std::max, std::transform
 #include <cctype>       // std::toupper
 #include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
-#include <cstddef>      // std::size_t
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <omp.h>        // omp_get_num_threads # TODO: get rid of it?
 #include <ostream>      // std::ofstream, std::ios::out, std::ios::trunc
@@ -49,26 +47,26 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
     value.resize(f.num_lines());
     data.resize(f.num_lines());
 
-    std::size_t max_size = 0;
+    size_type max_size = 0;
     std::exception_ptr parallel_exception;
 
     #pragma omp parallel
     {
         #pragma omp for reduction(max:max_size)
-        for (std::size_t i = 0; i < data.size(); ++i) {
+        for (size_type i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i);
 
                 // get class
-                std::size_t pos = line.find_first_of(' ');
-                value[i] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(0, pos)) > real_t{ 0.0 } ? 1 : -1;
-                // value[i] = std::copysign(1.0, detail::convert_to<real_t>(line.substr(0, pos)));
+                size_type pos = line.find_first_of(' ');
+                value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos)) > real_type{ 0.0 } ? 1 : -1;
+                // value[i] = std::copysign(1.0, detail::convert_to<real_type>(line.substr(0, pos)));
 
                 // get data
-                std::vector<real_t> vline(max_size);
+                std::vector<real_type> vline(max_size);
                 while (true) {
-                    std::size_t next_pos = line.find_first_of(':', pos);
+                    size_type next_pos = line.find_first_of(':', pos);
                     // no further data points
                     if (next_pos == std::string_view::npos) {
                         break;
@@ -83,7 +81,7 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
 
                     // get value
                     next_pos = line.find_first_of(' ', pos);
-                    vline[index] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                    vline[index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                     pos = next_pos;
                 }
                 max_size = std::max(max_size, vline.size());
@@ -108,7 +106,7 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
     }
 
     #pragma omp parallel for
-    for (std::size_t i = 0; i < data.size(); ++i) {
+    for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size);
     }
 
@@ -141,10 +139,10 @@ void CSVM<T>::parse_arff(const std::string &filename) {
     auto start_time = std::chrono::steady_clock::now();
 
     detail::file_reader f{ filename, '%' };
-    std::size_t max_size = 0;
+    size_type max_size = 0;
 
     // parse arff header
-    std::size_t header = 0;
+    size_type header = 0;
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
@@ -174,7 +172,7 @@ void CSVM<T>::parse_arff(const std::string &filename) {
     data.resize(f.num_lines() - (header + 1));
 
     #pragma omp parallel for
-    for (std::size_t i = 0; i < data.size(); ++i) {
+    for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size - 1);
     }
 
@@ -183,7 +181,7 @@ void CSVM<T>::parse_arff(const std::string &filename) {
     #pragma omp parallel
     {
         #pragma omp for
-        for (std::size_t i = 0; i < data.size(); ++i) {
+        for (size_type i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + header + 1);
@@ -201,9 +199,9 @@ void CSVM<T>::parse_arff(const std::string &filename) {
                     }
                     // sparse line
                     bool is_class_set = false;
-                    std::size_t pos = 1;
+                    size_type pos = 1;
                     while (true) {
-                        std::size_t next_pos = line.find_first_of(' ', pos);
+                        size_type next_pos = line.find_first_of(' ', pos);
                         // no further data points
                         if (next_pos == std::string_view::npos) {
                             break;
@@ -219,9 +217,9 @@ void CSVM<T>::parse_arff(const std::string &filename) {
                         // write parsed value depending on the index
                         if (index == max_size - 1) {
                             is_class_set = true;
-                            value[i] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{ 0.0 } ? 1 : -1;
+                            value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                         } else {
-                            data[i][index] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
                         // remove already processes part of the line
@@ -235,16 +233,16 @@ void CSVM<T>::parse_arff(const std::string &filename) {
                     }
                 } else {
                     // dense line
-                    std::size_t pos = 0;
-                    for (std::size_t j = 0; j < max_size - 1; ++j) {
-                        std::size_t next_pos = line.find_first_of(',', pos);
+                    size_type pos = 0;
+                    for (size_type j = 0; j < max_size - 1; ++j) {
+                        size_type next_pos = line.find_first_of(',', pos);
                         if (next_pos == std::string_view::npos) {
                             throw invalid_file_format_exception{ fmt::format("Invalid number of features! Found {} but should be {}.", j, max_size - 1) };
                         }
-                        data[i][j] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
                     }
-                    value[i] = detail::convert_to<real_t, invalid_file_format_exception>(line.substr(pos)) > real_t{ 0.0 } ? 1 : -1;
+                    value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                 }
             } catch (const std::exception &e) {
                 // catch first exception and store it
@@ -290,7 +288,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
     int nBSV = 0;
     int count_pos = 0;
     int count_neg = 0;
-    for (std::size_t i = 0; i < alpha.size(); ++i) {
+    for (size_type i = 0; i < alpha.size(); ++i) {
         if (value[i] > 0) {
             ++count_pos;
         }
@@ -338,10 +336,10 @@ void CSVM<T>::write_model(const std::string &model_name) {
         count_neg);
 
     // format one output-line
-    auto format_libsmv_line = [](real_t a, const std::vector<real_t> &d) -> std::string {
+    auto format_libsmv_line = [](real_type a, const std::vector<real_type> &d) -> std::string {
         std::string line;
         line += fmt::format("{} ", a);
-        for (std::size_t j = 0; j < d.size(); ++j) {
+        for (size_type j = 0; j < d.size(); ++j) {
             if (d[j] != 0.0) {
                 line += fmt::format("{}:{:e} ", j, d[j]);
             }
@@ -356,7 +354,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
         // all support vectors with class 1
         std::string out_pos;
         #pragma omp for nowait
-        for (std::size_t i = 0; i < alpha.size(); ++i) {
+        for (size_type i = 0; i < alpha.size(); ++i) {
             if (value[i] > 0) {
                 out_pos += format_libsmv_line(alpha[i], data[i]);
             }
@@ -372,7 +370,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
         // all support vectors with class -1
         std::string out_neg;
         #pragma omp for nowait
-        for (std::size_t i = 0; i < alpha.size(); ++i) {
+        for (size_type i = 0; i < alpha.size(); ++i) {
             if (value[i] < 0) {
                 out_neg += format_libsmv_line(alpha[i], data[i]);
             }

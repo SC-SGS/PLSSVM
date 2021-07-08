@@ -6,8 +6,8 @@ namespace plssvm {
 
 template <typename T>
 void CSVM<T>::learn() {
-    std::vector<real_t> q;
-    std::vector<real_t> b = value;
+    std::vector<real_type> q;
+    std::vector<real_type> b = value;
     #pragma omp parallel sections
     {
         #pragma omp section  // generate q
@@ -36,14 +36,14 @@ void CSVM<T>::learn() {
 }
 
 template <typename T>
-real_t CSVM<T>::kernel_function(real_t *xi, real_t *xj, int dim) {  //TODO: kernel as template
+auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {  // TODO: const correctness
     switch (kernel) {
         case kernel_type::linear:
             return mult(xi, xj, dim);
         case kernel_type::polynomial:
             return std::pow(gamma * mult(xi, xj, dim) + coef0, degree);
         case kernel_type::rbf: {
-            real_t temp = 0;
+            real_type temp = 0;
             for (int i = 0; i < dim; ++i) {
                 temp += (xi[i] - xj[i]);
             }
@@ -55,7 +55,7 @@ real_t CSVM<T>::kernel_function(real_t *xi, real_t *xj, int dim) {  //TODO: kern
 }
 
 template <typename T>
-real_t CSVM<T>::kernel_function(std::vector<real_t> &xi, std::vector<real_t> &xj) {
+auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
     // TODO: check sizes?
     return kernel_function(xi.data(), xj.data(), xi.size());
 }

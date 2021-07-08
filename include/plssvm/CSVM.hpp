@@ -1,7 +1,6 @@
 #pragma once
 #include <plssvm/detail/operators.hpp>
 #include <plssvm/kernel_types.hpp>
-#include <plssvm/typedef.hpp>
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
@@ -22,7 +21,7 @@
 
 namespace plssvm {
 
-template <typename T>
+template <typename T = double>
 class CSVM {
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
@@ -30,7 +29,7 @@ class CSVM {
     using real_type = T;
     using size_type = std::size_t;
 
-    CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_ = true) :
+    CSVM(real_type cost_, real_type epsilon_, kernel_type kernel_, real_type degree_, real_type gamma_, real_type coef0_, bool info_ = true) :
         cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), print_info_(info_) {}
 
     virtual ~CSVM() = default;
@@ -56,7 +55,7 @@ class CSVM {
     /**                                                             predict                                                              **/
     /**************************************************************************************************************************************/
     // TODO: protected?
-    //    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
+    //    virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
     /**************************************************************************************************************************************/
     /**                                                              getter                                                              **/
@@ -67,13 +66,13 @@ class CSVM {
   protected:
     // pure virtual, must be implemented by all subclasses
     virtual void loadDataDevice() = 0;
-    virtual std::vector<real_t> generate_q() = 0;
-    virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &q) = 0;
+    virtual std::vector<real_type> generate_q() = 0;
+    virtual std::vector<real_type> CG(const std::vector<real_type> &b, const int, const real_type, const std::vector<real_type> &q) = 0;
     //    virtual void load_w() = 0;
 
     // kernel functions: linear, polynomial, rbf
-    real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
-    real_t kernel_function(real_t *, real_t *, int);
+    real_type kernel_function(const std::vector<real_type> &, const std::vector<real_type> &);
+    real_type kernel_function(const real_type *, const real_type *, size_type);
 
     /**
  * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
@@ -100,19 +99,19 @@ class CSVM {
     }
 
     const bool print_info_;
-    real_t cost;
-    const real_t epsilon;
+    real_type cost;
+    const real_type epsilon;
     const kernel_type kernel;
-    const real_t degree;
-    real_t gamma;
-    const real_t coef0;
-    real_t bias;
-    real_t QA_cost;
-    std::vector<std::vector<real_t>> data;
-    size_t num_features;
-    size_t num_data_points;
-    std::vector<real_t> value;
-    std::vector<real_t> alpha;
+    const real_type degree;
+    real_type gamma;
+    const real_type coef0;
+    real_type bias;
+    real_type QA_cost;
+    std::vector<std::vector<real_type>> data;
+    size_type num_features;
+    size_type num_data_points;
+    std::vector<real_type> value;
+    std::vector<real_type> alpha;
 };
 
 extern template class CSVM<float>;

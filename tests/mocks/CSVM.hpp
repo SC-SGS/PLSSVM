@@ -13,6 +13,8 @@
 #include "gmock/gmock.h"
 #include <plssvm/kernel_types.hpp>
 
+using real_t = plssvm::real_t;  // TODO:
+
 class MockCSVM : public plssvm::CSVM<real_t> {
   public:
     MockCSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :

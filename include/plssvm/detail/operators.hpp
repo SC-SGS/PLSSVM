@@ -8,193 +8,215 @@
 #include <functional>
 #include <numeric>
 
-// TODO:
-using real_t = plssvm::real_t;
+// TODO: check all, check matching sizes?
 
-inline std::vector<real_t> operator-(const std::vector<real_t> &vec1, const std::vector<real_t> &vec2) {
-    std::vector<real_t> result(vec1.size());
-    for (unsigned i = 0; i < vec1.size(); ++i) {
-        result[i] = (vec1[i] - vec2[i]);
+template <typename T>
+[[nodiscard]] inline std::vector<T> operator-(const std::vector<T> &vec1, const std::vector<T> &vec2) {
+    std::vector<T> result(vec1.size());
+    for (std::size_t i = 0; i < vec1.size(); ++i) {
+        result[i] = vec1[i] - vec2[i];
     }
     return result;
 }
 
-inline std::vector<real_t> operator+(const std::vector<real_t> &vec1, const std::vector<real_t> &vec2) {
-    std::vector<real_t> result(vec1.size());
-    for (unsigned i = 0; i < vec1.size(); ++i) {
+template <typename T>
+[[nodiscard]] inline std::vector<T> operator+(const std::vector<T> &vec1, const std::vector<T> &vec2) {
+    std::vector<T> result(vec1.size());
+    for (std::size_t i = 0; i < vec1.size(); ++i) {
         result[i] = (vec1[i] + vec2[i]);
     }
     return result;
 }
 
-inline std::vector<real_t> &operator+=(std::vector<real_t> &result, const std::vector<real_t> &vec2) {
-    for (unsigned i = 0; i < result.size(); ++i) {
+template <typename T>
+inline std::vector<T> &operator+=(std::vector<T> &result, const std::vector<T> &vec2) {
+    for (std::size_t i = 0; i < result.size(); ++i) {
         result[i] += vec2[i];
     }
     return result;
 }
 
-inline real_t *operator+=(real_t *result, const std::vector<real_t> &vec2) {
-    for (unsigned i = 0; i < vec2.size(); ++i) {
+template <typename T>
+inline T *operator+=(T *result, const std::vector<T> &vec2) {
+    for (std::size_t i = 0; i < vec2.size(); ++i) {
         result[i] += vec2[i];
     }
     return result;
 }
 
-inline std::vector<real_t> operator*(const std::vector<std::vector<real_t>> &matr, const std::vector<real_t> &vec) {
-    std::vector<real_t> result(matr.size(), 0.0);
-    for (unsigned i = 0; i < matr.size(); ++i) {
-        for (unsigned j = 0; j < vec.size(); ++j) {
+template <typename T>
+[[nodiscard]] inline std::vector<T> operator*(const std::vector<std::vector<T>> &matr, const std::vector<T> &vec) {
+    std::vector<T> result(matr.size(), 0.0);
+    for (std::size_t i = 0; i < matr.size(); ++i) {
+        for (std::size_t j = 0; j < vec.size(); ++j) {
             result[i] += matr[i][j] * vec[j];
         }
     }
     return result;
 }
 
-inline real_t operator*(const std::vector<real_t> &vec1, const std::vector<real_t> &vec2) {
-    real_t result = 0.0;
-    for (unsigned i = 0; i < vec1.size(); ++i) {
+template <typename T>
+[[nodiscard]] inline T operator*(const std::vector<T> &vec1, const std::vector<T> &vec2) {
+    T result = 0.0;
+    for (std::size_t i = 0; i < vec1.size(); ++i) {
         result += vec1[i] * vec2[i];
     }
     return result;
 }
 
-inline real_t operator*(real_t *vec1, const std::vector<real_t> &vec2) {
-    real_t result = 0.0;
-    for (unsigned i = 0; i < vec2.size(); ++i) {
+template <typename T>
+[[nodiscard]] inline T operator*(T *vec1, const std::vector<T> &vec2) {
+    T result = 0.0;
+    for (std::size_t i = 0; i < vec2.size(); ++i) {
         result += vec1[i] * vec2[i];
     }
     return result;
 }
 
-inline std::ostream &operator<<(std::ostream &out, const std::vector<real_t> &vec) {
-    char buffer[20];
-    for (unsigned i = 0; i < vec.size(); ++i) {
-        if (vec[i] != 0) {
-            sprintf(buffer, "%i:%e ", i, vec[i]);
-            out << buffer;
-        }  //out << i << ":" << vec[i] << " ";
-    }
-    return out;
-}
+//inline std::ostream &operator<<(std::ostream &out, const std::vector<real_t> &vec) {
+//    char buffer[20];
+//    for (unsigned i = 0; i < vec.size(); ++i) {
+//        if (vec[i] != 0) {
+//            sprintf(buffer, "%i:%e ", i, vec[i]);
+//            out << buffer;
+//        }  //out << i << ":" << vec[i] << " ";
+//    }
+//    return out;
+//}
+//
+//inline std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<real_t>> &matr) {
+//    for (unsigned i = 0; i < matr.size(); ++i) {
+//        out << matr[i] << '\n';
+//    }
+//    return out;
+//}
 
-inline std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<real_t>> &matr) {
-    for (unsigned i = 0; i < matr.size(); ++i) {
-        out << matr[i] << '\n';
-    }
-    return out;
-}
-
-inline std::vector<real_t> operator*(const real_t &value, std::vector<real_t> vec) {
-    for (unsigned i = 0; i < vec.size(); ++i) {
+template <typename T>
+[[nodiscard]] inline std::vector<T> operator*(const T &value, std::vector<T> vec) {
+    for (std::size_t i = 0; i < vec.size(); ++i) {
         vec[i] *= value;
     }
     return vec;
 }
 
-inline real_t operator*(const std::vector<real_t> &vec1, real_t *vec2) {
-    real_t result = 0.0;
-    for (unsigned i = 0; i < vec1.size(); ++i) {
+template <typename T>
+[[nodiscard]] inline T operator*(const std::vector<T> &vec1, T *vec2) {
+    T result = 0.0;
+    for (std::size_t i = 0; i < vec1.size(); ++i) {
         result += vec1[i] * vec2[i];
     }
     return result;
 }
 
-inline std::vector<real_t> operator*(const std::vector<real_t> &vec, const real_t &value) {
+template <typename T>
+[[nodiscard]] inline std::vector<T> operator*(const std::vector<T> &vec, const T &value) {
     return value * vec;
 }
 
-inline std::vector<std::vector<real_t>> dot(const std::vector<real_t> &vec1, const std::vector<real_t> &vec2) {
-    std::vector<std::vector<real_t>> result(vec1.size(), std::vector<real_t>(vec1.size(), 0));
-    for (unsigned i = 0; i < vec1.size(); ++i) {
-        for (unsigned j = 0; j < vec1.size(); ++j) {
+template <typename T>
+[[nodiscard]] inline std::vector<std::vector<T>> dot(const std::vector<T> &vec1, const std::vector<T> &vec2) {
+    std::vector<std::vector<T>> result(vec1.size(), std::vector<T>(vec1.size(), 0));
+    for (std::size_t i = 0; i < vec1.size(); ++i) {
+        for (std::size_t j = 0; j < vec1.size(); ++j) {
             result[i][j] += vec1[i] * vec2[j];
         }
     }
     return result;
 }
 
-inline std::vector<std::vector<real_t>> &operator-=(std::vector<std::vector<real_t>> &result, const std::vector<std::vector<real_t>> &matr) {
-    for (unsigned i = 0; i < result.size(); ++i) {
-        for (unsigned j = 0; j < result[0].size(); ++j) {
+template <typename T>
+inline std::vector<std::vector<T>> &operator-=(std::vector<std::vector<T>> &result, const std::vector<std::vector<T>> &matr) {
+    for (std::size_t i = 0; i < result.size(); ++i) {
+        for (std::size_t j = 0; j < result[0].size(); ++j) {
             result[i][j] -= matr[i][j];
         }
     }
     return result;
 }
 
-inline std::vector<std::vector<real_t>> &operator+=(std::vector<std::vector<real_t>> &result, const real_t &value) {
-    for (unsigned i = 0; i < result.size(); ++i) {
-        for (unsigned j = 0; j < result[0].size(); ++j) {
+template <typename T>
+inline std::vector<std::vector<T>> &operator+=(std::vector<std::vector<T>> &result, const T &value) {
+    for (std::size_t i = 0; i < result.size(); ++i) {
+        for (std::size_t j = 0; j < result[0].size(); ++j) {
             result[i][j] += value;
         }
     }
     return result;
 }
 
-inline std::vector<real_t> &operator-=(std::vector<real_t> &result, const real_t &value) {
-    for (unsigned i = 0; i < result.size(); ++i) {
+template <typename T>
+inline std::vector<T> &operator-=(std::vector<T> &result, const T &value) {
+    for (std::size_t i = 0; i < result.size(); ++i) {
         result[i] -= value;
     }
     return result;
-};
+}
 
-inline real_t sum(std::vector<real_t> &vec) {
-    real_t result = 0;
-    for (unsigned i = 0; i < vec.size(); ++i) {
+template <typename T>
+[[nodiscard]] inline T sum(std::vector<T> &vec) {
+    T result = 0;
+    for (std::size_t i = 0; i < vec.size(); ++i) {
         result += vec[i];
     }
     return result;
-};
+}
 
-inline real_t mult(real_t *vec1, real_t *vec2, int dim) {
-    real_t result = 0.0;
-    for (unsigned i = 0; i < dim; ++i) {
+template <typename T>
+[[nodiscard]] inline T mult(T *vec1, T *vec2, std::size_t dim) {
+    std::remove_const_t<T> result = 0.0;
+    for (std::size_t i = 0; i < dim; ++i) {
         result += vec1[i] * vec2[i];
     }
     return result;
-};
+}
 
-inline real_t *mult(real_t value, real_t *vec, int dim) {
-    for (int i = 0; i < dim; ++i) {
+template <typename T>
+[[nodiscard]] inline T *mult(T value, T *vec, std::size_t dim) {
+    for (std::size_t i = 0; i < dim; ++i) {
         vec[i] *= value;
     }
     return vec;
-};
+}
 
-inline real_t *mult(real_t *vec, real_t val, int dim) {
+template <typename T>
+[[nodiscard]] inline T *mult(T *vec, T val, std::size_t dim) {
     return mult(val, vec, dim);
-};
+}
 
-inline real_t *add(real_t value, real_t *vec, int dim) {
-    for (unsigned i = 0; i < dim; ++i) {
+template <typename T>
+[[nodiscard]] inline T *add(T value, T *vec, std::size_t dim) {
+    for (std::size_t i = 0; i < dim; ++i) {
         vec[i] += value;
     }
     return vec;
-};
+}
 
-inline real_t *add(real_t *vec1, real_t *vec2, int dim) {
-    real_t *result = new real_t[dim];
+template <typename T>
+[[nodiscard]] inline T *add(T *vec1, T *vec2, std::size_t dim) {  // TODO: BBBBBAAAAADDDDDDD
+    T *result = new T[dim];
     for (unsigned i = 0; i < dim; ++i) {
         result[i] = vec1[i] + vec2[i];
     }
     return result;
-};
+}
 
-inline real_t *add(real_t *vec1, real_t *vec2, real_t *result, int dim) {
-    for (unsigned i = 0; i < dim; ++i) {
+template <typename T>
+inline T *add(T *vec1, T *vec2, T *result, std::size_t dim) {
+    for (std::size_t i = 0; i < dim; ++i) {
         result[i] = vec1[i] + vec2[i];
     }
     return result;
-};
+}
 
-inline real_t *add(real_t *vec, real_t value, int dim) {
+template <typename T>
+[[nodiscard]] inline T *add(T *vec, T value, std::size_t dim) {
     return add(value, vec, dim);
-};
+}
 
-inline std::vector<real_t> &operator+=(std::vector<real_t> &vec1, real_t *vec2) {
-    for (int i = 0; i < vec1.size(); ++i) {
+template <typename T>
+inline std::vector<T> &operator+=(std::vector<T> &vec1, T *vec2) {
+    for (std::size_t i = 0; i < vec1.size(); ++i) {
         vec1[i] += vec2[i];
     }
     return vec1;
-};
+}
