@@ -32,7 +32,7 @@ set(PLSSVM_CUDA_SOURCES
 
 # set target properties
 set(PLSSVM_CUDA_BACKEND_LIBRARY_NAME svm-CUDA)
-add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
+add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_CUDA_SOURCES})
 target_include_directories(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
 target_include_directories(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} fmt::fmt)
