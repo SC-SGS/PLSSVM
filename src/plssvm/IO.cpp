@@ -303,19 +303,19 @@ void CSVM<T>::write_model(const std::string &model_name) {
     // terminal output
     if (print_info_) {
         fmt::print(
-            "Optimization finished\n"
-            "kernel type: {}\n"
-            "#support vectors: {}\n"
-            "#bounded support vectors: {}\n"
-            "total # support vectors: {}\n"
-            "nu: {}\n"
-            "rho: {}\n",
+            "\nOptimization finished\n"
+            "  kernel type: {}\n"
+            "  # support vectors: {}\n"
+            "  # bounded support vectors: {}\n"
+            "  total # support vectors: {}\n"
+            "  nu: {}\n"
+            "  rho: {}\n\n",
             kernel_,
             count_pos + count_neg - nBSV,
             nBSV,
             count_pos + count_neg,
-            cost_
-                - bias_);
+            cost_,
+            -bias_);
     }
 
     // create model file
