@@ -137,7 +137,7 @@ std::vector<real_t> OpenCL_CSVM::generate_q() {
     return q;
 }
 
-std::vector<real_t> OpenCL_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q) {
+std::vector<real_t> OpenCL_CSVM::solver_CG(const std::vector<real_t> &b, const std::size_t imax, const real_t eps, const std::vector<real_t> &q) {
     std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
     const size_t dept = num_data_points_ - 1;
     const size_t boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;

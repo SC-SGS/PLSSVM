@@ -15,8 +15,8 @@ class CUDA_CSVM : public CSVM<real_t> {
 
   protected:
     void setup_data_on_device() override;
-    std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &q);
-    std::vector<real_t> generate_q();
+    std::vector<real_t> generate_q() override;
+    std::vector<real_t> solver_CG(const std::vector<real_t> &b, std::size_t, real_t, const std::vector<real_t> &q) override;
     std::vector<real_t *> data_d;
     std::vector<real_t *> datlast_d;
     real_t *w_d;

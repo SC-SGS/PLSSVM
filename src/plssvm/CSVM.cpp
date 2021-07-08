@@ -37,7 +37,7 @@ void CSVM<T>::learn() {
     }
 
     // solve minimization
-    alpha_ = CG(b, num_features_, epsilon_, q);
+    alpha_ = solver_CG(b, num_features_, epsilon_, q);
     alpha_.emplace_back(-sum(alpha_));
     bias_ = value_.back() - QA_cost_ * alpha_.back() - (q * alpha_);
 }

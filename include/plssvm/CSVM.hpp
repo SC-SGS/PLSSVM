@@ -58,7 +58,7 @@ class CSVM {
     // pure virtual, must be implemented by all subclasses
     virtual void setup_data_on_device() = 0;
     virtual std::vector<real_type> generate_q() = 0;
-    virtual std::vector<real_type> CG(const std::vector<real_type> &b, const int, const real_type, const std::vector<real_type> &q) = 0;
+    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type, real_type, const std::vector<real_type> &q) = 0;
     //    virtual void load_w() = 0; // TODO: implemented together with predict
 
     // kernel functions: linear, polynomial, rbf // TODO: move somewhere else?

@@ -27,7 +27,7 @@ std::vector<real_t> OpenMP_CSVM::generate_q() {
     return q;
 }
 
-std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q) {
+std::vector<real_t> OpenMP_CSVM::solver_CG(const std::vector<real_t> &b, const std::size_t imax, const real_t eps, const std::vector<real_t> &q) {
     std::vector<real_t> x(b.size(), 1);
     real_t *datlast = &data_.back()[0];
     static const size_t dim = data_.back().size();
