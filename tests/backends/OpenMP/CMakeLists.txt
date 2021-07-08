@@ -15,6 +15,8 @@ target_link_libraries(${PLSSVM_OpenMP_TEST_NAME} PUBLIC gtest_main)
 target_link_libraries(${PLSSVM_OpenMP_TEST_NAME} PUBLIC gmock)
 
 target_compile_definitions(${PLSSVM_OpenMP_TEST_NAME} PRIVATE TESTPATH="${PROJECT_SOURCE_DIR}/tests")
+target_compile_definitions(${PLSSVM_OpenMP_TEST_NAME} PRIVATE TESTFILE="${TESTFILE}")
+
 
 
 get_directory_property(PLSSVM_OpenMP_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenMP DEFINITION PLSSVM_OpenMP_BACKEND_LIBRARY_NAME)

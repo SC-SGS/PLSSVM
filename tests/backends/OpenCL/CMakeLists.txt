@@ -19,6 +19,7 @@ target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC gtest_main)
 target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC gmock)
 
 target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TESTPATH="${PROJECT_SOURCE_DIR}/tests")
+target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TESTFILE="${TESTFILE}")
 
 
 get_directory_property(PLSSVM_OpenCL_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenCL DEFINITION PLSSVM_OpenCL_BACKEND_LIBRARY_NAME)

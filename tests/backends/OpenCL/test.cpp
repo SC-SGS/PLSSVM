@@ -25,10 +25,10 @@ TEST(IO, writeModel) {
 }
 
 TEST(learn, q) {
-    std::vector correct = generate_q(TESTPATH "/data/500x200.libsvm");
+    std::vector correct = generate_q(TESTFILE);
 
     MockOpenCL_CSVM csvm_OpenCL;
-    csvm_OpenCL.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm_OpenCL.libsvmParser(TESTFILE);
     csvm_OpenCL.loadDataDevice();
     std::vector test = csvm_OpenCL.generate_q();
 
@@ -56,11 +56,11 @@ TEST(kernel, linear) {
 
 TEST(learn, q_linear) {
     MockCSVM csvm;
-    csvm.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm.libsvmParser(TESTFILE);
     std::vector<real_t> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
 
     MockOpenCL_CSVM csvm_OpenCL(1., 0.001, plssvm::kernel_type::linear);
-    csvm_OpenCL.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm_OpenCL.libsvmParser(TESTFILE);
     csvm_OpenCL.loadDataDevice();
     std::vector<real_t> test = csvm_OpenCL.generate_q();
 
@@ -72,7 +72,7 @@ TEST(learn, q_linear) {
 
 TEST(learn, kernel_linear) {
     MockCSVM csvm;
-    csvm.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm.libsvmParser(TESTFILE);
 
     const size_t dept = csvm.get_num_data_points() - 1;
 
@@ -90,7 +90,7 @@ TEST(learn, kernel_linear) {
 
     const size_t boundary_size = plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
     MockOpenCL_CSVM csvm_OpenCL(1., 0.001, plssvm::kernel_type::linear);
-    csvm_OpenCL.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm_OpenCL.libsvmParser(TESTFILE);
     csvm_OpenCL.loadDataDevice();
 
     std::vector<opencl::device_t> &devices = csvm_OpenCL.manager.get_devices();

@@ -24,10 +24,10 @@ TEST(IO, writeModel) {
 }
 
 TEST(learn, q) {
-    std::vector correct = generate_q(TESTPATH "/data/500x200.libsvm");
+    std::vector correct = generate_q(TESTFILE);
 
     MockOpenMP_CSVM csvm_OpenMP;
-    csvm_OpenMP.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm_OpenMP.libsvmParser(TESTFILE);
     csvm_OpenMP.loadDataDevice();
     std::vector test = csvm_OpenMP.generate_q();
 
@@ -55,11 +55,11 @@ TEST(kernel, linear) {
 
 TEST(learn, q_linear) {
     MockCSVM csvm;
-    csvm.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm.libsvmParser(TESTFILE);
     std::vector<real_t> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
 
     MockOpenMP_CSVM csvm_OpenMP(1., 0.001, plssvm::kernel_type::linear);
-    csvm_OpenMP.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm_OpenMP.libsvmParser(TESTFILE);
     csvm_OpenMP.loadDataDevice();
     std::vector<real_t> test = csvm_OpenMP.generate_q();
 
@@ -71,7 +71,7 @@ TEST(learn, q_linear) {
 
 TEST(learn, kernel_linear) {
     MockCSVM csvm;
-    csvm.libsvmParser(TESTPATH "/data/500x200.libsvm");
+    csvm.libsvmParser(TESTFILE);
 
     const size_t dept = csvm.get_num_data_points() - 1;
 
