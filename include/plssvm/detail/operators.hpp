@@ -73,19 +73,21 @@ template <typename T>
     return result;
 }
 
-//inline std::ostream &operator<<(std::ostream &out, const std::vector<real_t> &vec) {
+//template <typename T>
+//inline std::ostream &operator<<(std::ostream &out, const std::vector<T> &vec) {
 //    char buffer[20];
-//    for (unsigned i = 0; i < vec.size(); ++i) {
+//    for (std::size_t i = 0; i < vec.size(); ++i) {
 //        if (vec[i] != 0) {
 //            sprintf(buffer, "%i:%e ", i, vec[i]);
 //            out << buffer;
-//        }  //out << i << ":" << vec[i] << " ";
+//        }
 //    }
 //    return out;
 //}
 //
-//inline std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<real_t>> &matr) {
-//    for (unsigned i = 0; i < matr.size(); ++i) {
+//template <typename T>
+//inline std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<T>> &matr) {
+//    for (std::size_t i = 0; i < matr.size(); ++i) {
 //        out << matr[i] << '\n';
 //    }
 //    return out;
@@ -194,7 +196,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T *add(T *vec1, T *vec2, std::size_t dim) {  // TODO: BBBBBAAAAADDDDDDD
     T *result = new T[dim];
-    for (unsigned i = 0; i < dim; ++i) {
+    for (std::size_t i = 0; i < dim; ++i) {
         result[i] = vec1[i] + vec2[i];
     }
     return result;
