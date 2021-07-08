@@ -2,9 +2,11 @@
 
 #include "plssvm/detail/operators.hpp"
 
-#include "fmt/core.h"  // fmt::print
+#include "fmt/chrono.h"  // format std::chrono
+#include "fmt/core.h"    // fmt::print
 
 #include <cassert>  // assert
+#include <chrono>   // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <cmath>    // std::pow, std::exp
 #include <string>   // std::string
 #include <vector>   // std::vector
@@ -13,6 +15,8 @@ namespace plssvm {
 
 template <typename T>
 void CSVM<T>::learn() {
+    auto start_time = std::chrono::steady_clock::now();
+
     std::vector<real_type> q;
     std::vector<real_type> b = value_;
     #pragma omp parallel sections
@@ -32,18 +36,26 @@ void CSVM<T>::learn() {
         }
     }
 
+    auto end_time = std::chrono::steady_clock::now();
     if (print_info_) {
-        fmt::print("Start CG\n");
+        fmt::print("Setup for solving the optimization problem done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
+
+    start_time = std::chrono::steady_clock::now();
 
     // solve minimization
     alpha_ = solver_CG(b, num_features_, epsilon_, q);
     alpha_.emplace_back(-sum(alpha_));
     bias_ = value_.back() - QA_cost_ * alpha_.back() - (q * alpha_);
+
+    end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Solved minimization problem using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
 }
 
 template <typename T>
-auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {  // TODO: const correctness
+auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {
     switch (kernel_) {
         case kernel_type::linear:
             return mult(xi, xj, dim);
@@ -57,7 +69,7 @@ auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const si
             return std::exp(-gamma_ * temp * temp);
         }
         default:
-            throw std::runtime_error{ "Can not decide which kernel!" };
+            throw std::runtime_error{ "Can not decide which kernel!" };  // TODO: change to custom exception?
     }
 }
 
@@ -84,6 +96,25 @@ void CSVM<T>::learn(const std::string &input_filename, const std::string &model_
     //    if (true) {  // TODO: check
     //        std::clog << data.size() << ", " << num_features << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
     //    }
+}
+
+template <typename T>
+auto CSVM<T>::transform_data(const size_type boundary) -> std::vector<real_type> {
+    auto start_time = std::chrono::steady_clock::now();
+
+    std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
+    #pragma omp parallel for collapse(2)
+    for (size_type col = 0; col < num_features_; ++col) {
+        for (size_type row = 0; row < num_data_points_ - 1; ++row) {
+            vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];
+        }
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+    return vec;
 }
 
 // explicitly instantiate template class

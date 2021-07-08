@@ -2,10 +2,6 @@
 
 #include <plssvm/kernel_types.hpp>  // plssvm::kernel_type
 
-#include "fmt/chrono.h"  // format std::chrono
-#include "fmt/core.h"    // fmt::print
-
-#include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
@@ -71,23 +67,7 @@ class CSVM {
  * @attention boundary values can contain random numbers
  * @return an 1D vector in a SoA layout
  */
-    std::vector<real_type> transform_data(const size_type boundary) {
-        auto start_time = std::chrono::steady_clock::now();
-
-        std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-        #pragma omp parallel for collapse(2)
-        for (size_type col = 0; col < num_features_; ++col) {
-            for (size_type row = 0; row < num_data_points_ - 1; ++row) {
-                vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];
-            }
-        }
-
-        auto end_time = std::chrono::steady_clock::now();
-        if (print_info_) {
-            fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-        }
-        return vec;
-    }
+    std::vector<real_type> transform_data(size_type boundary);
 
     // parameter initialized by the constructor
     real_type cost_;

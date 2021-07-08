@@ -11,6 +11,8 @@
 #include "manager/apply_arguments.hpp"
 #include "manager/run_kernel.hpp"
 
+#include <chrono>
+
 namespace plssvm {
 
 int count_devices = 1;

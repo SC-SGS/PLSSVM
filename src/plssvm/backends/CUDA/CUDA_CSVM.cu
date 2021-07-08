@@ -4,6 +4,8 @@
 #include <plssvm/backends/CUDA/svm-kernel.cuh>
 #include <plssvm/detail/operators.hpp>
 
+#include <chrono>
+
 namespace plssvm {
 
 int CUDADEVICE = 0;
