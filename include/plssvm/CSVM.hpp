@@ -6,7 +6,7 @@
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
 
-#include <chrono>
+#include <chrono>  // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -48,9 +48,17 @@ class CSVM {
     /**************************************************************************************************************************************/
     void learn(const std::string &input_filename, const std::string &model_filename);
 
+  protected:
+    void learn();  // TODO: public after correct exception handling
+
+  public:
+    /**************************************************************************************************************************************/
+    /**                                                             predict                                                              **/
+    /**************************************************************************************************************************************/
+    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
+
     const real_t &getB() const { return bias; };
     virtual void load_w() = 0;
-    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
 
   protected:
     // pure virtual, must be implemented by all subclasses
@@ -72,8 +80,6 @@ class CSVM {
     size_t num_data_points;
     std::vector<real_t> value;
     std::vector<real_t> alpha;
-
-    void learn();  // TODO: public after correct exception handling
 
     real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
     real_t kernel_function(real_t *, real_t *, int);
