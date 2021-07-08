@@ -256,10 +256,10 @@ TEST(learn, comapre_backends) {
     csvm_OpenMP.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_OpenMP.loadDataDevice();
     csvm_OpenMP.learn();
-    ASSERT_EQ(csvm_OpenMP.get_num_data_points(), csvm_OpenMP.alpha.size());
-    alphas.push_back(csvm_OpenMP.alpha);
-    QA_costs.push_back(csvm_OpenMP.QA_cost);
-    biass.push_back(csvm_OpenMP.bias);
+    ASSERT_EQ(csvm_OpenMP.get_num_data_points(), csvm_OpenMP.alpha_.size());
+    alphas.push_back(csvm_OpenMP.alpha_);
+    QA_costs.push_back(csvm_OpenMP.QA_cost_);
+    biass.push_back(csvm_OpenMP.bias_);
     svms.emplace_back("openmp");
 #endif
 
@@ -268,10 +268,10 @@ TEST(learn, comapre_backends) {
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_OpenCL.loadDataDevice();
     csvm_OpenCL.learn();
-    ASSERT_EQ(csvm_OpenCL.get_num_data_points(), csvm_OpenCL.alpha.size());
-    alphas.push_back(csvm_OpenCL.alpha);
-    QA_costs.push_back(csvm_OpenCL.QA_cost);
-    biass.push_back(csvm_OpenCL.bias);
+    ASSERT_EQ(csvm_OpenCL.get_num_data_points(), csvm_OpenCL.alpha_.size());
+    alphas.push_back(csvm_OpenCL.alpha_);
+    QA_costs.push_back(csvm_OpenCL.QA_cost_);
+    biass.push_back(csvm_OpenCL.bias_);
     svms.emplace_back("opencl");
 #endif
 
@@ -280,10 +280,10 @@ TEST(learn, comapre_backends) {
     csvm_CUDA.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_CUDA.loadDataDevice();
     csvm_CUDA.learn();
-    ASSERT_EQ(csvm_CUDA.get_num_data_points(), csvm_CUDA.alpha.size());
-    alphas.push_back(csvm_CUDA.alpha);
-    QA_costs.push_back(csvm_CUDA.QA_cost);
-    biass.push_back(csvm_CUDA.bias);
+    ASSERT_EQ(csvm_CUDA.get_num_data_points(), csvm_CUDA.alpha_.size());
+    alphas.push_back(csvm_CUDA.alpha_);
+    QA_costs.push_back(csvm_CUDA.QA_cost_);
+    biass.push_back(csvm_CUDA.bias_);
     svms.emplace_back("cuda");
 #endif
 
@@ -312,9 +312,9 @@ TEST(learn, q) {
 
     qs.emplace_back(std::vector<real_t>());
 
-    qs[0].reserve(csvm.data.size());
-    for (int i = 0; i < csvm.data.size() - 1; ++i) {
-        qs[0].emplace_back(csvm.kernel_function(csvm.data.back(), csvm.data[i]));
+    qs[0].reserve(csvm.data_.size());
+    for (int i = 0; i < csvm.data_.size() - 1; ++i) {
+        qs[0].emplace_back(csvm.kernel_function(csvm.data_.back(), csvm.data_[i]));
     }
     svms.emplace_back("correct");
 
@@ -362,11 +362,11 @@ TEST(learn, kernel_linear) {
     MockCSVM csvm(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
     csvm.parse_libsvm(TESTPATH "/data/500x200.libsvm");
 
-    q.reserve(csvm.data.size());
-    for (int i = 0; i < csvm.data.size() - 1; ++i) {
-        q.emplace_back(csvm.kernel_function(csvm.data.back(), csvm.data[i]));
+    q.reserve(csvm.data_.size());
+    for (int i = 0; i < csvm.data_.size() - 1; ++i) {
+        q.emplace_back(csvm.kernel_function(csvm.data_.back(), csvm.data_[i]));
     }
-    real_t QA_cost = csvm.kernel_function(csvm.data.back(), csvm.data.back()) + 1 / csvm.cost;
+    real_t QA_cost = csvm.kernel_function(csvm.data_.back(), csvm.data_.back()) + 1 / csvm.cost_;
 
     real_t sgn = -1;  // TODO: +1
     const size_t dept = csvm.get_num_data_points() - 1;
@@ -381,9 +381,9 @@ TEST(learn, kernel_linear) {
     for (int i = 0; i < dept; ++i) {
         for (int j = 0; j < dept; ++j) {
             if (i >= j) {
-                real_t temp = csvm.kernel_function(&csvm.data[i][0], &csvm.data[j][0], csvm.get_num_features()) - q[i] - q[j] + QA_cost;
+                real_t temp = csvm.kernel_function(&csvm.data_[i][0], &csvm.data_[j][0], csvm.get_num_features()) - q[i] - q[j] + QA_cost;
                 if (i == j) {
-                    rs[0][i] += (temp + 1 / csvm.cost) * x[i] * sgn;
+                    rs[0][i] += (temp + 1 / csvm.cost_) * x[i] * sgn;
                 } else {
                     rs[0][i] += (temp) *x[j] * sgn;
                     rs[0][j] += (temp) *x[i] * sgn;
@@ -396,7 +396,7 @@ TEST(learn, kernel_linear) {
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     rs.emplace_back(std::vector<real_t>(dept, 0.0));
-    plssvm::kernel_linear(rs.back(), csvm.data, &csvm.data.back()[0], q.data(), rs.back(), x.data(), csvm.get_num_features(), QA_cost, 1 / csvm.cost, sgn);
+    plssvm::kernel_linear(rs.back(), csvm.data_, &csvm.data_.back()[0], q.data(), rs.back(), x.data(), csvm.get_num_features(), QA_cost, 1 / csvm.cost_, sgn);
     svms.emplace_back("openmp");
 #endif
 
@@ -436,7 +436,7 @@ TEST(learn, kernel_linear) {
     const int Ncols = csvm_OpenCL.get_num_features();
     const int Nrows = dept + plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
 
-    opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_OpenCL.data_cl[0].get(), QA_cost, 1 / csvm_OpenCL.cost, Ncols, Nrows, static_cast<int>(sgn), 0, Ncols);
+    opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_OpenCL.data_cl[0].get(), QA_cost, 1 / csvm_OpenCL.cost_, Ncols, Nrows, static_cast<int>(sgn), 0, Ncols);
     std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE))),
                                    static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE))) };
     grid_size[0] *= plssvm::THREADBLOCK_SIZE;

@@ -44,8 +44,8 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
 
     detail::file_reader f{ filename, '#' };
 
-    value.resize(f.num_lines());
-    data.resize(f.num_lines());
+    data_.resize(f.num_lines());
+    value_.resize(f.num_lines());
 
     size_type max_size = 0;
     std::exception_ptr parallel_exception;
@@ -53,14 +53,14 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
     #pragma omp parallel
     {
         #pragma omp for reduction(max:max_size)
-        for (size_type i = 0; i < data.size(); ++i) {
+        for (size_type i = 0; i < data_.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i);
 
                 // get class
                 size_type pos = line.find_first_of(' ');
-                value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos)) > real_type{ 0.0 } ? 1 : -1;
+                value_[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos)) > real_type{ 0.0 } ? 1 : -1;
                 // value[i] = std::copysign(1.0, detail::convert_to<real_type>(line.substr(0, pos)));
 
                 // get data
@@ -85,7 +85,7 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
                     pos = next_pos;
                 }
                 max_size = std::max(max_size, vline.size());
-                data[i] = std::move(vline);
+                data_[i] = std::move(vline);
             } catch (const std::exception &e) {
                 // catch first exception and store it
                 #pragma omp critical
@@ -106,29 +106,29 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
     }
 
     #pragma omp parallel for
-    for (size_type i = 0; i < data.size(); ++i) {
-        data[i].resize(max_size);
+    for (size_type i = 0; i < data_.size(); ++i) {
+        data_[i].resize(max_size);
     }
 
     // update values
-    num_data_points = data.size();
-    num_features = max_size;
+    num_data_points_ = data_.size();
+    num_features_ = max_size;
 
     // no features were parsed -> invalid file
-    if (num_features == 0) {
+    if (num_features_ == 0) {
         throw invalid_file_format_exception{ fmt::format("Can't parse file '{}'!", filename) };
     }
 
     // update gamma
-    if (gamma == 0) {
-        gamma = 1. / num_features;
+    if (gamma_ == 0) {
+        gamma_ = 1. / num_features_;
     }
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info_) {
         fmt::print("Read {} data points with {} features in {} using the libsvm parser.\n",
-                   num_data_points,
-                   num_features,
+                   num_data_points_,
+                   num_features_,
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
@@ -168,12 +168,12 @@ void CSVM<T>::parse_arff(const std::string &filename) {
         throw invalid_file_format_exception{ "Invalid file format!" };
     }
 
-    value.resize(f.num_lines() - (header + 1));
-    data.resize(f.num_lines() - (header + 1));
+    data_.resize(f.num_lines() - (header + 1));
+    value_.resize(f.num_lines() - (header + 1));
 
     #pragma omp parallel for
-    for (size_type i = 0; i < data.size(); ++i) {
-        data[i].resize(max_size - 1);
+    for (size_type i = 0; i < data_.size(); ++i) {
+        data_[i].resize(max_size - 1);
     }
 
     std::exception_ptr parallel_exception;
@@ -181,7 +181,7 @@ void CSVM<T>::parse_arff(const std::string &filename) {
     #pragma omp parallel
     {
         #pragma omp for
-        for (size_type i = 0; i < data.size(); ++i) {
+        for (size_type i = 0; i < data_.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + header + 1);
@@ -217,9 +217,9 @@ void CSVM<T>::parse_arff(const std::string &filename) {
                         // write parsed value depending on the index
                         if (index == max_size - 1) {
                             is_class_set = true;
-                            value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                            value_[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                         } else {
-                            data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            data_[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
                         // remove already processes part of the line
@@ -239,10 +239,10 @@ void CSVM<T>::parse_arff(const std::string &filename) {
                         if (next_pos == std::string_view::npos) {
                             throw invalid_file_format_exception{ fmt::format("Invalid number of features! Found {} but should be {}.", j, max_size - 1) };
                         }
-                        data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        data_[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
                     }
-                    value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                    value_[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                 }
             } catch (const std::exception &e) {
                 // catch first exception and store it
@@ -264,19 +264,19 @@ void CSVM<T>::parse_arff(const std::string &filename) {
     }
 
     // update values
-    num_data_points = data.size();
-    num_features = max_size - 1;
+    num_data_points_ = data_.size();
+    num_features_ = max_size - 1;
 
     // update gamma
-    if (gamma == 0) {
-        gamma = 1. / num_features;
+    if (gamma_ == 0) {
+        gamma_ = 1. / num_features_;
     }
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info_) {
         fmt::print("Read {} data points with {} features in {} using the arff parser.\n",
-                   num_data_points,
-                   num_features,
+                   num_data_points_,
+                   num_features_,
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
@@ -288,14 +288,14 @@ void CSVM<T>::write_model(const std::string &model_name) {
     int nBSV = 0;
     int count_pos = 0;
     int count_neg = 0;
-    for (size_type i = 0; i < alpha.size(); ++i) {
-        if (value[i] > 0) {
+    for (size_type i = 0; i < alpha_.size(); ++i) {
+        if (value_[i] > 0) {
             ++count_pos;
         }
-        if (value[i] < 0) {
+        if (value_[i] < 0) {
             ++count_neg;
         }
-        if (alpha[i] == cost) {
+        if (alpha_[i] == cost_) {
             ++nBSV;
         }
     }
@@ -310,12 +310,12 @@ void CSVM<T>::write_model(const std::string &model_name) {
             "total # support vectors: {}\n"
             "nu: {}\n"
             "rho: {}\n",
-            kernel,
+            kernel_,
             count_pos + count_neg - nBSV,
             nBSV,
             count_pos + count_neg,
-            cost,
-            -bias);
+            cost_
+                - bias_);
     }
 
     // create model file
@@ -329,9 +329,9 @@ void CSVM<T>::write_model(const std::string &model_name) {
         "label 1 -1\n"
         "nr_sv {} {}\n"
         "SV\n",
-        kernel,
+        kernel_,
         count_pos + count_neg,
-        -bias,
+        -bias_,
         count_pos,
         count_neg);
 
@@ -354,9 +354,9 @@ void CSVM<T>::write_model(const std::string &model_name) {
         // all support vectors with class 1
         std::string out_pos;
         #pragma omp for nowait
-        for (size_type i = 0; i < alpha.size(); ++i) {
-            if (value[i] > 0) {
-                out_pos += format_libsmv_line(alpha[i], data[i]);
+        for (size_type i = 0; i < alpha_.size(); ++i) {
+            if (value_[i] > 0) {
+                out_pos += format_libsmv_line(alpha_[i], data_[i]);
             }
         }
 
@@ -370,9 +370,9 @@ void CSVM<T>::write_model(const std::string &model_name) {
         // all support vectors with class -1
         std::string out_neg;
         #pragma omp for nowait
-        for (size_type i = 0; i < alpha.size(); ++i) {
-            if (value[i] < 0) {
-                out_neg += format_libsmv_line(alpha[i], data[i]);
+        for (size_type i = 0; i < alpha_.size(); ++i) {
+            if (value_[i] < 0) {
+                out_neg += format_libsmv_line(alpha_[i], data_[i]);
             }
         }
 

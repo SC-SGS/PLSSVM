@@ -28,9 +28,9 @@ std::vector<real_t> CUDA_CSVM::predict(real_t *data, int dim, int count) {
     real_t *data_d, *out;
     cudaMalloc((void **) &data_d, dim * count * sizeof(real_t));
     cudaMalloc((void **) &out, count * sizeof(real_t));
-    cudaMemcpy(data_d, data, dim * count * sizeof(real_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(data_d, data_, dim * count * sizeof(real_t), cudaMemcpyHostToDevice);
 
-    kernel_predict<<<((int) count / 1024) + 1, std::min(count, 1024)>>>(data, w_d, dim, out);
+    kernel_predict<<<((int) count / 1024) + 1, std::min(count, 1024)>>>(data_, w_d, dim, out);
 
     std::vector<real_t> ret(count);
     cudaDeviceSynchronize();
@@ -42,10 +42,10 @@ std::vector<real_t> CUDA_CSVM::predict(real_t *data, int dim, int count) {
 }
 
 void CUDA_CSVM::load_w() {
-    cudaMalloc((void **) &w_d, num_features * sizeof(real_t));
+    cudaMalloc((void **) &w_d, num_features_ * sizeof(real_t));
     real_t *alpha_d;
-    cudaMalloc((void **) &alpha_d, num_features * sizeof(real_t));
-    cudaMemcpy(alpha_d, &alpha[0], num_features * sizeof(real_t), cudaMemcpyHostToDevice);
+    cudaMalloc((void **) &alpha_d, num_features_ * sizeof(real_t));
+    cudaMemcpy(alpha_d, &alpha_[0], num_features_ * sizeof(real_t), cudaMemcpyHostToDevice);
 
     // TODO:
     // kernel_w<<<((int)num_features/1024) + 1,  std::min((int)num_features, 1024)>>>(w_d, data_d, alpha_d, num_data_points);

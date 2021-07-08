@@ -29,8 +29,8 @@ class CSVM {
     using real_type = T;
     using size_type = std::size_t;
 
-    CSVM(real_type cost_, real_type epsilon_, kernel_type kernel_, real_type degree_, real_type gamma_, real_type coef0_, bool info_ = true) :
-        cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), print_info_(info_) {}
+    CSVM(real_type cost, real_type epsilon, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, bool info = true) :
+        cost_(cost), epsilon_(epsilon), kernel_(kernel), degree_(degree), gamma_(gamma), coef0_(coef0), print_info_(info) {}
 
     virtual ~CSVM() = default;
 
@@ -83,11 +83,11 @@ class CSVM {
     std::vector<real_type> transform_data(const size_type boundary) {
         auto start_time = std::chrono::steady_clock::now();
 
-        std::vector<real_type> vec(num_features * (num_data_points - 1 + boundary));
+        std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
         #pragma omp parallel for collapse(2)
-        for (size_type col = 0; col < num_features; ++col) {
-            for (size_type row = 0; row < num_data_points - 1; ++row) {
-                vec[col * (num_data_points - 1 + boundary) + row] = data[row][col];
+        for (size_type col = 0; col < num_features_; ++col) {
+            for (size_type row = 0; row < num_data_points_ - 1; ++row) {
+                vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];
             }
         }
 
@@ -98,20 +98,23 @@ class CSVM {
         return vec;
     }
 
+    // parameter initialized by the constructor
+    real_type cost_;
+    const real_type epsilon_;
+    const kernel_type kernel_;
+    const real_type degree_;
+    real_type gamma_;
+    const real_type coef0_;
     const bool print_info_;
-    real_type cost;
-    const real_type epsilon;
-    const kernel_type kernel;
-    const real_type degree;
-    real_type gamma;
-    const real_type coef0;
-    real_type bias;
-    real_type QA_cost;
-    std::vector<std::vector<real_type>> data;
-    size_type num_features;
-    size_type num_data_points;
-    std::vector<real_type> value;
-    std::vector<real_type> alpha;
+
+    // internal variables
+    size_type num_data_points_{};
+    size_type num_features_{};
+    std::vector<std::vector<real_type>> data_{};
+    std::vector<real_type> value_{};
+    real_type bias_{};
+    real_type QA_cost_{};
+    std::vector<real_type> alpha_{};
 };
 
 extern template class CSVM<float>;

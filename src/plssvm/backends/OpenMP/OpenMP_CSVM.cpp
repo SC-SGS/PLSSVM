@@ -20,17 +20,17 @@ std::vector<real_t> OpenMP_CSVM::generate_q() {
     if (print_info_) {
         std::cout << "kernel_q" << std::endl;
     }
-    q.reserve(data.size());
-    for (int i = 0; i < data.size() - 1; ++i) {
-        q.emplace_back(kernel_function(data.back(), data[i]));
+    q.reserve(data_.size());
+    for (int i = 0; i < data_.size() - 1; ++i) {
+        q.emplace_back(kernel_function(data_.back(), data_[i]));
     }
     return q;
 }
 
 std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax, const real_t eps, const std::vector<real_t> &q) {
     std::vector<real_t> x(b.size(), 1);
-    real_t *datlast = &data.back()[0];
-    static const size_t dim = data.back().size();
+    real_t *datlast = &data_.back()[0];
+    static const size_t dim = data_.back().size();
     static const size_t dept = b.size();
 
     assert(dim == num_features);
@@ -41,7 +41,7 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
 
     std::vector<real_t> ones(b.size(), 1.0);
 
-    kernel_linear(b, data, datlast, q.data(), r, ones.data(), dim, QA_cost, 1 / cost, -1);  // TODO: other kernels
+    kernel_linear(b, data_, datlast, q.data(), r, ones.data(), dim, QA_cost_, 1 / cost_, -1);  // TODO: other kernels
 
     std::cout << "r= b-Ax" << std::endl;
     std::vector<real_t> d(b.size(), 0.0);
@@ -57,7 +57,7 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         //Ad = A * d
         std::vector<real_t> Ad(dept, 0.0);
 
-        kernel_linear(b, data, datlast, q.data(), Ad, d.data(), dim, QA_cost, 1 / cost, 1);  // TODO: other kernels
+        kernel_linear(b, data_, datlast, q.data(), Ad, d.data(), dim, QA_cost_, 1 / cost_, 1);  // TODO: other kernels
 
         alpha = delta / mult(d.data(), Ad.data(), d.size());
         x += mult(alpha, d.data(), d.size());
@@ -65,7 +65,7 @@ std::vector<real_t> OpenMP_CSVM::CG(const std::vector<real_t> &b, const int imax
         ///r = b;
         std::copy(b.begin(), b.end(), r.begin());
 
-        kernel_linear(b, data, datlast, q.data(), r, x.data(), dim, QA_cost, 1 / cost, -1);  // TODO: other kernels
+        kernel_linear(b, data_, datlast, q.data(), r, x.data(), dim, QA_cost_, 1 / cost_, -1);  // TODO: other kernels
 
         delta = mult(r.data(), r.data(), r.size());
         //break;

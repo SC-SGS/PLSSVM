@@ -25,16 +25,16 @@ class MockCSVM : public plssvm::CSVM<real_t> {
     MOCK_METHOD(void, loadDataDevice, (), (override));
     MOCK_METHOD(std::vector<real_t>, generate_q, (), (override));
     MOCK_METHOD(std::vector<real_t>, CG, (const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &), (override));
-    using plssvm::CSVM<real_t>::cost;
-    using plssvm::CSVM<real_t>::data;
+    using plssvm::CSVM<real_t>::cost_;
+    using plssvm::CSVM<real_t>::data_;
     using plssvm::CSVM<real_t>::kernel_function;
     using plssvm::CSVM<real_t>::transform_data;
-    using plssvm::CSVM<real_t>::value;
+    using plssvm::CSVM<real_t>::value_;
 
-    const real_t get_num_data_points() const { return num_data_points; }
-    const real_t get_num_features() const { return num_features; }
-    std::vector<std::vector<real_t>> get_data() const { return data; }
-    const real_t get_gamma() const { return gamma; }
+    const real_t get_num_data_points() const { return num_data_points_; }
+    const real_t get_num_features() const { return num_features_; }
+    std::vector<std::vector<real_t>> get_data() const { return data_; }
+    const real_t get_gamma() const { return gamma_; }
 };
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
 class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
@@ -44,9 +44,9 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    using plssvm::OpenMP_CSVM::alpha;
-    using plssvm::OpenMP_CSVM::bias;
-    using plssvm::OpenMP_CSVM::QA_cost;
+    using plssvm::OpenMP_CSVM::alpha_;
+    using plssvm::OpenMP_CSVM::bias_;
+    using plssvm::OpenMP_CSVM::QA_cost_;
 
     using plssvm::OpenMP_CSVM::CG;
     using plssvm::OpenMP_CSVM::learn;
@@ -56,16 +56,16 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
     using plssvm::OpenMP_CSVM::kernel_function;
 
     const real_t get_num_data_points() const {
-        return num_data_points;
+        return num_data_points_;
     }
     const real_t get_num_features() const {
-        return num_features;
+        return num_features_;
     }
     std::vector<std::vector<real_t>> get_data() const {
-        return data;
+        return data_;
     }
     const real_t get_gamma() const {
-        return gamma;
+        return gamma_;
     }
 };
 #else
@@ -80,32 +80,32 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    using plssvm::OpenCL_CSVM::alpha;
-    using plssvm::OpenCL_CSVM::bias;
-    using plssvm::OpenCL_CSVM::QA_cost;
+    using plssvm::OpenCL_CSVM::alpha_;
+    using plssvm::OpenCL_CSVM::bias_;
+    using plssvm::OpenCL_CSVM::QA_cost_;
 
     using plssvm::OpenCL_CSVM::CG;
     using plssvm::OpenCL_CSVM::learn;
     using plssvm::OpenCL_CSVM::loadDataDevice;
 
-    using plssvm::OpenCL_CSVM::cost;
-    using plssvm::OpenCL_CSVM::data;
+    using plssvm::OpenCL_CSVM::cost_;
+    using plssvm::OpenCL_CSVM::data_;
     using plssvm::OpenCL_CSVM::data_cl;
     using plssvm::OpenCL_CSVM::generate_q;
     using plssvm::OpenCL_CSVM::kernel_function;
     using plssvm::OpenCL_CSVM::manager;
 
     const real_t get_num_data_points() const {
-        return num_data_points;
+        return num_data_points_;
     }
     const real_t get_num_features() const {
-        return num_features;
+        return num_features_;
     }
     std::vector<std::vector<real_t>> get_data() const {
-        return data;
+        return data_;
     }
     const real_t get_gamma() const {
-        return gamma;
+        return gamma_;
     }
 };
 #else
@@ -120,26 +120,26 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    using plssvm::CUDA_CSVM::alpha;
-    using plssvm::CUDA_CSVM::bias;
+    using plssvm::CUDA_CSVM::alpha_;
+    using plssvm::CUDA_CSVM::bias_;
     using plssvm::CUDA_CSVM::CG;
     using plssvm::CUDA_CSVM::generate_q;
     using plssvm::CUDA_CSVM::kernel_function;
     using plssvm::CUDA_CSVM::learn;
     using plssvm::CUDA_CSVM::loadDataDevice;
-    using plssvm::CUDA_CSVM::QA_cost;
+    using plssvm::CUDA_CSVM::QA_cost_;
 
     const real_t get_num_data_points() const {
-        return num_data_points;
+        return num_data_points_;
     }
     const real_t get_num_features() const {
-        return num_features;
+        return num_features_;
     }
     std::vector<std::vector<real_t>> get_data() const {
-        return data;
+        return data_;
     }
     const real_t get_gamma() const {
-        return gamma;
+        return gamma_;
     }
 };
 #else
