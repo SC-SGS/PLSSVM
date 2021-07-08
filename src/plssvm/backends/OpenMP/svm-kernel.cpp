@@ -2,20 +2,11 @@
 
 #include "plssvm/detail/operators.hpp"
 
-#include <algorithm>  // std::copy
-#include <stdexcept>  // std::runtime_error
+#include <cassert>  // assert
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 namespace plssvm {
-
-template <typename real_type>
-real_type kernel_function(const real_type *xi, const real_type *xj, const std::size_t dim) {  // TODO:
-    switch (0) {
-        case 0:
-            return mult(xi, xj, dim);
-        default:
-            throw std::runtime_error{ "Can not decide wich kernel!" };
-    }
-}
 
 template <typename real_type>
 void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int sign) {
@@ -23,26 +14,20 @@ void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<
     constexpr size_type BLOCK_SIZE = 64;  // TODO: ?
 
     const std::vector<real_type> &data_last = data.back();
-    const size_type dim = data_last.size();
     const size_type dept = d.size();
+
+    auto linear_kernel_function = [](const std::vector<real_type> &lhs, const std::vector<real_type> &rhs) -> real_type {
+        assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
+        return mult(lhs.data(), rhs.data(), lhs.size());
+    };
 
     #pragma omp parallel for collapse(2) schedule(dynamic, 8)
     for (size_type i = 0; i < dept; i += BLOCK_SIZE) {
         for (size_type j = 0; j < dept; j += BLOCK_SIZE) {
-            real_type temp_data_i[BLOCK_SIZE][data[0].size()];  //TODO:
-            real_type temp_data_j[BLOCK_SIZE][data[0].size()];  //TODO:
-            for (size_type ii = 0; ii < BLOCK_SIZE; ++ii) {
-                if (ii + i < dept) {
-                    std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
-                }
-                if (ii + j < dept) {
-                    std::copy(data[ii + j].begin(), data[ii + j].end(), temp_data_j[ii]);
-                }
-            }
             for (size_type ii = 0; ii < BLOCK_SIZE && ii + i < dept; ++ii) {
                 for (size_type jj = 0; jj < BLOCK_SIZE && jj + j < dept; ++jj) {
                     if (ii + i > jj + j) {
-                        const real_type temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(data_last.data(), temp_data_j[jj], dim);
+                        const real_type temp = linear_kernel_function(data[ii + i], data[jj + j]) - linear_kernel_function(data_last, data[jj + j]);
                         #pragma omp atomic
                         ret[jj + j] += temp * d[ii + i] * sign;
                         #pragma omp atomic
@@ -55,9 +40,9 @@ void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<
 
     #pragma omp parallel for schedule(dynamic, 8)
     for (size_type i = 0; i < dept; ++i) {
-        real_t kernel_dat_and_cost = kernel_function(data_last.data(), &data[i][0], dim) - QA_cost;
+        const real_type kernel_dat_and_cost = linear_kernel_function(data_last, data[i]) - QA_cost;
         #pragma omp atomic
-        ret[i] += (kernel_function(&data[i][0], &data[i][0], dim) - kernel_function(data_last.data(), &data[i][0], dim) + cost - kernel_dat_and_cost) * d[i] * sign;
+        ret[i] += (linear_kernel_function(data[i], data[i]) - linear_kernel_function(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * sign;
         for (size_type j = 0; j < i; ++j) {
             #pragma omp atomic
             ret[j] -= kernel_dat_and_cost * sign * d[i];
@@ -71,6 +56,7 @@ template void kernel_linear(const std::vector<std::vector<float>> &, std::vector
 template void kernel_linear(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const double, const double, const int);
 }  // namespace plssvm
 
+// TODO: look at further optimizations
 // void kernel_linear(std::tuple<int,int> block, std::tuple<int,int> blockDim,real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){
 // 	int blockDimx = std::get<0>(blockDim);
 // 	int blockDimy = std::get<1>(blockDim);
