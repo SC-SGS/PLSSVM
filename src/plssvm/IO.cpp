@@ -17,6 +17,7 @@
 
 #include <algorithm>    // std::max, std::transform
 #include <cctype>       // std::toupper
+#include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <omp.h>        // omp_get_num_threads # TODO: get rid of it?
