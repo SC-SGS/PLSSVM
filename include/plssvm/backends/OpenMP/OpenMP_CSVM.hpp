@@ -10,6 +10,7 @@ namespace plssvm {
 template <typename T>
 class OpenMP_CSVM : public CSVM<T> {
   protected:
+    // protected for test MOCK class
     using base_type = CSVM<T>;
     using base_type::cost_;
     using base_type::data_;
