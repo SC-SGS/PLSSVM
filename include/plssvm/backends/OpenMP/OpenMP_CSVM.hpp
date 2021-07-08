@@ -2,6 +2,7 @@
 
 #include "plssvm/CSVM.hpp"
 #include "plssvm/kernel_types.hpp"
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include <vector>
 
@@ -21,7 +22,8 @@ class OpenMP_CSVM : public CSVM<T> {
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    OpenMP_CSVM(real_type cost, real_type epsilon, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, bool info);
+    explicit OpenMP_CSVM(parameter<T> &params);
+    OpenMP_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     //    void std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 

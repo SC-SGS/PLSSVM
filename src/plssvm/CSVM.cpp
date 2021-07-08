@@ -14,6 +14,14 @@
 namespace plssvm {
 
 template <typename T>
+CSVM<T>::CSVM(parameter<T> &params) :
+    CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+
+template <typename T>
+CSVM<T>::CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    kernel_{ kernel }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 }, cost_{ cost }, epsilon_{ epsilon }, print_info_{ print_info } {}
+
+template <typename T>
 void CSVM<T>::learn() {
     auto start_time = std::chrono::steady_clock::now();
 

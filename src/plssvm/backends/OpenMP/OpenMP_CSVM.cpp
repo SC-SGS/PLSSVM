@@ -12,8 +12,13 @@
 namespace plssvm {
 
 template <typename T>
-OpenMP_CSVM<T>::OpenMP_CSVM(real_type cost, real_type epsilon, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, bool info) :
-    CSVM<T>(cost, epsilon, kernel, degree, gamma, coef0, info) {}
+OpenMP_CSVM<T>::OpenMP_CSVM(parameter<T> &params) :
+    OpenMP_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+
+template <typename T>
+OpenMP_CSVM<T>::OpenMP_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+
 
 template <typename T>
 auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {

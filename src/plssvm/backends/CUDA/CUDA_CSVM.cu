@@ -23,8 +23,11 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 
 int count_devices = 1;
 
-CUDA_CSVM::CUDA_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-    CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {
+CUDA_CSVM::CUDA_CSVM(parameter<real_t> &params) :
+    CUDA_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+
+CUDA_CSVM::CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    CSVM<real_t>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
     gpuErrchk(cudaGetDeviceCount(&count_devices));
     datlast_d = std::vector<real_t *>(count_devices);
     data_d = std::vector<real_t *>(count_devices);

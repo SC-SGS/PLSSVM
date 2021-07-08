@@ -1,6 +1,7 @@
 #pragma once
 
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
+#include "plssvm/parameter.hpp"     // plssvm::parameter
 
 #include <cstddef>      // std::size_t
 #include <string>       // std::string
@@ -17,9 +18,8 @@ class CSVM {
     using real_type = T;
     using size_type = std::size_t;
 
-    // TODO: svm_param struct?
-    CSVM(real_type cost, real_type epsilon, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, bool info = true) :
-        cost_(cost), epsilon_(epsilon), kernel_(kernel), degree_(degree), gamma_(gamma), coef0_(coef0), print_info_(info) {}
+    explicit CSVM(parameter<T> &params);
+    CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     virtual ~CSVM() = default;
 
@@ -72,13 +72,13 @@ class CSVM {
     std::vector<real_type> transform_data(size_type boundary);
 
     // parameter initialized by the constructor
-    real_type cost_;
-    const real_type epsilon_;
     const kernel_type kernel_;
     const real_type degree_;
     real_type gamma_;
     const real_type coef0_;
-    const bool print_info_;
+    real_type cost_;
+    const real_type epsilon_;
+    const bool print_info_ = true;
 
     // internal variables
     size_type num_data_points_{};

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 #include <plssvm/CSVM.hpp>
 #include <plssvm/kernel_types.hpp>
 #include <plssvm/typedef.hpp>
@@ -8,7 +9,8 @@ namespace plssvm {
 
 class CUDA_CSVM : public CSVM<real_t> {
   public:
-    CUDA_CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_);
+    explicit CUDA_CSVM(parameter<real_t> &params);
+    CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     void load_w();
     std::vector<real_t> predict(real_t *, int, int);

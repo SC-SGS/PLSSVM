@@ -9,6 +9,7 @@
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 #endif
+#include "plssvm/parameter.hpp"
 #include "plssvm/typedef.hpp"
 #include "gmock/gmock.h"
 #include <plssvm/kernel_types.hpp>
@@ -17,8 +18,11 @@ using real_t = plssvm::real_t;  // TODO:
 
 class MockCSVM : public plssvm::CSVM<real_t> {
   public:
-    MockCSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        plssvm::CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    explicit MockCSVM(plssvm::parameter<real_t> &params) :
+        plssvm::CSVM<real_t>{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    MockCSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+        plssvm::CSVM<real_t>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
@@ -39,8 +43,11 @@ class MockCSVM : public plssvm::CSVM<real_t> {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
 class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM<real_t> {
   public:
-    MockOpenMP_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        plssvm::OpenMP_CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    explicit MockOpenMP_CSVM(plssvm::parameter<real_t> &params) :
+        plssvm::OpenMP_CSVM<real_t>{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    MockOpenMP_CSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+        plssvm::OpenMP_CSVM<real_t>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
@@ -75,8 +82,11 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM<real_t> {
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
 class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
   public:
-    MockOpenCL_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        plssvm::OpenCL_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    explicit MockOpenCL_CSVM(plssvm::parameter<real_t> &params) :
+        plssvm::OpenCL_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    MockOpenCL_CSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+        plssvm::OpenCL_CSVM{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
@@ -115,8 +125,11 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
 class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
   public:
-    MockCUDA_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        plssvm::CUDA_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+    explicit MockCUDA_CSVM(plssvm::parameter<real_t> &params) :
+        plssvm::CUDA_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    MockCUDA_CSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+        plssvm::CUDA_CSVM{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());

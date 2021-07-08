@@ -51,7 +51,7 @@ std::unique_ptr<CSVM<T>> make_SVM(const backend_type type, Args... args) {
 
 template <typename T>
 std::unique_ptr<CSVM<T>> make_SVM(const parameter<T> &params) {
-    return make_SVM<T>(params.backend, params.cost, params.epsilon, params.kernel, params.degree, params.gamma, params.coef0, params.print_info);
+    return make_SVM<T>(params.backend, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);
 }
 
 }  // namespace plssvm

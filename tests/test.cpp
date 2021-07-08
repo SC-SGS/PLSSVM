@@ -27,7 +27,7 @@
 #endif
 
 TEST(IO, libsvmFormat) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to libsvm test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -51,7 +51,7 @@ TEST(IO, libsvmFormat) {
 }
 
 TEST(IO, sparselibsvmFormat) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.sparse.libsvm");  //TODO: add comments etc to libsvm test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -75,7 +75,7 @@ TEST(IO, sparselibsvmFormat) {
 }
 
 TEST(IO, arffFormat) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -99,13 +99,13 @@ TEST(IO, arffFormat) {
 }
 
 TEST(IO, arffParserGamma) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_FLOAT_EQ(1.0, csvm.get_gamma());
 
-    MockCSVM csvm_gammazero(1., 1., plssvm::kernel_type::linear, 1., 0, 1., false);
+    MockCSVM csvm_gammazero(plssvm::kernel_type::linear, 1., 0, 1., 1., 1., false);
     csvm_gammazero.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
     EXPECT_EQ(csvm_gammazero.get_num_data_points(), 5);
     EXPECT_EQ(csvm_gammazero.get_num_features(), 4);
@@ -113,13 +113,13 @@ TEST(IO, arffParserGamma) {
 }
 
 TEST(IO, libsvmParserGamma) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_FLOAT_EQ(1.0, csvm.get_gamma());
 
-    MockCSVM csvm_gammazero(1., 1., plssvm::kernel_type::linear, 1., 0, 1., false);
+    MockCSVM csvm_gammazero(plssvm::kernel_type::linear, 1., 0, 1., 1., 1., false);
     csvm_gammazero.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
     EXPECT_EQ(csvm_gammazero.get_num_data_points(), 5);
     EXPECT_EQ(csvm_gammazero.get_num_features(), 4);
@@ -127,7 +127,7 @@ TEST(IO, libsvmParserGamma) {
 }
 
 TEST(IO, writeModel) {
-    MockCSVM csvm(1., 0.001, plssvm::kernel_type::linear, 3.0, 0.0, 0.0, false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
     std::string model1 = std::tmpnam(nullptr);
     csvm.write_model(model1);
@@ -140,7 +140,7 @@ TEST(IO, writeModel) {
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     std::string model2 = std::tmpnam(nullptr);  // TODO: only if openmp backend is available
-    MockOpenMP_CSVM csvm2(1., 0.001, plssvm::kernel_type::linear, 3.0, 0.0, 0.0, false);
+    MockOpenMP_CSVM csvm2(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     std::string testfile = TESTPATH "/data/5x4.libsvm";
     csvm2.learn(testfile, model2);
 
@@ -156,22 +156,22 @@ TEST(IO, writeModel) {
 }
 
 TEST(IO, libsvmFormatIllFormed) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_libsvm(TESTPATH "/data/5x4.arff");, plssvm::invalid_file_format_exception);
 }
 
 TEST(IO, arffFormatIllFormed) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_arff(TESTPATH "/data/5x4.libsvm");, plssvm::invalid_file_format_exception);
 }
 
 TEST(IO, libsvmNoneExistingFile) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_libsvm(TESTPATH "/data/5x5.ar");, plssvm::file_not_found_exception);
 }
 
 TEST(IO, arffNoneExistingFile) {
-    MockCSVM csvm(1., 1., plssvm::kernel_type::linear, 1., 1., 1., false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_arff(TESTPATH "/data/5x5.lib");, plssvm::file_not_found_exception);
 }
 
@@ -189,7 +189,7 @@ TEST(kernel, linear) {
         correct += x1[i] * x2[i];
     }
 
-    MockCSVM csvm(1., 0.001, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockCSVM csvm(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, 0.001, false);
     real_t result = csvm.kernel_function(x1, x2);
     real_t result2 = csvm.kernel_function(x1.data(), x2.data(), size);
 
@@ -197,7 +197,7 @@ TEST(kernel, linear) {
     EXPECT_DOUBLE_EQ(correct, result2);
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    MockOpenMP_CSVM csvm_OpenMP(1., 0.001, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenMP_CSVM csvm_OpenMP(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, 0.001, false);
     real_t result_OpenMP = csvm_OpenMP.kernel_function(x1, x2);
     real_t result2_OpenMP = csvm_OpenMP.kernel_function(x1.data(), x2.data(), size);
 
@@ -206,7 +206,7 @@ TEST(kernel, linear) {
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    MockOpenCL_CSVM csvm_OpenCL(1., 0.001, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, 0.001, false);
     real_t result_OpenCL = csvm_OpenCL.kernel_function(x1, x2);
     real_t result2_OpenCL = csvm_OpenCL.kernel_function(x1.data(), x2.data(), size);
 
@@ -215,7 +215,7 @@ TEST(kernel, linear) {
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    MockCUDA_CSVM csvm_CUDA(1., 0.001, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, 0.001, false);
     real_t result_CUDA = csvm_CUDA.kernel_function(x1, x2);
     real_t result2_CUDA = csvm_CUDA.kernel_function(x1.data(), x2.data(), size);
 
@@ -225,7 +225,7 @@ TEST(kernel, linear) {
 }
 
 TEST(CSVM, transform_data) {
-    MockCSVM csvm(1., 0.001, plssvm::kernel_type::linear, 3.0, 0.0, 0.0, false);
+    MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1.0, 0.001, false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     std::vector<real_t> result0 = csvm.transform_data(0);
     std::vector<real_t> result10 = csvm.transform_data(10);
@@ -253,7 +253,7 @@ TEST(learn, comapre_backends) {
     std::vector<real_t> QA_costs;
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    MockOpenMP_CSVM csvm_OpenMP(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenMP_CSVM csvm_OpenMP(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_OpenMP.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_OpenMP.setup_data_on_device();
     csvm_OpenMP.learn();
@@ -265,7 +265,7 @@ TEST(learn, comapre_backends) {
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_OpenCL.setup_data_on_device();
     csvm_OpenCL.learn();
@@ -277,7 +277,7 @@ TEST(learn, comapre_backends) {
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_CUDA.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     csvm_CUDA.setup_data_on_device();
     csvm_CUDA.learn();
@@ -308,7 +308,7 @@ TEST(learn, q) {
     std::vector<std::vector<real_t>> qs;
     std::vector<std::string> svms;
 
-    MockCSVM csvm(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockCSVM csvm(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm.parse_libsvm(TESTPATH "/data/500x200.libsvm");
 
     qs.emplace_back(std::vector<real_t>());
@@ -320,7 +320,7 @@ TEST(learn, q) {
     svms.emplace_back("correct");
 
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    MockOpenMP_CSVM csvm_OpenMP(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenMP_CSVM csvm_OpenMP(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_OpenMP.parse_libsvm(TESTPATH "/data/500x200.libsvm");
     csvm_OpenMP.setup_data_on_device();
     qs.emplace_back(csvm_OpenMP.generate_q());
@@ -328,14 +328,14 @@ TEST(learn, q) {
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/500x200.libsvm");
     csvm_OpenCL.setup_data_on_device();
     qs.emplace_back(csvm_OpenCL.generate_q());
     svms.emplace_back("opencl");
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_CUDA.parse_libsvm(TESTPATH "/data/500x200.libsvm");
     csvm_CUDA.setup_data_on_device();
     qs.emplace_back(csvm_CUDA.generate_q());
@@ -360,7 +360,7 @@ TEST(learn, kernel_linear) {
     std::vector<std::vector<real_t>> rs;
     std::vector<std::string> svms;
 
-    MockCSVM csvm(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockCSVM csvm(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm.parse_libsvm(TESTPATH "/data/500x200.libsvm");
 
     q.reserve(csvm.data_.size());
@@ -398,13 +398,13 @@ TEST(learn, kernel_linear) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     rs.emplace_back(std::vector<real_t>(dept, 0.0));
     plssvm::kernel_linear(csvm.data_, rs.back(), x, QA_cost, 1 / csvm.cost_, sgn);
-// plssvm::kernel_linear(rs.back(), csvm.data_, &csvm.data_.back()[0], q.data(), rs.back(), x.data(), csvm.get_num_features(), QA_cost, 1 / csvm.cost_, sgn);
+    // plssvm::kernel_linear(rs.back(), csvm.data_, &csvm.data_.back()[0], q.data(), rs.back(), x.data(), csvm.get_num_features(), QA_cost, 1 / csvm.cost_, sgn);
     svms.emplace_back("openmp");
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     const size_t boundary_size = plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
-    MockOpenCL_CSVM csvm_OpenCL(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     csvm_OpenCL.parse_libsvm(TESTPATH "/data/500x200.libsvm");
     csvm_OpenCL.setup_data_on_device();
 
@@ -455,7 +455,7 @@ TEST(learn, kernel_linear) {
 
     // #endif
     // #if defined(PLSSVM_HAS_CUDA_BACKEND) //TODO: Test for CUDA kernel
-    //     MockCUDA_CSVM csvm_CUDA(1., eps, plssvm::kernel_type::linear, degree, gamma, coef0, false);
+    //     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear, degree, gamma, coef0, 1.0, eps, false);
     //     csvm_CUDA.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     //     csvm_CUDA.setup_data_on_device();
     //     svms.emplace_back("cuda");
