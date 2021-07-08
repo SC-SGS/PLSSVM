@@ -1,6 +1,6 @@
 #pragma once
 
-#include <plssvm/kernel_types.hpp>  // plssvm::kernel_type
+#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
@@ -16,6 +16,7 @@ class CSVM {
     using real_type = T;
     using size_type = std::size_t;
 
+    // TODO: svm_param struct?
     CSVM(real_type cost, real_type epsilon, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, bool info = true) :
         cost_(cost), epsilon_(epsilon), kernel_(kernel), degree_(degree), gamma_(gamma), coef0_(coef0), print_info_(info) {}
 

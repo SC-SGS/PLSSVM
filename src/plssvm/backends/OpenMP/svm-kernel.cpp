@@ -72,23 +72,25 @@
 
 namespace plssvm {
 
-real_t kernel_function(real_t *xi, real_t *xj, int dim) {
+template <typename T>
+T kernel_function(T *xi, T *xj, const std::size_t dim) {  // TODO:
     switch (0) {
         case 0:
             return mult(xi, xj, dim);
         default:
-            throw std::runtime_error("Can not decide wich kernel!");
+            throw std::runtime_error{ "Can not decide wich kernel!" };
     }
 }
 
 constexpr int bloksize = 64;
 
-void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>> &data, real_t *datlast, const real_t *q, std::vector<real_t> &ret, const real_t *d, const int dim, const real_t QA_cost, const real_t cost, const int add) {
+template <typename T>
+void kernel_linear(const std::vector<T> &b, std::vector<std::vector<T>> &data, T *datlast, const T *q, std::vector<T> &ret, const T *d, const std::size_t dim, const T QA_cost, const T cost, const int add) {
     #pragma omp parallel for collapse(2) schedule(dynamic, 8)
     for (int i = 0; i < b.size(); i += bloksize) {
         for (int j = 0; j < b.size(); j += bloksize) {
-            real_t temp_data_i[bloksize][data[0].size()];  //TODO:
-            real_t temp_data_j[bloksize][data[0].size()];  //TODO:
+            T temp_data_i[bloksize][data[0].size()];  //TODO:
+            T temp_data_j[bloksize][data[0].size()];  //TODO:
             for (int ii = 0; ii < bloksize; ++ii) {
                 if (ii + i < b.size())
                     std::copy(data[ii + i].begin(), data[ii + i].end(), temp_data_i[ii]);
@@ -98,7 +100,7 @@ void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>
             for (int ii = 0; ii < bloksize && ii + i < b.size(); ++ii) {
                 for (int jj = 0; jj < bloksize && jj + j < b.size(); ++jj) {
                     if (ii + i > jj + j) {
-                        real_t temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
+                        T temp = kernel_function(temp_data_i[ii], temp_data_j[jj], dim) - kernel_function(datlast, temp_data_j[jj], dim);
                         #pragma omp atomic
                         ret[jj + j] += temp * d[ii + i] * add;
                         #pragma omp atomic
@@ -123,6 +125,8 @@ void kernel_linear(const std::vector<real_t> &b, std::vector<std::vector<real_t>
     }
 }
 
+template void kernel_linear(const std::vector<float> &, std::vector<std::vector<float>> &, float *, const float *, std::vector<float> &, const float *, const std::size_t, const float, const float, const int);
+template void kernel_linear(const std::vector<double> &, std::vector<std::vector<double>> &, double *, const double *, std::vector<double> &, const double *, const std::size_t, const double, const double, const int);
 }  // namespace plssvm
 
 // void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma, const real_t coef0 ,const real_t degree){

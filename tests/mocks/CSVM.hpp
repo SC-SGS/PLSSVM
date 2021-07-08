@@ -37,23 +37,23 @@ class MockCSVM : public plssvm::CSVM<real_t> {
     const real_t get_gamma() const { return gamma_; }
 };
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM {
+class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM<real_t> {
   public:
     MockOpenMP_CSVM(real_t cost_, real_t epsilon_, plssvm::kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        plssvm::OpenMP_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
+        plssvm::OpenMP_CSVM<real_t>(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    using plssvm::OpenMP_CSVM::alpha_;
-    using plssvm::OpenMP_CSVM::bias_;
-    using plssvm::OpenMP_CSVM::QA_cost_;
+    using plssvm::OpenMP_CSVM<real_t>::alpha_;
+    using plssvm::OpenMP_CSVM<real_t>::bias_;
+    using plssvm::OpenMP_CSVM<real_t>::QA_cost_;
 
-    using plssvm::OpenMP_CSVM::learn;
-    using plssvm::OpenMP_CSVM::setup_data_on_device;
-    using plssvm::OpenMP_CSVM::solver_CG;
+    using plssvm::OpenMP_CSVM<real_t>::learn;
+    using plssvm::OpenMP_CSVM<real_t>::setup_data_on_device;
+    using plssvm::OpenMP_CSVM<real_t>::solver_CG;
 
-    using plssvm::OpenMP_CSVM::generate_q;
-    using plssvm::OpenMP_CSVM::kernel_function;
+    using plssvm::OpenMP_CSVM<real_t>::generate_q;
+    using plssvm::OpenMP_CSVM<real_t>::kernel_function;
 
     const real_t get_num_data_points() const {
         return num_data_points_;

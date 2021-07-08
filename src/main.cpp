@@ -26,7 +26,7 @@ std::unique_ptr<CSVM<T>> make_SVM(const svm_backend type, Args... args) {
     switch (type) {
         case svm_backend::OPENMP:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-            return std::make_unique<OpenMP_CSVM>(std::forward<Args>(args)...);
+            return std::make_unique<OpenMP_CSVM<T>>(std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No OpenMP backend available!" };
 #endif
