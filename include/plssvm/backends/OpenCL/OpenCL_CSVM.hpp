@@ -18,6 +18,7 @@ class OpenCL_CSVM : public CSVM<T> {
   protected:
     // protected for test MOCK class
     using base_type = CSVM<T>;
+    using base_type::alpha_;
     using base_type::cost_;
     using base_type::data_;
     using base_type::kernel_;
@@ -25,7 +26,6 @@ class OpenCL_CSVM : public CSVM<T> {
     using base_type::num_features_;
     using base_type::print_info_;
     using base_type::QA_cost_;
-    using base_type::alpha_;
 
   public:
     using real_type = typename base_type::real_type;
@@ -41,12 +41,6 @@ class OpenCL_CSVM : public CSVM<T> {
     std::vector<real_type> generate_q() override;
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     //    void load_w() override;  // TODO: implement
-
-    void resizeData(int boundary);
-    void resizeData(const int device, int boundary);
-    void resizeDatalast(int boundary);
-    void resizeDatalast(const int device, int boundary);
-    // inline void resize(const int old_boundary,const int new_boundary);
 
     opencl::manager_t manager{ "../platform_configuration.cfg" };
     opencl::device_t first_device;

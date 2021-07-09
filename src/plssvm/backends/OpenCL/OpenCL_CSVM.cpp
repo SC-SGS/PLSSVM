@@ -73,24 +73,6 @@ void OpenCL_CSVM<T>::setup_data_on_device() {
 }
 
 template <typename T>
-void OpenCL_CSVM<T>::resizeData(const int device, const int boundary) {
-    std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
-
-    data_cl[device] = opencl::DevicePtrOpenCL<real_type>(devices[device], num_features_ * (num_data_points_ - 1 + boundary));
-    std::vector<real_type> vec;
-    //vec.reserve(num_data_points + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) -1);
-    for (size_type col = 0; col < num_features_; ++col) {
-        for (size_type row = 0; row < num_data_points_ - 1; ++row) {
-            vec.push_back(data_[row][col]);
-        }
-        for (size_type i = 0; i < boundary; ++i) {
-            vec.push_back(0.0);
-        }
-    }
-    data_cl[device].to_device(vec);
-}
-
-template <typename T>
 auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
     std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
     const size_type dept = num_data_points_ - 1;
