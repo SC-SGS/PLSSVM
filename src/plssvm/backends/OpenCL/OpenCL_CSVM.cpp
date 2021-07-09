@@ -113,9 +113,9 @@ auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
             {
                 std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/kernel_q.cl" };
                 std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                if (*typeid(real_t).name() == 'f') {
+                if constexpr (std::is_same_v<real_type, float>) {
                     manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                } else if (*typeid(real_t).name() == 'd') {
+                } else if constexpr (std::is_same_v<real_type, double>) {
                     manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
                 }
                 json::node &deviceNode =
@@ -136,8 +136,8 @@ auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
         const int end = (device + 1) * Ncols / count_devices;
         opencl::apply_arguments(kernel_q_cl[device], q_cl[device].get(), data_cl[device].get(), datlast_cl[device].get(), Nrows, start, end);
 
-        size_type grid_size = static_cast<size_t>(
-            ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE)) * THREADBLOCK_SIZE);
+        size_type grid_size = static_cast<size_type>(
+            ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE)) * THREADBLOCK_SIZE);
         size_type block_size = THREADBLOCK_SIZE;
         opencl::run_kernel_1d_timed(devices[device], kernel_q_cl[device], grid_size, block_size);
     }
@@ -213,9 +213,9 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                 if (!svm_kernel_linear[device]) {
                     std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
                     std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                    if (*typeid(real_t).name() == 'f') {
+                    if constexpr (std::is_same_v<real_type, float>) {
                         manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                    } else if (*typeid(real_t).name() == 'd') {
+                    } else if constexpr (std::is_same_v<real_type, double>) {
                         manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
                     }
                     json::node &deviceNode =
@@ -236,8 +236,8 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                     // resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
                     const int Ncols = num_features_;
                     const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-                    std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-                                                   static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))) };
+                    std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
+                                                      static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))) };
                     const int start = device * Ncols / count_devices;
                     const int end = (device + 1) * Ncols / count_devices;
                     opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
@@ -317,9 +317,9 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                     if (!svm_kernel_linear[device]) {
                         std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
                         std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                        if (*typeid(real_t).name() == 'f') {
+                        if constexpr (std::is_same_v<real_type, float>) {
                             manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                        } else if (*typeid(real_t).name() == 'd') {
+                        } else if constexpr (std::is_same_v<real_type, double>) {
                             manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
                         }
                         json::node &deviceNode =
@@ -340,8 +340,8 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                         // resizeData(device,THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
                         const int Ncols = num_features_;
                         const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-                        std::vector<size_type> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-                                                          static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))) };
+                        std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
+                                                          static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))) };
                         const int start = device * Ncols / count_devices;
                         const int end = (device + 1) * Ncols / count_devices;
                         opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), Ad_cl[device].get(), r_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, 1, start, end);
@@ -415,9 +415,9 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                         if (!svm_kernel_linear[device]) {
                             std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
                             std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                            if (*typeid(real_t).name() == 'f') {
+                            if constexpr (std::is_same_v<real_type, float>) {
                                 manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                            } else if (*typeid(real_t).name() == 'd') {
+                            } else if constexpr (std::is_same_v<real_type, double>) {
                                 manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
                             }
                             json::node &deviceNode =
@@ -442,8 +442,8 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                             const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
                             const int start = device * Ncols / count_devices;
                             const int end = (device + 1) * Ncols / count_devices;
-                            std::vector<size_type> grid_size{ static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-                                                              static_cast<size_t>(ceil(static_cast<real_t>(dept) / static_cast<real_t>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))) };
+                            std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
+                                                              static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))) };
                             opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
                             grid_size[0] *= THREADBLOCK_SIZE;
                             grid_size[1] *= THREADBLOCK_SIZE;
