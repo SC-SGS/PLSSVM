@@ -12,7 +12,8 @@ void init_(int block, int blockDim, real_t *vec, real_t value, int size) {
     }
 }
 
-void add_mult_(const int block, const int blockDim, real_t *vec1, const real_t *vec2, const real_t value, const int dim) {
+template <typename real_type>
+void add_mult_(const int block, const int blockDim, real_type *vec1, const real_type *vec2, const real_type value, const int dim) {
     for (int blockIdx = 0; blockIdx < block; ++blockIdx) {
         for (int threadIdx = 0; threadIdx < blockDim; ++threadIdx) {
             int id = blockIdx * blockDim + threadIdx;
@@ -35,5 +36,8 @@ void kernel_q_(int block, int blockDim, real_t *q, real_t *data_d, real_t *datla
         }
     }
 }
+
+template void add_mult_(const int block, const int blockDim, float *vec1, const float *vec2, const float value, const int dim);
+template void add_mult_(const int block, const int blockDim, double *vec1, const double *vec2, const double value, const int dim);
 
 }  // namespace plssvm

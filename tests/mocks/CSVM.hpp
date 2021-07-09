@@ -45,7 +45,7 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM<real_t> {
   public:
     explicit MockOpenMP_CSVM(plssvm::parameter<real_t> &params) :
         plssvm::OpenMP_CSVM<real_t>{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
-    MockOpenMP_CSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    MockOpenMP_CSVM(plssvm::kernel_type kernel, real_t degree, real_t gamma, real_t coef0, real_t cost, real_t epsilon, bool print_info) :
         plssvm::OpenMP_CSVM<real_t>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // MOCK_METHOD(void, load_w, (), (override));
@@ -80,30 +80,30 @@ class MockOpenMP_CSVM : public plssvm::OpenMP_CSVM<real_t> {
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
+class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM<real_t> {
   public:
     explicit MockOpenCL_CSVM(plssvm::parameter<real_t> &params) :
-        plssvm::OpenCL_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
-    MockOpenCL_CSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
-        plssvm::OpenCL_CSVM{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+        plssvm::OpenCL_CSVM<real_t>{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    MockOpenCL_CSVM(plssvm::kernel_type kernel, real_t degree, real_t gamma, real_t coef0, real_t cost, real_t epsilon, bool print_info) :
+        plssvm::OpenCL_CSVM<real_t>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    using plssvm::OpenCL_CSVM::alpha_;
-    using plssvm::OpenCL_CSVM::bias_;
-    using plssvm::OpenCL_CSVM::QA_cost_;
+    using plssvm::OpenCL_CSVM<real_t>::alpha_;
+    using plssvm::OpenCL_CSVM<real_t>::bias_;
+    using plssvm::OpenCL_CSVM<real_t>::QA_cost_;
 
-    using plssvm::OpenCL_CSVM::learn;
-    using plssvm::OpenCL_CSVM::setup_data_on_device;
-    using plssvm::OpenCL_CSVM::solver_CG;
+    using plssvm::OpenCL_CSVM<real_t>::learn;
+    using plssvm::OpenCL_CSVM<real_t>::setup_data_on_device;
+    using plssvm::OpenCL_CSVM<real_t>::solver_CG;
 
-    using plssvm::OpenCL_CSVM::cost_;
-    using plssvm::OpenCL_CSVM::data_;
-    using plssvm::OpenCL_CSVM::data_cl;
-    using plssvm::OpenCL_CSVM::generate_q;
-    using plssvm::OpenCL_CSVM::kernel_function;
-    using plssvm::OpenCL_CSVM::manager;
+    using plssvm::OpenCL_CSVM<real_t>::cost_;
+    using plssvm::OpenCL_CSVM<real_t>::data_;
+    using plssvm::OpenCL_CSVM<real_t>::data_cl;
+    using plssvm::OpenCL_CSVM<real_t>::generate_q;
+    using plssvm::OpenCL_CSVM<real_t>::kernel_function;
+    using plssvm::OpenCL_CSVM<real_t>::manager;
 
     const real_t get_num_data_points() const {
         return num_data_points_;
@@ -127,7 +127,7 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
   public:
     explicit MockCUDA_CSVM(plssvm::parameter<real_t> &params) :
         plssvm::CUDA_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
-    MockCUDA_CSVM(plssvm::kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    MockCUDA_CSVM(plssvm::kernel_type kernel, real_t degree, real_t gamma, real_t coef0, real_t cost, real_t epsilon, bool print_info) :
         plssvm::CUDA_CSVM{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // MOCK_METHOD(void, load_w, (), (override));
