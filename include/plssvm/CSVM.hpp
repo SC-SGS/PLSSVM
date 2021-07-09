@@ -57,7 +57,7 @@ class CSVM {
     virtual void setup_data_on_device() = 0;
     virtual std::vector<real_type> generate_q() = 0;
     virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
-    //    virtual void load_w() = 0; // TODO: implemented together with predict
+    virtual void load_w() = 0;  // TODO: implemented together with predict
 
     /**
      * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.

@@ -42,7 +42,7 @@ class OpenCL_CSVM : public CSVM<T> {
     void setup_data_on_device() override;
     std::vector<real_type> generate_q() override;
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
-    //    void load_w() override;  // TODO: implement
+    void load_w() override {}  // TODO: implement correctly
 
     opencl::manager_t manager{ "../platform_configuration.cfg" };
     opencl::device_t first_device;

@@ -34,7 +34,7 @@ void kernel_q_(int block, int blockDim, real_type *q, real_type *data_d, real_ty
     for (int blockIdx = 0; blockIdx < block; ++blockIdx) {
         for (int threadIdx = 0; threadIdx < blockDim; ++threadIdx) {
             int index = blockIdx * blockDim + threadIdx;
-            real_t temp = 0;
+            real_type temp = 0;
             for (int i = 0; i < Ncols; ++i) {
                 temp += data_d[i * Nrows + index] * datlast[i];
             }

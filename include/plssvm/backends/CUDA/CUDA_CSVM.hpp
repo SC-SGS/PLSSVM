@@ -27,13 +27,13 @@ class CUDA_CSVM : public CSVM<T> {
     explicit CUDA_CSVM(parameter<T> &params);
     CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
-    //    void std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
+    void std::vector<real_type> predict(const real_type *, size_type, size_type) override;  // TODO: implement correctly
 
   protected:
     void setup_data_on_device() override;
     std::vector<real_type> generate_q() override;
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
-    //    void load_w() override;  // TODO: implement
+    void load_w() override;  // TODO: implement correctly
 
     std::vector<real_type *> data_d;
     std::vector<real_type *> datlast_d;

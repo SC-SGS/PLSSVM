@@ -1,6 +1,8 @@
 #include "plssvm/backends/CUDA/cuda-kernel.cuh"
 #include "plssvm/backends/CUDA/svm-kernel.cuh"
 
+#include "plssvm/typedef.hpp"
+
 namespace plssvm {
 
 template <typename real_type>
