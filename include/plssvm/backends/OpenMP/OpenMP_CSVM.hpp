@@ -14,8 +14,11 @@ class OpenMP_CSVM : public CSVM<T> {
     // protected for test MOCK class
     using base_type = CSVM<T>;
     using base_type::alpha_;
+    using base_type::coef0_;
     using base_type::cost_;
     using base_type::data_;
+    using base_type::degree_;
+    using base_type::gamma_;
     using base_type::kernel_;
     using base_type::print_info_;
     using base_type::QA_cost_;

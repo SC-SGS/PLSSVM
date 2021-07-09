@@ -39,10 +39,10 @@ void OpenMP_CSVM<T>::run_device_kernel(const std::vector<std::vector<real_type>>
             device_kernel_linear(data, ret, d, QA_cost, cost, sign);
             break;
         case kernel_type::polynomial:
-            device_kernel_poly(data, ret, d, QA_cost, cost, sign);
+            device_kernel_poly(data, ret, d, QA_cost, cost, sign, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            device_kernel_radial(data, ret, d, QA_cost, cost, sign);
+            device_kernel_radial(data, ret, d, QA_cost, cost, sign, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
