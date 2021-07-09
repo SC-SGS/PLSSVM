@@ -59,17 +59,17 @@ class CSVM {
     virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type, real_type, const std::vector<real_type> &q) = 0;
     //    virtual void load_w() = 0; // TODO: implemented together with predict
 
-    // kernel functions: linear, polynomial, rbf // TODO: move somewhere else?
+    /**
+     * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
+     * @param[in] boundary the number of boundary cells
+     * @attention boundary values can contain random numbers
+     * @return an 1D vector in a SoA layout
+     */
+    std::vector<real_type> transform_data(size_type boundary);
+
+    // kernel functions: linear, polynomial, rbf
     real_type kernel_function(const std::vector<real_type> &, const std::vector<real_type> &);
     real_type kernel_function(const real_type *, const real_type *, size_type);
-
-    /**
- * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
- * @param[in] boundary the number of boundary cells
- * @attention boundary values can contain random numbers
- * @return an 1D vector in a SoA layout
- */
-    std::vector<real_type> transform_data(size_type boundary);
 
     // parameter initialized by the constructor
     const kernel_type kernel_;
