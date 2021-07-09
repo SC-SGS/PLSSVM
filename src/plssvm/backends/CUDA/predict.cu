@@ -3,7 +3,7 @@
 namespace plssvm {
 
 template <typename real_type>
-__global__ void kernel_predict(real_type *data_d, real_type *w, int dim, real_type *out) {
+__global__ void kernel_predict(const real_type *data_d, const real_type *w, int dim, real_type *out) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp = 0;
     for (int feature = 0; feature < dim; ++feature) {
@@ -15,11 +15,11 @@ __global__ void kernel_predict(real_type *data_d, real_type *w, int dim, real_ty
         out[index] = -1;
     }
 }
-template __global__ void kernel_predict(float *, float *, int, float *);
-template __global__ void kernel_predict(double *, double *, int, double *);
+template __global__ void kernel_predict(const float *, const float *, int, float *);
+template __global__ void kernel_predict(const double *, const double *, int, double *);
 
 template <typename real_type>
-__global__ void kernel_w(real_type *w_d, real_type *data_d, real_type *alpha_d, int count) {
+__global__ void kernel_w(real_type *w_d, const real_type *data_d, const real_type *alpha_d, int count) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp = 0;
     for (int dat = 0; dat < count; ++dat) {
@@ -27,8 +27,8 @@ __global__ void kernel_w(real_type *w_d, real_type *data_d, real_type *alpha_d, 
     }
     w_d[index] = temp;
 }
-template __global__ void kernel_w(float *, float *, float *, int);
-template __global__ void kernel_w(double *, double *, double *, int);
+template __global__ void kernel_w(float *, const float *, const float *, int);
+template __global__ void kernel_w(double *, const double *, const double *, int);
 
 template <typename T>
 auto CUDA_CSVM<T>::predict(const real_type *data, const size_type dim, const size_type count) -> std::vector<real_type> {
@@ -37,7 +37,7 @@ auto CUDA_CSVM<T>::predict(const real_type *data, const size_type dim, const siz
     cudaMalloc((void **) &out, count * sizeof(real_type));
     cudaMemcpy(data_d, data, dim * count * sizeof(real_type), cudaMemcpyHostToDevice);
 
-    kernel_predict<<<((int) count / 1024) + 1, std::min(count, 1024)>>>(data, w_d, dim, out);
+    kernel_predict<<<((int) count / 1024) + 1, std::min(count, static_cast<size_type>(1024))>>>(data, w_d, dim, out);
 
     std::vector<real_type> ret(count);
     cudaDeviceSynchronize();

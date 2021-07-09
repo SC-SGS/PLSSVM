@@ -30,7 +30,7 @@ class OpenMP_CSVM : public CSVM<T> {
     explicit OpenMP_CSVM(parameter<T> &params);
     OpenMP_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
-    //    void std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
+    //    std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 
   protected:
     void setup_data_on_device() override {

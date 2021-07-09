@@ -27,7 +27,7 @@ class CUDA_CSVM : public CSVM<T> {
     explicit CUDA_CSVM(parameter<T> &params);
     CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
-    void std::vector<real_type> predict(const real_type *, size_type, size_type) override;  // TODO: implement correctly
+    std::vector<real_type> predict(const real_type *, size_type, size_type);  // TODO: implement correctly, add override
 
   protected:
     void setup_data_on_device() override;

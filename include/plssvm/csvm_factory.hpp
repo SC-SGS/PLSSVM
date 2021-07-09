@@ -33,7 +33,7 @@ std::unique_ptr<CSVM<T>> make_SVM(const backend_type type, Args... args) {
 
         case backend_type::cuda:
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-            return std::make_unique<CUDA_CSVM>(std::forward<Args>(args)...);
+            return std::make_unique<CUDA_CSVM<T>>(std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No CUDA backend available!" };
 #endif
