@@ -1,6 +1,7 @@
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"
 
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/kernel_types.hpp"
 
 #include <cassert>  // assert
 #include <cstddef>  // std::size_t
@@ -16,18 +17,14 @@ void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<
     const std::vector<real_type> &data_last = data.back();
     const size_type dept = d.size();
 
-    auto linear_kernel_function = [](const std::vector<real_type> &lhs, const std::vector<real_type> &rhs) -> real_type {
-        assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
-        return mult(lhs.data(), rhs.data(), lhs.size());
-    };
-
     #pragma omp parallel for collapse(2) schedule(dynamic, 8)
     for (size_type i = 0; i < dept; i += BLOCK_SIZE) {
         for (size_type j = 0; j < dept; j += BLOCK_SIZE) {
             for (size_type ii = 0; ii < BLOCK_SIZE && ii + i < dept; ++ii) {
                 for (size_type jj = 0; jj < BLOCK_SIZE && jj + j < dept; ++jj) {
                     if (ii + i > jj + j) {
-                        const real_type temp = linear_kernel_function(data[ii + i], data[jj + j]) - linear_kernel_function(data_last, data[jj + j]);
+                        const real_type temp = kernel_function<kernel_type::linear>(data[ii + i], data[jj + j])
+                                               - kernel_function<kernel_type::linear>(data_last, data[jj + j]);
                         #pragma omp atomic
                         ret[jj + j] += temp * d[ii + i] * sign;
                         #pragma omp atomic
@@ -40,9 +37,9 @@ void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<
 
     #pragma omp parallel for schedule(dynamic, 8)
     for (size_type i = 0; i < dept; ++i) {
-        const real_type kernel_dat_and_cost = linear_kernel_function(data_last, data[i]) - QA_cost;
+        const real_type kernel_dat_and_cost = kernel_function<kernel_type::linear>(data_last, data[i]) - QA_cost;
         #pragma omp atomic
-        ret[i] += (linear_kernel_function(data[i], data[i]) - linear_kernel_function(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * sign;
+        ret[i] += (kernel_function<kernel_type::linear>(data[i], data[i]) - kernel_function<kernel_type::linear>(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * sign;
         for (size_type j = 0; j < i; ++j) {
             #pragma omp atomic
             ret[j] -= kernel_dat_and_cost * sign * d[i];

@@ -1,13 +1,12 @@
 #include "plssvm/CSVM.hpp"
 
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/kernel_types.hpp"
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
 
-#include <cassert>  // assert
 #include <chrono>   // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
-#include <cmath>    // std::pow, std::exp
 #include <string>   // std::string
 #include <vector>   // std::vector
 
@@ -61,31 +60,6 @@ void CSVM<T>::learn() {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
-// TODO: kernel function OpenMP <-> CUDA <-> CSVM
-template <typename T>
-auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {
-    switch (kernel_) {
-        case kernel_type::linear:
-            return mult(xi, xj, dim);
-        case kernel_type::polynomial:
-            return std::pow(gamma_ * mult(xi, xj, dim) + coef0_, degree_);
-        case kernel_type::rbf: {
-            real_type temp = 0;
-            for (size_type i = 0; i < dim; ++i) {
-                temp += xi[i] - xj[i];
-            }
-            return std::exp(-gamma_ * temp * temp);
-        }
-        default:
-            throw std::runtime_error{ "Can not decide which kernel!" };  // TODO: change to custom exception?
-    }
-}
-
-template <typename T>
-auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
-    assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
-    return kernel_function(xi.data(), xj.data(), xi.size());
-}
 
 template <typename T>
 void CSVM<T>::learn(const std::string &input_filename, const std::string &model_filename) {
@@ -123,6 +97,26 @@ auto CSVM<T>::transform_data(const size_type boundary) -> std::vector<real_type>
         fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
     return vec;
+}
+
+template <typename T>
+auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {
+    switch (kernel_) {
+        case kernel_type::linear:
+            return plssvm::kernel_function<kernel_type::linear>(xi, xj, dim);
+        case kernel_type::polynomial:
+            return plssvm::kernel_function<kernel_type::polynomial>(xi, xj, dim, degree_, gamma_, coef0_);
+        case kernel_type::rbf:
+            return plssvm::kernel_function<kernel_type::rbf>(xi, xj, dim, gamma_);
+        default:
+            throw std::runtime_error{ "Can not decide which kernel!" };  // TODO: change to custom exception?
+    }
+}
+
+template <typename T>
+auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
+    assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
+    return kernel_function(xi.data(), xj.data(), xi.size());
 }
 
 // explicitly instantiate template class
