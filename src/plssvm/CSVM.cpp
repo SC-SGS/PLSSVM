@@ -1,14 +1,15 @@
 #include "plssvm/CSVM.hpp"
 
 #include "plssvm/detail/operators.hpp"
-#include "plssvm/kernel_types.hpp"
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
 
-#include <chrono>   // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
-#include <string>   // std::string
-#include <vector>   // std::vector
+#include <chrono>  // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -109,7 +110,7 @@ auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const si
         case kernel_type::rbf:
             return plssvm::kernel_function<kernel_type::rbf>(xi, xj, dim, gamma_);
         default:
-            throw std::runtime_error{ "Can not decide which kernel!" };  // TODO: change to custom exception?
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
     }
 }
 
