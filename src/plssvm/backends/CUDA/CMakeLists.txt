@@ -1,6 +1,6 @@
 # check if CUDA can be enabled
 include(CheckLanguage)
-check_language(CUDA)
+check_language(CUDA) # TODO: CUDA via clang?
 
 # create message depending on requested mode
 if(NOT CMAKE_CUDA_COMPILER)
