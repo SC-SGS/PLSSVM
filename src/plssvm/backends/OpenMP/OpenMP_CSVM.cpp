@@ -2,9 +2,10 @@
 
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"  // plssvm::kernel_type
 #include "plssvm/detail/operators.hpp"
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "fmt/core.h"  // fmt::print
+#include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <algorithm>  // std::copy
 #include <cassert>    // assert
@@ -31,6 +32,24 @@ auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
+void OpenMP_CSVM<T>::run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, real_type QA_cost, real_type cost, int sign) {
+    // TODO: implement other kernels
+    switch (kernel_) {
+        case kernel_type::linear:
+            device_kernel_linear(data, ret, d, QA_cost, cost, sign);
+            break;
+        case kernel_type::polynomial:
+            device_kernel_poly(data, ret, d, QA_cost, cost, sign);
+            break;
+        case kernel_type::rbf:
+            device_kernel_radial(data, ret, d, QA_cost, cost, sign);
+            break;
+        default:
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
+    }
+}
+
+template <typename T>
 auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     alpha_.resize(b.size(), 1.0);
     const size_type dept = b.size();
@@ -46,8 +65,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     std::vector<real_type> r(b);
     std::vector<real_type> ones(b.size(), 1.0);
 
-    // TODO: other kernels
-    kernel_linear(data_, r, ones, QA_cost_, 1 / cost_, -1);
+    run_device_kernel(data_, r, ones, QA_cost_, 1 / cost_, -1);
     // kernel_linear(b, data_, datlast, q.data(), r, ones.data(), dim, QA_cost_, 1 / cost_, -1);
 
     std::vector<real_type> d(r);
@@ -64,8 +82,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         // Ad = A * d
         std::vector<real_type> Ad(dept, 0.0);
 
-        // TODO: other kernels
-        kernel_linear(data_, Ad, d, QA_cost_, 1 / cost_, 1);
+        run_device_kernel(data_, Ad, d, QA_cost_, 1 / cost_, 1);
         // kernel_linear(b, data_, datlast, q.data(), Ad, d.data(), dim, QA_cost_, 1 / cost_, 1);
 
         const real_type alpha = delta / mult(d.data(), Ad.data(), d.size());
@@ -74,8 +91,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         // r = b - (A * x)
         std::copy(b.begin(), b.end(), r.begin());
 
-        // TODO: other kernels
-        kernel_linear(data_, r, alpha_, QA_cost_, 1 / cost_, -1);
+        run_device_kernel(data_, r, alpha_, QA_cost_, 1 / cost_, -1);
         // kernel_linear(b, data_, datlast, q.data(), r, x.data(), dim, QA_cost_, 1 / cost_, -1);
 
         delta = mult(r.data(), r.data(), r.size());

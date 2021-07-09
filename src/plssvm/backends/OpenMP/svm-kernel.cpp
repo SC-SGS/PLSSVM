@@ -8,7 +8,7 @@
 namespace plssvm {
 
 template <typename real_type>
-void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int sign) {
+void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int sign) {
     using size_type = std::size_t;
     constexpr size_type BLOCK_SIZE = 64;  // TODO: ?
 
@@ -47,8 +47,8 @@ void kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<
     }
 }
 
-template void kernel_linear(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const float, const float, const int);
-template void kernel_linear(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const double, const double, const int);
+template void device_kernel_linear(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const float, const float, const int);
+template void device_kernel_linear(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const double, const double, const int);
 }  // namespace plssvm
 
 // TODO: look at further optimizations
