@@ -32,7 +32,7 @@ auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
 
 template <typename T>
 auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
-    std::vector<real_type> x(b.size(), 1.0);
+    alpha_.resize(b.size(), 1.0);
     const size_type dept = b.size();
 
     //    real_type *datlast = &data_.back()[0];
@@ -69,13 +69,13 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         // kernel_linear(b, data_, datlast, q.data(), Ad, d.data(), dim, QA_cost_, 1 / cost_, 1);
 
         const real_type alpha = delta / mult(d.data(), Ad.data(), d.size());
-        x += mult(alpha, d.data(), d.size());
+        alpha_ += mult(alpha, d.data(), d.size());
 
         // r = b - (A * x)
         std::copy(b.begin(), b.end(), r.begin());
 
         // TODO: other kernels
-        kernel_linear(data_, r, x, QA_cost_, 1 / cost_, -1);
+        kernel_linear(data_, r, alpha_, QA_cost_, 1 / cost_, -1);
         // kernel_linear(b, data_, datlast, q.data(), r, x.data(), dim, QA_cost_, 1 / cost_, -1);
 
         delta = mult(r.data(), r.data(), r.size());
@@ -92,7 +92,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
     }
 
-    return x;
+    return alpha_;
 }
 
 // explicitly instantiate template class
