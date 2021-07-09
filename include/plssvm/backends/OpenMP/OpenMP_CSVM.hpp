@@ -34,9 +34,10 @@ class OpenMP_CSVM : public CSVM<T> {
         // OpenMP device is the CPU -> no special load functions
     }
     std::vector<real_type> generate_q() override;
-    void run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, real_type QA_cost, real_type cost, int sign);
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     //    void load_w() override;  // TODO: implement
+
+    void run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, real_type QA_cost, real_type cost, int sign);
 };
 
 extern template class OpenMP_CSVM<float>;
