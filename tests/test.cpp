@@ -7,11 +7,13 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <type_traits>
 #include <unistd.h>
 
 #include "plssvm/exceptions/exceptions.hpp"
 
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
+#include "plssvm/detail/string_utility.hpp"
 #include <plssvm/backends/OpenMP/svm-kernel.hpp>
 #include <plssvm/kernel_types.hpp>
 
@@ -412,10 +414,12 @@ TEST(learn, kernel_linear) {
 
     std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear_debug.cl" };
     std::string kernel_src = csvm_OpenCL.manager.read_src_file(kernel_src_file_name);
-    if (*typeid(real_t).name() == 'f') {
+    if constexpr (std::is_same_v<real_t, float>) {
         csvm_OpenCL.manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-    } else if (*typeid(real_t).name() == 'd') {
+        plssvm::detail::replace_all(kernel_src, "real_type", "float");
+    } else if constexpr (std::is_same_v<real_t, double>) {
         csvm_OpenCL.manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+        plssvm::detail::replace_all(kernel_src, "real_type", "double");
     }
     json::node &deviceNode =
         csvm_OpenCL.manager.get_configuration()["PLATFORMS"][devices[0].platformName]

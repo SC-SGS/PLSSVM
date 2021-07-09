@@ -3,6 +3,7 @@
 #include "plssvm/backends/CUDA/cuda-kernel.hpp"
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/detail/string_utility.hpp"
 
 #include "manager/apply_arguments.hpp"
 #include "manager/configuration.hpp"
@@ -96,8 +97,10 @@ auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
                 std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/kernel_q.cl" };
                 std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                 if constexpr (std::is_same_v<real_type, float>) {
+                    detail::replace_all(kernel_src, "real_type", "float");
                     manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
                 } else if constexpr (std::is_same_v<real_type, double>) {
+                    detail::replace_all(kernel_src, "real_type", "double");
                     manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
                 }
                 json::node &deviceNode =
@@ -197,8 +200,10 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                     std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                     if constexpr (std::is_same_v<real_type, float>) {
                         manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+                        detail::replace_all(kernel_src, "real_type", "float");
                     } else if constexpr (std::is_same_v<real_type, double>) {
                         manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+                        detail::replace_all(kernel_src, "real_type", "double");
                     }
                     json::node &deviceNode =
                         manager.get_configuration()["PLATFORMS"][devices[device].platformName]
@@ -301,8 +306,10 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                         std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                         if constexpr (std::is_same_v<real_type, float>) {
                             manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+                            detail::replace_all(kernel_src, "real_type", "float");
                         } else if constexpr (std::is_same_v<real_type, double>) {
                             manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+                            detail::replace_all(kernel_src, "real_type", "double");
                         }
                         json::node &deviceNode =
                             manager.get_configuration()["PLATFORMS"][devices[device].platformName]
@@ -399,8 +406,10 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                             std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                             if constexpr (std::is_same_v<real_type, float>) {
                                 manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
+                                detail::replace_all(kernel_src, "real_type", "float");
                             } else if constexpr (std::is_same_v<real_type, double>) {
                                 manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
+                                detail::replace_all(kernel_src, "real_type", "double");
                             }
                             json::node &deviceNode =
                                 manager.get_configuration()["PLATFORMS"][devices[device].platformName]

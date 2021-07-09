@@ -12,9 +12,9 @@
 #include "plssvm/parameter.hpp"
 #include "plssvm/typedef.hpp"
 #include "gmock/gmock.h"
-#include <plssvm/kernel_types.hpp>
+#include "plssvm/kernel_types.hpp"
 
-using real_t = plssvm::real_t;  // TODO:
+using real_t = double;  // TODO:
 
 class MockCSVM : public plssvm::CSVM<real_t> {
   public:

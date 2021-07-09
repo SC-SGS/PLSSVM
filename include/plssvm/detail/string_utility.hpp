@@ -108,4 +108,10 @@ template <typename T, typename Exception = std::runtime_error>
     }
 }
 
+inline void replace_all(std::string &inout, const std::string_view what, const std::string_view with) {
+    for (std::string::size_type pos = 0; std::string::npos != (pos = inout.find(what.data(), pos, what.length())); pos += with.length()) {
+        inout.replace(pos, what.length(), with.data(), with.length());
+    }
+}
+
 }  // namespace plssvm::detail
