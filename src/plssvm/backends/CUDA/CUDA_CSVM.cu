@@ -98,16 +98,17 @@ std::vector<real_t> CUDA_CSVM::generate_q() {
     }
     gpuErrchk(cudaDeviceSynchronize());
 
-        std::vector<real_t> q(dept_all);
+        std::vector<real_t> q(dept);
         gpuErrchk(cudaSetDevice(0));
-        gpuErrchk(cudaMemcpy(q.data(), q_d[0], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
-        std::vector<real_t> ret(dept_all);
+        gpuErrchk(cudaMemcpy(q.data(), q_d[0], dept * sizeof(real_t), cudaMemcpyDeviceToHost));
+        std::vector<real_t> ret(dept);
         for (int device = 1; device < count_devices; ++device) {
             gpuErrchk(cudaSetDevice(device));
-            gpuErrchk(cudaMemcpy(ret.data(), q_d[device], dept_all * sizeof(real_t), cudaMemcpyDeviceToHost));
-            for (int i = 0; i < dept_all; ++i)
+            gpuErrchk(cudaMemcpy(ret.data(), q_d[device], dept * sizeof(real_t), cudaMemcpyDeviceToHost));
+            for (int i = 0; i < dept; ++i)
                 q[i] += ret[i];
         }
+
     return q;
 
 }
@@ -161,7 +162,7 @@ std::vector<real_t> CUDA_CSVM::CG(const std::vector<real_t> &b, const int imax, 
         gpuErrchk(cudaDeviceSynchronize());
         gpuErrchk(cudaMemset(q_d[device], 0, dept_all * sizeof(real_t)));
         gpuErrchk(cudaDeviceSynchronize());
-        gpuErrchk(cudaMemcpy(q_d[device], q.data(), dept_all * sizeof(real_t), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(q_d[device], q.data(), dept * sizeof(real_t), cudaMemcpyHostToDevice));
     }
 
 
