@@ -123,24 +123,24 @@ class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM<real_t> {
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
+class MockCUDA_CSVM : public plssvm::CUDA_CSVM<real_t> {
   public:
     explicit MockCUDA_CSVM(plssvm::parameter<real_t> &params) :
-        plssvm::CUDA_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+        plssvm::CUDA_CSVM<real_t>{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
     MockCUDA_CSVM(plssvm::kernel_type kernel, real_t degree, real_t gamma, real_t coef0, real_t cost, real_t epsilon, bool print_info) :
-        plssvm::CUDA_CSVM{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+        plssvm::CUDA_CSVM<real_t>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
     // MOCK_METHOD(void, learn, ());
-    using plssvm::CUDA_CSVM::alpha_;
-    using plssvm::CUDA_CSVM::bias_;
-    using plssvm::CUDA_CSVM::generate_q;
-    using plssvm::CUDA_CSVM::kernel_function;
-    using plssvm::CUDA_CSVM::learn;
-    using plssvm::CUDA_CSVM::QA_cost_;
-    using plssvm::CUDA_CSVM::setup_data_on_device;
-    using plssvm::CUDA_CSVM::solver_CG;
+    using plssvm::CUDA_CSVM<real_t>::alpha_;
+    using plssvm::CUDA_CSVM<real_t>::bias_;
+    using plssvm::CUDA_CSVM<real_t>::generate_q;
+    using plssvm::CUDA_CSVM<real_t>::kernel_function;
+    using plssvm::CUDA_CSVM<real_t>::learn;
+    using plssvm::CUDA_CSVM<real_t>::QA_cost_;
+    using plssvm::CUDA_CSVM<real_t>::setup_data_on_device;
+    using plssvm::CUDA_CSVM<real_t>::solver_CG;
 
     const real_t get_num_data_points() const {
         return num_data_points_;

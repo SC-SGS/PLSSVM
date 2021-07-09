@@ -1,16 +1,16 @@
 #pragma once
 
-#include <plssvm/CSVM.hpp>
-#include <plssvm/typedef.hpp>
-//TODO: remove if helperfunctions are all transfered to gpu
+// TODO: remove if helper functions are all transferred to GPU
 
 namespace plssvm {
 
-void init_(int, int, real_t *vec, real_t value, int size);
+template <typename real_type>
+void init_(int, int, real_type *vec, real_type value, int size);
 
-template <typename T>
-void add_mult_(const int, const int, T *vec1, const T *vec2, const T value, const int dim);  //TODO: transfair to multigpu
+template <typename real_type>
+void add_mult_(const int, const int, real_type *vec1, const real_type *vec2, const real_type value, const int dim);  // TODO: transfer to multi-GPU
 
-void kernel_q_(int, int, real_t *q, real_t *data_d, real_t *datlast, const int Ncols, const int Nrows);
+template <typename real_type>
+void kernel_q_(int, int, real_type *q, real_type *data_d, real_type *datlast, const int Ncols, const int Nrows);
 
 }  // namespace plssvm

@@ -1,18 +1,14 @@
 #pragma once
 
-#include <plssvm/CSVM.hpp>
-#include <plssvm/backends/CUDA/cuda-kernel.cuh>
-
 namespace plssvm {
 
-__global__ void
-kernel_linear(const real_t *q, real_t *ret, const real_t *d, const real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add, const int start, const int end);
-// __global__ void kernel_linear(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add);
+template <typename real_type>
+__global__ void kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const int start, const int end);
 
-__global__ void
-kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add, const real_t gamma, const real_t coef0, const real_t degree);
+template <typename real_type>
+__global__ void kernel_poly(real_type *q, real_type *ret, real_type *d, real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const real_type gamma, const real_type coef0, const real_type degree);
 
-__global__ void
-kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d, const real_t QA_cost, const real_t cost, const int Ncols, const int Nrows, const int add, const real_t gamma);
+template <typename real_type>
+__global__ void kernel_radial(real_type *q, real_type *ret, real_type *d, real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const real_type gamma);
 
 }  // namespace plssvm

@@ -1,24 +1,21 @@
 #pragma once
 
-#include <plssvm/CSVM.hpp>
-#include <plssvm/typedef.hpp>
-
 namespace plssvm {
 
-__global__ void init(real_t *vec, real_t value, int size);
+template <typename real_type>
+__global__ void init(real_type *vec, real_type value, int size);
 
-__global__ void add_mult(real_t *vec1, const real_t *vec2, const real_t value, const int dim);
+template <typename real_type>
+__global__ void add_mult(real_type *vec1, const real_type *vec2, const real_type value, const int dim);
 
-__global__ void add_inplace(real_t *vec1, const real_t *vec2, const int dim);
+template <typename real_type>
+__global__ void add_inplace(real_type *vec1, const real_type *vec2, const int dim);
 
-__global__ void dot(real_t *a, real_t *b, real_t *c, const int dim);
+template <typename real_type>
+__global__ void dot(real_type *a, real_type *b, real_type *c, const int dim);
 
-__global__ void kernel_q(real_t *q,
-                         const real_t *data_d,
-                         const real_t *datlast,
-                         const int Nrows,
-                         const int start,
-                         const int end);
+template <typename real_type>
+__global__ void kernel_q(real_type *q, const real_type *data_d, const real_type *datlast, const int Nrows, const int start, const int end);
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
