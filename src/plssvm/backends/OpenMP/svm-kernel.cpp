@@ -1,9 +1,7 @@
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"
 
-#include "plssvm/detail/operators.hpp"
-#include "plssvm/kernel_types.hpp"
+#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 
-#include <cassert>  // assert
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 

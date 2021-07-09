@@ -1,10 +1,10 @@
 #pragma once
 
 #include "plssvm/CSVM.hpp"
-#include "plssvm/kernel_types.hpp"
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
+#include "plssvm/parameter.hpp"     // plssvm::parameter
 
-#include <vector>
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -32,7 +32,7 @@ class OpenMP_CSVM : public CSVM<T> {
         // OpenMP device is the CPU -> no special load functions
     }
     std::vector<real_type> generate_q() override;
-    std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type, real_type, const std::vector<real_type> &q) override;
+    std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     //    void load_w() override;  // TODO: implement
 };
 

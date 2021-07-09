@@ -56,7 +56,7 @@ class CSVM {
     // pure virtual, must be implemented by all subclasses
     virtual void setup_data_on_device() = 0;
     virtual std::vector<real_type> generate_q() = 0;
-    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type, real_type, const std::vector<real_type> &q) = 0;
+    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
     //    virtual void load_w() = 0; // TODO: implemented together with predict
 
     /**
@@ -68,8 +68,8 @@ class CSVM {
     std::vector<real_type> transform_data(size_type boundary);
 
     // kernel functions: linear, polynomial, rbf
-    real_type kernel_function(const std::vector<real_type> &, const std::vector<real_type> &);
-    real_type kernel_function(const real_type *, const real_type *, size_type);
+    real_type kernel_function(const real_type *xi, const real_type *xj, size_type dim);
+    real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj);
 
     // parameter initialized by the constructor
     const kernel_type kernel_;
