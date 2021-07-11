@@ -109,7 +109,7 @@ void device_ptr<T>::memcpy_to_device(const std::vector<value_type> &data_to_copy
     if (data_to_copy.size() < rcount) {
         throw plssvm::cuda_backend_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
     }
-    this->memcpy_to_device(data_to_copy.data(), pos, count);
+    this->memcpy_to_device(data_to_copy.data(), pos, rcount);
 }
 
 template <typename T>
@@ -133,7 +133,7 @@ void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_t
     if (buffer.size() < rcount) {
         throw plssvm::cuda_backend_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
     }
-    this->memcpy_to_host(buffer.data(), pos, size_);
+    this->memcpy_to_host(buffer.data(), pos, rcount);
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_host(pointer buffer) {
