@@ -53,10 +53,6 @@ void CUDA_CSVM<T>::setup_data_on_device() {
 
 template <typename T>
 auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
-    //    if (print_info_) {
-    //        std::cout << "kernel_q" << std::endl;
-    //    }
-
     const size_type dept = num_data_points_ - 1;
     const size_type boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     const size_type dept_all = dept + boundary_size;
@@ -195,7 +191,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     size_type run;
     for (run = 0; run < imax; ++run) {
         if (print_info_) {
-            std::cout << "Start Iteration: " << run << std::endl;
+            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
         // Ad = A * d
         for (size_type device = 0; device < num_devices_; ++device) {
@@ -329,8 +325,8 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             }
         }
     }
-    if (run == imax) {
-        std::clog << "Regard reached maximum number of CG-iterations" << std::endl;
+    if (print_info_) {
+        fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
     }
 
     alpha_.resize(dept);
