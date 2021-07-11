@@ -229,4 +229,7 @@ class device_ptr {
     size_type size_ = 0;
 };
 
+extern template class device_ptr<float>;
+extern template class device_ptr<double>;
+
 }  // namespace plssvm::detail::cuda
