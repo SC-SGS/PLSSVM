@@ -1,27 +1,17 @@
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
+#include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"  // plssvm::detail::cuda::device_ptr
 #include "plssvm/backends/CUDA/cuda-kernel.cuh"
 #include "plssvm/backends/CUDA/cuda-kernel.hpp"
 #include "plssvm/backends/CUDA/svm-kernel.cuh"
 #include "plssvm/detail/operators.hpp"
 
+#include "fmt/core.h"
+
 #include <chrono>
 
 namespace plssvm {
 
-int CUDADEVICE = 0;
-
-#define gpuErrchk(ans) \
-    { gpuAssert((ans), __FILE__, __LINE__); }
-
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
-    if (code != cudaSuccess) {
-        fprintf(stderr, "GPUassert: %s %s:%d\n", cudaGetErrorString(code), file, line);
-        if (abort)
-            exit(code);
-    }
-}
-
-int count_devices = 1;
+using namespace plssvm::detail;
 
 template <typename T>
 CUDA_CSVM<T>::CUDA_CSVM(parameter<T> &params) :
@@ -29,93 +19,78 @@ CUDA_CSVM<T>::CUDA_CSVM(parameter<T> &params) :
 
 template <typename T>
 CUDA_CSVM<T>::CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
-    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
-    gpuErrchk(cudaGetDeviceCount(&count_devices));
-    datlast_d = std::vector<real_type *>(count_devices);
-    data_d = std::vector<real_type *>(count_devices);
-
-    std::cout << "GPUs found: " << count_devices << std::endl;
+    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info },
+    num_devices_{ cuda::get_device_count() },
+    data_d_(num_devices_),
+    data_last_d_(num_devices_) {
+    fmt::print("Found {} CUDA devices.", num_devices_);  // TODO: improve
 }
 
 template <typename T>
 void CUDA_CSVM<T>::setup_data_on_device() {
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMalloc((void **) &datlast_d[device],
-                             (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_type)));
+    // initialize data_last on devices
+    for (size_type device = 0; device < num_devices_; ++device) {
+        data_last_d_[device] = cuda::device_ptr<real_type>{ num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, static_cast<int>(device) };
     }
-    std::vector<real_type> datalast(data_[num_data_points_ - 1]);
-    datalast.resize(num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+    std::vector<real_type> data_last(num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+    std::copy(data_[num_data_points_ - 1].begin(), data_[num_data_points_ - 1].end(), data_last.begin());
     #pragma omp parallel for
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMemcpy(datlast_d[device], datalast.data(), (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_type), cudaMemcpyHostToDevice));
-    }
-    datalast.resize(num_data_points_ - 1);
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMalloc((void **) &data_d[device],
-                             num_features_ * (num_data_points_ + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_type)));
+    for (size_type device = 0; device < num_devices_; ++device) {
+        data_last_d_[device].memcpy_to_device(data_last);
     }
 
-    auto begin_transform = std::chrono::high_resolution_clock::now();
-    const std::vector<real_type> transformet_data = base_type::transform_data(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
-    auto end_transform = std::chrono::high_resolution_clock::now();
-    if (print_info_) {
-        std::clog << std::endl
-                  << data_.size() << " Datenpunkte mit Dimension " << num_features_ << " in "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(end_transform - begin_transform).count()
-                  << " ms transformiert" << std::endl;
+    // initialize data on devices
+    for (size_type device = 0; device < num_devices_; ++device) {
+        data_d_[device] = cuda::device_ptr<real_type>{ num_features_ * (num_data_points_ + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE), static_cast<int>(device) };
     }
+    // transform 2D to 1D data
+    const std::vector<real_type> transformed_data = base_type::transform_data(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
     #pragma omp parallel for
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-
-        gpuErrchk(cudaMemcpy(data_d[device], transformet_data.data(), num_features_ * (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE) * sizeof(real_type), cudaMemcpyHostToDevice));
+    for (size_type device = 0; device < num_devices_; ++device) {
+        data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE));  // TODO: look
     }
 }
 
 template <typename T>
 auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
-    if (print_info_) {
-        std::cout << "kernel_q" << std::endl;
-    }
+    //    if (print_info_) {
+    //        std::cout << "kernel_q" << std::endl;
+    //    }
 
     const size_type dept = num_data_points_ - 1;
     const size_type boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     const size_type dept_all = dept + boundary_size;
     const int Ncols = num_features_;
-    const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+    const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;  // TODO: size_type?
 
-    std::vector<real_type *> q_d(count_devices);
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMalloc((void **) &q_d[device], dept_all * sizeof(real_type)));
-        gpuErrchk(cudaMemset(q_d[device], 0, dept_all * sizeof(real_type)));
+    std::vector<cuda::device_ptr<real_type>> q_d(num_devices_);
+    for (size_type device = 0; device < num_devices_; ++device) {
+        q_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };  // TODO: dept <-> dept_all
+        q_d[device].memset(0);
     }
-    gpuErrchk(cudaDeviceSynchronize());
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
+    cuda::device_synchronize();  // TODO: sync all devices?
+    for (size_type device = 0; device < num_devices_; ++device) {
+        cuda::set_device(device);
 
-        const int start = device * Ncols / count_devices;
-        const int end = (device + 1) * Ncols / count_devices;
-        kernel_q<<<((int) dept / CUDABLOCK_SIZE) + 1, std::min((size_type) CUDABLOCK_SIZE, dept)>>>(q_d[device],
-                                                                                                    data_d[device],
-                                                                                                    datlast_d[device],
+        const int start = device * Ncols / num_devices_;
+        const int end = (device + 1) * Ncols / num_devices_;
+        // TODO:
+        kernel_q<<<((int) dept / CUDABLOCK_SIZE) + 1, std::min((size_type) CUDABLOCK_SIZE, dept)>>>(q_d[device].get(),
+                                                                                                    data_d_[device].get(),
+                                                                                                    data_last_d_[device].get(),
                                                                                                     Nrows,
                                                                                                     start,
                                                                                                     end);
-        gpuErrchk(cudaPeekAtLastError());
+        cuda::peek_at_last_error();
     }
-    gpuErrchk(cudaDeviceSynchronize());
+    cuda::device_synchronize();
 
     std::vector<real_type> q(dept);
-    gpuErrchk(cudaSetDevice(0));
-    gpuErrchk(cudaMemcpy(q.data(), q_d[0], dept * sizeof(real_type), cudaMemcpyDeviceToHost));
-    std::vector<real_type> ret(dept_all);
-    for (size_type device = 1; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMemcpy(ret.data(), q_d[device], dept * sizeof(real_type), cudaMemcpyDeviceToHost));
+    //    cuda::set_device(0);
+    q_d[0].memcpy_to_host(q, 0, dept);
+    std::vector<real_type> ret(dept);  // TODO: dept_all vs dept?
+    for (size_type device = 1; device < num_devices_; ++device) {
+        q_d[device].memcpy_to_host(ret, 0, dept);
         for (size_type i = 0; i < dept; ++i) {
             q[i] += ret[i];
         }
@@ -133,80 +108,72 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     // dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
     dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
 
-    real_type *d;
     std::vector<real_type> x(dept_all, 1.0);
     std::fill(x.end() - boundary_size, x.end(), 0.0);
 
-    std::vector<real_type *> x_d(count_devices);
+    std::vector<cuda::device_ptr<real_type>> x_d(num_devices_);
     std::vector<real_type> r(dept_all, 0.0);
-    std::vector<real_type *> r_d(count_devices);
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMalloc((void **) &x_d[device], dept_all * sizeof(real_type)));
-        gpuErrchk(cudaMemcpy(x_d[device], x.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
-        gpuErrchk(cudaMalloc((void **) &r_d[device], dept_all * sizeof(real_type)));
+    std::vector<cuda::device_ptr<real_type>> r_d(num_devices_);
+    for (size_type device = 0; device < num_devices_; ++device) {
+        x_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+        x_d[device].memcpy_to_device(x);
+        r_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
     }
 
-    gpuErrchk(cudaSetDevice(0));
-    gpuErrchk(cudaMemcpy(r_d[0], b.data(), dept * sizeof(real_type), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemset(r_d[0] + dept, 0, (dept_all - dept) * sizeof(real_type)));
+    r_d[0].memcpy_to_device(b, 0, dept);
+    r_d[0].memset(0, dept);
     #pragma omp parallel for
-    for (size_type device = 1; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMemset(r_d[device], 0, dept_all * sizeof(real_type)));
+    for (size_type device = 1; device < num_devices_; ++device) {
+        r_d[device].memset(0);
     }
-    d = new real_type[dept];
+    std::vector<real_type> d(dept);
 
+    // TODO: size_type
     const int Ncols = num_features_;
     const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
-    gpuErrchk(cudaDeviceSynchronize());
+    cuda::device_synchronize();
 
-    std::vector<real_type *> q_d(count_devices);
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMalloc((void **) &q_d[device], dept_all * sizeof(real_type)));
-        gpuErrchk(cudaDeviceSynchronize());
-        gpuErrchk(cudaMemset(q_d[device], 0, dept_all * sizeof(real_type)));
-        gpuErrchk(cudaDeviceSynchronize());
-        gpuErrchk(cudaMemcpy(q_d[device], q.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+    std::vector<cuda::device_ptr<real_type>> q_d(num_devices_);
+    for (size_type device = 0; device < num_devices_; ++device) {
+        q_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+        //        q_d[device].memset(0);
+        q_d[device].memcpy_to_device(q, 0, dept);
+        //        q_d[device].memcpy_to_device(q, 0, dept_all);  // TODO:
     }
-
-    gpuErrchk(cudaDeviceSynchronize());
+    cuda::device_synchronize();
 
     switch (kernel_) {
         case kernel_type::linear: {
             #pragma omp parallel for
-            for (size_type device = 0; device < count_devices; ++device) {
-                gpuErrchk(cudaSetDevice(device));
+            for (size_type device = 0; device < num_devices_; ++device) {
+                cuda::set_device(device);
                 dim3 grid(static_cast<size_type>(ceil(
                               static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
                           static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
-                const int start = device * Ncols / count_devices;
-                const int end = (device + 1) * Ncols / count_devices;
-                kernel_linear<<<grid, block>>>(q_d[device], r_d[device], x_d[device], data_d[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
-                gpuErrchk(cudaPeekAtLastError());
+                const int start = device * Ncols / num_devices_;
+                const int end = (device + 1) * Ncols / num_devices_;
+                kernel_linear<<<grid, block>>>(q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
+                cuda::peek_at_last_error();
             }
             break;
         }
         case kernel_type::polynomial:
-            // kernel_poly<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost_, 1/cost, num_features_ , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_, coef0_, degree_);
+            // kernel_poly<<<grid,block>>>(q_d, r_d, x_d,data_d_, QA_cost_, 1/cost, num_features_ , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            // kernel_radial<<<grid,block>>>(q_d, r_d, x_d,data_d, QA_cost_, 1/cost_, num_features_ , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_);
+            // kernel_radial<<<grid,block>>>(q_d, r_d, x_d,data_d_, QA_cost_, 1/cost_, num_features_ , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_);
             break;
         default:
-            throw std::runtime_error("Can not decide which kernel!");
+            throw std::runtime_error{ "Can not decide which kernel!" };
     }
 
     // cudaMemcpy(r, r_d, dept*sizeof(real_type), cudaMemcpyDeviceToHost);
-    gpuErrchk(cudaDeviceSynchronize());
+    cuda::device_synchronize();
     {
-        gpuErrchk(cudaSetDevice(0));
-        gpuErrchk(cudaMemcpy(r.data(), r_d[0], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
-        for (int device = 1; device < count_devices; ++device) {
-            gpuErrchk(cudaSetDevice(device));
-            std::vector<real_type> ret(dept_all);
-            gpuErrchk(cudaMemcpy(ret.data(), r_d[device], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
+        r_d[0].memcpy_to_host(r);
+        std::vector<real_type> ret(dept_all);
+        for (int device = 1; device < num_devices_; ++device) {
+            r_d[device].memcpy_to_host(ret);
             for (size_type j = 0; j <= dept; ++j) {
                 r[j] += ret[j];
             }
@@ -214,46 +181,45 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     }
     real_type delta = mult(r.data(), r.data(), dept);  // TODO:
     const real_type delta0 = delta;
-    real_type alpha_cd, beta;
+    real_type alpha_cd;
+    real_type beta;
     std::vector<real_type> Ad(dept);
 
-    std::vector<real_type *> Ad_d(count_devices);
-    for (size_type device = 0; device < count_devices; ++device) {
-        gpuErrchk(cudaSetDevice(device));
-        gpuErrchk(cudaMalloc((void **) &Ad_d[device], dept_all * sizeof(real_type)));
-        gpuErrchk(cudaMemcpy(r_d[device], r.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+    std::vector<cuda::device_ptr<real_type>> Ad_d(num_devices_);
+    for (size_type device = 0; device < num_devices_; ++device) {
+        Ad_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+        Ad_d[device].memcpy_to_device(r);
     }
-    //cudaMallocHost((void **) &Ad, dept *sizeof(real_type));
+    // cudaMallocHost((void **) &Ad, dept *sizeof(real_type));
 
     size_type run;
     for (run = 0; run < imax; ++run) {
         if (print_info_) {
             std::cout << "Start Iteration: " << run << std::endl;
         }
-        //Ad = A * d
-        for (size_type device = 0; device < count_devices; ++device) {
-            gpuErrchk(cudaSetDevice(device));
-            gpuErrchk(cudaMemset(Ad_d[device], 0, dept_all * sizeof(real_type)));
-            gpuErrchk(cudaMemset(r_d[device] + dept, 0, (dept_all - dept) * sizeof(real_type)));
+        // Ad = A * d
+        for (size_type device = 0; device < num_devices_; ++device) {
+            Ad_d[device].memset(0);
+            r_d[device].memset(0, dept);
         }
         switch (kernel_) {
             case kernel_type::linear: {
                 #pragma omp parallel for
-                for (size_type device = 0; device < count_devices; ++device) {
-                    gpuErrchk(cudaSetDevice(device));
+                for (size_type device = 0; device < num_devices_; ++device) {
+                    cuda::set_device(device);
                     dim3 grid(static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
                               static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
-                    const int start = device * Ncols / count_devices;
-                    const int end = (device + 1) * Ncols / count_devices;
-                    kernel_linear<<<grid, block>>>(q_d[device], Ad_d[device], r_d[device], data_d[device], QA_cost_, 1 / cost_, Ncols, Nrows, 1, start, end);
-                    gpuErrchk(cudaPeekAtLastError());
+                    const int start = device * Ncols / num_devices_;
+                    const int end = (device + 1) * Ncols / num_devices_;
+                    kernel_linear<<<grid, block>>>(q_d[device].get(), Ad_d[device].get(), r_d[device].get(), data_d_[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, 1, start, end);
+                    cuda::peek_at_last_error();
                 }
             } break;
             case kernel_type::polynomial:
-                // kernel_poly<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1, gamma_, coef0_, degree_);
+                // kernel_poly<<<grid,block>>>(q_d, Ad_d, r_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1, gamma_, coef0_, degree_);
                 break;
             case kernel_type::rbf:
-                // kernel_radial<<<grid,block>>>(q_d, Ad_d, r_d, data_d, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), 1, gamma_);
+                // kernel_radial<<<grid,block>>>(q_d, Ad_d, r_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), 1, gamma_);
                 break;
             default:
                 throw std::runtime_error("Can not decide which kernel!");
@@ -263,90 +229,82 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             d[i] = r[i];
         }
 
-        gpuErrchk(cudaDeviceSynchronize());
+        cuda::device_synchronize();
         {
             std::vector<real_type> buffer(dept_all, 0);
-            for (size_type device = 0; device < count_devices; ++device) {
-                gpuErrchk(cudaSetDevice(device));
-                std::vector<real_type> ret(dept_all, 0);
-                gpuErrchk(cudaMemcpy(ret.data(), Ad_d[device], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
+            std::vector<real_type> ret(dept_all);
+            for (size_type device = 0; device < num_devices_; ++device) {
+                Ad_d[device].memcpy_to_host(ret);
                 for (size_type j = 0; j <= dept; ++j) {
                     buffer[j] += ret[j];
                 }
             }
             std::copy(buffer.begin(), buffer.begin() + dept, Ad.data());
-            for (size_type device = 0; device < count_devices; ++device) {
-                gpuErrchk(cudaSetDevice(device));
-                gpuErrchk(
-                    cudaMemcpy(Ad_d[device], buffer.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+            for (size_type device = 0; device < num_devices_; ++device) {
+                Ad_d[device].memcpy_to_device(buffer);
             }
         }
 
-        alpha_cd = delta / mult(d, Ad.data(), dept);
+        alpha_cd = delta / mult(d.data(), Ad.data(), dept);
         // add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
-        //TODO: auf GPU
+        // TODO: move to GPU
         std::vector<real_type> buffer_r(dept_all);
-        cudaSetDevice(0);
-        gpuErrchk(cudaMemcpy(buffer_r.data(), r_d[0], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
+        r_d[0].memcpy_to_host(buffer_r);
         add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), buffer_r.data(), alpha_cd, dept);
 
         #pragma omp parallel for
-        for (size_type device = 0; device < count_devices; ++device) {
-            gpuErrchk(cudaSetDevice(device));
-            gpuErrchk(cudaMemcpy(x_d[device], x.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+        for (size_type device = 0; device < num_devices_; ++device) {
+            x_d[device].memcpy_to_device(x);
         }
         if (run % 50 == 49) {
-            std::vector<real_type> buffer(b);
-            buffer.resize(dept_all);
-            gpuErrchk(cudaSetDevice(0));
-            gpuErrchk(cudaMemcpy(r_d[0], buffer.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+            std::vector<real_type> buffer(dept_all);
+            std::copy(b.begin(), b.end(), buffer.begin());  // TODO:
+                                                            //            std::vector<real_type> buffer(b);
+                                                            //            buffer.resize(dept_all);
+            r_d[0].memcpy_to_device(buffer);
             #pragma omp parallel for
-            for (size_type device = 1; device < count_devices; ++device) {
-                gpuErrchk(cudaSetDevice(device));
-                gpuErrchk(cudaMemset(r_d[device], 0, dept_all * sizeof(real_type)));
+            for (size_type device = 1; device < num_devices_; ++device) {
+                r_d[device].memset(0);
             }
             switch (kernel_) {
                 case kernel_type::linear: {
                     #pragma omp parallel for
-                    for (size_type device = 0; device < count_devices; ++device) {
-                        gpuErrchk(cudaSetDevice(device));
-                        const int start = device * Ncols / count_devices;
-                        const int end = (device + 1) * Ncols / count_devices;
+                    for (size_type device = 0; device < num_devices_; ++device) {
+                        cuda::set_device(device);
+                        const int start = device * Ncols / num_devices_;
+                        const int end = (device + 1) * Ncols / num_devices_;
                         dim3 grid(static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
                                   static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
-                        kernel_linear<<<grid, block>>>(q_d[device], r_d[device], x_d[device], data_d[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
-                        gpuErrchk(cudaPeekAtLastError());
+                        kernel_linear<<<grid, block>>>(q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
+                        cuda::peek_at_last_error();
                     }
                 } break;
                 case kernel_type::polynomial:
-                    // kernel_poly<<<grid,block>>>(q_d, r_d, x_d, data_d, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_, coef0_, degree_);
+                    // kernel_poly<<<grid,block>>>(q_d, r_d, x_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_, coef0_, degree_);
                     break;
                 case kernel_type::rbf:
-                    // kernel_radial<<<grid,block>>>(q_d, r_d, x_d, data_d, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , -1, gamma_);
+                    // kernel_radial<<<grid,block>>>(q_d, r_d, x_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , -1, gamma_);
                     break;
                 default:
                     throw std::runtime_error("Can not decide wich kernel!");
             }
-            gpuErrchk(cudaDeviceSynchronize());
+            cuda::device_synchronize();
             // cudaMemcpy(r, r_d, dept*sizeof(real_type), cudaMemcpyDeviceToHost);
 
             {
-                gpuErrchk(cudaSetDevice(0));
-                gpuErrchk(cudaMemcpy(r.data(), r_d[0], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
-                #pragma omp parallel for
-                for (size_type device = 1; device < count_devices; ++device) {
-                    gpuErrchk(cudaSetDevice(device));
-                    std::vector<real_type> ret(dept_all, 0);
-                    gpuErrchk(
-                        cudaMemcpy(ret.data(), r_d[device], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
+                r_d[0].memcpy_to_host(r);
+                std::vector<real_type> ret(dept_all, 0);
+                //                #pragma omp parallel for // TODO: race conditions?!
+                for (size_type device = 1; device < num_devices_; ++device) {
+                    r_d[device].memcpy_to_host(ret);
+                    ;
                     for (size_type j = 0; j <= dept; ++j) {
                         r[j] += ret[j];
                     }
                 }
                 #pragma omp parallel for
-                for (size_type device = 0; device < count_devices; ++device) {
-                    gpuErrchk(cudaSetDevice(device));
-                    gpuErrchk(cudaMemcpy(r_d[device], r.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+                for (size_type device = 0; device < num_devices_; ++device) {
+                    r_d[device].memcpy_to_device(r);
                 }
             }
         } else {
@@ -359,17 +317,15 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         if (delta < eps * eps * delta0) {
             break;
         }
-        beta = -mult(r.data(), Ad.data(), dept) / mult(d, Ad.data(), dept);  // TODO:
-        add(mult(beta, d, dept), r.data(), d, dept);                         // TODO:
+        beta = -mult(r.data(), Ad.data(), dept) / mult(d.data(), Ad.data(), dept);  // TODO:
+        add(mult(beta, d.data(), dept), r.data(), d.data(), dept);                  // TODO:
 
         {
-            std::vector<real_type> buffer(dept_all, 0.0);
-            std::copy(d, d + dept, buffer.begin());
+            std::vector<real_type> buffer(dept_all, 0);
+            std::copy(d.begin(), d.begin() + dept, buffer.begin());
             #pragma omp parallel for
-            for (size_type device = 0; device < count_devices; ++device) {
-                gpuErrchk(cudaSetDevice(device));
-                gpuErrchk(
-                    cudaMemcpy(r_d[device], buffer.data(), dept_all * sizeof(real_type), cudaMemcpyHostToDevice));
+            for (size_type device = 0; device < num_devices_; ++device) {
+                r_d[device].memcpy_to_device(buffer);
             }
         }
     }
@@ -379,23 +335,15 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
 
     alpha_.resize(dept);
     std::vector<real_type> ret_q(dept);
-    gpuErrchk(cudaDeviceSynchronize());
+    cuda::device_synchronize();
     {
         std::vector<real_type> buffer(dept_all);
         std::copy(x.begin(), x.begin() + dept, alpha_.begin());
-        gpuErrchk(cudaSetDevice(0));
-        gpuErrchk(cudaMemcpy(buffer.data(), q_d[0], dept_all * sizeof(real_type), cudaMemcpyDeviceToHost));
+        q_d[0].memcpy_to_host(buffer);
         std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
     }
     // cudaMemcpy(&alpha[0],x_d, dept * sizeof(real_type), cudaMemcpyDeviceToHost);
     // cudaMemcpy(&ret_q[0],q_d, dept * sizeof(real_type), cudaMemcpyDeviceToHost);
-    // cudaFree(Ad_d);
-    // cudaFree(r_d);
-    // cudaFree(datlast);
-    // cudaFreeHost(Ad);
-    // cudaFree(x_d);
-    // cudaFreeHost(r);
-    // cudaFreeHost(d);
     return alpha_;
 }
 

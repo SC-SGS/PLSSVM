@@ -1,8 +1,9 @@
 #pragma once
 
 #include "plssvm/CSVM.hpp"
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"  // plssvm::detail::cuda::device_ptr
+#include "plssvm/kernel_types.hpp"                  // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                     // plssvm::parameter
 
 namespace plssvm {
 
@@ -35,9 +36,10 @@ class CUDA_CSVM : public CSVM<T> {
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     void load_w() override;  // TODO: implement correctly
 
-    std::vector<real_type *> data_d;
-    std::vector<real_type *> datlast_d;
-    real_type *w_d;
+    size_type num_devices_;
+    std::vector<detail::cuda::device_ptr<real_type>> data_d_;
+    std::vector<detail::cuda::device_ptr<real_type>> data_last_d_;
+    detail::cuda::device_ptr<real_type> w_d_;
 };
 
 extern template class CUDA_CSVM<float>;
