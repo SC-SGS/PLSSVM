@@ -28,6 +28,7 @@ set(PLSSVM_CUDA_SOURCES
   cuda-kernel.cu
   cuda-kernel.cpp # TODO: remove if add_mult_ is on gpu again
   predict.cu
+  CUDA_DevicePtr.cu
 )
 
 # set target properties
