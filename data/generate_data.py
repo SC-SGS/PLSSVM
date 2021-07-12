@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-@author Alexander Varn Craen
+@author Alexander Van Craen
 @author Marcel Breyer
 """
 
