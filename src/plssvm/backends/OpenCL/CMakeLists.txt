@@ -35,7 +35,7 @@ set(PLSSVM_OpenCL_SOURCES
 
 # set target properties
 set(PLSSVM_OpenCL_BACKEND_LIBRARY_NAME svm-OCL)
-add_library(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OpenCL_SOURCES})
+add_library(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OpenCL_SOURCES})
 target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
 target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
 target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
