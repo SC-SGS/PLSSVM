@@ -138,12 +138,20 @@ TEST(IO, libsvmParserGamma) {
 TEST(IO, writeModel) {
     MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
-    std::string model = std::tmpnam(nullptr);
+
+    std::string model = std::filesystem::temp_directory_path().string();
+    model += "/tmpfile_XXXXXX";
+    // create unique temporary file
+    int fd = mkstemp(model.data());
+    // immediately close file if possible
+    if (fd >= 0) {
+        close(fd);
+    }
+
     csvm.write_model(model);
     std::ifstream model_ifs(model);
-    std::string genfile1((std::istreambuf_iterator<char>(model_ifs)),
-                         std::istreambuf_iterator<char>());
-    remove(model.c_str());
+    std::string genfile1((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+    std::filesystem::remove(model.c_str());
 
     EXPECT_THAT(genfile1, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv 0+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
 }
