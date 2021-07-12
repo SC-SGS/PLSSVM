@@ -60,22 +60,22 @@ template void device_kernel_linear(const std::vector<std::vector<double>> &, std
 // 			for(int threadIdxx = 0; threadIdxx < blockDimy; ++ threadIdxx){
 // 				for(int threadIdxy = 0; threadIdxy < blockDimy; ++ threadIdxy){
 //
-// 					int i =  blockIdxx * blockDimx * BLOCKING_SIZE_THREAD;
-// 					int j = blockIdxy * blockDimy * BLOCKING_SIZE_THREAD;
+// 					int i =  blockIdxx * blockDimx * INTERNALBLOCK_SIZE;
+// 					int j = blockIdxy * blockDimy * INTERNALBLOCK_SIZE;
 //
-// 					/*__shared__*/ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 					/*__shared__*/ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 					real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-// 					real_t data_j[BLOCKING_SIZE_THREAD];
+// 					/*__shared__*/ real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+// 					/*__shared__*/ real_t data_intern_j [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+// 					real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
+// 					real_t data_j[INTERNALBLOCK_SIZE];
 //
 // 					if(i >= j){
-// 						i += threadIdxx * BLOCKING_SIZE_THREAD;
-// 						const int ji = j +  threadIdxx * BLOCKING_SIZE_THREAD;
-// 						j += threadIdxy * BLOCKING_SIZE_THREAD;
+// 						i += threadIdxx * INTERNALBLOCK_SIZE;
+// 						const int ji = j +  threadIdxx * INTERNALBLOCK_SIZE;
+// 						j += threadIdxy * INTERNALBLOCK_SIZE;
 // 						for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
 // 							{
-// 								#pragma unroll(BLOCKING_SIZE_THREAD)
-// 								for(int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id){
+// 								#pragma unroll(INTERNALBLOCK_SIZE)
+// 								for(int block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 // 									const int data_index = vec_index + block_id;
 // 									if(threadIdxy == block_id ) data_intern_i[threadIdxx][block_id] = data_d[data_index + i ];
 // 									if(threadIdxy == block_id * 2 ) data_intern_j[threadIdxx][block_id] = data_d[data_index + ji];
@@ -84,24 +84,24 @@ template void device_kernel_linear(const std::vector<std::vector<double>> &, std
 // 							}
 // 							//__syncthreads();
 //
-// 							#pragma unroll(BLOCKING_SIZE_THREAD)
-// 							for(int data_index = 0; data_index < BLOCKING_SIZE_THREAD; ++data_index){
+// 							#pragma unroll(INTERNALBLOCK_SIZE)
+// 							for(int data_index = 0; data_index < INTERNALBLOCK_SIZE; ++data_index){
 // 								data_j[data_index] = data_intern_j[threadIdxy][data_index];
 // 							}
 // 							//__syncthreads();
-// 							#pragma unroll(BLOCKING_SIZE_THREAD)
-// 							for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
+// 							#pragma unroll(INTERNALBLOCK_SIZE)
+// 							for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
 // 								const real_t data_i = data_intern_i[threadIdxx][x];
-// 								#pragma unroll(BLOCKING_SIZE_THREAD)
-// 								for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
+// 								#pragma unroll(INTERNALBLOCK_SIZE)
+// 								for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 // 									matr[x][y] += data_i * data_j[y];
 // 								}
 // 							}
 // 						}
-// 						#pragma unroll(BLOCKING_SIZE_THREAD)
-// 						for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-// 							#pragma unroll(BLOCKING_SIZE_THREAD)
-// 							for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
+// 						#pragma unroll(INTERNALBLOCK_SIZE)
+// 						for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
+// 							#pragma unroll(INTERNALBLOCK_SIZE)
+// 							for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 // 								const real_t temp = (matr[x][y]  + QA_cost - q[i + x] - q[j + y]) * add;
 // 								if(i + x > j + y){
 // 									//atomicAdd(&ret[i + x], temp * d[j + y]);
@@ -122,22 +122,22 @@ template void device_kernel_linear(const std::vector<std::vector<double>> &, std
 // }
 //
 // void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma, const real_t coef0 ,const real_t degree){
-// 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
-// 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
+// 	int i =  blockIdx.x * blockDim.x * INTERNALBLOCK_SIZE;
+// 	int j = blockIdx.y * blockDim.y * INTERNALBLOCK_SIZE;
 //
-// 	/*__shared__*/ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	/*__shared__*/ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-// 	real_t data_j[BLOCKING_SIZE_THREAD];
+// 	/*__shared__*/ real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+// 	/*__shared__*/ real_t data_intern_j [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+// 	real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
+// 	real_t data_j[INTERNALBLOCK_SIZE];
 //
 // 	if(i >= j){
-// 		i += threadIdx.x * BLOCKING_SIZE_THREAD;
-// 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
-// 		j += threadIdx.y * BLOCKING_SIZE_THREAD;
+// 		i += threadIdx.x * INTERNALBLOCK_SIZE;
+// 		const int ji = j +  threadIdx.x * INTERNALBLOCK_SIZE;
+// 		j += threadIdx.y * INTERNALBLOCK_SIZE;
 // 		for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
 // 			{
-// 				#pragma unroll(BLOCKING_SIZE_THREAD)
-// 				for(int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id){
+// 				#pragma unroll(INTERNALBLOCK_SIZE)
+// 				for(int block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 // 					const int data_index = vec_index + block_id;
 // 					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];
 // 					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji];
@@ -146,24 +146,24 @@ template void device_kernel_linear(const std::vector<std::vector<double>> &, std
 // 			}
 // 			//__syncthreads();
 //
-// 			#pragma unroll(BLOCKING_SIZE_THREAD)
-// 			for(int data_index = 0; data_index < BLOCKING_SIZE_THREAD; ++data_index){
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
+// 			for(int data_index = 0; data_index < INTERNALBLOCK_SIZE; ++data_index){
 // 				data_j[data_index] = data_intern_j[threadIdx.y][data_index];
 // 			}
 // 			//__syncthreads();
-// 			#pragma unroll(BLOCKING_SIZE_THREAD)
-// 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
+// 			for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
 // 				const real_t data_i = data_intern_i[threadIdx.x][x];
-// 				#pragma unroll(BLOCKING_SIZE_THREAD)
-// 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
+// 				#pragma unroll(INTERNALBLOCK_SIZE)
+// 				for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 // 					matr[x][y] += data_i * data_j[y];
 // 				}
 // 			}
 // 		}
-// 		#pragma unroll(BLOCKING_SIZE_THREAD)
-// 		for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-// 			#pragma unroll(BLOCKING_SIZE_THREAD)
-// 			for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
+// 		#pragma unroll(INTERNALBLOCK_SIZE)
+// 		for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
+// 			for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 // 				const real_t temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + x] - q[j + y]) * add;
 // 				if(i + x > j + y){
 // 					atomicAdd(&ret[i + x], temp * d[j + y]);
@@ -177,22 +177,22 @@ template void device_kernel_linear(const std::vector<std::vector<double>> &, std
 // }
 //
 // void kernel_radial(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma){
-// 	int i =  blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
-// 	int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
+// 	int i =  blockIdx.x * blockDim.x * INTERNALBLOCK_SIZE;
+// 	int j = blockIdx.y * blockDim.y * INTERNALBLOCK_SIZE;
 //
-// 	/*__shared__*/ real_t data_intern_i [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	/*__shared__*/ real_t data_intern_j [CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-// 	real_t matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-// 	real_t data_j[BLOCKING_SIZE_THREAD];
+// 	/*__shared__*/ real_t data_intern_i [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+// 	/*__shared__*/ real_t data_intern_j [THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+// 	real_t matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
+// 	real_t data_j[INTERNALBLOCK_SIZE];
 //
 // 	if(i >= j){
-// 		i += threadIdx.x * BLOCKING_SIZE_THREAD;
-// 		const int ji = j +  threadIdx.x * BLOCKING_SIZE_THREAD;
-// 		j += threadIdx.y * BLOCKING_SIZE_THREAD;
+// 		i += threadIdx.x * INTERNALBLOCK_SIZE;
+// 		const int ji = j +  threadIdx.x * INTERNALBLOCK_SIZE;
+// 		j += threadIdx.y * INTERNALBLOCK_SIZE;
 // 		for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
 // 			{
-// 				#pragma unroll(BLOCKING_SIZE_THREAD)
-// 				for(int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id){
+// 				#pragma unroll(INTERNALBLOCK_SIZE)
+// 				for(int block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id){
 // 					const int data_index = vec_index + block_id;
 // 					if(threadIdx.y == block_id ) data_intern_i[threadIdx.x][block_id] = data_d[data_index + i ];
 // 					if(threadIdx.y == block_id * 2 ) data_intern_j[threadIdx.x][block_id] = data_d[data_index + ji];
@@ -201,25 +201,25 @@ template void device_kernel_linear(const std::vector<std::vector<double>> &, std
 // 			}
 // 			__syncthreads();
 //
-// 			#pragma unroll(BLOCKING_SIZE_THREAD)
-// 			for(int data_index = 0; data_index < BLOCKING_SIZE_THREAD; ++data_index){
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
+// 			for(int data_index = 0; data_index < INTERNALBLOCK_SIZE; ++data_index){
 // 				data_j[data_index] = data_intern_j[threadIdx.y][data_index];
 // 			}
 // 			__syncthreads();
-// 			#pragma unroll(BLOCKING_SIZE_THREAD)
-// 			for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
+// 			for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
 // 				const real_t data_i = data_intern_i[threadIdx.x][x];
-// 				#pragma unroll(BLOCKING_SIZE_THREAD)
-// 				for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
+// 				#pragma unroll(INTERNALBLOCK_SIZE)
+// 				for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 // 					matr[x][y] += (data_i - data_j[y]) * (data_i - data_j[y]) ;
 // 				}
 // 			}
 // 		}
 //
-// 		#pragma unroll(BLOCKING_SIZE_THREAD)
-// 		for(int x = 0; x < BLOCKING_SIZE_THREAD; ++x){
-// 			#pragma unroll(BLOCKING_SIZE_THREAD)
-// 			for(int y = 0; y < BLOCKING_SIZE_THREAD; ++y){
+// 		#pragma unroll(INTERNALBLOCK_SIZE)
+// 		for(int x = 0; x < INTERNALBLOCK_SIZE; ++x){
+// 			#pragma unroll(INTERNALBLOCK_SIZE)
+// 			for(int y = 0; y < INTERNALBLOCK_SIZE; ++y){
 // 				const real_t temp = (exp(-gamma * matr[x][y]) + QA_cost - q[i + x] - q[j + y]) * add;
 // 				if(i + x > j + y){
 // 					atomicAdd(&ret[i + x], temp * d[j + y]);

@@ -77,7 +77,7 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
         const int start = device * Ncols / num_devices_;
         const int end = (device + 1) * Ncols / num_devices_;
         // TODO:
-        kernel_q<<<((int) dept / CUDABLOCK_SIZE) + 1, std::min((size_type) CUDABLOCK_SIZE, dept)>>>(q_d[device].get(),
+        kernel_q<<<((int) dept / THREADBLOCK_SIZE) + 1, std::min((size_type) THREADBLOCK_SIZE, dept)>>>(q_d[device].get(),
                                                                                                     data_d_[device].get(),
                                                                                                     data_last_d_[device].get(),
                                                                                                     Nrows,
@@ -129,7 +129,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     const size_type dept_all = dept + boundary_size;
     std::vector<real_type> zeros(dept_all, 0.0);
 
-    // dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
+    // dim3 grid((int)dept/(THREADBLOCK_SIZE*INTERNALBLOCK_SIZE) + 1,(int)dept/(THREADBLOCK_SIZE*INTERNALBLOCK_SIZE) + 1);
     //    dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
 
     std::vector<real_type> x(dept_all, 1.0);

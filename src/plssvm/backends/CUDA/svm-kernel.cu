@@ -17,7 +17,7 @@ __global__ void kernel_linear(const real_type *q, real_type *ret, const real_typ
 
     if (i >= j) {
         i += threadIdx.x * INTERNALBLOCK_SIZE;
-        const int ji = j + threadIdx.x * BLOCKING_SIZE_THREAD;
+        const int ji = j + threadIdx.x * INTERNALBLOCK_SIZE;
         j += threadIdx.y * INTERNALBLOCK_SIZE;
         //cache data
         for (int vec_index = start * Nrows; vec_index < end * Nrows; vec_index += Nrows) {
@@ -104,22 +104,22 @@ template __global__ void kernel_linear(const double *, double *, const double *,
 
 template <typename real_type>  // TODO: start / end ?
 __global__ void kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const int start, const int end, const real_type gamma, const real_type coef0, const real_type degree) {
-    int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
-    int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
+    int i = blockIdx.x * blockDim.x * INTERNALBLOCK_SIZE;
+    int j = blockIdx.y * blockDim.y * INTERNALBLOCK_SIZE;
 
-    __shared__ real_type data_intern_i[CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-    __shared__ real_type data_intern_j[CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-    real_type matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-    real_type data_j[BLOCKING_SIZE_THREAD];
+    __shared__ real_type data_intern_i[THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+    __shared__ real_type data_intern_j[THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+    real_type matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
+    real_type data_j[INTERNALBLOCK_SIZE];
 
     if (i >= j) {
-        i += threadIdx.x * BLOCKING_SIZE_THREAD;
-        const int ji = j + threadIdx.x * BLOCKING_SIZE_THREAD;
-        j += threadIdx.y * BLOCKING_SIZE_THREAD;
+        i += threadIdx.x * INTERNALBLOCK_SIZE;
+        const int ji = j + threadIdx.x * INTERNALBLOCK_SIZE;
+        j += threadIdx.y * INTERNALBLOCK_SIZE;
         for (int vec_index = 0; vec_index < Ncols * Nrows; vec_index += Nrows) {
             {
-                #pragma unroll(BLOCKING_SIZE_THREAD)
-                for (int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id) {
+                #pragma unroll(INTERNALBLOCK_SIZE)
+                for (int block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id) {
                     const int data_index = vec_index + block_id;
                     if (threadIdx.y == block_id)
                         data_intern_i[threadIdx.x][block_id] = data_d[data_index + i];
@@ -129,24 +129,24 @@ __global__ void kernel_poly(const real_type *q, real_type *ret, const real_type 
             }
             __syncthreads();
 
-            #pragma unroll(BLOCKING_SIZE_THREAD)
-            for (int data_index = 0; data_index < BLOCKING_SIZE_THREAD; ++data_index) {
+            #pragma unroll(INTERNALBLOCK_SIZE)
+            for (int data_index = 0; data_index < INTERNALBLOCK_SIZE; ++data_index) {
                 data_j[data_index] = data_intern_j[threadIdx.y][data_index];
             }
             __syncthreads();
-            #pragma unroll(BLOCKING_SIZE_THREAD)
-            for (int x = 0; x < BLOCKING_SIZE_THREAD; ++x) {
+            #pragma unroll(INTERNALBLOCK_SIZE)
+            for (int x = 0; x < INTERNALBLOCK_SIZE; ++x) {
                 const real_type data_i = data_intern_i[threadIdx.x][x];
-                #pragma unroll(BLOCKING_SIZE_THREAD)
-                for (int y = 0; y < BLOCKING_SIZE_THREAD; ++y) {
+                #pragma unroll(INTERNALBLOCK_SIZE)
+                for (int y = 0; y < INTERNALBLOCK_SIZE; ++y) {
                     matr[x][y] += data_i * data_j[y];
                 }
             }
         }
-        #pragma unroll(BLOCKING_SIZE_THREAD)
-        for (int x = 0; x < BLOCKING_SIZE_THREAD; ++x) {
-            #pragma unroll(BLOCKING_SIZE_THREAD)
-            for (int y = 0; y < BLOCKING_SIZE_THREAD; ++y) {
+        #pragma unroll(INTERNALBLOCK_SIZE)
+        for (int x = 0; x < INTERNALBLOCK_SIZE; ++x) {
+            #pragma unroll(INTERNALBLOCK_SIZE)
+            for (int y = 0; y < INTERNALBLOCK_SIZE; ++y) {
                 const real_type temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + x] - q[j + y]) * add;
                 if (i + x > j + y) {
                     atomicAdd(&ret[i + x], temp * d[j + y]);
@@ -164,22 +164,22 @@ template __global__ void kernel_poly(const double *, double *, const double *, c
 
 template <typename real_type>
 __global__ void kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const int start, const int end, const real_type gamma) {
-    int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
-    int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
+    int i = blockIdx.x * blockDim.x * INTERNALBLOCK_SIZE;
+    int j = blockIdx.y * blockDim.y * INTERNALBLOCK_SIZE;
 
-    __shared__ real_type data_intern_i[CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-    __shared__ real_type data_intern_j[CUDABLOCK_SIZE][BLOCKING_SIZE_THREAD];
-    real_type matr[BLOCKING_SIZE_THREAD][BLOCKING_SIZE_THREAD] = {};
-    real_type data_j[BLOCKING_SIZE_THREAD];
+    __shared__ real_type data_intern_i[THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+    __shared__ real_type data_intern_j[THREADBLOCK_SIZE][INTERNALBLOCK_SIZE];
+    real_type matr[INTERNALBLOCK_SIZE][INTERNALBLOCK_SIZE] = {};
+    real_type data_j[INTERNALBLOCK_SIZE];
 
     if (i >= j) {
-        i += threadIdx.x * BLOCKING_SIZE_THREAD;
-        const int ji = j + threadIdx.x * BLOCKING_SIZE_THREAD;
-        j += threadIdx.y * BLOCKING_SIZE_THREAD;
+        i += threadIdx.x * INTERNALBLOCK_SIZE;
+        const int ji = j + threadIdx.x * INTERNALBLOCK_SIZE;
+        j += threadIdx.y * INTERNALBLOCK_SIZE;
         for (int vec_index = 0; vec_index < Ncols * Nrows; vec_index += Nrows) {
             {
-                #pragma unroll(BLOCKING_SIZE_THREAD)
-                for (int block_id = 0; block_id < BLOCKING_SIZE_THREAD; ++block_id) {
+                #pragma unroll(INTERNALBLOCK_SIZE)
+                for (int block_id = 0; block_id < INTERNALBLOCK_SIZE; ++block_id) {
                     const int data_index = vec_index + block_id;
                     if (threadIdx.y == block_id)
                         data_intern_i[threadIdx.x][block_id] = data_d[data_index + i];
@@ -189,25 +189,25 @@ __global__ void kernel_radial(const real_type *q, real_type *ret, const real_typ
             }
             __syncthreads();
 
-            #pragma unroll(BLOCKING_SIZE_THREAD)
-            for (int data_index = 0; data_index < BLOCKING_SIZE_THREAD; ++data_index) {
+            #pragma unroll(INTERNALBLOCK_SIZE)
+            for (int data_index = 0; data_index < INTERNALBLOCK_SIZE; ++data_index) {
                 data_j[data_index] = data_intern_j[threadIdx.y][data_index];
             }
             __syncthreads();
-            #pragma unroll(BLOCKING_SIZE_THREAD)
-            for (int x = 0; x < BLOCKING_SIZE_THREAD; ++x) {
+            #pragma unroll(INTERNALBLOCK_SIZE)
+            for (int x = 0; x < INTERNALBLOCK_SIZE; ++x) {
                 const real_type data_i = data_intern_i[threadIdx.x][x];
-                #pragma unroll(BLOCKING_SIZE_THREAD)
-                for (int y = 0; y < BLOCKING_SIZE_THREAD; ++y) {
+                #pragma unroll(INTERNALBLOCK_SIZE)
+                for (int y = 0; y < INTERNALBLOCK_SIZE; ++y) {
                     matr[x][y] += (data_i - data_j[y]) * (data_i - data_j[y]);
                 }
             }
         }
 
-        #pragma unroll(BLOCKING_SIZE_THREAD)
-        for (int x = 0; x < BLOCKING_SIZE_THREAD; ++x) {
-            #pragma unroll(BLOCKING_SIZE_THREAD)
-            for (int y = 0; y < BLOCKING_SIZE_THREAD; ++y) {
+        #pragma unroll(INTERNALBLOCK_SIZE)
+        for (int x = 0; x < INTERNALBLOCK_SIZE; ++x) {
+            #pragma unroll(INTERNALBLOCK_SIZE)
+            for (int y = 0; y < INTERNALBLOCK_SIZE; ++y) {
                 const real_type temp = (exp(-gamma * matr[x][y]) + QA_cost - q[i + x] - q[j + y]) * add;
                 if (i + x > j + y) {
                     atomicAdd(&ret[i + x], temp * d[j + y]);
