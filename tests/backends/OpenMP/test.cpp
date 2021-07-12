@@ -7,19 +7,27 @@
 
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <fstream>
 #include <random>
 
 TEST(OpenMP, writeModel) {
-    std::string model = std::tmpnam(nullptr);
+    std::string model = std::filesystem::temp_directory_path().string();
+    model += "/tmpfile_XXXXXX";
+    // create unique temporary file
+    int fd = mkstemp(model.data());
+    // immediately close file if possible
+    if (fd >= 0) {
+        close(fd);
+    }
+
     MockOpenMP_CSVM csvm2(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     std::string testfile = TESTPATH "/data/5x4.libsvm";
     csvm2.learn(testfile, model);
 
     std::ifstream model_ifs(model);
-    std::string genfile2((std::istreambuf_iterator<char>(model_ifs)),
-                         std::istreambuf_iterator<char>());
-    remove(model.c_str());
+    std::string genfile2((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+    std::filesystem::remove(model.c_str());
 
     EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
 }
