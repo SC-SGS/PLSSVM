@@ -95,13 +95,10 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 
         const int start = device * Ncols / num_devices_;
         const int end = (device + 1) * Ncols / num_devices_;
-        // TODO:
-        kernel_q<<<((int) dept / THREADBLOCK_SIZE) + 1, std::min((size_type) THREADBLOCK_SIZE, dept)>>>(q_d[device].get(),
-                                                                                                        data_d_[device].get(),
-                                                                                                        data_last_d_[device].get(),
-                                                                                                        Nrows,
-                                                                                                        start,
-                                                                                                        end);
+        const int grid = dept / THREADBLOCK_SIZE + 1;  // TODO: ceil?: static_cast<size_type>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE)));
+        const int block = std::min<size_type>(THREADBLOCK_SIZE, dept);
+
+        kernel_q<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, start, end);
         cuda::peek_at_last_error();
     }
     cuda::device_synchronize();
@@ -121,9 +118,9 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 
 template <typename T>
 void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int sign) {
-    dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
-    dim3 grid(static_cast<size_type>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-              static_cast<size_type>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
+    const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+    dim3 grid{ grid_dim, grid_dim };
+    dim3 block{ static_cast<unsigned int>(THREADBLOCK_SIZE), static_cast<unsigned int>(THREADBLOCK_SIZE) };
     const int start = device * Ncols / num_devices_;
     const int end = (device + 1) * Ncols / num_devices_;
     switch (kernel_) {
