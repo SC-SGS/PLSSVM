@@ -1,5 +1,4 @@
 // #include "CSVM.hpp"
-#include "mocks/CSVM.hpp"
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -32,6 +31,8 @@
 
 TEST(IO, libsvmFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
+    using real_type = typename MockCSVM::real_type;
+
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to libsvm test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -40,7 +41,7 @@ TEST(IO, libsvmFormat) {
         EXPECT_EQ(csvm.get_data()[i].size(), csvm.get_num_features()) << "datapoint: " << i;
     }
 
-    std::vector<std::vector<real_t>> expected{
+    std::vector<std::vector<real_type>> expected{
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
@@ -56,6 +57,8 @@ TEST(IO, libsvmFormat) {
 
 TEST(IO, sparselibsvmFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
+    using real_type = typename MockCSVM::real_type;
+
     csvm.parse_libsvm(TESTPATH "/data/5x4.sparse.libsvm");  //TODO: add comments etc to libsvm test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -64,7 +67,7 @@ TEST(IO, sparselibsvmFormat) {
         EXPECT_EQ(csvm.get_data()[i].size(), csvm.get_num_features()) << "datapoint: " << i;
     }
 
-    std::vector<std::vector<real_t>> expected{
+    std::vector<std::vector<real_type>> expected{
         { 0., 0., 0., 0. },
         { 0., 0., 0.51687296029754564, 0. },
         { 0., 1.01405596624706053, 0., 0. },
@@ -80,6 +83,8 @@ TEST(IO, sparselibsvmFormat) {
 
 TEST(IO, arffFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
+    using real_type = typename MockCSVM::real_type;
+
     csvm.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -88,7 +93,7 @@ TEST(IO, arffFormat) {
         EXPECT_EQ(csvm.get_data()[i].size(), csvm.get_num_features()) << "datapoint: " << i;
     }
 
-    std::vector<std::vector<real_t>> expected{
+    std::vector<std::vector<real_type>> expected{
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
@@ -165,9 +170,11 @@ TEST(IO, arffNoneExistingFile) {
 
 TEST(CSVM, transform_data) {
     MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1.0, 0.001, false);
+    using real_type = typename MockCSVM::real_type;
+
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");
-    std::vector<real_t> result0 = csvm.transform_data(0);
-    std::vector<real_t> result10 = csvm.transform_data(10);
+    std::vector<real_type> result0 = csvm.transform_data(0);
+    std::vector<real_type> result10 = csvm.transform_data(10);
 
     EXPECT_EQ(result0.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());  //TODO: nochmal ünerlegen ob -1 wirklich passt (sollte eigentlich)
     EXPECT_EQ(result10.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
@@ -181,19 +188,21 @@ TEST(CSVM, transform_data) {
 }
 
 TEST(kernel, linear) {
-    const real_t degree = 0.0;
-    const real_t gamma = 0.0;
-    const real_t coef0 = 0.0;
+    using real_type = typename MockCSVM::real_type;
+
+    const real_type degree = 0.0;
+    const real_type gamma = 0.0;
+    const real_type coef0 = 0.0;
     const size_t size = 512;
-    std::vector<real_t> x1(size);
-    std::vector<real_t> x2(size);
+    std::vector<real_type> x1(size);
+    std::vector<real_type> x2(size);
     std::generate(x1.begin(), x1.end(), std::rand);
     std::generate(x2.begin(), x2.end(), std::rand);
-    real_t correct = linear_kernel(x1, x2);
+    real_type correct = linear_kernel(x1, x2);
 
     MockCSVM csvm(plssvm::kernel_type::linear, degree, gamma, coef0, 1., 0.001, false);
-    real_t result = csvm.kernel_function(x1, x2);
-    real_t result2 = csvm.kernel_function(x1.data(), x2.data(), size);
+    real_type result = csvm.kernel_function(x1, x2);
+    real_type result2 = csvm.kernel_function(x1.data(), x2.data(), size);
 
     EXPECT_DOUBLE_EQ(correct, result);
     EXPECT_DOUBLE_EQ(correct, result2);

@@ -7,11 +7,12 @@
 
 #include <gtest/gtest.h>
 
+#include <fstream>
 #include <random>
 
 TEST(IO, writeModel) {
     std::string model = std::tmpnam(nullptr);
-    MockCUDA_CSVM csvm2(1., 0.001, plssvm::kernel_type::linear, 3.0, 0.0, 0.0, false);
+    MockCUDA_CSVM csvm2(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     std::string testfile = TESTPATH "/data/5x4.libsvm";
     csvm2.learn(testfile, model);
 
@@ -24,12 +25,14 @@ TEST(IO, writeModel) {
 }
 
 TEST(learn, q) {
-    std::vector correct = generate_q(TESTFILE);
-
     MockCUDA_CSVM csvm_CUDA;
-    csvm_CUDA.libsvmParser(TESTFILE);
-    csvm_CUDA.loadDataDevice();
-    std::vector test = csvm_CUDA.generate_q();
+    using real_type = typename MockCUDA_CSVM::real_type;
+
+    std::vector correct = generate_q<real_type>(TESTFILE);
+
+    csvm_CUDA.parse_libsvm(TESTFILE);
+    csvm_CUDA.setup_data_on_device();
+    std::vector<real_type> test = csvm_CUDA.generate_q();
 
     ASSERT_EQ(correct.size(), test.size());
     for (size_t index = 0; index < correct.size(); ++index) {
@@ -38,16 +41,18 @@ TEST(learn, q) {
 }
 
 TEST(kernel, linear) {
+    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
+    using real_type = typename MockCUDA_CSVM::real_type;
+
     const size_t size = 512;
-    std::vector<real_t> x1(size);
-    std::vector<real_t> x2(size);
+    std::vector<real_type> x1(size);
+    std::vector<real_type> x2(size);
     std::generate(x1.begin(), x1.end(), std::rand);
     std::generate(x2.begin(), x2.end(), std::rand);
-    real_t correct = linear_kernel(x1, x2);
+    real_type correct = linear_kernel(x1, x2);
 
-    MockCUDA_CSVM csvm_CUDA;
-    real_t result_CUDA = csvm_CUDA.kernel_function(x1, x2);
-    real_t result2_CUDA = csvm_CUDA.kernel_function(x1.data(), x2.data(), size);
+    real_type result_CUDA = csvm_CUDA.kernel_function(x1, x2);
+    real_type result2_CUDA = csvm_CUDA.kernel_function(x1.data(), x2.data(), size);
 
     EXPECT_DOUBLE_EQ(correct, result_CUDA);
     EXPECT_DOUBLE_EQ(correct, result2_CUDA);
@@ -55,17 +60,18 @@ TEST(kernel, linear) {
 
 TEST(learn, q_linear) {
     MockCSVM csvm;
-    csvm.libsvmParser(TESTFILE);
-    std::vector<real_t> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
+    using real_type = typename MockCSVM::real_type;
 
-    MockCUDA_CSVM csvm_CUDA(1., 0.001, plssvm::kernel_type::linear);
-    csvm_CUDA.libsvmParser(TESTFILE);
-    csvm_CUDA.loadDataDevice();
-    std::vector<real_t> test = csvm_CUDA.generate_q();
+    csvm.parse_libsvm(TESTFILE);
+    std::vector<real_type> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
+
+    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
+    csvm_CUDA.parse_libsvm(TESTFILE);
+    csvm_CUDA.setup_data_on_device();
+    std::vector<real_type> test = csvm_CUDA.generate_q();
 
     ASSERT_EQ(correct.size(), test.size());
     for (size_t index = 0; index < correct.size(); ++index) {
         EXPECT_NEAR(correct[index], test[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
     }
 }
-

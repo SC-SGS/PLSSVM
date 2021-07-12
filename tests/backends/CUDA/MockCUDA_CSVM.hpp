@@ -1,5 +1,6 @@
 #ifndef TESTS_BACKENDS_CUDA_TEST
 #define TESTS_BACKENDS_CUDA_TEST
+
 #include "plssvm/CSVM.hpp"
 
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
@@ -8,33 +9,42 @@
 #include "gmock/gmock.h"
 #include <plssvm/kernel_types.hpp>
 
-class MockCUDA_CSVM : public plssvm::CUDA_CSVM {
-  public:
-    MockCUDA_CSVM(real_t cost_ = 1.5, real_t epsilon_ = 0.00001, plssvm::kernel_type kernel_ = plssvm::kernel_type::linear, real_t degree_ = 2.0, real_t gamma_ = 1.5, real_t coef0_ = 0.0, bool info_ = false) :
-        plssvm::CUDA_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
-    // MOCK_METHOD(void, load_w, (), (override));
-    MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
-    // MOCK_METHOD(void, learn, (), (override));
-    using plssvm::CUDA_CSVM::alpha;
-    using plssvm::CUDA_CSVM::bias;
-    using plssvm::CUDA_CSVM::CG;
-    using plssvm::CUDA_CSVM::generate_q;
-    using plssvm::CUDA_CSVM::kernel_function;
-    using plssvm::CUDA_CSVM::learn;
-    using plssvm::CUDA_CSVM::loadDataDevice;
-    using plssvm::CUDA_CSVM::QA_cost;
+class MockCUDA_CSVM : public plssvm::CUDA_CSVM<double> {
+    using base_type = plssvm::CUDA_CSVM<double>;
 
-    const real_t get_num_data_points() const {
-        return num_data_points;
+  public:
+    using base_type::real_type;
+    using base_type::size_type;
+
+    MockCUDA_CSVM(plssvm::kernel_type kernel_ = plssvm::kernel_type::linear, real_type degree_ = 2.0, real_type gamma_ = 1.5, real_type coef0_ = 0.0, real_type cost_ = 1.5, real_type epsilon_ = 0.00001, bool info_ = false) :
+        base_type{ kernel_, degree_, gamma_, coef0_, cost_, epsilon_, info_ } {}
+    MOCK_METHOD(void, load_w, (), (override));
+    //    MOCK_METHOD(std::vector<real_type>, predict, (real_type *, size_type, size_type));
+    MOCK_METHOD(void, learn, ());
+    using base_type::alpha_;
+    using base_type::bias_;
+    using base_type::data_;
+    using base_type::gamma_;
+    using base_type::generate_q;
+    using base_type::kernel_function;
+    using base_type::learn;
+    using base_type::num_data_points_;
+    using base_type::num_features_;
+    using base_type::QA_cost_;
+    using base_type::setup_data_on_device;
+    using base_type::solver_CG;
+
+    size_type get_num_data_points() const {
+        return num_data_points_;
     }
-    const real_t get_num_features() const {
-        return num_features;
+    size_type get_num_features() const {
+        return num_features_;
     }
-    std::vector<std::vector<real_t>> get_data() const {
-        return data;
+    std::vector<std::vector<real_type>> get_data() const {
+        return data_;
     }
-    const real_t get_gamma() const {
-        return gamma;
+    real_type get_gamma() const {
+        return gamma_;
     }
 };
 

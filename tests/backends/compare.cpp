@@ -5,39 +5,46 @@
 #include <string>
 #include <vector>
 
-std::vector<plssvm::real_t> generate_q(const std::string path) {
-    std::vector<plssvm::real_t> q;
+template <typename real_type>
+std::vector<real_type> generate_q(const std::string &path) {
+    std::vector<real_type> q;
     MockCSVM csvm;
-    csvm.libsvmParser(path);
+    csvm.parse_libsvm(path);
 
-    q.reserve(csvm.data.size());
-    for (int i = 0; i < csvm.data.size() - 1; ++i) {
-        q.emplace_back(csvm.kernel_function(csvm.data.back(), csvm.data[i]));
+    q.reserve(csvm.data_.size());
+    for (int i = 0; i < csvm.data_.size() - 1; ++i) {
+        q.emplace_back(csvm.kernel_function(csvm.data_.back(), csvm.data_[i]));
     }
     return q;
 }
+template std::vector<float> generate_q(const std::string &);
+template std::vector<double> generate_q(const std::string &);
 
-real_t linear_kernel(const std::vector<plssvm::real_t> &x1, const std::vector<plssvm::real_t> &x2) {
+template <typename real_type>
+real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2) {
     assert(x1.size() == x2.size());
-    plssvm::real_t result = static_cast<plssvm::real_t>(0.0);
+    real_type result{ 0.0 };
     for (size_t i = 0; i < x1.size(); ++i) {
         result += x1[i] * x2[i];
     }
     return result;
 }
+template float linear_kernel(const std::vector<float> &, const std::vector<float> &);
+template double linear_kernel(const std::vector<double> &, const std::vector<double> &);
 
-std::vector<plssvm::real_t> kernel_linear_function(const std::vector<std::vector<plssvm::real_t>> &data, std::vector<plssvm::real_t> &x, const std::vector<plssvm::real_t> &q, const plssvm::real_t sgn, const plssvm::real_t QA_cost, const plssvm::real_t cost) {
+template <typename real_type>
+std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const int sgn, const real_type QA_cost, const real_type cost) {
     assert(x.size() == q.size());
     assert(x.size() == data.size() - 1);
 
     const size_t dept = x.size();
 
-    std::vector<plssvm::real_t> r(dept, 0.0);
+    std::vector<real_type> r(dept, 0.0);
 
     for (int i = 0; i < dept; ++i) {
         for (int j = 0; j < dept; ++j) {
             if (i >= j) {
-                real_t temp = linear_kernel(data[i], data[j]) - q[i] - q[j] + QA_cost;
+                real_type temp = linear_kernel(data[i], data[j]) - q[i] - q[j] + QA_cost;
                 if (i == j) {
                     r[i] += (temp + 1 / cost) * x[i] * sgn;
                 } else {
@@ -49,3 +56,5 @@ std::vector<plssvm::real_t> kernel_linear_function(const std::vector<std::vector
     }
     return r;
 }
+template std::vector<float> kernel_linear_function(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const int, const float, const float);
+template std::vector<double> kernel_linear_function(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const int, const double, const double);

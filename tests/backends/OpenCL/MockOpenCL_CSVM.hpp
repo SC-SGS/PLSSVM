@@ -8,39 +8,47 @@
 #include "gmock/gmock.h"
 #include <plssvm/kernel_types.hpp>
 
-class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM {
+class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM<double> {
+    using base_type = plssvm::OpenCL_CSVM<double>;
+
   public:
-    MockOpenCL_CSVM(real_t cost_ = 1.5, real_t epsilon_ = 0.00001, plssvm::kernel_type kernel_ = plssvm::kernel_type::linear, real_t degree_ = 2.0, real_t gamma_ = 1.5, real_t coef0_ = 0.0, bool info_ = false) :
-        plssvm::OpenCL_CSVM(cost_, epsilon_, kernel_, degree_, gamma_, coef0_, info_) {}
-    // MOCK_METHOD(void, load_w, (), (override));
-    MOCK_METHOD(std::vector<real_t>, predict, (real_t *, int, int), (override));
-    // MOCK_METHOD(void, learn, (), (override));
-    using plssvm::OpenCL_CSVM::alpha;
-    using plssvm::OpenCL_CSVM::bias;
-    using plssvm::OpenCL_CSVM::QA_cost;
+    using base_type::real_type;
+    using base_type::size_type;
 
-    using plssvm::OpenCL_CSVM::CG;
-    using plssvm::OpenCL_CSVM::learn;
-    using plssvm::OpenCL_CSVM::loadDataDevice;
+    MockOpenCL_CSVM(plssvm::kernel_type kernel_ = plssvm::kernel_type::linear, real_type degree_ = 2.0, real_type gamma_ = 1.5, real_type coef0_ = 0.0, real_type cost_ = 1.5, real_type epsilon_ = 0.00001, bool info_ = false) :
+        base_type{ kernel_, degree_, gamma_, coef0_, cost_, epsilon_, info_ } {}
+    MOCK_METHOD(void, load_w, (), (override));
+    //    MOCK_METHOD(std::vector<real_type>, predict, (real_type *, size_type, size_type), (override));
+    MOCK_METHOD(void, learn, ());
+    using base_type::alpha_;
+    using base_type::bias_;
+    using base_type::QA_cost_;
 
-    using plssvm::OpenCL_CSVM::cost;
-    using plssvm::OpenCL_CSVM::data;
-    using plssvm::OpenCL_CSVM::data_cl;
-    using plssvm::OpenCL_CSVM::generate_q;
-    using plssvm::OpenCL_CSVM::kernel_function;
-    using plssvm::OpenCL_CSVM::manager;
+    using base_type::learn;
+    using base_type::setup_data_on_device;
+    using base_type::solver_CG;
 
-    const real_t get_num_data_points() const {
-        return num_data_points;
+    using base_type::cost_;
+    using base_type::data_;
+    using base_type::data_cl;
+    using base_type::gamma_;
+    using base_type::generate_q;
+    using base_type::kernel_function;
+    using base_type::manager;
+    using base_type::num_data_points_;
+    using base_type::num_features_;
+
+    size_type get_num_data_points() const {
+        return num_data_points_;
     }
-    const real_t get_num_features() const {
-        return num_features;
+    size_type get_num_features() const {
+        return num_features_;
     }
-    std::vector<std::vector<real_t>> get_data() const {
-        return data;
+    std::vector<std::vector<real_type>> get_data() const {
+        return data_;
     }
-    const real_t get_gamma() const {
-        return gamma;
+    real_type get_gamma() const {
+        return gamma_;
     }
 };
 

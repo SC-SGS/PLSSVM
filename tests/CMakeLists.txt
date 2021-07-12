@@ -25,6 +25,7 @@ target_include_directories(main_tests PUBLIC ${fmt_SOURCE_DIR}/include
 )# TODO: better?
 target_link_libraries(main_tests fmt::fmt)
 target_include_directories(main_tests PUBLIC ${fast_float_SOURCE_DIR}/include)
+target_include_directories(main_tests PUBLIC ${cxxopts_SOURCE_DIR}/include)
 
 option(GENERATE_TEST_FILE "Generate larger test file" ON)
 if(${GENERATE_TEST_FILE})

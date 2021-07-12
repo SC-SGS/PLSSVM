@@ -6,12 +6,14 @@
 #include <string>
 #include <vector>
 
-std::vector<plssvm::real_t> generate_q(const std::string path);
-plssvm::real_t linear_kernel(const std::vector<plssvm::real_t> &x1, const std::vector<plssvm::real_t> &x2);
+template <typename real_type>
+std::vector<real_type> generate_q(const std::string &path);
+template <typename real_type>
+real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2);
 
-template <plssvm::kernel_type kernel_type>
-std::vector<plssvm::real_t> q(const std::vector<std::vector<plssvm::real_t>> &data) {
-    std::vector<plssvm::real_t> result;
+template <plssvm::kernel_type kernel_type, typename real_type>
+std::vector<real_type> q(const std::vector<std::vector<real_type>> &data) {
+    std::vector<real_type> result;
 
     result.reserve(data.size());
     for (int i = 0; i < data.size() - 1; ++i) {
@@ -24,5 +26,7 @@ std::vector<plssvm::real_t> q(const std::vector<std::vector<plssvm::real_t>> &da
     return result;
 }
 
-std::vector<plssvm::real_t> kernel_linear_function(const std::vector<std::vector<plssvm::real_t>> &data, std::vector<plssvm::real_t> &x, const std::vector<plssvm::real_t> &q, const plssvm::real_t sgn, const plssvm::real_t QA_cost, const plssvm::real_t cost);
+template <typename real_type>
+std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, int sgn, real_type QA_cost, real_type cost);
+
 #endif /* TESTS_BACKENDS_COMPARE */
