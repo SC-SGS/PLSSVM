@@ -4,9 +4,8 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 #include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
 
-#include <string>
-#include <type_traits>
-#include <vector>
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 template <typename real_type>
 std::vector<real_type> generate_q(const std::string &path);
