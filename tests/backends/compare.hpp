@@ -1,9 +1,11 @@
 #ifndef TESTS_BACKENDS_COMPARE
 #define TESTS_BACKENDS_COMPARE
-#include "plssvm/kernel_types.hpp"
-#include "plssvm/typedef.hpp"
+
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
 
 #include <string>
+#include <type_traits>
 #include <vector>
 
 template <typename real_type>
@@ -16,11 +18,16 @@ std::vector<real_type> q(const std::vector<std::vector<real_type>> &data) {
     std::vector<real_type> result;
 
     result.reserve(data.size());
-    for (int i = 0; i < data.size() - 1; ++i) {
-        if (kernel_type == plssvm::kernel_type::linear) {
+    for (std::size_t i = 0; i < data.size() - 1; ++i) {
+        // TODO: Other Kernels
+        if constexpr (kernel_type == plssvm::kernel_type::linear) {
             result.emplace_back(linear_kernel(data.back(), data[i]));
+        } else if constexpr (kernel_type == plssvm::kernel_type::polynomial) {
+            static_assert(plssvm::detail::always_false_v<real_type>, "Tests for the polynomial kernel currently not available!");
+        } else if constexpr (kernel_type == plssvm::kernel_type::rbf) {
+            static_assert(plssvm::detail::always_false_v<real_type>, "Tests for the radial basis function kernel currently not available!");
         } else {
-            //TODO: Other Kernels
+            static_assert(plssvm::detail::always_false_v<real_type>, "Unknown kernel type!");
         }
     }
     return result;
