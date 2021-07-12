@@ -9,7 +9,8 @@
 
 #pragma once
 
-#include <vector>  // std::vector
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 // TODO: correct names (including doxygen comments), correct file, excpetion file?
 // TODO: correct namespace
