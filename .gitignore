@@ -69,3 +69,11 @@ include/plssvm/version/version.hpp
 !data/
 data/*
 !data/generate_data.py
+
+# data in test folder
+!tests/data/
+tests/data/*
+!tests/data/5x4.arff
+!tests/data/5x4.libsvm
+!tests/data/5x4.sparse.libsvm
+!tests/data/500x200.libsvm
