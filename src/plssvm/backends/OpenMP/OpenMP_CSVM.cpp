@@ -19,7 +19,11 @@ OpenMP_CSVM<T>::OpenMP_CSVM(parameter<T> &params) :
 
 template <typename T>
 OpenMP_CSVM<T>::OpenMP_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
-    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+    if (print_info_) {
+        fmt::print("Using OpenMP as backend.\n\n");
+    }
+}
 
 template <typename T>
 auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {

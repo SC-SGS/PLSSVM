@@ -1,9 +1,10 @@
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
 
-#include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"  // plssvm::detail::cuda::device_ptr
-#include "plssvm/backends/CUDA/cuda-kernel.cuh"     // kernel_q
-#include "plssvm/backends/CUDA/cuda-kernel.hpp"     // add_mult_
-#include "plssvm/backends/CUDA/svm-kernel.cuh"      // kernel_linear, kernel_poly, kernel_radial
+#include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"   // plssvm::detail::cuda::device_ptr
+#include "plssvm/backends/CUDA/CUDA_exceptions.hpp"  // plssvm::cuda_backend_exception
+#include "plssvm/backends/CUDA/cuda-kernel.cuh"      // kernel_q
+#include "plssvm/backends/CUDA/cuda-kernel.hpp"      // add_mult_
+#include "plssvm/backends/CUDA/svm-kernel.cuh"       // kernel_linear, kernel_poly, kernel_radial
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
@@ -29,7 +30,25 @@ CUDA_CSVM<T>::CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, r
     num_devices_{ cuda::get_device_count() },
     data_d_(num_devices_),
     data_last_d_(num_devices_) {
-    fmt::print("Found {} CUDA devices.", num_devices_);  // TODO: improve
+    if (print_info_) {
+        fmt::print("Using CUDA as backend.\n");
+    }
+
+    // throw exception if no CUDA devices could be found
+    if (num_devices_ < 1) {
+        throw cuda_backend_exception{ "CUDA backend selected but no CUDA devices were found!" };
+    }
+
+    if (print_info_) {
+        // print found CUDA devices
+        fmt::print("Found {} CUDA device(s):\n", num_devices_);
+        for (int device = 0; device < num_devices_; ++device) {
+            cudaDeviceProp prop;
+            cudaGetDeviceProperties(&prop, device);
+            fmt::print("  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+        }
+        fmt::print("\n");
+    }
 }
 
 template <typename T>

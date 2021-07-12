@@ -26,12 +26,17 @@ OpenCL_CSVM<T>::OpenCL_CSVM(parameter<T> &params) :
 template <typename T>
 OpenCL_CSVM<T>::OpenCL_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
     CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+    if (print_info_) {
+        fmt::print("Using OpenCL as backend.\n");
+    }
+
     std::vector<opencl::device_t> &devices = manager.get_devices();
     first_device = devices[0];
     count_devices = devices.size();
     svm_kernel_linear.resize(count_devices, nullptr);
     kernel_q_cl.resize(count_devices, nullptr);
-    std::cout << "GPUs found: " << count_devices << std::endl;
+    std::cout << "GPUs found: " << count_devices << '\n'
+              << std::endl;
 }
 
 template <typename T>
