@@ -4,10 +4,12 @@
 #include "plssvm/backends/CUDA/cuda-kernel.hpp"
 #include "plssvm/backends/CUDA/svm-kernel.cuh"
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/exceptions/exceptions.hpp"
 
 #include "fmt/core.h"
 
 #include <chrono>
+#include <cmath>
 
 namespace plssvm {
 
@@ -95,6 +97,28 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
+void CUDA_CSVM<T>::run_device_kernel(const size_type device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int sign) {
+    dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
+    dim3 grid(static_cast<size_type>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
+              static_cast<size_type>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
+    const int start = device * Ncols / num_devices_;
+    const int end = (device + 1) * Ncols / num_devices_;
+    switch (kernel_) {
+        case kernel_type::linear:
+            kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, cost, Ncols, Nrows, sign, start, end);
+            break;
+        case kernel_type::polynomial:
+            kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, cost, Ncols, Nrows, sign, start, end, gamma_, coef0_, degree_);
+            break;
+        case kernel_type::rbf:
+            kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, cost, Ncols, Nrows, sign, start, end, gamma_);
+            break;
+        default:
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
+    }
+}
+
+template <typename T>
 auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     const size_type dept = num_data_points_ - 1;
     const size_type boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
@@ -102,7 +126,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     std::vector<real_type> zeros(dept_all, 0.0);
 
     // dim3 grid((int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1,(int)dept/(CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) + 1);
-    dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
+    //    dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
 
     std::vector<real_type> x(dept_all, 1.0);
     std::fill(x.end() - boundary_size, x.end(), 0.0);
@@ -138,29 +162,11 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     }
     cuda::device_synchronize();
 
-    switch (kernel_) {
-        case kernel_type::linear: {
-            #pragma omp parallel for
-            for (size_type device = 0; device < num_devices_; ++device) {
-                cuda::set_device(device);
-                dim3 grid(static_cast<size_type>(ceil(
-                              static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-                          static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
-                const int start = device * Ncols / num_devices_;
-                const int end = (device + 1) * Ncols / num_devices_;
-                kernel_linear<<<grid, block>>>(q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
-                cuda::peek_at_last_error();
-            }
-            break;
-        }
-        case kernel_type::polynomial:
-            // kernel_poly<<<grid,block>>>(q_d, r_d, x_d,data_d_, QA_cost_, 1/cost, num_features_ , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_, coef0_, degree_);
-            break;
-        case kernel_type::rbf:
-            // kernel_radial<<<grid,block>>>(q_d, r_d, x_d,data_d_, QA_cost_, 1/cost_, num_features_ , dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_);
-            break;
-        default:
-            throw std::runtime_error{ "Can not decide which kernel!" };
+    #pragma omp parallel for
+    for (size_type device = 0; device < num_devices_; ++device) {
+        cuda::set_device(device);
+        run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1);
+        cuda::peek_at_last_error();
     }
 
     // cudaMemcpy(r, r_d, dept*sizeof(real_type), cudaMemcpyDeviceToHost);
@@ -198,27 +204,12 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept);
         }
-        switch (kernel_) {
-            case kernel_type::linear: {
-                #pragma omp parallel for
-                for (size_type device = 0; device < num_devices_; ++device) {
-                    cuda::set_device(device);
-                    dim3 grid(static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-                              static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
-                    const int start = device * Ncols / num_devices_;
-                    const int end = (device + 1) * Ncols / num_devices_;
-                    kernel_linear<<<grid, block>>>(q_d[device].get(), Ad_d[device].get(), r_d[device].get(), data_d_[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, 1, start, end);
-                    cuda::peek_at_last_error();
-                }
-            } break;
-            case kernel_type::polynomial:
-                // kernel_poly<<<grid,block>>>(q_d, Ad_d, r_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , 1, gamma_, coef0_, degree_);
-                break;
-            case kernel_type::rbf:
-                // kernel_radial<<<grid,block>>>(q_d, Ad_d, r_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), 1, gamma_);
-                break;
-            default:
-                throw std::runtime_error("Can not decide which kernel!");
+
+        #pragma omp parallel for
+        for (size_type device = 0; device < num_devices_; ++device) {
+            cuda::set_device(device);
+            run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, 1);
+            cuda::peek_at_last_error();
         }
 
         for (size_type i = 0; i < dept; ++i) {
@@ -262,27 +253,12 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             for (size_type device = 1; device < num_devices_; ++device) {
                 r_d[device].memset(0);
             }
-            switch (kernel_) {
-                case kernel_type::linear: {
-                    #pragma omp parallel for
-                    for (size_type device = 0; device < num_devices_; ++device) {
-                        cuda::set_device(device);
-                        const int start = device * Ncols / num_devices_;
-                        const int end = (device + 1) * Ncols / num_devices_;
-                        dim3 grid(static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
-                                  static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
-                        kernel_linear<<<grid, block>>>(q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
-                        cuda::peek_at_last_error();
-                    }
-                } break;
-                case kernel_type::polynomial:
-                    // kernel_poly<<<grid,block>>>(q_d, r_d, x_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD), -1, gamma_, coef0_, degree_);
-                    break;
-                case kernel_type::rbf:
-                    // kernel_radial<<<grid,block>>>(q_d, r_d, x_d, data_d_, QA_cost_, 1/cost_, num_features_, dept + (CUDABLOCK_SIZE*BLOCKING_SIZE_THREAD) , -1, gamma_);
-                    break;
-                default:
-                    throw std::runtime_error("Can not decide wich kernel!");
+
+            #pragma omp parallel for
+            for (size_type device = 0; device < num_devices_; ++device) {
+                cuda::set_device(device);
+                run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1);
+                cuda::peek_at_last_error();
             }
             cuda::device_synchronize();
             // cudaMemcpy(r, r_d, dept*sizeof(real_type), cudaMemcpyDeviceToHost);

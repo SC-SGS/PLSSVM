@@ -103,7 +103,7 @@ template __global__ void kernel_linear(const float *, float *, const float *, co
 template __global__ void kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int, const int);
 
 template <typename real_type>  // TODO: start / end ?
-__global__ void kernel_poly(real_type *q, real_type *ret, real_type *d, real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const real_type gamma, const real_type coef0, const real_type degree) {
+__global__ void kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const int start, const int end, const real_type gamma, const real_type coef0, const real_type degree) {
     int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
     int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
@@ -159,11 +159,11 @@ __global__ void kernel_poly(real_type *q, real_type *ret, real_type *d, real_typ
     }
 }
 
-template __global__ void kernel_poly(float *, float *, float *, float *, const float, const float, const int, const int, const int, const float, const float, const float);
-template __global__ void kernel_poly(double *, double *, double *, double *, const double, const double, const int, const int, const int, const double, const double, const double);
+template __global__ void kernel_poly(const float *, float *, const float *, const float *, const float, const float, const int, const int, const int, const int, const int, const float, const float, const float);
+template __global__ void kernel_poly(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int, const int, const double, const double, const double);
 
 template <typename real_type>
-__global__ void kernel_radial(real_type *q, real_type *ret, real_type *d, real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const real_type gamma) {
+__global__ void kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const int start, const int end, const real_type gamma) {
     int i = blockIdx.x * blockDim.x * BLOCKING_SIZE_THREAD;
     int j = blockIdx.y * blockDim.y * BLOCKING_SIZE_THREAD;
 
@@ -219,7 +219,7 @@ __global__ void kernel_radial(real_type *q, real_type *ret, real_type *d, real_t
         }
     }
 }
-template __global__ void kernel_radial(float *, float *, float *, float *, const float, const float, const int, const int, const int, const float);
-template __global__ void kernel_radial(double *, double *, double *, double *, const double, const double, const int, const int, const int, const double);
+template __global__ void kernel_radial(const float *, float *, const float *, const float *, const float, const float, const int, const int, const int, const int, const int, const float);
+template __global__ void kernel_radial(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int, const int, const double);
 
 }  // namespace plssvm
