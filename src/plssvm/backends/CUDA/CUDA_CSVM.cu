@@ -117,21 +117,27 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int sign) {
+void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const int sign) {
+    // TODO: size_type?
+    const int Ncols = num_features_;
+    const int Nrows = num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+
     const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
     dim3 grid{ grid_dim, grid_dim };
     dim3 block{ static_cast<unsigned int>(THREADBLOCK_SIZE), static_cast<unsigned int>(THREADBLOCK_SIZE) };
+
     const int start = device * Ncols / num_devices_;
     const int end = (device + 1) * Ncols / num_devices_;
+
     switch (kernel_) {
         case kernel_type::linear:
-            kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, cost, Ncols, Nrows, sign, start, end);
+            kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, sign, start, end);
             break;
         case kernel_type::polynomial:
-            kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, cost, Ncols, Nrows, sign, start, end, gamma_, coef0_, degree_);
+            kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, sign, start, end, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, cost, Ncols, Nrows, sign, start, end, gamma_);
+            kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, sign, start, end, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
@@ -168,9 +174,6 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     }
     std::vector<real_type> d(dept);
 
-    // TODO: size_type
-    const int Ncols = num_features_;
-    const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
     cuda::device_synchronize();
 
     std::vector<cuda::device_ptr<real_type>> q_d(num_devices_);
@@ -185,7 +188,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         cuda::set_device(device);
-        run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1);
+        run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
         cuda::peek_at_last_error();
     }
 
@@ -228,7 +231,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             cuda::set_device(device);
-            run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, 1);
+            run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], 1);
             cuda::peek_at_last_error();
         }
 
@@ -277,7 +280,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             #pragma omp parallel for
             for (int device = 0; device < num_devices_; ++device) {
                 cuda::set_device(device);
-                run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1);
+                run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
                 cuda::peek_at_last_error();
             }
             cuda::device_synchronize();

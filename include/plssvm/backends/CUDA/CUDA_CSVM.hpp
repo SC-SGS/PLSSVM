@@ -39,7 +39,7 @@ class CUDA_CSVM : public CSVM<T> {
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     void load_w() override;  // TODO: implement correctly
 
-    void run_device_kernel(int device, const detail::cuda::device_ptr<real_type> &q_d, detail::cuda::device_ptr<real_type> &r_d, const detail::cuda::device_ptr<real_type> &x_d, const detail::cuda::device_ptr<real_type> &data_d, real_type QA_cost, real_type cost, int Ncols, int Nrows, int sign);
+    void run_device_kernel(int device, const detail::cuda::device_ptr<real_type> &q_d, detail::cuda::device_ptr<real_type> &r_d, const detail::cuda::device_ptr<real_type> &x_d, const detail::cuda::device_ptr<real_type> &data_d, int sign);
 
     int num_devices_;
     std::vector<detail::cuda::device_ptr<real_type>> data_d_;
