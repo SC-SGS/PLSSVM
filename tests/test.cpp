@@ -18,18 +18,8 @@
 #include <plssvm/backends/OpenMP/svm-kernel.hpp>
 #include <plssvm/kernel_types.hpp>
 
-#if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    #include "manager/configuration.hpp"
-    #include "manager/device.hpp"
-    #include "manager/manager.hpp"
-    #include <plssvm/backends/OpenCL/DevicePtrOpenCL.hpp>
-    #include <stdexcept>
 
-    #include "manager/apply_arguments.hpp"
-    #include "manager/run_kernel.hpp"
-#endif
-
-TEST(IO, libsvmFormat) {
+TEST(BASE, libsvmFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     using real_type = typename MockCSVM::real_type;
 
@@ -55,7 +45,7 @@ TEST(IO, libsvmFormat) {
     }
 }
 
-TEST(IO, sparselibsvmFormat) {
+TEST(BASE, sparselibsvmFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     using real_type = typename MockCSVM::real_type;
 
@@ -81,7 +71,7 @@ TEST(IO, sparselibsvmFormat) {
     }
 }
 
-TEST(IO, arffFormat) {
+TEST(BASE, arffFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     using real_type = typename MockCSVM::real_type;
 
@@ -107,7 +97,7 @@ TEST(IO, arffFormat) {
     }
 }
 
-TEST(IO, arffParserGamma) {
+TEST(BASE, arffParserGamma) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
@@ -121,7 +111,7 @@ TEST(IO, arffParserGamma) {
     EXPECT_FLOAT_EQ(1.0 / csvm_gammazero.get_num_features(), csvm_gammazero.get_gamma());
 }
 
-TEST(IO, libsvmParserGamma) {
+TEST(BASE, libsvmParserGamma) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
     ASSERT_EQ(csvm.get_num_data_points(), 5);
@@ -135,7 +125,7 @@ TEST(IO, libsvmParserGamma) {
     EXPECT_FLOAT_EQ(1.0 / csvm_gammazero.get_num_features(), csvm_gammazero.get_gamma());
 }
 
-TEST(IO, writeModel) {
+TEST(BASE, writeModel) {
     MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
     std::string model = std::tmpnam(nullptr);
@@ -148,27 +138,27 @@ TEST(IO, writeModel) {
     EXPECT_THAT(genfile1, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv 0+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
 }
 
-TEST(IO, libsvmFormatIllFormed) {
+TEST(BASE, libsvmFormatIllFormed) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_libsvm(TESTPATH "/data/5x4.arff");, plssvm::invalid_file_format_exception);
 }
 
-TEST(IO, arffFormatIllFormed) {
+TEST(BASE, arffFormatIllFormed) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_arff(TESTPATH "/data/5x4.libsvm");, plssvm::invalid_file_format_exception);
 }
 
-TEST(IO, libsvmNoneExistingFile) {
+TEST(BASE, libsvmNoneExistingFile) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_libsvm(TESTPATH "/data/5x5.ar");, plssvm::file_not_found_exception);
 }
 
-TEST(IO, arffNoneExistingFile) {
+TEST(BASE, arffNoneExistingFile) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     EXPECT_THROW(csvm.parse_arff(TESTPATH "/data/5x5.lib");, plssvm::file_not_found_exception);
 }
 
-TEST(CSVM, transform_data) {
+TEST(BASE, transform_data) {
     MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1.0, 0.001, false);
     using real_type = typename MockCSVM::real_type;
 
@@ -187,7 +177,7 @@ TEST(CSVM, transform_data) {
     }
 }
 
-TEST(kernel, linear) {
+TEST(BASE, linear) {
     using real_type = typename MockCSVM::real_type;
 
     const real_type degree = 0.0;

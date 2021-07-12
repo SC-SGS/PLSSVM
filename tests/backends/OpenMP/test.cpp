@@ -10,7 +10,7 @@
 #include <fstream>
 #include <random>
 
-TEST(IO, writeModel) {
+TEST(OpenMP, writeModel) {
     std::string model = std::tmpnam(nullptr);
     MockOpenMP_CSVM csvm2(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
     std::string testfile = TESTPATH "/data/5x4.libsvm";
@@ -24,7 +24,7 @@ TEST(IO, writeModel) {
     EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
 }
 
-TEST(learn, q) {
+TEST(OpenMP, q) {
     MockOpenMP_CSVM csvm_OpenMP;
     using real_type = typename MockOpenMP_CSVM::real_type;
 
@@ -40,7 +40,7 @@ TEST(learn, q) {
     }
 }
 
-TEST(kernel, linear) {
+TEST(OpenMP, linear) {
     MockOpenMP_CSVM csvm_OpenMP(plssvm::kernel_type::linear);
     using real_type = typename MockOpenMP_CSVM::real_type;
 
@@ -58,7 +58,7 @@ TEST(kernel, linear) {
     EXPECT_DOUBLE_EQ(correct, result2_OpenMP);
 }
 
-TEST(learn, q_linear) {
+TEST(OpenMP, q_linear) {
     MockCSVM csvm;
     using real_type = typename MockCSVM::real_type;
 
@@ -76,7 +76,7 @@ TEST(learn, q_linear) {
     }
 }
 
-TEST(learn, kernel_linear) {
+TEST(OpenMP, kernel_linear) {
     MockCSVM csvm;
     using real_type = typename MockCSVM::real_type;
 
