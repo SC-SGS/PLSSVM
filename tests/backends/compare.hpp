@@ -27,6 +27,6 @@ std::vector<real_type> q(const std::vector<std::vector<real_type>> &data) {
 }
 
 template <typename real_type>
-std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, int sgn, real_type QA_cost, real_type cost);
+std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, real_type sgn, real_type QA_cost, real_type cost);
 
 #endif /* TESTS_BACKENDS_COMPARE */

@@ -33,7 +33,7 @@ template float linear_kernel(const std::vector<float> &, const std::vector<float
 template double linear_kernel(const std::vector<double> &, const std::vector<double> &);
 
 template <typename real_type>
-std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const int sgn, const real_type QA_cost, const real_type cost) {
+std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type sgn, const real_type QA_cost, const real_type cost) {
     assert(x.size() == q.size());
     assert(x.size() == data.size() - 1);
 
@@ -48,13 +48,13 @@ std::vector<real_type> kernel_linear_function(const std::vector<std::vector<real
                 if (i == j) {
                     r[i] += (temp + 1 / cost) * x[i] * sgn;
                 } else {
-                    r[i] += (temp) *x[j] * sgn;
-                    r[j] += (temp) *x[i] * sgn;
+                    r[i] += temp * x[j] * sgn;
+                    r[j] += temp * x[i] * sgn;
                 }
             }
         }
     }
     return r;
 }
-template std::vector<float> kernel_linear_function(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const int, const float, const float);
-template std::vector<double> kernel_linear_function(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const int, const double, const double);
+template std::vector<float> kernel_linear_function(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const float, const float, const float);
+template std::vector<double> kernel_linear_function(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const double, const double, const double);

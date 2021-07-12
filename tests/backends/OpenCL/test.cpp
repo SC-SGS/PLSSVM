@@ -142,11 +142,11 @@ TEST(learn, kernel_linear) {
     grid_size[0] *= plssvm::THREADBLOCK_SIZE;
     grid_size[1] *= plssvm::THREADBLOCK_SIZE;
 
-    for (const int sgn : { -1 }) {  // TODO: fix bug 1
+    for (const real_type sgn : { -1.0 }) {  // TODO: fix bug 1
         std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);
 
         std::vector<real_type> result(dept, 0.0);
-        opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_OpenCL.data_cl[0].get(), QA_cost, 1 / csvm_OpenCL.cost_, Ncols, Nrows, sgn, 0, Ncols);
+        opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_OpenCL.data_cl[0].get(), QA_cost, 1 / csvm_OpenCL.cost_, Ncols, Nrows, static_cast<int>(sgn), 0, Ncols);
         opencl::run_kernel_2d_timed(devices[0], kernel, grid_size, block_size);
 
         r_cl.resize(dept);
