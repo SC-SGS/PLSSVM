@@ -1,15 +1,19 @@
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
+
 #include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"  // plssvm::detail::cuda::device_ptr
-#include "plssvm/backends/CUDA/cuda-kernel.cuh"
-#include "plssvm/backends/CUDA/cuda-kernel.hpp"
-#include "plssvm/backends/CUDA/svm-kernel.cuh"
+#include "plssvm/backends/CUDA/cuda-kernel.cuh"     // kernel_q
+#include "plssvm/backends/CUDA/cuda-kernel.hpp"     // add_mult_
+#include "plssvm/backends/CUDA/svm-kernel.cuh"      // kernel_linear, kernel_poly, kernel_radial
 #include "plssvm/detail/operators.hpp"
-#include "plssvm/exceptions/exceptions.hpp"
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "fmt/core.h"
+#include "fmt/core.h"  // fmt::print, fmt::format
 
-#include <chrono>
-#include <cmath>
+#include <algorithm>  // std::copy, std::min
+#include <cmath>      // std::ceil
+#include <vector>     // std::vector
 
 namespace plssvm {
 
