@@ -20,8 +20,8 @@ namespace plssvm::detail::cuda {
  * @brief Returns the number of available devices.
  * @return the number of devices (`[[nodiscard]]`)
  */
-[[nodiscard]] std::size_t get_device_count();
-void set_device(std::size_t device);
+[[nodiscard]] int get_device_count();
+void set_device(int device);
 
 /**
  * @brief Returns the last error from a runtime call.

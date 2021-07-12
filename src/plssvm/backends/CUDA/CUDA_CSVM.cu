@@ -35,24 +35,24 @@ CUDA_CSVM<T>::CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, r
 template <typename T>
 void CUDA_CSVM<T>::setup_data_on_device() {
     // initialize data_last on devices
-    for (size_type device = 0; device < num_devices_; ++device) {
-        data_last_d_[device] = cuda::device_ptr<real_type>{ num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, static_cast<int>(device) };
+    for (int device = 0; device < num_devices_; ++device) {
+        data_last_d_[device] = cuda::device_ptr<real_type>{ num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, device };
     }
     std::vector<real_type> data_last(num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
     std::copy(data_[num_data_points_ - 1].begin(), data_[num_data_points_ - 1].end(), data_last.begin());
     #pragma omp parallel for
-    for (size_type device = 0; device < num_devices_; ++device) {
+    for (int device = 0; device < num_devices_; ++device) {
         data_last_d_[device].memcpy_to_device(data_last);
     }
 
     // initialize data on devices
-    for (size_type device = 0; device < num_devices_; ++device) {
-        data_d_[device] = cuda::device_ptr<real_type>{ num_features_ * (num_data_points_ + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE), static_cast<int>(device) };
+    for (int device = 0; device < num_devices_; ++device) {
+        data_d_[device] = cuda::device_ptr<real_type>{ num_features_ * (num_data_points_ + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE), device };
     }
     // transform 2D to 1D data
     const std::vector<real_type> transformed_data = base_type::transform_data(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
     #pragma omp parallel for
-    for (size_type device = 0; device < num_devices_; ++device) {
+    for (int device = 0; device < num_devices_; ++device) {
         data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE));  // TODO: look
     }
 }
@@ -66,23 +66,23 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
     const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;  // TODO: size_type?
 
     std::vector<cuda::device_ptr<real_type>> q_d(num_devices_);
-    for (size_type device = 0; device < num_devices_; ++device) {
-        q_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };  // TODO: dept <-> dept_all
+    for (int device = 0; device < num_devices_; ++device) {
+        q_d[device] = cuda::device_ptr<real_type>{ dept_all, device };  // TODO: dept <-> dept_all
         q_d[device].memset(0);
     }
     cuda::device_synchronize();  // TODO: sync all devices?
-    for (size_type device = 0; device < num_devices_; ++device) {
+    for (int device = 0; device < num_devices_; ++device) {
         cuda::set_device(device);
 
         const int start = device * Ncols / num_devices_;
         const int end = (device + 1) * Ncols / num_devices_;
         // TODO:
         kernel_q<<<((int) dept / THREADBLOCK_SIZE) + 1, std::min((size_type) THREADBLOCK_SIZE, dept)>>>(q_d[device].get(),
-                                                                                                    data_d_[device].get(),
-                                                                                                    data_last_d_[device].get(),
-                                                                                                    Nrows,
-                                                                                                    start,
-                                                                                                    end);
+                                                                                                        data_d_[device].get(),
+                                                                                                        data_last_d_[device].get(),
+                                                                                                        Nrows,
+                                                                                                        start,
+                                                                                                        end);
         cuda::peek_at_last_error();
     }
     cuda::device_synchronize();
@@ -91,7 +91,7 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
     //    cuda::set_device(0);
     q_d[0].memcpy_to_host(q, 0, dept);
     std::vector<real_type> ret(dept);  // TODO: dept_all vs dept?
-    for (size_type device = 1; device < num_devices_; ++device) {
+    for (int device = 1; device < num_devices_; ++device) {
         q_d[device].memcpy_to_host(ret, 0, dept);
         for (size_type i = 0; i < dept; ++i) {
             q[i] += ret[i];
@@ -101,7 +101,7 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void CUDA_CSVM<T>::run_device_kernel(const size_type device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int sign) {
+void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int sign) {
     dim3 block(THREADBLOCK_SIZE, THREADBLOCK_SIZE);
     dim3 grid(static_cast<size_type>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))),
               static_cast<size_type>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE))));
@@ -138,16 +138,16 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     std::vector<cuda::device_ptr<real_type>> x_d(num_devices_);
     std::vector<real_type> r(dept_all, 0.0);
     std::vector<cuda::device_ptr<real_type>> r_d(num_devices_);
-    for (size_type device = 0; device < num_devices_; ++device) {
-        x_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+    for (int device = 0; device < num_devices_; ++device) {
+        x_d[device] = cuda::device_ptr<real_type>{ dept_all, device };
         x_d[device].memcpy_to_device(x);
-        r_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+        r_d[device] = cuda::device_ptr<real_type>{ dept_all, device };
     }
 
     r_d[0].memcpy_to_device(b, 0, dept);
     r_d[0].memset(0, dept);
     #pragma omp parallel for
-    for (size_type device = 1; device < num_devices_; ++device) {
+    for (int device = 1; device < num_devices_; ++device) {
         r_d[device].memset(0);
     }
     std::vector<real_type> d(dept);
@@ -158,8 +158,8 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     cuda::device_synchronize();
 
     std::vector<cuda::device_ptr<real_type>> q_d(num_devices_);
-    for (size_type device = 0; device < num_devices_; ++device) {
-        q_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+    for (int device = 0; device < num_devices_; ++device) {
+        q_d[device] = cuda::device_ptr<real_type>{ dept_all, device };
         //        q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept);
         //        q_d[device].memcpy_to_device(q, 0, dept_all);  // TODO:
@@ -167,7 +167,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     cuda::device_synchronize();
 
     #pragma omp parallel for
-    for (size_type device = 0; device < num_devices_; ++device) {
+    for (int device = 0; device < num_devices_; ++device) {
         cuda::set_device(device);
         run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1);
         cuda::peek_at_last_error();
@@ -192,8 +192,8 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     std::vector<real_type> Ad(dept);
 
     std::vector<cuda::device_ptr<real_type>> Ad_d(num_devices_);
-    for (size_type device = 0; device < num_devices_; ++device) {
-        Ad_d[device] = cuda::device_ptr<real_type>{ dept_all, static_cast<int>(device) };
+    for (int device = 0; device < num_devices_; ++device) {
+        Ad_d[device] = cuda::device_ptr<real_type>{ dept_all, device };
         Ad_d[device].memcpy_to_device(r);
     }
     // cudaMallocHost((void **) &Ad, dept *sizeof(real_type));
@@ -204,13 +204,13 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
         // Ad = A * d
-        for (size_type device = 0; device < num_devices_; ++device) {
+        for (int device = 0; device < num_devices_; ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept);
         }
 
         #pragma omp parallel for
-        for (size_type device = 0; device < num_devices_; ++device) {
+        for (int device = 0; device < num_devices_; ++device) {
             cuda::set_device(device);
             run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, 1);
             cuda::peek_at_last_error();
@@ -224,14 +224,14 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         {
             std::vector<real_type> buffer(dept_all, 0);
             std::vector<real_type> ret(dept_all);
-            for (size_type device = 0; device < num_devices_; ++device) {
+            for (int device = 0; device < num_devices_; ++device) {
                 Ad_d[device].memcpy_to_host(ret);
                 for (size_type j = 0; j <= dept; ++j) {
                     buffer[j] += ret[j];
                 }
             }
             std::copy(buffer.begin(), buffer.begin() + dept, Ad.data());
-            for (size_type device = 0; device < num_devices_; ++device) {
+            for (int device = 0; device < num_devices_; ++device) {
                 Ad_d[device].memcpy_to_device(buffer);
             }
         }
@@ -244,7 +244,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), buffer_r.data(), alpha_cd, dept);
 
         #pragma omp parallel for
-        for (size_type device = 0; device < num_devices_; ++device) {
+        for (int device = 0; device < num_devices_; ++device) {
             x_d[device].memcpy_to_device(x);
         }
         if (run % 50 == 49) {
@@ -254,12 +254,12 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
                                                             //            buffer.resize(dept_all);
             r_d[0].memcpy_to_device(buffer);
             #pragma omp parallel for
-            for (size_type device = 1; device < num_devices_; ++device) {
+            for (int device = 1; device < num_devices_; ++device) {
                 r_d[device].memset(0);
             }
 
             #pragma omp parallel for
-            for (size_type device = 0; device < num_devices_; ++device) {
+            for (int device = 0; device < num_devices_; ++device) {
                 cuda::set_device(device);
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], QA_cost_, 1 / cost_, Ncols, Nrows, -1);
                 cuda::peek_at_last_error();
@@ -271,15 +271,14 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
                 r_d[0].memcpy_to_host(r);
                 std::vector<real_type> ret(dept_all, 0);
                 //                #pragma omp parallel for // TODO: race conditions?!
-                for (size_type device = 1; device < num_devices_; ++device) {
+                for (int device = 1; device < num_devices_; ++device) {
                     r_d[device].memcpy_to_host(ret);
-                    ;
                     for (size_type j = 0; j <= dept; ++j) {
                         r[j] += ret[j];
                     }
                 }
                 #pragma omp parallel for
-                for (size_type device = 0; device < num_devices_; ++device) {
+                for (int device = 0; device < num_devices_; ++device) {
                     r_d[device].memcpy_to_device(r);
                 }
             }
@@ -300,7 +299,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             std::vector<real_type> buffer(dept_all, 0);
             std::copy(d.begin(), d.begin() + dept, buffer.begin());
             #pragma omp parallel for
-            for (size_type device = 0; device < num_devices_; ++device) {
+            for (int device = 0; device < num_devices_; ++device) {
                 r_d[device].memcpy_to_device(buffer);
             }
         }

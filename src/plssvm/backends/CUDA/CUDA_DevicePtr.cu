@@ -24,13 +24,13 @@ inline void gpu_assert(const cudaError_t code) {
     }
 }
 
-std::size_t get_device_count() {
+int get_device_count() {
     int count;
     PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceCount(&count));
-    return static_cast<std::size_t>(count);
+    return count;
 }
-void set_device(const std::size_t device) {
-    PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(static_cast<int>(device)));
+void set_device(const int device) {
+    PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device));
 }
 
 void peek_at_last_error() {
