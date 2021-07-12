@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import sys
 import argparse
+from datetime import datetime
 
 
 # set up regular expressions
@@ -57,7 +58,9 @@ def parse_stream(file_stream):
         Parsed data
 
     """
-    data = {}  # create an empty dictionary to collect the data
+    now = datetime.now()
+    # create an dictionary to collect the data
+    data = {"parse_time": now.strftime("%Y-%m-%d %H:%M:%S")}
     for line in file_stream:
         # at each line check for a match with a regex
         matches = _parse_line(line)
