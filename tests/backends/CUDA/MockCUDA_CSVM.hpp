@@ -1,5 +1,5 @@
-#ifndef TESTS_BACKENDS_CUDA_TEST
-#define TESTS_BACKENDS_CUDA_TEST
+#ifndef TESTS_BACKENDS_CUDA_MOCKCUDA_CSVM
+#define TESTS_BACKENDS_CUDA_MOCKCUDA_CSVM
 
 #include "plssvm/CSVM.hpp"
 
@@ -33,6 +33,9 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM<double> {
     using base_type::QA_cost_;
     using base_type::setup_data_on_device;
     using base_type::solver_CG;
+    using base_type::run_device_kernel;
+    using base_type::data_d_;
+    using base_type::cost_;
 
     size_type get_num_data_points() const {
         return num_data_points_;
@@ -48,4 +51,4 @@ class MockCUDA_CSVM : public plssvm::CUDA_CSVM<double> {
     }
 };
 
-#endif /* TESTS_BACKENDS_CUDA_TEST */
+#endif /* TESTS_BACKENDS_CUDA_MOCKCUDA_CSVM */
