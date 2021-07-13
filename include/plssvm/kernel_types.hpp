@@ -10,6 +10,7 @@
 #pragma once
 
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
@@ -85,9 +86,6 @@ template <std::size_t I, class... Ts>
 decltype(auto) get(Ts &&...ts) {
     return std::get<I>(std::forward_as_tuple(ts...));
 }
-
-template <typename>
-constexpr bool always_false_v = false;
 }  // namespace detail
 
 template <kernel_type kernel, typename real_type, typename size_type, typename... Args>
