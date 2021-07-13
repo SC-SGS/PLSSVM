@@ -65,10 +65,14 @@ else:
 labels = labels * 2 - 1
 
 
+
 # set file names
-file = args.output + "." + args.format
+rawfile = args.output
+if rawfile.endswith(args.format):
+    rawfile = rawfile[:-(len(args.format)+1)]
+file = rawfile + "." + args.format
 if args.test_samples > 0:
-    test_file = args.output + "_test." + args.format
+    test_file = rawfile + "_test." + args.format
 
 if args.format == "libsvm":
     # dump data in libsvm format

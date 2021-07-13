@@ -1,6 +1,6 @@
 # check if CUDA can be enabled
 include(CheckLanguage)
-check_language(CUDA)
+check_language(CUDA) # TODO: CUDA via clang?
 
 # create message depending on requested mode
 if(NOT CMAKE_CUDA_COMPILER)
@@ -28,6 +28,7 @@ set(PLSSVM_CUDA_SOURCES
   cuda-kernel.cu
   cuda-kernel.cpp # TODO: remove if add_mult_ is on gpu again
   predict.cu
+  CUDA_DevicePtr.cu
 )
 
 # set target properties
@@ -35,6 +36,7 @@ set(PLSSVM_CUDA_BACKEND_LIBRARY_NAME svm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
 target_include_directories(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
 target_include_directories(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
+target_include_directories(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} fmt::fmt)
 set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES 72 80 86) # TODO: maybe better?
 set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

@@ -1,86 +1,96 @@
 #pragma once
-#include <plssvm/detail/operators.hpp>
-#include <plssvm/kernel_types.hpp>
-#include <plssvm/typedef.hpp>
 
-#include <chrono>
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
-#include <math.h>
-#include <omp.h>
-#include <sstream>
-#include <stdlib.h>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
+#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
+#include "plssvm/parameter.hpp"     // plssvm::parameter
+
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 namespace plssvm {
 
-const bool times = 0;
-
-// static const unsigned CUDABLOCK_SIZE = 7;
-// static const unsigned BLOCKING_SIZE_THREAD = 2;
-
+template <typename T = double>
 class CSVM {
-  public:
-    CSVM(real_t cost_, real_t epsilon_, kernel_type kernel_, real_t degree_, real_t gamma_, real_t coef0_, bool info_) :
-        cost(cost_), epsilon(epsilon_), kernel(kernel_), degree(degree_), gamma(gamma_), coef0(coef0_), info(info_) {}
-    virtual void learn(const std::string &, const std::string &);
+    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
-    const real_t &getB() const { return bias; };
-    virtual void load_w() = 0;
-    virtual std::vector<real_t> predict(real_t *, int, int) = 0;
+  public:
+    using real_type = T;
+    using size_type = std::size_t;
+
+    explicit CSVM(parameter<T> &params);
+    CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+
     virtual ~CSVM() = default;
 
-    void libsvmParser(const std::string &);
-    void arffParser(const std::string &);
-    void writeModel(const std::string &);
+    /**************************************************************************************************************************************/
+    /**                                                          IO functions                                                            **/
+    /**************************************************************************************************************************************/
+    void parse_libsvm(const std::string &filename);
+    void parse_arff(const std::string &filename);
+    void parse_file(const std::string &filename);
+    void write_model(const std::string &filename);
+
+    /**************************************************************************************************************************************/
+    /**                                                              learn                                                               **/
+    /**************************************************************************************************************************************/
+    void learn(const std::string &input_filename, const std::string &model_filename);
 
   protected:
-    const bool info;
-    real_t cost;
-    const real_t epsilon;
-    const kernel_type kernel;
-    const real_t degree;
-    real_t gamma;
-    const real_t coef0;
-    real_t bias;
-    real_t QA_cost;
-    std::vector<std::vector<real_t>> data;
-    size_t num_features;
-    size_t num_data_points;
-    std::vector<real_t> value;
-    std::vector<real_t> alpha;
+    void learn();  // TODO: public after correct exception handling
 
-    virtual void learn();
+  public:
+    /**************************************************************************************************************************************/
+    /**                                                             predict                                                              **/
+    /**************************************************************************************************************************************/
+    // TODO: protected?
+    //    virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
-    real_t kernel_function(std::vector<real_t> &, std::vector<real_t> &);
-    real_t kernel_function(real_t *, real_t *, int);
-    virtual std::vector<real_t> generate_q() = 0;
+    /**************************************************************************************************************************************/
+    /**                                                              getter                                                              **/
+    /**************************************************************************************************************************************/
+    // TODO: other getter?
+    //    [[nodiscard]] real_type get_bias() const noexcept { return bias_; };
 
-    virtual void loadDataDevice() = 0;
-
-    virtual std::vector<real_t> CG(const std::vector<real_t> &b, const int, const real_t, const std::vector<real_t> &q) = 0;
+  protected:
+    // pure virtual, must be implemented by all subclasses
+    virtual void setup_data_on_device() = 0;
+    virtual std::vector<real_type> generate_q() = 0;
+    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
+    virtual void load_w() = 0;  // TODO: implemented together with predict
 
     /**
-     * @brief Transforms the data matrix in SoA, while it ignores the last datapoint and adds boundary places,
+     * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
+     * @param[in] boundary the number of boundary cells
      * @attention boundary values can contain random numbers
-     * @param boundary the number of boundary cells
-     * @return std::vector<real_t> SoA
+     * @return an 1D vector in a SoA layout
      */
-    std::vector<real_t> transform_data(const int boundary) {
-        std::vector<real_t> vec(num_features * (num_data_points - 1 + boundary));
-        #pragma omp parallel for collapse(2)
-        for (size_t col = 0; col < num_features; ++col) {
-            for (size_t row = 0; row < num_data_points - 1; ++row) {
-                vec[col * (num_data_points - 1 + boundary) + row] = data[row][col];
-            }
-        }
-        return vec;
-    }
-    void loadDataDevice(const int device, const int boundary, const int start_line, const int number_lines, const std::vector<real_t> data);
+    std::vector<real_type> transform_data(size_type boundary);
+
+    // kernel functions: linear, polynomial, rbf
+    real_type kernel_function(const real_type *xi, const real_type *xj, size_type dim);
+    real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj);
+
+    // parameter initialized by the constructor
+    const kernel_type kernel_;
+    const real_type degree_;
+    real_type gamma_;
+    const real_type coef0_;
+    real_type cost_;
+    const real_type epsilon_;
+    const bool print_info_ = true;
+
+    // internal variables
+    size_type num_data_points_{};
+    size_type num_features_{};
+    std::vector<std::vector<real_type>> data_{};
+    std::vector<real_type> value_{};
+    real_type bias_{};
+    real_type QA_cost_{};
+    std::vector<real_type> alpha_{};
 };
+
+extern template class CSVM<float>;
+extern template class CSVM<double>;
 
 }  // namespace plssvm
