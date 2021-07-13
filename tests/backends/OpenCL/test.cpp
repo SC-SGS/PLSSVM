@@ -151,7 +151,7 @@ TEST(OpenCL, kernel_linear) {
     grid_size[0] *= plssvm::THREADBLOCK_SIZE;
     grid_size[1] *= plssvm::THREADBLOCK_SIZE;
 
-    for (const real_type sgn : { -1.0 }) {  // TODO: fix bug 1
+    for (const real_type sgn : { -1.0, 1.0 }) {
         std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);
 
         std::vector<real_type> result(dept, 0.0);
@@ -161,9 +161,12 @@ TEST(OpenCL, kernel_linear) {
         r_cl.resize(dept);
         r_cl.from_device(result);
 
+        r_cl.resize(dept + boundary_size);
+        r_cl.to_device(std::vector<real_type>(dept + boundary_size, 0.0));
+
         ASSERT_EQ(correct.size(), result.size()) << "sgn: " << sgn;
         for (size_t index = 0; index < correct.size(); ++index) {
-            EXPECT_NEAR(correct[index], result[index], std::abs(correct[index] * 1e-6)) << " index: " << index << " sgn: " << sgn;  // TODO: nochmal anschauen Nur 6 Stellen genau ist komisch
+            EXPECT_NEAR(correct[index], result[index], std::abs(correct[index] * 1e-10)) << " index: " << index << " sgn: " << sgn;
         }
     }
 }
