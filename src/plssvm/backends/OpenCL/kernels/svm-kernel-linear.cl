@@ -81,7 +81,7 @@ __kernel void kernel_linear(__global const real_type *q, __global real_type *ret
         #pragma unroll(INTERNALBLOCK_SIZE)
         for (size_t k = j; k < INTERNALBLOCK_SIZE + j; ++k) {
             const real_type q_j = q[k];
-            real_t ret_k = 0.0;
+            real_type ret_k = 0.0;
             #pragma unroll(INTERNALBLOCK_SIZE)
             for (size_t l = i; l < INTERNALBLOCK_SIZE + i; ++l) {
                 real_type temp;
