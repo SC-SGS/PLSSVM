@@ -10,7 +10,6 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                        echo https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT/statuses
                         curl --verbose\
                             --request POST \
                             --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
