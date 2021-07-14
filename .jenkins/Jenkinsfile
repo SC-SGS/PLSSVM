@@ -9,13 +9,13 @@ pipeline {
                 }
             }
         }
-        stage('build cppuddle') {
+        stage('build plssvm') {
             steps {
                 dir('plssvm') {
                     sh '''
                         module load cuda
                         cd SVM
-                        mkdir -d build/Release
+                        mkdir -p build/Release
                         cd build/Relese
                         cmake -DCMAKE_BUILD_TYPE=Relese ..
                         make -j4
