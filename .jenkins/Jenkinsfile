@@ -1,0 +1,38 @@
+#!groovy
+pipeline {
+    agent { label 'pcsgs05' }
+    stages {
+        stage('checkout') {
+            steps {
+                dir('plssvm') {
+                    checkout scm
+                }
+            }
+        }
+        stage('build cppuddle') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        cd SVM
+                        mkdir -d build/Release
+                        cd build/Relese
+                        cmake -DCMAKE_BUILD_TYPE=Relese ..
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('run tests') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        cd SVM/build/Release
+                        ctest -j4
+                    '''
+                }
+            }
+        }
+    }
+}
