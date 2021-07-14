@@ -18,7 +18,7 @@ pipeline {
                         cd SVM
                         mkdir -p build/Release
                         cd build/Release
-                        cmake -DCMAKE_BUILD_TYPE=Relese ..
+                        cmake -DCMAKE_BUILD_TYPE=Relese ../../
                         make -j4
                     '''
                 }
