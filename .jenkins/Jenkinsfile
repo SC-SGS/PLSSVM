@@ -84,7 +84,7 @@ pipeline {
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/CPPuddle/$BUILD_NUMBER/console\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
                 }"
             '''
         }
@@ -100,7 +100,7 @@ pipeline {
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/CPPuddle/$BUILD_NUMBER/console\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
                 }"
             '''
         }
@@ -116,7 +116,7 @@ pipeline {
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/CPPuddle/$BUILD_NUMBER/console\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
                 }"
             '''
         }
