@@ -62,7 +62,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     //    const size_type dim = data_.back().size();
 
     // sanity checks
-    assert((dim == num_features_) && "Size mismatch: dim != num_features_");
+    // assert((dim == num_features_) && "Size mismatch: dim != num_features_");
     assert((dept == num_data_points_ - 1) && "Size mismatch: dept != num_data_points_ - 1");
 
     // solve: r = b - (A * x)
