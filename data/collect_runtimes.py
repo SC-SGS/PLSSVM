@@ -11,7 +11,7 @@ import os
 import sys
 import argparse
 from datetime import datetime
-
+import platform
 
 # set up regular expressions
 rx_dict = {
@@ -62,7 +62,10 @@ def parse_stream(file_stream):
     """
     now = datetime.now()
     # create an dictionary to collect the data
-    data = {"parse_time": now.strftime("%Y-%m-%d %H:%M:%S")}
+    data = {
+        "parse_time": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "system": platform.node(),
+            }
     for line in file_stream:
         # at each line check for a match with a regex
         matches = _parse_line(line)
