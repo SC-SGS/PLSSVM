@@ -14,6 +14,7 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         module load cuda
+                        echo $PWD
                         cd SVM
                         mkdir -p build/Release
                         cd build/Relese
