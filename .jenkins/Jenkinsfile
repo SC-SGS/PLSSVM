@@ -2,7 +2,7 @@
 pipeline {
     agent { label 'pcsgs05' }
     environment {
-        GITLAB_TOKEN = credentials('a9bda00a-b124-4356-b9f0-0083d1f07518')
+        GITLAB_TOKEN = credentials('e3077b1e-a85e-4811-8dda-952c99be7b0a')
     }
     stages {
         stage('init') {
