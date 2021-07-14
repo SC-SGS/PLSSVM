@@ -10,10 +10,12 @@ pipeline {
             }
         }
         stage('setup python'){
-            sh '''
-                /usr/bin/python3.8 -m pip install --user arff
-                /usr/bin/python3.8 -m pip install --user pandas
-            '''
+            steps{
+                sh '''
+                    /usr/bin/python3.8 -m pip install --user arff
+                    /usr/bin/python3.8 -m pip install --user pandas
+                '''
+            }
         }
         stage('build plssvm') {
             steps {
