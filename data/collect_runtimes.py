@@ -17,15 +17,17 @@ from datetime import datetime
 rx_dict = {
     'iterations': re.compile(r'Start Iteration:? (?P<iteration>\d+)'),
     'rho': re.compile(r'rho (?P<rho>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)'),
+    'parser' : re.compile(r'(?P<parser>\S+) parser'),
     'time_read': re.compile(r'(?P<time>\d+) ms eingelesen'),
     'time_load': re.compile(r'(?P<time>\d+) ms auf die Gpu geladen'),
-    'time_learn': re.compile(r'(?P<time>\d+) ms gelernt'),
-    'time_write': re.compile(r'(?P<time>\d+) ms geschrieben'),
+    'time_learn': re.compile(r'((?P<time>\d+) ms gelernt)|(using CG in (?P<time2>\d+)ms)'),
+    'time_write': re.compile(r'((?P<time>\d+) ms geschrieben)|(Wrote model file with \d+ support vectors in (?P<time2>\d+)ms.)'),
     'points': re.compile(r'(?P<points>\d+) (Datenpunkte)|(data points)'),
     'features': re.compile(r'(Dimension (?P<dimension>\d+))|((?P<dimension2>\d+) features)'),
     'num_gpus': re.compile(r'GPUs found: (?P<num_gpus>\d+)'),
-    'transform': re.compile(r'(?P<time>\d+) ms transformiert'),
-
+    'transform': re.compile(r'((?P<time>\d+) ms transformiert)|(Transformed dataset \s+ in(?P<time2>\d+)ms)'),
+    'setup': re.compile(r'Setup for solving the optimization problem done in (?P<time>\d+)ms.'),
+    'max_iterations': re.compile(r'Iteration \d+ \(max: (?P<iterations>\d+)\)')
 }
 
 
