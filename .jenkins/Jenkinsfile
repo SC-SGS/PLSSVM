@@ -38,7 +38,9 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         module load cuda
-                        cd SVM/build/Release
+                        cd SVM
+                        git checkout 873c8e0efbe8563ab0a688d297f0720998e9304b -- platform_configuration.cfg
+                        cd build/Release
                         ctest -j4
                     '''
                 }
