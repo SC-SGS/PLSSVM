@@ -10,10 +10,10 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                        echo https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/repository/statuses/$GIT_COMMIT/statuses
+                        echo https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT/statuses
                         curl --verbose\
                             --request POST \
-                            --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/repository/statuses/$GIT_COMMIT?state=running" \
+                            --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT?state=running" \
                             --header "Content-Type: application/json" \
                             --header "authorization: Bearer ${gitlab_token}" \
                             --data "{
@@ -77,7 +77,7 @@ pipeline {
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/repository/statuses/$GIT_COMMIT?state=success" \
+                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT?state=success" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
@@ -93,7 +93,7 @@ pipeline {
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/repository/statuses/$GIT_COMMIT" \
+                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
@@ -109,7 +109,7 @@ pipeline {
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/repository/statuses/$GIT_COMMIT" \
+                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
