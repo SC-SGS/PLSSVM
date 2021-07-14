@@ -17,7 +17,7 @@ pipeline {
                         echo $PWD
                         cd SVM
                         mkdir -p build/Release
-                        cd build/Relese
+                        cd build/Release
                         cmake -DCMAKE_BUILD_TYPE=Relese ..
                         make -j4
                     '''
