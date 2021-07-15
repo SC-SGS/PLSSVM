@@ -1,3 +1,12 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Factory functions for constructing a new C-SVM based on the provided command line arguments.
+ */
+
 #pragma once
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend
@@ -9,6 +18,7 @@
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <utility>  // std::forward
 
+// only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 #endif
@@ -21,6 +31,14 @@
 
 namespace plssvm {
 
+/**
+  * @brief Construct a new C-SVM with the parameters given by @p args using the requested backend @p type.
+  * @tparam T the type of the data
+  * @tparam Args the types of parameters used to construct the C-SVM
+  * @param[in] type the used backend
+  * @param[in] args the used parameters
+  * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
+  */
 template <typename T, typename... Args>
 std::unique_ptr<CSVM<T>> make_SVM(const backend_type type, Args... args) {
     switch (type) {
@@ -49,6 +67,13 @@ std::unique_ptr<CSVM<T>> make_SVM(const backend_type type, Args... args) {
     }
 }
 
+/**
+ * @brief Construct a new C-SVM with the parameters given through @p params using the requested backend.
+ * @tparam T the type of the data
+ * @param[in] params struct encapsulating all possible parameters
+ * @throws unsupported_backend_exception if the requested backend isn't available
+ * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
+ */
 template <typename T>
 std::unique_ptr<CSVM<T>> make_SVM(const parameter<T> &params) {
     return make_SVM<T>(params.backend, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);

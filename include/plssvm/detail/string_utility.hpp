@@ -108,9 +108,15 @@ template <typename T, typename Exception = std::runtime_error>
     }
 }
 
-inline void replace_all(std::string &inout, const std::string_view what, const std::string_view with) {
-    for (std::string::size_type pos = 0; std::string::npos != (pos = inout.find(what.data(), pos, what.length())); pos += with.length()) {
-        inout.replace(pos, what.length(), with.data(), with.length());
+/**
+ * @brief Replaces all occurrences of @p what with @p with in the string @p str.
+ * @param[inout] str the string to replace the values
+ * @param[in] what the string to replace
+ * @param[in] with the string to replace with
+ */
+inline void replace_all(std::string &str, const std::string_view what, const std::string_view with) {
+    for (std::string::size_type pos = 0; std::string::npos != (pos = str.find(what.data(), pos, what.length())); pos += with.length()) {
+        str.replace(pos, what.length(), with.data(), with.length());
     }
 }
 
