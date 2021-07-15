@@ -122,7 +122,7 @@ pipeline {
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
-                        \\"state\\": \\"failure\\",
+                        \\"state\\": \\"failed\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
@@ -138,7 +138,7 @@ pipeline {
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
-                        \\"state\\": \\"error\\",
+                        \\"state\\": \\"canceled\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
