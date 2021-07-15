@@ -21,6 +21,10 @@ namespace plssvm::detail::cuda {
  * @return the number of devices (`[[nodiscard]]`)
  */
 [[nodiscard]] int get_device_count();
+/**
+ * @brief Set the device @p device to the active CUDA device.
+ * @param[in] device the now active device
+ */
 void set_device(int device);
 
 /**
