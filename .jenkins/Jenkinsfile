@@ -9,22 +9,25 @@ pipeline {
         stage('init') {
             agent any
             steps {
-                dir('plssvm') {
-                    sh '''
-                        gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                        curl --verbose\
-                            --request POST \
-                            --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
-                            --header "Content-Type: application/json" \
-                            --header "authorization: Bearer ${gitlab_token}" \
-                            --data "{
-                                \\"state\\": \\"running\\",
-                                \\"context\\": \\"jenkins-ctest\\",
-                                \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
-                        }"
-                    '''
-                }
+                withCredentials([usernamePassword(credentialsId: 'fb631ad7-7b49-4c79-af90-99c100a76b9b',
+                                          usernameVariable: 'GITLAB_APP',
+                                          passwordVariable: 'GITLAB_ACCESS_TOKEN')])
+
+                sh '''
+                    gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                    curl --verbose\
+                        --request POST \
+                        --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                        --header "Content-Type: application/json" \
+                        --header "authorization: Bearer ${gitlab_token}" \
+                        --data "{
+                            \\"state\\": \\"running\\",
+                            \\"context\\": \\"jenkins-ctest\\",
+                            \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
+                            \\"target_url\\": \\"https://$GITLAB_APP:$GITLAB_ACCESS_TOKEN@simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                    }"
+                '''
+
             }
         }
         stage('checkout and build epyc cpu') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
