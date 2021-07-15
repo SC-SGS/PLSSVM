@@ -1,6 +1,6 @@
 #!groovy
 pipeline {
-    agent { label 'pcsgs05' }
+    agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
     environment {
         GITLAB_TOKEN = credentials('e3077b1e-a85e-4811-8dda-952c99be7b0a')
     }
