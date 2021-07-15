@@ -20,6 +20,8 @@ class OpenMP_CSVM : public CSVM<T> {
     using base_type::degree_;
     using base_type::gamma_;
     using base_type::kernel_;
+    using base_type::num_data_points_;
+    using base_type::num_features_;
     using base_type::print_info_;
     using base_type::QA_cost_;
 
