@@ -3,6 +3,7 @@ pipeline {
     agent none
     environment {
         GITLAB_TOKEN = credentials('e3077b1e-a85e-4811-8dda-952c99be7b0a')
+        GITLAB_READ = credentials('PLSSVM-READ')
     }
     stages {
         stage('init') {
@@ -32,7 +33,7 @@ pipeline {
                 sh '''
                     srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     rm -rf plssvm && \
-                    gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':') && \
+                    gitlab_token=$(echo ${GITLAB_READ} | cut -f2 -d':') && \
                     git clone --branch time --single-branch --dept 1 https://oauth2:$gitlab_token@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
                     cd plssvm/SVM && \
                     mkdir -p build/Release && \
