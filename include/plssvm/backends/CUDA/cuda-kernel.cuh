@@ -20,8 +20,7 @@ __global__ void kernel_q(real_type *q, const real_type *data_d, const real_type 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
 __device__ __forceinline__ double atomicAdd(double *address, double val) {
-    unsigned long long int *address_as_ull =
-        (unsigned long long int *) address;
+    unsigned long long int *address_as_ull = (unsigned long long int *) address;
     unsigned long long int old = *address_as_ull, assumed;
     do {
         assumed = old;
