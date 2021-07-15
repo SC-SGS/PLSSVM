@@ -6,6 +6,7 @@
 #include "plssvm/backends/CUDA/cuda-kernel.hpp"      // add_mult_
 #include "plssvm/backends/CUDA/svm-kernel.cuh"       // kernel_linear, kernel_poly, kernel_radial
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
@@ -13,9 +14,9 @@
 #include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <algorithm>  // std::copy, std::min
+#include <cassert>    // assert
 #include <cmath>      // std::ceil
 #include <vector>     // std::vector
-#include <cassert>    // assert
 
 namespace plssvm {
 
@@ -143,7 +144,7 @@ void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<re
             kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, sign, start, end, gamma_);
             break;
         default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
     }
 }
 
@@ -262,7 +263,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         real_type alpha_cd = delta / mult(d, Ad);
 
         // (x = x + alpha * d)
-        add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), d.data(), alpha_cd, dept); // TODO: GPU (single <-> multi): add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
+        add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), d.data(), alpha_cd, dept);  // TODO: GPU (single <-> multi): add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             x_d[device].memcpy_to_device(x, 0, dept);

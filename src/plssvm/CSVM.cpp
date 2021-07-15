@@ -7,6 +7,7 @@
 #include "plssvm/CSVM.hpp"
 
 #include "plssvm/detail/operators.hpp"
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 
@@ -93,7 +94,7 @@ auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const si
         case kernel_type::rbf:
             return plssvm::kernel_function<kernel_type::rbf>(xi, xj, dim, gamma_);
         default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
     }
 }
 
