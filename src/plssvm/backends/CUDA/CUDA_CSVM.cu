@@ -22,11 +22,11 @@ namespace plssvm {
 using namespace plssvm::detail;
 
 template <typename T>
-CUDA_CSVM<T>::CUDA_CSVM(parameter<T> &params) :
+CUDA_CSVM<T>::CUDA_CSVM(const parameter<T> &params) :
     CUDA_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-CUDA_CSVM<T>::CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+CUDA_CSVM<T>::CUDA_CSVM(const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
     CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info },
     num_devices_{ cuda::get_device_count() },
     data_d_(num_devices_),

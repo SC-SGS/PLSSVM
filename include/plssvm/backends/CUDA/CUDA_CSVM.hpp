@@ -28,7 +28,7 @@ class CUDA_CSVM : public CSVM<T> {
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit CUDA_CSVM(parameter<T> &params);
+    explicit CUDA_CSVM(const parameter<T> &params);
     CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     std::vector<real_type> predict(const real_type *, size_type, size_type);  // TODO: implement correctly, add override
@@ -41,7 +41,7 @@ class CUDA_CSVM : public CSVM<T> {
 
     void run_device_kernel(int device, const detail::cuda::device_ptr<real_type> &q_d, detail::cuda::device_ptr<real_type> &r_d, const detail::cuda::device_ptr<real_type> &x_d, const detail::cuda::device_ptr<real_type> &data_d, int sign);
 
-    int num_devices_{};
+    const int num_devices_{};
     std::vector<detail::cuda::device_ptr<real_type>> data_d_{};
     std::vector<detail::cuda::device_ptr<real_type>> data_last_d_{};
     detail::cuda::device_ptr<real_type> w_d_{};
