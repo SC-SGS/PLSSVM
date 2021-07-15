@@ -9,9 +9,7 @@ pipeline {
         stage('init') {
             agent any
             steps {
-                withCredentials([usernamePassword(credentialsId: 'fb631ad7-7b49-4c79-af90-99c100a76b9b',
-                                          usernameVariable: 'GITLAB_APP',
-                                          passwordVariable: 'GITLAB_ACCESS_TOKEN')])
+
 
                 sh '''
                     gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
@@ -24,7 +22,7 @@ pipeline {
                             \\"state\\": \\"running\\",
                             \\"context\\": \\"jenkins-ctest\\",
                             \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                            \\"target_url\\": \\"https://$GITLAB_APP:$GITLAB_ACCESS_TOKEN@simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                            \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
                     }"
                 '''
 
@@ -33,11 +31,14 @@ pipeline {
         stage('checkout and build epyc cpu') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
             agent { label 'argon-fs'}
             steps {
+                withCredentials([usernamePassword(credentialsId: 'fb631ad7-7b49-4c79-af90-99c100a76b9b',
+                                          usernameVariable: 'GITLAB_APP',
+                                          passwordVariable: 'GITLAB_ACCESS_TOKEN')])
                 sh '''
                     srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     rm -rf plssvm && \
                     gitlab_token=$(echo ${GITLAB_READ} | cut -f2 -d':') && \
-                    git clone --branch time --single-branch --dept 1 https://gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
+                    git clone --branch time --single-branch --dept 1 https://$GITLAB_APP:$GITLAB_ACCESS_TOKEN@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
                     cd plssvm/SVM && \
                     mkdir -p build/Release && \
                     cd build/Release && \
