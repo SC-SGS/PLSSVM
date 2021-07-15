@@ -13,8 +13,10 @@
 #include "plssvm/kernel_types.hpp"   // plssvm::kernel_type
 
 #include "cxxopts.hpp"  // command line parsing
-#include "fmt/core.h"   // fmt::print
+#include "fmt/core.h"   // fmt::print, fmt::format
 
+#include <algorithm>    // std::transform
+#include <cctype>       // std::tolower
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
@@ -54,6 +56,13 @@ class parameter {
      * @param[in] argv the command line arguments
      */
     parameter(int argc, char **argv) {
+        // small helper function to convert a string to a lowercase string
+        auto as_lowercase = [](const std::string_view str) -> std::string {
+            std::string lowercase_str{ str };
+            std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const char c) { return std::tolower(c); });
+            return lowercase_str;
+        };
+
         cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
         options
             .positional_help("training_set_file [model_file]")
@@ -63,14 +72,14 @@ class parameter {
             .set_tab_expansion()
             // clang-format off
             .add_options()
-                ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value("0"))
-                ("d,degree", "degree in kernel function", cxxopts::value<real_type>()->default_value("3"))
-                ("g,gamma", "gamma in kernel function (default: 1/num_features)", cxxopts::value<real_type>())
-                ("r,coef0", "coef0 in kernel function", cxxopts::value<real_type>()->default_value("0"))
-                ("c,cost", "the parameter C", cxxopts::value<real_type>()->default_value("1"))
-                ("e,epsilon", "tolerance of termination criterion", cxxopts::value<real_type>()->default_value("0.001"))
-                ("b,backend", "chooses the backend openmp|cuda|opencl", cxxopts::value<backend_type>()->default_value("openmp"))
-                ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info))
+                ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(std::to_string(detail::to_underlying(kernel))))
+                ("d,degree", "degree in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", degree)))
+                ("g,gamma", "gamma in kernel function (default: 1 / num_features)", cxxopts::value<real_type>())
+                ("r,coef0", "coef0 in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", coef0)))
+                ("c,cost", "the parameter C", cxxopts::value<real_type>()->default_value(fmt::format("{}", cost)))
+                ("e,epsilon", "tolerance of termination criterion", cxxopts::value<real_type>()->default_value(fmt::format("{}", epsilon)))
+                ("b,backend", "chooses the backend openmp|cuda|opencl", cxxopts::value<backend_type>()->default_value(as_lowercase(fmt::format("{}", backend))))
+                ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
                 ("h,help", "print this helper message", cxxopts::value<bool>())
                 ("input", "", cxxopts::value<std::string>(), "training_set_file")
                 ("model", "", cxxopts::value<std::string>(), "model_file");
