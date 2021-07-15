@@ -30,8 +30,7 @@ pipeline {
             agent { label 'argon-fs'}
             steps {
                 sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /scratch/jenkins/plssvm bash -c "\
-                    module load cuda
+                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     rm -rf plssvm && \
                     gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':') && \
                     git clone --branch time --single-branch --dept 1 https://oauth2:$gitlab_token@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
@@ -58,7 +57,7 @@ pipeline {
             agent {label 'argon-fs'}
             steps{
                 sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /scratch/jenkins/plssvm bash -c "\
+                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     cd plssvm/SVM/data && \
                     python3 generate_data.py --format libsvm --samples 10000 --features 5000 --output data.libsvm \
                     "
@@ -69,7 +68,7 @@ pipeline {
             agent{label 'argon-fs'}
             steps{
                 sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /scratch/jenkins/plssvm bash -c "\
+                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     cd plssvm/SVM/data
                     ../build/Release/svm-train --backend=openmp  --input data.libsvm | python3 collect_runtimes /import/sgs.scratch/vancraar/runtime-epyc-openmp.csv
                 '''
