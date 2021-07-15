@@ -9,8 +9,9 @@
 
 #pragma once
 
-#include <cstddef>  // std::size_t
-#include <tuple>    // std::forward_as_tuple, std::get
+#include <cstddef>      // std::size_t
+#include <tuple>        // std::forward_as_tuple, std::get
+#include <type_traits>  // std::underlying_type_t, std::is_enum_v
 
 namespace plssvm::detail {
 
@@ -28,9 +29,21 @@ constexpr bool always_false_v = false;
  * @return the @p I-th element of @p ts
  */
 template <std::size_t I, class... Ts>
-decltype(auto) get(Ts &&...ts) {
+[[nodiscard]] decltype(auto) get(Ts &&...ts) {
     static_assert(I < sizeof...(Ts), "Out-of-bounce access: too few elements in parameter pack!");
     return std::get<I>(std::forward_as_tuple(ts...));
+}
+
+/**
+ * @brief Converts an enumeration to its underlying type.
+ * @tparam Enum the enumeration type
+ * @param[in] e enumeration value to convert
+ * @return the integer value of the underlying type of `Enum`, converted from @p e
+ */
+template <typename Enum>
+[[nodiscard]] constexpr std::underlying_type_t<Enum> to_underlying(const Enum e) noexcept {
+    static_assert(std::is_enum_v<Enum>, "e must be an enumeration type!");
+    return static_cast<std::underlying_type_t<Enum>>(e);
 }
 
 }  // namespace plssvm::detail
