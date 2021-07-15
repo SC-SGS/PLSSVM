@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/CSVM.hpp"
 
 #include "plssvm/detail/operators.hpp"
@@ -14,11 +20,11 @@
 namespace plssvm {
 
 template <typename T>
-CSVM<T>::CSVM(parameter<T> &params) :
+CSVM<T>::CSVM(const parameter<T> &params) :
     CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-CSVM<T>::CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+CSVM<T>::CSVM(const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
     kernel_{ kernel }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 }, cost_{ cost }, epsilon_{ epsilon }, print_info_{ print_info } {}
 
 template <typename T>
@@ -75,29 +81,6 @@ void CSVM<T>::learn(const std::string &input_filename, const std::string &model_
 
     // write results to model file
     write_model(model_filename);
-
-    //    if (true) {  // TODO: check
-    //        std::clog << data.size() << ", " << num_features << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_parse - begin_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_gpu - end_parse).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_learn - end_gpu).count() << ", " << std::chrono::duration_cast<std::chrono::milliseconds>(end_write - end_learn).count() << std::endl;
-    //    }
-}
-
-template <typename T>
-auto CSVM<T>::transform_data(const size_type boundary) -> std::vector<real_type> {
-    auto start_time = std::chrono::steady_clock::now();
-
-    std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-    #pragma omp parallel for collapse(2)
-    for (size_type col = 0; col < num_features_; ++col) {
-        for (size_type row = 0; row < num_data_points_ - 1; ++row) {
-            vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];
-        }
-    }
-
-    auto end_time = std::chrono::steady_clock::now();
-    if (print_info_) {
-        fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-    }
-    return vec;
 }
 
 template <typename T>
@@ -118,6 +101,25 @@ template <typename T>
 auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
     assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
     return kernel_function(xi.data(), xj.data(), xi.size());
+}
+
+template <typename T>
+auto CSVM<T>::transform_data(const size_type boundary) -> std::vector<real_type> {
+    auto start_time = std::chrono::steady_clock::now();
+
+    std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
+    #pragma omp parallel for collapse(2)
+    for (size_type col = 0; col < num_features_; ++col) {
+        for (size_type row = 0; row < num_data_points_ - 1; ++row) {
+            vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];
+        }
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+    return vec;
 }
 
 // explicitly instantiate template class

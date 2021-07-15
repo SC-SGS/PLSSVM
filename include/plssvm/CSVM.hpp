@@ -1,3 +1,12 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Defines the base class for all C-SVM backends and implements the functionality shared by all of them.
+ */
+
 #pragma once
 
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
@@ -10,8 +19,13 @@
 
 namespace plssvm {
 
-template <typename T = double>
+/**
+ * @brief Base class for all C-SVM backends.
+ * @tparam T the type of the data
+ */
+template <typename T>
 class CSVM {
+    // only float and doubles are allowed
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
   public:
@@ -20,10 +34,41 @@ class CSVM {
     /// Unsigned integer type.
     using size_type = std::size_t;
 
-    explicit CSVM(parameter<T> &params);
+    //*************************************************************************************************************************************//
+    //                                                      special member functions                                                       //
+    //*************************************************************************************************************************************//
+    /**
+     * @brief Construct a new C-SVM with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     */
+    explicit CSVM(const parameter<T> &params);
+    /**
+     * @brief Construct an new C-SVM explicitly specifying all necessary parameters.
+     * @param[in] kernel the type of the kernel function
+     * @param[in] degree parameter used in the polynomial kernel function
+     * @param[in] gamma parameter used in the polynomial and rbf kernel functions
+     * @param[in] coef0 parameter use din the polynomial kernel function
+     * @param[in] cost parameter of the C-SVM
+     * @param[in] epsilon error tolerance in the CG algorithm
+     * @param[in] print_info if `true` additional information will be printed during execution
+     */
     CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
+    /**
+     * @brief Virtual destructor to enable safe inheritance.
+     */
     virtual ~CSVM() = default;
+
+    /**
+     * @brief Disable copy-constructor.
+     */
+    CSVM(const CSVM &) = delete;
+    // clang-format off
+    /**
+     * @brief Explicitly allow move-construction.
+     */
+    CSVM(CSVM &&) noexcept = default;
+    // clang-format on
 
     //*************************************************************************************************************************************//
     //                                                             IO functions                                                            //
@@ -135,7 +180,7 @@ class CSVM {
     //                                                             learn model                                                             //
     //*************************************************************************************************************************************//
     /**
-     * @brief Learns the Support Vectors given the data in @p input_filename and writes the results to @p model_filename
+     * @brief Learns the Support Vectors given the data in @p input_filename and writes the results to @p model_filename.
      * @details Performs 4 steps:
      * 1. Read and parse the data file
      * 2. Load the data onto the used device (e.g. one or more GPUs)
@@ -147,6 +192,10 @@ class CSVM {
     void learn(const std::string &input_filename, const std::string &model_filename);
 
   protected:
+    /**
+     * @brief Learns the Support Vectors previously parsed.
+     * @details Learn the model by solving a minimization problem using the Conjugated Gradients algorithm.
+     */
     void learn();  // TODO: public after correct exception handling
 
   public:
@@ -163,11 +212,54 @@ class CSVM {
     //    [[nodiscard]] real_type get_bias() const noexcept { return bias_; };
 
   protected:
-    // pure virtual, must be implemented by all subclasses
+    //*************************************************************************************************************************************//
+    //                                         pure virtual, must be implemented by all subclasses                                         //
+    //*************************************************************************************************************************************//
+    /**
+     * @brief Initialize the data on the respective device(s) (e.g. GPUs).
+     */
     virtual void setup_data_on_device() = 0;
-    virtual std::vector<real_type> generate_q() = 0;
+    /**
+     * @brief Generate the vector `q`. TODO: more detailed
+     * @return the generated `q` vector
+     */
+    [[nodiscard]] virtual std::vector<real_type> generate_q() = 0;
+    /**
+     * @brief Solves the equation \f$Ax = b\f$ using the Conjugated Gradients algorithm.
+     * @details Solves using a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
+     * \image html cg.png
+     * @param[in] b the right-hand side of the equation \f$Ax = b\f$
+     * @param[in] imax the maximum number of CG iterations
+     * @param[in] eps error tolerance
+     * @param[in] q TODO
+     * @return `x`
+     */
     virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
+    /**
+     * @brief TODO:
+     */
     virtual void load_w() = 0;  // TODO: implemented together with predict
+
+    //*************************************************************************************************************************************//
+    //                                                          kernel functions                                                           //
+    //*************************************************************************************************************************************//
+    /**
+     * @brief Computes the value of the two arrays denoted by the pointers @p xi and @p xj using the kernel function specified during construction.
+     * @param[in] xi the first array
+     * @param[in] xj the seconds array
+     * @param[in] dim the length of both arrays
+     * @throws unsupported_kernel_type_exception if the kernel_type cannot be recognized
+     * @return the value computed by the kernel function
+     */
+    real_type kernel_function(const real_type *xi, const real_type *xj, size_type dim);
+    /**
+     * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function specified during construction.
+     * @param[in] xi the first vector
+     * @param[in] xj the second vector
+     * @throws unsupported_kernel_type_exception if the kernel_type cannot be recognized
+     * @return the value computed by the kernel function
+     */
+    real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj);
 
     /**
      * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
@@ -177,26 +269,40 @@ class CSVM {
      */
     std::vector<real_type> transform_data(size_type boundary);
 
-    // kernel functions: linear, polynomial, rbf
-    real_type kernel_function(const real_type *xi, const real_type *xj, size_type dim);
-    real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj);
-
-    // parameter initialized by the constructor
+    //*************************************************************************************************************************************//
+    //                                              parameter initialized by the constructor                                               //
+    //*************************************************************************************************************************************//
+    /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     const kernel_type kernel_;
+    /// The degree parameter used in the polynomial kernel function.
     const real_type degree_;
+    /// The gamma parameter used in the polynomial and rbf kernel functions.
     real_type gamma_;
+    /// The coef0 parameter used in the polynomial kernel function.
     const real_type coef0_;
+    /// The cost parameter in the C-SVM.
     real_type cost_;
+    /// The error tolerance parameter for the CG algorithm.
     const real_type epsilon_;
+    /// If `true` additional information (e.g. timing information) will be printed during execution.
     const bool print_info_ = true;
 
-    // internal variables
+    //*************************************************************************************************************************************//
+    //                                                         internal variables                                                          //
+    //*************************************************************************************************************************************//
+    /// The number of data points in the data set.
     size_type num_data_points_{};
+    /// The number of features per data point.
     size_type num_features_{};
+    /// The data used the train the SVM.
     std::vector<std::vector<real_type>> data_{};
+    /// The labels associated to each data point.
     std::vector<real_type> value_{};
+    /// The bias after learning.
     real_type bias_{};
+    /// The bottom right matrix entry multiplied by cost.
     real_type QA_cost_{};
+    /// The result of the CG calculation.
     std::vector<real_type> alpha_{};
 };
 
