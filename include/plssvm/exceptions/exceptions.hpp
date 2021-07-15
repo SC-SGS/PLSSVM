@@ -4,7 +4,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief Implements custom exception classes derived from `std::runtime_error` including source location information.
+ * @brief Implements custom exception classes derived from [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error) including source location information.
  */
 
 #pragma once

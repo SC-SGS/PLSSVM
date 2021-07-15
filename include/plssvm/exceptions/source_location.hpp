@@ -4,7 +4,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief Implements a custom (`std::source_location`](https://en.cppreference.com/w/cpp/utility/source_location) implementation for C++17.
+ * @brief Implements a custom [`std::source_location`](https://en.cppreference.com/w/cpp/utility/source_location) implementation for C++17.
  */
 
 #pragma once
