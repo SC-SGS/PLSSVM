@@ -34,7 +34,7 @@ pipeline {
                     srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     rm -rf plssvm && \
                     gitlab_token=$(echo ${GITLAB_READ} | cut -f2 -d':') && \
-                    git clone --branch time --single-branch --dept 1 https://oauth2:$gitlab_token@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
+                    git clone --branch time --single-branch --dept 1 https://gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
                     cd plssvm/SVM && \
                     mkdir -p build/Release && \
                     cd build/Release && \
