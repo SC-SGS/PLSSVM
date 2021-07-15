@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <cassert>
 
 // TODO: check all, check matching sizes?
 
@@ -173,10 +174,22 @@ template <typename T>
 }
 
 template <typename T>
-[[nodiscard]] inline T *mult(T value, T *vec, std::size_t dim) {
+[[nodiscard]] inline T mult(const std::vector<T>& vec1, const std::vector<T>& vec2) {
+    assert((vec1.size() == vec2.size()) && "Sizes mismatch!");
+    return mult(vec1.data(), vec2.data(), vec1.size());
+}
+
+template <typename T>
+inline T *mult(T value, T *vec, std::size_t dim) {
     for (std::size_t i = 0; i < dim; ++i) {
         vec[i] *= value;
     }
+    return vec;
+}
+
+template <typename T>
+inline std::vector<T>& mult(const T value, std::vector<T>& vec) {
+    mult(value, vec.data(), vec.size());
     return vec;
 }
 
@@ -203,10 +216,18 @@ template <typename T>
 }
 
 template <typename T>
-inline T *add(T *vec1, T *vec2, T *result, std::size_t dim) {
+inline T *add(const T *vec1, const T *vec2, T *result, std::size_t dim) {
     for (std::size_t i = 0; i < dim; ++i) {
         result[i] = vec1[i] + vec2[i];
     }
+    return result;
+}
+
+template <typename T>
+inline std::vector<T>& add(const std::vector<T>& vec1, const std::vector<T>& vec2, std::vector<T>& result) {
+    assert((vec1.size() == result.size()) && "Sizes mismatch!");
+    assert((vec2.size() == result.size()) && "Sizes mismatch!");
+    add(vec1.data(), vec2.data(), result.data(), result.size());
     return result;
 }
 
