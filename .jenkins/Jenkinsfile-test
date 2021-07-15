@@ -1,12 +1,11 @@
 #!groovy
 pipeline {
-    agent none
+    agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
     environment {
         GITLAB_TOKEN = credentials('e3077b1e-a85e-4811-8dda-952c99be7b0a')
     }
     stages {
         stage('init') {
-            agent any
             steps {
                 dir('plssvm') {
                     sh '''
@@ -26,25 +25,14 @@ pipeline {
                 }
             }
         }
-        stage('checkout and build epyc cpu') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
-            agent { label 'argon-fs'}
+        stage('checkout') {
             steps {
-                sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /scratch/jenkins/plssvm bash -c "\
-                    module load cuda
-                    rm -rf plssvm && \
-                    gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':') && \
-                    git clone --branch time --single-branch --dept 1 https://oauth2:$gitlab_token@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
-                    cd plssvm/SVM && \
-                    mkdir -p build/Release && \
-                    cd build/Release && \
-                    /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF  -DPLSVM_ENABLE_OpenMP_BACKEND=ON  ../../ && \
-                    make -j "
-                '''
+                dir('plssvm') {
+                    checkout scm
+                }
             }
         }
         stage('setup python'){
-            agent any
             steps{
                 sh '''
                     /usr/bin/python3.8 -m pip install --user arff
@@ -53,30 +41,60 @@ pipeline {
                 '''
             }
         }
-
-        stage('generate test Data argon-fs'){
-            agent {label 'argon-fs'}
-            steps{
-                sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /scratch/jenkins/plssvm bash -c "\
-                    cd plssvm/SVM/data && \
-                    python3 generate_data.py --format libsvm --samples 10000 --features 5000 --output data.libsvm \
-                    "
-                '''
+        stage('build plssvm Release') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        cd SVM
+                        mkdir -p build/Release
+                        cd build/Release
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release ../../
+                        make -j4
+                    '''
+                }
             }
         }
-        stage('runtimetest argon-fs'){
-            agent{label 'argon-fs'}
-            steps{
-                sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /scratch/jenkins/plssvm bash -c "\
-                    cd plssvm/SVM/data
-                    ../build/Release/svm-train --backend=openmp  --input data.libsvm | python3 collect_runtimes /import/sgs.scratch/vancraar/runtime-epyc-openmp.csv
-                '''
+        stage('run tests Release') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        cd SVM
+                        git checkout 873c8e0efbe8563ab0a688d297f0720998e9304b -- platform_configuration.cfg
+                        cd build/Release
+                        ctest -j4
+                    '''
+                }
             }
         }
-
-
+        stage('build plssvm Debug') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        cd SVM
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('run tests Debug') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        cd SVM
+                        git checkout 873c8e0efbe8563ab0a688d297f0720998e9304b -- platform_configuration.cfg
+                        cd build/Debug
+                        ctest -j4
+                    '''
+                }
+            }
+        }
     }
     post {
         success {
