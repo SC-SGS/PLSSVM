@@ -15,7 +15,9 @@ class CSVM {
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
   public:
+    /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
+    /// Unsigned integer type.
     using size_type = std::size_t;
 
     explicit CSVM(parameter<T> &params);
@@ -23,32 +25,140 @@ class CSVM {
 
     virtual ~CSVM() = default;
 
-    /**************************************************************************************************************************************/
-    /**                                                          IO functions                                                            **/
-    /**************************************************************************************************************************************/
+    //*************************************************************************************************************************************//
+    //                                                             IO functions                                                            //
+    //*************************************************************************************************************************************//
+    /**
+     * @brief Parse a file in the [libsvm sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
+     * @details The sparse libsvm file format saves each data point with its respective class as follows:
+     * @code
+     * <label> <index1>:<value1> <index2>:<value2> ... <indexN>:<valueN>
+     * @endcode
+     * Only non-empty lines that don't start with `#` (= optional comments) are parsed.
+     *
+     * An example libsvm file could look as follows:
+     * @code
+     * # this is a comment
+     *  1 1:1.29801019287324655 2:0.51687296029754564
+     * -1 1:1.01405596624706053
+     * -1 1:0.60276937379453293 3:-0.13086851759108944
+     * -1 2:0.298499933047586044 # this is also a comment
+     * @endcode
+     *
+     * Be aware that the parsed output is **always** in a dense format. The above file for example will be parsed to a
+     * @code
+     * std::vector<std::vector<real_type>> data = {
+     *   { 1.29801019287324655, 0.51687296029754564, 0.0 },
+     *   { 1.01405596624706053, 0.0, 0.0 },
+     *   { 0.60276937379453293, 0.0, -0.13086851759108944 },
+     *   { 0.0, 0.298499933047586044, 0.0 }
+     * }
+     * @endcode
+     *
+     * If possible, uses a memory mapped file internally to speed up the file parsing.
+     * @param[in] filename name of the libsvm file to parse
+     */
     void parse_libsvm(const std::string &filename);
+    /**
+     * @brief Parse a file in the [arff file format](https://www.cs.waikato.ac.nz/ml/weka/arff.html).
+     * @details The arff file format saves each data point with its respective class as follows:
+     * @code
+     * <value1>,<value2>,...,<valueN>,<label>
+     * @endcode
+     * Additionally, the sparse arff file format (or a mix of both) is also supported:
+     * @code
+     * {<index1> <value1>, <index2> <value2>, <label>}
+     * @endcode
+     * Only non-empty lines that don't start with `%` (= optional comments) are parsed.
+     *
+     * An example arff file could look as follows:
+     * @code
+     * % Title
+     * % comments
+     * @RELATION name
+     * @ATTRIBUTE first    NUMERIC
+     * @ATTRIBUTE second   numeric
+     * @ATTRIBUTE third    Numeric
+     * @ATTRIBUTE fourth   NUMERIC
+     * @ATTRIBUTE class    NUMERIC
+     *
+     * @DATA
+     * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1
+     * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1
+     * {1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}
+     * {0 1.88494043717792, 1 1.00518564317278263, 2 0.298499933047586044, 3 1.6464627048813514, 4 -1}
+     * @endcode
+     * The necessary arff header values must be present and the type of the `@ATTRIBUTE` tags must be `NUMERIC`.
+     *
+     * Be aware that the parsed output is **always** in a dense format. The above file for example will be parsed to a
+     * @code
+     * std::vector<std::vector<real_type>> data = {
+     *   { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
+     *   { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
+     *   { 0.0, 0.60276937379453293, -0.13086851759108944, 0.0 },
+     *   { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 }
+     * }
+     * @endcode
+     *
+     * If possible, uses a memory mapped file internally to speed up the file parsing.
+     * @param[in] filename name of the arff file to parse
+     */
     void parse_arff(const std::string &filename);
+    /**
+     * @brief Parse the given file. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
+     * @param[in] filename name of the file to parse
+     */
     void parse_file(const std::string &filename);
+    /**
+     * @brief Write the calculated model to the given file.
+     * @details Writes the model using the libsvm format:
+     * @code
+     * svm_type c_svc
+     * kernel_type linear
+     * nr_class 2
+     * total_sv 5
+     * rho 0.37332362
+     * label 1 -1
+     * nr_sv 2 3
+     * SV
+     * -0.17609704 0:-1.117828e+00 1:-2.908719e+00 2:6.663834e-01 3:1.097883e+00
+     * 0.883819 0:-5.282118e-01 1:-3.358810e-01 2:5.168729e-01 3:5.460446e-01
+     * -0.47971326 0:-2.098121e-01 1:6.027694e-01 2:-1.308685e-01 3:1.080525e-01
+     * -0.23146635 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01
+     * 0.0034576654 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00
+     * @endcode
+     * @param[in] filename name of the file to write the model information to
+     */
     void write_model(const std::string &filename);
 
-    /**************************************************************************************************************************************/
-    /**                                                              learn                                                               **/
-    /**************************************************************************************************************************************/
+    //*************************************************************************************************************************************//
+    //                                                             learn model                                                             //
+    //*************************************************************************************************************************************//
+    /**
+     * @brief Learns the Support Vectors given the data in @p input_filename and writes the results to @p model_filename
+     * @details Performs 4 steps:
+     * 1. Read and parse the data file
+     * 2. Load the data onto the used device (e.g. one or more GPUs)
+     * 3. Learn the model by solving a minimization problem using the Conjugated Gradients algorithm
+     * 4. Write the results to the model file
+     * @param[in] input_filename name of the data file to parse
+     * @param[in] model_filename name of the model file to write the model information to
+     */
     void learn(const std::string &input_filename, const std::string &model_filename);
 
   protected:
     void learn();  // TODO: public after correct exception handling
 
   public:
-    /**************************************************************************************************************************************/
-    /**                                                             predict                                                              **/
-    /**************************************************************************************************************************************/
+    //*************************************************************************************************************************************//
+    //                                                               predict                                                               //
+    //*************************************************************************************************************************************//
     // TODO: protected?
     //    virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
-    /**************************************************************************************************************************************/
-    /**                                                              getter                                                              **/
-    /**************************************************************************************************************************************/
+    //*************************************************************************************************************************************//
+    //                                                               getter                                                                //
+    //*************************************************************************************************************************************//
     // TODO: other getter?
     //    [[nodiscard]] real_type get_bias() const noexcept { return bias_; };
 
