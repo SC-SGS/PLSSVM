@@ -15,7 +15,11 @@ template <typename real_type>
 __global__ void dot(real_type *a, real_type *b, real_type *c, const int dim);
 
 template <typename real_type>
-__global__ void kernel_q(real_type *q, const real_type *data_d, const real_type *datlast, const int Nrows, const int start, const int end);
+__global__ void kernel_q_linear(real_type *q, const real_type *data_d, const real_type *datlast, const int Nrows, const int start, const int end);
+template <typename real_type>
+__global__ void kernel_q_poly(real_type *q, const real_type *data_d, const real_type *datlast, const int Nrows, const int Ncols, const real_type degree, const real_type gamma, const real_type coef0);
+template <typename real_type>
+__global__ void kernel_q_radial(real_type *q, const real_type *data_d, const real_type *datlast, const int Nrows, const int Ncols, const real_type gamma);
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else

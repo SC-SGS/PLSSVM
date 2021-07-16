@@ -41,6 +41,11 @@ CUDA_CSVM<T>::CUDA_CSVM(const kernel_type kernel, const real_type degree, const 
         throw cuda_backend_exception{ "CUDA backend selected but no CUDA devices were found!" };
     }
 
+    // polynomial and rbf kernel currently only support single GPU execution
+    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
+        num_devices_ = 1;
+    }
+
     if (print_info_) {
         // print found CUDA devices
         fmt::print("Found {} CUDA device(s):\n", num_devices_);
@@ -99,24 +104,23 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
         const size_type grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE)));
         const size_type block = std::min<size_type>(THREADBLOCK_SIZE, dept);
 
-        kernel_q<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, start, end);
+        switch (kernel_) {
+            case kernel_type::linear:
+                kernel_q_linear<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, start, end);
+                break;
+            case kernel_type::polynomial:
+                kernel_q_poly<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, Ncols, degree_, gamma_, coef0_);
+                break;
+            case kernel_type::rbf:
+                kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, Ncols, gamma_);
+                break;
+        }
 
         cuda::peek_at_last_error();
     }
 
     std::vector<real_type> q(dept);
-    cuda::device_synchronize(0);
-    q_d[0].memcpy_to_host(q, 0, dept);
-    std::vector<real_type> ret(dept);
-    for (int device = 1; device < num_devices_; ++device) {
-        cuda::device_synchronize(device);
-        q_d[device].memcpy_to_host(ret, 0, dept);
-
-        #pragma omp parallel for
-        for (size_type i = 0; i < dept; ++i) {
-            q[i] += ret[i];
-        }
-    }
+    device_reduction(q_d, q);
     return q;
 }
 
@@ -145,6 +149,30 @@ void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<re
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
+    }
+}
+
+template <typename T>
+void CUDA_CSVM<T>::device_reduction(std::vector<cuda::device_ptr<real_type>>& buffer_d, std::vector<real_type>& buffer) {
+    cuda::device_synchronize(0);
+    buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
+
+    if (num_devices_ > 1) {
+        std::vector<real_type> ret(buffer.size());
+        for (int device = 1; device < num_devices_; ++device) {
+            cuda::device_synchronize(device);
+            buffer_d[device].memcpy_to_host(ret, 0, ret.size());
+
+            #pragma omp parallel for
+            for (size_type j = 0; j < ret.size(); ++j) {
+                buffer[j] += ret[j];
+            }
+        }
+
+        #pragma omp parallel for
+        for (int device = 0; device < num_devices_; ++device) {
+            buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
+        }
     }
 }
 
@@ -183,6 +211,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         q_d[device].memcpy_to_device(q, 0, dept);
     }
 
+    // r = Ax (r = b - Ax)
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         cuda::set_device(device);
@@ -190,26 +219,9 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         cuda::peek_at_last_error();
     }
 
-    cuda::device_synchronize(0);
-    r_d[0].memcpy_to_host(r, 0, dept);
-    {
-        std::vector<real_type> ret(dept);
-        for (int device = 1; device < num_devices_; ++device) {
-            cuda::device_synchronize(device);
-            r_d[device].memcpy_to_host(ret, 0, dept);
+    device_reduction(r_d, r);
 
-            #pragma omp parallel for
-            for (size_type j = 0; j < dept; ++j) {
-                r[j] += ret[j];
-            }
-        }
-    }
-    #pragma omp parallel for
-    for (int device = 0; device < num_devices_; ++device) {
-        r_d[device].memcpy_to_device(r, 0, dept);
-    }
-
-    real_type delta = mult(r, r);
+    real_type delta = r * r;
     const real_type delta0 = delta;
     std::vector<real_type> Ad(dept);
 
@@ -240,27 +252,10 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         }
 
         // update Ad (q)
-        cuda::device_synchronize(0);
-        Ad_d[0].memcpy_to_host(Ad, 0, dept);
-        {
-            std::vector<real_type> ret(dept);
-            for (int device = 1; device < num_devices_; ++device) {
-                cuda::device_synchronize(device);
-                Ad_d[device].memcpy_to_host(ret, 0, dept);
-
-                #pragma omp parallel for
-                for (size_type j = 0; j < dept; ++j) {
-                    Ad[j] += ret[j];
-                }
-            }
-        }
-        // TODO: only if num_devices_ > 1?
-        for (int device = 0; device < num_devices_; ++device) {
-            Ad_d[device].memcpy_to_device(Ad, 0, dept);
-        }
+        device_reduction(Ad_d, Ad);
 
         // (alpha = delta_new / (d^T * q))
-        real_type alpha_cd = delta / mult(d, Ad);
+        real_type alpha_cd = delta / (d * Ad);
 
         // (x = x + alpha * d)
         add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), d.data(), alpha_cd, dept);  // TODO: GPU (single <-> multi): add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
@@ -286,24 +281,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
                 cuda::peek_at_last_error();
             }
 
-            cuda::device_synchronize(0);
-            r_d[0].memcpy_to_host(r, 0, dept);
-            {
-                std::vector<real_type> ret(dept);
-                for (int device = 1; device < num_devices_; ++device) {
-                    cuda::device_synchronize(device);
-                    r_d[device].memcpy_to_host(ret, 0, dept);
-
-                    #pragma omp parallel for
-                    for (size_type j = 0; j < dept; ++j) {
-                        r[j] += ret[j];
-                    }
-                }
-            }
-            #pragma omp parallel for
-            for (int device = 0; device < num_devices_; ++device) {
-                r_d[device].memcpy_to_device(r, 0, dept);
-            }
+            device_reduction(r_d, r);
         } else {
             // r -= alpha_cd * Ad (r = r - alpha * q)
             for (size_type index = 0; index < dept; ++index) {
@@ -313,14 +291,14 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
 
         // (delta = r^T * r)
         real_type delta_old = delta;
-        delta = mult(r, r);
+        delta = r * r;
         if (delta <= eps * eps * delta0) {
             break;
         }
         // (beta = delta_new / delta_old)
         real_type beta = delta / delta_old;
-        // d = r + beta * d
-        add(mult(beta, d), r, d);
+        // d = beta * d + r
+        d = beta * d + r;
 
         // r_d = d
         #pragma omp parallel for
