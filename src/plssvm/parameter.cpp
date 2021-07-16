@@ -6,6 +6,8 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+
 #include "cxxopts.hpp"  // command line parsing
 #include "fmt/core.h"   // fmt::print, fmt::format
 
@@ -130,5 +132,34 @@ void parameter<T>::model_name_from_input() {
 // explicitly instantiate template class
 template class parameter<float>;
 template class parameter<double>;
+
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
+    return out << fmt::format(
+               "kernel_type     {}\n"
+               "degree          {}\n"
+               "gamma           {}\n"
+               "coef0           {}\n"
+               "cost            {}\n"
+               "epsilon         {}\n"
+               "print_info      {}\n"
+               "backend         {}\n"
+               "input_filename  {}\n"
+               "model_filename  {}\n"
+               "real_type       {}\n",
+               params.kernel,
+               params.degree,
+               params.gamma,
+               params.coef0,
+               params.cost,
+               params.epsilon,
+               params.print_info,
+               params.backend,
+               params.input_filename,
+               params.model_filename,
+               detail::arithmetic_type_name<typename parameter<T>::real_type>());
+}
+template std::ostream &operator<<(std::ostream &, const parameter<float> &);
+template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
 }  // namespace plssvm
