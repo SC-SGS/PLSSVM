@@ -75,6 +75,7 @@ pipeline {
                     srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     cd plssvm/SVM/data
                     ../build/Release/svm-train --backend=openmp  --input data.libsvm | python3 collect_runtimes.py --output /import/sgs.scratch/vancraar/runtime-epyc-openmp.csv
+                    "
                 '''
             }
         }
