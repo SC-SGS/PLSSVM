@@ -81,8 +81,8 @@ pipeline {
 
     }
     post {
-        agent any
         success {
+            agent any
             sh '''
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
@@ -99,6 +99,7 @@ pipeline {
             '''
         }
         failure {
+            agent any
             sh '''
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
@@ -115,6 +116,7 @@ pipeline {
             '''
         }
         aborted {
+            agent any
             sh '''
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
