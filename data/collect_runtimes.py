@@ -110,8 +110,12 @@ if __name__ == '__main__':
     # parse
     data = parse_stream(input_stream)
 
-    # if outfile already exists concatenate
-    if os.path.isfile(args.output):
-        data = pd.concat([data, pd.read_csv(args.output)])
+    try:
+        # if outfile already exists concatenate
+        if os.path.isfile(args.output):
+            data = pd.concat([data, pd.read_csv(args.output)])
+    except pd.errors.EmptyDataError:
+        pass
+
     #write results
     data.to_csv(args.output, index=False)
