@@ -18,12 +18,11 @@
 #include <plssvm/backends/OpenMP/svm-kernel.hpp>
 #include <plssvm/kernel_types.hpp>
 
-
 TEST(BASE, libsvmFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     using real_type = typename MockCSVM::real_type;
 
-    csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to libsvm test file
+    csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
@@ -49,7 +48,7 @@ TEST(BASE, sparselibsvmFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     using real_type = typename MockCSVM::real_type;
 
-    csvm.parse_libsvm(TESTPATH "/data/5x4.sparse.libsvm");  //TODO: add comments etc to libsvm test file
+    csvm.parse_libsvm(TESTPATH "/data/5x4.sparse.libsvm");
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
@@ -75,7 +74,7 @@ TEST(BASE, arffFormat) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
     using real_type = typename MockCSVM::real_type;
 
-    csvm.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
+    csvm.parse_arff(TESTPATH "/data/5x4.arff");
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_EQ(csvm.get_data().size(), csvm.get_num_data_points());
@@ -99,13 +98,13 @@ TEST(BASE, arffFormat) {
 
 TEST(BASE, arffParserGamma) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
-    csvm.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
+    csvm.parse_arff(TESTPATH "/data/5x4.arff");
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_FLOAT_EQ(1.0, csvm.get_gamma());
 
     MockCSVM csvm_gammazero(plssvm::kernel_type::linear, 1., 0, 1., 1., 1., false);
-    csvm_gammazero.parse_arff(TESTPATH "/data/5x4.arff");  //TODO: add comments etc to arff test file
+    csvm_gammazero.parse_arff(TESTPATH "/data/5x4.arff");
     EXPECT_EQ(csvm_gammazero.get_num_data_points(), 5);
     EXPECT_EQ(csvm_gammazero.get_num_features(), 4);
     EXPECT_FLOAT_EQ(1.0 / csvm_gammazero.get_num_features(), csvm_gammazero.get_gamma());
@@ -113,13 +112,13 @@ TEST(BASE, arffParserGamma) {
 
 TEST(BASE, libsvmParserGamma) {
     MockCSVM csvm(plssvm::kernel_type::linear, 1., 1., 1., 1., 1., false);
-    csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
+    csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
     ASSERT_FLOAT_EQ(1.0, csvm.get_gamma());
 
     MockCSVM csvm_gammazero(plssvm::kernel_type::linear, 1., 0, 1., 1., 1., false);
-    csvm_gammazero.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
+    csvm_gammazero.parse_libsvm(TESTPATH "/data/5x4.libsvm");
     EXPECT_EQ(csvm_gammazero.get_num_data_points(), 5);
     EXPECT_EQ(csvm_gammazero.get_num_features(), 4);
     EXPECT_FLOAT_EQ(1.0 / csvm_gammazero.get_num_features(), csvm_gammazero.get_gamma());
@@ -127,7 +126,7 @@ TEST(BASE, libsvmParserGamma) {
 
 TEST(BASE, writeModel) {
     MockCSVM csvm(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
-    csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");  //TODO: add comments etc to arff test file
+    csvm.parse_libsvm(TESTPATH "/data/5x4.libsvm");
 
     std::string model = std::filesystem::temp_directory_path().string();
     model += "/tmpfile_XXXXXX";
@@ -174,7 +173,7 @@ TEST(BASE, transform_data) {
     std::vector<real_type> result0 = csvm.transform_data(0);
     std::vector<real_type> result10 = csvm.transform_data(10);
 
-    EXPECT_EQ(result0.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());  //TODO: nochmal ünerlegen ob -1 wirklich passt (sollte eigentlich)
+    EXPECT_EQ(result0.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
     EXPECT_EQ(result10.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
 
     for (size_t datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
