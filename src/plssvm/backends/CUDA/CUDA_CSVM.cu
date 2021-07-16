@@ -3,7 +3,6 @@
 #include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"   // plssvm::detail::cuda::device_ptr
 #include "plssvm/backends/CUDA/CUDA_exceptions.hpp"  // plssvm::cuda_backend_exception
 #include "plssvm/backends/CUDA/cuda-kernel.cuh"      // kernel_q
-#include "plssvm/backends/CUDA/cuda-kernel.hpp"      // add_mult_
 #include "plssvm/backends/CUDA/svm-kernel.cuh"       // kernel_linear, kernel_poly, kernel_radial
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
@@ -153,7 +152,7 @@ void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<re
 }
 
 template <typename T>
-void CUDA_CSVM<T>::device_reduction(std::vector<cuda::device_ptr<real_type>>& buffer_d, std::vector<real_type>& buffer) {
+void CUDA_CSVM<T>::device_reduction(std::vector<cuda::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer) {
     cuda::device_synchronize(0);
     buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
 
@@ -258,7 +257,8 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         real_type alpha_cd = delta / (d * Ad);
 
         // (x = x + alpha * d)
-        add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), d.data(), alpha_cd, dept);  // TODO: GPU (single <-> multi): add_mult<<< ((int) dept/1024) + 1, std::min(1024, dept)>>>(x_d,r_d,alpha_cd,dept);
+        x += alpha_cd * d;
+
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             x_d[device].memcpy_to_device(x, 0, dept);
