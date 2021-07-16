@@ -116,23 +116,6 @@ pipeline {
                 }"
             '''
         }
-        exception {
-            agent any
-            sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                curl --verbose\
-                    --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
-                        \\"state\\": \\"failed\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
-                }"
-            '''
-        }
         aborted {
             agent any
             sh '''
