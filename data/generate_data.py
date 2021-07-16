@@ -45,7 +45,7 @@ if args.plot and (args.samples > 2000 and (args.features != 2 or args.features !
 # set total number of samples
 num_samples = args.samples + args.test_samples
 
-# create labeled data set # TODO: do they make sense?
+# create labeled data set
 if args.problem == "blobs":
     samples, labels = make_blobs(n_samples=num_samples, n_features=args.features, centers=2)
 elif args.problem == "blobs_merged":
