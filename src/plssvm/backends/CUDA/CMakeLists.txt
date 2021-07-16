@@ -26,7 +26,6 @@ set(PLSSVM_CUDA_SOURCES
   CUDA_CSVM.cu
   svm-kernel.cu
   cuda-kernel.cu
-  cuda-kernel.cpp # TODO: remove if add_mult_ is on gpu again
   predict.cu
   CUDA_DevicePtr.cu
   ${CMAKE_CURRENT_LIST_DIR}/../../parameter.cpp
