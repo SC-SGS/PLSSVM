@@ -40,8 +40,9 @@ class CUDA_CSVM : public CSVM<T> {
     void load_w() override;  // TODO: implement correctly
 
     void run_device_kernel(int device, const detail::cuda::device_ptr<real_type> &q_d, detail::cuda::device_ptr<real_type> &r_d, const detail::cuda::device_ptr<real_type> &x_d, const detail::cuda::device_ptr<real_type> &data_d, int sign);
+    void device_reduction(std::vector<detail::cuda::device_ptr<real_type>>& buffer_d, std::vector<real_type>& buffer);
 
-    const int num_devices_{};
+    int num_devices_{};
     std::vector<detail::cuda::device_ptr<real_type>> data_d_{};
     std::vector<detail::cuda::device_ptr<real_type>> data_last_d_{};
     detail::cuda::device_ptr<real_type> w_d_{};

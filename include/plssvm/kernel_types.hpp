@@ -105,12 +105,12 @@ real_type kernel_function(const real_type *xi, const real_type *xj, const size_t
         return std::pow(gamma * mult(xi, xj, dim) + coef0, degree);
     } else if constexpr (kernel == kernel_type::rbf) {
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters!");
-        auto gamma = detail::get<0>(args...);  // TODO: check correctness
+        auto gamma = detail::get<0>(args...);
         real_type temp = 0.0;
         for (size_type i = 0; i < dim; ++i) {
-            temp += xi[i] - xj[i];
+            temp += (xi[i] - xj[i]) * (xi[i] - xj[i]);
         }
-        return std::exp(-gamma * temp * temp);
+        return std::exp(-gamma * temp);
     } else {
         static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
     }
