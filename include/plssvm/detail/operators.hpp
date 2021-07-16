@@ -5,11 +5,14 @@
 #include <plssvm/typedef.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <numeric>
-#include <cassert>
 
 // TODO: check all, check matching sizes?
+// TODO: remove pointer overloads
+// TODO: add docu
+// TODO: add simd?
 
 template <typename T>
 [[nodiscard]] inline std::vector<T> operator-(const std::vector<T> &vec1, const std::vector<T> &vec2) {
@@ -174,7 +177,7 @@ template <typename T>
 }
 
 template <typename T>
-[[nodiscard]] inline T mult(const std::vector<T>& vec1, const std::vector<T>& vec2) {
+[[nodiscard]] inline T mult(const std::vector<T> &vec1, const std::vector<T> &vec2) {
     assert((vec1.size() == vec2.size()) && "Sizes mismatch!");
     return mult(vec1.data(), vec2.data(), vec1.size());
 }
@@ -188,7 +191,7 @@ inline T *mult(T value, T *vec, std::size_t dim) {
 }
 
 template <typename T>
-inline std::vector<T>& mult(const T value, std::vector<T>& vec) {
+inline std::vector<T> &mult(const T value, std::vector<T> &vec) {
     mult(value, vec.data(), vec.size());
     return vec;
 }
@@ -224,7 +227,7 @@ inline T *add(const T *vec1, const T *vec2, T *result, std::size_t dim) {
 }
 
 template <typename T>
-inline std::vector<T>& add(const std::vector<T>& vec1, const std::vector<T>& vec2, std::vector<T>& result) {
+inline std::vector<T> &add(const std::vector<T> &vec1, const std::vector<T> &vec2, std::vector<T> &result) {
     assert((vec1.size() == result.size()) && "Sizes mismatch!");
     assert((vec2.size() == result.size()) && "Sizes mismatch!");
     add(vec1.data(), vec2.data(), result.data(), result.size());
