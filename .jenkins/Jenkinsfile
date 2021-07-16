@@ -6,28 +6,6 @@ pipeline {
         GITLAB_READ = credentials('PLSSVM-READ')
     }
     stages {
-        stage('init') {
-            agent any
-            steps {
-
-
-                sh '''
-                    gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                    curl --verbose\
-                        --request POST \
-                        --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
-                        --header "Content-Type: application/json" \
-                        --header "authorization: Bearer ${gitlab_token}" \
-                        --data "{
-                            \\"state\\": \\"running\\",
-                            \\"context\\": \\"jenkins-ctest\\",
-                            \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                            \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
-                    }"
-                '''
-
-            }
-        }
         stage('checkout and build epyc cpu') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
             agent { label 'argon-fs'}
             steps {
@@ -79,60 +57,6 @@ pipeline {
                 '''
             }
         }
-
-
     }
-    post {
-        success {
-            agent any
-            sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                curl --verbose\
-                    --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
-                        \\"state\\": \\"success\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
-                }"
-            '''
-        }
-        failure {
-            agent any
-            sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                curl --verbose\
-                    --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
-                        \\"state\\": \\"failed\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
-                }"
-            '''
-        }
-        aborted {
-            agent any
-            sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
-                curl --verbose\
-                    --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
-                        \\"state\\": \\"canceled\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
-                }"
-            '''
-        }
-    }
+
 }
