@@ -107,6 +107,13 @@ if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_OPENCL_BACKEND)
 endif()
 
 
+## check if ANY backend is available/has been enabled
+get_target_property(PLSSVM_LINKED_BACKENDS svm-train LINK_LIBRARIES)
+if (NOT PLSSVM_LINKED_BACKENDS)
+  message(FATAL_ERROR "At least one backend must be available!")
+endif()
+
+
 ## enable Link Time Optimization (LTO)
 option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
 if(PLSSVM_ENABLE_LTO)
