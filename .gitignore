@@ -70,6 +70,7 @@ include/plssvm/version/version.hpp
 !data/
 data/*
 !data/generate_data.py
+!data/collect_runtimes.py
 
 # data in test folder
 !tests/data/
