@@ -31,6 +31,7 @@ set(PLSSVM_OpenCL_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/manager/json/node.cpp
   ${CMAKE_CURRENT_LIST_DIR}/manager/json/text_node.cpp
   ${CMAKE_CURRENT_LIST_DIR}/../CUDA/cuda-kernel.cpp # TODO: remove after moved to GPU
+  ${CMAKE_CURRENT_LIST_DIR}/../../parameter.cpp
 )
 
 # set target properties

@@ -71,6 +71,7 @@ endif()
 set(PLSSVM_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/CSVM.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/IO.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter.cpp
 )
 
 
