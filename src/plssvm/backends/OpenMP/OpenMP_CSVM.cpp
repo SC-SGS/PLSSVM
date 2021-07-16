@@ -57,6 +57,7 @@ template <typename T>
 auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     alpha_.resize(b.size(), 1.0);
     const size_type dept = b.size();
+    // TODO: compare with CUDA
 
     //    real_type *datlast = &data_.back()[0];
     //    const size_type dim = data_.back().size();
