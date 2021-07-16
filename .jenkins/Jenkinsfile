@@ -2,7 +2,7 @@
 pipeline {
     agent none
     environment {
-        GITLAB_TOKEN = credentials('PLSSVM-GitLab-Api')
+        GITLAB_TOKEN = credentials('PLSSVMGitLab-Read-Repo-Text')
     }
     stages {
         stage('checkout and build epyc cpu') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
