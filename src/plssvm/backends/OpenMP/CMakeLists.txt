@@ -2,10 +2,10 @@
 find_package(OpenMP)
 
 if(NOT OPENMP_FOUND)
-    if(PLSVM_ENABLE_OpenMP_BACKEND MATCHES "ON")
+    if(PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "ON")
         message(FATAL_ERROR "Cannot find requested backend: OpenMP!")
     endif()
-    if (PLSVM_ENABLE_OpenMP_BACKEND MATCHES "AUTO")
+    if (PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "AUTO")
         message(STATUS "OpenMP backend not found.")
         return()
     endif()
