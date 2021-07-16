@@ -1,9 +1,9 @@
 #include "../MockCSVM.hpp"
 #include "../compare.hpp"
 #include "MockCUDA_CSVM.hpp"
+#include "plssvm/backends/CUDA/device_ptr.cuh"
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"
-#include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"
 #include "plssvm/kernel_types.hpp"
 
 #include <gtest/gtest.h>
@@ -137,4 +137,3 @@ TEST(CUDA, kernel_linear) {
         }
     }
 }
-

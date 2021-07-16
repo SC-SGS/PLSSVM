@@ -1,4 +1,4 @@
-#include "plssvm/backends/CUDA/cuda-kernel.cuh"
+#include "plssvm/backends/CUDA/q-kernel.cuh"
 
 namespace plssvm {
 

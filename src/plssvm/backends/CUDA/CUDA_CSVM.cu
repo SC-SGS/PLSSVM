@@ -1,9 +1,9 @@
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
 
-#include "plssvm/backends/CUDA/CUDA_DevicePtr.cuh"   // plssvm::detail::cuda::device_ptr
-#include "plssvm/backends/CUDA/CUDA_exceptions.hpp"  // plssvm::cuda_backend_exception
-#include "plssvm/backends/CUDA/cuda-kernel.cuh"      // kernel_q
-#include "plssvm/backends/CUDA/svm-kernel.cuh"       // kernel_linear, kernel_poly, kernel_radial
+#include "plssvm/backends/CUDA/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda_backend_exception
+#include "plssvm/backends/CUDA/q-kernel.cuh"    // kernel_q
+#include "plssvm/backends/CUDA/svm-kernel.cuh"  // kernel_linear, kernel_poly, kernel_radial
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception

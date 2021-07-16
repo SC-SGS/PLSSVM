@@ -1,5 +1,6 @@
-#include "plssvm/backends/CUDA/cuda-kernel.cuh"
 #include "plssvm/backends/CUDA/svm-kernel.cuh"
+
+#include "plssvm/backends/CUDA/atomics.cuh"
 
 #include "plssvm/typedef.hpp"
 
