@@ -59,6 +59,7 @@ CTestTestfile.cmake
 # generated documentation
 !docs/
 docs/*
+!docs/resources/
 !docs/CMakeLists.txt
 !docs/Doxyfile.in
 
