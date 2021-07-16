@@ -12,7 +12,7 @@
 #include <fstream>
 #include <random>
 
-TEST(IO, writeModel) {
+TEST(CUDA, writeModel) {
     std::string model = std::filesystem::temp_directory_path().string();
     model += "/tmpfile_XXXXXX";
     // create unique temporary file
@@ -33,7 +33,7 @@ TEST(IO, writeModel) {
     EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
 }
 
-TEST(learn, q) {
+TEST(CUDA, q) {
     MockCUDA_CSVM csvm_CUDA;
     using real_type = typename MockCUDA_CSVM::real_type;
 
@@ -49,7 +49,7 @@ TEST(learn, q) {
     }
 }
 
-TEST(kernel, linear) {
+TEST(CUDA, linear) {
     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
     using real_type = typename MockCUDA_CSVM::real_type;
 
@@ -67,7 +67,7 @@ TEST(kernel, linear) {
     EXPECT_DOUBLE_EQ(correct, result2_CUDA);
 }
 
-TEST(learn, q_linear) {
+TEST(CUDA, q_linear) {
     MockCSVM csvm;
     using real_type = typename MockCSVM::real_type;
 

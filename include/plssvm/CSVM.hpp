@@ -220,7 +220,7 @@ class CSVM {
      */
     virtual void setup_data_on_device() = 0;
     /**
-     * @brief Generate the vector `q`. TODO: more detailed
+     * @brief Generate the vector `q`, a subvector of the least-squares matrix equation.
      * @return the generated `q` vector
      */
     [[nodiscard]] virtual std::vector<real_type> generate_q() = 0;
@@ -231,7 +231,7 @@ class CSVM {
      * @param[in] b the right-hand side of the equation \f$Ax = b\f$
      * @param[in] imax the maximum number of CG iterations
      * @param[in] eps error tolerance
-     * @param[in] q TODO
+     * @param[in] q subvector of the least-squares matrix equation
      * @return `x`
      */
     virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
@@ -285,7 +285,7 @@ class CSVM {
     /// The error tolerance parameter for the CG algorithm.
     const real_type epsilon_;
     /// If `true` additional information (e.g. timing information) will be printed during execution.
-    const bool print_info_ = true;
+    const bool print_info_;
 
     //*************************************************************************************************************************************//
     //                                                         internal variables                                                          //
