@@ -51,6 +51,7 @@ pipeline {
                 sh '''
                     /usr/bin/python3.8 -m pip install --user arff
                     /usr/bin/python3.8 -m pip install --user pandas
+                    /usr/bin/python3.8 -m pip install --user datetime
                     /usr/bin/python3.8 -m pip install --user sklearn
                 '''
             }
@@ -73,7 +74,7 @@ pipeline {
                 sh '''
                     srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
                     cd plssvm/SVM/data
-                    ../build/Release/svm-train --backend=openmp  --input data.libsvm | python3 collect_runtimes /import/sgs.scratch/vancraar/runtime-epyc-openmp.csv
+                    ../build/Release/svm-train --backend=openmp  --input data.libsvm | python3 collect_runtimes.py /import/sgs.scratch/vancraar/runtime-epyc-openmp.csv
                 '''
             }
         }
@@ -99,6 +100,23 @@ pipeline {
             '''
         }
         failure {
+            agent any
+            sh '''
+                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                    --request POST \
+                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --header "Content-Type: application/json" \
+                    --header "authorization: Bearer ${gitlab_token}" \
+                    --data "{
+                        \\"state\\": \\"failed\\",
+                        \\"context\\": \\"jenkins-ctest\\",
+                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                }"
+            '''
+        }
+        exception {
             agent any
             sh '''
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
