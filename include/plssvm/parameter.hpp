@@ -72,7 +72,7 @@ class parameter {
             .set_tab_expansion()
             // clang-format off
             .add_options()
-                ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(std::to_string(detail::to_underlying(kernel))))
+                ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear,\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(fmt::format("{}", detail::to_underlying(kernel))))
                 ("d,degree", "degree in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", degree)))
                 ("g,gamma", "gamma in kernel function (default: 1 / num_features)", cxxopts::value<real_type>())
                 ("r,coef0", "coef0 in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", coef0)))
