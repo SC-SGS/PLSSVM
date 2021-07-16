@@ -21,8 +21,7 @@ target_include_directories(main_tests PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 target_compile_definitions(main_tests
                            PRIVATE TESTPATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_include_directories(main_tests PUBLIC ${fmt_SOURCE_DIR}/include
-)# TODO: better?
+target_include_directories(main_tests PUBLIC ${fmt_SOURCE_DIR}/include)# TODO: better?
 target_link_libraries(main_tests fmt::fmt)
 target_include_directories(main_tests PUBLIC ${fast_float_SOURCE_DIR}/include)
 target_include_directories(main_tests PUBLIC ${cxxopts_SOURCE_DIR}/include)

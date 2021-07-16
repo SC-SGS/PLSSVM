@@ -58,7 +58,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(include)
 
 
-## check for OpenMP (not for the backend!) TODO: better?
+## check for OpenMP (not for the backend!)
 find_package(OpenMP)
 if (OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -86,9 +86,9 @@ target_include_directories(${PLSSVM_EXECUTABLE_NAME} PUBLIC ${fast_float_SOURCE_
 
 
 ## check for OpenMP backend
-set(PLSVM_ENABLE_OpenMP_BACKEND AUTO CACHE STRING "Enable OpenMP Backend")
-set_property(CACHE PLSVM_ENABLE_OpenMP_BACKEND PROPERTY STRINGS AUTO ON OFF)
-if(PLSVM_ENABLE_OpenMP_BACKEND MATCHES "AUTO" OR PLSVM_ENABLE_OpenMP_BACKEND)
+set(PLSSVM_ENABLE_OPENMP_BACKEND AUTO CACHE STRING "Enable OpenMP Backend")
+set_property(CACHE PLSSVM_ENABLE_OPENMP_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if(PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_OPENMP_BACKEND)
   add_subdirectory(src/plssvm/backends/OpenMP)
 endif()
 
@@ -108,7 +108,7 @@ endif()
 
 
 ## enable Link Time Optimization (LTO)
-option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON) # TODO: default ON/OFF?
+option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
 if(PLSSVM_ENABLE_LTO)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT lto_supported OUTPUT lto_error)
@@ -122,7 +122,7 @@ endif()
 
 
 ## enable testing
-option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON) # TODO: default ON/OFF?
+option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
   enable_testing()
   add_subdirectory(tests)
@@ -130,7 +130,7 @@ endif()
 
 
 ## enable documentation generation with doxygen
-option(PLSSVM_ENABLE_DOCU "Build documentation using doxygen." ON) # TODO: default ON/OFF?
+option(PLSSVM_ENABLE_DOCU "Build documentation using doxygen." OFF)
 if(PLSSVM_ENABLE_DOCU)
   add_subdirectory(docs)
 endif()
