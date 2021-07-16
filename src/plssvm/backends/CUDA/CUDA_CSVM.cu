@@ -220,6 +220,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
 
     device_reduction(r_d, r);
 
+    // delta = r.T * r
     real_type delta = r * r;
     const real_type delta0 = delta;
     std::vector<real_type> Ad(dept);
@@ -231,8 +232,8 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
 
     std::vector<real_type> d(r);
 
-    size_type run;
-    for (run = 0; run < imax; ++run) {
+    size_type run = 0;
+    for (; run < imax; ++run) {
         if (print_info_) {
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
@@ -254,7 +255,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         device_reduction(Ad_d, Ad);
 
         // (alpha = delta_new / (d^T * q))
-        real_type alpha_cd = delta / (d * Ad);
+        const real_type alpha_cd = delta / (d * Ad);
 
         // (x = x + alpha * d)
         x += alpha_cd * d;
@@ -290,11 +291,13 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         }
 
         // (delta = r^T * r)
-        real_type delta_old = delta;
+        const real_type delta_old = delta;
         delta = r * r;
+        // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
             break;
         }
+
         // (beta = delta_new / delta_old)
         real_type beta = delta / delta_old;
         // d = beta * d + r
