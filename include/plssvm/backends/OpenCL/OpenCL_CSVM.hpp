@@ -11,8 +11,6 @@
 
 #include <vector>  // std::vector
 
-// TODO: change real_t in kernels!!!
-
 namespace plssvm {
 
 template <typename T>

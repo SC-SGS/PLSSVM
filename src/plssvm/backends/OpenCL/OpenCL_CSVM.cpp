@@ -1,6 +1,5 @@
 #include "plssvm/backends/OpenCL/OpenCL_CSVM.hpp"
 
-#include "plssvm/backends/CUDA/cuda-kernel.hpp"
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/detail/string_utility.hpp"
@@ -383,7 +382,9 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         std::vector<real_type> buffer_r(dept_all);
         r_cl[0].resize(dept_all);
         r_cl[0].from_device(buffer_r);
-        add_mult_(((int) dept / 1024) + 1, std::min(1024, (int) dept), x.data(), buffer_r.data(), alpha_cd, dept);
+
+        x += alpha_cd * buffer_r;
+
         #pragma omp parallel
         for (size_type device = 0; device < count_devices; ++device) {
             x_cl[device].resize(dept_all);
