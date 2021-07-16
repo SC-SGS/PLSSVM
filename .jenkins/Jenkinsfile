@@ -83,6 +83,7 @@ pipeline {
 
     }
     post {
+        agent any
         success {
             sh '''
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
