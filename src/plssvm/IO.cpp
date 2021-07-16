@@ -14,11 +14,14 @@
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::format, fmt::print
 
+#if __has_include(<omp.h>)
+    #include <omp.h>  // omp_get_num_threads
+#endif
+
 #include <algorithm>    // std::max, std::transform
 #include <cctype>       // std::toupper
 #include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
-#include <omp.h>        // omp_get_num_threads # TODO: get rid of it?
 #include <ostream>      // std::ofstream, std::ios::out, std::ios::trunc
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -367,8 +370,12 @@ void CSVM<T>::write_model(const std::string &model_name) {
         }
 
         // wait for all threads to write support vectors for class 1
+#if __has_include(<omp.h>)
         while (count < omp_get_num_threads()) {
         }
+#else
+        #pragma omp barrier
+#endif
 
         #pragma omp critical
         model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
