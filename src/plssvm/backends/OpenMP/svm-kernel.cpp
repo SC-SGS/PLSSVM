@@ -7,10 +7,11 @@
 
 namespace plssvm {
 
+constexpr unsigned int BLOCK_SIZE = 64;  // TODO: move to typedef
+
 template <typename real_type>
 void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int sign) {
     using size_type = std::size_t;
-    constexpr size_type BLOCK_SIZE = 64;  // TODO: ?
 
     const std::vector<real_type> &data_last = data.back();
     const size_type dept = d.size();
