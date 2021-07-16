@@ -12,6 +12,8 @@
 #include "plssvm/backend_types.hpp"  // plssvm::backend_type
 #include "plssvm/kernel_types.hpp"   // plssvm::kernel_type
 
+#include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
+
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 
@@ -76,5 +78,15 @@ class parameter {
 
 extern template class parameter<float>;
 extern template class parameter<double>;
+
+/**
+ * @brief Stream-insertion operator overload for convenient printing of all parameters encapsulated by @p params.
+ * @tparam T the type of the data
+ * @param[inout] out the output-stream to write the kernel type to
+ * @param[in] params the parameters
+ * @return the output-stream
+ */
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
 
 }  // namespace plssvm

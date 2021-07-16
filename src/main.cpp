@@ -1,11 +1,12 @@
 #include <plssvm/core.hpp>
 
-#include <exception>
-#include <iostream>
+#include <exception>  // std::exception
+#include <iostream>   // std::clog, std::cerr, std::endl
 
 int main(int argc, char *argv[]) {
     // parse SVM parameter from command line
     plssvm::parameter<double> params{ argc, argv };
+    //    std::clog << params << std::endl;
 
     try {
         // create SVM
