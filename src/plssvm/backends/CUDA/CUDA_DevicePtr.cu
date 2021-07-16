@@ -56,7 +56,7 @@ device_ptr<T>::device_ptr(const size_type size, const int device) :
         throw plssvm::cuda_backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device_) };
     }
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
-    PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, size_ * sizeof(value_type)));  // TODO: void** cast
+    PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(reinterpret_cast<void **>(&data_), size_ * sizeof(value_type)));
 }
 
 template <typename T>
