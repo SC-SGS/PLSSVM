@@ -1,248 +1,167 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Defines (arithmetic) functions on [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) (and scalars).
+ */
+
 #pragma once
-#include <iostream>
-#include <vector>
 
-#include <plssvm/typedef.hpp>
+#include <cassert>  // assert
+#include <vector>   // std::vector
 
-#include <algorithm>
-#include <cassert>
-#include <functional>
-#include <numeric>
-
-// TODO: check all, check matching sizes?
-// TODO: remove pointer overloads
-// TODO: add docu
-// TODO: add simd?
-
-template <typename T>
-[[nodiscard]] inline std::vector<T> operator-(const std::vector<T> &vec1, const std::vector<T> &vec2) {
-    std::vector<T> result(vec1.size());
-    for (std::size_t i = 0; i < vec1.size(); ++i) {
-        result[i] = vec1[i] - vec2[i];
+/**
+ * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION
+ * @brief Generate arithmetic element-wise operations using @p Op for [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) (and scalars).
+ * @details If available, OpenMP SIMD (`#pragma omp simd`) is used to speedup the computations.
+ *
+ * Given the variables
+ * @code
+ * std::vector<T> vec1 = \dots;
+ * std::vector<T> vec2 = \dots;
+ * T scalar = \dots;
+ * @endcode
+ * the following operations for @p Op are generated (e.g. Op is `+`):
+ * @code
+ * vec1 += vec2;   // operator+=(vector, vector)
+ * vec1 + vec2;    // operator+(vector, vector)
+ * vec1 += scalar; // operator+=(vector, scalar)
+ * vec1 + scalar;  // operator+(vector, scalar)
+ * scalar + vec1;  // operator+(scalar, vector)
+ * @endcode
+ * Also checks that both vectors have the same size.
+ * @param[in] Op the operator to generate
+ */
+// clang-format off
+#define PLSSVM_GENERATE_ARITHMETIC_OPERATION(Op)                                                     \
+    template <typename T>                                                                            \
+    inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const std::vector<T> &rhs) {          \
+        assert((lhs.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");            \
+                                                                                                     \
+        _Pragma("omp simd")                                                                          \
+        for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {                        \
+            lhs[i] Op##= rhs[i];                                                                     \
+        }                                                                                            \
+        return lhs;                                                                                  \
+    }                                                                                                \
+    template <typename T>                                                                            \
+    [[nodiscard]] inline std::vector<T> operator Op(std::vector<T> lhs, const std::vector<T> &rhs) { \
+        return lhs Op##= rhs;                                                                        \
+    }                                                                                                \
+    template <typename T>                                                                            \
+    inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const T rhs) {                        \
+        _Pragma("omp simd")                                                                          \
+        for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {                        \
+            lhs[i] Op##= rhs;                                                                        \
+        }                                                                                            \
+        return lhs;                                                                                  \
+    }                                                                                                \
+    template <typename T>                                                                            \
+    [[nodiscard]] inline std::vector<T> operator Op(std::vector<T> lhs, const T rhs) {               \
+        return lhs Op##= rhs;                                                                        \
+    }                                                                                                \
+    template <typename T>                                                                            \
+    [[nodiscard]] inline std::vector<T> operator Op(const T lhs, std::vector<T> rhs) {               \
+        return rhs Op##= lhs;                                                                        \
     }
-    return result;
-}
+// clang-format on
 
+namespace plssvm {
+
+// define arithmetic operations +-*/ on std::vector
+PLSSVM_GENERATE_ARITHMETIC_OPERATION(+)
+PLSSVM_GENERATE_ARITHMETIC_OPERATION(-)
+PLSSVM_GENERATE_ARITHMETIC_OPERATION(*)
+PLSSVM_GENERATE_ARITHMETIC_OPERATION(/)
+
+/**
+ * @brief Wrapper struct for overloading the dot product operator.
+ * @details Used to calculate the dot product \f$x^T \cdot y\f$ using
+ * @code
+ * std::vector<T> x = \dots;
+ * std::vector<T> y = \dots;
+ * T res = transposed{ x } * y;  // dot(x, y);
+ * @endcode
+ * @tparam T the value type
+ */
 template <typename T>
-[[nodiscard]] inline std::vector<T> operator+(const std::vector<T> &vec1, const std::vector<T> &vec2) {
-    std::vector<T> result(vec1.size());
-    for (std::size_t i = 0; i < vec1.size(); ++i) {
-        result[i] = (vec1[i] + vec2[i]);
+struct transposed {
+    /// The encapsulated vector.
+    const std::vector<T> &vec;
+};
+/**
+ * @brief Deduction guide needed for C++17.
+ */
+template <typename T>
+transposed(const std::vector<T> &) -> transposed<T>;
+
+/**
+ * @brief Calculate the dot product (\f$x^T \cdot y\f$) between both [`std::vector`](https://en.cppreference.com/w/cpp/container/vector).
+ * @details Uses OpenMP SIMD reduction to speedup the calculation.
+ * @tparam T the value type
+ * @param[in] lhs the first vector
+ * @param[in] rhs the second vector
+ * @return the dot product
+ */
+template <typename T>
+[[nodiscard]] inline T operator*(const transposed<T> &lhs, const std::vector<T> &rhs) {
+    assert((lhs.vec.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");
+
+    T val{};
+    #pragma omp simd reduction(+:val)
+    for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
+        val += lhs.vec[i] * rhs[i];
     }
-    return result;
+    return val;
 }
 
+/**
+ * @copydoc operator*(const transposed<T>&, const std::vector<T>&)
+ */
 template <typename T>
-inline std::vector<T> &operator+=(std::vector<T> &result, const std::vector<T> &vec2) {
-    for (std::size_t i = 0; i < result.size(); ++i) {
-        result[i] += vec2[i];
+[[nodiscard]] inline T dot(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    return transposed{ lhs } * rhs;
+}
+
+/**
+ * @brief Accumulate all elements in the [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) @p vec.
+ * @details Uses OpenMP SIMD reduction to speedup the calculation.
+ * @tparam T the value type
+ * @param[in] vec the elements to accumulate
+ * @return the sum of all elements
+ */
+template <typename T>
+[[nodiscard]] inline T sum(const std::vector<T> &vec) {
+    T val{};
+    #pragma omp simd reduction(+:val)
+    for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+        val += vec[i];
     }
-    return result;
+    return val;
 }
 
+/**
+ * @brief Calculates the squared Euclidean distance of both vectors: \f$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\f$.
+ * @details Uses OpenMP SIMD reduction to speedup the calculation.
+ * @tparam T the value type
+ * @param[in] lhs the first vector
+ * @param[in] rhs the second vector
+ * @return the squared euclidean distance
+ */
 template <typename T>
-inline T *operator+=(T *result, const std::vector<T> &vec2) {
-    for (std::size_t i = 0; i < vec2.size(); ++i) {
-        result[i] += vec2[i];
+[[nodiscard]] inline T squared_euclidean_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    assert((lhs.vec.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");
+
+    T val{};
+    #pragma omp simd reduction(+:val)
+    for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
+        val += (lhs[i] - rhs[i]) * (lhs[i] - rhs[i]);
     }
-    return result;
+    return val;
 }
 
-template <typename T>
-[[nodiscard]] inline std::vector<T> operator*(const std::vector<std::vector<T>> &matr, const std::vector<T> &vec) {
-    std::vector<T> result(matr.size(), 0.0);
-    for (std::size_t i = 0; i < matr.size(); ++i) {
-        for (std::size_t j = 0; j < vec.size(); ++j) {
-            result[i] += matr[i][j] * vec[j];
-        }
-    }
-    return result;
-}
+#undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
 
-template <typename T>
-[[nodiscard]] inline T operator*(const std::vector<T> &vec1, const std::vector<T> &vec2) {
-    T result = 0.0;
-    for (std::size_t i = 0; i < vec1.size(); ++i) {
-        result += vec1[i] * vec2[i];
-    }
-    return result;
-}
-
-template <typename T>
-[[nodiscard]] inline T operator*(T *vec1, const std::vector<T> &vec2) {
-    T result = 0.0;
-    for (std::size_t i = 0; i < vec2.size(); ++i) {
-        result += vec1[i] * vec2[i];
-    }
-    return result;
-}
-
-//template <typename T>
-//inline std::ostream &operator<<(std::ostream &out, const std::vector<T> &vec) {
-//    char buffer[20];
-//    for (std::size_t i = 0; i < vec.size(); ++i) {
-//        if (vec[i] != 0) {
-//            sprintf(buffer, "%i:%e ", i, vec[i]);
-//            out << buffer;
-//        }
-//    }
-//    return out;
-//}
-//
-//template <typename T>
-//inline std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<T>> &matr) {
-//    for (std::size_t i = 0; i < matr.size(); ++i) {
-//        out << matr[i] << '\n';
-//    }
-//    return out;
-//}
-
-template <typename T>
-[[nodiscard]] inline std::vector<T> operator*(const T &value, std::vector<T> vec) {
-    for (std::size_t i = 0; i < vec.size(); ++i) {
-        vec[i] *= value;
-    }
-    return vec;
-}
-
-template <typename T>
-[[nodiscard]] inline T operator*(const std::vector<T> &vec1, T *vec2) {
-    T result = 0.0;
-    for (std::size_t i = 0; i < vec1.size(); ++i) {
-        result += vec1[i] * vec2[i];
-    }
-    return result;
-}
-
-template <typename T>
-[[nodiscard]] inline std::vector<T> operator*(const std::vector<T> &vec, const T &value) {
-    return value * vec;
-}
-
-template <typename T>
-[[nodiscard]] inline std::vector<std::vector<T>> dot(const std::vector<T> &vec1, const std::vector<T> &vec2) {
-    std::vector<std::vector<T>> result(vec1.size(), std::vector<T>(vec1.size(), 0));
-    for (std::size_t i = 0; i < vec1.size(); ++i) {
-        for (std::size_t j = 0; j < vec1.size(); ++j) {
-            result[i][j] += vec1[i] * vec2[j];
-        }
-    }
-    return result;
-}
-
-template <typename T>
-inline std::vector<std::vector<T>> &operator-=(std::vector<std::vector<T>> &result, const std::vector<std::vector<T>> &matr) {
-    for (std::size_t i = 0; i < result.size(); ++i) {
-        for (std::size_t j = 0; j < result[0].size(); ++j) {
-            result[i][j] -= matr[i][j];
-        }
-    }
-    return result;
-}
-
-template <typename T>
-inline std::vector<std::vector<T>> &operator+=(std::vector<std::vector<T>> &result, const T &value) {
-    for (std::size_t i = 0; i < result.size(); ++i) {
-        for (std::size_t j = 0; j < result[0].size(); ++j) {
-            result[i][j] += value;
-        }
-    }
-    return result;
-}
-
-template <typename T>
-inline std::vector<T> &operator-=(std::vector<T> &result, const T &value) {
-    for (std::size_t i = 0; i < result.size(); ++i) {
-        result[i] -= value;
-    }
-    return result;
-}
-
-template <typename T>
-[[nodiscard]] inline T sum(std::vector<T> &vec) {
-    T result = 0;
-    for (std::size_t i = 0; i < vec.size(); ++i) {
-        result += vec[i];
-    }
-    return result;
-}
-
-template <typename T>
-[[nodiscard]] inline T mult(T *vec1, T *vec2, std::size_t dim) {
-    std::remove_const_t<T> result = 0.0;
-    for (std::size_t i = 0; i < dim; ++i) {
-        result += vec1[i] * vec2[i];
-    }
-    return result;
-}
-
-template <typename T>
-[[nodiscard]] inline T mult(const std::vector<T> &vec1, const std::vector<T> &vec2) {
-    assert((vec1.size() == vec2.size()) && "Sizes mismatch!");
-    return mult(vec1.data(), vec2.data(), vec1.size());
-}
-
-template <typename T>
-inline T *mult(T value, T *vec, std::size_t dim) {
-    for (std::size_t i = 0; i < dim; ++i) {
-        vec[i] *= value;
-    }
-    return vec;
-}
-
-template <typename T>
-inline std::vector<T> &mult(const T value, std::vector<T> &vec) {
-    mult(value, vec.data(), vec.size());
-    return vec;
-}
-
-template <typename T>
-[[nodiscard]] inline T *mult(T *vec, T val, std::size_t dim) {
-    return mult(val, vec, dim);
-}
-
-template <typename T>
-[[nodiscard]] inline T *add(T value, T *vec, std::size_t dim) {
-    for (std::size_t i = 0; i < dim; ++i) {
-        vec[i] += value;
-    }
-    return vec;
-}
-
-template <typename T>
-[[nodiscard]] inline T *add(T *vec1, T *vec2, std::size_t dim) {  // TODO: BBBBBAAAAADDDDDDD
-    T *result = new T[dim];
-    for (std::size_t i = 0; i < dim; ++i) {
-        result[i] = vec1[i] + vec2[i];
-    }
-    return result;
-}
-
-template <typename T>
-inline T *add(const T *vec1, const T *vec2, T *result, std::size_t dim) {
-    for (std::size_t i = 0; i < dim; ++i) {
-        result[i] = vec1[i] + vec2[i];
-    }
-    return result;
-}
-
-template <typename T>
-inline std::vector<T> &add(const std::vector<T> &vec1, const std::vector<T> &vec2, std::vector<T> &result) {
-    assert((vec1.size() == result.size()) && "Sizes mismatch!");
-    assert((vec2.size() == result.size()) && "Sizes mismatch!");
-    add(vec1.data(), vec2.data(), result.data(), result.size());
-    return result;
-}
-
-template <typename T>
-[[nodiscard]] inline T *add(T *vec, T value, std::size_t dim) {
-    return add(value, vec, dim);
-}
-
-template <typename T>
-inline std::vector<T> &operator+=(std::vector<T> &vec1, T *vec2) {
-    for (std::size_t i = 0; i < vec1.size(); ++i) {
-        vec1[i] += vec2[i];
-    }
-    return vec1;
-}
+}  // namespace plssvm

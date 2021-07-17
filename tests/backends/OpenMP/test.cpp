@@ -60,7 +60,7 @@ TEST(OpenMP, linear) {
     real_type correct = linear_kernel(x1, x2);
 
     real_type result_OpenMP = csvm_OpenMP.kernel_function(x1, x2);
-    real_type result2_OpenMP = csvm_OpenMP.kernel_function(x1.data(), x2.data(), size);
+    real_type result2_OpenMP = csvm_OpenMP.kernel_function(x1, x2);
 
     EXPECT_DOUBLE_EQ(correct, result_OpenMP);
     EXPECT_DOUBLE_EQ(correct, result2_OpenMP);

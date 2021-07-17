@@ -76,7 +76,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     std::vector<real_type> d(r);
 
     // delta = r.T * r
-    real_type delta = mult(r.data(), r.data(), r.size());
+    real_type delta = transposed{ r } * r;
     const real_type delta0 = delta;
 
     size_type run = 0;
@@ -90,8 +90,8 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         run_device_kernel(data_, Ad, d, 1);
         // kernel_linear(b, data_, datlast, q.data(), Ad, d.data(), dim, QA_cost_, 1 / cost_, 1);
 
-        const real_type alpha = delta / mult(d.data(), Ad.data(), d.size());
-        alpha_ += mult(alpha, d.data(), d.size());
+        const real_type alpha = delta / (transposed{ d } * Ad);
+        alpha_ += alpha * d;
 
         // r = b - (A * x)
         std::copy(b.begin(), b.end(), r.begin());
@@ -99,15 +99,15 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         run_device_kernel(data_, r, alpha_, -1);
         // kernel_linear(b, data_, datlast, q.data(), r, x.data(), dim, QA_cost_, 1 / cost_, -1);
 
-        delta = mult(r.data(), r.data(), r.size());
+        delta = transposed{ r } * r;
 
         // if we are exact enough stop CG iterations
         if (delta < eps * eps * delta0) {
             break;
         }
 
-        const real_type beta = -mult(r.data(), Ad.data(), b.size()) / mult(d.data(), Ad.data(), d.size());
-        add(mult(beta, d.data(), d.size()), r.data(), d.data(), d.size());
+        const real_type beta = -((transposed{ r } * Ad) / (transposed{ d } * Ad));  // mult(r.data(), Ad.data(), b.size()) / mult(d.data(), Ad.data(), d.size());
+        d = r + beta * d;                                                           // add(mult(beta, d.data(), d.size()), r.data(), d.data(), d.size());
     }
     if (print_info_) {
         fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);

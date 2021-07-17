@@ -9,6 +9,7 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/typedef.hpp"
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
@@ -221,7 +222,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     device_reduction(r_d, r);
 
     // delta = r.T * r
-    real_type delta = r * r;
+    real_type delta = transposed{ r } * r;
     const real_type delta0 = delta;
     std::vector<real_type> Ad(dept);
 
@@ -255,7 +256,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         device_reduction(Ad_d, Ad);
 
         // (alpha = delta_new / (d^T * q))
-        const real_type alpha_cd = delta / (d * Ad);
+        const real_type alpha_cd = delta / (transposed{ d } * Ad);
 
         // (x = x + alpha * d)
         x += alpha_cd * d;
@@ -285,14 +286,12 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
             device_reduction(r_d, r);
         } else {
             // r -= alpha_cd * Ad (r = r - alpha * q)
-            for (size_type index = 0; index < dept; ++index) {
-                r[index] -= alpha_cd * Ad[index];
-            }
+            r -= alpha_cd * Ad;
         }
 
         // (delta = r^T * r)
         const real_type delta_old = delta;
-        delta = r * r;
+        delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
             break;

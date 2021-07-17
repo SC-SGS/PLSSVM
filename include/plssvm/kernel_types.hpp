@@ -81,42 +81,6 @@ inline std::istream &operator>>(std::istream &in, kernel_type &kernel) {
 }
 
 /**
- * @brief Computes the value of the two arrays denoted by the pointers @p xi and @p xj using the kernel function determined at compile-time.
- * @tparam kernel the type of the kernel
- * @tparam real_type the type of the values
- * @tparam size_type unsigned integer type
- * @tparam Args additional parameters used in the respective kernel functions
- * @param[in] xi the first vector
- * @param[in] xj the second vector
- * @param[in] dim the length of both arrays
- * @param[in] args additional parameters
- * @return the value computed by the kernel function
- */
-template <kernel_type kernel, typename real_type, typename size_type, typename... Args>
-real_type kernel_function(const real_type *xi, const real_type *xj, const size_type dim, Args &&...args) {
-    if constexpr (kernel == kernel_type::linear) {
-        static_assert(sizeof...(args) == 0, "Illegal number of additional parameters!");
-        return mult(xi, xj, dim);
-    } else if constexpr (kernel == kernel_type::polynomial) {
-        static_assert(sizeof...(args) == 3, "Illegal number of additional parameters!");
-        auto degree = detail::get<0>(args...);
-        auto gamma = detail::get<1>(args...);
-        auto coef0 = detail::get<2>(args...);
-        return std::pow(gamma * mult(xi, xj, dim) + coef0, degree);
-    } else if constexpr (kernel == kernel_type::rbf) {
-        static_assert(sizeof...(args) == 1, "Illegal number of additional parameters!");
-        auto gamma = detail::get<0>(args...);
-        real_type temp = 0.0;
-        for (size_type i = 0; i < dim; ++i) {
-            temp += (xi[i] - xj[i]) * (xi[i] - xj[i]);
-        }
-        return std::exp(-gamma * temp);
-    } else {
-        static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
-    }
-}
-
-/**
  * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
  * @tparam real_type the type of the values
@@ -128,8 +92,24 @@ real_type kernel_function(const real_type *xi, const real_type *xj, const size_t
  */
 template <kernel_type kernel, typename real_type, typename... Args>
 real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, Args &&...args) {
-    assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
-    return kernel_function<kernel>(xi.data(), xj.data(), xi.size(), std::forward<Args>(args)...);
+    assert((xi.size() == xj.size()) && "Size mismatch!: xi.size() != xj.size()");
+
+    if constexpr (kernel == kernel_type::linear) {
+        static_assert(sizeof...(args) == 0, "Illegal number of additional parameters!");
+        return transposed{ xi } * xj;
+    } else if constexpr (kernel == kernel_type::polynomial) {
+        static_assert(sizeof...(args) == 3, "Illegal number of additional parameters!");
+        auto degree = detail::get<0>(args...);
+        auto gamma = detail::get<1>(args...);
+        auto coef0 = detail::get<2>(args...);
+        return std::pow(gamma * (transposed<real_type>{ xi } * xj) + coef0, degree);
+    } else if constexpr (kernel == kernel_type::rbf) {
+        static_assert(sizeof...(args) == 1, "Illegal number of additional parameters!");
+        auto gamma = detail::get<0>(args...);
+        return std::exp(-gamma * squared_euclidean_dist(xi, xj));
+    } else {
+        static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
+    }
 }
 
 }  // namespace plssvm

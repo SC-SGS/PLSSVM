@@ -238,15 +238,6 @@ class CSVM {
     //                                                          kernel functions                                                           //
     //*************************************************************************************************************************************//
     /**
-     * @brief Computes the value of the two arrays denoted by the pointers @p xi and @p xj using the kernel function specified during construction.
-     * @param[in] xi the first array
-     * @param[in] xj the seconds array
-     * @param[in] dim the length of both arrays
-     * @throws unsupported_kernel_type_exception if the kernel_type cannot be recognized
-     * @return the value computed by the kernel function
-     */
-    real_type kernel_function(const real_type *xi, const real_type *xj, size_type dim);
-    /**
      * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function specified during construction.
      * @param[in] xi the first vector
      * @param[in] xj the second vector

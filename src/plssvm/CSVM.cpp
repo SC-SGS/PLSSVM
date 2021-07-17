@@ -61,7 +61,7 @@ void CSVM<T>::learn() {
     // solve minimization
     alpha_ = solver_CG(b, num_features_, epsilon_, q);
     alpha_.emplace_back(-sum(alpha_));
-    bias_ = value_.back() - QA_cost_ * alpha_.back() - (q * alpha_);
+    bias_ = value_.back() - QA_cost_ * alpha_.back() - (transposed{ q } * alpha_);
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
@@ -85,23 +85,17 @@ void CSVM<T>::learn(const std::string &input_filename, const std::string &model_
 }
 
 template <typename T>
-auto CSVM<T>::kernel_function(const real_type *xi, const real_type *xj, const size_type dim) -> real_type {
+auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
     switch (kernel_) {
         case kernel_type::linear:
-            return plssvm::kernel_function<kernel_type::linear>(xi, xj, dim);
+            return plssvm::kernel_function<kernel_type::linear>(xi, xj);
         case kernel_type::polynomial:
-            return plssvm::kernel_function<kernel_type::polynomial>(xi, xj, dim, degree_, gamma_, coef0_);
+            return plssvm::kernel_function<kernel_type::polynomial>(xi, xj, degree_, gamma_, coef0_);
         case kernel_type::rbf:
-            return plssvm::kernel_function<kernel_type::rbf>(xi, xj, dim, gamma_);
+            return plssvm::kernel_function<kernel_type::rbf>(xi, xj, gamma_);
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
     }
-}
-
-template <typename T>
-auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
-    assert((xi.size() == xj.size()) && "Sizes in kernel function mismatch!");
-    return kernel_function(xi.data(), xj.data(), xi.size());
 }
 
 template <typename T>

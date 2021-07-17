@@ -199,7 +199,7 @@ TEST(BASE, linear) {
 
     MockCSVM csvm(plssvm::kernel_type::linear, degree, gamma, coef0, 1., 0.001, false);
     real_type result = csvm.kernel_function(x1, x2);
-    real_type result2 = csvm.kernel_function(x1.data(), x2.data(), size);
+    real_type result2 = csvm.kernel_function(x1, x2);
 
     EXPECT_DOUBLE_EQ(correct, result);
     EXPECT_DOUBLE_EQ(correct, result2);

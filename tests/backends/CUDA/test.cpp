@@ -61,7 +61,7 @@ TEST(CUDA, linear) {
     real_type correct = linear_kernel(x1, x2);
 
     real_type result_CUDA = csvm_CUDA.kernel_function(x1, x2);
-    real_type result2_CUDA = csvm_CUDA.kernel_function(x1.data(), x2.data(), size);
+    real_type result2_CUDA = csvm_CUDA.kernel_function(x1, x2);
 
     EXPECT_DOUBLE_EQ(correct, result_CUDA);
     EXPECT_DOUBLE_EQ(correct, result2_CUDA);
