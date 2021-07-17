@@ -1,6 +1,6 @@
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
 
-#include "plssvm/backends/CUDA/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
 
 namespace plssvm {
 

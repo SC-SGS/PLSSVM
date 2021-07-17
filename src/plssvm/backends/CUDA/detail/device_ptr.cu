@@ -1,4 +1,4 @@
-#include "plssvm/backends/CUDA/device_ptr.cuh"
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda_backend_exception
 
 #include "fmt/core.h"  // fmt::format

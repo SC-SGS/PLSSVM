@@ -1,7 +1,7 @@
 #pragma once
 
 #include "plssvm/CSVM.hpp"
-#include "plssvm/backends/CUDA/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
 #include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
