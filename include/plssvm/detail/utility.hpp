@@ -28,10 +28,10 @@ constexpr bool always_false_v = false;
  * @param[in] ts the values of the parameter pack
  * @return the @p I-th element of @p ts
  */
-template <std::size_t I, class... Ts>
-[[nodiscard]] decltype(auto) get(Ts &&...ts) {
-    static_assert(I < sizeof...(Ts), "Out-of-bounce access: too few elements in parameter pack!");
-    return std::get<I>(std::forward_as_tuple(ts...));
+template <std::size_t I, typename... Types>
+[[nodiscard]] constexpr decltype(auto) get(Types &&...args) noexcept {
+    static_assert(I < sizeof...(Types), "Out-of-bounce access!: too few elements in parameter pack");
+    return std::get<I>(std::forward_as_tuple(args...));
 }
 
 /**

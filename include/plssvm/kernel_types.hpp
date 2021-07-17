@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "plssvm/detail/operators.hpp"
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/detail/operators.hpp"  // dot product, plssvm::squared_euclidean_dist
+#include "plssvm/detail/utility.hpp"    // plssvm::detail::always_false_v
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
@@ -20,8 +20,7 @@
 #include <cmath>        // std::pow, std::exp
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream
-#include <string_view>  // std::string_view
-#include <utility>      // std::forward
+#include <string>       // std::string
 
 namespace plssvm {
 
@@ -95,17 +94,17 @@ real_type kernel_function(const std::vector<real_type> &xi, const std::vector<re
     assert((xi.size() == xj.size()) && "Size mismatch!: xi.size() != xj.size()");
 
     if constexpr (kernel == kernel_type::linear) {
-        static_assert(sizeof...(args) == 0, "Illegal number of additional parameters!");
+        static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         return transposed{ xi } * xj;
     } else if constexpr (kernel == kernel_type::polynomial) {
-        static_assert(sizeof...(args) == 3, "Illegal number of additional parameters!");
-        auto degree = detail::get<0>(args...);
-        auto gamma = detail::get<1>(args...);
-        auto coef0 = detail::get<2>(args...);
+        static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
+        const auto degree = static_cast<real_type>(detail::get<0>(args...));
+        const auto gamma = static_cast<real_type>(detail::get<1>(args...));
+        const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
         return std::pow(gamma * (transposed<real_type>{ xi } * xj) + coef0, degree);
     } else if constexpr (kernel == kernel_type::rbf) {
-        static_assert(sizeof...(args) == 1, "Illegal number of additional parameters!");
-        auto gamma = detail::get<0>(args...);
+        static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
+        const auto gamma = static_cast<real_type>(detail::get<0>(args...));
         return std::exp(-gamma * squared_euclidean_dist(xi, xj));
     } else {
         static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");

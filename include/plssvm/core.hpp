@@ -21,8 +21,11 @@
 /// The main namespace containing all API functions.
 namespace plssvm {}
 
-/// Namespace containing implementation details and **should not** be directly used by users.
-namespace plssvm::detail {}
-
 /// Namespace containing versioning information.
 namespace plssvm::version {}
+
+/// Namespace containing implementation details. **Should not** directly be used by users.
+namespace plssvm::detail {}
+
+/// Namespace containing CUDA specific implementation details. **Should not** directly be used by users.
+namespace plssvm::detail::cuda {}

@@ -11,11 +11,11 @@
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <algorithm>    // std::transform
-#include <cctype>       // std::tolower
-#include <istream>      // std::istream
-#include <ostream>      // std::ostream
-#include <string_view>  // std::string_view
+#include <algorithm>  // std::transform
+#include <cctype>     // std::tolower
+#include <istream>    // std::istream
+#include <ostream>    // std::ostream
+#include <string>     // std::string
 
 namespace plssvm {
 

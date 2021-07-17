@@ -9,16 +9,19 @@
 
 #pragma once
 
-#include "fast_float/fast_float.h"  // fast_float::from_chars (floating points)
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
+
+#include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format
 
 #include <algorithm>     // std::min
-#include <charconv>      // std::from_chars (integral types)
+#include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error
 #include <string>        // std::char_traits
 #include <string_view>   // std::string_view
 #include <system_error>  // std:errc
-#include <type_traits>   // std::is_floating_point_v, std::is_integral_v, std::is_arithmetic_v
+#include <type_traits>   // std::is_floating_point_v, std::is_integral_v
 
 namespace plssvm::detail {
 
@@ -83,29 +86,30 @@ namespace plssvm::detail {
  */
 template <typename T, typename Exception = std::runtime_error>
 [[nodiscard]] inline T convert_to(std::string_view str) {
+    // select conversion function depending on the provided type
+    const auto convert_from_chars = [](const std::string_view sv, auto &val) {
+        if constexpr (std::is_floating_point_v<T>) {
+            // convert the string to a floating point value
+            return fast_float::from_chars(sv.data(), sv.data() + sv.size(), val);
+        } else if constexpr (std::is_integral_v<T>) {
+            // convert the string to an integral value
+            return std::from_chars(sv.data(), sv.data() + sv.size(), val);
+        } else {
+            // can't convert the string to a non-arithmetic type
+            static_assert(always_false_v<T>, "Can only convert arithmetic types!");
+        }
+    };
+
     // remove leading whitespaces
     str = trim_left(str);
 
-    if constexpr (std::is_floating_point_v<T>) {
-        // convert the string to a floating point value
-        T val;
-        auto res = fast_float::from_chars(str.data(), str.data() + str.size(), val);
-        if (res.ec != std::errc{}) {
-            throw Exception{ fmt::format("Can't convert '{}' to a floating point value!", str) };
-        }
-        return val;
-    } else if constexpr (std::is_integral_v<T>) {
-        // convert the string to an integral value
-        T val;
-        auto res = std::from_chars(str.data(), str.data() + str.size(), val);
-        if (res.ec != std::errc{}) {
-            throw Exception{ fmt::format("Can't convert '{}' to an integral value!", str) };
-        }
-        return val;
-    } else {
-        // can't convert the string to a non-arithmetic type
-        static_assert(std::is_arithmetic_v<T>, "Can only convert arithmetic types!");
+    // convert string to value fo type T
+    T val;
+    auto res = convert_from_chars(str, val);
+    if (res.ec != std::errc{}) {
+        throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, plssvm::detail::arithmetic_type_name<T>()) };
     }
+    return val;
 }
 
 /**
