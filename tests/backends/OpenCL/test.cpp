@@ -108,7 +108,7 @@ TEST(OpenCL, kernel_linear) {
 
     const real_type QA_cost = linear_kernel(csvm.data_.back(), csvm.data_.back()) + 1 / cost;
 
-    const size_t boundary_size = plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
+    const size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear);
     csvm_OpenCL.parse_libsvm(TESTFILE);
     csvm_OpenCL.setup_data_on_device();
@@ -129,8 +129,8 @@ TEST(OpenCL, kernel_linear) {
                                                ["DEVICES"][devices[0].deviceName];
     json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
 
-    kernelConfig.replaceTextAttr("INTERNALBLOCK_SIZE", std::to_string(plssvm::INTERNALBLOCK_SIZE));
-    kernelConfig.replaceTextAttr("THREADBLOCK_SIZE", std::to_string(plssvm::THREADBLOCK_SIZE));
+    kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(plssvm::INTERNAL_BLOCK_SIZE));
+    kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(plssvm::THREAD_BLOCK_SIZE));
     cl_kernel kernel = csvm_OpenCL.manager.build_kernel(kernel_src, devices[0], kernelConfig, "kernel_linear");
 
     opencl::DevicePtrOpenCL<real_type> q_cl(devices[0], q_.size());
@@ -143,13 +143,13 @@ TEST(OpenCL, kernel_linear) {
     x_cl.resize(dept + boundary_size);
     r_cl.resize(dept + boundary_size);
     const int Ncols = csvm_OpenCL.get_num_features();
-    const int Nrows = dept + plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
+    const int Nrows = dept + plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
 
-    std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE))),
-                                   static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE))) };
-    std::vector<size_t> block_size{ plssvm::THREADBLOCK_SIZE, plssvm::THREADBLOCK_SIZE };
-    grid_size[0] *= plssvm::THREADBLOCK_SIZE;
-    grid_size[1] *= plssvm::THREADBLOCK_SIZE;
+    std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))),
+                                   static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))) };
+    std::vector<size_t> block_size{ plssvm::THREAD_BLOCK_SIZE, plssvm::THREAD_BLOCK_SIZE };
+    grid_size[0] *= plssvm::THREAD_BLOCK_SIZE;
+    grid_size[1] *= plssvm::THREAD_BLOCK_SIZE;
 
     for (const real_type sgn : { -1.0, 1.0 }) {
         std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);

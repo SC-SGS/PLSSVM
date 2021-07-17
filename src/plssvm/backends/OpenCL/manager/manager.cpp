@@ -186,11 +186,11 @@ cl_kernel manager_t::build_kernel(const std::string &source, device_t &device, j
         build_opts = "-cl-opt-disable";  // -g
     }
 
-    if (kernelConfiguration.contains("THREADBLOCK_SIZE")) {
-        build_opts += " -DTHREADBLOCK_SIZE=" + kernelConfiguration["THREADBLOCK_SIZE"].get();
+    if (kernelConfiguration.contains("THREAD_BLOCK_SIZE")) {
+        build_opts += " -DTHREADBLOCK_SIZE=" + kernelConfiguration["THREAD_BLOCK_SIZE"].get();
     }
-    if (kernelConfiguration.contains("INTERNALBLOCK_SIZE")) {
-        build_opts += " -DINTERNALBLOCK_SIZE=" + kernelConfiguration["INTERNALBLOCK_SIZE"].get();
+    if (kernelConfiguration.contains("INTERNAL_BLOCK_SIZE")) {
+        build_opts += " -DINTERNALBLOCK_SIZE=" + kernelConfiguration["INTERNAL_BLOCK_SIZE"].get();
     }
     build_opts += " -Dreal_t=" + parameters["INTERNAL_PRECISION"].get();
     if (verbose) {

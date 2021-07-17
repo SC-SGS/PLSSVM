@@ -62,7 +62,7 @@ template <typename T>
 void CUDA_CSVM<T>::setup_data_on_device() {
     // initialize data_last on devices
     for (int device = 0; device < num_devices_; ++device) {
-        data_last_d_[device] = cuda::device_ptr<real_type>{ num_features_ + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE, device };
+        data_last_d_[device] = cuda::device_ptr<real_type>{ num_features_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, device };
     }
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
@@ -72,23 +72,23 @@ void CUDA_CSVM<T>::setup_data_on_device() {
 
     // initialize data on devices
     for (int device = 0; device < num_devices_; ++device) {
-        data_d_[device] = cuda::device_ptr<real_type>{ num_features_ * (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE), device };
+        data_d_[device] = cuda::device_ptr<real_type>{ num_features_ * (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), device };
     }
     // transform 2D to 1D data
-    const std::vector<real_type> transformed_data = base_type::transform_data(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE);
+    const std::vector<real_type> transformed_data = base_type::transform_data(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
-        data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE));
+        data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
     }
 }
 
 template <typename T>
 auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
     const size_type dept = num_data_points_ - 1;
-    const size_type boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+    const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const size_type dept_all = dept + boundary_size;
     const int Ncols = num_features_;
-    const int Nrows = dept + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;  // TODO: size_type?
+    const int Nrows = dept + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;  // TODO: size_type?
 
     std::vector<cuda::device_ptr<real_type>> q_d(num_devices_);
     for (int device = 0; device < num_devices_; ++device) {
@@ -101,8 +101,8 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 
         const int start = device * Ncols / num_devices_;
         const int end = (device + 1) * Ncols / num_devices_;
-        const size_type grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREADBLOCK_SIZE)));
-        const size_type block = std::min<size_type>(THREADBLOCK_SIZE, dept);
+        const size_type grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
+        const size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept);
 
         switch (kernel_) {
             case kernel_type::linear:
@@ -128,11 +128,11 @@ template <typename T>
 void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::device_ptr<real_type> &q_d, cuda::device_ptr<real_type> &r_d, const cuda::device_ptr<real_type> &x_d, const cuda::device_ptr<real_type> &data_d, const int sign) {
     // TODO: size_type?
     const int Ncols = num_features_;
-    const int Nrows = num_data_points_ - 1 + THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+    const int Nrows = num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
 
-    const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREADBLOCK_SIZE * INTERNALBLOCK_SIZE)));
+    const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE)));
     dim3 grid{ grid_dim, grid_dim };
-    dim3 block{ static_cast<unsigned int>(THREADBLOCK_SIZE), static_cast<unsigned int>(THREADBLOCK_SIZE) };
+    dim3 block{ static_cast<unsigned int>(THREAD_BLOCK_SIZE), static_cast<unsigned int>(THREAD_BLOCK_SIZE) };
 
     const int start = device * Ncols / num_devices_;
     const int end = (device + 1) * Ncols / num_devices_;
@@ -180,7 +180,7 @@ template <typename T>
 auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     // TODO: member variables!
     const size_type dept = num_data_points_ - 1;
-    const size_type boundary_size = THREADBLOCK_SIZE * INTERNALBLOCK_SIZE;
+    const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const size_type dept_all = dept + boundary_size;
 
     std::vector<real_type> x(dept, 1.0);

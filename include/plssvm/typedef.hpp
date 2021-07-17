@@ -12,12 +12,20 @@
 namespace plssvm {
 
 /// Used for internal caching.
-constexpr unsigned int THREADBLOCK_SIZE = 16;
-/// Used for internal caching.
-constexpr unsigned int INTERNALBLOCK_SIZE = 6;
+#if defined(PLSSVM_THREAD_BLOCK_SIZE)
+constexpr unsigned int THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
+#else
+constexpr unsigned int THREAD_BLOCK_SIZE = 16;
+#endif
 
-// sanity checks TODO: check CUDA limitations
-static_assert(THREADBLOCK_SIZE > 0, "THREADBLOCK_SIZE must be greater than 0!");
-static_assert(INTERNALBLOCK_SIZE > 0, "INTERNALBLOCK_SIZE must be greater than 0!");
+/// Used for internal caching.
+#if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
+constexpr unsigned int INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
+#else
+constexpr unsigned int INTERNAL_BLOCK_SIZE = 6;
+#endif
+
+static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
+static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
 
 }  // namespace plssvm

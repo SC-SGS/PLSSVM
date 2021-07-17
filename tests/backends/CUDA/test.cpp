@@ -105,7 +105,7 @@ TEST(CUDA, kernel_linear) {
 
     const real_type QA_cost = linear_kernel(csvm.data_.back(), csvm.data_.back()) + 1 / cost;
 
-    const size_t boundary_size = plssvm::THREADBLOCK_SIZE * plssvm::INTERNALBLOCK_SIZE;
+    const size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
     csvm_CUDA.parse_libsvm(TESTFILE);
     csvm_CUDA.setup_data_on_device();

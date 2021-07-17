@@ -107,19 +107,19 @@ __kernel void kernel_linear(__global const real_type *q, __global real_type *ret
 }
 
 // __kernel void kernel_linear(__global  const real_t *q, __global __read_write real_t *ret, __global  const real_t *d, __global  const real_t *data_d,  const real_t QA_cost,  const real_t cost, const int Ncols,  const int Nrows,  const int add,  const int start_block_x,  const int start_block_y){
-// 	int i =  get_group_id(0) * (get_local_size(0) * INTERNALBLOCK_SIZE);
-// 	int j =  get_group_id(1) * (get_local_size(1) * INTERNALBLOCK_SIZE);
+// 	int i =  get_group_id(0) * (get_local_size(0) * INTERNAL_BLOCK_SIZE);
+// 	int j =  get_group_id(1) * (get_local_size(1) * INTERNAL_BLOCK_SIZE);
 
 // 	__private real_t matr = 0.0;
 
 // 	if(i >= j){
-// 		i += 	get_local_id(0) * INTERNALBLOCK_SIZE;
-// 		j += 	get_local_id(1) * INTERNALBLOCK_SIZE;
-// 		#pragma unroll(INTERNALBLOCK_SIZE)
-// 		for(int k = 0; k < INTERNALBLOCK_SIZE ; ++k){
+// 		i += 	get_local_id(0) * INTERNAL_BLOCK_SIZE;
+// 		j += 	get_local_id(1) * INTERNAL_BLOCK_SIZE;
+// 		#pragma unroll(INTERNAL_BLOCK_SIZE)
+// 		for(int k = 0; k < INTERNAL_BLOCK_SIZE ; ++k){
 // 			real_t ret_k = 0;
-// 			#pragma unroll(INTERNALBLOCK_SIZE)
-// 			for(int l = i; l < INTERNALBLOCK_SIZE + i; ++l){
+// 			#pragma unroll(INTERNAL_BLOCK_SIZE)
+// 			for(int l = i; l < INTERNAL_BLOCK_SIZE + i; ++l){
 // 				matr = 0;
 // 				for(int vec_index = 0; vec_index < Ncols * Nrows ; vec_index += Nrows){
 // 					matr += data_d[vec_index + l] * data_d[vec_index + j];
