@@ -3,9 +3,6 @@ set(PLSSVM_OPENCL_TEST_NAME OpenCL_tests)
 add_executable(
   ${PLSSVM_OPENCL_TEST_NAME}
   test.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/parameter.cpp
   ../compare.cpp
   ) # TODO: link against svm as library
 
@@ -23,8 +20,8 @@ target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TESTPATH="${PROJEC
 target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TESTFILE="${TESTFILE}")
 
 
-get_directory_property(PLSSVM_OpenCL_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenCL DEFINITION PLSSVM_OpenCL_BACKEND_LIBRARY_NAME)
-target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME})
+get_directory_property(PLSSVM_OPENCL_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenCL DEFINITION PLSSVM_OPENCL_BACKEND_LIBRARY_NAME)
+target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
 
 include(GoogleTest)
 gtest_discover_tests(${PLSSVM_OPENCL_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)

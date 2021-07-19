@@ -3,9 +3,6 @@ set(PLSSVM_CUDA_TEST_NAME CUDA_tests)
 add_executable(
   ${PLSSVM_CUDA_TEST_NAME}
   test.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/parameter.cpp
   ../compare.cpp
   ) # TODO: link against svm as library
 

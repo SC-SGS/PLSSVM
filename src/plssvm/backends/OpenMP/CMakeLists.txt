@@ -13,18 +13,19 @@ endif()
 message(STATUS "OpenMP backend enabled.")
 
 # explicitly set sources
-set(PLSSVM_OpenMP_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/OpenMP_CSVM.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/svm-kernel.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/../../parameter.cpp
+set(PLSSVM_OPENMP_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/OpenMP_CSVM.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm-kernel.cpp
 )
 
 # set target properties
-set(PLSSVM_OpenMP_BACKEND_LIBRARY_NAME svm-OpenMP)
-add_library(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OpenMP_SOURCES})
-target_include_directories(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
-target_include_directories(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
-target_include_directories(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
-target_link_libraries(${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME} PUBLIC fmt::fmt)
+set(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME svm-OpenMP)
+add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OPENMP_SOURCES})
+target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
+
+# link base library against OpenMP library
+target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
+
+# link OpenMP library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OpenMP_BACKEND_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})

@@ -2,45 +2,45 @@
 find_package(OpenCL)
 
 if(NOT OpenCL_FOUND)
-  if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "ON")
-    message(FATAL_ERROR "Cannot find requested backend: OpenCL!")
-  endif()
-  if (PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "AUTO")
-    message(STATUS "OpenCL backend not found.")
-    return()
-  endif()
+    if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "ON")
+        message(FATAL_ERROR "Cannot find requested backend: OpenCL!")
+    endif()
+    if (PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "AUTO")
+        message(STATUS "OpenCL backend not found.")
+        return()
+    endif()
 endif()
 message(STATUS "OpenCL backend enabled.")
 
 
 # explicitly set sources
-set(PLSSVM_OpenCL_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
-  ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
-  ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/run_kernel.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/configuration.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/platform_wrapper.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/dict_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/id_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/json.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/json_exception.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/list_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/manager/json/text_node.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/../../parameter.cpp
+set(PLSSVM_OPENCL_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
+    ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
+    ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/run_kernel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/configuration.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/platform_wrapper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/dict_node.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/id_node.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/json.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/json_exception.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/list_node.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/node.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/json/text_node.cpp
 )
 
 # set target properties
-set(PLSSVM_OpenCL_BACKEND_LIBRARY_NAME svm-OCL)
-add_library(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OpenCL_SOURCES})
-target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
-target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
-target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
-target_link_libraries(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} fmt::fmt)
-target_include_directories(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
-target_link_libraries(${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME} OpenCL)
+set(PLSSVM_OPENCL_BACKEND_LIBRARY_NAME svm-OCL)
+add_library(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OPENCL_SOURCES})
+target_include_directories(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
+target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
+
+# link base library against OpenCL library
+target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
+
+# link OpenMP library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OpenCL_BACKEND_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})

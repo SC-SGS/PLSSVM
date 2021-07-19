@@ -8,10 +8,9 @@ set(gtest_force_shared_crt
     CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(
-  main_tests
-  test.cpp backends/compare.cpp ${PROJECT_SOURCE_DIR}/src/plssvm/IO.cpp
-  ${PROJECT_SOURCE_DIR}/src/plssvm/CSVM.cpp) # TODO: link against
+add_executable(main_tests test.cpp backends/compare.cpp ) # TODO: link against
+target_link_libraries(main_tests ${PLSSVM_BASE_LIBRARY_NAME})
+
 # svm as library
 target_link_libraries(main_tests gtest_main)
 target_link_libraries(main_tests gmock)
