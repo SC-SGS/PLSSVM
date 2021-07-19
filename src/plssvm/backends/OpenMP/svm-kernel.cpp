@@ -3,14 +3,14 @@
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 
 #include <cstddef>  // std::size_t
-#include <vector>   // std::vector
-
+#include <iostream>
+#include <vector>  // std::vector
 namespace plssvm::openmp {
 
 constexpr std::size_t BLOCK_SIZE = 64;  // TODO: move to typedef
 
 template <typename real_type>
-void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int add) {
+void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const int add) {
     using size_type = std::size_t;
 
     const std::vector<real_type> &data_last = data.back();
@@ -20,36 +20,28 @@ void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::
     for (size_type i = 0; i < dept; i += BLOCK_SIZE) {
         for (size_type j = 0; j < dept; j += BLOCK_SIZE) {
             for (size_type ii = 0; ii < BLOCK_SIZE && ii + i < dept; ++ii) {
+                real_type ret_iii = 0.0;
                 for (size_type jj = 0; jj < BLOCK_SIZE && jj + j < dept; ++jj) {
-                    if (ii + i > jj + j) {
-                        const real_type temp = kernel_function<kernel_type::linear>(data[ii + i], data[jj + j])
-                                               - kernel_function<kernel_type::linear>(data_last, data[jj + j]);
-                        #pragma omp atomic
-                        ret[jj + j] += temp * d[ii + i] * add;
-                        #pragma omp atomic
-                        ret[ii + i] += temp * d[jj + j] * add;
+                    if (ii + i >= jj + j) {
+                        const real_type temp = (kernel_function<kernel_type::linear>(data[ii + i], data[jj + j]) + QA_cost - q[ii + i] - q[jj + j]) * add;
+                        if (ii + i == jj + j) {
+                            ret_iii += (temp + cost * add) * d[ii + i];
+                        } else {
+                            ret_iii += temp * d[jj + j];
+                            #pragma omp atomic
+                            ret[jj + j] += temp * d[ii + i];
+                        }
                     }
                 }
+                #pragma omp atomic
+                ret[ii + i] += ret_iii;
             }
-        }
-    }
-
-    #pragma omp parallel for schedule(dynamic, 8)
-    for (size_type i = 0; i < dept; ++i) {
-        const real_type kernel_dat_and_cost = kernel_function<kernel_type::linear>(data_last, data[i]) - QA_cost;
-        #pragma omp atomic
-        ret[i] += (kernel_function<kernel_type::linear>(data[i], data[i]) - kernel_function<kernel_type::linear>(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * add;
-        for (size_type j = 0; j < i; ++j) {
-            #pragma omp atomic
-            ret[j] -= kernel_dat_and_cost * add * d[i];
-            #pragma omp atomic
-            ret[i] -= kernel_dat_and_cost * add * d[j];
         }
     }
 }
 
-template void device_kernel_linear(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const float, const float, const int);
-template void device_kernel_linear(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const double, const double, const int);
+template void device_kernel_linear(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const int);
+template void device_kernel_linear(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const int);
 }  // namespace plssvm::openmp
 
 // TODO: look at further optimizations

@@ -36,11 +36,11 @@ auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void OpenMP_CSVM<T>::run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const int add) {
+void OpenMP_CSVM<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const int add) {
     // TODO: implement other kernels
     switch (kernel_) {
         case kernel_type::linear:
-            openmp::device_kernel_linear(data, ret, d, QA_cost_, 1 / cost_, add);
+            openmp::device_kernel_linear(q, ret, d, data, QA_cost_, 1 / cost_, add);
             break;
         case kernel_type::polynomial:
             openmp::device_kernel_poly(data, ret, d, QA_cost_, 1 / cost_, add, gamma_, coef0_, degree_);
@@ -64,7 +64,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     std::vector<real_type> r(b);
 
     // solve: r = b - (A * alpha_)
-    run_device_kernel(data_, r, alpha_, -1);
+    run_device_kernel(q, r, alpha_, data_, -1);
 
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
@@ -80,7 +80,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         }
         // Ad = A * d
         std::fill(Ad.begin(), Ad.end(), 0.0);
-        run_device_kernel(data_, Ad, d, 1);
+        run_device_kernel(q, Ad, d, data_, 1);
 
         // (alpha = delta_new / (d^T * q))
         const real_type alpha_cd = delta / (transposed{ d } * Ad);
@@ -92,7 +92,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         // r = b
         r = b;
         // r -= A * x
-        run_device_kernel(data_, r, alpha_, -1);
+        run_device_kernel(q, r, alpha_, data_, -1);
 
         // (delta = r^T * r)
         const real_type delta_old = delta;

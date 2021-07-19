@@ -74,12 +74,13 @@ class OpenMP_CSVM : public CSVM<T> {
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.
-     * @param[in] data the data
+     * @param[in] q the `q` vector
      * @param[out] ret the result vector
      * @param[in] d the right-hand side
+     * @param[in] data the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, int add);
+    void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, int add);
 };
 
 extern template class OpenMP_CSVM<float>;
