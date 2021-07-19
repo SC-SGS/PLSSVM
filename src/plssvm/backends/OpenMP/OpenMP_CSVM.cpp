@@ -57,27 +57,21 @@ template <typename T>
 auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     alpha_.resize(b.size(), 1.0);
     const size_type dept = b.size();
-    // TODO: compare with CUDA
-
-    //    real_type *datlast = &data_.back()[0];
-    //    const size_type dim = data_.back().size();
 
     // sanity checks
-    // assert((dim == num_features_) && "Size mismatch: dim != num_features_");
     assert((dept == num_data_points_ - 1) && "Size mismatch: dept != num_data_points_ - 1");
 
-    // solve: r = b - (A * x)
     std::vector<real_type> r(b);
-    std::vector<real_type> ones(b.size(), 1.0);
 
-    run_device_kernel(data_, r, ones, -1);
-    // kernel_linear(b, data_, datlast, q.data(), r, ones.data(), dim, QA_cost_, 1 / cost_, -1);
-
-    std::vector<real_type> d(r);
+    // solve: r = b - (A * alpha_)
+    run_device_kernel(data_, r, alpha_, -1);
 
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
     const real_type delta0 = delta;
+    std::vector<real_type> Ad(dept);
+
+    std::vector<real_type> d(r);
 
     size_type run = 0;
     for (; run < imax; ++run) {
@@ -85,29 +79,33 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
         // Ad = A * d
-        std::vector<real_type> Ad(dept, 0.0);
-
+        std::fill(Ad.begin(), Ad.end(), 0.0);
         run_device_kernel(data_, Ad, d, 1);
-        // kernel_linear(b, data_, datlast, q.data(), Ad, d.data(), dim, QA_cost_, 1 / cost_, 1);
 
-        const real_type alpha = delta / (transposed{ d } * Ad);
-        alpha_ += alpha * d;
+        // (alpha = delta_new / (d^T * q))
+        const real_type alpha_cd = delta / (transposed{ d } * Ad);
 
-        // r = b - (A * x)
-        std::copy(b.begin(), b.end(), r.begin());
+        // (x = x + alpha * d)
+        alpha_ += alpha_cd * d;
 
+        // (r = b - A * x)
+        // r = b
+        r = b;
+        // r -= A * x
         run_device_kernel(data_, r, alpha_, -1);
-        // kernel_linear(b, data_, datlast, q.data(), r, x.data(), dim, QA_cost_, 1 / cost_, -1);
 
+        // (delta = r^T * r)
+        const real_type delta_old = delta;
         delta = transposed{ r } * r;
-
         // if we are exact enough stop CG iterations
-        if (delta < eps * eps * delta0) {
+        if (delta <= eps * eps * delta0) {
             break;
         }
 
-        const real_type beta = -((transposed{ r } * Ad) / (transposed{ d } * Ad));  // mult(r.data(), Ad.data(), b.size()) / mult(d.data(), Ad.data(), d.size());
-        d = r + beta * d;                                                           // add(mult(beta, d.data(), d.size()), r.data(), d.data(), d.size());
+        // (beta = delta_new / delta_old)
+        real_type beta = delta / delta_old;
+        // d = beta * d + r
+        d = beta * d + r;
     }
     if (print_info_) {
         fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
