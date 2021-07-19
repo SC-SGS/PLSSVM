@@ -152,7 +152,7 @@ template <typename T>
  */
 template <typename T>
 [[nodiscard]] inline T squared_euclidean_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
-    assert((lhs.vec.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");
+    assert((lhs.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");
 
     T val{};
     #pragma omp simd reduction(+:val)
