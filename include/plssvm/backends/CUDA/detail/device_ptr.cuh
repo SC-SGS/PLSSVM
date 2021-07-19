@@ -12,7 +12,6 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-// TODO: correct names (including doxygen comments), correct file, exception file?
 namespace plssvm::detail::cuda {
 
 /**
