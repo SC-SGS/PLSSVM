@@ -24,9 +24,9 @@ constexpr bool always_false_v = false;
 /**
  * @brief Get the @p I-th element of the parameter pack @p ts.
  * @tparam I the index of the element to get
- * @tparam Ts the types inside the parameter pack
- * @param[in] ts the values of the parameter pack
- * @return the @p I-th element of @p ts
+ * @tparam Types the types inside the parameter pack
+ * @param[in] args the values of the parameter pack
+ * @return the @p I-th element of @p args
  */
 template <std::size_t I, typename... Types>
 [[nodiscard]] constexpr decltype(auto) get(Types &&...args) noexcept {
