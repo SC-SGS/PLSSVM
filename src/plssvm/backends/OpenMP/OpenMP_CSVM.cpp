@@ -37,16 +37,15 @@ auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
 
 template <typename T>
 void OpenMP_CSVM<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const int add) {
-    // TODO: implement other kernels
     switch (kernel_) {
         case kernel_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost_, 1 / cost_, add);
             break;
         case kernel_type::polynomial:
-            openmp::device_kernel_poly(data, ret, d, QA_cost_, 1 / cost_, add, gamma_, coef0_, degree_);
+            openmp::device_kernel_poly(q, ret, d, data, QA_cost_, 1 / cost_, add, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            openmp::device_kernel_radial(data, ret, d, QA_cost_, 1 / cost_, add, gamma_);
+            openmp::device_kernel_radial(q, ret, d, data, QA_cost_, 1 / cost_, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
