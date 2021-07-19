@@ -16,7 +16,7 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
     const std::vector<real_type> &data_last = data.back();
     const size_type dept = d.size();
 
-    #pragma omp parallel for collapse(2) schedule(dynamic, 8)
+    #pragma omp parallel for collapse(2)
     for (size_type i = 0; i < dept; i += BLOCK_SIZE) {
         for (size_type j = 0; j < dept; j += BLOCK_SIZE) {
             for (size_type ii = 0; ii < BLOCK_SIZE && ii + i < dept; ++ii) {
