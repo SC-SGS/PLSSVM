@@ -5,12 +5,12 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm {
+namespace plssvm::openmp {
 
-constexpr unsigned int BLOCK_SIZE = 64;  // TODO: move to typedef
+constexpr std::size_t BLOCK_SIZE = 64;  // TODO: move to typedef
 
 template <typename real_type>
-void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int sign) {
+void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const real_type QA_cost, const real_type cost, const int add) {
     using size_type = std::size_t;
 
     const std::vector<real_type> &data_last = data.back();
@@ -25,9 +25,9 @@ void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::
                         const real_type temp = kernel_function<kernel_type::linear>(data[ii + i], data[jj + j])
                                                - kernel_function<kernel_type::linear>(data_last, data[jj + j]);
                         #pragma omp atomic
-                        ret[jj + j] += temp * d[ii + i] * sign;
+                        ret[jj + j] += temp * d[ii + i] * add;
                         #pragma omp atomic
-                        ret[ii + i] += temp * d[jj + j] * sign;
+                        ret[ii + i] += temp * d[jj + j] * add;
                     }
                 }
             }
@@ -41,16 +41,16 @@ void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::
         ret[i] += (kernel_function<kernel_type::linear>(data[i], data[i]) - kernel_function<kernel_type::linear>(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * sign;
         for (size_type j = 0; j < i; ++j) {
             #pragma omp atomic
-            ret[j] -= kernel_dat_and_cost * sign * d[i];
+            ret[j] -= kernel_dat_and_cost * add * d[i];
             #pragma omp atomic
-            ret[i] -= kernel_dat_and_cost * sign * d[j];
+            ret[i] -= kernel_dat_and_cost * add * d[j];
         }
     }
 }
 
 template void device_kernel_linear(const std::vector<std::vector<float>> &, std::vector<float> &, const std::vector<float> &, const float, const float, const int);
 template void device_kernel_linear(const std::vector<std::vector<double>> &, std::vector<double> &, const std::vector<double> &, const double, const double, const int);
-}  // namespace plssvm
+}  // namespace plssvm::openmp
 
 // TODO: look at further optimizations
 // void kernel_linear(std::tuple<int,int> block, std::tuple<int,int> blockDim,real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add){

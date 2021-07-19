@@ -1,9 +1,9 @@
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"  // plssvm::kernel_type
-#include "plssvm/detail/operators.hpp"
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
+#include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
@@ -36,17 +36,17 @@ auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void OpenMP_CSVM<T>::run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const int sign) {
+void OpenMP_CSVM<T>::run_device_kernel(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &ret, const std::vector<real_type> &d, const int add) {
     // TODO: implement other kernels
     switch (kernel_) {
         case kernel_type::linear:
-            device_kernel_linear(data, ret, d, QA_cost_, 1 / cost_, sign);
+            openmp::device_kernel_linear(data, ret, d, QA_cost_, 1 / cost_, add);
             break;
         case kernel_type::polynomial:
-            device_kernel_poly(data, ret, d, QA_cost_, 1 / cost_, sign, gamma_, coef0_, degree_);
+            openmp::device_kernel_poly(data, ret, d, QA_cost_, 1 / cost_, add, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            device_kernel_radial(data, ret, d, QA_cost_, 1 / cost_, sign, gamma_);
+            openmp::device_kernel_radial(data, ret, d, QA_cost_, 1 / cost_, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
