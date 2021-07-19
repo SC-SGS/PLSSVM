@@ -123,6 +123,8 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
             case kernel_type::rbf:
                 cuda::kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
+            default:
+                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
         }
 
         cuda::detail::peek_at_last_error();
