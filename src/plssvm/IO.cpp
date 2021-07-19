@@ -329,7 +329,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
     model << libsvm_model_header;
 
     // format one output-line
-    auto format_libsmv_line = [](real_type a, const std::vector<real_type> &d) -> std::string {
+    auto format_libsvm_line = [](real_type a, const std::vector<real_type> &d) -> std::string {
         std::string line;
         line += fmt::format("{} ", a);
         for (size_type j = 0; j < d.size(); ++j) {
@@ -349,7 +349,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
         #pragma omp for nowait
         for (size_type i = 0; i < alpha_.size(); ++i) {
             if (value_[i] > 0) {
-                out_pos += format_libsmv_line(alpha_[i], data_[i]);
+                out_pos += format_libsvm_line(alpha_[i], data_[i]);
             }
         }
 
@@ -365,7 +365,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
         #pragma omp for nowait
         for (size_type i = 0; i < alpha_.size(); ++i) {
             if (value_[i] < 0) {
-                out_neg += format_libsmv_line(alpha_[i], data_[i]);
+                out_neg += format_libsvm_line(alpha_[i], data_[i]);
             }
         }
 
