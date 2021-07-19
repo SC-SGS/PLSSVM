@@ -60,7 +60,7 @@ class parameter {
     /// The error tolerance parameter for the CG algorithm.
     real_type epsilon = 0.001;
     /// If `true` additional information (e.g. timing information) will be printed during execution.
-    bool print_info = false;
+    bool print_info = true;
     /// The used backend: OpenMP, OpenCL or CUDA.
     backend_type backend = backend_type::openmp;
 
