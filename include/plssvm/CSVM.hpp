@@ -191,21 +191,18 @@ class CSVM {
      */
     void learn(const std::string &input_filename, const std::string &model_filename);
 
+    //*************************************************************************************************************************************//
+    //                                                               predict                                                               //
+    //*************************************************************************************************************************************//
+    // TODO: protected?
+    // virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
+
   protected:
     /**
      * @brief Learns the Support Vectors previously parsed.
      * @details Learn the model by solving a minimization problem using the Conjugated Gradients algorithm.
      */
-    void learn();  // TODO: public after correct exception handling
-
-  public:
-    //*************************************************************************************************************************************//
-    //                                                               predict                                                               //
-    //*************************************************************************************************************************************//
-    // TODO: protected?
-    //    virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
-
-  protected:
+    void learn();
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
