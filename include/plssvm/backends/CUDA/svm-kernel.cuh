@@ -4,7 +4,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief Defines a C-SVM using the CUDA backend.
+ * @brief Defines the kernel functions for the C-SVM using the CUDA backend.
  */
 
 #pragma once
@@ -27,7 +27,7 @@ namespace plssvm::cuda {
  * @param[in] last_feature the last feature used in the calculations (depending on the current device)
  */
 template <typename real_type>
-__global__ void kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int add, const int first_feature, const int last_feature);
+__global__ void device_kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int add, const int first_feature, const int last_feature);
 
 /**
  * @brief Calculates the C-SVM kernel using the polynomial kernel function.
@@ -47,7 +47,7 @@ __global__ void kernel_linear(const real_type *q, real_type *ret, const real_typ
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-__global__ void kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma, const real_type coef0, const real_type degree);
+__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma, const real_type coef0, const real_type degree);
 
 /**
  * @brief Calculates the C-SVM kernel using the radial basis function kernel function.
@@ -65,6 +65,6 @@ __global__ void kernel_poly(const real_type *q, real_type *ret, const real_type 
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-__global__ void kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma);
+__global__ void device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma);
 
 }  // namespace plssvm::cuda

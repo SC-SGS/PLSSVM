@@ -115,13 +115,13 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 
         switch (kernel_) {
             case kernel_type::linear:
-                cuda::kernel_q_linear<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
+                cuda::device_kernel_q_linear<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
                 break;
             case kernel_type::polynomial:
-                cuda::kernel_q_poly<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
+                cuda::device_kernel_q_poly<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
                 break;
             case kernel_type::rbf:
-                cuda::kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
+                cuda::device_kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
             default:
                 throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
@@ -150,13 +150,13 @@ void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::detail::devic
 
     switch (kernel_) {
         case kernel_type::linear:
-            cuda::kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
+            cuda::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
             break;
         case kernel_type::polynomial:
-            cuda::kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_, coef0_, degree_);
+            cuda::device_kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            cuda::kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
+            cuda::device_kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
