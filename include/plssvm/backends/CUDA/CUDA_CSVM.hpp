@@ -94,6 +94,14 @@ class CUDA_CSVM : public CSVM<T> {
 
     /// The number of available/used CUDA devices.
     int num_devices_{};
+    /// The number of data points excluding the last data point.
+    size_type dept_{};
+    /// The boundary size used to remove boundary condition checks inside the kernels.
+    size_type boundary_size_{};
+    /// The number of rows to calculate including the boundary values.
+    int num_rows_{};
+    /// The number of columns in the data matrix (= the number of features per data point).
+    int num_cols_{};
     /// The data saved across all devices.
     std::vector<cuda::detail::device_ptr<real_type>> data_d_{};
     /// The last row of the data matrix.

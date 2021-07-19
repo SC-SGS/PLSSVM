@@ -15,7 +15,7 @@ using namespace plssvm::cuda::detail;
 using size_type = unsigned int;
 
 template <typename real_type>
-__global__ void kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Nrows, const int add, const int start, const int end) {
+__global__ void kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int add, const int first_feature, const int last_feature) {
     size_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     size_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -29,7 +29,7 @@ __global__ void kernel_linear(const real_type *q, real_type *ret, const real_typ
         const size_type ji = j + threadIdx.x * INTERNAL_BLOCK_SIZE;
         j += threadIdx.y * INTERNAL_BLOCK_SIZE;
         // cache data
-        for (int vec_index = start * Nrows; vec_index < end * Nrows; vec_index += Nrows) {
+        for (int vec_index = first_feature * num_rows; vec_index < last_feature * num_rows; vec_index += num_rows) {
             __syncthreads();
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
@@ -65,7 +65,7 @@ __global__ void kernel_linear(const real_type *q, real_type *ret, const real_typ
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                 real_type temp;
-                if (start == 0) {
+                if (first_feature == 0) {
                     temp = (matr[x][y] + QA_cost - q[i + y] - q[j + x]) * add;
                 } else {
                     temp = matr[x][y] * add;
@@ -76,7 +76,7 @@ __global__ void kernel_linear(const real_type *q, real_type *ret, const real_typ
                     ret_jx += temp * d[i + y];
                 } else if (i + x == j + y) {
                     // diagonal
-                    if (start == 0) {
+                    if (first_feature == 0) {
                         ret_jx += (temp + cost * add) * d[i + y];
                     } else {
                         ret_jx += temp * d[i + y];
@@ -88,11 +88,11 @@ __global__ void kernel_linear(const real_type *q, real_type *ret, const real_typ
     }
 }
 
-template __global__ void kernel_linear(const float *, float *, const float *, const float *, const float, const float, const int,  const int, const int, const int);
-template __global__ void kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int,  const int, const int, const int);
+template __global__ void kernel_linear(const float *, float *, const float *, const float *, const float, const float, const int, const int, const int, const int);
+template __global__ void kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int);
 
 template <typename real_type>
-__global__ void kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const real_type gamma, const real_type coef0, const real_type degree) {
+__global__ void kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma, const real_type coef0, const real_type degree) {
     size_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     size_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -105,7 +105,7 @@ __global__ void kernel_poly(const real_type *q, real_type *ret, const real_type 
         i += threadIdx.x * INTERNAL_BLOCK_SIZE;
         const size_type ji = j + threadIdx.x * INTERNAL_BLOCK_SIZE;
         j += threadIdx.y * INTERNAL_BLOCK_SIZE;
-        for (int vec_index = 0; vec_index < Ncols * Nrows; vec_index += Nrows) {
+        for (int vec_index = 0; vec_index < num_cols * num_rows; vec_index += num_rows) {
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
                 const size_type data_index = vec_index + block_id;
@@ -154,7 +154,7 @@ template __global__ void kernel_poly(const float *, float *, const float *, cons
 template __global__ void kernel_poly(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const double, const double, const double);
 
 template <typename real_type>
-__global__ void kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const real_type gamma) {
+__global__ void kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma) {
     size_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     size_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -167,7 +167,7 @@ __global__ void kernel_radial(const real_type *q, real_type *ret, const real_typ
         i += threadIdx.x * INTERNAL_BLOCK_SIZE;
         const size_type ji = j + threadIdx.x * INTERNAL_BLOCK_SIZE;
         j += threadIdx.y * INTERNAL_BLOCK_SIZE;
-        for (int vec_index = 0; vec_index < Ncols * Nrows; vec_index += Nrows) {
+        for (int vec_index = 0; vec_index < num_cols * num_rows; vec_index += num_rows) {
             {
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {

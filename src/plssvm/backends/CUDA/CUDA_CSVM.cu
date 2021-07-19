@@ -64,9 +64,15 @@ CUDA_CSVM<T>::CUDA_CSVM(const kernel_type kernel, const real_type degree, const 
 
 template <typename T>
 void CUDA_CSVM<T>::setup_data_on_device() {
+    // set values of member variables
+    dept_ = num_data_points_ - 1;
+    boundary_size_ = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    num_rows_ = dept_ + boundary_size_;
+    num_cols_ = num_features_;
+
     // initialize data_last on devices
     for (int device = 0; device < num_devices_; ++device) {
-        data_last_d_[device] = cuda::detail::device_ptr<real_type>{ num_features_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, device };
+        data_last_d_[device] = cuda::detail::device_ptr<real_type>{ num_features_ + boundary_size_, device };
     }
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
@@ -76,80 +82,79 @@ void CUDA_CSVM<T>::setup_data_on_device() {
 
     // initialize data on devices
     for (int device = 0; device < num_devices_; ++device) {
-        data_d_[device] = cuda::detail::device_ptr<real_type>{ num_features_ * (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), device };
+        data_d_[device] = cuda::detail::device_ptr<real_type>{ num_features_ * (dept_ + boundary_size_), device };
     }
     // transform 2D to 1D data
-    const std::vector<real_type> transformed_data = base_type::transform_data(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
+    const std::vector<real_type> transformed_data = base_type::transform_data(boundary_size_);
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
-        data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
+        data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (dept_ + boundary_size_));
     }
 }
 
 template <typename T>
 auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
-    const size_type dept = num_data_points_ - 1;
-    const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-    const size_type dept_all = dept + boundary_size;
-    const int Ncols = num_features_;
-    const int Nrows = dept + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;  // TODO: size_type?
+    assert((dept_ != 0 && boundary_size_ != 0) && "dept_ and boundary_size_ not initialized! Maybe a missing call to setup_data_on_device()?");
+    assert((num_rows_ != 0 && num_cols_ != 0) && "num_rows_ and num_cols_ not initialized! Maybe a missing call to setup_data_on_device()?");
 
     std::vector<cuda::detail::device_ptr<real_type>> q_d(num_devices_);
     for (int device = 0; device < num_devices_; ++device) {
-        q_d[device] = cuda::detail::device_ptr<real_type>{ dept_all, device };
+        q_d[device] = cuda::detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
         q_d[device].memset(0);
     }
 
     for (int device = 0; device < num_devices_; ++device) {
         cuda::detail::set_device(device);
 
-        const int start = device * Ncols / num_devices_;
-        const int end = (device + 1) * Ncols / num_devices_;
-        const size_type grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
-        const size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept);
+        // feature splitting on multiple devices
+        const int first_feature = device * num_cols_ / num_devices_;
+        const int last_feature = (device + 1) * num_cols_ / num_devices_;
+
+        const auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
+        const size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept_);
 
         switch (kernel_) {
             case kernel_type::linear:
-                cuda::kernel_q_linear<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, start, end);
+                cuda::kernel_q_linear<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
                 break;
             case kernel_type::polynomial:
-                cuda::kernel_q_poly<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, Ncols, degree_, gamma_, coef0_);
+                cuda::kernel_q_poly<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
                 break;
             case kernel_type::rbf:
-                cuda::kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), Nrows, Ncols, gamma_);
+                cuda::kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
         }
 
         cuda::detail::peek_at_last_error();
     }
 
-    std::vector<real_type> q(dept);
+    std::vector<real_type> q(dept_);
     device_reduction(q_d, q);
     return q;
 }
 
 template <typename T>
 void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::detail::device_ptr<real_type> &q_d, cuda::detail::device_ptr<real_type> &r_d, const cuda::detail::device_ptr<real_type> &x_d, const cuda::detail::device_ptr<real_type> &data_d, const int add) {
-    // TODO: size_type?
-    const int Ncols = num_features_;
-    const int Nrows = num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    assert((dept_ != 0 && boundary_size_ != 0) && "dept_ and boundary_size_ not initialized! Maybe a missing call to setup_data_on_device()?");
+    assert((num_rows_ != 0 && num_cols_ != 0) && "num_rows_ and num_cols_ not initialized! Maybe a missing call to setup_data_on_device()?");
 
-    const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_ - 1) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE)));
+    // feature splitting on multiple devices
+    const int first_feature = device * num_cols_ / num_devices_;
+    const int last_feature = (device + 1) * num_cols_ / num_devices_;
+
+    const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(boundary_size_)));
     dim3 grid{ grid_dim, grid_dim };
     dim3 block{ static_cast<unsigned int>(THREAD_BLOCK_SIZE), static_cast<unsigned int>(THREAD_BLOCK_SIZE) };
 
-    const int start = device * Ncols / num_devices_;
-    const int end = (device + 1) * Ncols / num_devices_;
-
     switch (kernel_) {
         case kernel_type::linear:
-            cuda::kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Nrows, add, start, end);
+            cuda::kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
             break;
         case kernel_type::polynomial:
-            cuda::kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, gamma_, coef0_, degree_);
+            cuda::kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            cuda::kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, gamma_);
+            cuda::kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
@@ -182,37 +187,34 @@ void CUDA_CSVM<T>::device_reduction(std::vector<cuda::detail::device_ptr<real_ty
 
 template <typename T>
 auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
-    // TODO: member variables!
-    const size_type dept = num_data_points_ - 1;
-    const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-    const size_type dept_all = dept + boundary_size;
+    assert((dept_ != 0 && boundary_size_ != 0) && "dept_ and boundary_size_ not initialized! Maybe a missing call to setup_data_on_device()?");
 
-    std::vector<real_type> x(dept, 1.0);
+    std::vector<real_type> x(dept_, 1.0);
     std::vector<cuda::detail::device_ptr<real_type>> x_d(num_devices_);
 
-    std::vector<real_type> r(dept, 0.0);
+    std::vector<real_type> r(dept_, 0.0);
     std::vector<cuda::detail::device_ptr<real_type>> r_d(num_devices_);
 
     for (int device = 0; device < num_devices_; ++device) {
-        x_d[device] = cuda::detail::device_ptr<real_type>{ dept_all, device };
-        r_d[device] = cuda::detail::device_ptr<real_type>{ dept_all, device };
+        x_d[device] = cuda::detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
+        r_d[device] = cuda::detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         x_d[device].memset(0);
-        x_d[device].memcpy_to_device(x, 0, dept);
+        x_d[device].memcpy_to_device(x, 0, dept_);
         r_d[device].memset(0);
     }
-    r_d[0].memcpy_to_device(b, 0, dept);
+    r_d[0].memcpy_to_device(b, 0, dept_);
 
     std::vector<cuda::detail::device_ptr<real_type>> q_d(num_devices_);
     for (int device = 0; device < num_devices_; ++device) {
-        q_d[device] = cuda::detail::device_ptr<real_type>{ dept_all, device };
+        q_d[device] = cuda::detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         q_d[device].memset(0);
-        q_d[device].memcpy_to_device(q, 0, dept);
+        q_d[device].memcpy_to_device(q, 0, dept_);
     }
 
     // r = Ax (r = b - Ax)
@@ -228,11 +230,11 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
     const real_type delta0 = delta;
-    std::vector<real_type> Ad(dept);
+    std::vector<real_type> Ad(dept_);
 
     std::vector<cuda::detail::device_ptr<real_type>> Ad_d(num_devices_);
     for (int device = 0; device < num_devices_; ++device) {
-        Ad_d[device] = cuda::detail::device_ptr<real_type>{ dept_all, device };
+        Ad_d[device] = cuda::detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
 
     std::vector<real_type> d(r);
@@ -247,7 +249,7 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             Ad_d[device].memset(0);
-            r_d[device].memset(0, dept);
+            r_d[device].memset(0, dept_);
         }
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
@@ -267,13 +269,13 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
 
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
-            x_d[device].memcpy_to_device(x, 0, dept);
+            x_d[device].memcpy_to_device(x, 0, dept_);
         }
 
         // (r = b - A * x)
         if (run % 50 == 49) {
             // r = b
-            r_d[0].memcpy_to_device(b, 0, dept);
+            r_d[0].memcpy_to_device(b, 0, dept_);
             #pragma omp parallel for
             for (int device = 1; device < num_devices_; ++device) {
                 r_d[device].memset(0);
@@ -309,14 +311,14 @@ auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type im
         // r_d = d
         #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
-            r_d[device].memcpy_to_device(d, 0, dept);
+            r_d[device].memcpy_to_device(d, 0, dept_);
         }
     }
     if (print_info_) {
         fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
     }
 
-    alpha_.assign(x.begin(), x.begin() + dept);
+    alpha_.assign(x.begin(), x.begin() + dept_);
     // alpha_.resize(dept);
     // x_d[0].memcpy_to_host(alpha_, 0, dept);
 
