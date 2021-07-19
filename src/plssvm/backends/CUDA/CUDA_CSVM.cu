@@ -143,13 +143,13 @@ void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::detail::devic
 
     switch (kernel_) {
         case kernel_type::linear:
-            cuda::kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, start, end);
+            cuda::kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Nrows, add, start, end);
             break;
         case kernel_type::polynomial:
-            cuda::kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, start, end, gamma_, coef0_, degree_);
+            cuda::kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, gamma_, coef0_, degree_);
             break;
         case kernel_type::rbf:
-            cuda::kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, start, end, gamma_);
+            cuda::kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, Ncols, Nrows, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
