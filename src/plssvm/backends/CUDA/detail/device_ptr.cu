@@ -8,9 +8,9 @@
 #include <utility>    // std::exchange, std::move, std::swap
 #include <vector>     // std::vector
 
-#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::detail::cuda::gpu_assert((err))
+#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::cuda::detail::gpu_assert((err))
 
-namespace plssvm::detail::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Check the CUDA error code. If @p code signals an error, throw a `plssvm::cuda_backend_exception`.
@@ -149,4 +149,4 @@ void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const si
 template class device_ptr<double>;
 template class device_ptr<float>;
 
-}  // namespace plssvm::detail::cuda
+}  // namespace plssvm::cuda::detail

@@ -1,10 +1,17 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/backends/CUDA/svm-kernel.cuh"
 
-#include "plssvm/backends/CUDA/detail/atomics.cuh"
+#include "plssvm/backends/CUDA/detail/atomics.cuh"  // atomicAdd for double precision floating point numbers
+#include "plssvm/typedef.hpp"                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
-#include "plssvm/typedef.hpp"
+namespace plssvm::cuda {
 
-namespace plssvm {
+using namespace plssvm::cuda::detail;
 
 template <typename real_type>
 __global__ void kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int Ncols, const int Nrows, const int add, const int start, const int end) {
@@ -206,4 +213,4 @@ __global__ void kernel_radial(const real_type *q, real_type *ret, const real_typ
 template __global__ void kernel_radial(const float *, float *, const float *, const float *, const float, const float, const int, const int, const int, const int, const int, const float);
 template __global__ void kernel_radial(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int, const int, const double);
 
-}  // namespace plssvm
+}  // namespace plssvm::cuda

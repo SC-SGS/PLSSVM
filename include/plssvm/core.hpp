@@ -27,5 +27,8 @@ namespace plssvm::version {}
 /// Namespace containing implementation details. **Should not** directly be used by users.
 namespace plssvm::detail {}
 
+/// Namespace containing CUDA specific functions.
+namespace plssvm::cuda {}
+
 /// Namespace containing CUDA specific implementation details. **Should not** directly be used by users.
-namespace plssvm::detail::cuda {}
+namespace plssvm::cuda::detail {}

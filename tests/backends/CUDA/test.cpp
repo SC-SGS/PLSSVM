@@ -110,13 +110,11 @@ TEST(CUDA, kernel_linear) {
     csvm_CUDA.parse_libsvm(TESTFILE);
     csvm_CUDA.setup_data_on_device();
 
-    using namespace plssvm::detail;
-
-    cuda::device_ptr<real_type> q_d{ dept + boundary_size };
+    plssvm::cuda::detail::device_ptr<real_type> q_d{ dept + boundary_size };
     q_d.memcpy_to_device(q_, 0, dept);
-    cuda::device_ptr<real_type> x_d{ dept + boundary_size };
+    plssvm::cuda::detail::device_ptr<real_type> x_d{ dept + boundary_size };
     x_d.memcpy_to_device(x, 0, dept);
-    cuda::device_ptr<real_type> r_d{ dept + boundary_size };
+    plssvm::cuda::detail::device_ptr<real_type> r_d{ dept + boundary_size };
     r_d.memset(0);
 
     for (const real_type sgn : { -1.0, 1.0 }) {
@@ -126,7 +124,7 @@ TEST(CUDA, kernel_linear) {
         csvm_CUDA.cost_ = cost;
         csvm_CUDA.run_device_kernel(0, q_d, r_d, x_d, csvm_CUDA.data_d_[0], static_cast<int>(sgn));
 
-        cuda::device_synchronize();
+        plssvm::cuda::detail::device_synchronize();
         std::vector<real_type> result(dept, 0.0);
         r_d.memcpy_to_host(result, 0, dept);
         r_d.memset(0);

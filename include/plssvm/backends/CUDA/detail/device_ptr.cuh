@@ -12,7 +12,7 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm::detail::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Returns the number of available devices.
