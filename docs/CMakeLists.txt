@@ -1,22 +1,25 @@
-### based on https://vicrucann.github.io/tutorials/quick-cmake-doxygen/ ###
-
 # find doxygen
-find_package(Doxygen REQUIRED)
+find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
 
-# configure doxygen files
-set(DOXYGEN_IN Doxyfile.in)
-set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.out)
-configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+# configure doxygen
+set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/docs)
+set(DOXYGEN_IMAGE_PATH "docs/resources")
+set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "README.md")
+set(DOXYGEN_FILE_PATTERNS "*.hpp;*.cuh")
+set(DOXYGEN_EXTENSION_MAPPING "cu=c++;cuh=c++")
+set(DOXYGEN_STRIP_FROM_PATH ${PROJECT_SOURCE_DIR})
+set(DOXYGEN_EXCLUDE "src/main.cpp")
+set(DOXYGEN_ABBREVIATE_BRIEF "")
+set(DOXYGEN_QUIET "YES")
+set(DOXYGEN_HTML_TIMESTAMP "YES")
+set(DOXYGEN_NUM_PROC_THREADS 0)
+set(DOXYGEN_WARN_NO_PARAMDOC "YES")
+set(DOXYGEN_SORT_MEMBER_DOCS "NO")
 
-
-add_custom_command(
-  OUTPUT
-    doxygen.stamp
-  COMMAND
-    ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-  COMMENT
-    "Generating API documentation with Doxygen"
-  VERBATIM
+# add doxygen as target
+doxygen_add_docs(
+        doc
+        "include;README.md"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen"
 )
-
-add_custom_target(doc DEPENDS doxygen.stamp)

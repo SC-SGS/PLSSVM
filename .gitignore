@@ -61,7 +61,6 @@ CTestTestfile.cmake
 docs/*
 !docs/resources/
 !docs/CMakeLists.txt
-!docs/Doxyfile.in
 
 # auto-generated version header
 include/plssvm/version/version.hpp
