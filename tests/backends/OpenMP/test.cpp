@@ -108,7 +108,7 @@ TEST(OpenMP, kernel_linear) {
         std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);
 
         std::vector<real_type> result(dept, 0.0);
-        plssvm::device_kernel_linear(csvm.data_, result, x, QA_cost, 1 / cost, sgn);
+        plssvm::openmp::device_kernel_linear(csvm.data_, result, x, QA_cost, 1 / cost, sgn);
 
         ASSERT_EQ(correct.size(), result.size()) << "sgn: " << sgn;
         for (size_t index = 0; index < correct.size(); ++index) {

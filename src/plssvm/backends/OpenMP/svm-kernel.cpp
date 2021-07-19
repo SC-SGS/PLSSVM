@@ -38,7 +38,7 @@ void device_kernel_linear(const std::vector<std::vector<real_type>> &data, std::
     for (size_type i = 0; i < dept; ++i) {
         const real_type kernel_dat_and_cost = kernel_function<kernel_type::linear>(data_last, data[i]) - QA_cost;
         #pragma omp atomic
-        ret[i] += (kernel_function<kernel_type::linear>(data[i], data[i]) - kernel_function<kernel_type::linear>(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * sign;
+        ret[i] += (kernel_function<kernel_type::linear>(data[i], data[i]) - kernel_function<kernel_type::linear>(data_last, data[i]) + cost - kernel_dat_and_cost) * d[i] * add;
         for (size_type j = 0; j < i; ++j) {
             #pragma omp atomic
             ret[j] -= kernel_dat_and_cost * add * d[i];
