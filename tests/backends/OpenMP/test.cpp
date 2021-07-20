@@ -68,7 +68,7 @@ TEST(OpenMP, linear) {
 
 TEST(OpenMP, q_linear) {
     MockCSVM csvm;
-    using real_type = typename MockCSVM::real_type;
+    using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
     std::vector<real_type> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
@@ -86,7 +86,7 @@ TEST(OpenMP, q_linear) {
 
 TEST(OpenMP, kernel_linear) {
     MockCSVM csvm;
-    using real_type = typename MockCSVM::real_type;
+    using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
 
@@ -100,15 +100,15 @@ TEST(OpenMP, kernel_linear) {
 
     const std::vector<real_type> q_ = q<plssvm::kernel_type::linear>(csvm.get_data());
 
-    const real_type cost = csvm.cost_;
+    const real_type cost = csvm.get_cost();
 
-    const real_type QA_cost = linear_kernel(csvm.data_.back(), csvm.data_.back()) + 1 / cost;
+    const real_type QA_cost = linear_kernel(csvm.get_data().back(), csvm.get_data().back()) + 1 / cost;
 
     for (const real_type sgn : { -1.0, 1.0 }) {
         std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);
 
         std::vector<real_type> result(dept, 0.0);
-        plssvm::openmp::device_kernel_linear(q_, result, x, csvm.data_, QA_cost, 1 / cost, sgn);
+        plssvm::openmp::device_kernel_linear(q_, result, x, csvm.get_data(), QA_cost, 1 / cost, sgn);
 
         ASSERT_EQ(correct.size(), result.size()) << "sgn: " << sgn;
         for (size_t index = 0; index < correct.size(); ++index) {

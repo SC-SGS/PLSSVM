@@ -72,7 +72,7 @@ TEST(OpenCL, linear) {
 
 TEST(OpenCL, q_linear) {
     MockCSVM csvm;
-    using real_type = typename MockCSVM::real_type;
+    using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
     std::vector<real_type> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
@@ -90,7 +90,7 @@ TEST(OpenCL, q_linear) {
 
 TEST(OpenCL, kernel_linear) {
     MockCSVM csvm;
-    using real_type = MockCSVM::real_type;
+    using real_type = decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
 
@@ -104,9 +104,9 @@ TEST(OpenCL, kernel_linear) {
 
     const std::vector<real_type> q_ = q<plssvm::kernel_type::linear>(csvm.get_data());
 
-    const real_type cost = csvm.cost_;
+    const real_type cost = csvm.get_cost();
 
-    const real_type QA_cost = linear_kernel(csvm.data_.back(), csvm.data_.back()) + 1 / cost;
+    const real_type QA_cost = linear_kernel(csvm.get_data().back(), csvm.get_data().back()) + 1 / cost;
 
     const size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear);

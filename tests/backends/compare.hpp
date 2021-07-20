@@ -8,9 +8,14 @@
 #include <vector>  // std::vector
 
 template <typename real_type>
-std::vector<real_type> generate_q(const std::string &path);
-template <typename real_type>
 real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2);
+template <typename real_type>
+real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, real_type degree, real_type gamma, real_type coef0);
+template <typename real_type>
+real_type radial_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, real_type gamma);
+
+template <typename real_type>
+std::vector<real_type> generate_q(const std::string &path);
 
 template <plssvm::kernel_type kernel_type, typename real_type>
 std::vector<real_type> q(const std::vector<std::vector<real_type>> &data) {
