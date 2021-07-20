@@ -46,10 +46,14 @@ class MockCSVM : public plssvm::CSVM<T> {
     const std::vector<std::vector<real_type>> &get_data() const { return data_; }
     real_type get_gamma() const { return gamma_; }
     real_type get_cost() const { return cost_; }
+    real_type get_degree() const { return degree_; }
+    real_type get_coef0() const { return coef0_; }
 
   private:
+    using base_type::coef0_;
     using base_type::cost_;
     using base_type::data_;
+    using base_type::degree_;
     using base_type::gamma_;
     using base_type::num_data_points_;
     using base_type::num_features_;
