@@ -134,17 +134,22 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
     const real_type cost = csvm.get_cost();
     const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
+    // setup OpenMP C-SVM
+    MockOpenMP_CSVM csvm_openmp{ params };
+
+    // parse libsvm file
+    csvm_openmp.parse_libsvm(params.input_filename);
+
+    // setup data on device
+    csvm_openmp.setup_data_on_device();
+
     for (const int add : { -1, 1 }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         std::vector<real_type> calculated(dept, 0.0);
-        if constexpr (TypeParam::kernel == plssvm::kernel_type::linear) {
-            plssvm::openmp::device_kernel_linear(q_vec, calculated, x, csvm.get_data(), QA_cost, real_type{ 1.0 } / cost, add);
-        } else if constexpr (TypeParam::kernel == plssvm::kernel_type::polynomial) {
-            plssvm::openmp::device_kernel_poly(q_vec, calculated, x, csvm.get_data(), QA_cost, real_type{ 1.0 } / cost, add, csvm.get_degree(), csvm.get_gamma(), csvm.get_coef0());
-        } else if constexpr (TypeParam::kernel == plssvm::kernel_type::rbf) {
-            plssvm::openmp::device_kernel_radial(q_vec, calculated, x, csvm.get_data(), QA_cost, real_type{ 1.0 } / cost, add, csvm.get_gamma());
-        }
+        csvm_openmp.set_QA_cost(QA_cost);
+        csvm_openmp.set_cost(cost);
+        csvm_openmp.run_device_kernel(q_vec, calculated, x, csvm_openmp.get_device_data(), add);
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (std::size_t index = 0; index < correct.size(); ++index) {

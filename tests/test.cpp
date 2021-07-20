@@ -323,10 +323,11 @@ TYPED_TEST(BASE_kernel, kernel_function) {
 
     // fill vectors with random values
     std::random_device rnd_device;
-    std::mt19937 rnd_engine{ rnd_device() };
-    std::uniform_real_distribution<real_type> dist{ 1, 42 };
-    std::generate(x1.begin(), x1.end(), [&]() { return dist(rnd_engine); });
-    std::generate(x2.begin(), x2.end(), [&]() { return dist(rnd_engine); });
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<real_type> dist(-1, 2.0);
+    std::generate(x1.begin(), x1.end(), [&]() { return dist(gen); });
+    std::generate(x2.begin(), x2.end(), [&]() { return dist(gen); });
 
     // calculated result
     const real_type calculated = csvm.kernel_function(x1, x2);

@@ -116,6 +116,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     csvm.parse_libsvm(params.input_filename);
 
     const size_type dept = csvm.get_num_data_points() - 1;
+    const size_type num_features = csvm.get_num_features();
 
     // create x vector and fill it with random values
     std::vector<real_type> x(dept);
@@ -177,7 +178,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     q_cl.resize(dept + boundary_size);
     x_cl.resize(dept + boundary_size);
     r_cl.resize(dept + boundary_size);
-    const int Ncols = csvm_opencl.get_num_features();
+    const int Ncols = num_features;
     const int Nrows = dept + plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
 
     std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))),
@@ -190,7 +191,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
         std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         std::vector<real_type> result(dept, 0.0);
-        opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_opencl.data_cl[0].get(), QA_cost, 1 / csvm_opencl.cost_, Ncols, Nrows, add, 0, Ncols);
+        opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_opencl.get_device_data()[0].get(), QA_cost, cost, Ncols, Nrows, add, 0, Ncols);
         opencl::run_kernel_2d_timed(devices[0], kernel, grid_size, block_size);
 
         r_cl.resize(dept);
