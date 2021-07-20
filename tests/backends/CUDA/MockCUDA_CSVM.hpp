@@ -4,7 +4,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief MOCK class for the C-SVM class using the OpenMP backend.
+ * @brief MOCK class for the C-SVM class using the CUDA backend.
  */
 
 #pragma once
