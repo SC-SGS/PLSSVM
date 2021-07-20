@@ -26,10 +26,11 @@ class MockCSVM : public plssvm::CSVM<T> {
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    MockCSVM(const plssvm::parameter<T> &params) :
+    explicit MockCSVM(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    MockCSVM(plssvm::kernel_type kernel_ = plssvm::kernel_type::linear, real_type degree_ = 2.0, real_type gamma_ = 1.5, real_type coef0_ = 0.0, real_type cost_ = 1.5, real_type epsilon_ = 0.00001, bool info_ = false) :
+    explicit MockCSVM(plssvm::kernel_type kernel_ = plssvm::kernel_type::linear, real_type degree_ = 2.0, real_type gamma_ = 1.5, real_type coef0_ = 0.0, real_type cost_ = 1.5, real_type epsilon_ = 0.00001, bool info_ = false) :
         base_type{ kernel_, degree_, gamma_, coef0_, cost_, epsilon_, info_ } {}
+
     MOCK_METHOD(void, load_w, (), (override));
     // MOCK_METHOD(std::vector<real_type>, predict, (real_type *, size_type, size_type));
     MOCK_METHOD(void, learn, ());

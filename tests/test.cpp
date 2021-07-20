@@ -197,7 +197,7 @@ TYPED_TEST(BASE, write_model) {
 
     MockCSVM csvm{ params };
 
-    // parse arff file
+    // parse libsvm file
     csvm.parse_libsvm(params.input_filename);
 
     // create temporary model file and write model
