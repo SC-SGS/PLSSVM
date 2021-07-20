@@ -92,7 +92,7 @@ template __global__ void device_kernel_linear(const float *, float *, const floa
 template __global__ void device_kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int);
 
 template <typename real_type>
-__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma, const real_type coef0, const real_type degree) {
+__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type degree, const real_type gamma, const real_type coef0) {
     size_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     size_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
