@@ -1,121 +1,151 @@
-#include "../MockCSVM.hpp"
-#include "../compare.hpp"
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Tests for the functionality related to the OpenMP backend.
+ */
+
 #include "MockCUDA_CSVM.hpp"
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"
-#include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
-#include "plssvm/backends/OpenMP/svm-kernel.hpp"
-#include "plssvm/kernel_types.hpp"
 
-#include <gtest/gtest.h>
+#include "../../MockCSVM.hpp"  // MockCSVM
+#include "../../utility.hpp"   // util::create_temp_file, util::gtest_expect_floating_point_eq
 
-#include <filesystem>
-#include <fstream>
-#include <random>
+#include "../compare.hpp"                      // compare::generate_q, compare::kernel_function, compare::device_kernel_function
+#include "plssvm/backends/CUDA/CUDA_CSVM.hpp"  // plssvm::OpenMP_CSVM
+#include "plssvm/kernel_types.hpp"             // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                // plssvm::parameter
+#include "plssvm/typedef.hpp"                  // plssvm::THREAD_BLOCK_SIZE
 
-TEST(CUDA, writeModel) {
-    std::string model = std::filesystem::temp_directory_path().string();
-    model += "/tmpfile_XXXXXX";
-    // create unique temporary file
-    int fd = mkstemp(model.data());
-    // immediately close file if possible
-    if (fd >= 0) {
-        close(fd);
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
+
+#include <cmath>       // std::abs
+#include <cstddef>     // std::size_t
+#include <filesystem>  // std::filesystem::remove
+#include <fstream>     // std::ifstream
+#include <iterator>    // std::istreambuf_iterator
+#include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <string>      // std::string
+#include <vector>      // std::vector
+
+template <typename T>
+class CUDA : public ::testing::Test {};
+
+using testing_types = ::testing::Types<float, double>;
+TYPED_TEST_SUITE(CUDA, testing_types);
+
+TYPED_TEST(CUDA, write_model) {
+    // setup CUDA C-SVM
+    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    params.print_info = false;
+
+    MockCUDA_CSVM csvm{ params };
+
+    // create temporary model file
+    std::string model_file = util::create_temp_file();
+
+    // learn
+    csvm.learn(params.input_filename, model_file);
+
+    // read content of model file and delete it
+    std::ifstream model_ifs(model_file);
+    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+    std::filesystem::remove(model_file);
+
+    // check model file content for correctness
+    EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+}
+
+TYPED_TEST(CUDA, q_linear) {
+    // setup C-SVM
+    plssvm::parameter<TypeParam> params{ TESTFILE };
+    params.print_info = false;
+    params.kernel = plssvm::kernel_type::linear;
+
+    MockCSVM csvm{ params };
+    using real_type_csvm = typename decltype(csvm)::real_type;
+
+    // parse libsvm file and calculate q vector
+    csvm.parse_libsvm(params.input_filename);
+    const std::vector<real_type_csvm> correct = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
+
+    // setup CUDA C-SVM
+    MockCUDA_CSVM csvm_cuda{ params };
+    using real_type_csvm_cuda = typename decltype(csvm_cuda)::real_type;
+
+    // check real_types
+    ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_cuda>();
+
+    // parse libsvm file and calculate q vector
+    csvm_cuda.parse_libsvm(params.input_filename);
+    csvm_cuda.setup_data_on_device();
+    const std::vector<real_type_csvm_cuda> calculated = csvm_cuda.generate_q();
+
+    ASSERT_EQ(correct.size(), calculated.size());
+    for (std::size_t index = 0; index < correct.size(); ++index) {
+        EXPECT_NEAR(correct[index], calculated[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
     }
-
-    MockCUDA_CSVM csvm2(plssvm::kernel_type::linear, 3.0, 0.0, 0.0, 1., 0.001, false);
-    std::string testfile = TESTPATH "/data/5x4.libsvm";
-    csvm2.learn(testfile, model);
-
-    std::ifstream model_ifs(model);
-    std::string genfile2((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
-    std::filesystem::remove(model);
-
-    EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
 }
 
-TEST(CUDA, linear) {
-    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
-    using real_type = typename MockCUDA_CSVM::real_type;
+TYPED_TEST(CUDA, kernel_linear) {
+    // setup C-SVM
+    plssvm::parameter<TypeParam> params{ TESTFILE };
+    params.print_info = false;
+    params.kernel = plssvm::kernel_type::linear;
 
-    const size_t size = 512;
-    std::vector<real_type> x1(size);
-    std::vector<real_type> x2(size);
-    std::generate(x1.begin(), x1.end(), std::rand);
-    std::generate(x2.begin(), x2.end(), std::rand);
-    real_type correct = compare::kernel_function<plssvm::kernel_type::linear>(x1, x2);
-
-    real_type result_CUDA = csvm_CUDA.kernel_function(x1, x2);
-    real_type result2_CUDA = csvm_CUDA.kernel_function(x1, x2);
-
-    EXPECT_DOUBLE_EQ(correct, result_CUDA);
-    EXPECT_DOUBLE_EQ(correct, result2_CUDA);
-}
-
-TEST(CUDA, q_linear) {
-    MockCSVM csvm;
+    MockCSVM csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
+    using size_type = typename decltype(csvm)::size_type;
 
-    csvm.parse_libsvm(TESTFILE);
-    std::vector<real_type> correct = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
+    // parse libsvm file
+    csvm.parse_libsvm(params.input_filename);
 
-    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
-    csvm_CUDA.parse_libsvm(TESTFILE);
-    csvm_CUDA.setup_data_on_device();
-    std::vector<real_type> test = csvm_CUDA.generate_q();
+    const size_type dept = csvm.get_num_data_points() - 1;
 
-    ASSERT_EQ(correct.size(), test.size());
-    for (size_t index = 0; index < correct.size(); ++index) {
-        EXPECT_NEAR(correct[index], test[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
-    }
-}
-
-TEST(CUDA, kernel_linear) {
-    MockCSVM csvm;
-    using real_type = decltype(csvm)::real_type;
-
-    csvm.parse_libsvm(TESTFILE);
-
-    const size_t dept = csvm.get_num_data_points() - 1;
-
-    std::vector<real_type> x(dept, 1.0);
+    // create x vector and fill it with random values
+    std::vector<real_type> x(dept);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<real_type> dist(-1, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    const std::vector<real_type> q_ = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
-
+    // create correct q vector, cost and QA_cost
+    const std::vector<real_type> q_vec = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
     const real_type cost = csvm.get_cost();
-
     const real_type QA_cost = compare::kernel_function<plssvm::kernel_type::linear>(csvm.get_data().back(), csvm.get_data().back()) + 1 / cost;
 
-    const size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
-    csvm_CUDA.parse_libsvm(TESTFILE);
-    csvm_CUDA.setup_data_on_device();
+    // setup CUDA C-SVM
+    MockCUDA_CSVM csvm_cuda{ params };
 
+    // parse libsvm file
+    csvm_cuda.parse_libsvm(params.input_filename);
+
+    // setup data on device
+    csvm_cuda.setup_data_on_device();
+
+    const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::cuda::detail::device_ptr<real_type> q_d{ dept + boundary_size };
-    q_d.memcpy_to_device(q_, 0, dept);
+    q_d.memcpy_to_device(q_vec, 0, dept);
     plssvm::cuda::detail::device_ptr<real_type> x_d{ dept + boundary_size };
     x_d.memcpy_to_device(x, 0, dept);
     plssvm::cuda::detail::device_ptr<real_type> r_d{ dept + boundary_size };
     r_d.memset(0);
 
-    for (const int sgn : { -1, 1 }) {
-        std::vector<real_type> correct = compare::device_kernel_function<plssvm::kernel_type::linear>(csvm.get_data(), x, q_, QA_cost, cost, sgn);
+    for (const int add : { -1, 1 }) {
+        const std::vector<real_type> correct = compare::device_kernel_function<plssvm::kernel_type::linear>(csvm.get_data(), x, q_vec, QA_cost, cost, add);
 
-        csvm_CUDA.QA_cost_ = QA_cost;
-        csvm_CUDA.cost_ = cost;
-        csvm_CUDA.run_device_kernel(0, q_d, r_d, x_d, csvm_CUDA.data_d_[0], static_cast<int>(sgn));
+        csvm_cuda.QA_cost_ = QA_cost;
+        csvm_cuda.cost_ = cost;
+        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, csvm_cuda.data_d_[0], add);
 
         plssvm::cuda::detail::device_synchronize();
-        std::vector<real_type> result(dept, 0.0);
-        r_d.memcpy_to_host(result, 0, dept);
+        std::vector<real_type> calculated(dept);
+        r_d.memcpy_to_host(calculated, 0, dept);
         r_d.memset(0);
 
-        ASSERT_EQ(correct.size(), result.size()) << "sgn: " << sgn;
-        for (size_t index = 0; index < correct.size(); ++index) {
-            EXPECT_NEAR(correct[index], result[index], std::abs(correct[index] * 1e-10)) << " index: " << index << " sgn: " << sgn;
+        ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
+        for (std::size_t index = 0; index < correct.size(); ++index) {
+            EXPECT_NEAR(correct[index], calculated[index], std::abs(correct[index] * 1e-10)) << " index: " << index << " add: " << add;
         }
     }
 }
