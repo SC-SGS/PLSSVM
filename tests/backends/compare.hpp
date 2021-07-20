@@ -49,15 +49,7 @@ std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &dat
     result.reserve(data.size());
 
     for (std::size_t i = 0; i < data.size() - 1; ++i) {
-        if constexpr (kernel == plssvm::kernel_type::linear) {
-            result.template emplace_back(detail::linear_kernel(data.back(), data[i], std::forward<Args>(args)...));
-        } else if constexpr (kernel == plssvm::kernel_type::polynomial) {
-            result.template emplace_back(detail::poly_kernel(data.back(), data[i], std::forward<Args>(args)...));
-        } else if constexpr (kernel == plssvm::kernel_type::rbf) {
-            result.template emplace_back(detail::radial_kernel(data.back(), data[i], std::forward<Args>(args)...));
-        } else {
-            static_assert(plssvm::detail::always_false_v<real_type>, "Unknown kernel type!");
-        }
+        result.template emplace_back(kernel_function<kernel>(data.back(), data[i], args...));
     }
     return result;
 }
