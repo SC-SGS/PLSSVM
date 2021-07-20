@@ -16,7 +16,7 @@ message(STATUS "OpenCL backend enabled.")
 # explicitly set sources
 set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/OpenCL_CSVM.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel-linear.cl
+    ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
     ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp

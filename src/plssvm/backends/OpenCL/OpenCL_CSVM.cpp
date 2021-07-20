@@ -201,7 +201,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
             #pragma omp parallel for
             for (size_type device = 0; device < count_devices; ++device) {
                 if (!svm_kernel_linear[device]) {
-                    std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
+                    std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
                     std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                     if constexpr (std::is_same_v<real_type, float>) {
                         manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
@@ -307,7 +307,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                 #pragma omp parallel for
                 for (size_type device = 0; device < count_devices; ++device) {
                     if (!svm_kernel_linear[device]) {
-                        std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
+                        std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
                         std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                         if constexpr (std::is_same_v<real_type, float>) {
                             manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
@@ -409,7 +409,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                     #pragma omp parallel for
                     for (size_type device = 0; device < count_devices; ++device) {
                         if (!svm_kernel_linear[device]) {
-                            std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel-linear.cl" };
+                            std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
                             std::string kernel_src = manager.read_src_file(kernel_src_file_name);
                             if constexpr (std::is_same_v<real_type, float>) {
                                 manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
