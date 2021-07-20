@@ -20,7 +20,7 @@ namespace plssvm {
 std::size_t count_devices = 1;
 
 template <typename T>
-OpenCL_CSVM<T>::OpenCL_CSVM(parameter<T> &params) :
+OpenCL_CSVM<T>::OpenCL_CSVM(const parameter<T> &params) :
     OpenCL_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>

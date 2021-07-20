@@ -31,7 +31,7 @@ class OpenCL_CSVM : public CSVM<T> {
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit OpenCL_CSVM(parameter<T> &params);
+    explicit OpenCL_CSVM(const parameter<T> &params);
     OpenCL_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement

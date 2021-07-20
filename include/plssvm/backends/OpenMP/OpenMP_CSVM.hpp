@@ -49,7 +49,7 @@ class OpenMP_CSVM : public CSVM<T> {
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
      */
-    explicit OpenMP_CSVM(parameter<T> &params);
+    explicit OpenMP_CSVM(const parameter<T> &params);
     /**
      * @brief Construct an new C-SVM using the OpenMP backend explicitly specifying all necessary parameters.
      * @param[in] kernel the type of the kernel function

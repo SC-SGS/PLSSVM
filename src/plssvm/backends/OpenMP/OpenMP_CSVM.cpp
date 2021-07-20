@@ -14,7 +14,7 @@
 namespace plssvm {
 
 template <typename T>
-OpenMP_CSVM<T>::OpenMP_CSVM(parameter<T> &params) :
+OpenMP_CSVM<T>::OpenMP_CSVM(const parameter<T> &params) :
     OpenMP_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
@@ -42,7 +42,7 @@ void OpenMP_CSVM<T>::run_device_kernel(const std::vector<real_type> &q, std::vec
             openmp::device_kernel_linear(q, ret, d, data, QA_cost_, 1 / cost_, add);
             break;
         case kernel_type::polynomial:
-            openmp::device_kernel_poly(q, ret, d, data, QA_cost_, 1 / cost_, add, gamma_, coef0_, degree_);
+            openmp::device_kernel_poly(q, ret, d, data, QA_cost_, 1 / cost_, add, degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
             openmp::device_kernel_radial(q, ret, d, data, QA_cost_, 1 / cost_, add, gamma_);
