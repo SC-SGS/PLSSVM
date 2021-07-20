@@ -11,10 +11,11 @@
 #include "../../MockCSVM.hpp"  // MockCSVM
 #include "../../utility.hpp"   // util::create_temp_file, util::gtest_expect_floating_point_eq
 
-#include "../compare.hpp"
+#include "../compare.hpp"                          // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"  // plssvm::OpenMP_CSVM
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"   // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_poly, plssvm::openmp::device_kernel_radial
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
