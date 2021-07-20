@@ -293,11 +293,25 @@ TYPED_TEST(BASE, transform_data) {
     }
 }
 
-TYPED_TEST(BASE, kernel_linear) {
+// enumerate all type and kernel combinations to test
+using parameter_types = ::testing::Types<
+    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+
+// generate tests for the kernel functions
+template <typename T>
+class BASE_kernel : public ::testing::Test {};
+TYPED_TEST_SUITE(BASE_kernel, parameter_types, util::google_test::parameter_definition_to_name);
+
+TYPED_TEST(BASE_kernel, kernel_function) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ "" };
+    plssvm::parameter<typename TypeParam::real_type> params{ "" };
     params.print_info = false;
-    params.kernel = plssvm::kernel_type::linear;
+    params.kernel = TypeParam::kernel;
 
     MockCSVM csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
@@ -318,69 +332,7 @@ TYPED_TEST(BASE, kernel_linear) {
     const real_type calculated = csvm.kernel_function(x1, x2);
 
     // correct result
-    const real_type correct = compare::kernel_function<plssvm::kernel_type::linear>(x1, x2);
-
-    // check for correctness
-    util::gtest_expect_floating_point_eq(correct, calculated);
-}
-
-TYPED_TEST(BASE, kernel_polynomial) {
-    // setup C-SVM
-    plssvm::parameter<TypeParam> params{ "" };
-    params.print_info = false;
-    params.kernel = plssvm::kernel_type::polynomial;
-
-    MockCSVM csvm{ params };
-    using real_type = typename decltype(csvm)::real_type;
-
-    // create dummy data vectors
-    constexpr std::size_t size = 512;
-    std::vector<real_type> x1(size);
-    std::vector<real_type> x2(size);
-
-    // fill vectors with random values
-    std::random_device rnd_device;
-    std::mt19937 rnd_engine{ rnd_device() };
-    std::uniform_real_distribution<real_type> dist{ 1, 42 };
-    std::generate(x1.begin(), x1.end(), [&]() { return dist(rnd_engine); });
-    std::generate(x2.begin(), x2.end(), [&]() { return dist(rnd_engine); });
-
-    // calculated result
-    const real_type calculated = csvm.kernel_function(x1, x2);
-
-    // correct result
-    const real_type correct = compare::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, csvm.get_degree(), csvm.get_gamma(), csvm.get_coef0());
-
-    // check for correctness
-    util::gtest_expect_floating_point_eq(correct, calculated);
-}
-
-TYPED_TEST(BASE, kernel_radial_basis_function) {
-    // setup C-SVM
-    plssvm::parameter<TypeParam> params{ "" };
-    params.print_info = false;
-    params.kernel = plssvm::kernel_type::rbf;
-
-    MockCSVM csvm{ params };
-    using real_type = typename decltype(csvm)::real_type;
-
-    // create dummy data vectors
-    constexpr std::size_t size = 512;
-    std::vector<real_type> x1(size);
-    std::vector<real_type> x2(size);
-
-    // fill vectors with random values
-    std::random_device rnd_device;
-    std::mt19937 rnd_engine{ rnd_device() };
-    std::uniform_real_distribution<real_type> dist{ 1, 42 };
-    std::generate(x1.begin(), x1.end(), [&]() { return dist(rnd_engine); });
-    std::generate(x2.begin(), x2.end(), [&]() { return dist(rnd_engine); });
-
-    // calculated result
-    const real_type calculated = csvm.kernel_function(x1, x2);
-
-    // correct result
-    const real_type correct = compare::kernel_function<plssvm::kernel_type::rbf>(x1, x2, csvm.get_gamma());
+    const real_type correct = compare::kernel_function<TypeParam::kernel>(x1, x2, csvm);
 
     // check for correctness
     util::gtest_expect_floating_point_eq(correct, calculated);

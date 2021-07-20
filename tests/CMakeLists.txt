@@ -81,7 +81,9 @@ if(${GENERATE_TEST_FILE})
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(main_tests WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#gtest_discover_tests(main_tests WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#gtest_discover_tests(main_tests WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}) # TODO: not working
+gtest_add_tests(TARGET main_tests) # TODO: improve names
 
 add_test(NAME Parameter COMMAND svm-train --help)
 

@@ -21,4 +21,5 @@ get_directory_property(PLSSVM_CUDA_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOUR
 target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PUBLIC ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
 
 include(GoogleTest)
-gtest_discover_tests(${PLSSVM_CUDA_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+#gtest_discover_tests(${PLSSVM_CUDA_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: not working
+gtest_add_tests(TARGET ${PLSSVM_CUDA_TEST_NAME}) # TODO: improve names

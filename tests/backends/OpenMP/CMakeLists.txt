@@ -21,4 +21,5 @@ get_directory_property(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SO
 target_link_libraries(${PLSSVM_OpenMP_TEST_NAME} PUBLIC ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
 
 include(GoogleTest)
-gtest_discover_tests(${PLSSVM_OpenMP_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+#gtest_discover_tests(${PLSSVM_OpenMP_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: not working
+gtest_add_tests(TARGET ${PLSSVM_OpenMP_TEST_NAME}) # TODO: improve names

@@ -45,7 +45,7 @@ TEST(OpenCL, linear) {
     std::vector<real_type> x2(size);
     std::generate(x1.begin(), x1.end(), std::rand);
     std::generate(x2.begin(), x2.end(), std::rand);
-    real_type correct = compare::kernel_function<plssvm::kernel_type::linear>(x1, x2);
+    real_type correct = compare::kernel_function<plssvm::kernel_type::linear>(x1, x2, csvm_OpenCL);
 
     real_type result_OpenCL = csvm_OpenCL.kernel_function(x1, x2);
     real_type result2_OpenCL = csvm_OpenCL.kernel_function(x1, x2);
@@ -59,7 +59,7 @@ TEST(OpenCL, q_linear) {
     using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
-    std::vector<real_type> correct = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
+    std::vector<real_type> correct = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data(), csvm);
 
     MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear);
     csvm_OpenCL.parse_libsvm(TESTFILE);
@@ -86,11 +86,11 @@ TEST(OpenCL, kernel_linear) {
     std::uniform_real_distribution<real_type> dist(-1, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    const std::vector<real_type> q_ = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
+    const std::vector<real_type> q_ = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data(), csvm);
 
     const real_type cost = csvm.get_cost();
 
-    const real_type QA_cost = compare::kernel_function<plssvm::kernel_type::linear>(csvm.get_data().back(), csvm.get_data().back()) + 1 / cost;
+    const real_type QA_cost = compare::kernel_function<plssvm::kernel_type::linear>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
     const size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear);
@@ -136,7 +136,7 @@ TEST(OpenCL, kernel_linear) {
     grid_size[1] *= plssvm::THREAD_BLOCK_SIZE;
 
     for (const int sgn : { -1, 1 }) {
-        std::vector<real_type> correct = compare::device_kernel_function<plssvm::kernel_type::linear>(csvm.get_data(), x, q_, QA_cost, cost, sgn);
+        std::vector<real_type> correct = compare::device_kernel_function<plssvm::kernel_type::linear>(csvm.get_data(), x, q_, QA_cost, cost, sgn, csvm);
 
         std::vector<real_type> result(dept, 0.0);
         opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_OpenCL.data_cl[0].get(), QA_cost, 1 / csvm_OpenCL.cost_, Ncols, Nrows, static_cast<int>(sgn), 0, Ncols);
