@@ -349,7 +349,7 @@ TYPED_TEST(BASE, kernel_polynomial) {
     const real_type calculated = csvm.kernel_function(x1, x2);
 
     // correct result
-    const real_type correct = poly_kernel(x1, x2, params.degree, params.gamma, params.coef0);
+    const real_type correct = poly_kernel(x1, x2, csvm.get_degree(), csvm.get_gamma(), csvm.get_coef0());
 
     // check for correctness
     util::gtest_expect_floating_point_eq(correct, calculated);
@@ -380,7 +380,7 @@ TYPED_TEST(BASE, kernel_radial_basis_function) {
     const real_type calculated = csvm.kernel_function(x1, x2);
 
     // correct result
-    const real_type correct = radial_kernel(x1, x2, params.gamma);
+    const real_type correct = radial_kernel(x1, x2, csvm.get_gamma());
 
     // check for correctness
     util::gtest_expect_floating_point_eq(correct, calculated);

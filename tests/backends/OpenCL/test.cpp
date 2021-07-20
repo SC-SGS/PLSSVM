@@ -36,22 +36,6 @@ TEST(OpenCL, writeModel) {
     EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
 }
 
-TEST(OpenCL, q) {
-    MockOpenCL_CSVM csvm_OpenCL;
-    using real_type = typename MockOpenCL_CSVM::real_type;
-
-    std::vector correct = generate_q<real_type>(TESTFILE);
-
-    csvm_OpenCL.parse_libsvm(TESTFILE);
-    csvm_OpenCL.setup_data_on_device();
-    std::vector test = csvm_OpenCL.generate_q();
-
-    ASSERT_EQ(correct.size(), test.size());
-    for (size_t index = 0; index < correct.size(); ++index) {
-        EXPECT_NEAR(correct[index], test[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
-    }
-}
-
 TEST(OpenCL, linear) {
     MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear);
     using real_type = typename MockOpenCL_CSVM::real_type;
@@ -75,7 +59,7 @@ TEST(OpenCL, q_linear) {
     using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
-    std::vector<real_type> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
+    std::vector<real_type> correct = generate_q<plssvm::kernel_type::linear>(csvm.get_data());
 
     MockOpenCL_CSVM csvm_OpenCL(plssvm::kernel_type::linear);
     csvm_OpenCL.parse_libsvm(TESTFILE);
@@ -102,7 +86,7 @@ TEST(OpenCL, kernel_linear) {
     std::uniform_real_distribution<real_type> dist(-1, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    const std::vector<real_type> q_ = q<plssvm::kernel_type::linear>(csvm.get_data());
+    const std::vector<real_type> q_ = generate_q<plssvm::kernel_type::linear>(csvm.get_data());
 
     const real_type cost = csvm.get_cost();
 
@@ -151,8 +135,8 @@ TEST(OpenCL, kernel_linear) {
     grid_size[0] *= plssvm::THREAD_BLOCK_SIZE;
     grid_size[1] *= plssvm::THREAD_BLOCK_SIZE;
 
-    for (const real_type sgn : { -1.0, 1.0 }) {
-        std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);
+    for (const int sgn : { -1, 1 }) {
+        std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, QA_cost, cost, sgn);
 
         std::vector<real_type> result(dept, 0.0);
         opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_OpenCL.data_cl[0].get(), QA_cost, 1 / csvm_OpenCL.cost_, Ncols, Nrows, static_cast<int>(sgn), 0, Ncols);

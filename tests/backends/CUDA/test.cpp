@@ -33,22 +33,6 @@ TEST(CUDA, writeModel) {
     EXPECT_THAT(genfile2, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
 }
 
-TEST(CUDA, q) {
-    MockCUDA_CSVM csvm_CUDA;
-    using real_type = typename MockCUDA_CSVM::real_type;
-
-    std::vector correct = generate_q<real_type>(TESTFILE);
-
-    csvm_CUDA.parse_libsvm(TESTFILE);
-    csvm_CUDA.setup_data_on_device();
-    std::vector<real_type> test = csvm_CUDA.generate_q();
-
-    ASSERT_EQ(correct.size(), test.size());
-    for (size_t index = 0; index < correct.size(); ++index) {
-        EXPECT_NEAR(correct[index], test[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
-    }
-}
-
 TEST(CUDA, linear) {
     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
     using real_type = typename MockCUDA_CSVM::real_type;
@@ -72,7 +56,7 @@ TEST(CUDA, q_linear) {
     using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
-    std::vector<real_type> correct = q<plssvm::kernel_type::linear>(csvm.get_data());
+    std::vector<real_type> correct = generate_q<plssvm::kernel_type::linear>(csvm.get_data());
 
     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
     csvm_CUDA.parse_libsvm(TESTFILE);
@@ -99,7 +83,7 @@ TEST(CUDA, kernel_linear) {
     std::uniform_real_distribution<real_type> dist(-1, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    const std::vector<real_type> q_ = q<plssvm::kernel_type::linear>(csvm.get_data());
+    const std::vector<real_type> q_ = generate_q<plssvm::kernel_type::linear>(csvm.get_data());
 
     const real_type cost = csvm.get_cost();
 
@@ -117,8 +101,8 @@ TEST(CUDA, kernel_linear) {
     plssvm::cuda::detail::device_ptr<real_type> r_d{ dept + boundary_size };
     r_d.memset(0);
 
-    for (const real_type sgn : { -1.0, 1.0 }) {
-        std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, sgn, QA_cost, cost);
+    for (const int sgn : { -1, 1 }) {
+        std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, QA_cost, cost, sgn);
 
         csvm_CUDA.QA_cost_ = QA_cost;
         csvm_CUDA.cost_ = cost;
