@@ -42,7 +42,7 @@ TEST(CUDA, linear) {
     std::vector<real_type> x2(size);
     std::generate(x1.begin(), x1.end(), std::rand);
     std::generate(x2.begin(), x2.end(), std::rand);
-    real_type correct = linear_kernel(x1, x2);
+    real_type correct = compare::kernel_function<plssvm::kernel_type::linear>(x1, x2);
 
     real_type result_CUDA = csvm_CUDA.kernel_function(x1, x2);
     real_type result2_CUDA = csvm_CUDA.kernel_function(x1, x2);
@@ -56,7 +56,7 @@ TEST(CUDA, q_linear) {
     using real_type = typename decltype(csvm)::real_type;
 
     csvm.parse_libsvm(TESTFILE);
-    std::vector<real_type> correct = generate_q<plssvm::kernel_type::linear>(csvm.get_data());
+    std::vector<real_type> correct = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
 
     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
     csvm_CUDA.parse_libsvm(TESTFILE);
@@ -83,11 +83,11 @@ TEST(CUDA, kernel_linear) {
     std::uniform_real_distribution<real_type> dist(-1, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    const std::vector<real_type> q_ = generate_q<plssvm::kernel_type::linear>(csvm.get_data());
+    const std::vector<real_type> q_ = compare::generate_q<plssvm::kernel_type::linear>(csvm.get_data());
 
     const real_type cost = csvm.get_cost();
 
-    const real_type QA_cost = linear_kernel(csvm.get_data().back(), csvm.get_data().back()) + 1 / cost;
+    const real_type QA_cost = compare::kernel_function<plssvm::kernel_type::linear>(csvm.get_data().back(), csvm.get_data().back()) + 1 / cost;
 
     const size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     MockCUDA_CSVM csvm_CUDA(plssvm::kernel_type::linear);
@@ -102,7 +102,7 @@ TEST(CUDA, kernel_linear) {
     r_d.memset(0);
 
     for (const int sgn : { -1, 1 }) {
-        std::vector<real_type> correct = kernel_linear_function(csvm.get_data(), x, q_, QA_cost, cost, sgn);
+        std::vector<real_type> correct = compare::device_kernel_function<plssvm::kernel_type::linear>(csvm.get_data(), x, q_, QA_cost, cost, sgn);
 
         csvm_CUDA.QA_cost_ = QA_cost;
         csvm_CUDA.cost_ = cost;
