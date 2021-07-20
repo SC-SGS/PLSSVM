@@ -134,9 +134,9 @@ TYPED_TEST(CUDA, kernel_linear) {
     for (const int add : { -1, 1 }) {
         const std::vector<real_type> correct = compare::device_kernel_function<plssvm::kernel_type::linear>(csvm.get_data(), x, q_vec, QA_cost, cost, add);
 
-        csvm_cuda.QA_cost_ = QA_cost;
-        csvm_cuda.cost_ = cost;
-        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, csvm_cuda.data_d_[0], add);
+        csvm_cuda.set_QA_cost(QA_cost);
+        csvm_cuda.set_cost(cost);
+        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, csvm_cuda.get_device_data()[0], add);
 
         plssvm::cuda::detail::device_synchronize();
         std::vector<real_type> calculated(dept);
