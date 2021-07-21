@@ -13,7 +13,6 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
 
     constexpr size_type BLOCK_SIZE = 64;
 
-    const std::vector<real_type> &data_last = data.back();
     const size_type dept = d.size();
 
     #pragma omp parallel for collapse(2)
