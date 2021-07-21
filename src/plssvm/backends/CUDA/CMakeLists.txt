@@ -34,8 +34,23 @@ set(PLSSVM_CUDA_SOURCES
 # set target properties
 set(PLSSVM_CUDA_BACKEND_LIBRARY_NAME svm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
-set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES 72 80 86) # TODO: maybe better?
 set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+# also specific architectures can be set using a CMake option
+set(PLSSVM_CUDA_ARCHITECTURES "" CACHE STRING "List of CUDA architectures to compile for.")
+# auto detect available CUDA architectures and append to list
+include(${PROJECT_SOURCE_DIR}/cmake/auto_detect_cuda_arch.cmake)
+auto_detect_cuda_arch(PLSSVM_CUDA_ARCHITECTURES_AUTO)
+set(PLSSVM_CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES} ${PLSSVM_CUDA_ARCHITECTURES_AUTO})
+# check that at least one architecture has been defined
+if(NOT PLSSVM_CUDA_ARCHITECTURES)
+    message(STATUS "No CUDA architecture specified! Setting CUDA_ARCHITECTURES to OFF")
+    set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES OFF.)
+else()
+    # set architectures for target
+    message(STATUS "CUDA architectures to compile for: ${PLSSVM_CUDA_ARCHITECTURES}")
+    set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES})
+endif()
 
 # link base library against CUDA library
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
