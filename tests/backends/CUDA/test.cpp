@@ -36,7 +36,7 @@ TYPED_TEST_SUITE(CUDA_base, write_model_parameter_types);
 
 TYPED_TEST(CUDA_base, write_model) {
     // setup CUDA C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     MockCUDA_CSVM csvm{ params };
@@ -71,8 +71,9 @@ class CUDA_generate_q : public ::testing::Test {};
 TYPED_TEST_SUITE(CUDA_generate_q, parameter_types, util::google_test::parameter_definition_to_name);
 
 TYPED_TEST(CUDA_generate_q, generate_q) {
+    fmt::print("{}\n", TEST_FILE);
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TESTFILE };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -108,7 +109,7 @@ TYPED_TEST_SUITE(CUDA_device_kernel, parameter_types, util::google_test::paramet
 
 TYPED_TEST(CUDA_device_kernel, device_kernel) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TESTFILE };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 

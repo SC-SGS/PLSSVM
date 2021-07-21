@@ -10,11 +10,11 @@
 #include "plssvm/parameter.hpp"                // plssvm::parameter
 #include "plssvm/typedef.hpp"                  // plssvm::THREAD_BLOCK_SIZE
 
-#include "manager/apply_arguments.hpp"
-#include "manager/configuration.hpp"
-#include "manager/device.hpp"
-#include "manager/manager.hpp"
-#include "manager/run_kernel.hpp"
+#include "../../../src/plssvm/backends/OpenCL/manager/apply_arguments.hpp"
+#include "../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
+#include "../../../src/plssvm/backends/OpenCL/manager/device.hpp"
+#include "../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
+#include "../../../src/plssvm/backends/OpenCL/manager/run_kernel.hpp"
 
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
 
@@ -36,7 +36,7 @@ TYPED_TEST_SUITE(OpenCL_base, write_model_parameter_types);
 
 TYPED_TEST(OpenCL_base, write_model) {
     // setup OpenCL C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     MockOpenCL_CSVM csvm{ params };
@@ -68,7 +68,7 @@ TYPED_TEST_SUITE(OpenCL_generate_q, parameter_types, util::google_test::paramete
 
 TYPED_TEST(OpenCL_generate_q, generate_q) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TESTFILE };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -104,7 +104,7 @@ TYPED_TEST_SUITE(OpenCL_device_kernel, parameter_types, util::google_test::param
 
 TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TESTFILE };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 

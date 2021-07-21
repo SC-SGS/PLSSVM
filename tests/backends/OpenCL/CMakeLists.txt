@@ -1,28 +1,32 @@
+## create OpenCL tests
 set(PLSSVM_OPENCL_TEST_NAME OpenCL_tests)
 
-add_executable(
-  ${PLSSVM_OPENCL_TEST_NAME}
-  test.cpp
-  ../compare.cpp
-  ) # TODO: link against svm as library
+# list all necessary sources
+set(PLSSVM_OPENCL_TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../compare.cpp
+)
 
+# add test executable
+add_executable(${PLSSVM_OPENCL_TEST_NAME} ${PLSSVM_OPENCL_TEST_SOURCES})
+
+# set necessary include directories
 target_include_directories(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../)
-target_include_directories(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenCL)
-target_include_directories(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
-target_include_directories(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
-target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC fmt::fmt)
 
-target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC gtest_main)
-target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC gmock)
+# add necessary compile definitions
+target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TEST_PATH="${PROJECT_SOURCE_DIR}/tests")
+target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TEST_FILE="${PLSSVM_TEST_FILE}")
 
-target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TESTPATH="${PROJECT_SOURCE_DIR}/tests")
-target_compile_definitions(${PLSSVM_OPENCL_TEST_NAME} PRIVATE TESTFILE="${TESTFILE}")
-
-
+# link against OpenCL backend
 get_directory_property(PLSSVM_OPENCL_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenCL DEFINITION PLSSVM_OPENCL_BACKEND_LIBRARY_NAME)
 target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
 
+
 include(GoogleTest)
+
+# link against gtest
+target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC gtest_main)
+target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PUBLIC gmock)
+
 #gtest_discover_tests(${PLSSVM_OPENCL_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: not working
 gtest_add_tests(TARGET ${PLSSVM_OPENCL_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: improve names

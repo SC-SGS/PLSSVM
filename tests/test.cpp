@@ -35,7 +35,7 @@ TYPED_TEST_SUITE(BASE, testing_types);
 
 TYPED_TEST(BASE, parse_libsvm) {
     // setup C-SVM class
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -72,7 +72,7 @@ TYPED_TEST(BASE, parse_libsvm) {
 
 TYPED_TEST(BASE, parse_libsvm_sparse) {
     // setup C-SVM class
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.sparse.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.sparse.libsvm" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -109,7 +109,7 @@ TYPED_TEST(BASE, parse_libsvm_sparse) {
 
 TYPED_TEST(BASE, parse_arff) {
     // setup C-SVM class
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.arff" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -145,7 +145,7 @@ TYPED_TEST(BASE, parse_arff) {
 }
 
 TYPED_TEST(BASE, parse_libsvm_gamma) {
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     // gamma = 1.0 (!= 0.0)
@@ -168,7 +168,7 @@ TYPED_TEST(BASE, parse_libsvm_gamma) {
 }
 
 TYPED_TEST(BASE, parse_arff_gamma) {
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.arff" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
     params.print_info = false;
 
     // gamma = 1.0 (!= 0.0)
@@ -192,7 +192,7 @@ TYPED_TEST(BASE, parse_arff_gamma) {
 
 TYPED_TEST(BASE, write_model) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -215,7 +215,7 @@ TYPED_TEST(BASE, write_model) {
 
 TYPED_TEST(BASE, parse_libsvm_ill_formed) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.arff" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -226,7 +226,7 @@ TYPED_TEST(BASE, parse_libsvm_ill_formed) {
 
 TYPED_TEST(BASE, parse_arff_ill_formed) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -237,7 +237,7 @@ TYPED_TEST(BASE, parse_arff_ill_formed) {
 
 TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.lib" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.lib" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -248,7 +248,7 @@ TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
 
 TYPED_TEST(BASE, parse_arff_non_existing_file) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.ar" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.ar" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
@@ -259,7 +259,7 @@ TYPED_TEST(BASE, parse_arff_non_existing_file) {
 
 TYPED_TEST(BASE, transform_data) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TESTPATH "/data/5x4.libsvm" };
+    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
     MockCSVM csvm{ params };
