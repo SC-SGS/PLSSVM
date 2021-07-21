@@ -11,12 +11,11 @@ function(auto_detect_cuda_arch OUT_LIST)
     string(STRIP "${INSTALLED_GPU_CCS_1}" INSTALLED_GPU_CCS_2)
     string(REPLACE "." "" CUDA_ARCH_LIST "${INSTALLED_GPU_CCS_2}")
 
-    # couldn't find any CUDA capable GPU
     if(CUDA_ARCH_LIST MATCHES ".*PTX.*")
+        # couldn't find any CUDA capable GPU
         message(STATUS "No CUDA capable GPU was found!")
-        return()
+    else()
+        # "return" list of found architectures
+        set(${OUT_LIST} "${CUDA_ARCH_LIST}" PARENT_SCOPE)
     endif()
-
-    # "return" list of found architectures
-    set(${OUT_LIST} "${CUDA_ARCH_LIST}" PARENT_SCOPE)
 endfunction()

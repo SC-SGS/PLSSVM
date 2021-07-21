@@ -1,6 +1,6 @@
 # check if CUDA can be enabled
 include(CheckLanguage)
-check_language(CUDA) # TODO: CUDA via clang?
+check_language(CUDA)
 
 # create message depending on requested mode
 if(NOT CMAKE_CUDA_COMPILER)
@@ -19,8 +19,15 @@ enable_language(CUDA)
 # set necessary flags
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O3 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg" )
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")
+
+if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    # use nvcc to compile CUDA code
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O3 -lineinfo -Xptxas=-v -Xptxas -dlcm=cg" )
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math")
+elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+    # use clang to compile CUDA code
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -ffast-math")
+endif()
 
 # explicitly set sources
 set(PLSSVM_CUDA_SOURCES
@@ -34,7 +41,9 @@ set(PLSSVM_CUDA_SOURCES
 # set target properties
 set(PLSSVM_CUDA_BACKEND_LIBRARY_NAME svm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
-set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+endif()
 
 # also specific architectures can be set using a CMake option
 set(PLSSVM_CUDA_ARCHITECTURES "" CACHE STRING "List of CUDA architectures to compile for.")
@@ -44,13 +53,12 @@ auto_detect_cuda_arch(PLSSVM_CUDA_ARCHITECTURES_AUTO)
 set(PLSSVM_CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES} ${PLSSVM_CUDA_ARCHITECTURES_AUTO})
 # check that at least one architecture has been defined
 if(NOT PLSSVM_CUDA_ARCHITECTURES)
-    message(STATUS "No CUDA architecture specified! Setting CUDA_ARCHITECTURES to OFF")
-    set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES OFF.)
-else()
-    # set architectures for target
-    message(STATUS "CUDA architectures to compile for: ${PLSSVM_CUDA_ARCHITECTURES}")
-    set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES})
+    message(STATUS "No CUDA architecture specified! Building for common CUDA architectures.")
+    set(PLSSVM_CUDA_ARCHITECTURES "52;60;61;70;75;86") # TODO: sensible defaults?
 endif()
+# set architectures for target
+message(STATUS "CUDA architectures to compile for: ${PLSSVM_CUDA_ARCHITECTURES}")
+set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES})
 
 # link base library against CUDA library
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
