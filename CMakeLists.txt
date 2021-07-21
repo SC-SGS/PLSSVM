@@ -39,8 +39,6 @@ include(FetchContent)
 
 # fetch command line parser library cxxopts
 FetchContent_Declare(cxxopts
-        # Compared to release tag or branch, commit hash avoids network connection
-        # if the local clone already has that particular commit.
         GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
         GIT_TAG                 df229cff0d5b96e146f3f11441f714e8e240cad0
         GIT_SHALLOW             TRUE
