@@ -11,7 +11,7 @@ set(PLSSVM_CUDA_TEST_SOURCES
 add_executable(${PLSSVM_CUDA_TEST_NAME} ${PLSSVM_CUDA_TEST_SOURCES})
 
 # set necessary include directories
-target_include_directories(${PLSSVM_CUDA_TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # add necessary compile definitions
 target_compile_definitions(${PLSSVM_CUDA_TEST_NAME} PRIVATE TEST_PATH="${PROJECT_SOURCE_DIR}/tests")
@@ -19,14 +19,13 @@ target_compile_definitions(${PLSSVM_CUDA_TEST_NAME} PRIVATE TEST_FILE="${PLSSVM_
 
 # link against CUDA backend
 get_directory_property(PLSSVM_CUDA_BACKEND_LIBRARY_NAME DIRECTORY ${PROJECT_SOURCE_DIR}/src/plssvm/backends/CUDA DEFINITION PLSSVM_CUDA_BACKEND_LIBRARY_NAME)
-target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PUBLIC ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
 
 
 include(GoogleTest)
 
 # link against gtest
-target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PUBLIC gtest_main)
-target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PUBLIC gmock)
+target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PRIVATE GTest::gtest_main GTest::gmock)
 
-#gtest_discover_tests(${PLSSVM_CUDA_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: not working
-gtest_add_tests(TARGET ${PLSSVM_CUDA_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: improve names
+# add tests
+gtest_add_tests(TARGET ${PLSSVM_CUDA_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)

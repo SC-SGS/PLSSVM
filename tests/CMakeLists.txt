@@ -20,7 +20,7 @@ set(PLSSVM_BASE_TEST_SOURCES
 add_executable(${PLSSVM_BASE_TEST_NAME} ${PLSSVM_BASE_TEST_SOURCES})
 
 # link against base library
-target_link_libraries(${PLSSVM_BASE_TEST_NAME} ${PLSSVM_BASE_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE ${PLSSVM_BASE_LIBRARY_NAME})
 
 # add necessary compile definitions
 target_compile_definitions(${PLSSVM_BASE_TEST_NAME} PRIVATE TEST_PATH="${CMAKE_CURRENT_LIST_DIR}")
@@ -71,11 +71,10 @@ endif()
 include(GoogleTest)
 
 # link against gtest
-target_link_libraries(${PLSSVM_BASE_TEST_NAME} gtest_main)
-target_link_libraries(${PLSSVM_BASE_TEST_NAME} gmock)
+target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE GTest::gtest_main GTest::gmock)
 
-#gtest_discover_tests(main_tests WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: not working
-gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests) # TODO: improve names
+# add tests
+gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
 
 # add test for help message
 add_test(NAME BASE/exe_help COMMAND svm-train --help)
