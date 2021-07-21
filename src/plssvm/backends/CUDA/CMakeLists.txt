@@ -1,18 +1,17 @@
 # check if CUDA can be enabled
+message(CHECK_START "Checking for CUDA backend")
+
 include(CheckLanguage)
 check_language(CUDA)
 
-# create message depending on requested mode
 if(NOT CMAKE_CUDA_COMPILER)
+    message(CHECK_FAIL "not found")
     if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
         message(FATAL_ERROR "Cannot find requested backend: CUDA!")
     endif()
-    if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "AUTO")
-        message(STATUS "CUDA backend not found.")
-        return()
-    endif()
+    return()
 endif()
-message(STATUS "CUDA backend enabled.")
+message(CHECK_PASS "found")
 
 enable_language(CUDA)
 

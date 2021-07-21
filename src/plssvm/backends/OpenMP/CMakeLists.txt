@@ -1,16 +1,16 @@
 # check if OpenMP can be enabled
+message(CHECK_START "Checking for OpenMP backend")
+
 find_package(OpenMP)
 
 if(NOT OPENMP_FOUND)
+    message(CHECK_FAIL "not found")
     if(PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "ON")
         message(FATAL_ERROR "Cannot find requested backend: OpenMP!")
     endif()
-    if (PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "AUTO")
-        message(STATUS "OpenMP backend not found.")
-        return()
-    endif()
+    return()
 endif()
-message(STATUS "OpenMP backend enabled.")
+message(CHECK_PASS "found")
 
 # explicitly set sources
 set(PLSSVM_OPENMP_SOURCES

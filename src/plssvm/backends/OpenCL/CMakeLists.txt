@@ -1,16 +1,16 @@
 # check if OpenCL can be enabled
+message(CHECK_START "Checking for OpenCL backend")
+
 find_package(OpenCL)
 
 if(NOT OpenCL_FOUND)
+    message(CHECK_FAIL "not found")
     if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "ON")
         message(FATAL_ERROR "Cannot find requested backend: OpenCL!")
     endif()
-    if (PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "AUTO")
-        message(STATUS "OpenCL backend not found.")
-        return()
-    endif()
+    return()
 endif()
-message(STATUS "OpenCL backend enabled.")
+message(CHECK_PASS "found")
 
 
 # explicitly set sources
