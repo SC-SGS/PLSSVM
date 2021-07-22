@@ -1,4 +1,4 @@
-#include <plssvm/core.hpp>
+#include "plssvm/core.hpp"
 
 #include <exception>  // std::exception
 #include <iostream>   // std::clog, std::cerr, std::endl
