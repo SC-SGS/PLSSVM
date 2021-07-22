@@ -30,7 +30,7 @@ Additional dependencies for the OpenCL backend:
 - OpenCL runtime and header files
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
-- [Python3](https://www.python.org/) with the following modules installed: <br>argparse, numpy, pandas, sklearn, arff, matplotlib, mpl_toolkits
+- [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
 ### Installing
 
@@ -87,7 +87,10 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 
 ### Generating data
 
-The repository comes with a python3 script (in the `data/` directory) to simply generate arbitrarily large data sets:
+The repository comes with a python3 script (in the `data/` directory) to simply generate arbitrarily large data sets.
+
+In order to use all functionality, the following python3 modules must be installed: 
+argparse, numpy, pandas, sklearn, arff, matplotlib and mpl_toolkits
 
 ```bash
 > python3 generate_data.py --help

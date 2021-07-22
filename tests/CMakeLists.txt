@@ -28,13 +28,13 @@ target_compile_definitions(${PLSSVM_BASE_TEST_NAME} PRIVATE TEST_PATH="${CMAKE_C
 
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate larger test file" ON)
-if(${PLSSVM_GENERATE_TEST_FILE})
+if(PLSSVM_GENERATE_TEST_FILE)
     # set default sizes
     set(PLSSVM_TEST_FILE_NUM_DATA_POINTS "5000" CACHE STRING "Number of data points for the test file generator")
     set(PLSSVM_TEST_FILE_NUM_FEATURES "2000" CACHE STRING "Number of features for each data point for the test file generator")
 
     # set test file name based on requested sizes
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}.libsvm" CACHE STRING "Path including name of the test file")
+    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
 
     # check if the requested test file already exists (otherwise create new test file)
     if(EXISTS "${PLSSVM_TEST_FILE}")
@@ -43,7 +43,7 @@ if(${PLSSVM_GENERATE_TEST_FILE})
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
-        foreach(PLSSVM_PYTHON_LIB IN ITEMS argparse numpy pandas sklearn arff matplotlib mpl_toolkits)
+        foreach(PLSSVM_PYTHON_LIB IN ITEMS argparse sklearn)
             # search for Python package
             execute_process(
                     COMMAND ${Python3_EXECUTABLE} -c "import ${PLSSVM_PYTHON_LIB}"
@@ -57,7 +57,7 @@ if(${PLSSVM_GENERATE_TEST_FILE})
             endif()
         endforeach()
 
-        message(STATUS "Generating test file.")
+        message(STATUS "Generating test file: ${PLSSVM_TEST_FILE}.")
         execute_process(
             COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/data/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}"
             OUTPUT_QUIET)
