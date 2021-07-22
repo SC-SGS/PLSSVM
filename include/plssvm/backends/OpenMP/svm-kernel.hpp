@@ -34,7 +34,7 @@ void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type
  * @param[in] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
- * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] QA_cost the bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] add denotes whether the values are added or subtracted from the result vector
  * @param[in] degree the degree parameter used in the polynomial kernel function

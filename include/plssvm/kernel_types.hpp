@@ -14,13 +14,13 @@
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <algorithm>    // std::transform
-#include <cassert>      // assert
-#include <cctype>       // std::tolower
-#include <cmath>        // std::pow, std::exp
-#include <istream>      // std::istream
-#include <ostream>      // std::ostream
-#include <string>       // std::string
+#include <algorithm>  // std::transform
+#include <cassert>    // assert
+#include <cctype>     // std::tolower
+#include <cmath>      // std::pow, std::exp
+#include <istream>    // std::istream
+#include <ostream>    // std::ostream
+#include <string>     // std::string
 
 namespace plssvm {
 
@@ -28,9 +28,9 @@ namespace plssvm {
  * @brief Enum class for the different kernel types.
  */
 enum class kernel_type {
-    /**  \f$\vec{u} \cdot \vec{v}\f$ */
+    /**  \f$\vec{u}^T \cdot \vec{v}\f$ */
     linear = 0,
-    /** \f$(gamma \cdot \vec{u} \cdot \vec{v} + coef0)^{degree}\f$ */
+    /** \f$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\f$ */
     polynomial = 1,
     /** \f$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\f$ */
     rbf = 2
