@@ -8,17 +8,12 @@
 import argparse
 import numpy as np
 import pandas
-import arff
 
 # data set creation
 from sklearn.datasets import dump_svmlight_file
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
-
-# plotting
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 
 # parse command line arguments
@@ -65,7 +60,6 @@ else:
 labels = labels * 2 - 1
 
 
-
 # set file names
 rawfile = args.output
 if rawfile.endswith(args.format):
@@ -80,6 +74,7 @@ if args.format == "libsvm":
     if args.test_samples > 0:
         dump_svmlight_file(samples[args.samples:, :], labels[args.samples:], test_file)
 elif args.format == "arff":
+    import arff
     # dump data in arff format
     # concatenate features and labels
     data = np.c_[samples, labels]
@@ -103,7 +98,6 @@ elif args.format == "arff":
     dump_arff_file(data[:args.samples, :], file, 'train data set')
     if args.test_samples > 0:
         dump_arff_file(data[args.samples:, :], test_file, 'test data set')
-
 else:
     raise RuntimeError("Only arff and libsvm supported as file format!")
 
@@ -116,6 +110,10 @@ if args.test_samples > 0:
 
 # plot generated data set
 if args.plot:
+    # plotting imports
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
     if args.features == 2:
         plt.scatter(samples[:args.samples, 0], samples[:args.samples, 1], c=labels)
     elif args.features == 3:
