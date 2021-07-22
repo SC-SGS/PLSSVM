@@ -1,16 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 @author Alexander Van Craen
 @author Marcel Breyer
 """
 
 import argparse
-import numpy as np
-import pandas
 
 # data set creation
-from sklearn.datasets import dump_svmlight_file
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
@@ -69,15 +64,18 @@ if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
 if args.format == "libsvm":
+    from sklearn.datasets import dump_svmlight_file
     # dump data in libsvm format
     dump_svmlight_file(samples[:args.samples, :], labels[:args.samples], file)
     if args.test_samples > 0:
         dump_svmlight_file(samples[args.samples:, :], labels[args.samples:], test_file)
 elif args.format == "arff":
+    import numpy
     import arff
+    import pandas
     # dump data in arff format
     # concatenate features and labels
-    data = np.c_[samples, labels]
+    data = numpy.c_[samples, labels]
 
     # convert numpy array to pandas dataframe
     col_names = ["feature_" + str(i) for i in range(args.features)]
