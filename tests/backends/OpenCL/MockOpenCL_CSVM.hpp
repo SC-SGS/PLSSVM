@@ -13,6 +13,12 @@
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
+#include <vector>  // std::vector
+
+/**
+ * @brief GTest mock class for the OpenCL CSVM.
+ * @tparam T the type of the data
+ */
 template <typename T>
 class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM<T> {
     using base_type = plssvm::OpenCL_CSVM<T>;

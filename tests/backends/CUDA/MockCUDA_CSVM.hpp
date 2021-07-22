@@ -14,6 +14,12 @@
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
+#include <vector>  // std::vector
+
+/**
+ * @brief GTest mock class for the CUDA CSVM.
+ * @tparam T the type of the data
+ */
 template <typename T>
 class MockCUDA_CSVM : public plssvm::CUDA_CSVM<T> {
     using base_type = plssvm::CUDA_CSVM<T>;

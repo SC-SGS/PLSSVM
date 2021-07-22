@@ -17,6 +17,10 @@
 
 #include <vector>  // std::vector
 
+/**
+ * @brief GTest mock class for the base CSVM class.
+ * @tparam T the type of the data
+ */
 template <typename T>
 class MockCSVM : public plssvm::CSVM<T> {
     using base_type = plssvm::CSVM<T>;
