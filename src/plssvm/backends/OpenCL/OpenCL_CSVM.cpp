@@ -520,6 +520,8 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
         std::copy(buffer.begin(), buffer.begin() + dept, ret_q.begin());
     }
 
+    alpha_ = ret_q;
+
     return alpha_;
 }
 
