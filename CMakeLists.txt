@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(SupportVectorMachine
+project(ParallelLeastSquaresSupportVectorMachine
         VERSION 0.1.0
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
@@ -129,16 +129,16 @@ if(PLSSVM_ENABLE_LTO)
 endif()
 
 
+## enable documentation generation with doxygen
+option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
+if(PLSSVM_ENABLE_DOCUMENTATION)
+    add_subdirectory(docs)
+endif()
+
+
 ## enable testing
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
-endif()
-
-
-## enable documentation generation with doxygen
-option(PLSSVM_ENABLE_DOCU "Build documentation using doxygen." OFF)
-if(PLSSVM_ENABLE_DOCU)
-    add_subdirectory(docs)
 endif()
