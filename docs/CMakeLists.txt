@@ -1,8 +1,6 @@
 # find doxygen
 find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
 
-message(STATUS "${CMAKE_PROJECT_NAME}")
-
 # configure doxygen
 set(DOXYGEN_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/docs")
 set(DOXYGEN_IMAGE_PATH "${PROJECT_SOURCE_DIR}/docs/resources")
