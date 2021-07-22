@@ -10,10 +10,10 @@
 #pragma once
 
 #include "../MockCSVM.hpp"            // MockCSVM
+#include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 #include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
 
-#include <cassert>  // assert
 #include <utility>  // std::forward
 #include <vector>   // std::vector
 
@@ -66,7 +66,7 @@ real_type radial_kernel(const std::vector<real_type> &x1, const std::vector<real
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
 real_type kernel_function(const std::vector<real_type> &x1, const std::vector<real_type> &x2, [[maybe_unused]] const SVM &csvm) {
-    assert((x1.size() == x2.size()) && "Size mismatch!: x1.size() != x2.size()");
+    PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
 
     if constexpr (kernel == plssvm::kernel_type::linear) {
         return detail::linear_kernel(x1, x2);
@@ -117,8 +117,8 @@ std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &dat
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
 std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const int add, [[maybe_unused]] const SVM &csvm) {
-    assert((x.size() == q.size()) && "Sizes mismatch!: x.size() != q.size()");
-    assert((x.size() == data.size() - 1) && "Sizes mismatch!: x.size() != data.size() - 1");
+    PLSSVM_ASSERT(x.size() == q.size(), "Sizes mismatch!: {} != {}", x.size(), q.size());
+    PLSSVM_ASSERT(x.size() == data.size() - 1, "Sizes mismatch!: {} != {}", x.size(), data.size() - 1);
 
     using size_type = typename std::vector<real_type>::size_type;
 

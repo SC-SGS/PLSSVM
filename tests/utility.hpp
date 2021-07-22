@@ -10,6 +10,7 @@
 #pragma once
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 
@@ -92,8 +93,8 @@ void gtest_assert_floating_point_near(const T val1, const T val2, const std::str
     const T eps = 128 * std::numeric_limits<T>::epsilon();  // TODO: remove magic number?
 
     // sanity checks for picked epsilon value
-    assert(std::numeric_limits<T>::epsilon() <= eps);
-    assert(eps < T{ 1.0 });
+    PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon() <= eps);
+    PLSSVM_ASSERT(eps < T{ 1.0 }, "Chosen epsilon too large!: {} >= 1.0", eps);
 
     if (val1 == val2) {
         SUCCEED();

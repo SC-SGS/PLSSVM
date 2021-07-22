@@ -9,13 +9,13 @@
 
 #pragma once
 
+#include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"  // dot product, plssvm::squared_euclidean_dist
 #include "plssvm/detail/utility.hpp"    // plssvm::detail::always_false_v
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
 #include <algorithm>  // std::transform
-#include <cassert>    // assert
 #include <cctype>     // std::tolower
 #include <cmath>      // std::pow, std::exp
 #include <istream>    // std::istream
@@ -91,7 +91,7 @@ inline std::istream &operator>>(std::istream &in, kernel_type &kernel) {
  */
 template <kernel_type kernel, typename real_type, typename... Args>
 real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, Args &&...args) {
-    assert((xi.size() == xj.size()) && "Size mismatch!: xi.size() != xj.size()");
+    PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
     if constexpr (kernel == kernel_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");

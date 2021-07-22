@@ -11,6 +11,7 @@
 #include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda_backend_exception
 #include "plssvm/backends/CUDA/q-kernel.cuh"           // plssvm::cuda::kernel_q_linear, plssvm::cuda::kernel_q_poly, plssvm::cuda::kernel_q_radial
 #include "plssvm/backends/CUDA/svm-kernel.cuh"         // plssvm::cuda::kernel_linear, plssvm::cuda::kernel_poly, plssvm::cuda::kernel_radial
+#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars
 #include "plssvm/detail/utility.hpp"                   // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
@@ -94,8 +95,10 @@ void CUDA_CSVM<T>::setup_data_on_device() {
 
 template <typename T>
 auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
-    assert((dept_ != 0 && boundary_size_ != 0) && "dept_ and boundary_size_ not initialized! Maybe a missing call to setup_data_on_device()?");
-    assert((num_rows_ != 0 && num_cols_ != 0) && "num_rows_ and num_cols_ not initialized! Maybe a missing call to setup_data_on_device()?");
+    PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
     std::vector<cuda::detail::device_ptr<real_type>> q_d(num_devices_);
     for (int device = 0; device < num_devices_; ++device) {
@@ -137,8 +140,10 @@ auto CUDA_CSVM<T>::generate_q() -> std::vector<real_type> {
 
 template <typename T>
 void CUDA_CSVM<T>::run_device_kernel(const int device, const cuda::detail::device_ptr<real_type> &q_d, cuda::detail::device_ptr<real_type> &r_d, const cuda::detail::device_ptr<real_type> &x_d, const cuda::detail::device_ptr<real_type> &data_d, const int add) {
-    assert((dept_ != 0 && boundary_size_ != 0) && "dept_ and boundary_size_ not initialized! Maybe a missing call to setup_data_on_device()?");
-    assert((num_rows_ != 0 && num_cols_ != 0) && "num_rows_ and num_cols_ not initialized! Maybe a missing call to setup_data_on_device()?");
+    PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
     // feature splitting on multiple devices
     const int first_feature = device * num_cols_ / num_devices_;
@@ -189,7 +194,8 @@ void CUDA_CSVM<T>::device_reduction(std::vector<cuda::detail::device_ptr<real_ty
 
 template <typename T>
 auto CUDA_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
-    assert((dept_ != 0 && boundary_size_ != 0) && "dept_ and boundary_size_ not initialized! Maybe a missing call to setup_data_on_device()?");
+    PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
     std::vector<real_type> x(dept_, 1.0);
     std::vector<cuda::detail::device_ptr<real_type>> x_d(num_devices_);

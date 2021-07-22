@@ -9,8 +9,9 @@
 
 #pragma once
 
-#include <cassert>  // assert
-#include <vector>   // std::vector
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+
+#include <vector>  // std::vector
 
 /**
  * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION
@@ -35,36 +36,36 @@
  * @param[in] Op the operator to generate
  */
 // clang-format off
-#define PLSSVM_GENERATE_ARITHMETIC_OPERATION(Op)                                                     \
-    template <typename T>                                                                            \
-    inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const std::vector<T> &rhs) {          \
-        assert((lhs.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");            \
-                                                                                                     \
-        _Pragma("omp simd")                                                                          \
-        for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {                        \
-            lhs[i] Op##= rhs[i];                                                                     \
-        }                                                                                            \
-        return lhs;                                                                                  \
-    }                                                                                                \
-    template <typename T>                                                                            \
-    [[nodiscard]] inline std::vector<T> operator Op(std::vector<T> lhs, const std::vector<T> &rhs) { \
-        return lhs Op##= rhs;                                                                        \
-    }                                                                                                \
-    template <typename T>                                                                            \
-    inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const T rhs) {                        \
-        _Pragma("omp simd")                                                                          \
-        for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {                        \
-            lhs[i] Op##= rhs;                                                                        \
-        }                                                                                            \
-        return lhs;                                                                                  \
-    }                                                                                                \
-    template <typename T>                                                                            \
-    [[nodiscard]] inline std::vector<T> operator Op(std::vector<T> lhs, const T rhs) {               \
-        return lhs Op##= rhs;                                                                        \
-    }                                                                                                \
-    template <typename T>                                                                            \
-    [[nodiscard]] inline std::vector<T> operator Op(const T lhs, std::vector<T> rhs) {               \
-        return rhs Op##= lhs;                                                                        \
+#define PLSSVM_GENERATE_ARITHMETIC_OPERATION(Op)                                                      \
+    template <typename T>                                                                             \
+    inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const std::vector<T> &rhs) {           \
+        PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size()); \
+                                                                                                      \
+        _Pragma("omp simd")                                                                           \
+        for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {                         \
+            lhs[i] Op##= rhs[i];                                                                      \
+        }                                                                                             \
+        return lhs;                                                                                   \
+    }                                                                                                 \
+    template <typename T>                                                                             \
+    [[nodiscard]] inline std::vector<T> operator Op(std::vector<T> lhs, const std::vector<T> &rhs) {  \
+        return lhs Op##= rhs;                                                                         \
+    }                                                                                                 \
+    template <typename T>                                                                             \
+    inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const T rhs) {                         \
+        _Pragma("omp simd")                                                                           \
+        for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {                         \
+            lhs[i] Op##= rhs;                                                                         \
+        }                                                                                             \
+        return lhs;                                                                                   \
+    }                                                                                                 \
+    template <typename T>                                                                             \
+    [[nodiscard]] inline std::vector<T> operator Op(std::vector<T> lhs, const T rhs) {                \
+        return lhs Op##= rhs;                                                                         \
+    }                                                                                                 \
+    template <typename T>                                                                             \
+    [[nodiscard]] inline std::vector<T> operator Op(const T lhs, std::vector<T> rhs) {                \
+        return rhs Op##= lhs;                                                                         \
     }
 // clang-format on
 
@@ -107,7 +108,7 @@ transposed(const std::vector<T> &) -> transposed<T>;
  */
 template <typename T>
 [[nodiscard]] inline T operator*(const transposed<T> &lhs, const std::vector<T> &rhs) {
-    assert((lhs.vec.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");
+    PLSSVM_ASSERT(lhs.vec.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.vec.size(), rhs.size());
 
     T val{};
     #pragma omp simd reduction(+:val)
@@ -152,7 +153,7 @@ template <typename T>
  */
 template <typename T>
 [[nodiscard]] inline T squared_euclidean_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
-    assert((lhs.size() == rhs.size()) && "Size mismatch!: lhs.size() != rhs.size()");
+    PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
     #pragma omp simd reduction(+:val)

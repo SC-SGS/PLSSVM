@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception
 
@@ -24,7 +25,6 @@
     #define PLSSVM_HAS_MEMORY_MAPPING
 #endif
 
-#include <cassert>      // assert
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios::beg, std::ios::end, std::streamsize
@@ -90,7 +90,7 @@ class file_reader {
      * @return the line without leading whitespaces
      */
     [[nodiscard]] std::string_view line(const std::size_t pos) const {
-        assert((pos < this->num_lines()) && "Out-of-bounce access!");
+        PLSSVM_ASSERT(pos < this->num_lines(), "Out-of-bounce access!: {} >= {}", pos, this->num_lines());
         return lines_[pos];
     }
 

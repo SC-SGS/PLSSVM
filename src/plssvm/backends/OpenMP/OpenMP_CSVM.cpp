@@ -1,6 +1,7 @@
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 
 #include "plssvm/backends/OpenMP/svm-kernel.hpp"  // plssvm::kernel_type
+#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
@@ -8,7 +9,6 @@
 #include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <algorithm>  // std::copy
-#include <cassert>    // assert
 #include <vector>     // std::vector
 
 namespace plssvm {
@@ -58,7 +58,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     const size_type dept = b.size();
 
     // sanity checks
-    assert((dept == num_data_points_ - 1) && "Size mismatch: dept != num_data_points_ - 1");
+    PLSSVM_ASSERT(dept == num_data_points_ - 1, "Sizes mismatch!: {} != {}", dept, num_data_points_ - 1);
 
     std::vector<real_type> r(b);
 
