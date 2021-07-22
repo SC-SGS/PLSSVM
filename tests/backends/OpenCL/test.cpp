@@ -93,7 +93,7 @@ TYPED_TEST(OpenCL_generate_q, generate_q) {
 
     ASSERT_EQ(correct.size(), calculated.size());
     for (std::size_t index = 0; index < correct.size(); ++index) {
-        EXPECT_NEAR(correct[index], calculated[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
+        util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}", index));
     }
 }
 
@@ -202,7 +202,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
 
         ASSERT_EQ(correct.size(), result.size()) << "add: " << add;
         for (size_t index = 0; index < correct.size(); ++index) {
-            EXPECT_NEAR(correct[index], result[index], std::abs(correct[index] * 1e-10)) << " index: " << index << " add: " << add;
+            util::gtest_assert_floating_point_near(correct[index], result[index], fmt::format("\tindex: {}, add: {}", index, add));
         }
     }
 }

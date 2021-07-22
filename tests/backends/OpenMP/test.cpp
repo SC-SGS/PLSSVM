@@ -98,7 +98,7 @@ TYPED_TEST(OpenMP_generate_q, generate_q) {
     // check size and values for correctness
     ASSERT_EQ(correct.size(), calculated.size());
     for (std::size_t index = 0; index < correct.size(); ++index) {
-        EXPECT_NEAR(correct[index], calculated[index], std::abs(correct[index] * 1e-10)) << " index: " << index;
+        util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}", index));
     }
 }
 
@@ -153,7 +153,7 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (std::size_t index = 0; index < correct.size(); ++index) {
-            EXPECT_NEAR(correct[index], calculated[index], std::abs(correct[index] * 1e-10)) << " index: " << index << " add: " << add;
+            util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
         }
     }
 }

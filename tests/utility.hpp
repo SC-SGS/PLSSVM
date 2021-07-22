@@ -45,7 +45,7 @@ std::string create_temp_file() {
  * @tparam T the floating point type
  * @param[in] val1 first value to compare
  * @param[in] val2 second value to compare
- * @param msg an optional message
+ * @param[in] msg an optional message
  */
 template <typename T>
 void gtest_expect_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
@@ -64,7 +64,7 @@ void gtest_expect_floating_point_eq(const T val1, const T val2, const std::strin
  * @tparam T the floating point type
  * @param[in] val1 first value to compare
  * @param[in] val2 second value to compare
- * @param msg an optional message
+ * @param[in] msg an optional message
  */
 template <typename T>
 void gtest_assert_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
@@ -77,8 +77,35 @@ void gtest_assert_floating_point_eq(const T val1, const T val2, const std::strin
     }
 }
 
-namespace google_test {
+/**
+ * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode
+ * @tparam T the floating point type
+ * @param[in] val1 first value to compare
+ * @param[in] val2 second value to compare
+ * @param[in] msg an optional message
+ */
+template <typename T>
+void gtest_assert_floating_point_near(const T val1, const T val2, const std::string &msg = "") {
+    // based on: https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
 
+    // set epsilon
+    const T eps = 128 * std::numeric_limits<T>::epsilon();  // TODO: remove magic number?
+
+    // sanity checks for picked epsilon value
+    assert(std::numeric_limits<T>::epsilon() <= eps);
+    assert(eps < T{ 1.0 });
+
+    if (val1 == val2) {
+        SUCCEED();
+    }
+
+    const T diff = std::abs(val1 - val2);
+    const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
+
+    EXPECT_LT(diff, std::max(std::numeric_limits<T>::lowest(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+}
+
+namespace google_test {
 /**
  * @brief Save the data type and kernel function in a single struct used by GoogleTest's TYPED_TEST_SUITE.
  * @tparam T the type of the data
