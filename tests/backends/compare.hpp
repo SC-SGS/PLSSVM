@@ -14,7 +14,6 @@
 #include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
 
 #include <cassert>  // assert
-#include <cstddef>  // std::size_t
 #include <utility>  // std::forward
 #include <vector>   // std::vector
 
