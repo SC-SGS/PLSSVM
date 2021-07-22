@@ -1,4 +1,6 @@
-# find doxygen
+## setup documentation generation with doxygen
+
+# use installed doxygen TODO: install via fetch content
 find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
 
 # configure doxygen

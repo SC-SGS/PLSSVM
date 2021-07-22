@@ -1,12 +1,18 @@
-## fetch testing framework GoogleTest
-include(FetchContent)
-FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
-        )
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+## setup testing wit GoogleTest
+if(PLSSVM_BUILD_DEPENDENCIES)
+    # fetch testing framework GoogleTest
+    include(FetchContent)
+    FetchContent_Declare(
+            googletest
+            URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+else()
+    # use installed GoogleTest
+    find_package(GTest REQUIRED)
+endif()
 
 set(PLSSVM_BASE_TEST_NAME base_tests)
 

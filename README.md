@@ -15,8 +15,8 @@ TODO: description, UPDATES
 General dependencies:
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.18 or newer
-- [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration)
-- [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration)
+- [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if `PLSSVM_BUILD_DEPENDENCIES` is set to `ON`)
+- [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `PLSSVM_BUILD_DEPENDENCIES` is set to `ON`)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 
 Additional dependencies for the OpenMP backend:
@@ -61,6 +61,7 @@ Where `[options]` can be one or multiple of:
 
 **Attention:** at least one backend must be enabled and available!    
 
+- `PLSSVM_BUILD_DEPENDENCIES=ON|OFF` (default: `ON`): automatically build all necessary dependencies 
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: ON): enable testing using GoogleTest and ctest

@@ -34,50 +34,67 @@ if(OPENMP_FOUND)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()
 
+# if OFF, do not build dependencies but use the already installed ones
+option(PLSSVM_BUILD_DEPENDENCIES "Automatically build all dependencies." ON)
+
 ## setup dependencies
-include(FetchContent)
+if(PLSSVM_BUILD_DEPENDENCIES)
+    include(FetchContent)
+    # fetch command line parser library cxxopts
+    FetchContent_Declare(cxxopts
+            GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
+            GIT_TAG                 df229cff0d5b96e146f3f11441f714e8e240cad0
+            GIT_SHALLOW             TRUE
 
-# fetch command line parser library cxxopts
-FetchContent_Declare(cxxopts
-        GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
-        GIT_TAG                 df229cff0d5b96e146f3f11441f714e8e240cad0
-        GIT_SHALLOW             TRUE
+            set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+            set(CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    )
+    FetchContent_MakeAvailable(cxxopts)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
+else()
+    # use installed cxxopts
+    find_package(cxxopts REQUIRED)
+endif()
 
-        set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-        set(CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-        )
-FetchContent_MakeAvailable(cxxopts)
-add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
+if(PLSSVM_BUILD_DEPENDENCIES)
+    # fetch float parsing library fast_float
+    FetchContent_Declare(fast_float
+            GIT_REPOSITORY          https://github.com/fastfloat/fast_float
+            GIT_TAG                 8159e8bcf63c1b92f5a51fb550f966e56624b209
+            GIT_SHALLOW             TRUE
 
-# fetch float parsing library fast_float
-FetchContent_Declare(fast_float
-        GIT_REPOSITORY          https://github.com/fastfloat/fast_float
-        GIT_TAG                 8159e8bcf63c1b92f5a51fb550f966e56624b209
-        GIT_SHALLOW             TRUE
+            set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
+            set(FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
+    )
+    FetchContent_MakeAvailable(fast_float)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
+else()
+    # use installed fast_float
+    find_package(fast_float REQUIRED)
+endif()
 
-        set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
-        set(FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
-        )
-FetchContent_MakeAvailable(fast_float)
-add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
+if(PLSSVM_BUILD_DEPENDENCIES)
+    # fetch string formatting library fmt
+    FetchContent_Declare(fmt
+            GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
+            GIT_TAG                 9e8b86fd2d9806672cc73133d21780dd182bfd24
+            GIT_SHALLOW             TRUE
 
-# fetch string formatting library fmt
-FetchContent_Declare(fmt
-        GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
-        GIT_TAG                 9e8b86fd2d9806672cc73133d21780dd182bfd24
-        GIT_SHALLOW             TRUE
-
-        set(FMT_TEST OFF CACHE BOOL "" FORCE)
-        set(FMT_DOC OFF CACHE BOOL "" FORCE)
-        set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
-        )
-FetchContent_MakeAvailable(fmt)
-set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
-add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
+            set(FMT_TEST OFF CACHE BOOL "" FORCE)
+            set(FMT_DOC OFF CACHE BOOL "" FORCE)
+            set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+    )
+    FetchContent_MakeAvailable(fmt)
+    set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
+else()
+    # use installed fmt
+    find_package(fmt REQUIRED)
+endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 
