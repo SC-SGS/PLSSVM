@@ -1,0 +1,1 @@
+file(WRITE documentation.html "<meta http-equiv=\"REFRESH\" content=\"0;URL=html/index.html\">")
