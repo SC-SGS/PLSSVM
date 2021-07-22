@@ -55,6 +55,7 @@ if(NOT PLSSVM_CUDA_ARCHITECTURES)
     message(STATUS "No CUDA architecture specified! Building for common CUDA architectures.")
     set(PLSSVM_CUDA_ARCHITECTURES "52;60;61;70;75;86") # TODO: sensible defaults?
 endif()
+list(REMOVE_DUPLICATES PLSSVM_CUDA_ARCHITECTURES)
 # set architectures for target
 message(STATUS "CUDA architectures to compile for: ${PLSSVM_CUDA_ARCHITECTURES}")
 set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES})
