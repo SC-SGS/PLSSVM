@@ -71,7 +71,6 @@ class CUDA_generate_q : public ::testing::Test {};
 TYPED_TEST_SUITE(CUDA_generate_q, parameter_types, util::google_test::parameter_definition_to_name);
 
 TYPED_TEST(CUDA_generate_q, generate_q) {
-    fmt::print("{}\n", TEST_FILE);
     // setup C-SVM
     plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
