@@ -1,6 +1,8 @@
 # find doxygen
 find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
 
+message(STATUS "${CMAKE_PROJECT_NAME}")
+
 # configure doxygen
 set(DOXYGEN_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/docs)
 set(DOXYGEN_IMAGE_PATH "docs/resources")
@@ -19,7 +21,7 @@ set(DOXYGEN_SORT_MEMBER_DOCS "NO")
 # add doxygen as target
 doxygen_add_docs(
         doc
-        "include;README.md"
+        "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/README.md"
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT "Generating API documentation with Doxygen"
 )
