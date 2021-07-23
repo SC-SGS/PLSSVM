@@ -195,6 +195,8 @@ void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffe
 
 template <typename T>
 auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+    using namespace plssvm::operators;
+
     PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 

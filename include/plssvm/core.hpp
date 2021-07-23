@@ -27,6 +27,9 @@ namespace plssvm::version {}
 /// Namespace containing implementation details. **Should not** directly be used by users.
 namespace plssvm::detail {}
 
+/// Namespace containing operator overloads for [std::vector](https://en.cppreference.com/w/cpp/container/vector) and other mathematical functions on vectors.
+namespace plssvm::operators {}
+
 /// Namespace containing the C-SVM using the OpenMP backend.
 namespace plssvm::openmp {}
 

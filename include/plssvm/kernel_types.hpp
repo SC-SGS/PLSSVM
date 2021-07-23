@@ -91,6 +91,8 @@ inline std::istream &operator>>(std::istream &in, kernel_type &kernel) {
  */
 template <kernel_type kernel, typename real_type, typename... Args>
 real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, Args &&...args) {
+    using namespace plssvm::operators;
+
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
     if constexpr (kernel == kernel_type::linear) {

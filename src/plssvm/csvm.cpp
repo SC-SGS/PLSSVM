@@ -30,6 +30,8 @@ csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type 
 
 template <typename T>
 void csvm<T>::learn() {
+    using namespace plssvm::operators;
+
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> q;

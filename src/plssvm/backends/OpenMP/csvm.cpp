@@ -55,6 +55,8 @@ void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<rea
 
 template <typename T>
 auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+    using namespace plssvm::operators;
+
     alpha_.resize(b.size(), 1.0);
     const size_type dept = b.size();
 

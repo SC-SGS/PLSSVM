@@ -69,7 +69,7 @@
     }
 // clang-format on
 
-namespace plssvm {
+namespace plssvm::operators {
 
 // define arithmetic operations +-*/ on std::vector
 PLSSVM_GENERATE_ARITHMETIC_OPERATION(+)
@@ -165,4 +165,4 @@ template <typename T>
 
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
 
-}  // namespace plssvm
+}  // namespace plssvm::operators

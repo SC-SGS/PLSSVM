@@ -148,6 +148,8 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
 
 template <typename T>
 auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+    using namespace plssvm::operators;
+
     std::vector<::opencl::device_t> &devices = manager.get_devices();  //TODO: header
     const size_type dept = num_data_points_ - 1;
     const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
