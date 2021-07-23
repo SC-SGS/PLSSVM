@@ -33,8 +33,8 @@ set(PLSSVM_CUDA_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
     ${CMAKE_CURRENT_LIST_DIR}/CUDA_CSVM.cu
     ${CMAKE_CURRENT_LIST_DIR}/predict.cu
-    ${CMAKE_CURRENT_LIST_DIR}/q-kernel.cu
-    ${CMAKE_CURRENT_LIST_DIR}/svm-kernel.cu
+    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
+    ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
 )
 
 # set target properties

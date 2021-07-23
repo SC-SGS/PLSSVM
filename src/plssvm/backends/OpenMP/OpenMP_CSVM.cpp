@@ -1,6 +1,6 @@
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
 
-#include "plssvm/backends/OpenMP/svm-kernel.hpp"  // plssvm::kernel_type
+#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::kernel_type
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception

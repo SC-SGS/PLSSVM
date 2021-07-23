@@ -1,4 +1,4 @@
-#include "plssvm/backends/OpenMP/svm-kernel.hpp"
+#include "plssvm/backends/OpenMP/svm_kernel.hpp"
 
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type, plssvm::kernel_function
 

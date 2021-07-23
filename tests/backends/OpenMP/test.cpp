@@ -13,7 +13,6 @@
 
 #include "../compare.hpp"                          // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"  // plssvm::OpenMP_CSVM
-#include "plssvm/backends/OpenMP/svm-kernel.hpp"   // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_poly, plssvm::openmp::device_kernel_radial
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 

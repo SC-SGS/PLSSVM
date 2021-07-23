@@ -9,8 +9,8 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device,
                                                        // plssvm::detail::cuda::peek_at_last_error, plssvm::detail::cuda::device_synchronize
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda_backend_exception
-#include "plssvm/backends/CUDA/q-kernel.cuh"    // plssvm::cuda::kernel_q_linear, plssvm::cuda::kernel_q_poly, plssvm::cuda::kernel_q_radial
-#include "plssvm/backends/CUDA/svm-kernel.cuh"  // plssvm::cuda::kernel_linear, plssvm::cuda::kernel_poly, plssvm::cuda::kernel_radial
+#include "plssvm/backends/CUDA/q_kernel.cuh"    // plssvm::cuda::kernel_q_linear, plssvm::cuda::kernel_q_poly, plssvm::cuda::kernel_q_radial
+#include "plssvm/backends/CUDA/svm_kernel.cuh"  // plssvm::cuda::kernel_linear, plssvm::cuda::kernel_poly, plssvm::cuda::kernel_radial
 #include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"          // various operator overloads for std::vector and scalars

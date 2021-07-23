@@ -4,7 +4,7 @@
  * @copyright
  */
 
-#include "plssvm/backends/CUDA/q-kernel.cuh"
+#include "plssvm/backends/CUDA/q_kernel.cuh"
 
 namespace plssvm::cuda {
 
