@@ -32,3 +32,6 @@ namespace plssvm::cuda {}
 
 /// Namespace containing CUDA specific implementation details. **Should not** directly be used by users.
 namespace plssvm::cuda::detail {}
+
+/// Namespace containing OpenMP specific functions.
+namespace plssvm::openmp {}
