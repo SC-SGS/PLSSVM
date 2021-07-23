@@ -1,9 +1,9 @@
 #include "plssvm/backends/OpenCL/OpenCL_CSVM.hpp"
 
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
+#include "plssvm/constants.hpp"
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/detail/string_utility.hpp"
-#include "plssvm/typedef.hpp"
 
 #include "manager/apply_arguments.hpp"
 #include "manager/configuration.hpp"

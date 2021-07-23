@@ -5,10 +5,10 @@
 
 #include "../compare.hpp"                      // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"  // plssvm::OpenMP_CSVM
+#include "plssvm/constants.hpp"                // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/detail/string_utility.hpp"    // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"             // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                // plssvm::parameter
-#include "plssvm/typedef.hpp"                  // plssvm::THREAD_BLOCK_SIZE
 
 #include "../../../src/plssvm/backends/OpenCL/manager/apply_arguments.hpp"
 #include "../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"

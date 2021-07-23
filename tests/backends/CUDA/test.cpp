@@ -13,9 +13,9 @@
 
 #include "../compare.hpp"                      // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/CUDA/CUDA_CSVM.hpp"  // plssvm::OpenMP_CSVM
+#include "plssvm/constants.hpp"                // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/kernel_types.hpp"             // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                // plssvm::parameter
-#include "plssvm/typedef.hpp"                  // plssvm::THREAD_BLOCK_SIZE
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
