@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../MockCSVM.hpp"            // MockCSVM
+#include "../mock_csvm.hpp"           // mock_csvm
 #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 #include "plssvm/kernel_types.hpp"    // plssvm::kernel_type

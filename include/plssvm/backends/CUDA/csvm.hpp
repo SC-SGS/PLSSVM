@@ -9,25 +9,25 @@
 
 #pragma once
 
-#include "plssvm/CSVM.hpp"                             // plssvm::CSVM
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
+#include "plssvm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
 #include <vector>  // std::vector
 
-namespace plssvm {
+namespace plssvm::cuda {
 
 /**
  * @brief The C-SVM class using the CUDA backend.
  * @tparam T the type of the data
  */
 template <typename T>
-class CUDA_CSVM : public CSVM<T> {
+class csvm : public ::plssvm::csvm<T> {
   protected:
     // protected for the test MOCK class
     /// The template base type of the CUDA_SVM class.
-    using base_type = CSVM<T>;
+    using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_;
     using base_type::coef0_;
     using base_type::cost_;
@@ -50,7 +50,7 @@ class CUDA_CSVM : public CSVM<T> {
      * @brief Construct a new C-SVM using the CUDA backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
      */
-    explicit CUDA_CSVM(const parameter<T> &params);
+    explicit csvm(const parameter<T> &params);
     /**
      * @brief Construct an new C-SVM using the CUDA backend explicitly specifying all necessary parameters.
      * @param[in] kernel the type of the kernel function
@@ -61,7 +61,7 @@ class CUDA_CSVM : public CSVM<T> {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    CUDA_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief TODO: predict
@@ -84,13 +84,13 @@ class CUDA_CSVM : public CSVM<T> {
      * @param[in] data_d the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(int device, const cuda::detail::device_ptr<real_type> &q_d, cuda::detail::device_ptr<real_type> &r_d, const cuda::detail::device_ptr<real_type> &x_d, const cuda::detail::device_ptr<real_type> &data_d, int add);
+    void run_device_kernel(int device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, int add);
     /**
      * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
      * @param[inout] buffer_d the data to gather
      * @param[inout] buffer the reduces data
      */
-    void device_reduction(std::vector<cuda::detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
+    void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
     /// The number of available/used CUDA devices.
     int num_devices_{};
@@ -103,14 +103,14 @@ class CUDA_CSVM : public CSVM<T> {
     /// The number of columns in the data matrix (= the number of features per data point).
     int num_cols_{};
     /// The data saved across all devices.
-    std::vector<cuda::detail::device_ptr<real_type>> data_d_{};
+    std::vector<detail::device_ptr<real_type>> data_d_{};
     /// The last row of the data matrix.
-    std::vector<cuda::detail::device_ptr<real_type>> data_last_d_{};
+    std::vector<detail::device_ptr<real_type>> data_last_d_{};
     /// TODO:
-    cuda::detail::device_ptr<real_type> w_d_{};
+    detail::device_ptr<real_type> w_d_{};
 };
 
-extern template class CUDA_CSVM<float>;
-extern template class CUDA_CSVM<double>;
+extern template class csvm<float>;
+extern template class csvm<double>;
 
-}  // namespace plssvm
+}  // namespace plssvm::cuda

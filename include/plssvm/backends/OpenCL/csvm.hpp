@@ -1,7 +1,7 @@
 #pragma once
 
-#include "plssvm/CSVM.hpp"
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
+#include "plssvm/csvm.hpp"          // plssvm::csvm
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 #include "plssvm/parameter.hpp"     // plssvm::parameter
 
@@ -11,13 +11,13 @@
 
 #include <vector>  // std::vector
 
-namespace plssvm {
+namespace plssvm::opencl {
 
 template <typename T>
-class OpenCL_CSVM : public CSVM<T> {
+class csvm : public ::plssvm::csvm<T> {
   protected:
     // protected for test MOCK class
-    using base_type = CSVM<T>;
+    using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_;
     using base_type::cost_;
     using base_type::data_;
@@ -31,8 +31,8 @@ class OpenCL_CSVM : public CSVM<T> {
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit OpenCL_CSVM(const parameter<T> &params);
-    OpenCL_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    explicit csvm(const parameter<T> &params);
+    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 
@@ -42,15 +42,15 @@ class OpenCL_CSVM : public CSVM<T> {
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     void load_w() override {}  // TODO: implement correctly
 
-    opencl::manager_t manager{ "../platform_configuration.cfg" };
-    opencl::device_t first_device;
+    ::opencl::manager_t manager{ "../platform_configuration.cfg" };
+    ::opencl::device_t first_device;
     std::vector<cl_kernel> kernel_q_cl;
     std::vector<cl_kernel> svm_kernel_linear;
-    std::vector<opencl::DevicePtrOpenCL<real_type>> datlast_cl;
-    std::vector<opencl::DevicePtrOpenCL<real_type>> data_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> datlast_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> data_cl;
 };
 
-extern template class OpenCL_CSVM<float>;
-extern template class OpenCL_CSVM<double>;
+extern template class csvm<float>;
+extern template class csvm<double>;
 
-}  // namespace plssvm
+}  // namespace plssvm::opencl

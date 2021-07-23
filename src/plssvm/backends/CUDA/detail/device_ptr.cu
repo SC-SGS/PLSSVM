@@ -20,7 +20,7 @@ namespace plssvm::cuda::detail {
  */
 inline void gpu_assert(const cudaError_t code) {
     if (code != cudaSuccess) {
-        throw cuda_backend_exception{ fmt::format("CUDA assert {}: {}", cudaGetErrorName(code), cudaGetErrorString(code)) };
+        throw backend_exception{ fmt::format("CUDA assert {}: {}", cudaGetErrorName(code), cudaGetErrorString(code)) };
     }
 }
 
@@ -42,7 +42,7 @@ void device_synchronize() {
 }
 void device_synchronize(const int device) {
     if (device < 0 || device >= static_cast<int>(get_device_count())) {
-        throw plssvm::cuda_backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device) };
+        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device) };
     }
     peek_at_last_error();
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device));
@@ -53,7 +53,7 @@ template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const int device) :
     device_{ device }, size_{ size } {
     if (device_ < 0 || device_ >= static_cast<int>(get_device_count())) {
-        throw plssvm::cuda_backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device_) };
+        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device_) };
     }
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
     PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(reinterpret_cast<void **>(&data_), size_ * sizeof(value_type)));
@@ -92,7 +92,7 @@ void device_ptr<T>::memset(const value_type value, const size_type pos) {
 template <typename T>
 void device_ptr<T>::memset(const value_type value, const size_type pos, const size_type count) {
     if (pos >= size_) {
-        throw plssvm::cuda_backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
     }
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
     const size_type rcount = std::min(count, size_ - pos);
@@ -107,7 +107,7 @@ template <typename T>
 void device_ptr<T>::memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
     const size_type rcount = std::min(count, size_ - pos);
     if (data_to_copy.size() < rcount) {
-        throw plssvm::cuda_backend_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
+        throw backend_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
     }
     this->memcpy_to_device(data_to_copy.data(), pos, rcount);
 }
@@ -131,7 +131,7 @@ template <typename T>
 void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) {
     const size_type rcount = std::min(count, size_ - pos);
     if (buffer.size() < rcount) {
-        throw plssvm::cuda_backend_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
+        throw backend_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
     }
     this->memcpy_to_host(buffer.data(), pos, rcount);
 }

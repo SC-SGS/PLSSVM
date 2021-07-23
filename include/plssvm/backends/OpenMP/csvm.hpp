@@ -9,24 +9,24 @@
 
 #pragma once
 
-#include "plssvm/CSVM.hpp"
+#include "plssvm/csvm.hpp"          // plssvm::csvm
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 #include "plssvm/parameter.hpp"     // plssvm::parameter
 
 #include <vector>  // std::vector
 
-namespace plssvm {
+namespace plssvm::openmp {
 
 /**
  * @brief The C-SVM class using the OpenMP backend.
  * @tparam T the type of the data
  */
 template <typename T>
-class OpenMP_CSVM : public CSVM<T> {
+class csvm : public ::plssvm::csvm<T> {
   protected:
     // protected for test MOCK class
     /// The template base type of the CUDA_SVM class.
-    using base_type = CSVM<T>;
+    using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_;
     using base_type::coef0_;
     using base_type::cost_;
@@ -49,7 +49,7 @@ class OpenMP_CSVM : public CSVM<T> {
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
      */
-    explicit OpenMP_CSVM(const parameter<T> &params);
+    explicit csvm(const parameter<T> &params);
     /**
      * @brief Construct an new C-SVM using the OpenMP backend explicitly specifying all necessary parameters.
      * @param[in] kernel the type of the kernel function
@@ -60,7 +60,7 @@ class OpenMP_CSVM : public CSVM<T> {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    OpenMP_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 
@@ -83,7 +83,7 @@ class OpenMP_CSVM : public CSVM<T> {
     void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, int add);
 };
 
-extern template class OpenMP_CSVM<float>;
-extern template class OpenMP_CSVM<double>;
+extern template class csvm<float>;
+extern template class csvm<double>;
 
-}  // namespace plssvm
+}  // namespace plssvm::openmp

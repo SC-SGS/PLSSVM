@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "plssvm/CSVM.hpp"          // plssvm::CSVM
+#include "plssvm/csvm.hpp"          // plssvm::csvm
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 #include "plssvm/parameter.hpp"     // plssvm::parameter
 
@@ -22,16 +22,16 @@
  * @tparam T the type of the data
  */
 template <typename T>
-class MockCSVM : public plssvm::CSVM<T> {
-    using base_type = plssvm::CSVM<T>;
+class mock_csvm : public plssvm::csvm<T> {
+    using base_type = plssvm::csvm<T>;
 
   public:
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit MockCSVM(const plssvm::parameter<T> &params) :
+    explicit mock_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit MockCSVM(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    explicit mock_csvm(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
         base_type{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // mock pure virtual functions

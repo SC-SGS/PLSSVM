@@ -1,6 +1,7 @@
-#include "plssvm/backends/OpenMP/OpenMP_CSVM.hpp"
+#include "plssvm/backends/OpenMP/csvm.hpp"
 
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::kernel_type
+#include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
@@ -11,22 +12,22 @@
 #include <algorithm>  // std::copy
 #include <vector>     // std::vector
 
-namespace plssvm {
+namespace plssvm::openmp {
 
 template <typename T>
-OpenMP_CSVM<T>::OpenMP_CSVM(const parameter<T> &params) :
-    OpenMP_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+csvm<T>::csvm(const parameter<T> &params) :
+    csvm{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-OpenMP_CSVM<T>::OpenMP_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
-    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+csvm<T>::csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    ::plssvm::csvm<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
     if (print_info_) {
         fmt::print("Using OpenMP as backend.\n\n");
     }
 }
 
 template <typename T>
-auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
+auto csvm<T>::generate_q() -> std::vector<real_type> {
     std::vector<real_type> q;
     q.reserve(data_.size());
     for (size_type i = 0; i < data_.size() - 1; ++i) {
@@ -36,7 +37,7 @@ auto OpenMP_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void OpenMP_CSVM<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const int add) {
+void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const int add) {
     switch (kernel_) {
         case kernel_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost_, 1 / cost_, add);
@@ -53,7 +54,7 @@ void OpenMP_CSVM<T>::run_device_kernel(const std::vector<real_type> &q, std::vec
 }
 
 template <typename T>
-auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     alpha_.resize(b.size(), 1.0);
     const size_type dept = b.size();
 
@@ -114,7 +115,7 @@ auto OpenMP_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
 }
 
 // explicitly instantiate template class
-template class OpenMP_CSVM<float>;
-template class OpenMP_CSVM<double>;
+template class csvm<float>;
+template class csvm<double>;
 
-}  // namespace plssvm
+}  // namespace plssvm::openmp

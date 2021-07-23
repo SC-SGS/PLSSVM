@@ -1,7 +1,8 @@
-#include "plssvm/backends/OpenCL/OpenCL_CSVM.hpp"
+#include "plssvm/backends/OpenCL/csvm.hpp"
 
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
 #include "plssvm/constants.hpp"
+#include "plssvm/csvm.hpp"  // plssvm::csvm
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/detail/string_utility.hpp"
 
@@ -14,23 +15,23 @@
 #include <chrono>
 #include <stdexcept>
 
-namespace plssvm {
+namespace plssvm::opencl {
 
 // TODO:
 std::size_t count_devices = 1;
 
 template <typename T>
-OpenCL_CSVM<T>::OpenCL_CSVM(const parameter<T> &params) :
-    OpenCL_CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+csvm<T>::csvm(const parameter<T> &params) :
+    csvm{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-OpenCL_CSVM<T>::OpenCL_CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
-    CSVM<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+csvm<T>::csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
+    ::plssvm::csvm<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
     if (print_info_) {
         fmt::print("Using OpenCL as backend.\n");
     }
 
-    std::vector<opencl::device_t> &devices = manager.get_devices();
+    std::vector<::opencl::device_t> &devices = manager.get_devices();
     first_device = devices[0];
     count_devices = devices.size();
     svm_kernel_linear.resize(count_devices, nullptr);
@@ -40,10 +41,10 @@ OpenCL_CSVM<T>::OpenCL_CSVM(kernel_type kernel, real_type degree, real_type gamm
 }
 
 template <typename T>
-void OpenCL_CSVM<T>::setup_data_on_device() {
-    std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
+void csvm<T>::setup_data_on_device() {
+    std::vector<::opencl::device_t> &devices = manager.get_devices();  //TODO: header
     for (size_type device = 0; device < count_devices; ++device) {
-        datlast_cl.emplace_back(opencl::DevicePtrOpenCL<real_type>(devices[device], (num_features_)));
+        datlast_cl.emplace_back(::opencl::DevicePtrOpenCL<real_type>(devices[device], (num_features_)));
     }
 
     std::vector<real_type> datalast(data_[num_data_points_ - 1]);
@@ -59,7 +60,7 @@ void OpenCL_CSVM<T>::setup_data_on_device() {
 
     for (size_type device = 0; device < count_devices; ++device) {
         data_cl.emplace_back(
-            opencl::DevicePtrOpenCL<real_type>(devices[device], num_features_ * (num_data_points_ - 1)));
+            ::opencl::DevicePtrOpenCL<real_type>(devices[device], num_features_ * (num_data_points_ - 1)));
     }
 
     auto begin_transform = std::chrono::high_resolution_clock::now();
@@ -73,19 +74,19 @@ void OpenCL_CSVM<T>::setup_data_on_device() {
     }
     #pragma omp parallel for
     for (size_type device = 0; device < count_devices; ++device) {
-        data_cl[device] = opencl::DevicePtrOpenCL<real_type>(devices[device], num_features_ * (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
+        data_cl[device] = ::opencl::DevicePtrOpenCL<real_type>(devices[device], num_features_ * (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
         data_cl[device].to_device(transformet_data);
     }
 }
 
 template <typename T>
-auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
-    std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
+auto csvm<T>::generate_q() -> std::vector<real_type> {
+    std::vector<::opencl::device_t> &devices = manager.get_devices();  //TODO: header
     const size_type dept = num_data_points_ - 1;
     const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const size_type dept_all = dept + boundary_size;
 
-    std::vector<opencl::DevicePtrOpenCL<real_type>> q_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> q_cl;
     for (size_type device = 0; device < count_devices; ++device) {
         q_cl.emplace_back(devices[device], dept_all);
     }
@@ -124,12 +125,12 @@ auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
         // resizeData(i,THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
         const int start = device * Ncols / count_devices;
         const int end = (device + 1) * Ncols / count_devices;
-        opencl::apply_arguments(kernel_q_cl[device], q_cl[device].get(), data_cl[device].get(), datlast_cl[device].get(), Nrows, start, end);
+        ::opencl::apply_arguments(kernel_q_cl[device], q_cl[device].get(), data_cl[device].get(), datlast_cl[device].get(), Nrows, start, end);
 
         size_type grid_size = static_cast<size_type>(
             ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
         size_type block_size = THREAD_BLOCK_SIZE;
-        opencl::run_kernel_1d_timed(devices[device], kernel_q_cl[device], grid_size, block_size);
+        ::opencl::run_kernel_1d_timed(devices[device], kernel_q_cl[device], grid_size, block_size);
     }
 
     std::vector<real_type> q(dept_all);
@@ -146,8 +147,8 @@ auto OpenCL_CSVM<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
-    std::vector<opencl::device_t> &devices = manager.get_devices();  //TODO: header
+auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+    std::vector<::opencl::device_t> &devices = manager.get_devices();  //TODO: header
     const size_type dept = num_data_points_ - 1;
     const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const size_type dept_all = dept + boundary_size;
@@ -157,7 +158,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     std::vector<real_type> x(dept_all, 1.0);
     std::fill(x.end() - boundary_size, x.end(), 0.0);
 
-    std::vector<opencl::DevicePtrOpenCL<real_type>> x_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> x_cl;
     for (size_type device = 0; device < count_devices; ++device) {
         x_cl.emplace_back(devices[device], dept_all);
     }
@@ -167,7 +168,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
 
     std::vector<real_type> r(dept_all, 0.0);
 
-    std::vector<opencl::DevicePtrOpenCL<real_type>> r_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> r_cl;
     for (size_type device = 0; device < count_devices; ++device)
         r_cl.emplace_back(devices[device], dept_all);
 
@@ -182,7 +183,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     }
     std::vector<real_type> d(dept);
 
-    std::vector<opencl::DevicePtrOpenCL<real_type>> q_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> q_cl;
     for (size_type device = 0; device < count_devices; ++device) {
         q_cl.emplace_back(devices[device], q.size());
     }
@@ -232,12 +233,12 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                                                       static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
                     const int start = device * Ncols / count_devices;
                     const int end = (device + 1) * Ncols / count_devices;
-                    opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
+                    ::opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
                     grid_size[0] *= THREAD_BLOCK_SIZE;
                     grid_size[1] *= THREAD_BLOCK_SIZE;
                     std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
 
-                    opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
+                    ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
                     // exit(0);
                 }
             }
@@ -274,7 +275,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
     real_type alpha_cd, beta;
     std::vector<real_type> Ad(dept);
 
-    std::vector<opencl::DevicePtrOpenCL<real_type>> Ad_cl;
+    std::vector<::opencl::DevicePtrOpenCL<real_type>> Ad_cl;
     for (size_type device = 0; device < count_devices; ++device) {
         Ad_cl.emplace_back(devices[device], dept_all);
     }
@@ -338,12 +339,12 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                                                           static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
                         const int start = device * Ncols / count_devices;
                         const int end = (device + 1) * Ncols / count_devices;
-                        opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), Ad_cl[device].get(), r_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, 1, start, end);
+                        ::opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), Ad_cl[device].get(), r_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, 1, start, end);
                         grid_size[0] *= THREAD_BLOCK_SIZE;
                         grid_size[1] *= THREAD_BLOCK_SIZE;
                         std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
 
-                        opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
+                        ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
                     }
                 }
                 break;
@@ -442,12 +443,12 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
                             const int end = (device + 1) * Ncols / count_devices;
                             std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
                                                               static_cast<size_type>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
-                            opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
+                            ::opencl::apply_arguments(svm_kernel_linear[device], q_cl[device].get(), r_cl[device].get(), x_cl[device].get(), data_cl[device].get(), QA_cost_, 1 / cost_, Ncols, Nrows, -1, start, end);
                             grid_size[0] *= THREAD_BLOCK_SIZE;
                             grid_size[1] *= THREAD_BLOCK_SIZE;
                             std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
 
-                            opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
+                            ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
                         }
                     }
                     break;
@@ -526,7 +527,7 @@ auto OpenCL_CSVM<T>::solver_CG(const std::vector<real_type> &b, const size_type 
 }
 
 // explicitly instantiate template class
-template class OpenCL_CSVM<float>;
-template class OpenCL_CSVM<double>;
+template class csvm<float>;
+template class csvm<double>;
 
-}  // namespace plssvm
+}  // namespace plssvm::opencl

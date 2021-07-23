@@ -6,7 +6,7 @@
  * @brief Tests for the base functionality independent of the used backend.
  */
 
-#include "MockCSVM.hpp"
+#include "mock_csvm.hpp"
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
@@ -38,7 +38,7 @@ TYPED_TEST(BASE, parse_libsvm) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
@@ -75,7 +75,7 @@ TYPED_TEST(BASE, parse_libsvm_sparse) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.sparse.libsvm" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
@@ -112,7 +112,7 @@ TYPED_TEST(BASE, parse_arff) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
@@ -150,7 +150,7 @@ TYPED_TEST(BASE, parse_libsvm_gamma) {
 
     // gamma = 1.0 (!= 0.0)
     params.gamma = 1.0;
-    MockCSVM csvm_gamma{ params };
+    mock_csvm csvm_gamma{ params };
     using real_type_gamma = typename decltype(csvm_gamma)::real_type;
     csvm_gamma.parse_libsvm(params.input_filename);
     ASSERT_EQ(csvm_gamma.get_num_data_points(), 5);
@@ -159,7 +159,7 @@ TYPED_TEST(BASE, parse_libsvm_gamma) {
 
     // gamma = 0.0 -> automatically set to (1.0 / num_features)
     params.gamma = 0.0;
-    MockCSVM csvm_gamma_zero{ params };
+    mock_csvm csvm_gamma_zero{ params };
     using real_type_gamma_zero = typename decltype(csvm_gamma_zero)::real_type;
     csvm_gamma_zero.parse_libsvm(params.input_filename);
     EXPECT_EQ(csvm_gamma_zero.get_num_data_points(), 5);
@@ -173,7 +173,7 @@ TYPED_TEST(BASE, parse_arff_gamma) {
 
     // gamma = 1.0 (!= 0.0)
     params.gamma = 1.0;
-    MockCSVM csvm_gamma{ params };
+    mock_csvm csvm_gamma{ params };
     using real_type_gamma = typename decltype(csvm_gamma)::real_type;
     csvm_gamma.parse_arff(params.input_filename);
     ASSERT_EQ(csvm_gamma.get_num_data_points(), 5);
@@ -182,7 +182,7 @@ TYPED_TEST(BASE, parse_arff_gamma) {
 
     // gamma = 0.0 -> automatically set to (1.0 / num_features)
     params.gamma = 0.0;
-    MockCSVM csvm_gamma_zero{ params };
+    mock_csvm csvm_gamma_zero{ params };
     using real_type_gamma_zero = typename decltype(csvm_gamma_zero)::real_type;
     csvm_gamma_zero.parse_arff(params.input_filename);
     EXPECT_EQ(csvm_gamma_zero.get_num_data_points(), 5);
@@ -195,7 +195,7 @@ TYPED_TEST(BASE, write_model) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
 
     // parse libsvm file
     csvm.parse_libsvm(params.input_filename);
@@ -218,7 +218,7 @@ TYPED_TEST(BASE, parse_libsvm_ill_formed) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
 
     // parsing an arff file using the libsvm parser should result in an exception
     EXPECT_THROW(csvm.parse_libsvm(params.input_filename), plssvm::invalid_file_format_exception);
@@ -229,7 +229,7 @@ TYPED_TEST(BASE, parse_arff_ill_formed) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
 
     // parsing a libsvm file using the arff parser should result in an exception
     EXPECT_THROW(csvm.parse_arff(params.input_filename), plssvm::invalid_file_format_exception);
@@ -240,7 +240,7 @@ TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.lib" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
 
     // attempting to parse a non-existing file should result in an exception
     EXPECT_THROW(csvm.parse_libsvm(params.input_filename), plssvm::file_not_found_exception);
@@ -251,7 +251,7 @@ TYPED_TEST(BASE, parse_arff_non_existing_file) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.ar" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
 
     // attempting to parse a non-existing file should result in an exception
     EXPECT_THROW(csvm.parse_arff(params.input_filename), plssvm::file_not_found_exception);
@@ -262,7 +262,7 @@ TYPED_TEST(BASE, transform_data) {
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
@@ -313,7 +313,7 @@ TYPED_TEST(BASE_kernel, kernel_function) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    MockCSVM csvm{ params };
+    mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
 
     // create dummy data vectors

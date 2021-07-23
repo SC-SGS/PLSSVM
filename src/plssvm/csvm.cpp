@@ -4,7 +4,7 @@
  * @copyright
  */
 
-#include "plssvm/CSVM.hpp"
+#include "plssvm/csvm.hpp"
 
 #include "plssvm/detail/operators.hpp"
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
@@ -21,15 +21,15 @@
 namespace plssvm {
 
 template <typename T>
-CSVM<T>::CSVM(const parameter<T> &params) :
-    CSVM{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+csvm<T>::csvm(const parameter<T> &params) :
+    csvm{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-CSVM<T>::CSVM(const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
     kernel_{ kernel }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 }, cost_{ cost }, epsilon_{ epsilon }, print_info_{ print_info } {}
 
 template <typename T>
-void CSVM<T>::learn() {
+void csvm<T>::learn() {
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> q;
@@ -73,7 +73,7 @@ void CSVM<T>::learn() {
 }
 
 template <typename T>
-void CSVM<T>::learn(const std::string &input_filename, const std::string &model_filename) {
+void csvm<T>::learn(const std::string &input_filename, const std::string &model_filename) {
     // parse data file
     parse_file(input_filename);
 
@@ -88,7 +88,7 @@ void CSVM<T>::learn(const std::string &input_filename, const std::string &model_
 }
 
 template <typename T>
-auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
+auto csvm<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
     switch (kernel_) {
         case kernel_type::linear:
             return plssvm::kernel_function<kernel_type::linear>(xi, xj);
@@ -102,7 +102,7 @@ auto CSVM<T>::kernel_function(const std::vector<real_type> &xi, const std::vecto
 }
 
 template <typename T>
-auto CSVM<T>::transform_data(const size_type boundary) -> std::vector<real_type> {
+auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type> {
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
@@ -121,7 +121,7 @@ auto CSVM<T>::transform_data(const size_type boundary) -> std::vector<real_type>
 }
 
 // explicitly instantiate template class
-template class CSVM<float>;
-template class CSVM<double>;
+template class csvm<float>;
+template class csvm<double>;
 
 }  // namespace plssvm

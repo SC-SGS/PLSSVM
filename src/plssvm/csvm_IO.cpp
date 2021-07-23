@@ -4,7 +4,7 @@
  * @copyright
  */
 
-#include "plssvm/CSVM.hpp"
+#include "plssvm/csvm.hpp"
 
 #include "plssvm/detail/file_reader.hpp"     // plssvm::detail::file_reader
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::convert_to, plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left
@@ -32,7 +32,7 @@ namespace plssvm {
 
 // read and parse file
 template <typename T>
-void CSVM<T>::parse_file(const std::string &filename) {
+void csvm<T>::parse_file(const std::string &filename) {
     if (detail::ends_with(filename, ".arff")) {
         parse_arff(filename);
     } else {
@@ -42,7 +42,7 @@ void CSVM<T>::parse_file(const std::string &filename) {
 
 // read and parse a libsvm file
 template <typename T>
-void CSVM<T>::parse_libsvm(const std::string &filename) {
+void csvm<T>::parse_libsvm(const std::string &filename) {
     auto start_time = std::chrono::steady_clock::now();
 
     detail::file_reader f{ filename, '#' };
@@ -138,7 +138,7 @@ void CSVM<T>::parse_libsvm(const std::string &filename) {
 
 // read and parse an ARFF file
 template <typename T>
-void CSVM<T>::parse_arff(const std::string &filename) {
+void csvm<T>::parse_arff(const std::string &filename) {
     auto start_time = std::chrono::steady_clock::now();
 
     detail::file_reader f{ filename, '%' };
@@ -285,7 +285,7 @@ void CSVM<T>::parse_arff(const std::string &filename) {
 }
 
 template <typename T>
-void CSVM<T>::write_model(const std::string &model_name) {
+void csvm<T>::write_model(const std::string &model_name) {
     auto start_time = std::chrono::steady_clock::now();
 
     int nBSV = 0;
@@ -390,7 +390,7 @@ void CSVM<T>::write_model(const std::string &model_name) {
 }
 
 // explicitly instantiate template class
-template class CSVM<float>;
-template class CSVM<double>;
+template class csvm<float>;
+template class csvm<double>;
 
 }  // namespace plssvm

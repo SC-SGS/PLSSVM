@@ -9,7 +9,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"  // opencl::DevicePtrOpenCL
-#include "plssvm/backends/OpenCL/OpenCL_CSVM.hpp"      // plssvm::OpenCL_CSVM
+#include "plssvm/backends/OpenCL/csvm.hpp"             // plssvm::opencl::csvm
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
@@ -20,16 +20,16 @@
  * @tparam T the type of the data
  */
 template <typename T>
-class MockOpenCL_CSVM : public plssvm::OpenCL_CSVM<T> {
-    using base_type = plssvm::OpenCL_CSVM<T>;
+class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
+    using base_type = plssvm::opencl::csvm<T>;
 
   public:
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit MockOpenCL_CSVM(const plssvm::parameter<T> &params) :
+    explicit mock_opencl_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit MockOpenCL_CSVM(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    explicit mock_opencl_csvm(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
         base_type{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // make non-virtual functions publicly visible

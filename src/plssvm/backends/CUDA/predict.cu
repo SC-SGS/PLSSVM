@@ -1,8 +1,8 @@
-#include "plssvm/backends/CUDA/CUDA_CSVM.hpp"
+#include "plssvm/backends/CUDA/csvm.hpp"
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
 
-namespace plssvm {
+namespace plssvm::cuda {
 
 template <typename real_type>
 __global__ void kernel_predict(const real_type *data_d, const real_type *w, int dim, real_type *out) {
@@ -33,7 +33,7 @@ template __global__ void kernel_w(float *, const float *, const float *, int);
 template __global__ void kernel_w(double *, const double *, const double *, int);
 
 template <typename T>
-auto CUDA_CSVM<T>::predict(const real_type *data, const size_type dim, const size_type count) -> std::vector<real_type> {
+auto csvm<T>::predict(const real_type *data, const size_type dim, const size_type count) -> std::vector<real_type> {
     cuda::detail::device_ptr<real_type> data_d{ dim * count };
     data_d.memcpy_to_device(data);
     cuda::detail::device_ptr<real_type> out{ count };
@@ -48,7 +48,7 @@ auto CUDA_CSVM<T>::predict(const real_type *data, const size_type dim, const siz
 }
 
 template <typename T>
-void CUDA_CSVM<T>::load_w() {
+void csvm<T>::load_w() {
     w_d_ = cuda::detail::device_ptr<real_type>{ num_features_ };
     cuda::detail::device_ptr<real_type> alpha_d{ num_features_ };
     alpha_d.memcpy_to_device(alpha_, 0, num_features_);  // TODO: ????
@@ -59,7 +59,7 @@ void CUDA_CSVM<T>::load_w() {
     cuda::detail::device_synchronize();
 }
 
-template class CUDA_CSVM<float>;
-template class CUDA_CSVM<double>;
+template class csvm<float>;
+template class csvm<double>;
 
-}  // namespace plssvm
+}  // namespace plssvm::cuda

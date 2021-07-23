@@ -24,7 +24,7 @@ namespace plssvm {
  * @tparam T the type of the data
  */
 template <typename T>
-class CSVM {
+class csvm {
     // only float and doubles are allowed
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
@@ -41,7 +41,7 @@ class CSVM {
      * @brief Construct a new C-SVM with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
      */
-    explicit CSVM(const parameter<T> &params);
+    explicit csvm(const parameter<T> &params);
     /**
      * @brief Construct an new C-SVM explicitly specifying all necessary parameters.
      * @param[in] kernel the type of the kernel function
@@ -52,22 +52,22 @@ class CSVM {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    CSVM(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Virtual destructor to enable safe inheritance.
      */
-    virtual ~CSVM() = default;
+    virtual ~csvm() = default;
 
     /**
      * @brief Disable copy-constructor.
      */
-    CSVM(const CSVM &) = delete;
+    csvm(const csvm &) = delete;
     // clang-format off
     /**
      * @brief Explicitly allow move-construction.
      */
-    CSVM(CSVM &&) noexcept = default;
+    csvm(csvm &&) noexcept = default;
     // clang-format on
 
     //*************************************************************************************************************************************//
@@ -288,7 +288,7 @@ class CSVM {
     std::vector<real_type> alpha_{};
 };
 
-extern template class CSVM<float>;
-extern template class CSVM<double>;
+extern template class csvm<float>;
+extern template class csvm<double>;
 
 }  // namespace plssvm

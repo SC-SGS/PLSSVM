@@ -11,8 +11,8 @@
 
 #include "plssvm/csvm_factory.hpp"
 
-#include "plssvm/CSVM.hpp"
 #include "plssvm/backend_types.hpp"
+#include "plssvm/csvm.hpp"
 #include "plssvm/exceptions/exceptions.hpp"
 #include "plssvm/kernel_types.hpp"
 #include "plssvm/parameter.hpp"
@@ -27,11 +27,14 @@ namespace plssvm::version {}
 /// Namespace containing implementation details. **Should not** directly be used by users.
 namespace plssvm::detail {}
 
-/// Namespace containing CUDA specific functions.
+/// Namespace containing the C-SVM using the OpenMP backend.
+namespace plssvm::openmp {}
+
+/// Namespace containing the C-SVM using the CUDA backend.
 namespace plssvm::cuda {}
 
-/// Namespace containing CUDA specific implementation details. **Should not** directly be used by users.
+/// Namespace containing CUDA backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::cuda::detail {}
 
-/// Namespace containing OpenMP specific functions.
-namespace plssvm::openmp {}
+/// Namespace containing the C-SVM using the OpenCL backend.
+namespace plssvm::opencl {}

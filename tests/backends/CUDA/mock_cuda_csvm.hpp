@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "plssvm/backends/CUDA/CUDA_CSVM.hpp"          // plssvm::CUDA_CSVM
+#include "plssvm/backends/CUDA/csvm.hpp"               // plssvm::cuda::csvm
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
@@ -21,16 +21,16 @@
  * @tparam T the type of the data
  */
 template <typename T>
-class MockCUDA_CSVM : public plssvm::CUDA_CSVM<T> {
-    using base_type = plssvm::CUDA_CSVM<T>;
+class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
+    using base_type = plssvm::cuda::csvm<T>;
 
   public:
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit MockCUDA_CSVM(const plssvm::parameter<T> &params) :
+    explicit mock_cuda_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit MockCUDA_CSVM(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    explicit mock_cuda_csvm(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
         base_type{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // make non-virtual functions publicly visible
