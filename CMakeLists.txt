@@ -96,6 +96,7 @@ else()
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
+# TODO: fix compiler warning when using "fmt/color.h" header?
 
 
 ## create main executable
