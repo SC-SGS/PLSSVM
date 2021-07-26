@@ -162,8 +162,8 @@ int main(int argc, char *argv[]) {
     // parse SVM parameter from command line
     plssvm::parameter<double> params{ argc, argv };
 
-    // create SVM (based on selected backend)
-    auto svm = plssvm::make_SVM(params);
+    // create C-SVM (based on selected backend)
+    auto svm = plssvm::make_csvm(params);
     
     // learn
     svm->learn(params.input_filename, params.model_filename);

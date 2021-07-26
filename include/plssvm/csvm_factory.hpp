@@ -41,7 +41,7 @@ namespace plssvm {
   * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
   */
 template <typename T, typename... Args>
-std::unique_ptr<csvm<T>> make_SVM(const backend_type type, Args... args) {
+std::unique_ptr<csvm<T>> make_csvm(const backend_type type, Args... args) {
     switch (type) {
         case backend_type::openmp:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -76,8 +76,8 @@ std::unique_ptr<csvm<T>> make_SVM(const backend_type type, Args... args) {
  * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
  */
 template <typename T>
-std::unique_ptr<csvm<T>> make_SVM(const parameter<T> &params) {
-    return make_SVM<T>(params.backend, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);
+std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
+    return make_csvm<T>(params.backend, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);
 }
 
 }  // namespace plssvm

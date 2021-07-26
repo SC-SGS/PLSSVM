@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
 
     try {
         // create SVM
-        auto svm = plssvm::make_SVM(params);
+        auto svm = plssvm::make_csvm(params);
 
         // learn
         svm->learn(params.input_filename, params.model_filename);
