@@ -29,6 +29,9 @@
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     #include "plssvm/backends/OpenCL/csvm.hpp"
 #endif
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    #include "plssvm/backends/SYCL/csvm.hpp"
+#endif
 
 namespace plssvm {
 
@@ -62,6 +65,12 @@ std::unique_ptr<csvm<T>> make_csvm(const backend_type type, Args... args) {
             return std::make_unique<opencl::csvm<T>>(std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No OpenCL backend available!" };
+#endif
+        case backend_type::sycl:
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+            return std::make_unique<sycl::csvm<T>>(std::forward<Args>(args)...);
+#else
+            throw unsupported_backend_exception{ "No SYCL backend available!" };
 #endif
         default:
             throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(type)) };

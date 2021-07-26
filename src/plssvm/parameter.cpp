@@ -51,7 +51,7 @@ parameter<T>::parameter(int argc, char **argv) {
             ("r,coef0", "set coef0 in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", coef0)))
             ("c,cost", "set the parameter C", cxxopts::value<real_type>()->default_value(fmt::format("{}", cost)))
             ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<real_type>()->default_value(fmt::format("{}", epsilon)))
-            ("b,backend", "chooses the backend openmp|cuda|opencl", cxxopts::value<backend_type>()->default_value(as_lowercase(fmt::format("{}", backend))))
+            ("b,backend", "chooses the backend openmp|cuda|opencl|sycl", cxxopts::value<backend_type>()->default_value(as_lowercase(fmt::format("{}", backend))))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("input", "", cxxopts::value<std::string>(), "training_set_file")
