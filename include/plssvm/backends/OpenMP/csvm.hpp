@@ -24,8 +24,8 @@ namespace plssvm::openmp {
 template <typename T>
 class csvm : public ::plssvm::csvm<T> {
   protected:
-    // protected for test MOCK class
-    /// The template base type of the CUDA_SVM class.
+    // protected for test mock class
+    /// The template base type of the OpenMP C-SVM class.
     using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_;
     using base_type::coef0_;

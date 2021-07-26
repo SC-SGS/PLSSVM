@@ -25,8 +25,8 @@ namespace plssvm::cuda {
 template <typename T>
 class csvm : public ::plssvm::csvm<T> {
   protected:
-    // protected for the test MOCK class
-    /// The template base type of the CUDA_SVM class.
+    // protected for the test mock class
+    /// The template base type of the CUDA C-SVM class.
     using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_;
     using base_type::coef0_;
