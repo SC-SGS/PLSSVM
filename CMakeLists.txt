@@ -124,6 +124,13 @@ if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_OPENCL_BACKEND)
     add_subdirectory(src/plssvm/backends/OpenCL)
 endif()
 
+## check for SYCL backend
+set(PLSSVM_ENABLE_SYCL_BACKEND AUTO CACHE STRING "Enable SYCL Backend")
+set_property(CACHE PLSSVM_ENABLE_SYCL_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if(PLSSVM_ENABLE_SYCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_BACKEND)
+    add_subdirectory(src/plssvm/backends/SYCL)
+endif()
+
 
 ## check if ANY backend is available/has been enabled
 get_target_property(PLSSVM_LINKED_BACKENDS svm-train LINK_LIBRARIES)

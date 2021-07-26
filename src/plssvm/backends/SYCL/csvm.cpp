@@ -10,6 +10,8 @@
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_types
 #include "plssvm/parameter.hpp"     // plssvm::parameter
 
+#include "CL/sycl.hpp"  // SYCL stuff
+
 #include "fmt/core.h"  // fmt::print
 
 #include <vector>  // std::vector
@@ -26,6 +28,9 @@ csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type 
     if (print_info_) {
         fmt::print("Using SYCL as backend.\n");
     }
+
+    ::sycl::queue q{ ::sycl::gpu_selector{} };
+    fmt::print("{}\n", q.get_device().get_info<::sycl::info::device::name>());
 }
 
 template <typename T>
@@ -34,10 +39,12 @@ void csvm<T>::setup_data_on_device() {
 
 template <typename T>
 auto csvm<T>::generate_q() -> std::vector<real_type> {
+    return {};
 }
 
 template <typename T>
 auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+    return {};
 }
 
 template class csvm<float>;

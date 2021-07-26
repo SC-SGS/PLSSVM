@@ -22,11 +22,12 @@ namespace plssvm::sycl {
  * @tparam T the type of the data
  */
 template <typename T>
-class csvm : ::plssvm::csvm<T> {
+class csvm : public ::plssvm::csvm<T> {
   protected:
     // protected for the test MOCK class
     /// The template base type of the CUDA_SVM class.
     using base_type = ::plssvm::csvm<T>;
+    using base_type::print_info_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
