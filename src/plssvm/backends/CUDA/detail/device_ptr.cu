@@ -1,10 +1,15 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
-#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda_backend_exception
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
-#include <cstddef>    // std::size_t
 #include <utility>    // std::exchange, std::move, std::swap
 #include <vector>     // std::vector
 
@@ -111,7 +116,6 @@ void device_ptr<T>::memcpy_to_device(const std::vector<value_type> &data_to_copy
     }
     this->memcpy_to_device(data_to_copy.data(), pos, rcount);
 }
-
 template <typename T>
 void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy) {
     this->memcpy_to_device(data_to_copy, 0, size_);
@@ -146,7 +150,7 @@ void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const si
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost));
 }
 
-template class device_ptr<double>;
 template class device_ptr<float>;
+template class device_ptr<double>;
 
 }  // namespace plssvm::cuda::detail
