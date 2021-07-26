@@ -28,7 +28,9 @@ enum class backend_type {
     /** [CUDA](https://developer.nvidia.com/cuda-zone) */
     cuda = 1,
     /** [OpenCL](https://www.khronos.org/opencl/) */
-    opencl = 2
+    opencl = 2,
+    /** [SYCL](https://www.khronos.org/sycl/) */
+    sycl = 3
 };
 
 /**
@@ -45,6 +47,8 @@ inline std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "CUDA";
         case backend_type::opencl:
             return out << "OpenCL";
+        case backend_type::sycl:
+            return out << "SYCL";
         default:
             return out << "unknown";
     }
@@ -67,6 +71,8 @@ inline std::istream &operator>>(std::istream &in, backend_type &backend) {
         backend = backend_type::cuda;
     } else if (str == "opencl") {
         backend = backend_type::opencl;
+    } else if (str == "sycl") {
+        backend = backend_type::sycl;
     } else {
         in.setstate(std::ios::failbit);
     }
