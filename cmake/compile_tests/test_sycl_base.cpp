@@ -1,6 +1,9 @@
 #include "CL/sycl.hpp"
 
 int main() {
-    //    static_assert(SYCL_LANGUAGE_VERSION >= 202001, "Insufficient SYCL language version!");
+// TODO: check necessary features?
+#if defined(SYCL_LANGUAGE_VERSION)
+    static_assert(SYCL_LANGUAGE_VERSION >= 202001, "Insufficient SYCL language version!");
+#endif
     return 0;
 }

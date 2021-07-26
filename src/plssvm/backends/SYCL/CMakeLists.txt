@@ -1,27 +1,35 @@
 # check if SYCL can be enabled
 message(CHECK_START "Checking for SYCL backend")
 
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+# check if the compiler supports SYCL
+try_compile(PLSSVM_IS_SYCL_COMPILER
+    "${CMAKE_BINARY_DIR}/temp"
+    "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_base.cpp"
+    CXX_STANDARD 17)
+
+if(NOT PLSSVM_IS_SYCL_COMPILER)
     message(CHECK_FAIL "not found")
+    if(PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
+        message(FATAL_ERROR "Cannot find requested backend: SYCL!")
+    endif()
     return()
 endif()
 
-# check if the compiler supports SYCL
-#try_compile(PLSSVM_IS_SYCL_COMPILER
-#        "${CMAKE_BINARY_DIR}/temp"
-#        "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_base.cpp"
-#        CMAKE_FLAGS "-DCMAKE_CXX_STANDARD=17" "-DCMAKE_EXE_LINKER_FLAGS=-fopenmp")
-#message(STATUS "SYCL: ${PLSSVM_IS_SYCL_COMPILER}")
-#
-#if(NOT PLSSVM_IS_SYCL_COMPILER)
-#    message(CHECK_FAIL "not found")
-#    if(PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
-#        message(FATAL_ERROR "Cannot find requested backend: SYCL!")
-#    endif()
-#    return()
-#endif()
-
 message(CHECK_PASS "found")
+
+message(CHECK_START "Checking for used SYCL implementation")
+
+try_compile(PLSSVM_IS_DPCPP
+    "${CMAKE_BINARY_DIR}/temp"
+    "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_dpcpp.cpp"
+    CXX_STANDARD 17)
+
+if(PLSSVM_IS_DPCPP)
+    message(CHECK_PASS "dpcpp")
+else()
+    message(FATAL_ERROR "SYCL implementation currently not supported!")
+endif()
+
 
 # explicitly set sources
 set(PLSSVM_SYCL_SOURCES
