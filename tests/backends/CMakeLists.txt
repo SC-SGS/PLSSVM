@@ -12,3 +12,8 @@ endif()
 if(TARGET svm-CUDA)
     add_subdirectory(CUDA)
 endif()
+
+# create SYCL tests if the SSYCL backend is available
+if(TARGET svm-SYCL)
+    add_subdirectory(SYCL)
+endif()
