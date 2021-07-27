@@ -38,7 +38,7 @@ void device_synchronize();
  * @brief Wait for the compute device @p device to finish.
  * @details Calls `peek_at_last_error()` before synchronizing.
  * @param[in] device the CUDA device to synchronize
- * @throws plssvm::cuda_backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
+ * @throws plssvm::cuda::backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
  */
 void device_synchronize(int device);
 
@@ -66,8 +66,8 @@ class device_ptr {
     /**
      * @brief Allocates `size * sizeof(T)` bytes on the device with ID @p device.
      * @param[in] size the number of elements represented by the device pointer
-     * @param[in] device the associated CUDA device (default: `0`)
-     * @throws plssvm::cuda_backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
+     * @param[in] device the associated CUDA device
+     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
      */
     explicit device_ptr(size_type size, int device = 0);
 
@@ -155,23 +155,23 @@ class device_ptr {
      * @brief Memset all values to @p value starting at position @p pos.
      * @param[in] value the memset value
      * @param[in] pos the position to start the memset (default: `0`)
-     * @throws plssvm::cuda_backend_exception if @p pos is greater or equal than `device_ptr::size()`
+     * @throws plssvm::cuda::backend_exception if @p pos is greater or equal than `device_ptr::size()`
      */
     void memset(value_type value, size_type pos = 0);
     /**
      * @brief Memset up-to @p count values to @p value starting at position @p pos.
      * @details Memset `[p, rcount)` where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[in] value the memset value
-     * @param[in] pos the position to start the memset (default: `0`)
+     * @param[in] pos the position to start the memset
      * @param[in] count the number of values to set
-     * @throws plssvm::cuda_backend_exception if @p pos is greater or equal than `device_ptr::size()`
+     * @throws plssvm::cuda::backend_exception if @p pos is greater or equal than `device_ptr::size()`
      */
     void memset(value_type value, size_type pos, size_type count);
 
     /**
      * @brief Memcpy `device_ptr::size()` many values from @p data_to_copy to the device.
      * @param[in] data_to_copy the data to copy onto the device
-     * @throws plssvm::cuda_backend_exception if @p data_to_copy is too small to satisfy the memcpy
+     * @throws plssvm::cuda::backend_exception if @p data_to_copy is too small to satisfy the memcpy
      */
     void memcpy_to_device(const std::vector<value_type> &data_to_copy);
     /**
@@ -180,7 +180,7 @@ class device_ptr {
      * @param[in] data_to_copy the data to copy onto the device
      * @param[in] pos the starting position for the copying in the CUDA device pointer
      * @param[in] count the number of elements to copy
-     * @throws plssvm::cuda_backend_exception if @p data_to_copy is too small to satisfy the memcpy
+     * @throws plssvm::cuda::backend_exception if @p data_to_copy is too small to satisfy the memcpy
      */
     void memcpy_to_device(const std::vector<value_type> &data_to_copy, size_type pos, size_type count);
     /**
@@ -200,7 +200,7 @@ class device_ptr {
     /**
      * @brief Memcpy `device_ptr::size()` many values from the device to the host buffer @p buffer.
      * @param[in] buffer the buffer to copy the data to
-     * @throws plssvm::cuda_backend_exception if @p buffer is too small
+     * @throws plssvm::cuda::backend_exception if @p buffer is too small
      */
     void memcpy_to_host(std::vector<value_type> &buffer);
     /**
@@ -209,7 +209,7 @@ class device_ptr {
      * @param[in] buffer the buffer to copy the data to
      * @param[in] pos the starting position for the copying in the CUDA device pointer
      * @param[in] count the number of elements to copy
-     * @throws plssvm::cuda_backend_exception if @p data_to_copy is too small
+     * @throws plssvm::cuda::backend_exception if @p data_to_copy is too small
      */
     void memcpy_to_host(std::vector<value_type> &buffer, size_type pos, size_type count);
     /**
@@ -235,4 +235,4 @@ class device_ptr {
 extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
-}  // namespace plssvm::detail::cuda
+}  // namespace plssvm::cuda::detail
