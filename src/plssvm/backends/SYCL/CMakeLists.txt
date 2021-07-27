@@ -33,6 +33,7 @@ endif()
 
 # explicitly set sources
 set(PLSSVM_SYCL_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
 )
 
