@@ -14,6 +14,8 @@
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
+#include "sycl/sycl.hpp"  // SYCL stuff
+
 #include <vector>  // std::vector
 
 /**
@@ -36,7 +38,7 @@ class mock_sycl_csvm : public plssvm::sycl::csvm<T> {
     // make non-virtual functions publicly visible
     using base_type::generate_q;
     using base_type::learn;
-    //    using base_type::run_device_kernel;
+    using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
 
     // parameter setter
@@ -45,10 +47,12 @@ class mock_sycl_csvm : public plssvm::sycl::csvm<T> {
 
     // getter for internal variables
     const std::vector<plssvm::sycl::detail::device_ptr<real_type>> &get_device_data() const { return data_d_; }
+    std::vector<sycl::queue> &get_devices() { return devices_; }
 
   private:
     using base_type::cost_;
     using base_type::QA_cost_;
 
     using base_type::data_d_;
+    using base_type::devices_;
 };
