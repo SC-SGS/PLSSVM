@@ -10,7 +10,7 @@
 #include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
 #include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
-#include "plssvm/constants.hpp"                        // THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE
+#include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars

@@ -7,7 +7,7 @@
 #include "plssvm/backends/SYCL/svm_kernel.hpp"
 
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-#include "plssvm/constants.hpp"                       // THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE
+#include "plssvm/constants.hpp"                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::group_barrier, sycl::pow, sycl::exp, sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
 
