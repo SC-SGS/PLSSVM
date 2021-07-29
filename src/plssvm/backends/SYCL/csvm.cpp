@@ -10,7 +10,7 @@
 #include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
 #include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
-#include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/constants.hpp"                        // THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE
 #include "plssvm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars
@@ -20,7 +20,7 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::print, fmt::format
-#include "sycl/sycl.hpp"  // SYCL stuff
+#include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
@@ -110,10 +110,6 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         // feature splitting on multiple devices
         const int first_feature = device * num_cols_ / devices_.size();
         const int last_feature = (device + 1) * num_cols_ / devices_.size();
-
-        // TODO: remove?
-        const auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
-        const size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept_);
 
         switch (kernel_) {
             case kernel_type::linear:
