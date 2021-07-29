@@ -6,7 +6,8 @@
 
 #include "plssvm/backends/SYCL/svm_kernel.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+#include "plssvm/constants.hpp"                       // THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::group_barrier, sycl::pow, sycl::exp, sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
 
@@ -14,15 +15,25 @@
 
 namespace plssvm::sycl {
 
-using size_type = std::size_t;
+namespace detail {
 
-// TODO: #ifdef intel's ext::oneapi namespace
+// TODO: remove #if after Intel has a SYCL2020 conformant sycl::atomic_ref implementation
+#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
+using ::sycl::ext::oneapi::atomic_ref;
+#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+using ::sycl::atomic_ref;
+#endif
+
+}  // namespace detail
+
 /**
  * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references).
  * @tparam T the type of the accessed values
  */
 template <typename real_type>
-using atomic_op = ::sycl::ext::oneapi::atomic_ref<real_type, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
+using atomic_op = detail::atomic_ref<real_type, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
+
+using size_type = std::size_t;
 
 template <typename T>
 device_kernel_linear<T>::device_kernel_linear(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int add, const int first_feature, const int last_feature) :

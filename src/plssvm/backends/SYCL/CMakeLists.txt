@@ -50,6 +50,11 @@ target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets
 # link base library against SYCL library
 target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
+
+# TODO: not hardcoded
+target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
+
+
 # link SYCL library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
 target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
