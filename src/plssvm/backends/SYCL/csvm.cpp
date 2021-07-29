@@ -39,6 +39,7 @@ csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type 
         fmt::print("Using SYCL as backend.\n");
     }
 
+    // TODO: add async_handler
     devices_.emplace_back(::sycl::gpu_selector{}, ::sycl::property::queue::in_order());
     fmt::print("{}\n", devices_.back().get_device().get_info<::sycl::info::device::name>());
 

@@ -13,7 +13,7 @@
 
 namespace plssvm::sycl {
 
-// TODO: change to ::sycl::accessor once implemented
+// TODO: change to ::sycl::local_accessor once implemented
 /**
  * @brief Shortcut alias for a SYCL local accessor.
  * @tparam T the type of the accessed values

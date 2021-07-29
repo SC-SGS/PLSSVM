@@ -9,7 +9,7 @@
 
 #pragma once
 
-// TODO: try to get rid of this include
+// TODO: try to get rid of this include?
 #include "sycl/sycl.hpp"  // sycl::queue
 
 #include <cstddef>  // std::size_t
