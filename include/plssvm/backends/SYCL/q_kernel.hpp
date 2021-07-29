@@ -9,24 +9,38 @@
 
 #pragma once
 
-#include "sycl/sycl.hpp"
+#include "sycl/sycl.hpp"  // sycl::item
 
 namespace plssvm::sycl {
 
-template <typename real_type>
+/**
+ * @brief Functor to calculate the `q` vector using the linear C-SVM kernel.
+ * @details Supports multi-GPU execution.
+ * @tparam T the type of the data
+ */
+template <typename T>
 class device_kernel_q_linear {
   public:
-    device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int first_feature, const int last_feature) :
-        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, first_feature_{ first_feature }, last_feature_{ last_feature } {}
+    /// The type of the data.
+    using real_type = T;
 
-    void operator()(::sycl::item<1> item) const {
-        const auto index = item.get_linear_id();
-        real_type temp{ 0.0 };
-        for (int i = first_feature_; i < last_feature_; ++i) {
-            temp += data_d_[i * num_rows_ + index] * data_last_[i];
-        }
-        q_[index] = temp;
-    }
+    /**
+     * @brief Construct a new device kernel calculating the `q` vector using the linear C-SVM kernel.
+     * @param[out] q the calculated `q` vector
+     * @param[in] data_d the one-dimensional data matrix
+     * @param[in] data_last the last row in the data matrix
+     * @param[in] num_rows the number of rows in the data matrix
+     * @param[in] first_feature the first feature used in the calculations (depending on the current device)
+     * @param[in] last_feature the last feature used in the calculations (depending on the current device)
+     */
+    device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int first_feature, int last_feature);
+
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
+     *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     */
+    SYCL_EXTERNAL void operator()(::sycl::item<1> item) const;
 
   private:
     real_type *q_;
@@ -37,20 +51,39 @@ class device_kernel_q_linear {
     const int last_feature_;
 };
 
-template <typename real_type>
+extern template class device_kernel_q_linear<float>;
+extern template class device_kernel_q_linear<double>;
+
+/**
+ * @brief Functor to calculate the `q` vector using the polynomial C-SVM kernel.
+ * @details Currently only single GPU execution is supported.
+ * @tparam T the type of the data
+ */
+template <typename T>
 class device_kernel_q_poly {
   public:
-    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int num_cols, const real_type degree, const real_type gamma, const real_type coef0) :
-        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
+    /// The type of the data.
+    using real_type = T;
 
-    void operator()(::sycl::item<1> item) const {
-        const auto index = item.get_linear_id();
-        real_type temp{ 0.0 };
-        for (int i = 0; i < num_cols_; ++i) {
-            temp += data_d_[i * num_rows_ + index] * data_last_[i];
-        }
-        q_[index] = ::sycl::pow(gamma_ * temp + coef0_, degree_);
-    }
+    /**
+     * @brief Construct a new device kernel calculating the `q` vector using the polynomial C-SVM kernel.
+     * @param[out] q the calculated `q` vector
+     * @param[in] data_d the one-dimensional data matrix
+     * @param[in] data_last the last row in the data matrix
+     * @param[in] num_rows the number of rows in the data matrix
+     * @param[in] num_cols the number of columns in the data matrix
+     * @param[in] degree the degree parameter used in the polynomial kernel function
+     * @param[in] gamma the gamma parameter used in the polynomial kernel function
+     * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
+     */
+    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols, real_type degree, real_type gamma, real_type coef0);
+
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
+     *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     */
+    SYCL_EXTERNAL void operator()(::sycl::item<1> item) const;
 
   private:
     real_type *q_;
@@ -63,20 +96,37 @@ class device_kernel_q_poly {
     const real_type coef0_;
 };
 
-template <typename real_type>
+extern template class device_kernel_q_poly<float>;
+extern template class device_kernel_q_poly<double>;
+
+/**
+ * @brief Functor to calculate the `q` vector using the radial basis functions C-SVM kernel.
+ * @details Currently only single GPU execution is supported.
+ * @tparam T the type of the data
+ */
+template <typename T>
 class device_kernel_q_radial {
   public:
-    device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int num_cols, const real_type gamma) :
-        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, gamma_{ gamma } {}
+    /// The type of the data.
+    using real_type = T;
 
-    void operator()(::sycl::item<1> item) const {
-        const auto index = item.get_linear_id();
-        real_type temp{ 0.0 };
-        for (int i = 0; i < num_cols_; ++i) {
-            temp += (data_d_[i * num_rows_ + index] - data_last_[i]) * (data_d_[i * num_rows_ + index] - data_last_[i]);
-        }
-        q_[index] = ::sycl::exp(-gamma_ * temp);
-    }
+    /**
+     * @brief Construct a new device kernel calculating the `q` vector using the radial basis functions C-SVM kernel.
+     * @param[out] q the calculated `q` vector
+     * @param[in] data_d the one-dimensional data matrix
+     * @param[in] data_last the last row in the data matrix
+     * @param[in] num_rows the number of rows in the data matrix
+     * @param[in] num_cols the number of columns in the data matrix
+     * @param[in] gamma the gamma parameter used in the polynomial kernel function
+     */
+    device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols, real_type gamma);
+
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
+     *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     */
+    SYCL_EXTERNAL void operator()(::sycl::item<1> item) const;
 
   private:
     real_type *q_;
@@ -86,5 +136,8 @@ class device_kernel_q_radial {
     const int num_cols_;
     const real_type gamma_;
 };
+
+extern template class device_kernel_q_radial<float>;
+extern template class device_kernel_q_radial<double>;
 
 }  // namespace plssvm::sycl
