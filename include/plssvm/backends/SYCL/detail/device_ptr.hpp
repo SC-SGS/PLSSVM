@@ -28,6 +28,10 @@ namespace plssvm::sycl::detail {
  */
 void device_synchronize(::sycl::queue &queue);
 
+/**
+ * @brief Small wrapper class around a SYCL device pointer together with commonly used device functions.
+ * @tparam T the type of the kernel pointer to wrap
+ */
 template <typename T>
 class device_ptr {
   public:
