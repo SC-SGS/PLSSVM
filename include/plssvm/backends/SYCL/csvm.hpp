@@ -65,12 +65,11 @@ class csvm : public ::plssvm::csvm<T> {
      */
     csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
-    ~csvm() {
-        // be sure that all operations on the SYCL queues have finished before destruction
-        for (::sycl::queue &q : devices_) {
-            q.wait_and_throw();
-        }
-    }
+    /**
+     * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
+     * @details Terminates the program, if any asynchronous exception are thrown.
+     */
+    ~csvm() override;
 
     // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 

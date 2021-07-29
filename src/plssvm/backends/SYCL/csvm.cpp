@@ -24,6 +24,8 @@
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
+#include <cstdio>     // stderr
+#include <exception>  // std::exception, std::terminate
 #include <vector>     // std::vector
 
 namespace plssvm::sycl {
@@ -45,6 +47,19 @@ csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type 
 
     data_d_.resize(devices_.size());
     data_last_d_.resize(devices_.size());
+}
+
+template <typename T>
+csvm<T>::~csvm() {
+    try {
+        // be sure that all operations on the SYCL queues have finished before destruction
+        for (::sycl::queue &q : devices_) {
+            q.wait_and_throw();
+        }
+    } catch (const std::exception &e) {
+        fmt::print("SYCL exception thrown: {}\n", e.what());
+        std::terminate();
+    }
 }
 
 template <typename T>
