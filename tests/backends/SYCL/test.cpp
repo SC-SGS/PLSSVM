@@ -37,7 +37,6 @@ using write_model_parameter_types = ::testing::Types<float, double>;
 TYPED_TEST_SUITE(SYCL_base, write_model_parameter_types);
 
 TYPED_TEST(SYCL_base, write_model) {
-    fmt::print("SYCL TESTS!\n");
     // setup SYCL C-SVM
     plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
@@ -61,12 +60,12 @@ TYPED_TEST(SYCL_base, write_model) {
 
 // enumerate all type and kernel combinations to test
 using parameter_types = ::testing::Types<
-    //    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
-    //    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
-    //    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>>;
-//    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
-//    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 // generate tests for the generation of the q vector
 template <typename T>
@@ -154,7 +153,7 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     plssvm::sycl::detail::device_ptr<real_type> r_d{ dept + boundary_size, q };
     r_d.memset(0);
 
-    for (const int add : { 1 }) {
+    for (const int add : { -1, 1 }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         csvm_sycl.set_QA_cost(QA_cost);
