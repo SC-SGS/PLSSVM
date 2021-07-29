@@ -44,3 +44,6 @@ namespace plssvm::opencl {}
 
 /// Namespace containing the C-SVM using the SYCL backend.
 namespace plssvm::sycl {}
+
+/// Namespace containing SYCL backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::sycl::detail {}
