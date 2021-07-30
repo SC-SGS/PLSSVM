@@ -9,8 +9,9 @@
 
 #pragma once
 
-#include "plssvm/backend_types.hpp"  // plssvm::backend_type
-#include "plssvm/kernel_types.hpp"   // plssvm::kernel_type
+#include "plssvm/backend_types.hpp"    // plssvm::backend_type
+#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
@@ -61,8 +62,10 @@ class parameter {
     real_type epsilon = 0.001;
     /// If `true` additional information (e.g. timing information) will be printed during execution.
     bool print_info = true;
-    /// The used backend: OpenMP, OpenCL or CUDA.
+    /// The used backend: OpenMP, OpenCL, CUDA or SYCL.
     backend_type backend = backend_type::openmp;
+    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
+    target_platform target = target_platform::automatic;
 
     /// The name of the data file to parse.
     std::string input_filename;

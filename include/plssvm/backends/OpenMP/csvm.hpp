@@ -9,9 +9,10 @@
 
 #pragma once
 
-#include "plssvm/csvm.hpp"          // plssvm::csvm
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/csvm.hpp"             // plssvm::csvm
+#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
+#include "plssvm/parameter.hpp"        // plssvm::parameter
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
 #include <vector>  // std::vector
 
@@ -38,6 +39,7 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::num_features_;
     using base_type::print_info_;
     using base_type::QA_cost_;
+    using base_type::target_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
@@ -52,6 +54,7 @@ class csvm : public ::plssvm::csvm<T> {
     explicit csvm(const parameter<T> &params);
     /**
      * @brief Construct an new C-SVM using the OpenMP backend explicitly specifying all necessary parameters.
+     * @param[in] target the target platform
      * @param[in] kernel the type of the kernel function
      * @param[in] degree parameter used in the polynomial kernel function
      * @param[in] gamma parameter used in the polynomial and rbf kernel functions
@@ -60,7 +63,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(target_platform target, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 

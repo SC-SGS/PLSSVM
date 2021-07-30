@@ -13,6 +13,7 @@
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // SYCL stuff
 
@@ -32,8 +33,8 @@ class mock_sycl_csvm : public plssvm::sycl::csvm<T> {
 
     explicit mock_sycl_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit mock_sycl_csvm(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-        base_type{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
+    explicit mock_sycl_csvm(const plssvm::target_platform target, const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+        base_type{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // make non-virtual functions publicly visible
     using base_type::generate_q;

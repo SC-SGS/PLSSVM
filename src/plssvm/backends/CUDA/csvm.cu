@@ -19,6 +19,7 @@
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
@@ -30,16 +31,25 @@ namespace plssvm::cuda {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    csvm{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-    ::plssvm::csvm<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info },
-    num_devices_{ detail::get_device_count() },
-    data_d_(num_devices_),
-    data_last_d_(num_devices_) {
+csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    ::plssvm::csvm<T>{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+    // check if supported target platform has been selected
+    if (target_ != target_platform::automatic && target_ != target_platform::gpu_nvidia) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target_) };
+    }
+
     if (print_info_) {
         fmt::print("Using CUDA as backend.\n");
+    }
+
+    // polynomial and rbf kernel currently only support single GPU execution
+    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
+        num_devices_ = 1;
+    } else {
+        num_devices_ = detail::get_device_count();
     }
 
     // throw exception if no CUDA devices could be found
@@ -47,10 +57,9 @@ csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type 
         throw backend_exception{ "CUDA backend selected but no CUDA devices were found!" };
     }
 
-    // polynomial and rbf kernel currently only support single GPU execution
-    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
-        num_devices_ = 1;
-    }
+    // resize vectors accordingly
+    data_d_.resize(num_devices_);
+    data_last_d_.resize(num_devices_);
 
     if (print_info_) {
         // print found CUDA devices

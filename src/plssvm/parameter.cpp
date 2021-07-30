@@ -51,7 +51,8 @@ parameter<T>::parameter(int argc, char **argv) {
             ("r,coef0", "set coef0 in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", coef0)))
             ("c,cost", "set the parameter C", cxxopts::value<real_type>()->default_value(fmt::format("{}", cost)))
             ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<real_type>()->default_value(fmt::format("{}", epsilon)))
-            ("b,backend", "chooses the backend openmp|cuda|opencl|sycl", cxxopts::value<backend_type>()->default_value(as_lowercase(fmt::format("{}", backend))))
+            ("b,backend", "choose the backend: openmp|cuda|opencl|sycl", cxxopts::value<backend_type>()->default_value(as_lowercase(fmt::format("{}", backend))))
+            ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<target_platform>()->default_value(as_lowercase(fmt::format("{}", target))))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("input", "", cxxopts::value<std::string>(), "training_set_file")
@@ -104,6 +105,9 @@ parameter<T>::parameter(int argc, char **argv) {
     // parse backend_type and cast the value to the respective enum
     backend = result["backend"].as<backend_type>();
 
+    // parse target_platform and cast the value to the respective enum
+    target = result["target_platform"].as<target_platform>();
+
     // parse print info
     print_info = !print_info;
 
@@ -144,6 +148,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                "epsilon         {}\n"
                "print_info      {}\n"
                "backend         {}\n"
+               "target platform {}\n"
                "input_filename  {}\n"
                "model_filename  {}\n"
                "real_type       {}\n",
@@ -155,6 +160,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                params.epsilon,
                params.print_info,
                params.backend,
+               params.target,
                params.input_filename,
                params.model_filename,
                detail::arithmetic_type_name<typename parameter<T>::real_type>());

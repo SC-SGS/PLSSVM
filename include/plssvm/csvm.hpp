@@ -9,8 +9,9 @@
 
 #pragma once
 
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
+#include "plssvm/parameter.hpp"        // plssvm::parameter
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
 #include <string>       // std::string
@@ -44,6 +45,7 @@ class csvm {
     explicit csvm(const parameter<T> &params);
     /**
      * @brief Construct an new C-SVM explicitly specifying all necessary parameters.
+     * @param[in] target the target platform
      * @param[in] kernel the type of the kernel function
      * @param[in] degree parameter used in the polynomial kernel function
      * @param[in] gamma parameter used in the polynomial and rbf kernel functions
@@ -52,7 +54,7 @@ class csvm {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(target_platform target, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Virtual destructor to enable safe inheritance.
@@ -254,6 +256,8 @@ class csvm {
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //
     //*************************************************************************************************************************************//
+    /// The target platform.
+    const target_platform target_;
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     const kernel_type kernel_;
     /// The degree parameter used in the polynomial kernel function.

@@ -18,6 +18,7 @@
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler
@@ -32,16 +33,17 @@ namespace plssvm::sycl {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    csvm{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-    ::plssvm::csvm<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    ::plssvm::csvm<T>{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {
     if (print_info_) {
         fmt::print("Using SYCL as backend.\n");
     }
 
     // TODO: add async_handler
+    // TODO: select device wrt target_platform
     devices_.emplace_back(::sycl::gpu_selector{}, ::sycl::property::queue::in_order());
     fmt::print("{}\n", devices_.back().get_device().get_info<::sycl::info::device::name>());
 

@@ -1,11 +1,14 @@
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
-#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::kernel_type
+#include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_poly, plssvm::openmp::device_kernel_radial
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
+#include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/target_platform.hpp"             // plssvm::target_platform
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
@@ -16,11 +19,16 @@ namespace plssvm::openmp {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    csvm{ params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-csvm<T>::csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info) :
-    ::plssvm::csvm<T>{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    ::plssvm::csvm<T>{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+    // check if supported target platform has been selected
+    if (target_ != target_platform::automatic && target_ != target_platform::cpu) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the OpenMP backend!", target_) };
+    }
+
     if (print_info_) {
         fmt::print("Using OpenMP as backend.\n\n");
     }

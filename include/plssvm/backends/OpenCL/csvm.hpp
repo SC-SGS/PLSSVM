@@ -1,9 +1,10 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
-#include "plssvm/csvm.hpp"          // plssvm::csvm
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/csvm.hpp"             // plssvm::csvm
+#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
+#include "plssvm/parameter.hpp"        // plssvm::parameter
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
 #include "../../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
 #include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"
@@ -26,13 +27,14 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::num_features_;
     using base_type::print_info_;
     using base_type::QA_cost_;
+    using base_type::target_;
 
   public:
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
     explicit csvm(const parameter<T> &params);
-    csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(target_platform target, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 
