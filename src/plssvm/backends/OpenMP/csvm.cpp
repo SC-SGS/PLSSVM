@@ -1,6 +1,7 @@
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/q_kernel.hpp"    // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_poly, plssvm::openmp::device_kernel_q_radial
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_poly, plssvm::openmp::device_kernel_radial
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
@@ -36,10 +37,19 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
 
 template <typename T>
 auto csvm<T>::generate_q() -> std::vector<real_type> {
-    std::vector<real_type> q;
-    q.reserve(data_.size());
-    for (size_type i = 0; i < data_.size() - 1; ++i) {
-        q.emplace_back(base_type::kernel_function(data_.back(), data_[i]));
+    std::vector<real_type> q(data_.size() - 1);
+    switch (kernel_) {
+        case kernel_type::linear:
+            device_kernel_q_linear(q, data_);
+            break;
+        case kernel_type::polynomial:
+            device_kernel_q_poly(q, data_, degree_, gamma_, coef0_);
+            break;
+        case kernel_type::rbf:
+            device_kernel_q_radial(q, data_, gamma_);
+            break;
+        default:
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
     }
     return q;
 }

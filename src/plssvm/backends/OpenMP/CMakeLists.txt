@@ -15,6 +15,7 @@ message(CHECK_PASS "found")
 # explicitly set sources
 set(PLSSVM_OPENMP_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cpp
 )
 
