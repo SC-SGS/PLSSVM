@@ -54,7 +54,7 @@ csvm<T>::~csvm() {
     try {
         // be sure that all operations on the SYCL queues have finished before destruction
         for (::sycl::queue &q : devices_) {
-            q.wait_and_throw();
+            detail::device_synchronize(q);
         }
     } catch (const std::exception &e) {
         fmt::print("SYCL exception thrown: {}\n", e.what());

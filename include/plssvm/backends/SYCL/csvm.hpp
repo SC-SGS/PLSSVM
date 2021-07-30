@@ -67,7 +67,7 @@ class csvm : public ::plssvm::csvm<T> {
 
     /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
-     * @details Terminates the program, if any asynchronous exception are thrown.
+     * @details Terminates the program, if any asynchronous exceptions are thrown.
      */
     ~csvm() override;
 
