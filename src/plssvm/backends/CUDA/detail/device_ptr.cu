@@ -6,6 +6,7 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
 #include "fmt/core.h"  // fmt::format
 
@@ -92,10 +93,14 @@ void device_ptr<T>::swap(device_ptr &other) noexcept {
 
 template <typename T>
 void device_ptr<T>::memset(const value_type value, const size_type pos) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     this->memset(value, pos, size_);
 }
 template <typename T>
 void device_ptr<T>::memset(const value_type value, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     if (pos >= size_) {
         throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
     }
@@ -106,10 +111,14 @@ void device_ptr<T>::memset(const value_type value, const size_type pos, const si
 
 template <typename T>
 void device_ptr<T>::memcpy_to_device(const std::vector<value_type> &data_to_copy) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     this->memcpy_to_device(data_to_copy, 0, size_);
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     const size_type rcount = std::min(count, size_ - pos);
     if (data_to_copy.size() < rcount) {
         throw backend_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
@@ -118,10 +127,14 @@ void device_ptr<T>::memcpy_to_device(const std::vector<value_type> &data_to_copy
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     this->memcpy_to_device(data_to_copy, 0, size_);
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
     const size_type rcount = std::min(count, size_ - pos);
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice));
@@ -129,10 +142,14 @@ void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy, const size_type
 
 template <typename T>
 void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     this->memcpy_to_host(buffer, 0, size_);
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     const size_type rcount = std::min(count, size_ - pos);
     if (buffer.size() < rcount) {
         throw backend_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
@@ -141,10 +158,14 @@ void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_t
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_host(pointer buffer) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     this->memcpy_to_host(buffer, 0, size_);
 }
 template <typename T>
 void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device_));
     const size_type rcount = std::min(count, size_ - pos);
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost));
