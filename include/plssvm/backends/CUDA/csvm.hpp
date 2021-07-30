@@ -64,6 +64,12 @@ class csvm : public ::plssvm::csvm<T> {
     csvm(kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
+     * @brief Wait for all operations on all devices to finish.
+     * @details Terminates the program, if any exceptions are thrown.
+     */
+    ~csvm() override;
+
+    /**
      * @brief TODO: predict
      * @return
      */

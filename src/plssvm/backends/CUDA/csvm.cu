@@ -65,6 +65,19 @@ csvm<T>::csvm(const kernel_type kernel, const real_type degree, const real_type 
 }
 
 template <typename T>
+csvm<T>::~csvm() {
+    try {
+        // be sure that all operations on the CUDA devices have finished before destruction
+        for (int device = 0; device < num_devices_; ++device) {
+            detail::device_synchronize(device);
+        }
+    } catch (const plssvm::exception &e) {
+        fmt::print("{}\n", e.what_with_loc());
+        std::terminate();
+    }
+}
+
+template <typename T>
 void csvm<T>::setup_data_on_device() {
     // set values of member variables
     dept_ = num_data_points_ - 1;
