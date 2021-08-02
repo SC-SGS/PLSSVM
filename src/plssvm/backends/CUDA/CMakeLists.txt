@@ -10,6 +10,12 @@ if(NOT CMAKE_CUDA_COMPILER)
         message(FATAL_ERROR "Cannot find requested backend: CUDA!")
     endif()
     return()
+else()
+    if(NOT DEFINED PLSSVM_CUDA_TARGET_ARCHS)
+        message(STATUS "Found requested backend CUDA, but no cuda targets were specified!")
+        message(CHECK_FAIL "skipped")
+        return()
+    endif()
 endif()
 message(CHECK_PASS "found")
 
@@ -44,21 +50,19 @@ if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif()
 
-# also specific architectures can be set using a CMake option
-set(PLSSVM_CUDA_ARCHITECTURES "" CACHE STRING "List of CUDA architectures to compile for.")
-# auto detect available CUDA architectures and append to list
-include(${PROJECT_SOURCE_DIR}/cmake/auto_detect_cuda_arch.cmake)
-auto_detect_cuda_arch(PLSSVM_CUDA_ARCHITECTURES_AUTO)
-set(PLSSVM_CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES} ${PLSSVM_CUDA_ARCHITECTURES_AUTO})
-# check that at least one architecture has been defined
-if(NOT PLSSVM_CUDA_ARCHITECTURES)
-    message(STATUS "No CUDA architecture specified! Building for common CUDA architectures.")
-    set(PLSSVM_CUDA_ARCHITECTURES "52;60;61;70;75;86") # TODO: sensible defaults?
+# automatically detect available GPU architectures if none has been provided
+if(PLSSVM_NUM_CUDA_TARGET_ARCHS EQUAL 0)
+    include(${PROJECT_SOURCE_DIR}/cmake/auto_detect_cuda_arch.cmake)
+    auto_detect_cuda_arch(PLSSVM_CUDA_TARGET_ARCHS)
+    list(LENGTH PLSSVM_CUDA_TARGET_ARCHS PLSSVM_NUM_CUDA_TARGET_ARCHS)
 endif()
-list(REMOVE_DUPLICATES PLSSVM_CUDA_ARCHITECTURES)
-# set architectures for target
-message(STATUS "CUDA architectures to compile for: ${PLSSVM_CUDA_ARCHITECTURES}")
-set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_ARCHITECTURES})
+
+message(STATUS "Compiling for CUDA architecture(s): ${PLSSVM_CUDA_TARGET_ARCHS}")
+
+# prepare architectures for CMake's CUDA_ARCHITECTURES
+list(TRANSFORM PLSSVM_CUDA_TARGET_ARCHS REPLACE "sm_" "")
+# set target architecture
+set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_TARGET_ARCHS})
 
 # link base library against CUDA library
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})

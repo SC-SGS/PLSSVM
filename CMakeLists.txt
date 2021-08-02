@@ -43,7 +43,7 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
-            GIT_TAG                 df229cff0d5b96e146f3f11441f714e8e240cad0
+            GIT_TAG                 5eca8a30012b69b76316b71fa391a89fe09256cb
             GIT_SHALLOW             TRUE
 
             set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -101,6 +101,46 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 ## create main executable
 set(PLSSVM_EXECUTABLE_NAME svm-train)
 add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp)
+
+
+# the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
+if(DEFINED PLSSVM_TARGET_PLATFORMS)
+    set(PLSSVM_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The target platforms to compile for." FORCE)
+elseif(DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
+    set(PLSSVM_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The target platforms to compile for." FORCE)
+else()
+    message(FATAL_ERROR "PLSSVM_TARGET_PLATFORMS must be defined (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;cuda:sm_70,sm_86;amd:gfx906;intel\"!")
+endif()
+
+# PLSSVM_TARGET_PLATFORMS must not be empty
+if(PLSSVM_TARGET_PLATFORMS STREQUAL "")
+    message(FATAL_ERROR "PLSSVM_TARGET_PLATFORMS must not be empty!")
+endif()
+
+# parse provided target platforms
+include(${PROJECT_SOURCE_DIR}/cmake/parse_architecture_info.cmake)
+foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
+    if(PLSSVM_PLATFORM MATCHES "^cpu")
+        # parse provided CPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
+        if(NOT PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform CPU must not have any architecture specifications!")
+        endif()
+    elseif(PLSSVM_PLATFORM MATCHES "^cuda")
+        # parse provided CUDA architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CUDA_TARGET_ARCHS PLSSVM_NUM_CUDA_TARGET_ARCHS)
+    elseif(PLSSVM_PLATFORM MATCHES "^amd")
+        # parse provided AMD architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
+    elseif(PLSSVM_PLATFORM MATCHES "^intel")
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
+        if(NOT PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform Intel must not have any architecture specifications!")
+        endif()
+    else()
+        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu cuda amd intel")
+    endif()
+endforeach()
 
 
 ## check for OpenMP backend

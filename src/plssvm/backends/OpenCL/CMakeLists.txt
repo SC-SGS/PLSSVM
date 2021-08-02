@@ -1,6 +1,8 @@
 # check if OpenCL can be enabled
 message(CHECK_START "Checking for OpenCL backend")
 
+# TODO: rewrite to use PLSSVM_TARGET_PLATFORMS
+
 find_package(OpenCL)
 
 if(NOT OpenCL_FOUND)
