@@ -1,19 +1,19 @@
-## see: https://stackoverflow.com/questions/68223398/how-can-i-get-cmake-to-automatically-detect-the-value-for-cuda-architectures ##
-
-## ATTENTION: uses a non public API file -> may silently break in newer CMake versions (but relatively unlikely)
-
 function(auto_detect_cuda_arch OUT_LIST)
-    # include select_compute_arch
-    include(FindCUDA/select_compute_arch)
-    # auto detect installed GPUs
-    CUDA_DETECT_INSTALLED_GPUS(INSTALLED_GPU_CCS_1)
+    # get GPU architecture by querying device information
+    try_run(run_result compile_result ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/compile_tests/compute_capability.cu
+        RUN_OUTPUT_VARIABLE compute_capabilities)
+
+    # strip unnecessary information
+    string(REGEX MATCHALL "[0-9]+\\.[0-9]+" compute_capabilities "${compute_capabilities}")
+
     # reformat string to be usable in CUDA_ARCHITECTURES
-    string(STRIP "${INSTALLED_GPU_CCS_1}" INSTALLED_GPU_CCS_2)
-    string(REPLACE "." "" CUDA_ARCH_LIST "${INSTALLED_GPU_CCS_2}")
+    string(STRIP "${compute_capabilities}" compute_capabilities_stripped)
+    string(REPLACE "." "" CUDA_ARCH_LIST "${compute_capabilities_stripped}")
+    list(TRANSFORM CUDA_ARCH_LIST PREPEND "sm_")
 
     if(CUDA_ARCH_LIST MATCHES ".*PTX.*")
         # couldn't find any CUDA capable GPU
-        message(STATUS "No CUDA capable GPU was found!")
+        message(FATAL_ERROR "No CUDA capable GPU was found! Please explicitly specify CUDA architectures to compile for.")
     else()
         # "return" list of found architectures
         set(${OUT_LIST} "${CUDA_ARCH_LIST}" PARENT_SCOPE)
