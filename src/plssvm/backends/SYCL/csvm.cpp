@@ -6,19 +6,20 @@
 
 #include "plssvm/backends/SYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_count, plssvm::detail::cuda::device_synchronize
-#include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
-#include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
-#include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
-#include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
-#include "plssvm/csvm.hpp"                             // plssvm::csvm
-#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars
-#include "plssvm/detail/utility.hpp"                   // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
-#include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"       // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_count, plssvm::detail::cuda::device_synchronize
+#include "plssvm/backends/SYCL/detail/device_selector.hpp"  // plssvm::detail::device_selector
+#include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/q_kernel.hpp"                // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
+#include "plssvm/backends/SYCL/svm_kernel.hpp"              // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
+#include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/csvm.hpp"                                  // plssvm::csvm
+#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/operators.hpp"                      // various operator overloads for std::vector and scalars
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler
@@ -44,7 +45,7 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
 
     // TODO: add async_handler
     // TODO: select device wrt target_platform
-    devices_.emplace_back(::sycl::gpu_selector{}, ::sycl::property::queue::in_order());
+    devices_.emplace_back(detail::device_selector{ target_ }, ::sycl::property::queue::in_order());
     fmt::print("{}\n", devices_.back().get_device().get_info<::sycl::info::device::name>());
 
     data_d_.resize(devices_.size());
