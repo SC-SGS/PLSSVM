@@ -61,6 +61,24 @@ namespace plssvm::detail {
 [[nodiscard]] inline bool ends_with(const std::string_view str, const char c) noexcept {
     return !str.empty() && std::char_traits<char>::eq(str.back(), c);
 }
+/**
+ * @brief Checks if the string @p str contains the string @p sv.
+ * @param[in] str the string to check
+ * @param[in] sv the string to find
+ * @return `true` if @p str contains the string @p sv, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool contains(const std::string_view str, const std::string_view sv) noexcept {
+    return str.find(sv) != std::string_view::npos;
+}
+/**
+ * @brief Checks if the string @p str contains the character @p c.
+ * @param[in] str the string to check
+ * @param[in] c the character to find
+ * @return `true` if @p str contains the character @p c, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool contains(const std::string_view str, const char c) noexcept {
+    return str.find(c) != std::string_view::npos;
+}
 
 /**
  * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leding whitespaces are removed.
