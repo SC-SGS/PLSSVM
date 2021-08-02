@@ -35,8 +35,6 @@ endif()
 set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cpp
 )
 
 # set target properties
