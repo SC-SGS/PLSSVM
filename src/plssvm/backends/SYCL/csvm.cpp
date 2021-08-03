@@ -6,20 +6,19 @@
 
 #include "plssvm/backends/SYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"       // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_count, plssvm::detail::cuda::device_synchronize
-#include "plssvm/backends/SYCL/detail/device_selector.hpp"  // plssvm::detail::device_selector
-#include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::sycl::backend_exception
-#include "plssvm/backends/SYCL/q_kernel.hpp"                // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
-#include "plssvm/backends/SYCL/svm_kernel.hpp"              // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
-#include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
-#include "plssvm/csvm.hpp"                                  // plssvm::csvm
-#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"                      // various operator overloads for std::vector and scalars
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_count, plssvm::detail::cuda::device_synchronize
+#include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
+#include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
+#include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/csvm.hpp"                             // plssvm::csvm
+#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
+#include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars
+#include "plssvm/detail/utility.hpp"                   // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
+#include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler
@@ -43,13 +42,31 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
         fmt::print("Using SYCL as backend.\n");
     }
 
-    // TODO: add async_handler
-    // TODO: select device wrt target_platform
-    devices_.emplace_back(detail::device_selector{ target_ }, ::sycl::property::queue::in_order());
-    fmt::print("{}\n", devices_.back().get_device().get_info<::sycl::info::device::name>());
+    // get all available devices wrt the requested target platform
+    devices_ = detail::get_device_list(target_);
 
+    // throw exception if no devices for the requested target could be found
+    if (devices_.size() < 1) {
+        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
+    }
+
+    // polynomial and rbf kernel currently only support single GPU execution
+    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
+        devices_.resize(1);
+    }
+
+    // resize vectors accordingly
     data_d_.resize(devices_.size());
     data_last_d_.resize(devices_.size());
+
+    if (print_info_) {
+        // print found SYCL devices
+        fmt::print("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), target_);
+        for (size_type device = 0; device < devices_.size(); ++device) {
+            fmt::print("  [{}, {}]\n", device, devices_[device].get_device().template get_info<::sycl::info::device::name>());
+        }
+        fmt::print("\n");
+    }
 }
 
 template <typename T>

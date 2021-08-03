@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+
 // TODO: try to get rid of this include?
 #include "sycl/sycl.hpp"  // sycl::queue
 
@@ -18,10 +20,15 @@
 namespace plssvm::sycl::detail {
 
 /**
- * @brief Returns the number of available (GPU) devices. // TODO:
- * @return the number of devices (`[[nodiscard]]`)
+ * @brief Returns the list devices matching the target platform @p target.
+ * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
+ *          1. NVIDIA GPUs
+ *          2. AMD GPUs
+ *          3. Intel GPUs
+ *          4. CPUs
+ * @return the devices (`[[nodiscard]]`)
  */
-[[nodiscard]] std::size_t get_device_count();
+[[nodiscard]] std::vector<::sycl::queue> get_device_list(target_platform target);
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the SYCL queue to synchronize
