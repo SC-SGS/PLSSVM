@@ -23,7 +23,7 @@ namespace plssvm {
  * @brief Enum class for the different targets.
  */
 enum class target_platform {
-    /** The default target with respect to the used backend type. */
+    /** The default target with respect to the used backend type. Checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs */
     automatic,
     /** Target CPUs. */
     cpu,
