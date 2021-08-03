@@ -50,9 +50,14 @@ namespace plssvm::sycl::detail {
                             }
                             break;
                         case target_platform::gpu_intel:
-                            // TODO: really restrict to OpenCL? -> maybe CMAKE VARIABLE?
-                            if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(platform_string, "opencl")) {
+                            if (::plssvm::detail::contains(vendor_string, "intel")) {
+#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
+                                if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
+                                    target_devices.emplace_back(device, ::sycl::property::queue::in_order());
+                                }
+#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
                                 target_devices.emplace_back(device, ::sycl::property::queue::in_order());
+#endif
                             }
                             break;
                         default:

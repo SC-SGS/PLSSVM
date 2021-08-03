@@ -53,6 +53,14 @@ target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_L
 target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
 
 
+option(PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO "Enable Level Zero backend in favor of OpenCL when using DPC++." OFF)
+if(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO)
+    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level-zero")
+else()
+    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
+endif()
+
+
 # link SYCL library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
 target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
