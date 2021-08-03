@@ -38,6 +38,32 @@ csvm<T>::csvm(const parameter<T> &params) :
 template <typename T>
 csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
     ::plssvm::csvm<T>{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+    // check whether the requested target platform has been enabled
+    switch (target_) {
+        case target_platform::cpu:
+#if !defined(PLSSVM_HAS_CPU_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
+#endif
+            break;
+        case target_platform::gpu_nvidia:
+#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
+#endif
+            break;
+        case target_platform::gpu_amd:
+#if !defined(PLSSVM_HAS_AMD_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
+#endif
+            break;
+        case target_platform::gpu_intel:
+#if !defined(PLSSVM_HAS_INTEL_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
+#endif
+            break;
+        default:
+            break;
+    }
+
     if (print_info_) {
         fmt::print("Using SYCL as backend.\n");
     }
