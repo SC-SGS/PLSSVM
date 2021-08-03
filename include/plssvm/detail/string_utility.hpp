@@ -144,7 +144,7 @@ inline void replace_all(std::string &str, const std::string_view what, const std
 }
 
 /**
- * @brief Convert the string @str to its all lower case representation.
+ * @brief Convert the string @p str to its all lower case representation.
  * @param[inout] str the string to transform
  * @return the transformed string
  */

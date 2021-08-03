@@ -17,6 +17,7 @@
 
 namespace plssvm::sycl {
 
+/// Unsigned integer type.
 using size_type = std::size_t;
 
 namespace detail {

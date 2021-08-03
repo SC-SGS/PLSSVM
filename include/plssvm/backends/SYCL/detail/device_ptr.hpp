@@ -26,6 +26,7 @@ namespace plssvm::sycl::detail {
  *          2. AMD GPUs
  *          3. Intel GPUs
  *          4. CPUs
+ * @param[in] target the target platform for which the devices must match
  * @return the devices (`[[nodiscard]]`)
  */
 [[nodiscard]] std::vector<::sycl::queue> get_device_list(target_platform target);
