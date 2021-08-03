@@ -15,7 +15,8 @@
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format
 
-#include <algorithm>     // std::min
+#include <algorithm>     // std::min, std::transform
+#include <cctype>        // std::tolower
 #include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error
 #include <string>        // std::char_traits
@@ -140,6 +141,16 @@ inline void replace_all(std::string &str, const std::string_view what, const std
     for (std::string::size_type pos = 0; std::string::npos != (pos = str.find(what.data(), pos, what.length())); pos += with.length()) {
         str.replace(pos, what.length(), with.data(), with.length());
     }
+}
+
+/**
+ * @brief Convert the string @str to its all lower case representation.
+ * @param[inout] str the string to transform
+ * @return the transformed string
+ */
+inline std::string &to_lower_case(std::string &str) {
+    std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return std::tolower(c); });
+    return str;
 }
 
 }  // namespace plssvm::detail
