@@ -1,33 +1,34 @@
 # check if SYCL can be enabled
 message(CHECK_START "Checking for SYCL backend")
 
-# check if the compiler supports SYCL
-try_compile(PLSSVM_IS_SYCL_COMPILER
-    "${CMAKE_BINARY_DIR}/temp"
-    "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_base.cpp"
-    CXX_STANDARD 17)
+# reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case hipSYCL may be available)
+set(HIPSYCL_TARGETS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "" FORCE)
+list(TRANSFORM HIPSYCL_TARGETS REPLACE "cpu" "omp")
+list(TRANSFORM HIPSYCL_TARGETS REPLACE "amd" "hip")
+list(TRANSFORM HIPSYCL_TARGETS REPLACE "intel" "spirv")
 
-if(NOT PLSSVM_IS_SYCL_COMPILER)
-    message(CHECK_FAIL "not found")
-    if(PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
-        message(FATAL_ERROR "Cannot find requested backend: SYCL!")
-    endif()
-    return()
-endif()
-
-message(CHECK_PASS "found")
-
-message(CHECK_START "Checking for used SYCL implementation")
-
-try_compile(PLSSVM_IS_DPCPP
-    "${CMAKE_BINARY_DIR}/temp"
-    "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_dpcpp.cpp"
-    CXX_STANDARD 17)
-
-if(PLSSVM_IS_DPCPP)
-    message(CHECK_PASS "dpcpp")
+# check if hipSYCL is used as SYCL compiler
+find_package(hipSYCL CONFIG)
+if(hipSYCL_FOUND)
+    set(PLSSVM_SYCL_BACKEND_COMPILER "hipSYCL" CACHE STRING "" FORCE)
+    message(CHECK_PASS "found hipSYCL")
 else()
-    message(FATAL_ERROR "SYCL implementation currently not supported!")
+    # if not, check if DPC++ is used instead
+    try_compile(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER
+            "${CMAKE_BINARY_DIR}/temp"
+            "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_dpcpp.cpp"
+            CXX_STANDARD 17
+            CXX_STANDARD_REQUIRED ON)
+    if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
+        set(PLSSVM_SYCL_BACKEND_COMPILER "DPC++" CACHE STRING "" FORCE)
+        message(CHECK_PASS "found DPC++")
+    else()
+        message(CHECK_FAIL "not found")
+        if(PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
+            message(FATAL_ERROR "Cannot find requested backend: SYCL!")
+        endif()
+        return()
+    endif()
 endif()
 
 
@@ -41,25 +42,39 @@ set(PLSSVM_SYCL_SOURCES
 set(PLSSVM_SYCL_BACKEND_LIBRARY_NAME svm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES})
 
-target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda-sycldevice --cuda-gpu-arch=sm_80 --cuda-path=/usr/local.nfs/sw/cuda/cuda-11.2.2)
-target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl --cuda-gpu-arch=sm_80 --cuda-path=/usr/local.nfs/sw/cuda/cuda-11.2.2)
-target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+
+# set additional properties depending on the used SYCL implementation
+if("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "hipSYCL")
+    add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
+    # set backend compiler to hipSYCL (= 1)
+    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
+elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
+    # enable DPC++ SYCL support
+    target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
+    target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
+
+    # TODO: correct flags for other targets
+    if(DEFINED PLSSVM_CUDA_TARGET_ARCHS)
+        message(STATUS "Target NVIDIA")
+        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
+    endif()
+
+    # set backend compiler to DPC++ (= 0)
+    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
+
+    # be able to choose between the Level-Zero and OpenCL DPC++ backend
+    option(PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO "Enable Level-Zero backend in favor of OpenCL when using DPC++." OFF)
+    if(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO)
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level-zero")
+    else()
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
+    endif()
+endif()
+
 
 # link base library against SYCL library
 target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
-
-
-# TODO: not hardcoded
-target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
-
-
-option(PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO "Enable Level Zero backend in favor of OpenCL when using DPC++." OFF)
-if(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level-zero")
-else()
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
-endif()
-
 
 # link SYCL library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
