@@ -42,8 +42,6 @@ set(PLSSVM_SYCL_SOURCES
 set(PLSSVM_SYCL_BACKEND_LIBRARY_NAME svm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES})
 
-message(STATUS "Compiling for AMD architecture(s): ${PLSSVM_AMD_TARGET_ARCHS}")
-
 # set additional properties depending on the used SYCL implementation
 if("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "hipSYCL")
     add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
