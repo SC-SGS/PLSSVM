@@ -4,9 +4,9 @@ function(assemble_summary_string out_var)
         # add cpu platform
         string(APPEND PLSSVM_SUMMARY_STRING_ASSEMBLE " cpu,")
     endif()
-    if(DEFINED PLSSVM_CUDA_TARGET_ARCHS)
-        # add cuda platform
-        string(APPEND PLSSVM_SUMMARY_STRING_ASSEMBLE " cuda (${PLSSVM_CUDA_TARGET_ARCHS}),")
+    if(DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        # add nvidia platform
+        string(APPEND PLSSVM_SUMMARY_STRING_ASSEMBLE " nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS}),")
     endif()
     if(DEFINED PLSSVM_AMD_TARGET_ARCHS)
         # add amd platform

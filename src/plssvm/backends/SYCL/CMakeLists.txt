@@ -4,6 +4,7 @@ message(CHECK_START "Checking for SYCL backend")
 # reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case hipSYCL may be available)
 set(HIPSYCL_TARGETS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "" FORCE)
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "cpu" "omp")
+list(TRANSFORM HIPSYCL_TARGETS REPLACE "nvidia" "cuda")
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "amd" "hip")
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "intel" "spirv")
 
@@ -54,7 +55,7 @@ elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
 
     # TODO: test (somehow?)
     # nvidia targets
-    if(DEFINED PLSSVM_CUDA_TARGET_ARCHS)
+    if(DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
         target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda-sycldevice)
     endif()

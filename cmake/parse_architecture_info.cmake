@@ -1,7 +1,7 @@
 function(parse_architecture_info target_platform target_archs num_archs)
-  # transform platforms to list (e.g "cuda:sm_70,sm_80" -> "cuda;sm_70,sm_80")
+  # transform platforms to list (e.g "nvidia:sm_70,sm_80" -> "nvidia;sm_70,sm_80")
   string(REPLACE ":" ";" ARCH_LIST ${target_platform})
-  # remove platform from list (e.g. "cuda;sm_70,sm_80" -> "sm_70,sm_80")
+  # remove platform from list (e.g. "nvidia;sm_70,sm_80" -> "sm_70,sm_80")
   list(POP_FRONT ARCH_LIST)
 
   if(ARCH_LIST STREQUAL "")

@@ -11,8 +11,8 @@ if(NOT CMAKE_CUDA_COMPILER)
     endif()
     return()
 else()
-    if(NOT DEFINED PLSSVM_CUDA_TARGET_ARCHS)
-        message(STATUS "Found requested backend CUDA, but no cuda targets were specified!")
+    if(NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        message(STATUS "Found requested CUDA backend, but no \"nvidia\" targets were specified!")
         message(CHECK_FAIL "skipped")
         return()
     endif()
@@ -51,9 +51,9 @@ if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
 endif()
 
 # prepare architectures for CMake's CUDA_ARCHITECTURES
-list(TRANSFORM PLSSVM_CUDA_TARGET_ARCHS REPLACE "sm_" "")
+list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
 # set target architecture
-set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_CUDA_TARGET_ARCHS})
+set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_NVIDIA_TARGET_ARCHS})
 
 # link base library against CUDA library
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
@@ -64,5 +64,5 @@ target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_CUDA_BACKEND_LIBRARY_NA
 
 
 # generate summary string
-list(TRANSFORM PLSSVM_CUDA_TARGET_ARCHS PREPEND "sm_")
-set(PLSSVM_CUDA_BACKEND_SUMMARY_STRING " - CUDA: cuda (${PLSSVM_CUDA_TARGET_ARCHS})" PARENT_SCOPE)
+list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")
+set(PLSSVM_CUDA_BACKEND_SUMMARY_STRING " - CUDA: nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS})" PARENT_SCOPE)
