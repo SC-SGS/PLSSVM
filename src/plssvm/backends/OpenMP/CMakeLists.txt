@@ -36,3 +36,7 @@ target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE
 # link OpenMP library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
 target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
+
+
+# generate summary string
+set(PLSSVM_OPENMP_BACKEND_SUMMARY_STRING " - OpenMP: cpu" PARENT_SCOPE)
