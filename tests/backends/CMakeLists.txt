@@ -4,7 +4,7 @@ if(TARGET svm-OpenMP)
 endif()
 
 # create OpenCL tests if the OpenCL backend is available
-if(TARGET svm-OCL)
+if(TARGET svm-OpenCL)
     add_subdirectory(OpenCL)
 endif()
 
