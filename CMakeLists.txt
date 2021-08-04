@@ -5,6 +5,7 @@ project(ParallelLeastSquaresSupportVectorMachine
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
+include(${PROJECT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
 ## configure version file
 set(CONFIG_IN ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in)
@@ -220,15 +221,15 @@ endif()
 
 ## print summary
 message(STATUS "Enabled backends with respective targets:")
-if(TARGET svm-OpenMP)
+if(TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENMP_BACKEND_SUMMARY_STRING}")
 endif()
-if(TARGET svm-CUDA)
+if(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_CUDA_BACKEND_SUMMARY_STRING}")
 endif()
-if(TARGET svm-OpenCL)
+if(TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING}")
 endif()
-if(TARGET svm-SYCL)
+if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING}")
 endif()

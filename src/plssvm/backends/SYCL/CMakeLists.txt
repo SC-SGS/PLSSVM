@@ -39,7 +39,7 @@ set(PLSSVM_SYCL_SOURCES
 )
 
 # set target properties
-set(PLSSVM_SYCL_BACKEND_LIBRARY_NAME svm-SYCL)
+set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME svm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES})
 
 # set additional properties depending on the used SYCL implementation
