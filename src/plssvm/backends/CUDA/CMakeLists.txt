@@ -50,13 +50,6 @@ if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif()
 
-# automatically detect available GPU architectures if none has been provided
-if(PLSSVM_NUM_CUDA_TARGET_ARCHS EQUAL 0)
-    include(${PROJECT_SOURCE_DIR}/cmake/auto_detect_cuda_arch.cmake)
-    auto_detect_cuda_arch(PLSSVM_CUDA_TARGET_ARCHS)
-    list(LENGTH PLSSVM_CUDA_TARGET_ARCHS PLSSVM_NUM_CUDA_TARGET_ARCHS)
-endif()
-
 message(STATUS "Compiling for CUDA architecture(s): ${PLSSVM_CUDA_TARGET_ARCHS}")
 
 # prepare architectures for CMake's CUDA_ARCHITECTURES
