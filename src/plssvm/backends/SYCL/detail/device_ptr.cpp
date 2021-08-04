@@ -71,8 +71,6 @@ namespace plssvm::sycl::detail {
 }
 
 [[nodiscard]] std::vector<::sycl::queue> get_device_list(const target_platform target) {
-    // TODO: check PLATFORM AVAILABILITY
-
     if (target != target_platform::automatic) {
         return get_device_list_impl(target);
     } else {
