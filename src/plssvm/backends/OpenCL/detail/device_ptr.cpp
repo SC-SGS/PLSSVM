@@ -10,6 +10,8 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"         // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 
+#include "CL/cl.h"     // cl_command_queue, cl_context, clGetCommandQueueInfo, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer
+                       // clFinish, clEnqueueWriteBuffer, clEnqueueReadBuffer
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>    // std::min
