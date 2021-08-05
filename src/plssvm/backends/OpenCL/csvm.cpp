@@ -19,7 +19,7 @@
 #include "manager/device.hpp"
 #include "manager/manager.hpp"
 
-#include "CL/cl.h"     //
+#include "CL/cl.h"     // clReleaseKernel
 #include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <algorithm>  // std::min
