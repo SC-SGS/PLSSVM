@@ -89,7 +89,7 @@ class device_ptr {
      * @brief Access the underlying OpenCL device pointer.
      * @return the device pointer (`[[nodiscard]]`)
      */
-    [[nodiscard]] cl_mem get() noexcept {
+    [[nodiscard]] cl_mem get() const noexcept {
         return data_;
     }
     /**

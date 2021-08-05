@@ -254,6 +254,48 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
+void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, const int add) {
+    PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+    PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
+
+    // TODO: implement other kernel
+
+    std::vector<::opencl::device_t> &devices = manager.get_devices();
+
+    if (!svm_kernel_linear[device]) {
+        std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
+        std::string kernel_src = manager.read_src_file(kernel_src_file_name);
+        manager.parameters.replaceTextAttr("INTERNAL_PRECISION", std::string{ ::plssvm::detail::arithmetic_type_name<real_type>() });
+        ::plssvm::detail::replace_all(kernel_src, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
+        json::node &deviceNode =
+            manager.get_configuration()["PLATFORMS"][devices[device].platformName]
+                                       ["DEVICES"][devices[device].deviceName];
+        json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
+        #pragma omp critical  //TODO: evtl besser keine Referenz
+        {
+            kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(INTERNAL_BLOCK_SIZE));
+            kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
+            svm_kernel_linear[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_linear");
+        }
+    }
+
+    // feature splitting on multiple devices
+    const int first_feature = device * num_cols_ / count_devices;
+    const int last_feature = (device + 1) * num_cols_ / count_devices;
+
+    std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
+    std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
+                                      static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
+    grid_size[0] *= THREAD_BLOCK_SIZE;
+    grid_size[1] *= THREAD_BLOCK_SIZE;
+
+    ::opencl::apply_arguments(svm_kernel_linear[device], q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, add, first_feature, last_feature);
+    ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
+}
+
+template <typename T>
 void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer) {
     std::vector<::opencl::device_t> &devices = manager.get_devices();
     clFinish(devices[0].commandQueue);
@@ -314,57 +356,11 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept_);
     }
-    switch (kernel_) {
-        case kernel_type::linear:
-            #pragma omp parallel for
-            for (size_type device = 0; device < count_devices; ++device) {
-                if (!svm_kernel_linear[device]) {
-                    std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
-                    std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                    if constexpr (std::is_same_v<real_type, float>) {
-                        manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                        ::plssvm::detail::replace_all(kernel_src, "real_type", "float");
-                    } else if constexpr (std::is_same_v<real_type, double>) {
-                        manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
-                        ::plssvm::detail::replace_all(kernel_src, "real_type", "double");
-                    }
-                    json::node &deviceNode =
-                        manager.get_configuration()["PLATFORMS"][devices[device].platformName]
-                                                   ["DEVICES"][devices[device].deviceName];
-                    json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-                    #pragma omp critical  //TODO: evtl besser keine Referenz
-                    {
-                        kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(INTERNAL_BLOCK_SIZE));
-                        kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
-                        svm_kernel_linear[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_linear");
-                    }
-                }
-                {
-                    std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
-                                                      static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
-                    const int start = device * num_cols_ / count_devices;
-                    const int end = (device + 1) * num_cols_ / count_devices;
-                    std::flush(std::cout);
-                    ::opencl::apply_arguments(svm_kernel_linear[device], q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, -1, start, end);
-                    grid_size[0] *= THREAD_BLOCK_SIZE;
-                    grid_size[1] *= THREAD_BLOCK_SIZE;
-                    std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
 
-                    ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
-                }
-            }
-            break;
-
-        case kernel_type::polynomial:
-            //TODO: kernel_poly OpenCL
-            std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
-            break;
-        case kernel_type::rbf:
-            //TODO: kernel_radial OpenCL
-            std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
-            break;
-        default:
-            throw std::runtime_error("Can not decide wich kernel!");
+    // r = Ax (r = b - Ax)
+    #pragma omp parallel for
+    for (size_type device = 0; device < count_devices; ++device) {
+        run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
     }
 
     device_reduction(r_d, r);
@@ -392,57 +388,9 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept_);
         }
-
-        switch (kernel_) {
-            case kernel_type::linear:
-                #pragma omp parallel for
-                for (size_type device = 0; device < count_devices; ++device) {
-                    if (!svm_kernel_linear[device]) {
-                        std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
-                        std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                        if constexpr (std::is_same_v<real_type, float>) {
-                            manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                            ::plssvm::detail::replace_all(kernel_src, "real_type", "float");
-                        } else if constexpr (std::is_same_v<real_type, double>) {
-                            manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
-                            ::plssvm::detail::replace_all(kernel_src, "real_type", "double");
-                        }
-                        json::node &deviceNode =
-                            manager.get_configuration()["PLATFORMS"][devices[device].platformName]
-                                                       ["DEVICES"][devices[device].deviceName];
-                        json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-                        #pragma omp critical
-                        {
-                            kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(INTERNAL_BLOCK_SIZE));
-                            kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
-                            svm_kernel_linear[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_linear");
-                        }
-                    }
-                    {
-                        // resizeData(device,THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
-                        std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
-                                                          static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
-                        const int start = device * num_cols_ / count_devices;
-                        const int end = (device + 1) * num_cols_ / count_devices;
-                        ::opencl::apply_arguments(svm_kernel_linear[device], q_d[device].get(), Ad_d[device].get(), r_d[device].get(), data_d_[device].get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, 1, start, end);
-                        grid_size[0] *= THREAD_BLOCK_SIZE;
-                        grid_size[1] *= THREAD_BLOCK_SIZE;
-                        std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-
-                        ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
-                    }
-                }
-                break;
-            case kernel_type::polynomial:
-                //TODO: kernel_poly OpenCL
-                std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
-                break;
-            case kernel_type::rbf:
-                //TODO: kernel_radial OpenCL
-                std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
-                break;
-            default:
-                throw std::runtime_error("Can not decide which kernel!");
+        #pragma omp parallel for
+        for (size_type device = 0; device < devices_.size(); ++device) {
+            run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], 1);
         }
 
         // update Ad (q)
@@ -468,57 +416,9 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             }
 
             // r -= A * x
-            switch (kernel_) {
-                case kernel_type::linear:
-                    #pragma omp parallel for
-                    for (size_type device = 0; device < count_devices; ++device) {
-                        if (!svm_kernel_linear[device]) {
-                            std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
-                            std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                            if constexpr (std::is_same_v<real_type, float>) {
-                                manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                                ::plssvm::detail::replace_all(kernel_src, "real_type", "float");
-                            } else if constexpr (std::is_same_v<real_type, double>) {
-                                manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
-                                ::plssvm::detail::replace_all(kernel_src, "real_type", "double");
-                            }
-                            json::node &deviceNode =
-                                manager.get_configuration()["PLATFORMS"][devices[device].platformName]
-                                                           ["DEVICES"][devices[device].deviceName];
-                            json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-                            #pragma omp critical
-                            {
-                                kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE",
-                                                             std::to_string(INTERNAL_BLOCK_SIZE));
-                                kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
-                                svm_kernel_linear[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_linear");
-                            }
-                        }
-
-                        {
-                            const int start = device * num_cols_ / count_devices;
-                            const int end = (device + 1) * num_cols_ / count_devices;
-                            std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
-                                                              static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
-                            ::opencl::apply_arguments(svm_kernel_linear[device], q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, -1, start, end);
-                            grid_size[0] *= THREAD_BLOCK_SIZE;
-                            grid_size[1] *= THREAD_BLOCK_SIZE;
-                            std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-
-                            ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
-                        }
-                    }
-                    break;
-                case kernel_type::polynomial:
-                    //TODO: kernel_poly OpenCL
-                    std::cerr << "kernel_poly not jet implemented in OpenCl use CUDA";
-                    break;
-                case kernel_type::rbf:
-                    //TODO: kernel_radial OpenCL
-                    std::cerr << "kernel_radial not jet implemented in OpenCl use CUDA";
-                    break;
-                default:
-                    throw std::runtime_error("Can not decide wich kernel!");
+            #pragma omp parallel for
+            for (size_type device = 0; device < devices_.size(); ++device) {
+                run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
             }
 
             device_reduction(r_d, r);
