@@ -19,6 +19,7 @@ message(CHECK_PASS "found")
 set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
     ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
