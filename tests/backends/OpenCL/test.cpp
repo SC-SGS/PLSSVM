@@ -10,21 +10,16 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "../../../src/plssvm/backends/OpenCL/manager/apply_arguments.hpp"
-#include "../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
-#include "../../../src/plssvm/backends/OpenCL/manager/device.hpp"
 #include "../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
-#include "../../../src/plssvm/backends/OpenCL/manager/run_kernel.hpp"
 
-#include <cmath>        // std::abs
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::remove
-#include <fstream>      // std::ifstream
-#include <iterator>     // std::istreambuf_iterator
-#include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <string>       // std::string
-#include <type_traits>  // std::is_same_v
-#include <vector>       // std::vector
+#include <cmath>       // std::abs
+#include <cstddef>     // std::size_t
+#include <filesystem>  // std::filesystem::remove
+#include <fstream>     // std::ifstream
+#include <iterator>    // std::istreambuf_iterator
+#include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <string>      // std::string
+#include <vector>      // std::vector
 
 template <typename T>
 class OpenCL_base : public ::testing::Test {};
@@ -57,7 +52,11 @@ TYPED_TEST(OpenCL_base, write_model) {
 // enumerate all type and kernel combinations to test
 using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>>;
+    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 // generate tests for the generation of the q vector
 template <typename T>
@@ -137,36 +136,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     // setup data on device
     csvm_opencl.setup_data_on_device();
 
-    // assemble kernel name
-    std::string kernel_name;
-    if constexpr (TypeParam::kernel == plssvm::kernel_type::linear) {
-        kernel_name = "kernel_linear";
-    } else if constexpr (TypeParam::kernel == plssvm::kernel_type::polynomial) {
-        kernel_name = "kernel_poly";
-    } else if constexpr (TypeParam::kernel == plssvm::kernel_type::rbf) {
-        kernel_name = "kernel_radial";
-    }
-
     std::vector<opencl::device_t> &devices = csvm_opencl.manager.get_devices();
-    ASSERT_FALSE(devices.empty());
-    std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
-    std::string kernel_src = csvm_opencl.manager.read_src_file(kernel_src_file_name);
-    if constexpr (std::is_same_v<real_type, float>) {
-        csvm_opencl.manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-        plssvm::detail::replace_all(kernel_src, "real_type", "float");
-    } else if constexpr (std::is_same_v<real_type, double>) {
-        csvm_opencl.manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
-        plssvm::detail::replace_all(kernel_src, "real_type", "double");
-    }
-    json::node &deviceNode =
-        csvm_opencl.manager.get_configuration()["PLATFORMS"][devices[0].platformName]
-                                               ["DEVICES"][devices[0].deviceName];
-    json::node &kernelConfig = deviceNode["KERNELS"][kernel_name];
-
-    kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(plssvm::INTERNAL_BLOCK_SIZE));
-    kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(plssvm::THREAD_BLOCK_SIZE));
-    cl_kernel kernel = csvm_opencl.manager.build_kernel(kernel_src, devices[0], kernelConfig, kernel_name);
-
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, devices[0].commandQueue };
     q_d.memcpy_to_device(q_vec, 0, dept);
@@ -175,20 +145,13 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     plssvm::opencl::detail::device_ptr<real_type> r_d{ dept + boundary_size, devices[0].commandQueue };
     r_d.memset(0);
 
-    const int Ncols = num_features;
-    const int Nrows = dept + boundary_size;
-
-    std::vector<size_t> grid_size{ static_cast<size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))),
-                                   static_cast<size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))) };
-    std::vector<size_t> block_size{ plssvm::THREAD_BLOCK_SIZE, plssvm::THREAD_BLOCK_SIZE };
-    grid_size[0] *= plssvm::THREAD_BLOCK_SIZE;
-    grid_size[1] *= plssvm::THREAD_BLOCK_SIZE;
-
     for (const int add : { -1, 1 }) {
         std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
-        opencl::apply_arguments(kernel, q_d.get(), r_d.get(), x_d.get(), csvm_opencl.get_device_data()[0].get(), QA_cost, real_type{ 1. } / cost, Ncols, Nrows, add, 0, Ncols);
-        opencl::run_kernel_2d_timed(devices[0], kernel, grid_size, block_size);
+        csvm_opencl.set_QA_cost(QA_cost);
+        csvm_opencl.set_cost(cost);
+
+        csvm_opencl.run_device_kernel(0, q_d, r_d, x_d, csvm_opencl.get_device_data()[0], add);
 
         std::vector<real_type> calculated(dept);
         r_d.memcpy_to_host(calculated, 0, dept);
