@@ -29,6 +29,10 @@ inline void device_assert(const error_code ec) {
     }
 }
 
+void device_synchronize(cl_command_queue queue) {
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue));
+}
+
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, cl_command_queue queue) :
     queue_{ queue }, size_{ size } {

@@ -84,16 +84,21 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
 
 template <typename T>
 csvm<T>::~csvm() {
-    // be sure that all operations on the CUDA devices have finished before destruction
-    // TODO: error_code
-    for (auto &d : manager.get_devices()) {
-        clFinish(d.commandQueue);
-    }
-    if (!q_kernel_) {
-        clReleaseKernel(q_kernel_);
-    }
-    if (!svm_kernel_) {
-        clReleaseKernel(svm_kernel_);
+    try {
+        // be sure that all operations on the OpenCL devices have finished before destruction
+        for (auto &d : manager.get_devices()) {
+            detail::device_synchronize(d.commandQueue);
+        }
+        // release kernel
+        if (!q_kernel_) {
+            clReleaseKernel(q_kernel_);
+        }
+        if (!svm_kernel_) {
+            clReleaseKernel(svm_kernel_);
+        }
+    } catch (const plssvm::exception &e) {
+        fmt::print("{}\n", e.what_with_loc());
+        std::terminate();
     }
 }
 
@@ -248,13 +253,13 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
 template <typename T>
 void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer) {
     std::vector<::opencl::device_t> &devices = manager.get_devices();
-    clFinish(devices[0].commandQueue);
+    detail::device_synchronize(devices[0].commandQueue);
     buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
 
     if (devices.size() > 1) {
         std::vector<real_type> ret(buffer.size());
         for (size_type device = 1; device < devices.size(); ++device) {
-            clFinish(devices[device].commandQueue);
+            detail::device_synchronize(devices[device].commandQueue);
             buffer_d[device].memcpy_to_host(ret, 0, ret.size());
 
             #pragma omp parallel for

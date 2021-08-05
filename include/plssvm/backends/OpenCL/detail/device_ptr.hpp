@@ -17,6 +17,12 @@
 namespace plssvm::opencl::detail {
 
 /**
+ * @brief Wait for the compute device associated with @p queue to finish.
+ * @param[in] queue the OpenCL queue to synchronize
+ */
+void device_synchronize(cl_command_queue queue);
+
+/**
  * @brief Small wrapper class around an OpenCL device pointer together with commonly used device functions.
  * @tparam T the type of the kernel pointer to wrap
  */
