@@ -37,11 +37,19 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
     using base_type::generate_q;
     using base_type::learn;
     using base_type::manager;
+    using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
+
+    // parameter setter
+    void set_cost(const real_type cost) { cost_ = cost; }
+    void set_QA_cost(const real_type QA_cost) { QA_cost_ = QA_cost; }
 
     // getter for internal variables
     std::vector<plssvm::opencl::detail::device_ptr<real_type>> &get_device_data() { return data_d_; }
 
   private:
+    using base_type::cost_;
+    using base_type::QA_cost_;
+
     using base_type::data_d_;
 };
