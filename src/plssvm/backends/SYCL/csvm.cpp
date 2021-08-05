@@ -128,7 +128,6 @@ void csvm<T>::setup_data_on_device() {
     }
 
     // initialize data on devices
-    real_type *data_d;
     for (size_type device = 0; device < devices_.size(); ++device) {
         data_d_[device] = detail::device_ptr<real_type>{ num_features_ * (dept_ + boundary_size_), devices_[device] };
     }
