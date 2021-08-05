@@ -174,7 +174,7 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
                     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
             }
 
-            q_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, "../src/plssvm/backends/OpenCL/kernels/q_kernel.cl", kernel_name);
+            q_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_name);
         }
 
         switch (kernel_) {
@@ -224,7 +224,7 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
                 throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
         }
 
-        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, "../src/plssvm/backends/OpenCL/kernels/svm_kernel.cl", kernel_name);
+        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_name);
     }
 
     // feature splitting on multiple devices

@@ -18,10 +18,10 @@ message(CHECK_PASS "found")
 # explicitly set sources
 set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cl
+    ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/kernels/svm_kernel.cl
-        ${CMAKE_CURRENT_LIST_DIR}/kernels/q_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp
     ${CMAKE_CURRENT_LIST_DIR}/manager/run_kernel.cpp
@@ -45,7 +45,10 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 # link base library against OpenCL library
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# link OpenMP library against executable
+# set kernel file directory
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/")
+
+# link OpenCL library against executable
 target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
 target_link_libraries(${PLSSVM_EXECUTABLE_NAME} ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
 
