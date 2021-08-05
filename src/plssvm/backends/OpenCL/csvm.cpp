@@ -339,14 +339,12 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
                         kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
                         svm_kernel_linear[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_linear");
                     }
-                    fmt::print("{}", kernel_src);
                 }
                 {
                     std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
                                                       static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
                     const int start = device * num_cols_ / count_devices;
                     const int end = (device + 1) * num_cols_ / count_devices;
-                    fmt::print("APPLY 1\n");
                     std::flush(std::cout);
                     ::opencl::apply_arguments(svm_kernel_linear[device], q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, -1, start, end);
                     grid_size[0] *= THREAD_BLOCK_SIZE;
@@ -427,7 +425,6 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
                                                           static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
                         const int start = device * num_cols_ / count_devices;
                         const int end = (device + 1) * num_cols_ / count_devices;
-                        fmt::print("APPLY 2\n");
                         ::opencl::apply_arguments(svm_kernel_linear[device], q_d[device].get(), Ad_d[device].get(), r_d[device].get(), data_d_[device].get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, 1, start, end);
                         grid_size[0] *= THREAD_BLOCK_SIZE;
                         grid_size[1] *= THREAD_BLOCK_SIZE;
@@ -504,7 +501,6 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
                             const int end = (device + 1) * num_cols_ / count_devices;
                             std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
                                                               static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
-                            fmt::print("APPLY 3\n");
                             ::opencl::apply_arguments(svm_kernel_linear[device], q_d[device].get(), r_d[device].get(), x_d[device].get(), data_d_[device].get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, -1, start, end);
                             grid_size[0] *= THREAD_BLOCK_SIZE;
                             grid_size[1] *= THREAD_BLOCK_SIZE;
