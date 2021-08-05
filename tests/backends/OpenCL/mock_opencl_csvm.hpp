@@ -8,11 +8,12 @@
  */
 #pragma once
 
-#include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"  // opencl::DevicePtrOpenCL
-#include "plssvm/backends/OpenCL/csvm.hpp"             // plssvm::opencl::csvm
-#include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
+//#include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"  // opencl::DevicePtrOpenCL
+#include "plssvm/backends/OpenCL/csvm.hpp"               // plssvm::opencl::csvm
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
+#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                          // plssvm::parameter
+#include "plssvm/target_platform.hpp"                    // plssvm::target_platform
 
 #include <vector>  // std::vector
 
@@ -40,8 +41,8 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
     using base_type::setup_data_on_device;
 
     // getter for internal variables
-    std::vector<opencl::DevicePtrOpenCL<real_type>> &get_device_data() { return data_cl; }
+    std::vector<plssvm::opencl::detail::device_ptr<real_type>> &get_device_data() { return data_d_; }
 
   private:
-    using base_type::data_cl;
+    using base_type::data_d_;
 };
