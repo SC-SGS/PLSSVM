@@ -15,11 +15,9 @@
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/target_platform.hpp"                    // plssvm::target_platform
 
-#include "../../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
-#include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"
 #include "../../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
 
-#include "CL/cl.h"  // cl_command_queue
+#include "CL/cl.h"  // cl_command_queue, cl_kernel
 
 #include <vector>  // std::vector
 
@@ -36,8 +34,11 @@ class csvm : public ::plssvm::csvm<T> {
     /// The template base type of the OpenCL C-SVM class.
     using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_;
+    using base_type::coef0_;
     using base_type::cost_;
     using base_type::data_;
+    using base_type::degree_;
+    using base_type::gamma_;
     using base_type::kernel_;
     using base_type::num_data_points_;
     using base_type::num_features_;
@@ -101,7 +102,7 @@ class csvm : public ::plssvm::csvm<T> {
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
     /// The available/used OpenCL devices.
-    std::vector<cl_command_queue> devices_{};
+    //    std::vector<cl_command_queue> devices_{};
     /// The number of data points excluding the last data point.
     size_type dept_{};
     /// The boundary size used to remove boundary condition checks inside the kernels.
@@ -117,10 +118,13 @@ class csvm : public ::plssvm::csvm<T> {
     /// TODO:
     detail::device_ptr<real_type> w_d_{};
 
+    cl_kernel q_kernel_ = nullptr;
+    cl_kernel svm_kernel_ = nullptr;
+
     ::opencl::manager_t manager{ "../platform_configuration.cfg" };
-    ::opencl::device_t first_device;
-    std::vector<cl_kernel> kernel_q_cl;
-    std::vector<cl_kernel> svm_kernel_linear;
+    //    ::opencl::device_t first_device;
+    //    std::vector<cl_kernel> kernel_q_cl;
+    //    std::vector<cl_kernel> svm_kernel_linear;
 };
 
 extern template class csvm<float>;

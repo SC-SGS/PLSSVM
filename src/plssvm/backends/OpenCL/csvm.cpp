@@ -6,44 +6,27 @@
 
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::detail::opencl::device_ptr
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/utility.hpp"     // plssvm::opencl::detail::create_kernel, plssvm::opencl::detail::run_kernel
 #include "plssvm/backends/OpenCL/exceptions.hpp"         // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                          // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/csvm.hpp"                               // plssvm::csvm
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                   // various operator overloads for std::vector and scalars
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/target_platform.hpp"                    // plssvm::target_platform
 
-#include "manager/apply_arguments.hpp"
-#include "manager/configuration.hpp"
 #include "manager/device.hpp"
 #include "manager/manager.hpp"
-#include "manager/run_kernel.hpp"
 
 #include "CL/cl.h"     //
 #include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
-#include <cstdio>     // stderr
-#include <exception>  // std::exception, std::terminate
 #include <vector>     // std::vector
 
-#include <fstream>
-#include <streambuf>
-#include <string>
-
-#include <chrono>
-#include <stdexcept>
-
 namespace plssvm::opencl {
-
-// TODO:
-std::size_t count_devices = 1;
-
-cl_context context;
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
@@ -57,49 +40,61 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
     }
 
     // TODO: RAII
-    // get all available devices wrt the requested target platform
-    cl_int err;
-    cl_device_id device_id;
-    clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 1, &device_id, nullptr);
-    context = clCreateContext(0, 1, &device_id, nullptr, nullptr, &err);
-    devices_.emplace_back(clCreateCommandQueue(context, device_id, 0, &err));
-
-    // throw exception if no devices for the requested target could be found
-    if (devices_.size() < 1) {
-        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
-    }
-
-    // polynomial and rbf kernel currently only support single GPU execution
-    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
-        devices_.resize(1);
-    }
-
-    // resize vectors accordingly
-    data_d_.resize(devices_.size());
-    data_last_d_.resize(devices_.size());
-
-    if (print_info_) {
-        // print found OpenLC devices
-        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
-        // TODO:
-        //        for (size_type device = 0; device < devices_.size(); ++device) {
-        //            fmt::print("  [{}, {}]\n", device, devices_[device].get_device().template get_info<::sycl::info::device::name>());
-        //        }
-        //        fmt::print("\n");
-    }
+    //    // get all available devices wrt the requested target platform
+    //    cl_int err;
+    //    cl_device_id device_id;
+    //    clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 1, &device_id, nullptr);
+    //    context = clCreateContext(0, 1, &device_id, nullptr, nullptr, &err);
+    //    devices_.emplace_back(clCreateCommandQueue(context, device_id, 0, &err));
+    //
+    //    // throw exception if no devices for the requested target could be found
+    //    if (devices_.size() < 1) {
+    //        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
+    //    }
+    //
+    //    // polynomial and rbf kernel currently only support single GPU execution
+    //    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
+    //        devices_.resize(1);
+    //    }
+    //
+    //    // resize vectors accordingly
+    //    data_d_.resize(devices_.size());
+    //    data_last_d_.resize(devices_.size());
+    //
+    //    if (print_info_) {
+    //        // print found OpenLC devices
+    //        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
+    //        // TODO:
+    //        //        for (size_type device = 0; device < devices_.size(); ++device) {
+    //        //            fmt::print("  [{}, {}]\n", device, devices_[device].get_device().template get_info<::sycl::info::device::name>());
+    //        //        }
+    //        //        fmt::print("\n");
+    //    }
 
     std::vector<::opencl::device_t> &devices = manager.get_devices();
-    first_device = devices[0];
-    count_devices = devices.size();
-    svm_kernel_linear.resize(count_devices, nullptr);
-    kernel_q_cl.resize(count_devices, nullptr);
-    std::cout << "GPUs found: " << count_devices << '\n'
+    //    svm_kernel_linear.resize(devices.size(), nullptr);
+    //    kernel_q_cl.resize(devices.size(), nullptr);
+    std::cout << "GPUs found: " << devices.size() << '\n'
               << std::endl;
+
+    // resize vectors accordingly
+    data_d_.resize(devices.size());
+    data_last_d_.resize(devices.size());
 }
 
 template <typename T>
 csvm<T>::~csvm() {
-    // TODO:
+    // be sure that all operations on the CUDA devices have finished before destruction
+    // TODO: error_code
+    for (auto &d : manager.get_devices()) {
+        clFinish(d.commandQueue);
+    }
+    if (!q_kernel_) {
+        clReleaseKernel(q_kernel_);
+    }
+    if (!svm_kernel_) {
+        clReleaseKernel(svm_kernel_);
+    }
 }
 
 template <typename T>
@@ -110,7 +105,7 @@ void csvm<T>::setup_data_on_device() {
     num_rows_ = dept_ + boundary_size_;
     num_cols_ = num_features_;
 
-    std::vector<::opencl::device_t> &devices = manager.get_devices();  //TODO: header
+    std::vector<::opencl::device_t> &devices = manager.get_devices();
     // initialize data_last on device
     for (size_type device = 0; device < devices.size(); ++device) {
         data_last_d_[device] = detail::device_ptr<real_type>{ num_features_ + boundary_size_, devices[device].commandQueue };
@@ -148,104 +143,48 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         q_d[device].memset(0);
     }
 
-    //    for (size_type device = 0; device < devices_.size(); ++device) {
-    //        // feature splitting on multiple devices
-    //        const int first_feature = device * num_cols_ / devices_.size();
-    //        const int last_feature = (device + 1) * num_cols_ / devices_.size();
-    //
-    //        const auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
-    //        const size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept_);
-    //
-    //        // TODO: add switch
-    //        // TODO: call kernel
-    //        std::ifstream in("../src/plssvm/backends/OpenCL/kernels/kernel_q.cl");
-    //        std::string kernel_src((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    //
-    //        // replace type
-    //        ::plssvm::detail::replace_all(kernel_src, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
-    //        // replace constants
-    //        ::plssvm::detail::replace_all(kernel_src, "INTERNAL_BLOCK_SIZE", std::to_string(INTERNAL_BLOCK_SIZE));
-    //        ::plssvm::detail::replace_all(kernel_src, "THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
-    //
-    //        cl_int err;
-    //        const char *kernel_src_ptr = kernel_src.c_str();
-    //        cl_program program = clCreateProgramWithSource(context, 1, &kernel_src_ptr, nullptr, &err);
-    //        fmt::print("{}: {}\n", err, "clCreateProgramWithSource");
-    //        err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
-    //        fmt::print("{}: {}\n", err, "clBuildProgram");
-    //        cl_kernel kernel = clCreateKernel(program, "kernel_q", &err);
-    //        fmt::print("{}: {}\n", err, "clCreateKernel");
-    //        cl_mem ptr = q_d[device].get();
-    //        err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &ptr);
-    //        fmt::print("{}: {}\n", err, "clSetKernelArg 0");
-    //        ptr = data_d_[device].get();
-    //        err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &ptr);
-    //        fmt::print("{}: {}\n", err, "clSetKernelArg 1");
-    //        ptr = data_last_d_[device].get();
-    //        err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &ptr);
-    //        fmt::print("{}: {}\n", err, "clSetKernelArg 2");
-    //        err = clSetKernelArg(kernel, 3, sizeof(int), &num_rows_);
-    //        fmt::print("{}: {}\n", err, "clSetKernelArg 3");
-    //        err = clSetKernelArg(kernel, 4, sizeof(int), &first_feature);
-    //        fmt::print("{}: {}\n", err, "clSetKernelArg 4");
-    //        err = clSetKernelArg(kernel, 5, sizeof(int), &last_feature);
-    //        fmt::print("{}: {}\n", err, "clSetKernelArg 5");
-    //        err = clEnqueueNDRangeKernel(devices_[device], kernel, 1, nullptr, &grid, &block, 0, nullptr, nullptr);
-    //        fmt::print("{}: {}\n", err, "clEnqueueNDRangeKernel");
-    //        err = clFinish(devices_[device]);
-    //        fmt::print("{}: {}\n", err, "clFinish");
-    //    }
-    //
-    //    std::vector<real_type> q(dept_);
-    //    device_reduction(q_d, q);
-    //    return q;
+    for (size_type device = 0; device < devices.size(); ++device) {
+        // feature splitting on multiple devices
+        const int first_feature = device * num_cols_ / devices.size();
+        const int last_feature = (device + 1) * num_cols_ / devices.size();
 
-    //    std::vector<::opencl::device_t> &devices = manager.get_devices();  //TODO: header
-    //    const size_type dept = num_data_points_ - 1;
-    //    const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-    //    const size_type dept_all = dept + boundary_size;
-    //
-    //    std::vector<::opencl::DevicePtrOpenCL<real_type>> q_cl;
-    //    for (size_type device = 0; device < count_devices; ++device) {
-    //        q_cl.emplace_back(devices[device], dept_all);
-    //    }
-    //    //TODO: init on gpu
-    //    for (size_type device = 0; device < count_devices; ++device) {
-    //        q_cl[device].to_device(std::vector<real_type>(dept_all, 0.0));
-    //    }
-    //    std::cout << "kernel_q" << std::endl;
-    #pragma omp parallel for
-    for (size_type device = 0; device < count_devices; ++device) {
-        if (!kernel_q_cl[device]) {
-            #pragma omp critical  //TODO: evtl besser keine Referenz
-            {
-                std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/kernel_q.cl" };
-                std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-                if constexpr (std::is_same_v<real_type, float>) {
-                    ::plssvm::detail::replace_all(kernel_src, "real_type", "float");
-                    manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "float");
-                } else if constexpr (std::is_same_v<real_type, double>) {
-                    ::plssvm::detail::replace_all(kernel_src, "real_type", "double");
-                    manager.parameters.replaceTextAttr("INTERNAL_PRECISION", "double");
-                }
-                json::node &deviceNode =
-                    manager.get_configuration()["PLATFORMS"][devices[device].platformName]
-                                               ["DEVICES"][devices[device].deviceName];
-                json::node &kernelConfig = deviceNode["KERNELS"]["kernel_q"];
-                kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(INTERNAL_BLOCK_SIZE));
-                kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
-                kernel_q_cl[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_q");
+        auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
+        size_type block = THREAD_BLOCK_SIZE;
+
+        // create device kernel if it doesn't already exist
+        if (!q_kernel_) {
+            // assemble kernel name
+            std::string kernel_name;
+            switch (kernel_) {
+                case kernel_type::linear:
+                    kernel_name = "device_kernel_q_linear";
+                    break;
+                case kernel_type::polynomial:
+                    kernel_name = "device_kernel_q_poly";
+                    break;
+                case kernel_type::rbf:
+                    kernel_name = "device_kernel_q_radial";
+                    break;
+                default:
+                    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
             }
-        }
-        // resizeData(i,THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
-        const int start = device * num_cols_ / count_devices;
-        const int end = (device + 1) * num_cols_ / count_devices;
-        ::opencl::apply_arguments(kernel_q_cl[device], q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, start, end);
 
-        size_type grid_size = static_cast<size_type>(
-            ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
-        size_type block_size = THREAD_BLOCK_SIZE;
-        ::opencl::run_kernel_1d_timed(devices[device], kernel_q_cl[device], grid_size, block_size);
+            q_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, "../src/plssvm/backends/OpenCL/kernels/q_kernel.cl", kernel_name);
+        }
+
+        switch (kernel_) {
+            case kernel_type::linear:
+                detail::run_kernel(devices[device].commandQueue, q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
+                break;
+            case kernel_type::polynomial:
+                detail::run_kernel(devices[device].commandQueue, q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
+                break;
+            case kernel_type::rbf:
+                detail::run_kernel(devices[device].commandQueue, q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
+                break;
+            default:
+                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
+        }
     }
 
     std::vector<real_type> q(dept_);
@@ -260,39 +199,50 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
-    // TODO: implement other kernel
-
     std::vector<::opencl::device_t> &devices = manager.get_devices();
 
-    if (!svm_kernel_linear[device]) {
-        std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
-        std::string kernel_src = manager.read_src_file(kernel_src_file_name);
-        manager.parameters.replaceTextAttr("INTERNAL_PRECISION", std::string{ ::plssvm::detail::arithmetic_type_name<real_type>() });
-        ::plssvm::detail::replace_all(kernel_src, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
-        json::node &deviceNode =
-            manager.get_configuration()["PLATFORMS"][devices[device].platformName]
-                                       ["DEVICES"][devices[device].deviceName];
-        json::node &kernelConfig = deviceNode["KERNELS"]["kernel_linear"];
-        #pragma omp critical  //TODO: evtl besser keine Referenz
-        {
-            kernelConfig.replaceTextAttr("INTERNAL_BLOCK_SIZE", std::to_string(INTERNAL_BLOCK_SIZE));
-            kernelConfig.replaceTextAttr("THREAD_BLOCK_SIZE", std::to_string(THREAD_BLOCK_SIZE));
-            svm_kernel_linear[device] = manager.build_kernel(kernel_src, devices[device], kernelConfig, "kernel_linear");
+    // create device kernel if it doesn't already exist
+    if (!svm_kernel_) {
+        // assemble kernel name
+        std::string kernel_name;
+        switch (kernel_) {
+            case kernel_type::linear:
+                kernel_name = "device_kernel_linear";
+                break;
+            case kernel_type::polynomial:
+                kernel_name = "device_kernel_poly";
+                break;
+            case kernel_type::rbf:
+                kernel_name = "device_kernel_radial";
+                break;
+            default:
+                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
         }
+
+        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, "../src/plssvm/backends/OpenCL/kernels/svm_kernel.cl", kernel_name);
     }
 
     // feature splitting on multiple devices
-    const int first_feature = device * num_cols_ / count_devices;
-    const int last_feature = (device + 1) * num_cols_ / count_devices;
+    const int first_feature = device * num_cols_ / devices.size();
+    const int last_feature = (device + 1) * num_cols_ / devices.size();
 
-    std::vector<size_type> block_size{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-    std::vector<size_type> grid_size{ static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))),
-                                      static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) };
-    grid_size[0] *= THREAD_BLOCK_SIZE;
-    grid_size[1] *= THREAD_BLOCK_SIZE;
+    const auto grid_dim = static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) * THREAD_BLOCK_SIZE;
+    std::vector<size_type> grid{ grid_dim, grid_dim };
+    std::vector<size_type> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
 
-    ::opencl::apply_arguments(svm_kernel_linear[device], q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, real_type{ 1. } / cost_, num_cols_, num_rows_, add, first_feature, last_feature);
-    ::opencl::run_kernel_2d_timed(devices[device], svm_kernel_linear[device], grid_size, block_size);
+    switch (kernel_) {
+        case kernel_type::linear:
+            detail::run_kernel(devices[device].commandQueue, svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
+            break;
+        case kernel_type::polynomial:
+            detail::run_kernel(devices[device].commandQueue, svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_);
+            break;
+        case kernel_type::rbf:
+            detail::run_kernel(devices[device].commandQueue, svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
+            break;
+        default:
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
+    }
 }
 
 template <typename T>
@@ -359,7 +309,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
     // r = Ax (r = b - Ax)
     #pragma omp parallel for
-    for (size_type device = 0; device < count_devices; ++device) {
+    for (size_type device = 0; device < devices.size(); ++device) {
         run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
     }
 
@@ -389,7 +339,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             r_d[device].memset(0, dept_);
         }
         #pragma omp parallel for
-        for (size_type device = 0; device < devices_.size(); ++device) {
+        for (size_type device = 0; device < devices.size(); ++device) {
             run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], 1);
         }
 
@@ -417,7 +367,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
             // r -= A * x
             #pragma omp parallel for
-            for (size_type device = 0; device < devices_.size(); ++device) {
+            for (size_type device = 0; device < devices.size(); ++device) {
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
             }
 
