@@ -9,12 +9,17 @@
 
 #pragma once
 
-#include <CL/cl.h>
+#include <CL/cl.h>  // cl_command_queue, cl_mem
 
-#include <vector>  // std::vector
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 namespace plssvm::opencl::detail {
 
+/**
+ * @brief Small wrapper class around an OpenCL device pointer together with commonly used device functions.
+ * @tparam T the type of the kernel pointer to wrap
+ */
 template <typename T>
 class device_ptr {
   public:
@@ -89,7 +94,13 @@ class device_ptr {
      * @brief Access the underlying OpenCL device pointer.
      * @return the device pointer (`[[nodiscard]]`)
      */
-    [[nodiscard]] cl_mem get() const noexcept {
+    [[nodiscard]] cl_mem &get() noexcept {
+        return data_;
+    }
+    /**
+     * @copydoc device_ptr::get()
+     */
+    [[nodiscard]] const cl_mem &get() const noexcept {
         return data_;
     }
     /**
