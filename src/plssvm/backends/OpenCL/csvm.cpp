@@ -21,7 +21,6 @@
 #include "manager/device.hpp"
 #include "manager/manager.hpp"
 #include "manager/run_kernel.hpp"
-#include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
 
 #include "CL/cl.h"     //
 #include "fmt/core.h"  // fmt::print, fmt::format

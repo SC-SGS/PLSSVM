@@ -18,7 +18,6 @@
 #include "../../../../src/plssvm/backends/OpenCL/manager/configuration.hpp"
 #include "../../../../src/plssvm/backends/OpenCL/manager/device.hpp"
 #include "../../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
-#include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
 
 #include "CL/cl.h"  // cl_command_queue
 
@@ -122,8 +121,6 @@ class csvm : public ::plssvm::csvm<T> {
     ::opencl::device_t first_device;
     std::vector<cl_kernel> kernel_q_cl;
     std::vector<cl_kernel> svm_kernel_linear;
-    std::vector<::opencl::DevicePtrOpenCL<real_type>> datlast_cl;
-    std::vector<::opencl::DevicePtrOpenCL<real_type>> data_cl;
 };
 
 extern template class csvm<float>;

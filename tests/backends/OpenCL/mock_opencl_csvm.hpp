@@ -8,7 +8,6 @@
  */
 #pragma once
 
-//#include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"  // opencl::DevicePtrOpenCL
 #include "plssvm/backends/OpenCL/csvm.hpp"               // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
 #include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type

@@ -16,8 +16,6 @@
 #include "../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
 #include "../../../src/plssvm/backends/OpenCL/manager/run_kernel.hpp"
 
-#include "plssvm/backends/OpenCL/DevicePtrOpenCL.hpp"
-
 #include <cmath>        // std::abs
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
