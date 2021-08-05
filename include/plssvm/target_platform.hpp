@@ -43,6 +43,8 @@ enum class target_platform {
  */
 inline std::ostream &operator<<(std::ostream &out, const target_platform target) {
     switch (target) {
+        case target_platform::automatic:
+            return out << "automatic";
         case target_platform::cpu:
             return out << "cpu";
         case target_platform::gpu_nvidia:
@@ -67,7 +69,9 @@ inline std::istream &operator>>(std::istream &in, target_platform &target) {
     in >> str;
     std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return std::tolower(c); });
 
-    if (str == "cpu") {
+    if (str == "automatic") {
+        target = target_platform::automatic;
+    } else if (str == "cpu") {
         target = target_platform::cpu;
     } else if (str == "gpu_nvidia") {
         target = target_platform::gpu_nvidia;
