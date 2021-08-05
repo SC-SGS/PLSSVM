@@ -15,7 +15,7 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
-#include "sycl/sycl.hpp"
+#include "sycl/sycl.hpp"  // sycl::queue
 
 #include <vector>  // std::vector
 
@@ -93,13 +93,13 @@ class csvm : public ::plssvm::csvm<T> {
      */
     void run_device_kernel(size_type device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, int add);
     /**
- * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
- * @param[inout] buffer_d the data to gather
- * @param[inout] buffer the reduces data
- */
+     * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
+     * @param[inout] buffer_d the data to gather
+     * @param[inout] buffer the reduces data
+     */
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
-    /// The number of available/used SYCL devices.
+    /// The available/used SYCL devices.
     std::vector<::sycl::queue> devices_{};
     /// The number of data points excluding the last data point.
     size_type dept_{};
