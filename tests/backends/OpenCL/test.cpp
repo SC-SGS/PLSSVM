@@ -150,6 +150,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     }
 
     std::vector<opencl::device_t> &devices = csvm_opencl.manager.get_devices();
+    ASSERT_FALSE(devices.empty());
     std::string kernel_src_file_name{ "../src/plssvm/backends/OpenCL/kernels/svm-kernel.cl" };
     std::string kernel_src = csvm_opencl.manager.read_src_file(kernel_src_file_name);
     if constexpr (std::is_same_v<real_type, float>) {
@@ -169,20 +170,18 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     cl_kernel kernel = csvm_opencl.manager.build_kernel(kernel_src, devices[0], kernelConfig, kernel_name);
 
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    opencl::DevicePtrOpenCL<real_type> q_cl(devices[0], q_vec.size());
-    opencl::DevicePtrOpenCL<real_type> x_cl(devices[0], x.size());
-    opencl::DevicePtrOpenCL<real_type> r_cl(devices[0], dept);
-    q_cl.to_device(q_vec);
-    x_cl.to_device(x);
-    r_cl.to_device(std::vector<real_type>(dept, 0.0));
-    q_cl.resize(dept + boundary_size);
-    x_cl.resize(dept + boundary_size);
-    r_cl.resize(dept + boundary_size);
-    const int Ncols = num_features;
-    const int Nrows = dept + plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, devices[0].commandQueue };
+    q_d.memcpy_to_device(q_vec, 0, dept);
+    plssvm::opencl::detail::device_ptr<real_type> x_d{ dept + boundary_size, devices[0].commandQueue };
+    x_d.memcpy_to_device(x, 0, dept);
+    plssvm::opencl::detail::device_ptr<real_type> r_d{ dept + boundary_size, devices[0].commandQueue };
+    r_d.memset(0);
 
-    std::vector<size_t> grid_size{ static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))),
-                                   static_cast<size_t>(ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))) };
+    const int Ncols = num_features;
+    const int Nrows = dept + boundary_size;
+
+    std::vector<size_t> grid_size{ static_cast<size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))),
+                                   static_cast<size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE))) };
     std::vector<size_t> block_size{ plssvm::THREAD_BLOCK_SIZE, plssvm::THREAD_BLOCK_SIZE };
     grid_size[0] *= plssvm::THREAD_BLOCK_SIZE;
     grid_size[1] *= plssvm::THREAD_BLOCK_SIZE;
@@ -190,19 +189,16 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     for (const int add : { -1, 1 }) {
         std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
-        std::vector<real_type> result(dept, 0.0);
-        opencl::apply_arguments(kernel, q_cl.get(), r_cl.get(), x_cl.get(), csvm_opencl.get_device_data()[0].get(), QA_cost, cost, Ncols, Nrows, add, 0, Ncols);
+        opencl::apply_arguments(kernel, q_d.get(), r_d.get(), x_d.get(), csvm_opencl.get_device_data()[0].get(), QA_cost, real_type{ 1. } / cost, Ncols, Nrows, add, 0, Ncols);
         opencl::run_kernel_2d_timed(devices[0], kernel, grid_size, block_size);
 
-        r_cl.resize(dept);
-        r_cl.from_device(result);
+        std::vector<real_type> calculated(dept);
+        r_d.memcpy_to_host(calculated, 0, dept);
+        r_d.memset(0);
 
-        r_cl.resize(dept + boundary_size);
-        r_cl.to_device(std::vector<real_type>(dept + boundary_size, 0.0));
-
-        ASSERT_EQ(correct.size(), result.size()) << "add: " << add;
+        ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (size_t index = 0; index < correct.size(); ++index) {
-            util::gtest_assert_floating_point_near(correct[index], result[index], fmt::format("\tindex: {}, add: {}", index, add));
+            util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
         }
     }
 }
