@@ -5,6 +5,7 @@ The currently available backends are:
 - [OpenMP](https://www.openmp.org/)
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [OpenCL](https://www.khronos.org/opencl/)
+- [SYCL](https://www.khronos.org/sycl/)
 
 TODO: description, UPDATES
 
@@ -29,6 +30,9 @@ Additional dependencies for the CUDA backend:
 Additional dependencies for the OpenCL backend:
 - OpenCL runtime and header files
 
+Additional dependencies for the SYCL backend:
+- the code must be compiled with a SYCL capable compiler; currently tested are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
+
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
@@ -40,11 +44,51 @@ Building the library can be done using the normal CMake approach:
 > git clone git@gitlab-sim.informatik.uni-stuttgart.de:vancraar/Bachelor-Code.git SVM
 > cd SVM/SVM
 > mkdir build && cd build
-> cmake [options] ..
+> cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] ..
 > cmake --build .
 ```
 
-Where `[options]` can be one or multiple of:
+#### Target Platform Selection
+
+The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
+Valid targets are:
+- `cpu`: compile for the CPU; **no** architectural specifications  is allowed
+- `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g. `nvidia:sm_86,sm_70`
+- `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g. `amd:gfx906`
+- `intel`: compile for Intel GPUs; **no** architectural specification is allowed
+
+At least one of the above targets must be present.
+
+To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple python3 script `utility/gpu_name_to_arch.py` is provided:
+
+```bash
+> python3 utility/gpu_name_to_arch.py --help
+usage: gpu_name_to_arch.py [-h] [--name NAME]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --name NAME  the full name of the GPU (e.g. GeForce RTX 3080)
+```
+
+Example invocations:
+
+```bash
+> python3 utility/gpu_name_to_arch.py --name "GeForce RTX 3080"
+sm_86
+> python3 utility/gpu_name_to_arch.py --name "Radeon VII"
+gfx906
+```
+
+If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU 
+(requires the python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
+
+If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
+- for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
+- for AMD GPUs: [ROCm Documentation](https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst)
+
+#### Optional CMake Options
+
+The `[optional_options]` can be one or multiple of:
 
 - `PLSSVM_ENABLE_OPENMP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
     - `ON`: check for the OpenMP backend and fail if not available
@@ -58,6 +102,10 @@ Where `[options]` can be one or multiple of:
     - `ON`: check for the OpenCL backend and fail if not available
     - `AUTO`: check for the OpenCL backend but **do not** fail if not available
     - `OFF`: do not check for the OpenCL backend
+- `PLSSVM_ENABLE_SYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for the SYCL backend and fail if not available
+  - `AUTO`: check for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for the SYCL backend
 
 **Attention:** at least one backend must be enabled and available!    
 
@@ -71,10 +119,8 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
     - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
     - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point
 
-If the CUDA backend is available, the option `PLSSVM_CUDA_ARCHITECTURES` can be used to select CUDA architectures to compile for:
-- per default CMake tries to find all available NVIDIA GPUs and sets the architecture values accordingly
-- additional architecture values can be set using `PLSSVM_CUDA_ARCHITECTURES` (e.g. `-DPLSSVM_CUDA_ARCHITECTURES=60;70`)
-- if **no** architectures are set, the CUDA backend is compiled for a few default architectures: `52;60;61;70;75;86`
+If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select the Level-Zero as
+DPC++ backend instead of OpenCL.
 
 ### Running the tests
 
@@ -90,8 +136,11 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 
 The repository comes with a python3 script (in the `data/` directory) to simply generate arbitrarily large data sets.
 
-In order to use all functionality, the following python3 modules must be installed: 
-argparse, numpy, pandas, sklearn, arff, matplotlib and mpl_toolkits
+In order to use all functionality, the following python3 modules must be installed:
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`numpy`](https://pypi.org/project/numpy/), 
+[`pandas`](https://pypi.org/project/pandas/), [`sklearn`](https://scikit-learn.org/stable/), 
+[`arff`](https://pypi.org/project/arff/), [`matplotlib`](https://pypi.org/project/matplotlib/) and 
+[`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
 ```bash
 > python3 generate_data.py --help
@@ -132,19 +181,32 @@ Usage:
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
-  -b, --backend arg             chooses the backend openmp|cuda|opencl (default: openmp)
+  -b, --backend arg             choose the backend: openmp|cuda|opencl|sycl (default: openmp)
+  -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
       --input training_set_file
                                 
-      --model model_file 
+      --model model_file
 ```
 
-An example invocation using the cuda backend could look like:
+An example invocation using the CUDA backend could look like:
 
 ```bash
 > ./svm-train --backend cuda --input /path/to/data_file
 ```
+
+Another example targeting NVIDIA GPUs using the SYCL backend looks like:
+
+```bash
+> ./svm-train --backend sycl --target_platform nvidia --input /path/to/data_file
+```
+
+The `--target_platform=automatic` flags works as follows:
+- for the `OpenMP` backend: always select a CPU
+- for the `CUDA` backend: always select an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
+- for the `OpenCL` backend: TODO
+- for the `SYCL` backends: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
 ### Predict
 
