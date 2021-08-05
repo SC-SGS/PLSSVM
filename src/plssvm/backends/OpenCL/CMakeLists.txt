@@ -20,8 +20,8 @@ set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/kernels/svm-kernel.cl
-    ${CMAKE_CURRENT_LIST_DIR}/kernels/kernel_q.cl
+        ${CMAKE_CURRENT_LIST_DIR}/kernels/svm_kernel.cl
+        ${CMAKE_CURRENT_LIST_DIR}/kernels/q_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp
     ${CMAKE_CURRENT_LIST_DIR}/manager/run_kernel.cpp
