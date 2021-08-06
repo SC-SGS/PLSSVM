@@ -7,8 +7,6 @@ The currently available backends are:
 - [OpenCL](https://www.khronos.org/opencl/)
 - [SYCL](https://www.khronos.org/sycl/)
 
-TODO: description, UPDATES
-
 ## Getting Started
 
 ### Dependencies
@@ -59,7 +57,8 @@ Valid targets are:
 
 At least one of the above targets must be present.
 
-To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple python3 script `utility/gpu_name_to_arch.py` is provided:
+To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple python3 script `utility/gpu_name_to_arch.py` is provided
+(requiring python3 [`argparse`](https://docs.python.org/3/library/argparse.html) as dependency):
 
 ```bash
 > python3 utility/gpu_name_to_arch.py --help
