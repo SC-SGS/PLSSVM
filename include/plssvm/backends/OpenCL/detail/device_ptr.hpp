@@ -9,13 +9,26 @@
 
 #pragma once
 
-#include <CL/cl.h>  // cl_command_queue, cl_mem
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+
+#include "CL/cl.h"  // cl_command_queue, cl_mem
 
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
 namespace plssvm::opencl::detail {
 
+/**
+ * @brief Returns the list devices matching the target platform @p target.
+ * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
+ *          1. NVIDIA GPUs
+ *          2. AMD GPUs
+ *          3. Intel GPUs
+ *          4. CPUs
+ * @param[in] target the target platform for which the devices must match
+ * @return the devices (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<cl_command_queue> get_device_list(target_platform target);
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the OpenCL queue to synchronize
