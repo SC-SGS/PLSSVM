@@ -42,6 +42,9 @@ namespace plssvm::cuda::detail {}
 /// Namespace containing the C-SVM using the OpenCL backend.
 namespace plssvm::opencl {}
 
+/// Namespace containing OpenCL backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::opencl::detail {}
+
 /// Namespace containing the C-SVM using the SYCL backend.
 namespace plssvm::sycl {}
 
