@@ -99,6 +99,17 @@ std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues
     if (!err) {
         throw backend_exception{ fmt::format("Error creating OpenCL program ({})!", err) };
     }
+    err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
+    if (!err) {
+        throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err) };
+        // collect build log
+        //        std::size_t len;
+        //        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
+        //        std::string buffer(len, '\0');
+        //        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, buffer.data(), nullptr);
+        //        buffer = buffer.substr(0, buffer.find_first_of('\0'));
+        //        throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err, buffer) };
+    }
 
     // build kernels
     std::vector<cl_kernel> kernels;
@@ -108,17 +119,6 @@ std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues
         err = clGetCommandQueueInfo(q, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr);
         if (!err) {
             throw backend_exception{ fmt::format("Error obtaining device ({})!", err) };
-        }
-
-        err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
-        if (!err) {
-            // collect build log
-            std::size_t len;
-            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
-            std::string buffer(len, '\0');
-            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, buffer.data(), nullptr);
-            buffer = buffer.substr(0, buffer.find_first_of('\0'));
-            throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err, buffer) };
         }
 
         // create kernel
