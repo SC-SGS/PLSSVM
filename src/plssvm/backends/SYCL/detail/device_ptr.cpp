@@ -33,9 +33,9 @@ namespace plssvm::sycl::detail {
                     std::string vendor_string = device.get_info<::sycl::info::device::vendor>();
                     // convert vendor name to lower case
                     ::plssvm::detail::to_lower_case(vendor_string);
-                    // get vendor name of current GPU device
+                    // get platform name of current GPU device
                     std::string platform_string = platform.get_info<::sycl::info::platform::name>();
-                    // convert vendor name to lower case
+                    // convert platform name to lower case
                     ::plssvm::detail::to_lower_case(platform_string);
 
                     switch (target) {
@@ -70,7 +70,7 @@ namespace plssvm::sycl::detail {
     return target_devices;
 }
 
-[[nodiscard]] std::vector<::sycl::queue> get_device_list(const target_platform target) {
+std::vector<::sycl::queue> get_device_list(const target_platform target) {
     if (target != target_platform::automatic) {
         return get_device_list_impl(target);
     } else {
@@ -87,6 +87,7 @@ namespace plssvm::sycl::detail {
         return target_devices;
     }
 }
+
 void device_synchronize(::sycl::queue &queue) {
     queue.wait_and_throw();
 }
