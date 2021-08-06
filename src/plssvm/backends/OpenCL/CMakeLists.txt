@@ -22,18 +22,6 @@ set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/manager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/error_codes.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/run_kernel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/configuration.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/platform_wrapper.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/dict_node.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/id_node.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/json.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/json_exception.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/list_node.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/node.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/manager/json/text_node.cpp
 )
 
 # set target properties
