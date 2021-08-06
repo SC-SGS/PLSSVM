@@ -36,7 +36,6 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
     // make non-virtual functions publicly visible
     using base_type::generate_q;
     using base_type::learn;
-    using base_type::manager;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
 
@@ -46,10 +45,12 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
 
     // getter for internal variables
     std::vector<plssvm::opencl::detail::device_ptr<real_type>> &get_device_data() { return data_d_; }
+    std::vector<cl_command_queue> &get_devices() { return devices_; }
 
   private:
     using base_type::cost_;
     using base_type::QA_cost_;
 
     using base_type::data_d_;
+    using base_type::devices_;
 };

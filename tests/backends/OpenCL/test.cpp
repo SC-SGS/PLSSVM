@@ -10,8 +10,6 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
-
 #include <cmath>       // std::abs
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
@@ -136,13 +134,14 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     // setup data on device
     csvm_opencl.setup_data_on_device();
 
-    std::vector<opencl::device_t> &devices = csvm_opencl.manager.get_devices();
+    // TODO: multi GPU support
+    cl_command_queue &queue = csvm_opencl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, devices[0].commandQueue };
+    plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, queue };
     q_d.memcpy_to_device(q_vec, 0, dept);
-    plssvm::opencl::detail::device_ptr<real_type> x_d{ dept + boundary_size, devices[0].commandQueue };
+    plssvm::opencl::detail::device_ptr<real_type> x_d{ dept + boundary_size, queue };
     x_d.memcpy_to_device(x, 0, dept);
-    plssvm::opencl::detail::device_ptr<real_type> r_d{ dept + boundary_size, devices[0].commandQueue };
+    plssvm::opencl::detail::device_ptr<real_type> r_d{ dept + boundary_size, queue };
     r_d.memset(0);
 
     for (const int add : { -1, 1 }) {
