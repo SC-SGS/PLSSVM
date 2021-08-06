@@ -157,15 +157,19 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         const int first_feature = device * num_cols_ / devices_.size();
         const int last_feature = (device + 1) * num_cols_ / devices_.size();
 
+        const ::sycl::range<1> grid{ static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) };
+        const ::sycl::range<1> block{ std::min<size_type>(THREAD_BLOCK_SIZE, dept_) };
+        const ::sycl::nd_range<1> execution_range{ grid * block, block };
+
         switch (kernel_) {
             case kernel_type::linear:
-                devices_[device].parallel_for(::sycl::range<1>{ dept_ }, device_kernel_q_linear{ q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature });
+                devices_[device].parallel_for(execution_range, device_kernel_q_linear{ q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature });
                 break;
             case kernel_type::polynomial:
-                devices_[device].parallel_for(::sycl::range<1>{ dept_ }, device_kernel_q_poly{ q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_ });
+                devices_[device].parallel_for(execution_range, device_kernel_q_poly{ q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_ });
                 break;
             case kernel_type::rbf:
-                devices_[device].parallel_for(::sycl::range<1>{ dept_ }, device_kernel_q_radial{ q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_ });
+                devices_[device].parallel_for(execution_range, device_kernel_q_radial{ q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_ });
                 break;
             default:
                 throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };

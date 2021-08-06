@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "sycl/sycl.hpp"  // sycl::item, sycl::pow, sycl::exp
+#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
 namespace plssvm::sycl {
 
@@ -41,8 +41,8 @@ class device_kernel_q_linear {
      * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
      *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::item<1> item) const {
-        const auto index = item.get_linear_id();
+    void operator()(::sycl::nd_item<1> item) const {
+        const auto index = item.get_global_linear_id();
         real_type temp{ 0.0 };
         for (int i = first_feature_; i < last_feature_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
@@ -89,8 +89,8 @@ class device_kernel_q_poly {
      * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
      *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::item<1> item) const {
-        const auto index = item.get_linear_id();
+    void operator()(::sycl::nd_item<1> item) const {
+        const auto index = item.get_global_linear_id();
         real_type temp{ 0.0 };
         for (int i = 0; i < num_cols_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
@@ -137,8 +137,8 @@ class device_kernel_q_radial {
      * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
      *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::item<1> item) const {
-        const auto index = item.get_linear_id();
+    void operator()(::sycl::nd_item<1> item) const {
+        const auto index = item.get_global_linear_id();
         real_type temp{ 0.0 };
         for (int i = 0; i < num_cols_; ++i) {
             temp += (data_d_[i * num_rows_ + index] - data_last_[i]) * (data_d_[i * num_rows_ + index] - data_last_[i]);
