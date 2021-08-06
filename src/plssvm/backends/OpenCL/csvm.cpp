@@ -63,6 +63,10 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
         }
         fmt::print("\n");
     }
+
+    // build necessary kernel
+    q_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", "device_kernel_q_linear");    // TODO: name
+    svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", "device_kernel_linear");  // TODO: name
 }
 
 template <typename T>
@@ -73,11 +77,11 @@ csvm<T>::~csvm() {
             detail::device_synchronize(q);
         }
         // release kernel
-        if (!q_kernel_) {
-            clReleaseKernel(q_kernel_);
+        for (const cl_kernel &k : q_kernel_) {
+            clReleaseKernel(k);
         }
-        if (!svm_kernel_) {
-            clReleaseKernel(svm_kernel_);
+        for (const cl_kernel &k : svm_kernel_) {
+            clReleaseKernel(k);
         }
     } catch (const plssvm::exception &e) {
         fmt::print("{}\n", e.what_with_loc());
@@ -136,36 +140,36 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
         size_type block = THREAD_BLOCK_SIZE;
 
-        // create device kernel if it doesn't already exist
-        if (!q_kernel_) {
-            // assemble kernel name
-            std::string kernel_name;
-            switch (kernel_) {
-                case kernel_type::linear:
-                    kernel_name = "device_kernel_q_linear";
-                    break;
-                case kernel_type::polynomial:
-                    kernel_name = "device_kernel_q_poly";
-                    break;
-                case kernel_type::rbf:
-                    kernel_name = "device_kernel_q_radial";
-                    break;
-                default:
-                    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
-            }
-
-            q_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_name);
-        }
+        //        // create device kernel if it doesn't already exist
+        //        if (!q_kernel_) {
+        //            // assemble kernel name
+        //            std::string kernel_name;
+        //            switch (kernel_) {
+        //                case kernel_type::linear:
+        //                    kernel_name = "device_kernel_q_linear";
+        //                    break;
+        //                case kernel_type::polynomial:
+        //                    kernel_name = "device_kernel_q_poly";
+        //                    break;
+        //                case kernel_type::rbf:
+        //                    kernel_name = "device_kernel_q_radial";
+        //                    break;
+        //                default:
+        //                    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
+        //            }
+        //
+        //            q_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_name);
+        //        }
 
         switch (kernel_) {
             case kernel_type::linear:
-                detail::run_kernel(devices_[device], q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
+                detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
                 break;
             case kernel_type::polynomial:
-                detail::run_kernel(devices_[device], q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
+                detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
                 break;
             case kernel_type::rbf:
-                detail::run_kernel(devices_[device], q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
+                detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
             default:
                 throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
@@ -185,25 +189,25 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
     // create device kernel if it doesn't already exist
-    if (!svm_kernel_) {
-        // assemble kernel name
-        std::string kernel_name;
-        switch (kernel_) {
-            case kernel_type::linear:
-                kernel_name = "device_kernel_linear";
-                break;
-            case kernel_type::polynomial:
-                kernel_name = "device_kernel_poly";
-                break;
-            case kernel_type::rbf:
-                kernel_name = "device_kernel_radial";
-                break;
-            default:
-                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
-        }
-
-        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_name);
-    }
+    //    if (!svm_kernel_) {
+    //        // assemble kernel name
+    //        std::string kernel_name;
+    //        switch (kernel_) {
+    //            case kernel_type::linear:
+    //                kernel_name = "device_kernel_linear";
+    //                break;
+    //            case kernel_type::polynomial:
+    //                kernel_name = "device_kernel_poly";
+    //                break;
+    //            case kernel_type::rbf:
+    //                kernel_name = "device_kernel_radial";
+    //                break;
+    //            default:
+    //                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
+    //        }
+    //
+    //        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_name);
+    //    }
 
     // feature splitting on multiple devices
     const int first_feature = device * num_cols_ / devices_.size();
@@ -215,13 +219,13 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
+            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
             break;
         case kernel_type::polynomial:
-            detail::run_kernel(devices_[device], svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_);
+            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
-            detail::run_kernel(devices_[device], svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
+            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };

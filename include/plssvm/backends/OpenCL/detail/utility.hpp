@@ -29,6 +29,11 @@
 
 namespace plssvm::opencl::detail {
 
+/**
+ * @brief Get the name of the device associated with the OpenCL command queue @p queue.
+ * @param[in] queue the OpenCL command queue
+ * @return the device name
+ */
 std::string get_device_name(cl_command_queue queue) {
     error_code err;
     // get device
@@ -47,17 +52,16 @@ std::string get_device_name(cl_command_queue queue) {
 }
 
 /**
- * @brief Create a kernel with @p kernel_name for the given devices and context from the file @p file.
+ * @brief Create a kernel with @p kernel_name for the given command queues from the file @p file.
  * @tparam real_type the floating point type used to replace the placeholders in the kernel file
  * @tparam size_type the unsigned integer type used to replace the placeholders in the kernel file
- * @param[in] context the current OpenCL context
- * @param[in] device_id the current OpenCL device
+ * @param[in] queues the used OpenCL command queues
  * @param[in] file the file containing the kernel
  * @param[in] kernel_name the name of the kernel to create
  * @return the kernel
  */
 template <typename real_type, typename size_type = std::size_t>
-cl_kernel create_kernel(cl_command_queue queue, const std::string &file, const std::string &kernel_name) {
+std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues, const std::string &file, const std::string &kernel_name) {
     // read kernel
     std::string kernel_src_string;
     {
@@ -84,15 +88,9 @@ cl_kernel create_kernel(cl_command_queue queue, const std::string &file, const s
 
     // get context
     cl_context context;  // TODO: RAII
-    err = clGetCommandQueueInfo(queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr);
+    err = clGetCommandQueueInfo(queues[0], CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr);
     if (!err) {
         throw backend_exception{ fmt::format("Error obtaining context ({})!", err) };
-    }
-    // get device
-    cl_device_id device;
-    err = clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error obtaining device ({})!", err) };
     }
 
     // create program
@@ -102,21 +100,32 @@ cl_kernel create_kernel(cl_command_queue queue, const std::string &file, const s
         throw backend_exception{ fmt::format("Error creating OpenCL program ({})!", err) };
     }
 
-    err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
-    if (!err) {
-        // collect build log
-        std::size_t len;
-        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
-        std::string buffer(len, '\0');
-        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, buffer.data(), nullptr);
-        buffer = buffer.substr(0, buffer.find_first_of('\0'));
-        throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err, buffer) };
-    }
+    // build kernels
+    std::vector<cl_kernel> kernels;
+    for (const cl_command_queue &q : queues) {
+        // get device
+        cl_device_id device;
+        err = clGetCommandQueueInfo(q, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr);
+        if (!err) {
+            throw backend_exception{ fmt::format("Error obtaining device ({})!", err) };
+        }
 
-    // create kernel
-    cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &err);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error creating OpenCL kernel ({})!", err) };
+        err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
+        if (!err) {
+            // collect build log
+            std::size_t len;
+            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
+            std::string buffer(len, '\0');
+            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, buffer.data(), nullptr);
+            buffer = buffer.substr(0, buffer.find_first_of('\0'));
+            throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err, buffer) };
+        }
+
+        // create kernel
+        kernels.push_back(clCreateKernel(program, kernel_name.c_str(), &err));
+        if (!err) {
+            throw backend_exception{ fmt::format("Error creating OpenCL kernel ({})!", err) };
+        }
     }
 
     // release resource
@@ -127,7 +136,7 @@ cl_kernel create_kernel(cl_command_queue queue, const std::string &file, const s
         }
     }
 
-    return kernel;
+    return kernels;
 }
 
 /**

@@ -116,8 +116,10 @@ class csvm : public ::plssvm::csvm<T> {
     /// TODO:
     detail::device_ptr<real_type> w_d_{};
 
-    cl_kernel q_kernel_ = nullptr;
-    cl_kernel svm_kernel_ = nullptr;
+    /// OpenCL kernel for the generate q function compiled for each device.
+    std::vector<cl_kernel> q_kernel_{};
+    /// OpenCL kernel for the svm kernel function compiled for each device.
+    std::vector<cl_kernel> svm_kernel_{};
 };
 
 extern template class csvm<float>;
