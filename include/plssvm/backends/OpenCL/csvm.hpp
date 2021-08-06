@@ -9,11 +9,12 @@
 
 #pragma once
 
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
-#include "plssvm/csvm.hpp"                               // plssvm::csvm
-#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                          // plssvm::parameter
-#include "plssvm/target_platform.hpp"                    // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
+#include "plssvm/csvm.hpp"                                  // plssvm::csvm
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_command_queue, cl_kernel
 
@@ -117,9 +118,9 @@ class csvm : public ::plssvm::csvm<T> {
     detail::device_ptr<real_type> w_d_{};
 
     /// OpenCL kernel for the generate q function compiled for each device.
-    std::vector<cl_kernel> q_kernel_{};
+    std::vector<detail::kernel> q_kernel_{};
     /// OpenCL kernel for the svm kernel function compiled for each device.
-    std::vector<cl_kernel> svm_kernel_{};
+    std::vector<detail::kernel> svm_kernel_{};
 };
 
 extern template class csvm<float>;

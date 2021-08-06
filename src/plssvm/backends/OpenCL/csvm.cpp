@@ -108,13 +108,6 @@ csvm<T>::~csvm() {
         for (const cl_command_queue &q : devices_) {
             detail::device_synchronize(q);
         }
-        // release kernel
-        for (const cl_kernel &k : q_kernel_) {
-            clReleaseKernel(k);
-        }
-        for (const cl_kernel &k : svm_kernel_) {
-            clReleaseKernel(k);
-        }
     } catch (const plssvm::exception &e) {
         fmt::print("{}\n", e.what_with_loc());
         std::terminate();

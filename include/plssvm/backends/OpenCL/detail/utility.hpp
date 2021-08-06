@@ -10,6 +10,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"      // plssvm::opencl::detail::kernel
 #include "plssvm/backends/OpenCL/exceptions.hpp"         // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                          // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
@@ -80,7 +81,7 @@ std::string get_device_name(const cl_command_queue &queue) {
  * @return the kernel
  */
 template <typename real_type, typename size_type = std::size_t>
-std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues, const std::string &file, const std::string &kernel_name) {
+std::vector<detail::kernel> create_kernel(const std::vector<cl_command_queue> &queues, const std::string &file, const std::string &kernel_name) {
     // read kernel
     std::string kernel_src_string;
     {
@@ -131,7 +132,7 @@ std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues
     }
 
     // build kernels
-    std::vector<cl_kernel> kernels;
+    std::vector<detail::kernel> kernels;
     for (const cl_command_queue &q : queues) {
         // get device
         cl_device_id device;
@@ -141,7 +142,7 @@ std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues
         }
 
         // create kernel
-        kernels.push_back(clCreateKernel(program, kernel_name.c_str(), &err));
+        kernels.emplace_back(clCreateKernel(program, kernel_name.c_str(), &err));
         if (!err) {
             throw backend_exception{ fmt::format("Error creating OpenCL kernel ({})!", err) };
         }
