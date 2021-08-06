@@ -163,7 +163,7 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         const int last_feature = (device + 1) * num_cols_ / devices_.size();
 
         auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
-        size_type block = THREAD_BLOCK_SIZE;
+        size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept_);
 
         switch (kernel_) {
             case kernel_type::linear:
