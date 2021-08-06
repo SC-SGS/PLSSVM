@@ -140,27 +140,6 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
         size_type block = THREAD_BLOCK_SIZE;
 
-        //        // create device kernel if it doesn't already exist
-        //        if (!q_kernel_) {
-        //            // assemble kernel name
-        //            std::string kernel_name;
-        //            switch (kernel_) {
-        //                case kernel_type::linear:
-        //                    kernel_name = "device_kernel_q_linear";
-        //                    break;
-        //                case kernel_type::polynomial:
-        //                    kernel_name = "device_kernel_q_poly";
-        //                    break;
-        //                case kernel_type::rbf:
-        //                    kernel_name = "device_kernel_q_radial";
-        //                    break;
-        //                default:
-        //                    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
-        //            }
-        //
-        //            q_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_name);
-        //        }
-
         switch (kernel_) {
             case kernel_type::linear:
                 detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
@@ -187,27 +166,6 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
-
-    // create device kernel if it doesn't already exist
-    //    if (!svm_kernel_) {
-    //        // assemble kernel name
-    //        std::string kernel_name;
-    //        switch (kernel_) {
-    //            case kernel_type::linear:
-    //                kernel_name = "device_kernel_linear";
-    //                break;
-    //            case kernel_type::polynomial:
-    //                kernel_name = "device_kernel_poly";
-    //                break;
-    //            case kernel_type::rbf:
-    //                kernel_name = "device_kernel_radial";
-    //                break;
-    //            default:
-    //                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
-    //        }
-    //
-    //        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_name);
-    //    }
 
     // feature splitting on multiple devices
     const int first_feature = device * num_cols_ / devices_.size();
