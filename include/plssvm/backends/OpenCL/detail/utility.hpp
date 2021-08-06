@@ -29,6 +29,23 @@
 
 namespace plssvm::opencl::detail {
 
+std::string get_device_name(cl_command_queue queue) {
+    error_code err;
+    // get device
+    cl_device_id device_id;
+    err = clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr);
+    if (!err) {
+        throw backend_exception{ fmt::format("Error obtaining device ({})!", err) };
+    }
+    // get device name
+    std::string device_name(128, '\0');
+    err = clGetDeviceInfo(device_id, CL_DEVICE_NAME, device_name.size() * sizeof(char), device_name.data(), nullptr);
+    if (!err) {
+        throw backend_exception{ fmt::format("Error obtaining device name ({})!", err) };
+    }
+    return device_name.substr(0, device_name.find_first_of('\0'));
+}
+
 /**
  * @brief Create a kernel with @p kernel_name for the given devices and context from the file @p file.
  * @tparam real_type the floating point type used to replace the placeholders in the kernel file
@@ -40,7 +57,7 @@ namespace plssvm::opencl::detail {
  * @return the kernel
  */
 template <typename real_type, typename size_type = std::size_t>
-cl_kernel create_kernel(cl_context context, cl_device_id device_id, const std::string &file, const std::string &kernel_name) {
+cl_kernel create_kernel(cl_command_queue queue, const std::string &file, const std::string &kernel_name) {
     // read kernel
     std::string kernel_src_string;
     {
@@ -63,9 +80,23 @@ cl_kernel create_kernel(cl_context context, cl_device_id device_id, const std::s
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
+    error_code err;
+
+    // get context
+    cl_context context;  // TODO: RAII
+    err = clGetCommandQueueInfo(queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr);
+    if (!err) {
+        throw backend_exception{ fmt::format("Error obtaining context ({})!", err) };
+    }
+    // get device
+    cl_device_id device;
+    err = clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr);
+    if (!err) {
+        throw backend_exception{ fmt::format("Error obtaining device ({})!", err) };
+    }
+
     // create program
     const char *kernel_src_ptr = kernel_src_string.c_str();
-    error_code err;
     cl_program program = clCreateProgramWithSource(context, 1, &kernel_src_ptr, nullptr, &err);
     if (!err) {
         throw backend_exception{ fmt::format("Error creating OpenCL program ({})!", err) };
@@ -75,9 +106,10 @@ cl_kernel create_kernel(cl_context context, cl_device_id device_id, const std::s
     if (!err) {
         // collect build log
         std::size_t len;
-        clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &len);
         std::string buffer(len, '\0');
-        clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, len, buffer.data(), nullptr);
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, buffer.data(), nullptr);
+        buffer = buffer.substr(0, buffer.find_first_of('\0'));
         throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err, buffer) };
     }
 

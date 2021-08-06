@@ -15,8 +15,6 @@
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/target_platform.hpp"                    // plssvm::target_platform
 
-#include "../../../../src/plssvm/backends/OpenCL/manager/manager.hpp"
-
 #include "CL/cl.h"  // cl_command_queue, cl_kernel
 
 #include <vector>  // std::vector
@@ -102,7 +100,7 @@ class csvm : public ::plssvm::csvm<T> {
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
     /// The available/used OpenCL devices.
-    //    std::vector<cl_command_queue> devices_{};
+    std::vector<cl_command_queue> devices_{};
     /// The number of data points excluding the last data point.
     size_type dept_{};
     /// The boundary size used to remove boundary condition checks inside the kernels.
@@ -120,11 +118,6 @@ class csvm : public ::plssvm::csvm<T> {
 
     cl_kernel q_kernel_ = nullptr;
     cl_kernel svm_kernel_ = nullptr;
-
-    ::opencl::manager_t manager{ "../platform_configuration.cfg" };
-    //    ::opencl::device_t first_device;
-    //    std::vector<cl_kernel> kernel_q_cl;
-    //    std::vector<cl_kernel> svm_kernel_linear;
 };
 
 extern template class csvm<float>;

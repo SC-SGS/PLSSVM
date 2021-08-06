@@ -7,6 +7,7 @@
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/utility.hpp"     // plssvm::opencl::detail::create_kernel, plssvm::opencl::detail::run_kernel
 #include "plssvm/backends/OpenCL/exceptions.hpp"         // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                          // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
@@ -15,9 +16,6 @@
 #include "plssvm/detail/operators.hpp"                   // various operator overloads for std::vector and scalars
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/target_platform.hpp"                    // plssvm::target_platform
-
-#include "manager/device.hpp"
-#include "manager/manager.hpp"
 
 #include "CL/cl.h"     // clReleaseKernel
 #include "fmt/core.h"  // fmt::print, fmt::format
@@ -39,55 +37,40 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
         fmt::print("Using OpenCL as backend.\n");
     }
 
-    // TODO: RAII
-    //    // get all available devices wrt the requested target platform
-    //    cl_int err;
-    //    cl_device_id device_id;
-    //    clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 1, &device_id, nullptr);
-    //    context = clCreateContext(0, 1, &device_id, nullptr, nullptr, &err);
-    //    devices_.emplace_back(clCreateCommandQueue(context, device_id, 0, &err));
-    //
-    //    // throw exception if no devices for the requested target could be found
-    //    if (devices_.size() < 1) {
-    //        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
-    //    }
-    //
-    //    // polynomial and rbf kernel currently only support single GPU execution
-    //    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
-    //        devices_.resize(1);
-    //    }
-    //
-    //    // resize vectors accordingly
-    //    data_d_.resize(devices_.size());
-    //    data_last_d_.resize(devices_.size());
-    //
-    //    if (print_info_) {
-    //        // print found OpenLC devices
-    //        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
-    //        // TODO:
-    //        //        for (size_type device = 0; device < devices_.size(); ++device) {
-    //        //            fmt::print("  [{}, {}]\n", device, devices_[device].get_device().template get_info<::sycl::info::device::name>());
-    //        //        }
-    //        //        fmt::print("\n");
-    //    }
+    // TODO: RAII, check multi GPU
+    // get all available devices wrt the requested target platform
+    devices_ = detail::get_device_list(target_);
 
-    std::vector<::opencl::device_t> &devices = manager.get_devices();
-    //    svm_kernel_linear.resize(devices.size(), nullptr);
-    //    kernel_q_cl.resize(devices.size(), nullptr);
-    std::cout << "GPUs found: " << devices.size() << '\n'
-              << std::endl;
+    // throw exception if no devices for the requested target could be found
+    if (devices_.empty()) {
+        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
+    }
+
+    // polynomial and rbf kernel currently only support single GPU execution
+    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
+        devices_.resize(1);
+    }
 
     // resize vectors accordingly
-    data_d_.resize(devices.size());
-    data_last_d_.resize(devices.size());
+    data_d_.resize(devices_.size());
+    data_last_d_.resize(devices_.size());
+
+    if (print_info_) {
+        // print found OpenLC devices
+        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
+        for (size_type device = 0; device < devices_.size(); ++device) {
+            fmt::print("  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
+        }
+        fmt::print("\n");
+    }
 }
 
 template <typename T>
 csvm<T>::~csvm() {
     try {
         // be sure that all operations on the OpenCL devices have finished before destruction
-        for (auto &d : manager.get_devices()) {
-            detail::device_synchronize(d.commandQueue);
+        for (const cl_command_queue &q : devices_) {
+            detail::device_synchronize(q);
         }
         // release kernel
         if (!q_kernel_) {
@@ -110,25 +93,24 @@ void csvm<T>::setup_data_on_device() {
     num_rows_ = dept_ + boundary_size_;
     num_cols_ = num_features_;
 
-    std::vector<::opencl::device_t> &devices = manager.get_devices();
     // initialize data_last on device
-    for (size_type device = 0; device < devices.size(); ++device) {
-        data_last_d_[device] = detail::device_ptr<real_type>{ num_features_ + boundary_size_, devices[device].commandQueue };
+    for (size_type device = 0; device < devices_.size(); ++device) {
+        data_last_d_[device] = detail::device_ptr<real_type>{ num_features_ + boundary_size_, devices_[device] };
     }
     #pragma omp parallel for
-    for (size_type device = 0; device < devices.size(); ++device) {
+    for (size_type device = 0; device < devices_.size(); ++device) {
         data_last_d_[device].memset(0);
         data_last_d_[device].memcpy_to_device(data_[dept_], 0, num_features_);
     }
 
     // initialize data on devices
-    for (size_type device = 0; device < devices.size(); ++device) {
-        data_d_[device] = detail::device_ptr<real_type>{ num_features_ * (dept_ + boundary_size_), devices[device].commandQueue };
+    for (size_type device = 0; device < devices_.size(); ++device) {
+        data_d_[device] = detail::device_ptr<real_type>{ num_features_ * (dept_ + boundary_size_), devices_[device] };
     }
     // transform 2D to 1D data
     const std::vector<real_type> transformed_data = base_type::transform_data(boundary_size_);
     #pragma omp parallel for
-    for (size_type device = 0; device < devices.size(); ++device) {
+    for (size_type device = 0; device < devices_.size(); ++device) {
         data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (dept_ + boundary_size_));
     }
 }
@@ -140,18 +122,16 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
     PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
-    std::vector<::opencl::device_t> &devices = manager.get_devices();
-
-    std::vector<detail::device_ptr<real_type>> q_d(devices.size());
-    for (size_type device = 0; device < devices.size(); ++device) {
-        q_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices[device].commandQueue };
+    std::vector<detail::device_ptr<real_type>> q_d(devices_.size());
+    for (size_type device = 0; device < devices_.size(); ++device) {
+        q_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices_[device] };
         q_d[device].memset(0);
     }
 
-    for (size_type device = 0; device < devices.size(); ++device) {
+    for (size_type device = 0; device < devices_.size(); ++device) {
         // feature splitting on multiple devices
-        const int first_feature = device * num_cols_ / devices.size();
-        const int last_feature = (device + 1) * num_cols_ / devices.size();
+        const int first_feature = device * num_cols_ / devices_.size();
+        const int last_feature = (device + 1) * num_cols_ / devices_.size();
 
         auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
         size_type block = THREAD_BLOCK_SIZE;
@@ -174,18 +154,18 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
                     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
             }
 
-            q_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_name);
+            q_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_name);
         }
 
         switch (kernel_) {
             case kernel_type::linear:
-                detail::run_kernel(devices[device].commandQueue, q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
+                detail::run_kernel(devices_[device], q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
                 break;
             case kernel_type::polynomial:
-                detail::run_kernel(devices[device].commandQueue, q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
+                detail::run_kernel(devices_[device], q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
                 break;
             case kernel_type::rbf:
-                detail::run_kernel(devices[device].commandQueue, q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
+                detail::run_kernel(devices_[device], q_kernel_, grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
             default:
                 throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
@@ -203,8 +183,6 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
-
-    std::vector<::opencl::device_t> &devices = manager.get_devices();
 
     // create device kernel if it doesn't already exist
     if (!svm_kernel_) {
@@ -224,12 +202,12 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
                 throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
         }
 
-        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices[device].context, devices[device].deviceId, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_name);
+        svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_[device], PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_name);
     }
 
     // feature splitting on multiple devices
-    const int first_feature = device * num_cols_ / devices.size();
-    const int last_feature = (device + 1) * num_cols_ / devices.size();
+    const int first_feature = device * num_cols_ / devices_.size();
+    const int last_feature = (device + 1) * num_cols_ / devices_.size();
 
     const auto grid_dim = static_cast<size_type>(ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) * THREAD_BLOCK_SIZE;
     std::vector<size_type> grid{ grid_dim, grid_dim };
@@ -237,13 +215,13 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices[device].commandQueue, svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
+            detail::run_kernel(devices_[device], svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
             break;
         case kernel_type::polynomial:
-            detail::run_kernel(devices[device].commandQueue, svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_);
+            detail::run_kernel(devices_[device], svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
-            detail::run_kernel(devices[device].commandQueue, svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
+            detail::run_kernel(devices_[device], svm_kernel_, grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
             break;
         default:
             throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
@@ -252,14 +230,13 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
 
 template <typename T>
 void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer) {
-    std::vector<::opencl::device_t> &devices = manager.get_devices();
-    detail::device_synchronize(devices[0].commandQueue);
+    detail::device_synchronize(devices_[0]);
     buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
 
-    if (devices.size() > 1) {
+    if (devices_.size() > 1) {
         std::vector<real_type> ret(buffer.size());
-        for (size_type device = 1; device < devices.size(); ++device) {
-            detail::device_synchronize(devices[device].commandQueue);
+        for (size_type device = 1; device < devices_.size(); ++device) {
+            detail::device_synchronize(devices_[device]);
             buffer_d[device].memcpy_to_host(ret, 0, ret.size());
 
             #pragma omp parallel for
@@ -269,7 +246,7 @@ void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffe
         }
 
         #pragma omp parallel for
-        for (size_type device = 0; device < devices.size(); ++device) {
+        for (size_type device = 0; device < devices_.size(); ++device) {
             buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
         }
     }
@@ -282,39 +259,37 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
-    std::vector<::opencl::device_t> &devices = manager.get_devices();
-
     std::vector<real_type> x(dept_, 1.0);
-    std::vector<detail::device_ptr<real_type>> x_d(devices.size());
+    std::vector<detail::device_ptr<real_type>> x_d(devices_.size());
 
     std::vector<real_type> r(dept_, 0.0);
-    std::vector<detail::device_ptr<real_type>> r_d(devices.size());
+    std::vector<detail::device_ptr<real_type>> r_d(devices_.size());
 
-    for (size_type device = 0; device < devices.size(); ++device) {
-        x_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices[device].commandQueue };
-        r_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices[device].commandQueue };
+    for (size_type device = 0; device < devices_.size(); ++device) {
+        x_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices_[device] };
+        r_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices_[device] };
     }
     #pragma omp parallel for
-    for (size_type device = 0; device < devices.size(); ++device) {
+    for (size_type device = 0; device < devices_.size(); ++device) {
         x_d[device].memset(0);
         x_d[device].memcpy_to_device(x, 0, dept_);
         r_d[device].memset(0);
     }
     r_d[0].memcpy_to_device(b, 0, dept_);
 
-    std::vector<detail::device_ptr<real_type>> q_d(devices.size());
-    for (size_type device = 0; device < devices.size(); ++device) {
-        q_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices[device].commandQueue };
+    std::vector<detail::device_ptr<real_type>> q_d(devices_.size());
+    for (size_type device = 0; device < devices_.size(); ++device) {
+        q_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices_[device] };
     }
     #pragma omp parallel for
-    for (size_type device = 0; device < devices.size(); ++device) {
+    for (size_type device = 0; device < devices_.size(); ++device) {
         q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept_);
     }
 
     // r = Ax (r = b - Ax)
     #pragma omp parallel for
-    for (size_type device = 0; device < devices.size(); ++device) {
+    for (size_type device = 0; device < devices_.size(); ++device) {
         run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
     }
 
@@ -325,9 +300,9 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     const real_type delta0 = delta;
     std::vector<real_type> Ad(dept_);
 
-    std::vector<detail::device_ptr<real_type>> Ad_d(devices.size());
-    for (size_type device = 0; device < devices.size(); ++device) {
-        Ad_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices[device].commandQueue };
+    std::vector<detail::device_ptr<real_type>> Ad_d(devices_.size());
+    for (size_type device = 0; device < devices_.size(); ++device) {
+        Ad_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, devices_[device] };
     }
 
     std::vector<real_type> d(r);
@@ -339,12 +314,12 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         }
         // Ad = A * r (q = A * d)
         #pragma omp parallel for
-        for (size_type device = 0; device < devices.size(); ++device) {
+        for (size_type device = 0; device < devices_.size(); ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept_);
         }
         #pragma omp parallel for
-        for (size_type device = 0; device < devices.size(); ++device) {
+        for (size_type device = 0; device < devices_.size(); ++device) {
             run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], 1);
         }
 
@@ -358,7 +333,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         x += alpha_cd * d;
 
         #pragma omp parallel for
-        for (size_type device = 0; device < devices.size(); ++device) {
+        for (size_type device = 0; device < devices_.size(); ++device) {
             x_d[device].memcpy_to_device(x, 0, dept_);
         }
 
@@ -366,13 +341,13 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             // r = b
             r_d[0].memcpy_to_device(b, 0, dept_);
             #pragma omp parallel for
-            for (size_type device = 1; device < devices.size(); ++device) {
+            for (size_type device = 1; device < devices_.size(); ++device) {
                 r_d[device].memset(0);
             }
 
             // r -= A * x
             #pragma omp parallel for
-            for (size_type device = 0; device < devices.size(); ++device) {
+            for (size_type device = 0; device < devices_.size(); ++device) {
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
             }
 
@@ -397,7 +372,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
         // r_d = d
         #pragma omp parallel for
-        for (size_type device = 0; device < devices.size(); ++device) {
+        for (size_type device = 0; device < devices_.size(); ++device) {
             r_d[device].memcpy_to_device(d, 0, dept_);
         }
     }
