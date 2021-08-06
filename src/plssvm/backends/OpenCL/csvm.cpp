@@ -68,7 +68,7 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
 
     // TODO: RAII, check multi GPU
     // get all available devices wrt the requested target platform
-    devices_ = detail::get_device_list(target_);
+    devices_ = detail::get_command_queues(target_);
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
@@ -105,8 +105,8 @@ template <typename T>
 csvm<T>::~csvm() {
     try {
         // be sure that all operations on the OpenCL devices have finished before destruction
-        for (const cl_command_queue &q : devices_) {
-            detail::device_synchronize(q);
+        for (const detail::command_queue &queue : devices_) {
+            detail::device_synchronize(queue);
         }
     } catch (const plssvm::exception &e) {
         fmt::print("{}\n", e.what_with_loc());

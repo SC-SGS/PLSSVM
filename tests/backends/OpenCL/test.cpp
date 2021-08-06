@@ -2,13 +2,14 @@
 
 #include "../../mock_csvm.hpp"  // mock_csvm
 #include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
+#include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
-#include "../compare.hpp"                    // compare::generate_q, compare::kernel_function, compare::device_kernel_function
-#include "plssvm/backends/OpenCL/csvm.hpp"   // plssvm::opencl::csvm
-#include "plssvm/constants.hpp"              // plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
-#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
 
 #include <cmath>       // std::abs
 #include <cstddef>     // std::size_t
@@ -135,7 +136,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     csvm_opencl.setup_data_on_device();
 
     // TODO: multi GPU support
-    cl_command_queue &queue = csvm_opencl.get_devices()[0];
+    plssvm::opencl::detail::command_queue &queue = csvm_opencl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, queue };
     q_d.memcpy_to_device(q_vec, 0, dept);

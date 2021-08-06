@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/csvm.hpp"               // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
 #include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
@@ -45,7 +46,7 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
 
     // getter for internal variables
     std::vector<plssvm::opencl::detail::device_ptr<real_type>> &get_device_data() { return data_d_; }
-    std::vector<cl_command_queue> &get_devices() { return devices_; }
+    std::vector<plssvm::opencl::detail::command_queue> &get_devices() { return devices_; }
 
   private:
     using base_type::cost_;

@@ -6,17 +6,19 @@
 
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"
 
-#include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
-#include "plssvm/backends/OpenCL/exceptions.hpp"         // plssvm::opencl::backend_exception
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::to_lower_case, plssvm::detail::contains
-#include "plssvm/target_platform.hpp"                    // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
+#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::to_lower_case, plssvm::detail::contains
+#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
-#include "CL/cl.h"     // cl_command_queue, cl_context, clGetCommandQueueInfo, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer
+#include "CL/cl.h"     // cl_command_queue, cl_context, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer
                        // clFinish, clEnqueueWriteBuffer, clEnqueueReadBuffer
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>    // std::min
+#include <map>          // std::map
 #include <string_view>  // std::string_view
 #include <utility>      // std::exchange, std::move, std::swap
 #include <vector>       // std::vector
@@ -31,8 +33,9 @@ inline void device_assert(const error_code ec) {
     }
 }
 
-[[nodiscard]] std::vector<cl_command_queue> get_device_list_impl(const target_platform target) {
-    std::vector<cl_device_id> target_devices;
+[[nodiscard]] std::vector<command_queue> get_command_queues_impl(const target_platform target) {
+    std::map<cl_platform_id, std::vector<cl_device_id>> platform_devices;
+    //    std::vector<cl_device_id> target_devices;
 
     // get number of platforms
     cl_uint num_platforms;
@@ -54,7 +57,7 @@ inline void device_assert(const error_code ec) {
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr));
             if (target == target_platform::cpu && device_type == CL_DEVICE_TYPE_CPU) {
                 // select CPU device
-                target_devices.emplace_back(device);
+                platform_devices[platform].push_back(device);
             } else {
                 // must be a GPU device
                 if (device_type == CL_DEVICE_TYPE_GPU) {
@@ -68,17 +71,17 @@ inline void device_assert(const error_code ec) {
                     switch (target) {
                         case target_platform::gpu_nvidia:
                             if (::plssvm::detail::contains(vendor_string, "nvidia")) {
-                                target_devices.emplace_back(device);
+                                platform_devices[platform].push_back(device);
                             }
                             break;
                         case target_platform::gpu_amd:
                             if (::plssvm::detail::contains(vendor_string, "amd")) {
-                                target_devices.emplace_back(device);
+                                platform_devices[platform].push_back(device);
                             }
                             break;
                         case target_platform::gpu_intel:
                             if (::plssvm::detail::contains(vendor_string, "intel")) {
-                                target_devices.emplace_back(device);
+                                platform_devices[platform].push_back(device);
                             }
                             break;
                         default:
@@ -88,37 +91,33 @@ inline void device_assert(const error_code ec) {
             }
         }
     }
-    // TODO: context
-    cl_context context;
-    if (!target_devices.empty()) {
-        cl_platform_id platform;
-        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(target_devices[0], CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, nullptr));
+
+    std::vector<command_queue> command_queues;
+    for (const auto &[platform, device_list] : platform_devices) {
         error_code err;
-        context = clCreateContext(nullptr, static_cast<cl_uint>(target_devices.size()), target_devices.data(), nullptr, nullptr, &err);
+        cl_context context = clCreateContext(nullptr, static_cast<cl_uint>(device_list.size()), device_list.data(), nullptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err);
-    }
-    // convert device ids to command queues
-    std::vector<cl_command_queue> command_queues(target_devices.size());
-    error_code err;
-    for (std::size_t device = 0; device < target_devices.size(); ++device) {
-        command_queues[device] = clCreateCommandQueue(context, target_devices[device], 0, &err);
-        PLSSVM_OPENCL_ERROR_CHECK(err);
+
+        for (const cl_device_id &device : device_list) {
+            command_queues.emplace_back(context, clCreateCommandQueue(context, device, 0, &err), device);
+            PLSSVM_OPENCL_ERROR_CHECK(err);
+        }
     }
 
     return command_queues;
 }
 
-std::vector<cl_command_queue> get_device_list(const target_platform target) {
+std::vector<command_queue> get_command_queues(const target_platform target) {
     if (target != target_platform::automatic) {
-        return get_device_list_impl(target);
+        return get_command_queues_impl(target);
     } else {
-        std::vector<cl_command_queue> target_devices = get_device_list_impl(target_platform::gpu_nvidia);
+        std::vector<command_queue> target_devices = get_command_queues_impl(target_platform::gpu_nvidia);
         if (target_devices.empty()) {
-            target_devices = get_device_list_impl(target_platform::gpu_amd);
+            target_devices = get_command_queues_impl(target_platform::gpu_amd);
             if (target_devices.empty()) {
-                target_devices = get_device_list_impl(target_platform::gpu_intel);
+                target_devices = get_command_queues_impl(target_platform::gpu_intel);
                 if (target_devices.empty()) {
-                    target_devices = get_device_list_impl(target_platform::cpu);
+                    target_devices = get_command_queues_impl(target_platform::cpu);
                 }
             }
         }
@@ -126,18 +125,15 @@ std::vector<cl_command_queue> get_device_list(const target_platform target) {
     }
 }
 
-void device_synchronize(cl_command_queue queue) {
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue));
+void device_synchronize(const command_queue &queue) {
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue.queue));
 }
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, cl_command_queue queue) :
-    queue_{ queue }, size_{ size } {
-    cl_context context;  // TODO: clReleaseContext?
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr));
-
+device_ptr<T>::device_ptr(const size_type size, command_queue &queue) :
+    queue_{ &queue }, size_{ size } {
     error_code err;
-    data_ = clCreateBuffer(context, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
+    data_ = clCreateBuffer(queue_->context, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err);
 }
 
@@ -183,9 +179,9 @@ void device_ptr<T>::memset(const value_type value, const size_type pos, const si
     }
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueFillBuffer(queue_, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
+    err = clEnqueueFillBuffer(queue_->queue, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
 }
 
 template <typename T>
@@ -216,9 +212,9 @@ void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy, const size_type
 
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueWriteBuffer(queue_, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
+    err = clEnqueueWriteBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
 }
 
 template <typename T>
@@ -249,9 +245,9 @@ void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const si
 
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueReadBuffer(queue_, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
+    err = clEnqueueReadBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
 }
 
 template class device_ptr<float>;

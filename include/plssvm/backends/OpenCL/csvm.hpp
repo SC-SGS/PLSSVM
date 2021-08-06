@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
 #include "plssvm/csvm.hpp"                                  // plssvm::csvm
@@ -101,7 +102,7 @@ class csvm : public ::plssvm::csvm<T> {
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
     /// The available/used OpenCL devices.
-    std::vector<cl_command_queue> devices_{};
+    std::vector<detail::command_queue> devices_{};
     /// The number of data points excluding the last data point.
     size_type dept_{};
     /// The boundary size used to remove boundary condition checks inside the kernels.

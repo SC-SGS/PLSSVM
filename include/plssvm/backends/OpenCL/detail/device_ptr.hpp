@@ -9,7 +9,8 @@
 
 #pragma once
 
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_command_queue, cl_mem
 
@@ -26,14 +27,14 @@ namespace plssvm::opencl::detail {
  *          3. Intel GPUs
  *          4. CPUs
  * @param[in] target the target platform for which the devices must match
- * @return the devices (`[[nodiscard]]`)
+ * @return the command queues (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<cl_command_queue> get_device_list(target_platform target);
+[[nodiscard]] std::vector<command_queue> get_command_queues(target_platform target);
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
- * @param[in] queue the OpenCL queue to synchronize
+ * @param[in] queue the command queue to synchronize
  */
-void device_synchronize(cl_command_queue queue);
+void device_synchronize(const command_queue& queue);
 
 /**
  * @brief Small wrapper class around an OpenCL device pointer together with commonly used device functions.
@@ -62,7 +63,7 @@ class device_ptr {
      * @param[in] queue the associated command queue
      * @throws plssvm::opencl::backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
      */
-    explicit device_ptr(size_type size, cl_command_queue queue);
+    explicit device_ptr(size_type size, command_queue &queue);
 
     /**
      * @brief Move only type, therefore deleted copy-constructor.
@@ -140,8 +141,14 @@ class device_ptr {
      * @brief Return the command queue associated with the wrapped OpenCL device pointer.
      * @return the OpenCL context (`[[nodiscard]]`)
      */
-    [[nodiscard]] cl_command_queue queue() const noexcept {
-        return queue_;
+    [[nodiscard]] command_queue &queue() noexcept {
+        return *queue_;
+    }
+    /**
+     * @copydoc queue()
+     */
+    [[nodiscard]] const command_queue &queue() const noexcept {
+        return *queue_;
     }
 
     /**
@@ -220,7 +227,7 @@ class device_ptr {
     void memcpy_to_host(pointer buffer, size_type pos, size_type count);
 
   private:
-    cl_command_queue queue_ = nullptr;
+    command_queue *queue_ = nullptr;
     cl_mem data_ = nullptr;
     size_type size_ = 0;
 };
