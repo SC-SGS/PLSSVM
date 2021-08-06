@@ -11,7 +11,6 @@
 
 #include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
-// TODO: try to get rid of this include?
 #include "sycl/sycl.hpp"  // sycl::queue
 
 #include <cstddef>  // std::size_t

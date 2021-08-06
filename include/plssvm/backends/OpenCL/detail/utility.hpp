@@ -106,7 +106,7 @@ std::vector<cl_kernel> create_kernel(const std::vector<cl_command_queue> &queues
     error_code err;
 
     // get context
-    cl_context context;  // TODO: RAII
+    cl_context context;  // TODO: clReleaseContext
     err = clGetCommandQueueInfo(queues[0], CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr);
     if (!err) {
         throw backend_exception{ fmt::format("Error obtaining context ({})!", err) };

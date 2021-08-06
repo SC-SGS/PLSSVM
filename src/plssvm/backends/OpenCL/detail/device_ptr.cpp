@@ -133,7 +133,7 @@ void device_synchronize(cl_command_queue queue) {
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, cl_command_queue queue) :
     queue_{ queue }, size_{ size } {
-    cl_context context;  // TODO: RAII
+    cl_context context;  // TODO: clReleaseContext?
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr));
 
     error_code err;
