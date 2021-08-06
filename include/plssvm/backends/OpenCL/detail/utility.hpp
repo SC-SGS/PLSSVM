@@ -15,6 +15,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
+#include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_kernel_type_exception
 
 #include "CL/cl.h"     // cl_program, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, cl_kernel, clCreateKernel
                        // clReleaseProgram, cl_uint, clSetKernelArg
@@ -24,7 +25,7 @@
 #include <fstream>  // std::ifstream
 #include <ios>      // std::ios, std::streamsize
 #include <string>   // std::string
-#include <utility>  // std::forward
+#include <utility>  // std::forward, std::pair, std::make_pair
 #include <vector>   // std::vector
 
 namespace plssvm::opencl::detail {
@@ -34,7 +35,7 @@ namespace plssvm::opencl::detail {
  * @param[in] queue the OpenCL command queue
  * @return the device name
  */
-std::string get_device_name(cl_command_queue queue) {
+std::string get_device_name(const cl_command_queue &queue) {
     error_code err;
     // get device
     cl_device_id device_id;
@@ -49,6 +50,24 @@ std::string get_device_name(cl_command_queue queue) {
         throw backend_exception{ fmt::format("Error obtaining device name ({})!", err) };
     }
     return device_name.substr(0, device_name.find_first_of('\0'));
+}
+
+/**
+ * @brief Convert the kernel type @p kernel to the function names for the q and svm kernel functions.
+ * @param[in] kernel the kernel type
+ * @return the kernel function names (first: q_kernel name, second: svm_kernel name)
+ */
+[[nodiscard]] std::pair<std::string, std::string> kernel_type_to_function_name(const kernel_type kernel) {
+    switch (kernel) {
+        case kernel_type::linear:
+            return std::make_pair("device_kernel_q_linear", "device_kernel_linear");
+        case kernel_type::polynomial:
+            return std::make_pair("device_kernel_q_poly", "device_kernel_poly");
+        case kernel_type::rbf:
+            return std::make_pair("device_kernel_q_radial", "device_kernel_radial");
+        default:
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel)) };
+    }
 }
 
 /**

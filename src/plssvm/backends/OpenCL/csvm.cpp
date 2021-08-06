@@ -15,6 +15,7 @@
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                   // various operator overloads for std::vector and scalars
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
+#include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_kernel_type_exception
 #include "plssvm/target_platform.hpp"                    // plssvm::target_platform
 
 #include "CL/cl.h"     // clReleaseKernel
@@ -22,6 +23,8 @@
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
+#include <string>     // std::string
+#include <utility>    // std::pair
 #include <vector>     // std::vector
 
 namespace plssvm::opencl {
@@ -64,9 +67,12 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
         fmt::print("\n");
     }
 
+    // get kernel names
+    std::pair<std::string, std::string> kernel_names = detail::kernel_type_to_function_name(kernel_);
     // build necessary kernel
-    q_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", "device_kernel_q_linear");    // TODO: name
-    svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", "device_kernel_linear");  // TODO: name
+    q_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_names.first);
+    // assemble kernel name
+    svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_names.second);
 }
 
 template <typename T>
