@@ -144,6 +144,7 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     // setup data on device
     csvm_sycl.setup_data_on_device();
 
+    // TODO: multi GPU support
     sycl::queue &q = csvm_sycl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::sycl::detail::device_ptr<real_type> q_d{ dept + boundary_size, q };
