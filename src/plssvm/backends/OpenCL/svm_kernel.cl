@@ -74,33 +74,31 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
             }
         }
 
-        // TODO: equalize?
-        #pragma unroll(INTERNAL_BLOCK_SIZE)
-        for (size_type k = j; k < INTERNAL_BLOCK_SIZE + j; ++k) {
-            const real_type q_j = q[k];
-            real_type ret_k = 0.0;
-            #pragma unroll(INTERNAL_BLOCK_SIZE)
-            for (size_type l = i; l < INTERNAL_BLOCK_SIZE + i; ++l) {
+        #pragma unroll INTERNAL_BLOCK_SIZE
+        for (size_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
+            real_type ret_jx = 0.0;
+            #pragma unroll INTERNAL_BLOCK_SIZE
+            for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                 real_type temp;
                 if (first_feature == 0) {
-                    temp = (matr[k - j][l - i] + QA_cost - q[l] - q_j) * add;
+                    temp = (matr[x][y] + QA_cost - q[i + y] - q[j + x]) * add;
                 } else {
-                    temp = matr[k - j][l - i] * add;
+                    temp = matr[x][y] * add;
                 }
-                if (l > k) {
+                if (i + x > j + y) {
                     // upper triangular matrix
-                    AtomicAdd(&ret[l], temp * d[k]);
-                    ret_k += temp * d[l];
-                } else if (l == k) {
+                    AtomicAdd(&ret[i + y], temp * d[j + x]);
+                    ret_jx += temp * d[i + y];
+                } else if (i + x == j + y) {
                     // diagonal
                     if (first_feature == 0) {
-                        ret_k += (temp + cost * add) * d[l];
+                        ret_jx += (temp + cost * add) * d[i + y];
                     } else {
-                        ret_k += temp * d[l];
+                        ret_jx += temp * d[i + y];
                     }
                 }
             }
-            AtomicAdd(&ret[k], ret_k);
+            AtomicAdd(&ret[j + x], ret_jx);
         }
     }
 }
@@ -148,24 +146,22 @@ __kernel void device_kernel_poly(__global const real_type *q, __global real_type
             }
         }
 
-        // TODO: equalize?
-        #pragma unroll(INTERNAL_BLOCK_SIZE)
-        for (size_type k = j; k < INTERNAL_BLOCK_SIZE + j; ++k) {
-            const real_type q_j = q[k];
-            real_type ret_k = 0.0;
-            #pragma unroll(INTERNAL_BLOCK_SIZE)
-            for (size_type l = i; l < INTERNAL_BLOCK_SIZE + i; ++l) {
-                const real_type temp = (pow(gamma * matr[k - j][l - i] + coef0, degree) + QA_cost - q[l] - q_j) * add;
-                if (l > k) {
+        #pragma unroll INTERNAL_BLOCK_SIZE
+        for (size_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
+            real_type ret_jx = 0.0;
+            #pragma unroll INTERNAL_BLOCK_SIZE
+            for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
+                const real_type temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + y] - q[j + x]) * add;
+                if (i + x > j + y) {
                     // upper triangular matrix
-                    AtomicAdd(&ret[l], temp * d[k]);
-                    ret_k += temp * d[l];
-                } else if (l == k) {
+                    AtomicAdd(&ret[i + y], temp * d[j + x]);
+                    ret_jx += temp * d[i + y];
+                } else if (i + x == j + y) {
                     // diagonal
-                    ret_k += (temp + cost * add) * d[l];
+                    ret_jx += (temp + cost * add) * d[i + y];
                 }
             }
-            AtomicAdd(&ret[k], ret_k);
+            AtomicAdd(&ret[j + x], ret_jx);
         }
     }
 }
@@ -213,24 +209,22 @@ __kernel void device_kernel_radial(__global const real_type *q, __global real_ty
             }
         }
 
-        // TODO: equalize?
-        #pragma unroll(INTERNAL_BLOCK_SIZE)
-        for (size_type k = j; k < INTERNAL_BLOCK_SIZE + j; ++k) {
-            const real_type q_j = q[k];
-            real_type ret_k = 0.0;
-            #pragma unroll(INTERNAL_BLOCK_SIZE)
-            for (size_type l = i; l < INTERNAL_BLOCK_SIZE + i; ++l) {
-                const real_type temp = (exp(-gamma * matr[k - j][l - i]) + QA_cost - q[l] - q_j) * add;
-                if (l > k) {
+        #pragma unroll INTERNAL_BLOCK_SIZE
+        for (size_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
+            real_type ret_jx = 0.0;
+            #pragma unroll INTERNAL_BLOCK_SIZE
+            for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
+                const real_type temp = (exp(-gamma * matr[x][y]) + QA_cost - q[i + y] - q[j + x]) * add;
+                if (i + x > j + y) {
                     // upper triangular matrix
-                    AtomicAdd(&ret[l], temp * d[k]);
-                    ret_k += temp * d[l];
-                } else if (l == k) {
+                    AtomicAdd(&ret[i + y], temp * d[j + x]);
+                    ret_jx += temp * d[i + y];
+                } else if (i + x == j + y) {
                     // diagonal
-                    ret_k += (temp + cost * add) * d[l];
+                    ret_jx += (temp + cost * add) * d[i + y];
                 }
             }
-            AtomicAdd(&ret[k], ret_k);
+            AtomicAdd(&ret[j + x], ret_jx);
         }
     }
 }
