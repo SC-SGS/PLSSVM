@@ -100,7 +100,7 @@ class csvm : public ::plssvm::csvm<T> {
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
     /// The available/used SYCL devices.
-    std::vector<::sycl::queue> devices_{};
+    std::vector<::sycl::queue> devices_{}; // TODO: rename
     /// The number of data points excluding the last data point.
     size_type dept_{};
     /// The boundary size used to remove boundary condition checks inside the kernels.
