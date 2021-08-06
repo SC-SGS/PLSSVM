@@ -29,7 +29,9 @@ class kernel {
      * @brief Release the cl_kernel resources on destruction.
      */
     ~kernel() {
-        clReleaseKernel(compute_kernel);
+        if (compute_kernel) {
+            clReleaseKernel(compute_kernel);
+        }
     }
 
     /**
