@@ -73,7 +73,7 @@ csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real
     devices_ = detail::get_device_list(target_);
 
     // throw exception if no devices for the requested target could be found
-    if (devices_.size() < 1) {
+    if (devices_.empty()) {
         throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
     }
 
