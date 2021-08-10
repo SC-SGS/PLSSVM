@@ -58,7 +58,7 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
 #if defined(NDEBUG)
     #define PLSSVM_ASSERT(cond, msg, ...)
 #else
-    #define PLSSVM_ASSERT(cond, msg, ...) plssvm::detail::check_assertion(cond, #cond, plssvm::source_location::current(), msg PLSSVM_VA_ARGS(__VA_ARGS__))
+    #define PLSSVM_ASSERT(cond, msg, ...) plssvm::detail::check_assertion(cond, #cond, plssvm::source_location::current(), msg, ##__VA_ARGS__)
 #endif
 
 }  // namespace plssvm::detail
