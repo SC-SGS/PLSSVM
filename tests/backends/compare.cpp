@@ -35,7 +35,7 @@ real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_t
     for (std::size_t i = 0; i < x1.size(); ++i) {
         result += x1[i] * x2[i];
     }
-    return std::pow(gamma * result + coef0, degree);
+    return std::pow(gamma * result + coef0, static_cast<int>(degree));
 }
 template float poly_kernel(const std::vector<float> &, const std::vector<float> &, const float, const float, const float);
 template double poly_kernel(const std::vector<double> &, const std::vector<double> &, const double, const double, const double);
