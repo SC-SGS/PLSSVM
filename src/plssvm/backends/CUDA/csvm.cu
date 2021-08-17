@@ -148,9 +148,11 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
                 cuda::device_kernel_q_linear<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
                 break;
             case kernel_type::polynomial:
+                PLSSVM_ASSERT(num_devices_ == 1, "Polynomial CUDA kernel is currently only implemented for using one GPU");
                 cuda::device_kernel_q_poly<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
                 break;
             case kernel_type::rbf:
+                PLSSVM_ASSERT(num_devices_ == 1, "RBF CUDA kernel is currently only implemented for using one GPU");
                 cuda::device_kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
             default:

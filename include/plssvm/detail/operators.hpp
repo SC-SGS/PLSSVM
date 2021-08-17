@@ -113,7 +113,8 @@ template <typename T>
     T val{};
     #pragma omp simd reduction(+:val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
-        val += lhs.vec[i] * rhs[i];
+        // val += lhs.vec[i] * rhs[i]; //TODO: enable auto fma
+        val = std::fma(lhs.vec[i], rhs[i], val);
     }
     return val;
 }

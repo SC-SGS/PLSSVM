@@ -9,7 +9,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::pow, std::exp
+#include <cmath>   // std::pow, std::exp, std::fma
 #include <vector>  // std::vector
 
 namespace compare::detail {
@@ -20,7 +20,7 @@ real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real
 
     real_type result{ 0.0 };
     for (std::size_t i = 0; i < x1.size(); ++i) {
-        result += x1[i] * x2[i];
+        result = std::fma(x1[i] , x2[i], result);  //TODO: enable auto fma
     }
     return result;
 }
@@ -33,9 +33,10 @@ real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_t
 
     real_type result{ 0.0 };
     for (std::size_t i = 0; i < x1.size(); ++i) {
-        result += x1[i] * x2[i];
+        // result += x1[i] * x2[i];
+        result = std::fma( x1[i] , x2[i], result);  //TODO: enable auto fma
     }
-    return std::pow(gamma * result + coef0, static_cast<int>(degree));
+    return std::pow(std::fma(gamma , result , coef0), static_cast<int>(degree));  //TODO: enable auto fma
 }
 template float poly_kernel(const std::vector<float> &, const std::vector<float> &, const float, const float, const float);
 template double poly_kernel(const std::vector<double> &, const std::vector<double> &, const double, const double, const double);

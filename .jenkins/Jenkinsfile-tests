@@ -19,7 +19,7 @@ pipeline {
                                 \\"state\\": \\"running\\",
                                 \\"context\\": \\"jenkins-ctest\\",
                                 \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
                         }"
                     '''
                 }
@@ -38,6 +38,7 @@ pipeline {
                     /usr/bin/python3.8 -m pip install --user arff
                     /usr/bin/python3.8 -m pip install --user pandas
                     /usr/bin/python3.8 -m pip install --user sklearn
+                    /usr/bin/python3.8 -m pip install --user argparse
                 '''
             }
         }
@@ -49,7 +50,8 @@ pipeline {
                         cd SVM
                         mkdir -p build/Release
                         cd build/Release
-                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release ../../
+                        rm -rf *
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release  -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" ../../
                         make -j4
                     '''
                 }
@@ -58,13 +60,13 @@ pipeline {
         stage('run tests Release') {
             steps {
                 dir('plssvm') {
-                    sh '''
-                        module load cuda
-                        cd SVM
-                        git checkout 873c8e0efbe8563ab0a688d297f0720998e9304b -- platform_configuration.cfg
-                        cd build/Release
-                        ctest -j4
-                    '''
+                    warnError('Release tests failed!') {
+                        sh '''
+                            module load cuda
+                            cd SVM/build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
                 }
             }
         }
@@ -76,7 +78,8 @@ pipeline {
                         cd SVM
                         mkdir -p build/Debug
                         cd build/Debug
-                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug ../../
+                        rm -rf *
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug  -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" ../../
                         make -j4
                     '''
                 }
@@ -85,18 +88,37 @@ pipeline {
         stage('run tests Debug') {
             steps {
                 dir('plssvm') {
-                    sh '''
-                        module load cuda
-                        cd SVM
-                        git checkout 873c8e0efbe8563ab0a688d297f0720998e9304b -- platform_configuration.cfg
-                        cd build/Debug
-                        ctest -j4
-                    '''
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            module load cuda
+                            cd SVM/build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
                 }
             }
         }
     }
     post {
+        always {
+            // Process the CTest xml output with the xUnit plugin
+            xunit (
+                testTimeMargin: '3000',
+                thresholdMode: 1,
+                thresholds: [
+                    skipped(failureThreshold: '0'),
+                    failed(failureThreshold: '0')
+                ],
+                tools: [CTest(
+                    pattern: 'plssvm/SVM/build/*/Testing/**/*.xml',
+                    deleteOutputFiles: true,
+                    failIfNotNew: false,
+                    skipNoTestFiles: true,
+                    stopProcessingIfError: true
+                )]
+            )
+
+        }
         success {
             sh '''
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
@@ -109,7 +131,7 @@ pipeline {
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
                 }"
             '''
         }
@@ -125,7 +147,7 @@ pipeline {
                         \\"state\\": \\"failed\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
                 }"
             '''
         }
@@ -141,7 +163,7 @@ pipeline {
                         \\"state\\": \\"canceled\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/job/PLSSVM/$BUILD_NUMBER/console\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
                 }"
             '''
         }
