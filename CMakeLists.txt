@@ -218,6 +218,18 @@ if(PLSSVM_ENABLE_TESTING)
 endif()
 
 
+## generate scripts
+option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings" ON)
+if(PLSSVM_GENERATE_TIMINGSCRIPT)
+    enable_testing()
+    add_subdirectory(tests)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
+        ${CMAKE_BINARY_DIR}/time.sh
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        @ONLY)
+endif()
+
 ## print summary
 message(STATUS "Enabled backends with respective targets:")
 if(TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
