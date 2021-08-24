@@ -21,7 +21,7 @@ pipeline {
             agent { label 'argon-fs'}
             steps {
                 sh '''
-                    srun -w argon-tesla* -N 1 -n 1 -t 2-00:00:00 --gres=gpu:1 -D /data/scratch/jenkins/plssvm bash -c "\
+                    srun --nodelist="argon-tesla[1,2]" -N 1 -n 1 -t 2-00:00:00 --gres=gpu:1 -D /data/scratch/jenkins/plssvm bash -c "\
                     rm -rf plssvm && \
                     git clone --branch time --single-branch --dept 1 https://oauth2:$(echo ${GITLAB_TOKEN} | cut -f2 -d':')@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
                     cd plssvm/SVM && \
