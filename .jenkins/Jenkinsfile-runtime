@@ -5,21 +5,6 @@ pipeline {
         GITLAB_TOKEN = credentials('PLSSVMGitLab-Read-Repo-Text')
     }
     stages {
-        stage('checkout and build epyc cpu') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
-            agent { label 'argon-fs'}
-            steps {
-                sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
-                    rm -rf plssvm && \
-                    git clone --branch time --single-branch --dept 1 https://oauth2:$(echo ${GITLAB_TOKEN} | cut -f2 -d':')@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
-                    cd plssvm/SVM && \
-                    mkdir -p build/Release && \
-                    cd build/Release && \
-                    /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-zen/gcc-9.3.0/cmake-3.20.2-3iug2mkxsvqokairopuge643lcasu3rg/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF  -DPLSVM_ENABLE_OpenMP_BACKEND=ON  ../../ && \
-                    make -j "
-                '''
-            }
-        }
         stage('setup python'){
             agent any
             steps{
@@ -32,28 +17,25 @@ pipeline {
             }
         }
 
-        stage('generate test Data argon-fs'){
-            agent {label 'argon-fs'}
-            steps{
+        stage('checkout, build and runtimetest') { // theoretisch geht hier auch OpenCL (Vega 20 Radeon VII)
+            agent { label 'argon-fs'}
+            steps {
                 sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
-                    cd plssvm/SVM/data && \
-                    python3 generate_data.py --format libsvm --samples 10000 --features 5000 --output data.libsvm \
-                    "
+                    srun -w argon-tesla* -N 1 -n 1 -t 2-00:00:00 --gres=gpu:1 -D /data/scratch/jenkins/plssvm bash -c "\
+                    rm -rf plssvm && \
+                    git clone --branch time --single-branch --dept 1 https://oauth2:$(echo ${GITLAB_TOKEN} | cut -f2 -d':')@gitlab-sim.informatik.uni-stuttgart.de/vancraar/Bachelor-Code.git plssvm && \
+                    cd plssvm/SVM && \
+                    mkdir -p build/Release && \
+                    cd build/Release && \
+                    /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_ENABLE_TESTING=OFF -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_60" ../../ && \
+                    make -j &&\
+                    ./time.sh"
                 '''
             }
         }
-        stage('runtimetest argon-fs'){
-            agent{label 'argon-fs'}
-            steps{
-                sh '''
-                    srun -p epyc -N 1 -n 1 -t 00:30:00 -D /data/scratch/jenkins/plssvm bash -c "\
-                    cd plssvm/SVM/data
-                    ../build/Release/svm-train --backend=openmp  --input data.libsvm | python3 collect_runtimes.py --output /import/sgs.scratch/vancraar/runtime-epyc-openmp.csv
-                    "
-                '''
-            }
-        }
+
+
+
     }
 
 }
