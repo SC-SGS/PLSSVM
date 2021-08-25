@@ -64,10 +64,10 @@ void csvm<T>::learn() {
     // solve minimization
     alpha_ = solver_CG(b, num_features_, epsilon_, q);
     // old TODO: which one is correct? -> q.size() != alpha_.size() !!! -> does it have any implications on write_model?
-    //    alpha_.emplace_back(-sum(alpha_));
     //    bias_ = value_.back() - QA_cost_ * alpha_.back() - (transposed{ q } * alpha_);
     // new
     bias_ = value_.back() + QA_cost_ * sum(alpha_) - (transposed{ q } * alpha_);
+    alpha_.emplace_back(-sum(alpha_));
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
