@@ -221,8 +221,6 @@ endif()
 ## generate scripts
 option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings" ON)
 if(PLSSVM_GENERATE_TIMINGSCRIPT)
-    enable_testing()
-    add_subdirectory(tests)
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
         ${CMAKE_BINARY_DIR}/time.sh
