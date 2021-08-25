@@ -76,6 +76,31 @@ void csvm<T>::learn() {
 }
 
 template <typename T>
+void csvm<T>::calculate_w() {
+    w_.resize(data_[0].size());
+    std::fill(w_.begin(), w_.end(), 0.0);
+    for (int dat = 0; dat < data_.size(); ++dat){
+        for (int feature = 0; feature < data_[0].size(); ++feature){
+            w_[feature] += alpha_[feature] * data_[dat][feature] * value_[dat];
+        }
+    }
+}
+
+template <typename T>
+auto csvm<T>::accuracy() -> real_type  {
+    using namespace plssvm::operators;
+
+    int correct = 0;
+
+    for (int dat = 0; dat < data_.size(); ++dat){
+        if ( (transposed<real_type>{ data_[dat] } * w_ + bias_) * value_[dat] > 0.0){
+            ++correct;
+        }
+    }
+    return static_cast<real_type>(correct) / static_cast<real_type>(data_.size());
+}
+
+template <typename T>
 void csvm<T>::learn(const std::string &input_filename, const std::string &model_filename) {
     // parse data file
     parse_file(input_filename);

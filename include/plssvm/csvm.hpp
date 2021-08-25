@@ -200,6 +200,11 @@ class csvm {
     // virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
   protected:
+    /// TODO: doxygen
+    real_type accuracy();
+    /// TODO: doxygen
+    void calculate_w();
+
     /**
      * @brief Learns the Support Vectors previously parsed.
      * @details Learn the model by solving a minimization problem using the Conjugated Gradients algorithm.
@@ -290,6 +295,8 @@ class csvm {
     real_type QA_cost_{};
     /// The result of the CG calculation.
     std::vector<real_type> alpha_{};
+    /// TODO:doxygen
+    std::vector<real_type> w_{};
 };
 
 extern template class csvm<float>;
