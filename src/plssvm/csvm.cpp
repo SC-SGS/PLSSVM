@@ -79,8 +79,8 @@ void csvm<T>::learn() {
 template <typename T>
 auto csvm<T>::predict(std::vector<real_type>& point) -> real_type{
     using namespace plssvm::operators;
-    PLSSVM_ASSERT(data_[data_index].size() ==  point.size(), "Prediction point has different amount of features than training data");
     PLSSVM_ASSERT(data_.size() > 0, "No model or trainingsdata read");
+    PLSSVM_ASSERT(data_[0].size() ==  point.size(), "Prediction point has different amount of features than training data");
     PLSSVM_ASSERT(alpha_.size() == data_.size(), "Model does not fit the training data");
 
     real_type temp = bias_;
