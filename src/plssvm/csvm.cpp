@@ -19,6 +19,7 @@
 #include <string>  // std::string
 #include <vector>  // std::vector
 
+#include <iostream>
 namespace plssvm {
 
 template <typename T>
@@ -76,14 +77,18 @@ void csvm<T>::learn() {
 }
 
 template <typename T>
-void csvm<T>::calculate_w() {
-    w_.resize(data_[0].size());
-    std::fill(w_.begin(), w_.end(), 0.0);
-    for (int dat = 0; dat < data_.size(); ++dat){
-        for (int feature = 0; feature < data_[0].size(); ++feature){
-            w_[feature] += alpha_[feature] * data_[dat][feature] * value_[dat];
-        }
+auto csvm<T>::predict(std::vector<real_type>& point) -> real_type{
+    using namespace plssvm::operators;
+    PLSSVM_ASSERT(data_[data_index].size() ==  point.size(), "Prediction point has different amount of features than training data");
+    PLSSVM_ASSERT(data_.size() > 0, "No model or trainingsdata read");
+    PLSSVM_ASSERT(alpha_.size() == data_.size(), "Model does not fit the training data");
+
+    real_type temp = bias_;
+    for (size_type data_index = 0; data_index < data_.size(); ++data_index){
+        temp += alpha_[data_index] * kernel_function(data_[data_index], point);
     }
+    // return sign(temp); // If predict should return +- 1
+    return temp;
 }
 
 template <typename T>
@@ -91,9 +96,8 @@ auto csvm<T>::accuracy() -> real_type  {
     using namespace plssvm::operators;
 
     int correct = 0;
-
-    for (int dat = 0; dat < data_.size(); ++dat){
-        if ( (transposed<real_type>{ data_[dat] } * w_ + bias_) * value_[dat] > 0.0){
+    for (size_type dat = 0; dat < data_.size(); ++dat){
+        if ( predict(data_[dat]) * value_[dat] > 0.0){
             ++correct;
         }
     }

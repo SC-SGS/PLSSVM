@@ -199,12 +199,22 @@ class csvm {
     // TODO: protected?
     // virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
-  protected:
-    /// TODO: doxygen
+    /**
+     * @brief Evaluates the model on the data used for training.
+     *
+     * @return real_type The fraction of correct labeled training data
+     */
     real_type accuracy();
-    /// TODO: doxygen
-    void calculate_w();
 
+    /**
+     * @brief Uses the already learned model to predict the class of an (new) point
+     *
+     * @param point the point to predict
+     * @return real_type a negative value if the prediction for point is the negativ class and vice versa
+     */
+    real_type predict(std::vector<real_type>& point); //TODO: implement on devices for performance improvement
+
+  protected:
     /**
      * @brief Learns the Support Vectors previously parsed.
      * @details Learn the model by solving a minimization problem using the Conjugated Gradients algorithm.
