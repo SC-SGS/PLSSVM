@@ -19,6 +19,7 @@
 #include <string>  // std::string
 #include <vector>  // std::vector
 
+#include <iostream>
 namespace plssvm {
 
 template <typename T>
@@ -64,15 +65,43 @@ void csvm<T>::learn() {
     // solve minimization
     alpha_ = solver_CG(b, num_features_, epsilon_, q);
     // old TODO: which one is correct? -> q.size() != alpha_.size() !!! -> does it have any implications on write_model?
-    //    alpha_.emplace_back(-sum(alpha_));
     //    bias_ = value_.back() - QA_cost_ * alpha_.back() - (transposed{ q } * alpha_);
     // new
     bias_ = value_.back() + QA_cost_ * sum(alpha_) - (transposed{ q } * alpha_);
+    alpha_.emplace_back(-sum(alpha_));
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
+}
+
+template <typename T>
+auto csvm<T>::predict(std::vector<real_type>& point) -> real_type{
+    using namespace plssvm::operators;
+    PLSSVM_ASSERT(data_[data_index].size() ==  point.size(), "Prediction point has different amount of features than training data");
+    PLSSVM_ASSERT(data_.size() > 0, "No model or trainingsdata read");
+    PLSSVM_ASSERT(alpha_.size() == data_.size(), "Model does not fit the training data");
+
+    real_type temp = bias_;
+    for (size_type data_index = 0; data_index < data_.size(); ++data_index){
+        temp += alpha_[data_index] * kernel_function(data_[data_index], point);
+    }
+    // return sign(temp); // If predict should return +- 1
+    return temp;
+}
+
+template <typename T>
+auto csvm<T>::accuracy() -> real_type  {
+    using namespace plssvm::operators;
+
+    int correct = 0;
+    for (size_type dat = 0; dat < data_.size(); ++dat){
+        if ( predict(data_[dat]) * value_[dat] > 0.0){
+            ++correct;
+        }
+    }
+    return static_cast<real_type>(correct) / static_cast<real_type>(data_.size());
 }
 
 template <typename T>

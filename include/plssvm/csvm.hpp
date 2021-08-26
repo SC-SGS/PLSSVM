@@ -199,6 +199,21 @@ class csvm {
     // TODO: protected?
     // virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
+    /**
+     * @brief Evaluates the model on the data used for training.
+     *
+     * @return real_type The fraction of correct labeled training data
+     */
+    real_type accuracy();
+
+    /**
+     * @brief Uses the already learned model to predict the class of an (new) point
+     *
+     * @param point the point to predict
+     * @return real_type a negative value if the prediction for point is the negativ class and vice versa
+     */
+    real_type predict(std::vector<real_type>& point); //TODO: implement on devices for performance improvement
+
   protected:
     /**
      * @brief Learns the Support Vectors previously parsed.
@@ -290,6 +305,8 @@ class csvm {
     real_type QA_cost_{};
     /// The result of the CG calculation.
     std::vector<real_type> alpha_{};
+    /// TODO:doxygen
+    std::vector<real_type> w_{};
 };
 
 extern template class csvm<float>;
