@@ -14,9 +14,10 @@ int main(int argc, char *argv[]) {
 
         // learn
         svm->learn(params.input_filename, params.model_filename);
+#ifdef DEBUG
         double acc = svm->accuracy();
         std::cout << "accuracy: " << acc << std::endl;
-
+#endif
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {
