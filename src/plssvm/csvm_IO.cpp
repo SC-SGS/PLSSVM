@@ -322,6 +322,7 @@ void csvm<T>::write_model(const std::string &model_name) {
                 -bias_,
                 count_pos,
                 count_neg);
+            break;
         case kernel_type::polynomial:
             libsvm_model_header = fmt::format(
                 "svm_type c_svc\n"
@@ -339,6 +340,7 @@ void csvm<T>::write_model(const std::string &model_name) {
                 -bias_,
                 count_pos,
                 count_neg);
+            break;
         case kernel_type::rbf:
             libsvm_model_header = fmt::format(
                 "svm_type c_svc\n"
@@ -360,6 +362,10 @@ void csvm<T>::write_model(const std::string &model_name) {
                 -bias_,
                 count_pos,
                 count_neg);
+            break;
+        default:
+            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
+            break;
     }
 
     // terminal output

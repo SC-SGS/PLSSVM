@@ -174,6 +174,7 @@ class csvm {
      * -0.23146635 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01
      * 0.0034576654 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00
      * @endcode
+     * @throws unsupported_kernel_type_exception if the kernel_type cannot be recognized
      * @param[in] filename name of the file to write the model information to
      */
     void write_model(const std::string &filename);
@@ -212,7 +213,7 @@ class csvm {
      * @param point the point to predict
      * @return real_type a negative value if the prediction for point is the negativ class and vice versa
      */
-    real_type predict(std::vector<real_type>& point); //TODO: implement on devices for performance improvement
+    real_type predict(std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
 
   protected:
     /**
