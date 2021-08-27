@@ -173,3 +173,5 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
         }
     }
 }
+
+//TODO: accuracy test
