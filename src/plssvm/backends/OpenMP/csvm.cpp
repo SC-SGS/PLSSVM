@@ -23,7 +23,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+csvm<T>::csvm(const target_platform target, const kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
     ::plssvm::csvm<T>{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {
     // check if supported target platform has been selected
     if (target_ != target_platform::automatic && target_ != target_platform::cpu) {

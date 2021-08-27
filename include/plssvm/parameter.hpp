@@ -51,7 +51,7 @@ class parameter {
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     kernel_type kernel = kernel_type::linear;
     /// The degree parameter used in the polynomial kernel function.
-    real_type degree = 3.0;
+    int degree = 3;
     /// The gamma parameter used in the polynomial and rbf kernel functions.
     real_type gamma = 0.0;
     /// The coef0 parameter used in the polynomial kernel function.

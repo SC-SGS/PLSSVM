@@ -46,7 +46,7 @@ parameter<T>::parameter(int argc, char **argv) {
         // clang-format off
         .add_options()
             ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(fmt::format("{}", detail::to_underlying(kernel))))
-            ("d,degree", "set degree in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", degree)))
+            ("d,degree", "set degree in kernel function", cxxopts::value<int>()->default_value(fmt::format("{}", degree)))
             ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<real_type>())
             ("r,coef0", "set coef0 in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", coef0)))
             ("c,cost", "set the parameter C", cxxopts::value<real_type>()->default_value(fmt::format("{}", cost)))
