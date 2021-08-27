@@ -22,6 +22,7 @@ pipeline {
             steps {
                 sh '''
                     srun --nodelist="argon-tesla[1,2]" -N 1 -n 1 -t 2-00:00:00 --gres=gpu:1 --mail-type=ALL --mail-user=vancraar  bash -c "\
+                    module load cuda
                     mkdir -p /data/scratch/jenkins/plssvm  && \
                     cd /data/scratch/jenkins/plssvm  && \
                     rm -rf plssvm && \
