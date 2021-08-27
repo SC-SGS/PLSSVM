@@ -30,13 +30,21 @@
 template <typename T>
 class OpenMP_base : public ::testing::Test {};
 
-using write_model_parameter_types = ::testing::Types<float, double>;
-TYPED_TEST_SUITE(OpenMP_base, write_model_parameter_types);
+// enumerate all type and kernel combinations to test
+using parameter_types = ::testing::Types<
+    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+TYPED_TEST_SUITE(OpenMP_base, parameter_types);
 
 TYPED_TEST(OpenMP_base, write_model) {
     // setup OpenMP C-SVM
-    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
+    params.kernel = TypeParam::kernel;
 
     mock_openmp_csvm csvm{ params };
 
@@ -52,17 +60,21 @@ TYPED_TEST(OpenMP_base, write_model) {
     std::filesystem::remove(model_file);
 
     // check model file content for correctness
-    EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+    switch (params.kernel) {
+        case plssvm::kernel_type::linear:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+            break;
+        case plssvm::kernel_type::polynomial:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+            break;
+        default:
+            FAIL() << "untested kernel" << params.kernel;
+            break;
+    }
 }
-
-// enumerate all type and kernel combinations to test
-using parameter_types = ::testing::Types<
-    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 // generate tests for the generation of the q vector
 template <typename T>
@@ -155,4 +167,32 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
             util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
         }
     }
+}
+
+// enumerate all type and kernel combinations to test
+using parameter_types_double = ::testing::Types<
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+
+template <typename T>
+class OpenMP_accuracy : public ::testing::Test {};
+TYPED_TEST_SUITE(OpenMP_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name); // TODO: float parameter_types accuracy
+TYPED_TEST(OpenMP_accuracy, accuracy) {
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+    params.epsilon = 0.0000000001;
+    // setup OpenMP C-SVM
+    mock_openmp_csvm csvm_openmp{ params };
+    using real_type_csvm_openmp = typename decltype(csvm_openmp)::real_type;
+    // create temporary model file
+    std::string model_file = util::create_temp_file();
+    // learn
+    csvm_openmp.learn(params.input_filename, model_file);
+    // delete model file
+    std::filesystem::remove(model_file);
+    real_type_csvm_openmp acc = csvm_openmp.accuracy();
+    ASSERT_GT(acc, 0.95);
+
 }
