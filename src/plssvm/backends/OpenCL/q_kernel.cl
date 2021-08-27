@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 __kernel void device_kernel_q_linear(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const int num_rows, const int first_feature, const int last_feature) {
     size_type index = get_global_id(0);
     real_type temp = 0.0;

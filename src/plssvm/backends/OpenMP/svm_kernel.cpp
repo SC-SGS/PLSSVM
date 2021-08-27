@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"
 
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type, plssvm::kernel_function
