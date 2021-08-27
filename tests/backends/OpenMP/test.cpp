@@ -168,3 +168,31 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
         }
     }
 }
+
+// enumerate all type and kernel combinations to test
+using parameter_types_double = ::testing::Types<
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+
+template <typename T>
+class OpenMP_accuracy : public ::testing::Test {};
+TYPED_TEST_SUITE(OpenMP_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name); // TODO: float parameter_types accuracy
+TYPED_TEST(OpenMP_accuracy, accuracy) {
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+    params.epsilon = 0.0000000001;
+    // setup OpenMP C-SVM
+    mock_openmp_csvm csvm_openmp{ params };
+    using real_type_csvm_openmp = typename decltype(csvm_openmp)::real_type;
+    // create temporary model file
+    std::string model_file = util::create_temp_file();
+    // learn
+    csvm_openmp.learn(params.input_filename, model_file);
+    // delete model file
+    std::filesystem::remove(model_file);
+    real_type_csvm_openmp acc = csvm_openmp.accuracy();
+    ASSERT_GT(acc, 0.95);
+
+}
