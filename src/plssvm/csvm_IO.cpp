@@ -53,11 +53,12 @@ void csvm<T>::parse_libsvm(const std::string &filename) {
     size_type max_size = 0;
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel
+#pragma omp parallel
     {
-        #pragma omp for reduction(max:max_size)
+#pragma omp for reduction(max \
+                          : max_size)
         for (size_type i = 0; i < data_.size(); ++i) {
-            #pragma omp cancellation point for
+#pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i);
 
@@ -90,15 +91,15 @@ void csvm<T>::parse_libsvm(const std::string &filename) {
                 max_size = std::max(max_size, vline.size());
                 data_[i] = std::move(vline);
             } catch (const std::exception &e) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
+// cancel parallel execution, needs env variable OMP_CANCELLATION=true
+#pragma omp cancel for
             }
         }
     }
@@ -108,7 +109,7 @@ void csvm<T>::parse_libsvm(const std::string &filename) {
         std::rethrow_exception(parallel_exception);
     }
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_type i = 0; i < data_.size(); ++i) {
         data_[i].resize(max_size);
     }
@@ -174,18 +175,18 @@ void csvm<T>::parse_arff(const std::string &filename) {
     data_.resize(f.num_lines() - (header + 1));
     value_.resize(f.num_lines() - (header + 1));
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_type i = 0; i < data_.size(); ++i) {
         data_[i].resize(max_size - 1);
     }
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel
+#pragma omp parallel
     {
-        #pragma omp for
+#pragma omp for
         for (size_type i = 0; i < data_.size(); ++i) {
-            #pragma omp cancellation point for
+#pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + header + 1);
                 //
@@ -248,15 +249,15 @@ void csvm<T>::parse_arff(const std::string &filename) {
                     value_[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                 }
             } catch (const std::exception &e) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
+// cancel parallel execution, needs env variable OMP_CANCELLATION=true
+#pragma omp cancel for
             }
         }
     }
@@ -304,20 +305,62 @@ void csvm<T>::write_model(const std::string &model_name) {
     }
 
     // create libsvm model header
-    std::string libsvm_model_header = fmt::format(
-        "svm_type c_svc\n"
-        "kernel_type {}\n"
-        "nr_class 2\n"
-        "total_sv {}\n"
-        "rho {}\n"
-        "label 1 -1\n"
-        "nr_sv {} {}\n"
-        "SV\n",
-        kernel_,
-        count_pos + count_neg,
-        -bias_,
-        count_pos,
-        count_neg);
+    std::string libsvm_model_header;
+    switch (kernel_) {
+        case kernel_type::linear:
+            libsvm_model_header = fmt::format(
+                "svm_type c_svc\n"
+                "kernel_type {}\n"
+                "nr_class 2\n"
+                "total_sv {}\n"
+                "rho {}\n"
+                "label 1 -1\n"
+                "nr_sv {} {}\n"
+                "SV\n",
+                kernel_,
+                count_pos + count_neg,
+                -bias_,
+                count_pos,
+                count_neg);
+        case kernel_type::polynomial:
+            libsvm_model_header = fmt::format(
+                "svm_type c_svc\n"
+                "kernel_type {}\n"
+                "gamma {}\n"
+                "nr_class 2\n"
+                "total_sv {}\n"
+                "rho {}\n"
+                "label 1 -1\n"
+                "nr_sv {} {}\n"
+                "SV\n",
+                kernel_,
+                gamma_,
+                count_pos + count_neg,
+                -bias_,
+                count_pos,
+                count_neg);
+        case kernel_type::rbf:
+            libsvm_model_header = fmt::format(
+                "svm_type c_svc\n"
+                "kernel_type {}\n"
+                "degree {}\n"
+                "gamma {}\n"
+                "coef0 {}\n"
+                "nr_class 2\n"
+                "total_sv {}\n"
+                "rho {}\n"
+                "label 1 -1\n"
+                "nr_sv {} {}\n"
+                "SV\n",
+                kernel_,
+                degree_,
+                gamma_,
+                coef0_,
+                count_pos + count_neg,
+                -bias_,
+                count_pos,
+                count_neg);
+    }
 
     // terminal output
     if (print_info_) {
@@ -342,27 +385,27 @@ void csvm<T>::write_model(const std::string &model_name) {
     };
 
     volatile int count = 0;
-    #pragma omp parallel
+#pragma omp parallel
     {
         // all support vectors with class 1
         std::string out_pos;
-        #pragma omp for nowait
+#pragma omp for nowait
         for (size_type i = 0; i < alpha_.size(); ++i) {
             if (value_[i] > 0) {
                 out_pos += format_libsvm_line(alpha_[i], data_[i]);
             }
         }
 
-        #pragma omp critical
+#pragma omp critical
         {
             model.write(out_pos.data(), static_cast<std::streamsize>(out_pos.size()));
             count++;
-            #pragma omp flush(count, model)
+#pragma omp flush(count, model)
         }
 
         // all support vectors with class -1
         std::string out_neg;
-        #pragma omp for nowait
+#pragma omp for nowait
         for (size_type i = 0; i < alpha_.size(); ++i) {
             if (value_[i] < 0) {
                 out_neg += format_libsvm_line(alpha_[i], data_[i]);
@@ -374,10 +417,10 @@ void csvm<T>::write_model(const std::string &model_name) {
         while (count < omp_get_num_threads()) {
         }
 #else
-        #pragma omp barrier
+    #pragma omp barrier
 #endif
 
-        #pragma omp critical
+#pragma omp critical
         model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
     }
 
