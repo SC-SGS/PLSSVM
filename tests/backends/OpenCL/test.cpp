@@ -23,13 +23,22 @@
 template <typename T>
 class OpenCL_base : public ::testing::Test {};
 
-using write_model_parameter_types = ::testing::Types<float, double>;
-TYPED_TEST_SUITE(OpenCL_base, write_model_parameter_types);
+// enumerate all type and kernel combinations to test
+using parameter_types = ::testing::Types<
+    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+
+TYPED_TEST_SUITE(OpenCL_base, parameter_types);
 
 TYPED_TEST(OpenCL_base, write_model) {
     // setup OpenCL C-SVM
-    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
+    params.kernel = TypeParam::kernel;
 
     mock_opencl_csvm csvm{ params };
 
@@ -45,17 +54,21 @@ TYPED_TEST(OpenCL_base, write_model) {
     std::filesystem::remove(model_file);
 
     // check model file content for correctness
-    EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv [1-9][0-9]*\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+    switch (params.kernel) {
+        case plssvm::kernel_type::linear:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+            break;
+        case plssvm::kernel_type::polynomial:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
+            break;
+        default:
+            FAIL() << "untested kernel" << params.kernel;
+            break;
+    }
 }
-
-// enumerate all type and kernel combinations to test
-using parameter_types = ::testing::Types<
-    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 // generate tests for the generation of the q vector
 template <typename T>

@@ -190,10 +190,24 @@ TYPED_TEST(BASE, parse_arff_gamma) {
     util::gtest_assert_floating_point_eq(real_type_gamma_zero{ 1.0 } / csvm_gamma_zero.get_num_features(), csvm_gamma_zero.get_gamma());
 }
 
-TYPED_TEST(BASE, write_model) {
+// enumerate all type and kernel combinations to test
+using parameter_types = ::testing::Types<
+    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+
+template <typename T>
+class BASE_write : public ::testing::Test {};
+TYPED_TEST_SUITE(BASE_write, parameter_types, util::google_test::parameter_definition_to_name);
+
+TYPED_TEST(BASE_write, write_model) {
     // setup C-SVM
-    plssvm::parameter<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
+    params.kernel = TypeParam::kernel;
 
     mock_csvm csvm{ params };
 
@@ -210,7 +224,20 @@ TYPED_TEST(BASE, write_model) {
     std::filesystem::remove(model_file);
 
     // check model file content for correctness
-    EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type [(linear),(polynomial),(rbf)]+\nnr_class 2\ntotal_sv 0+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+    switch (params.kernel) {
+        case plssvm::kernel_type::linear:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv 0+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        case plssvm::kernel_type::polynomial:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        default:
+            FAIL() << "untested kernel" << params.kernel;
+            break;
+    }
 }
 
 TYPED_TEST(BASE, parse_libsvm_ill_formed) {
@@ -292,15 +319,6 @@ TYPED_TEST(BASE, transform_data) {
         }
     }
 }
-
-// enumerate all type and kernel combinations to test
-using parameter_types = ::testing::Types<
-    util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<float, plssvm::kernel_type::rbf>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 // generate tests for the kernel functions
 template <typename T>
