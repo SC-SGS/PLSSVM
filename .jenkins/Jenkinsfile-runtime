@@ -33,8 +33,7 @@ pipeline {
                     make -j &&\
                     ./time.sh && \
                     cd ../../../ &&\
-                    rm -rf plssvm && \
-                    "
+                    rm -rf plssvm"
                 '''
             }
         }
