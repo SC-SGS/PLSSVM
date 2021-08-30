@@ -45,18 +45,18 @@ parameter<T>::parameter(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
         .add_options()
-            ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(fmt::format("{}", detail::to_underlying(kernel))))
-            ("d,degree", "set degree in kernel function", cxxopts::value<int>()->default_value(fmt::format("{}", degree)))
-            ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<real_type>())
-            ("r,coef0", "set coef0 in kernel function", cxxopts::value<real_type>()->default_value(fmt::format("{}", coef0)))
-            ("c,cost", "set the parameter C", cxxopts::value<real_type>()->default_value(fmt::format("{}", cost)))
-            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<real_type>()->default_value(fmt::format("{}", epsilon)))
-            ("b,backend", "choose the backend: openmp|cuda|opencl|sycl", cxxopts::value<backend_type>()->default_value(as_lowercase(fmt::format("{}", backend))))
-            ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<target_platform>()->default_value(as_lowercase(fmt::format("{}", target))))
+            ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<decltype(kernel)>()->default_value(fmt::format("{}", detail::to_underlying(kernel))))
+            ("d,degree", "set degree in kernel function", cxxopts::value<decltype(degree)>()->default_value(fmt::format("{}", degree)))
+            ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<decltype(gamma)>())
+            ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(coef0)>()->default_value(fmt::format("{}", coef0)))
+            ("c,cost", "set the parameter C", cxxopts::value<decltype(cost)>()->default_value(fmt::format("{}", cost)))
+            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(epsilon)>()->default_value(fmt::format("{}", epsilon)))
+            ("b,backend", "choose the backend: openmp|cuda|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(as_lowercase(fmt::format("{}", backend))))
+            ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<decltype(target)>()->default_value(as_lowercase(fmt::format("{}", target))))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
-            ("input", "", cxxopts::value<std::string>(), "training_set_file")
-            ("model", "", cxxopts::value<std::string>(), "model_file");
+            ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
+            ("model", "", cxxopts::value<decltype(model_filename)>(), "model_file");
     // clang-format on
 
     // parse command line options
@@ -76,14 +76,14 @@ parameter<T>::parameter(int argc, char **argv) {
     }
 
     // parse kernel_type and cast the value to the respective enum
-    kernel = result["kernel_type"].as<kernel_type>();
+    kernel = result["kernel_type"].as<decltype(kernel)>();
 
     // parse degree
-    degree = result["degree"].as<real_type>();
+    degree = result["degree"].as<decltype(degree)>();
 
     // parse gamma
     if (result.count("gamma")) {
-        gamma = result["gamma"].as<real_type>();
+        gamma = result["gamma"].as<decltype(gamma)>();
         if (gamma == 0.0) {
             fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
             fmt::print("{}", options.help());
@@ -94,19 +94,19 @@ parameter<T>::parameter(int argc, char **argv) {
     }
 
     // parse coef0
-    coef0 = result["coef0"].as<real_type>();
+    coef0 = result["coef0"].as<decltype(coef0)>();
 
     // parse cost
-    cost = result["cost"].as<real_type>();
+    cost = result["cost"].as<decltype(cost)>();
 
     // parse epsilon
-    epsilon = result["epsilon"].as<real_type>();
+    epsilon = result["epsilon"].as<decltype(epsilon)>();
 
     // parse backend_type and cast the value to the respective enum
-    backend = result["backend"].as<backend_type>();
+    backend = result["backend"].as<decltype(backend)>();
 
     // parse target_platform and cast the value to the respective enum
-    target = result["target_platform"].as<target_platform>();
+    target = result["target_platform"].as<decltype(target)>();
 
     // parse print info
     print_info = !print_info;
@@ -117,11 +117,11 @@ parameter<T>::parameter(int argc, char **argv) {
         fmt::print("{}", options.help());
         std::exit(EXIT_FAILURE);
     }
-    input_filename = result["input"].as<std::string>();
+    input_filename = result["input"].as<decltype(input_filename)>();
 
     // parse output model filename
     if (result.count("model")) {
-        model_filename = result["model"].as<std::string>();
+        model_filename = result["model"].as<decltype(model_filename)>();
     } else {
         model_name_from_input();
     }
