@@ -31,7 +31,7 @@ class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
 
     explicit mock_cuda_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit mock_cuda_csvm(const plssvm::target_platform target, const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    explicit mock_cuda_csvm(const plssvm::target_platform target, const plssvm::kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
         base_type{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // make non-virtual functions publicly visible

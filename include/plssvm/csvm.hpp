@@ -54,7 +54,7 @@ class csvm {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    csvm(target_platform target, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Virtual destructor to enable safe inheritance.
@@ -277,7 +277,7 @@ class csvm {
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     const kernel_type kernel_;
     /// The degree parameter used in the polynomial kernel function.
-    const real_type degree_;
+    const int degree_;
     /// The gamma parameter used in the polynomial and rbf kernel functions.
     real_type gamma_;
     /// The coef0 parameter used in the polynomial kernel function.

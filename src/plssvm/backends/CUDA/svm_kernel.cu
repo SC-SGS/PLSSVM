@@ -92,7 +92,7 @@ template __global__ void device_kernel_linear(const float *, float *, const floa
 template __global__ void device_kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int);
 
 template <typename real_type>
-__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type degree, const real_type gamma, const real_type coef0) {
+__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const int degree, const real_type gamma, const real_type coef0) {
     size_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     size_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -140,7 +140,7 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
             real_type ret_jx = 0.0;
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
-                const real_type temp = (pow(gamma * matr[x][y] + coef0, static_cast<int>(degree)) + QA_cost - q[i + y] - q[j + x]) * add;
+                const real_type temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + y] - q[j + x]) * add;
                 if (i + x > j + y) {
                     // upper triangular matrix
                     atomicAdd(&ret[i + y], temp * d[j + x]);
@@ -155,8 +155,8 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
     }
 }
 
-template __global__ void device_kernel_poly(const float *, float *, const float *, const float *, const float, const float, const int, const int, const int, const float, const float, const float);
-template __global__ void device_kernel_poly(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const double, const double, const double);
+template __global__ void device_kernel_poly(const float *, float *, const float *, const float *, const float, const float, const int, const int, const int, const int, const float, const float);
+template __global__ void device_kernel_poly(const double *, double *, const double *, const double *, const double, const double, const int, const int, const int, const int, const double, const double);
 
 template <typename real_type>
 __global__ void device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const int add, const real_type gamma) {

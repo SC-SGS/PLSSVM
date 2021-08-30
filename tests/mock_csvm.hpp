@@ -31,7 +31,7 @@ class mock_csvm : public plssvm::csvm<T> {
 
     explicit mock_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit mock_csvm(const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    explicit mock_csvm(const plssvm::kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
         base_type{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // mock pure virtual functions
@@ -45,7 +45,7 @@ class mock_csvm : public plssvm::csvm<T> {
     using base_type::transform_data;
 
     // parameter getter
-    real_type get_degree() const { return degree_; }
+    int get_degree() const { return degree_; }
     real_type get_gamma() const { return gamma_; }
     real_type get_coef0() const { return coef0_; }
     real_type get_cost() const { return cost_; }

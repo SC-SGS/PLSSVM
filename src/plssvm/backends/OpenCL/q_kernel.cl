@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 __kernel void device_kernel_q_linear(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const int num_rows, const int first_feature, const int last_feature) {
     size_type index = get_global_id(0);
     real_type temp = 0.0;
@@ -7,7 +13,7 @@ __kernel void device_kernel_q_linear(__global real_type *q, __global real_type *
     q[index] = temp;
 }
 
-__kernel void device_kernel_q_poly(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const int num_rows, const int num_cols, const real_type degree, const real_type gamma, const real_type coef0) {
+__kernel void device_kernel_q_poly(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const int num_rows, const int num_cols, const int degree, const real_type gamma, const real_type coef0) {
     size_type index = get_global_id(0);
     real_type temp = 0.0;
     for (int i = 0; i < num_cols; ++i) {
