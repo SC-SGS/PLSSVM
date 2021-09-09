@@ -251,7 +251,7 @@ class device_kernel_poly {
                 real_type ret_jx = 0.0;
 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
-                    const real_type temp = (::sycl::pow(gamma_ * matr[x][y] + coef0_, degree_) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
+                    const real_type temp = (::sycl::pow(gamma_ * matr[x][y] + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
                     if (i + x > j + y) {
                         // upper triangular matrix
                         atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];

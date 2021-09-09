@@ -95,7 +95,7 @@ class device_kernel_q_poly {
         for (int i = 0; i < num_cols_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
         }
-        q_[index] = ::sycl::pow(gamma_ * temp + coef0_, degree_);
+        q_[index] = ::sycl::pow(gamma_ * temp + coef0_, static_cast<real_type>(degree_));
     }
 
   private:
