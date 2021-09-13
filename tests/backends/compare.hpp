@@ -107,7 +107,7 @@ std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &dat
  * @tparam real_type the type of the data
  * @tparam SVM the used SVM implementation
  * @param[in] data the data points
- * @param[inout] x the right-hand side
+ * @param[in,out] x the right-hand side
  * @param[in] q the `q` vector
  * @param[in] QA_cost the bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM

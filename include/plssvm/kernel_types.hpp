@@ -38,7 +38,7 @@ enum class kernel_type {
 
 /**
  * @brief Stream-insertion operator overload for convenient printing of the kernel type @p kernel.
- * @param[inout] out the output-stream to write the kernel type to
+ * @param[in,out] out the output-stream to write the kernel type to
  * @param[in] kernel the kernel type
  * @return the output-stream
  */
@@ -58,7 +58,7 @@ inline std::ostream &operator<<(std::ostream &out, const kernel_type kernel) {
 /**
  * @brief Stream-extraction operator overload for convenient converting a string to a kernel type.
  * @details The extracted value is matched case-insensitive and can be the integer value of the kernel_type.
- * @param[inout] in input-stream to extract the kernel type from
+ * @param[in,out] in input-stream to extract the kernel type from
  * @param[in] kernel the kernel type
  * @return the input-stream
  */

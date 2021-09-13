@@ -82,7 +82,7 @@ class error_code {
  * @code
  * "-1; CL_DEVICE_NOT_FOUND"
  * @endcode
- * @param[inout] out the output-stream to write the kernel type to
+ * @param[in,out] out the output-stream to write the kernel type to
  * @param[in] ec the error code
  * @return the output-stream
  */

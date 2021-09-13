@@ -33,7 +33,7 @@ using ::sycl::atomic_ref;
 
 /**
  * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references).
- * @tparam T the type of the accessed values
+ * @tparam real_type the type of the accessed values
  */
 
 template <typename real_type>

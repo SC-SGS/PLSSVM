@@ -85,7 +85,7 @@ extern template class parameter<double>;
 /**
  * @brief Stream-insertion operator overload for convenient printing of all parameters encapsulated by @p params.
  * @tparam T the type of the data
- * @param[inout] out the output-stream to write the kernel type to
+ * @param[in,out] out the output-stream to write the kernel type to
  * @param[in] params the parameters
  * @return the output-stream
  */

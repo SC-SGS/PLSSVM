@@ -35,7 +35,7 @@ enum class backend_type {
 
 /**
  * @brief Stream-insertion-operator overload for convenient printing of the backend type @p backend.
- * @param[inout] out the output-stream to write the backend type to
+ * @param[in,out] out the output-stream to write the backend type to
  * @param[in] backend the backend type
  * @return the output-stream
  */
@@ -56,7 +56,7 @@ inline std::ostream &operator<<(std::ostream &out, const backend_type backend) {
 
 /**
  * @brief Stream-extraction-operator overload for convenient converting a string to a backend type.
- * @param[inout] in input-stream to extract the backend type from
+ * @param[in,out] in input-stream to extract the backend type from
  * @param[in] backend the backend type
  * @return the input-stream
  */

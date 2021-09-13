@@ -88,7 +88,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CUDA @p device.
      * @param[in] device the CUDA device to run the kernel on
      * @param[in] q_d subvector of the least-squares matrix equation
-     * @param[inout] r_d the result vector
+     * @param[in,out] r_d the result vector
      * @param[in] x_d the `x` vector
      * @param[in] data_d the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
@@ -96,8 +96,8 @@ class csvm : public ::plssvm::csvm<T> {
     void run_device_kernel(int device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, int add);
     /**
      * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
-     * @param[inout] buffer_d the data to gather
-     * @param[inout] buffer the reduces data
+     * @param[in,out] buffer_d the data to gather
+     * @param[in,out] buffer the reduces data
      */
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 

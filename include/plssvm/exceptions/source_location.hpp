@@ -56,7 +56,6 @@ class source_location {
     /**
      * @brief Returns the line number or `0` if no information could be retrieved.
      * @return the line number (`[[nodiscard]]`)
-     * @return
      */
     [[nodiscard]] int line() const noexcept { return line_; }
     /**

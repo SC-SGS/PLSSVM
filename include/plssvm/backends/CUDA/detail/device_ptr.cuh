@@ -77,7 +77,7 @@ class device_ptr {
     device_ptr(const device_ptr &) = delete;
     /**
      * @brief Move-constructor.
-     * @param[inout] other the `device_ptr` to move-construct from
+     * @param[in,out] other the `device_ptr` to move-construct from
      */
     device_ptr(device_ptr &&other) noexcept;
 
@@ -99,13 +99,13 @@ class device_ptr {
 
     /**
      * @brief Swap the contents of `*this` with the contents of @p other.
-     * @param[inout] other the other `device_ptr`
+     * @param[in,out] other the other `device_ptr`
      */
     void swap(device_ptr &other) noexcept;
     /**
      * @brief Swap the contents of @p lhs and @p rhs.
-     * @param[inout] lhs a `device_ptr`
-     * @param[inout] rhs a `device_ptr`
+     * @param[in,out] lhs a `device_ptr`
+     * @param[in,out] rhs a `device_ptr`
      */
     friend void swap(device_ptr &lhs, device_ptr &rhs) noexcept { lhs.swap(rhs); }
 

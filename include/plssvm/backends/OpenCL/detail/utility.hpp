@@ -162,8 +162,8 @@ void set_kernel_args(cl_kernel kernel, Args... args) {
 /**
  * @brief
  * @tparam Args the types of the arguments
- * @param[inout] queue the command queue on which the kernel should be executed
- * @param[inout] kernel the kernel to run
+ * @param[in,out] queue the command queue on which the kernel should be executed
+ * @param[in,out] kernel the kernel to run
  * @param[in] grid_size the number of global work-items (possibly multi-dimensional)
  * @param[in] block_size the number of work-items that make up a work-group (possibly multi-dimensional)
  * @param[in] args the arguments to set
@@ -192,8 +192,8 @@ void run_kernel(const command_queue &queue, cl_kernel kernel, std::vector<std::s
 /**
  * @brief
  * @tparam Args the types of the arguments
- * @param[inout] queue the command queue on which the kernel should be executed
- * @param[inout] kernel the kernel to run
+ * @param[in,out] queue the command queue on which the kernel should be executed
+ * @param[in,out] kernel the kernel to run
  * @param[in] grid_size the number of global work-items
  * @param[in] block_size the number of work-items that make up a work-group
  * @param[in] args the arguments to set

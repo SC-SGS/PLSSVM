@@ -133,7 +133,7 @@ template <typename T, typename Exception = std::runtime_error>
 
 /**
  * @brief Replaces all occurrences of @p what with @p with in the string @p str.
- * @param[inout] str the string to replace the values
+ * @param[in,out] str the string to replace the values
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
  */
@@ -145,7 +145,7 @@ inline void replace_all(std::string &str, const std::string_view what, const std
 
 /**
  * @brief Convert the string @p str to its all lower case representation.
- * @param[inout] str the string to transform
+ * @param[in,out] str the string to transform
  * @return the transformed string
  */
 inline std::string &to_lower_case(std::string &str) {

@@ -15,7 +15,7 @@ namespace plssvm::cuda::detail {
 #else
 /**
  * @brief Atomically add the double precision value @p val to the value denoted by @p address.
- * @param[inout] address the value to increment
+ * @param[in,out] address the value to increment
  * @param[in] val the value to add
  */
 __device__ __forceinline__ double atomicAdd(double *address, const double val) {

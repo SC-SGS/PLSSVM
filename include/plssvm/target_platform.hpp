@@ -37,7 +37,7 @@ enum class target_platform {
 
 /**
  * @brief Stream-insertion-operator overload for convenient printing of the target platform @p target.
- * @param[inout] out the output-stream to write the target platform to
+ * @param[in,out] out the output-stream to write the target platform to
  * @param[in] target the target platform
  * @return the output-stream
  */
@@ -60,7 +60,7 @@ inline std::ostream &operator<<(std::ostream &out, const target_platform target)
 
 /**
  * @brief Stream-extraction-operator overload for convenient converting a string to a target platform.
- * @param[inout] in input-stream to extract the target platform from
+ * @param[in,out] in input-stream to extract the target platform from
  * @param[in] target the target platform
  * @return the input-stream
  */
