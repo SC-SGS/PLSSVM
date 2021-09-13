@@ -64,7 +64,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    csvm(target_platform target, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Wait for all operations on all devices to finish.

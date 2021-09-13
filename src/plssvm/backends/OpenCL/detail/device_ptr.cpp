@@ -75,7 +75,7 @@ inline void device_assert(const error_code ec) {
                             }
                             break;
                         case target_platform::gpu_amd:
-                            if (::plssvm::detail::contains(vendor_string, "amd")) {
+                            if (::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) {
                                 platform_devices[platform].push_back(device);
                             }
                             break;

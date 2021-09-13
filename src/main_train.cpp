@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/core.hpp"
 
 #include <exception>  // std::exception

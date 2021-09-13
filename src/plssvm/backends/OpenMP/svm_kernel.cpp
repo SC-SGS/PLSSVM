@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"
 
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type, plssvm::kernel_function
@@ -15,7 +21,7 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
 
     const size_type dept = d.size();
 
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (size_type i = 0; i < dept; i += BLOCK_SIZE) {
         for (size_type j = 0; j < dept; j += BLOCK_SIZE) {
             for (size_type ii = 0; ii < BLOCK_SIZE && ii + i < dept; ++ii) {
@@ -27,12 +33,12 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
                             ret_iii += (temp + cost * add) * d[ii + i];
                         } else {
                             ret_iii += temp * d[jj + j];
-                            #pragma omp atomic
+#pragma omp atomic
                             ret[jj + j] += temp * d[ii + i];
                         }
                     }
                 }
-                #pragma omp atomic
+#pragma omp atomic
                 ret[ii + i] += ret_iii;
             }
         }
@@ -47,11 +53,11 @@ template void device_kernel_linear(const std::vector<float> &, std::vector<float
 template void device_kernel_linear(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const int);
 
 template <typename real_type>
-void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const int add, const real_type degree, const real_type gamma, const real_type coef0) {
+void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const int add, const int degree, const real_type gamma, const real_type coef0) {
     device_kernel<kernel_type::polynomial>(q, ret, d, data, QA_cost, cost, add, degree, gamma, coef0);
 }
-template void device_kernel_poly(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const int, const float, const float, const float);
-template void device_kernel_poly(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const int, const double, const double, const double);
+template void device_kernel_poly(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const int, const int, const float, const float);
+template void device_kernel_poly(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const int, const int, const double, const double);
 
 template <typename real_type>
 void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const int add, const real_type gamma) {
@@ -132,7 +138,7 @@ template void device_kernel_radial(const std::vector<double> &, std::vector<doub
 // 	}
 // }
 //
-// void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma, const real_t coef0 ,const real_t degree){
+// void kernel_poly(real_t *q, real_t *ret, real_t *d, real_t *data_d,const real_t QA_cost, const real_t cost,const int Ncols,const int Nrows,const int add, const real_t gamma, const real_t coef0 ,const int degree){
 // 	int i =  blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
 // 	int j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 //

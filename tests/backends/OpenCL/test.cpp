@@ -1,3 +1,9 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
+
 #include "mock_opencl_csvm.hpp"
 
 #include "../../mock_csvm.hpp"  // mock_csvm
@@ -177,7 +183,6 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     }
 }
 
-
 // enumerate double and kernel combinations to test
 using parameter_types_double = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
@@ -186,7 +191,7 @@ using parameter_types_double = ::testing::Types<
 
 template <typename T>
 class OpenCL_accuracy : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenCL_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name); // TODO: float parameter_types accuracy
+TYPED_TEST_SUITE(OpenCL_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name);  // TODO: float parameter_types accuracy
 TYPED_TEST(OpenCL_accuracy, accuracy) {
     plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
@@ -203,5 +208,4 @@ TYPED_TEST(OpenCL_accuracy, accuracy) {
     std::filesystem::remove(model_file);
     real_type_csvm_opencl acc = csvm_opencl.accuracy();
     ASSERT_GT(acc, 0.95);
-
 }

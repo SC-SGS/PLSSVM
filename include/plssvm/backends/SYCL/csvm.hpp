@@ -66,7 +66,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    csvm(target_platform target, kernel_type kernel, real_type degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
@@ -100,7 +100,7 @@ class csvm : public ::plssvm::csvm<T> {
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
 
     /// The available/used SYCL devices.
-    std::vector<::sycl::queue> devices_{}; // TODO: rename
+    std::vector<::sycl::queue> devices_{};  // TODO: rename
     /// The number of data points excluding the last data point.
     size_type dept_{};
     /// The boundary size used to remove boundary condition checks inside the kernels.

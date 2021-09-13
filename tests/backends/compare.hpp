@@ -40,7 +40,7 @@ real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real
  * @return the result after applying the kernel function
  */
 template <typename real_type>
-real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, real_type degree, real_type gamma, real_type coef0);
+real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, int degree, real_type gamma, real_type coef0);
 /**
  * @brief Compute the value of te two vectors @p x1 and @p x2 using the polynomial kernel function: \f$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\f$.
  * @tparam real_type the type of the data

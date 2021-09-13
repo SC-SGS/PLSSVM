@@ -39,7 +39,7 @@ __global__ void device_kernel_q_linear(real_type *q, const real_type *data_d, co
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int num_cols, const real_type degree, const real_type gamma, const real_type coef0);
+__global__ void device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int num_cols, const int degree, const real_type gamma, const real_type coef0);
 
 /**
  * @brief Calculates the `q` vector using the radial basis functions C-SVM kernel.

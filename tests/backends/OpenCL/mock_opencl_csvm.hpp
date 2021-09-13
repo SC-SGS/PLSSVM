@@ -8,12 +8,12 @@
  */
 #pragma once
 
+#include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/backends/OpenCL/csvm.hpp"               // plssvm::opencl::csvm
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
-#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                          // plssvm::parameter
-#include "plssvm/target_platform.hpp"                    // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
 #include <vector>  // std::vector
 
@@ -31,7 +31,7 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
 
     explicit mock_opencl_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit mock_opencl_csvm(const plssvm::target_platform target, const plssvm::kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+    explicit mock_opencl_csvm(const plssvm::target_platform target, const plssvm::kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
         base_type{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // make non-virtual functions publicly visible

@@ -108,6 +108,8 @@ The `[optional_options]` can be one or multiple of:
 
 **Attention:** at least one backend must be enabled and available!    
 
+- `PLSSVM_THREAD_BLOCK_SIZE`: set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_INTERNAL_BLOCK_SIZE`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_BUILD_DEPENDENCIES=ON|OFF` (default: `ON`): automatically build all necessary dependencies 
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen

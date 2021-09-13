@@ -22,6 +22,7 @@ pipeline {
             steps {
                 sh '''
                     srun --nodelist="argon-tesla[1,2]" -N 1 -n 1 -t 2-00:00:00 --gres=gpu:1 --mail-type=ALL --mail-user=vancraar  bash -c "\
+                    module load cuda
                     mkdir -p /data/scratch/jenkins/plssvm  && \
                     cd /data/scratch/jenkins/plssvm  && \
                     rm -rf plssvm && \
@@ -29,12 +30,11 @@ pipeline {
                     cd plssvm/SVM && \
                     mkdir -p build/Release && \
                     cd build/Release && \
-                    /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_ENABLE_TESTING=OFF -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_60" ../../ && \
+                    /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_ENABLE_TESTING=OFF -DPLSSVM_TARGET_PLATFORMS=\\"cpu;nvidia:sm_60\\" ../../ && \
                     make -j &&\
                     ./time.sh && \
                     cd ../../../ &&\
-                    rm -rf plssvm && \
-                    "
+                    rm -rf plssvm"
                 '''
             }
         }

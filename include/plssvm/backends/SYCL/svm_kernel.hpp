@@ -95,7 +95,7 @@ class device_kernel_linear {
             // cache data
             for (int vec_index = first_feature_ * num_rows_; vec_index < last_feature_ * num_rows_; vec_index += num_rows_) {
                 ::sycl::group_barrier(nd_idx.get_group());
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
                     const size_type idx = 0;  // TODO: load parallel
                     if (nd_idx.get_local_id(1) == idx) {
@@ -108,25 +108,25 @@ class device_kernel_linear {
                 }
                 ::sycl::group_barrier(nd_idx.get_group());
 
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type data_index = 0; data_index < INTERNAL_BLOCK_SIZE; ++data_index) {
                     data_j[data_index] = data_intern_j_[nd_idx.get_local_id(1)][data_index];
                 }
 
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type l = 0; l < INTERNAL_BLOCK_SIZE; ++l) {
                     const real_type data_i = data_intern_i_[nd_idx.get_local_id(0)][l];
-                    #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                     for (size_type k = 0; k < INTERNAL_BLOCK_SIZE; ++k) {
                         matr[k][l] += data_i * data_j[k];
                     }
                 }
             }
 
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
                 real_type ret_jx = 0.0;
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                     real_type temp;
                     if (first_feature_ == 0) {
@@ -195,7 +195,7 @@ class device_kernel_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_poly(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, real_type QA_cost, real_type cost, int num_rows, int num_cols, int add, real_type degree, real_type gamma, real_type coef0) :
+    device_kernel_poly(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, real_type QA_cost, real_type cost, int num_rows, int num_cols, int add, int degree, real_type gamma, real_type coef0) :
         data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -218,7 +218,7 @@ class device_kernel_poly {
             // cache data
             for (int vec_index = 0; vec_index < num_cols_ * num_rows_; vec_index += num_rows_) {
                 ::sycl::group_barrier(nd_idx.get_group());
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
                     const size_type idx = 0;  // TODO: load parallel
                     if (nd_idx.get_local_id(1) == idx) {
@@ -231,27 +231,27 @@ class device_kernel_poly {
                 }
                 ::sycl::group_barrier(nd_idx.get_group());
 
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type data_index = 0; data_index < INTERNAL_BLOCK_SIZE; ++data_index) {
                     data_j[data_index] = data_intern_j_[nd_idx.get_local_id(1)][data_index];
                 }
 
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type l = 0; l < INTERNAL_BLOCK_SIZE; ++l) {
                     const real_type data_i = data_intern_i_[nd_idx.get_local_id(0)][l];
-                    #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                     for (size_type k = 0; k < INTERNAL_BLOCK_SIZE; ++k) {
                         matr[k][l] += data_i * data_j[k];
                     }
                 }
             }
 
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
                 real_type ret_jx = 0.0;
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
-                    const real_type temp = (::sycl::pow(gamma_ * matr[x][y] + coef0_, degree_) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
+                    const real_type temp = (::sycl::pow(gamma_ * matr[x][y] + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
                     if (i + x > j + y) {
                         // upper triangular matrix
                         atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
@@ -279,7 +279,7 @@ class device_kernel_poly {
     const int num_rows_;
     const int num_cols_;
     const int add_;
-    const real_type degree_;
+    const int degree_;
     const real_type gamma_;
     const real_type coef0_;
 };
@@ -332,7 +332,7 @@ class device_kernel_radial {
             // cache data
             for (int vec_index = 0; vec_index < num_cols_ * num_rows_; vec_index += num_rows_) {
                 ::sycl::group_barrier(nd_idx.get_group());
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
                     const size_type idx = 0;  // TODO: load parallel
                     if (nd_idx.get_local_id(1) == idx) {
@@ -345,25 +345,25 @@ class device_kernel_radial {
                 }
                 ::sycl::group_barrier(nd_idx.get_group());
 
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type data_index = 0; data_index < INTERNAL_BLOCK_SIZE; ++data_index) {
                     data_j[data_index] = data_intern_j_[nd_idx.get_local_id(1)][data_index];
                 }
 
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type l = 0; l < INTERNAL_BLOCK_SIZE; ++l) {
                     const real_type data_i = data_intern_i_[nd_idx.get_local_id(0)][l];
-                    #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                     for (size_type k = 0; k < INTERNAL_BLOCK_SIZE; ++k) {
                         matr[k][l] += (data_i - data_j[k]) * (data_i - data_j[k]);
                     }
                 }
             }
 
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
                 real_type ret_jx = 0.0;
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                     const real_type temp = (::sycl::exp(-gamma_ * matr[x][y]) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
                     if (i + x > j + y) {

@@ -155,6 +155,33 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
 endforeach()
 
 
+## set specific thread block sizes of requested
+if(DEFINED ENV{PLSSVM_THREAD_BLOCK_SIZE})
+    set(PLSSVM_THREAD_BLOCK_SIZE $ENV{PLSSVM_THREAD_BLOCK_SIZE} CACHE STRING "The used thread block size." FORCE)
+endif()
+if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
+    if (PLSSVM_THREAD_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_THREAD_BLOCK_SIZE GREATER 0)
+        # add target definition
+        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
+    else()
+        message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
+    endif()
+endif()
+
+## set specific internal block sizes of requested
+if(DEFINED ENV{PLSSVM_INTERNAL_BLOCK_SIZE})
+    set(PLSSVM_INTERNAL_BLOCK_SIZE $ENV{PLSSVM_INTERNAL_BLOCK_SIZE} CACHE STRING "The used internal block size." FORCE)
+endif()
+if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
+    if (PLSSVM_INTERNAL_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_INTERNAL_BLOCK_SIZE GREATER 0)
+        # add target definition
+        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
+    else()
+        message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
+    endif()
+endif()
+
+
 ## check for OpenMP backend
 set(PLSSVM_ENABLE_OPENMP_BACKEND AUTO CACHE STRING "Enable OpenMP Backend")
 set_property(CACHE PLSSVM_ENABLE_OPENMP_BACKEND PROPERTY STRINGS AUTO ON OFF)

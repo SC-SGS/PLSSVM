@@ -27,7 +27,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
 
 template <typename T>
-csvm<T>::csvm(const target_platform target, const kernel_type kernel, const real_type degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
+csvm<T>::csvm(const target_platform target, const kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
     target_{ target }, kernel_{ kernel }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 }, cost_{ cost }, epsilon_{ epsilon }, print_info_{ print_info } {}
 
 template <typename T>
@@ -38,18 +38,18 @@ void csvm<T>::learn() {
 
     std::vector<real_type> q;
     std::vector<real_type> b = value_;
-    #pragma omp parallel sections
+#pragma omp parallel sections
     {
-        #pragma omp section  // generate q
+#pragma omp section  // generate q
         {
             q = generate_q();
         }
-        #pragma omp section  // generate right-hand side from equation
+#pragma omp section  // generate right-hand side from equation
         {
             b.pop_back();
             b -= value_.back();
         }
-        #pragma omp section  // generate bottom right from A
+#pragma omp section  // generate bottom right from A
         {
             QA_cost_ = kernel_function(data_.back(), data_.back()) + 1 / cost_;
         }
@@ -77,14 +77,14 @@ void csvm<T>::learn() {
 }
 
 template <typename T>
-auto csvm<T>::predict(std::vector<real_type>& point) -> real_type{
+auto csvm<T>::predict(std::vector<real_type> &point) -> real_type {
     using namespace plssvm::operators;
     PLSSVM_ASSERT(data_.size() > 0, "No model or trainingsdata read");
-    PLSSVM_ASSERT(data_[0].size() ==  point.size(), "Prediction point has different amount of features than training data");
+    PLSSVM_ASSERT(data_[0].size() == point.size(), "Prediction point has different amount of features than training data");
     PLSSVM_ASSERT(alpha_.size() == data_.size(), "Model does not fit the training data");
 
     real_type temp = bias_;
-    for (size_type data_index = 0; data_index < data_.size(); ++data_index){
+    for (size_type data_index = 0; data_index < data_.size(); ++data_index) {
         temp += alpha_[data_index] * kernel_function(data_[data_index], point);
     }
     // return sign(temp); // If predict should return +- 1
@@ -92,12 +92,12 @@ auto csvm<T>::predict(std::vector<real_type>& point) -> real_type{
 }
 
 template <typename T>
-auto csvm<T>::accuracy() -> real_type  {
+auto csvm<T>::accuracy() -> real_type {
     using namespace plssvm::operators;
 
     int correct = 0;
-    for (size_type dat = 0; dat < data_.size(); ++dat){
-        if ( predict(data_[dat]) * value_[dat] > 0.0){
+    for (size_type dat = 0; dat < data_.size(); ++dat) {
+        if (predict(data_[dat]) * value_[dat] > 0.0) {
             ++correct;
         }
     }
@@ -138,7 +138,7 @@ auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type>
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (size_type col = 0; col < num_features_; ++col) {
         for (size_type row = 0; row < num_data_points_ - 1; ++row) {
             vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];

@@ -81,7 +81,7 @@ class device_kernel_q_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols, real_type degree, real_type gamma, real_type coef0) :
+    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols, int degree, real_type gamma, real_type coef0) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -95,7 +95,7 @@ class device_kernel_q_poly {
         for (int i = 0; i < num_cols_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
         }
-        q_[index] = ::sycl::pow(gamma_ * temp + coef0_, degree_);
+        q_[index] = ::sycl::pow(gamma_ * temp + coef0_, static_cast<real_type>(degree_));
     }
 
   private:
@@ -104,7 +104,7 @@ class device_kernel_q_poly {
     const real_type *data_last_;
     const int num_rows_;
     const int num_cols_;
-    const real_type degree_;
+    const int degree_;
     const real_type gamma_;
     const real_type coef0_;
 };
