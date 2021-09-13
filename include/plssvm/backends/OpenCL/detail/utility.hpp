@@ -121,7 +121,7 @@ std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queu
 
     // build kernels
     std::vector<detail::kernel> kernels;
-    for (const command_queue &q : queues) {
+    for ([[maybe_unused]] const command_queue &q : queues) {
         // create kernel
         kernels.emplace_back(clCreateKernel(program, kernel_name.c_str(), &err));
         if (!err) {

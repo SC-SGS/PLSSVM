@@ -84,12 +84,12 @@ class device_kernel_linear {
         size_type i = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
         size_type j = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
-        real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+        real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = {{ 0.0 }};
         real_type data_j[INTERNAL_BLOCK_SIZE];
 
         if (i >= j) {
             i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
-            const size_type ji = j + nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
+            //const size_type ji = j + nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
             j += nd_idx.get_local_id(1) * INTERNAL_BLOCK_SIZE;
 
             // cache data
@@ -207,12 +207,12 @@ class device_kernel_poly {
         size_type i = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
         size_type j = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
-        real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+        real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = {{ 0.0 }};
         real_type data_j[INTERNAL_BLOCK_SIZE];
 
         if (i >= j) {
             i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
-            const size_type ji = j + nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
+            //const size_type ji = j + nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
             j += nd_idx.get_local_id(1) * INTERNAL_BLOCK_SIZE;
 
             // cache data
@@ -321,12 +321,12 @@ class device_kernel_radial {
         size_type i = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
         size_type j = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
-        real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+        real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = {{ 0.0 }};
         real_type data_j[INTERNAL_BLOCK_SIZE];
 
         if (i >= j) {
             i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
-            const size_type ji = j + nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
+            //const size_type ji = j + nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
             j += nd_idx.get_local_id(1) * INTERNAL_BLOCK_SIZE;
 
             // cache data

@@ -131,7 +131,7 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     csvm.parse_libsvm(params.input_filename);
 
     const size_type dept = csvm.get_num_data_points() - 1;
-    const size_type num_features = csvm.get_num_features();
+    // const size_type num_features = csvm.get_num_features();
 
     // create x vector and fill it with random values
     std::vector<real_type> x(dept);

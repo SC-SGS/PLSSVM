@@ -166,30 +166,18 @@ template <typename T>
 
 
 /**
-* @copydoc inline constexpr int sign(T x)
- */
-template <typename T>
-[[nodiscard]] inline constexpr int sign(T x, std::false_type is_signed) {
-    return T(0) < x;
-}
-
-/**
-* @copydoc inline constexpr int sign(T x)
- */
-template <typename T>
-[[nodiscard]] inline constexpr int sign(T x, std::true_type is_signed) {
-    return (T(0) < x) - (x < T(0));
-}
-
-/**
  * @brief Returns +1 if x is positive and -1 if x is negative.
  *
  * @param x the number parameter to evaluate
  * @return constexpr int +1 if x is positive and -1 if x is negative.
  */
 template <typename T>
-[[nodiscard]] inline constexpr int sign(T x) {
-    return sign(x, std::is_signed<T>());
+[[nodiscard]] inline constexpr int sign(const T x) {
+    if constexpr (std::is_signed<T>()) {
+        return (T{ 0 } < x) - (x < T{ 0 });
+    } else {
+        return T{ 0 } < x;
+    }
 }
 
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
