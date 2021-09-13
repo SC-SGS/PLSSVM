@@ -51,7 +51,7 @@ pipeline {
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release  -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" ../../
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" ../../
                         make -j4
                     '''
                 }
@@ -63,6 +63,70 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda
+                            cd SVM/build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        stage('build plssvm hipSYCL Release') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        module use /home/breyerml/.modulefiles/
+                        module load pcsgs05/hipsycl
+                        cd SVM
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('run tests hipSYCL Release') {
+            steps {
+                dir('plssvm') {
+                    warnError('hipSYCL Release tests failed!') {
+                        sh '''
+                            module load cuda
+                            module use /home/breyerml/.modulefiles/
+                            module load pcsgs05/hipsycl
+                            cd SVM/build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        stage('build plssvm DPC++ Release') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        module use /home/breyerml/.modulefiles/
+                        module load pcsgs05/dpcpp
+                        cd SVM
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('run tests DPC++ Release') {
+            steps {
+                dir('plssvm') {
+                    warnError('DPC++ Release tests failed!') {
+                        sh '''
+                            module load cuda
+                            module use /home/breyerml/.modulefiles/
+                            module load pcsgs05/dpcpp
                             cd SVM/build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -91,6 +155,70 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda
+                            cd SVM/build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        stage('build plssvm hipSYCL Debug') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        module use /home/breyerml/.modulefiles/
+                        module load pcsgs05/hipsycl
+                        cd SVM
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('run tests hipSYCL Debug') {
+            steps {
+                dir('plssvm') {
+                    warnError('hipSYCL Debug tests failed!') {
+                        sh '''
+                            module load cuda
+                            module use /home/breyerml/.modulefiles/
+                            module load pcsgs05/hipsycl
+                            cd SVM/build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        stage('build plssvm DPC++ Debug') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        module load cuda
+                        module use /home/breyerml/.modulefiles/
+                        module load pcsgs05/dpcpp
+                        cd SVM
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('run tests DPC++ Debug') {
+            steps {
+                dir('plssvm') {
+                    warnError('DPC++ Debug tests failed!') {
+                        sh '''
+                            module load cuda
+                            module use /home/breyerml/.modulefiles/
+                            module load pcsgs05/dpcpp
                             cd SVM/build/Debug
                             ctest -j4 --no-compress-output -T Test
                         '''
