@@ -79,9 +79,9 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
-            GIT_TAG                 9e8b86fd2d9806672cc73133d21780dd182bfd24
+            GIT_TAG                 d141cdbeb0fb422a3fb7173b285fd38e0d1772dc
             GIT_SHALLOW             TRUE
-
+            
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
             set(FMT_DOC OFF CACHE BOOL "" FORCE)
             set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
@@ -96,6 +96,11 @@ else()
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
+
+
+## additional base library compile options
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
+#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -ffast-math)
 
 
 ## create main executable
