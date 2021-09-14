@@ -6,8 +6,6 @@
 
 #include "plssvm/parameter_train.hpp"
 
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-
 #include "cxxopts.hpp"  // command line parsing
 #include "fmt/core.h"   // fmt::print, fmt::format
 

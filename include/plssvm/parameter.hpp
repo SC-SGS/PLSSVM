@@ -21,7 +21,7 @@
 namespace plssvm {
 
 /**
- * @brief Class encapsulating all necessary parameters possibly provided through command line arguments.
+ * @brief Base class for encapsulating all necessary parameters possibly provided through command line arguments.
  * @tparam T the type of the data
  */
 template <typename T>
@@ -65,6 +65,7 @@ class parameter {
     std::string predict_filename;
 };
 
+// Default pure virtual destructor.
 template <typename T>
 parameter<T>::~parameter() = default;
 
