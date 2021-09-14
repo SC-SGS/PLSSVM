@@ -50,9 +50,10 @@ TYPED_TEST(OpenCL_base, write_model) {
 
     // create temporary model file
     std::string model_file = util::create_temp_file();
-
-    // learn
-    csvm.learn(params.input_filename, model_file);
+    // learn model
+    csvm.learn();
+    // write learned model to file
+    csvm.write_model(model_file);
 
     // read content of model file and delete it
     std::ifstream model_ifs(model_file);
@@ -91,7 +92,6 @@ TYPED_TEST(OpenCL_generate_q, generate_q) {
     using real_type_csvm = typename decltype(csvm)::real_type;
 
     // parse libsvm file and calculate q vector
-    csvm.parse_libsvm(params.input_filename);
     const std::vector<real_type_csvm> correct = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
 
     // setup OpenCL C-SVM
@@ -102,7 +102,6 @@ TYPED_TEST(OpenCL_generate_q, generate_q) {
     ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_opencl>();
 
     // parse libsvm file and calculate q vector
-    csvm_opencl.parse_libsvm(params.input_filename);
     csvm_opencl.setup_data_on_device();
     const std::vector<real_type_csvm_opencl> calculated = csvm_opencl.generate_q();
 
@@ -127,9 +126,6 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
-    // parse libsvm file
-    csvm.parse_libsvm(params.input_filename);
-
     const size_type dept = csvm.get_num_data_points() - 1;
     // const size_type num_features = csvm.get_num_features();
 
@@ -147,9 +143,6 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
 
     // setup OpenCL C-SVM
     mock_opencl_csvm csvm_opencl{ params };
-
-    // parse libsvm file
-    csvm_opencl.parse_libsvm(params.input_filename);
 
     // setup data on device
     csvm_opencl.setup_data_on_device();
@@ -197,15 +190,14 @@ TYPED_TEST(OpenCL_accuracy, accuracy) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
     params.epsilon = 0.0000000001;
+
     // setup OpenCL C-SVM
     mock_opencl_csvm csvm_opencl{ params };
     using real_type_csvm_opencl = typename decltype(csvm_opencl)::real_type;
-    // create temporary model file
-    std::string model_file = util::create_temp_file();
+
     // learn
-    csvm_opencl.learn(params.input_filename, model_file);
-    // delete model file
-    std::filesystem::remove(model_file);
+    csvm_opencl.learn();
+
     real_type_csvm_opencl acc = csvm_opencl.accuracy();
     ASSERT_GT(acc, 0.95);
 }

@@ -31,14 +31,13 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
 
     explicit mock_opencl_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit mock_opencl_csvm(const plssvm::target_platform target, const plssvm::kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-        base_type{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // make non-virtual functions publicly visible
     using base_type::generate_q;
     using base_type::learn;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
+    using base_type::write_model;
 
     // parameter setter
     void set_cost(const real_type cost) { cost_ = cost; }
