@@ -31,11 +31,7 @@ namespace plssvm::cuda {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
-
-template <typename T>
-csvm<T>::csvm(const target_platform target, const kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-    ::plssvm::csvm<T>{ target, kernel, degree, gamma, coef0, cost, epsilon, print_info } {
+    ::plssvm::csvm<T>{ params } {
     // check if supported target platform has been selected
     if (target_ != target_platform::automatic && target_ != target_platform::gpu_nvidia) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target_) };
@@ -105,7 +101,7 @@ void csvm<T>::setup_data_on_device() {
     #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         data_last_d_[device].memset(0);
-        data_last_d_[device].memcpy_to_device(data_[num_data_points_ - 1], 0, num_features_);
+        data_last_d_[device].memcpy_to_device((*data_ptr_)[num_data_points_ - 1], 0, num_features_);
     }
 
     // initialize data on devices
@@ -357,11 +353,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
     }
 
-    alpha_.assign(x.begin(), x.begin() + dept_);
-    // alpha_.resize(dept);
-    // x_d[0].memcpy_to_host(alpha_, 0, dept);
-
-    return alpha_;
+    return std::vector<real_type>(x.begin(), x.begin() + dept_);
 }
 
 template class csvm<float>;

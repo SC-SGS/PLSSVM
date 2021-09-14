@@ -52,9 +52,10 @@ TYPED_TEST(CUDA_base, write_model) {
 
     // create temporary model file
     std::string model_file = util::create_temp_file();
-
-    // learn
-    csvm.learn(params.input_filename, model_file);
+    // learn model
+    csvm.learn();
+    // write learned model to file
+    csvm.write_model(model_file);
 
     // read content of model file and delete it
     std::ifstream model_ifs(model_file);
@@ -92,8 +93,7 @@ TYPED_TEST(CUDA_generate_q, generate_q) {
     mock_csvm csvm{ params };
     using real_type_csvm = typename decltype(csvm)::real_type;
 
-    // parse libsvm file and calculate q vector
-    csvm.parse_libsvm(params.input_filename);
+    // calculate q vector
     const std::vector<real_type_csvm> correct = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
 
     // setup CUDA C-SVM
@@ -103,8 +103,7 @@ TYPED_TEST(CUDA_generate_q, generate_q) {
     // check real_types
     ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_cuda>();
 
-    // parse libsvm file and calculate q vector
-    csvm_cuda.parse_libsvm(params.input_filename);
+    // calculate q vector
     csvm_cuda.setup_data_on_device();
     const std::vector<real_type_csvm_cuda> calculated = csvm_cuda.generate_q();
 
@@ -129,9 +128,6 @@ TYPED_TEST(CUDA_device_kernel, device_kernel) {
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
-    // parse libsvm file
-    csvm.parse_libsvm(params.input_filename);
-
     const size_type dept = csvm.get_num_data_points() - 1;
 
     // create x vector and fill it with random values
@@ -148,9 +144,6 @@ TYPED_TEST(CUDA_device_kernel, device_kernel) {
 
     // setup CUDA C-SVM
     mock_cuda_csvm csvm_cuda{ params };
-
-    // parse libsvm file
-    csvm_cuda.parse_libsvm(params.input_filename);
 
     // setup data on device
     csvm_cuda.setup_data_on_device();
@@ -196,15 +189,14 @@ TYPED_TEST(CUDA_accuracy, accuracy) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
     params.epsilon = 0.0000000001;
+
     // setup CUDA C-SVM
     mock_cuda_csvm csvm_cuda{ params };
     using real_type_csvm_cuda = typename decltype(csvm_cuda)::real_type;
-    // create temporary model file
-    std::string model_file = util::create_temp_file();
+
     // learn
-    csvm_cuda.learn(params.input_filename, model_file);
-    // delete model file
-    std::filesystem::remove(model_file);
+    csvm_cuda.learn();
+
     real_type_csvm_cuda acc = csvm_cuda.accuracy();
     ASSERT_GT(acc, 0.95);
 }

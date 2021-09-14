@@ -91,6 +91,7 @@ TYPED_TEST(OpenMP_generate_q, generate_q) {
     mock_csvm csvm{ params };
     using real_type_csvm = typename decltype(csvm)::real_type;
 
+    // calculate q vector
     const std::vector<real_type_csvm> correct = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
 
     // setup OpenMP C-SVM
