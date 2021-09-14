@@ -53,9 +53,10 @@ TYPED_TEST(SYCL_base, write_model) {
 
     // create temporary model file
     std::string model_file = util::create_temp_file();
-
-    // learn
-    csvm.learn(params.input_filename, model_file);
+    // learn model
+    csvm.learn();
+    // write learned model to file
+    csvm.write_model(model_file);
 
     // read content of model file and delete it
     std::ifstream model_ifs(model_file);
@@ -94,7 +95,6 @@ TYPED_TEST(SYCL_generate_q, generate_q) {
     using real_type_csvm = typename decltype(csvm)::real_type;
 
     // parse libsvm file and calculate q vector
-    csvm.parse_libsvm(params.input_filename);
     const std::vector<real_type_csvm> correct = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
 
     // setup SYCL C-SVM
@@ -105,7 +105,6 @@ TYPED_TEST(SYCL_generate_q, generate_q) {
     ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_sycl>();
 
     // parse libsvm file and calculate q vector
-    csvm_sycl.parse_libsvm(params.input_filename);
     csvm_sycl.setup_data_on_device();
     const std::vector<real_type_csvm_sycl> calculated = csvm_sycl.generate_q();
 
@@ -130,9 +129,6 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
-    // parse libsvm file
-    csvm.parse_libsvm(params.input_filename);
-
     const size_type dept = csvm.get_num_data_points() - 1;
 
     // create x vector and fill it with random values
@@ -149,9 +145,6 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
 
     // setup SYCL C-SVM
     mock_sycl_csvm csvm_sycl{ params };
-
-    // parse libsvm file
-    csvm_sycl.parse_libsvm(params.input_filename);
 
     // setup data on device
     csvm_sycl.setup_data_on_device();
@@ -186,4 +179,28 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     }
 }
 
-//TODO: accuracy test
+// enumerate all type and kernel combinations to test
+using parameter_types_double = ::testing::Types<
+    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
+    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
+
+template <typename T>
+class SYCL_accuracy : public ::testing::Test {};
+TYPED_TEST_SUITE(SYCL_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name);  // TODO: float parameter_types accuracy
+TYPED_TEST(SYCL_accuracy, accuracy) {
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+    params.epsilon = 0.0000000001;
+
+    // setup SYCL C-SVM
+    mock_sycl_csvm csvm_sycl{ params };
+    using real_type_csvm_sycl = typename decltype(csvm_sycl)::real_type;
+
+    // learn
+    csvm_sycl.learn();
+
+    real_type_csvm_sycl acc = csvm_sycl.accuracy();
+    ASSERT_GT(acc, 0.95);
+}

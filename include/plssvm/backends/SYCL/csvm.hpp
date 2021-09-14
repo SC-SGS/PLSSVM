@@ -31,10 +31,10 @@ class csvm : public ::plssvm::csvm<T> {
     // protected for the test MOCK class
     /// The template base type of the SYCL C-SVM class.
     using base_type = ::plssvm::csvm<T>;
-    using base_type::alpha_;
+    using base_type::alpha_ptr_;
     using base_type::coef0_;
     using base_type::cost_;
-    using base_type::data_;
+    using base_type::data_ptr_;
     using base_type::degree_;
     using base_type::gamma_;
     using base_type::kernel_;
@@ -55,18 +55,6 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] params struct encapsulating all possible parameters
      */
     explicit csvm(const parameter<T> &params);
-    /**
-     * @brief Construct an new C-SVM using the SYCL backend explicitly specifying all necessary parameters.
-     * @param[in] target the target platform
-     * @param[in] kernel the type of the kernel function
-     * @param[in] degree parameter used in the polynomial kernel function
-     * @param[in] gamma parameter used in the polynomial and rbf kernel functions
-     * @param[in] coef0 parameter use din the polynomial kernel function
-     * @param[in] cost parameter of the C-SVM
-     * @param[in] epsilon error tolerance in the CG algorithm
-     * @param[in] print_info if `true` additional information will be printed during execution
-     */
-    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
