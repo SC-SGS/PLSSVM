@@ -15,7 +15,8 @@
 #include "plssvm/csvm.hpp"
 #include "plssvm/exceptions/exceptions.hpp"
 #include "plssvm/kernel_types.hpp"
-#include "plssvm/parameter.hpp"
+#include "plssvm/parameter_predict.hpp"
+#include "plssvm/parameter_train.hpp"
 #include "plssvm/version/version.hpp"
 
 /// The main namespace containing all API functions.

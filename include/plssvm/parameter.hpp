@@ -4,7 +4,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief Implements a class encapsulating all necessary parameters possibly provided through command line arguments.
+ * @brief Implements the base class encapsulating all necessary parameters.
  */
 
 #pragma once
@@ -35,18 +35,8 @@ class parameter {
     /// Unsigned integer type.
     using size_type = std::size_t;
 
-    /**
-     * @brief Set all parameters to their default values.
-     * @param[in] input_filename the name of the data file
-     */
-    explicit parameter(std::string input_filename);
-
-    /**
-     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the parameters accordingly.
-     * @param[in] argc the number of passed command line arguments
-     * @param[in] argv the command line arguments
-     */
-    parameter(int argc, char **argv);
+    /// Pure virtual, default destructor.
+    virtual ~parameter() = 0;
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     kernel_type kernel = kernel_type::linear;
@@ -71,13 +61,12 @@ class parameter {
     std::string input_filename;
     /// The name of the model file to write the learned Support Vectors to.
     std::string model_filename;
-
-  private:
-    /*
-     * Generate model filename based on the name of the input file.
-     */
-    void model_name_from_input();
+    /// The name of the file to write the prediction to.
+    std::string predict_filename;
 };
+
+template <typename T>
+parameter<T>::~parameter() = default;
 
 extern template class parameter<float>;
 extern template class parameter<double>;

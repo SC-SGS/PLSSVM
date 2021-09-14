@@ -18,6 +18,8 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/csvm_IO.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter_train.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter_predict.cpp
 )
 
 ## create base library
@@ -81,7 +83,7 @@ if(PLSSVM_BUILD_DEPENDENCIES)
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
             GIT_TAG                 d141cdbeb0fb422a3fb7173b285fd38e0d1772dc
             GIT_SHALLOW             TRUE
-            
+
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
             set(FMT_DOC OFF CACHE BOOL "" FORCE)
             set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
@@ -105,7 +107,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
 
 ## create main executable
 set(PLSSVM_EXECUTABLE_NAME svm-train)
-add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp)
+add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
 
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name

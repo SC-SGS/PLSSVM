@@ -15,7 +15,7 @@
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/parameter_train.hpp"                       // plssvm::parameter
 
 #include <cmath>       // std::abs
 #include <cstddef>     // std::size_t
@@ -42,7 +42,7 @@ TYPED_TEST_SUITE(OpenCL_base, parameter_types);
 
 TYPED_TEST(OpenCL_base, write_model) {
     // setup OpenCL C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -83,7 +83,7 @@ TYPED_TEST_SUITE(OpenCL_generate_q, parameter_types, util::google_test::paramete
 
 TYPED_TEST(OpenCL_generate_q, generate_q) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -119,7 +119,7 @@ TYPED_TEST_SUITE(OpenCL_device_kernel, parameter_types, util::google_test::param
 
 TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -193,7 +193,7 @@ template <typename T>
 class OpenCL_accuracy : public ::testing::Test {};
 TYPED_TEST_SUITE(OpenCL_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name);  // TODO: float parameter_types accuracy
 TYPED_TEST(OpenCL_accuracy, accuracy) {
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
     params.epsilon = 0.0000000001;

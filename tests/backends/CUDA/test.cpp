@@ -15,7 +15,7 @@
 #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm
 #include "plssvm/constants.hpp"           // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/kernel_types.hpp"        // plssvm::kernel_type
-#include "plssvm/parameter.hpp"           // plssvm::parameter
+#include "plssvm/parameter_train.hpp"     // plssvm::parameter
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
@@ -44,7 +44,7 @@ TYPED_TEST_SUITE(CUDA_base, parameter_types);
 
 TYPED_TEST(CUDA_base, write_model) {
     // setup CUDA C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -85,7 +85,7 @@ TYPED_TEST_SUITE(CUDA_generate_q, parameter_types, util::google_test::parameter_
 
 TYPED_TEST(CUDA_generate_q, generate_q) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -121,7 +121,7 @@ TYPED_TEST_SUITE(CUDA_device_kernel, parameter_types, util::google_test::paramet
 
 TYPED_TEST(CUDA_device_kernel, device_kernel) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -190,9 +190,9 @@ using parameter_types_double = ::testing::Types<
 
 template <typename T>
 class CUDA_accuracy : public ::testing::Test {};
-TYPED_TEST_SUITE(CUDA_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name); // TODO: float parameter_types accuracy
+TYPED_TEST_SUITE(CUDA_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name);  // TODO: float parameter_types accuracy
 TYPED_TEST(CUDA_accuracy, accuracy) {
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
     params.epsilon = 0.0000000001;
@@ -207,5 +207,4 @@ TYPED_TEST(CUDA_accuracy, accuracy) {
     std::filesystem::remove(model_file);
     real_type_csvm_cuda acc = csvm_cuda.accuracy();
     ASSERT_GT(acc, 0.95);
-
 }

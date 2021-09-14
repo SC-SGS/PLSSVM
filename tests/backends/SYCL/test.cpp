@@ -16,7 +16,7 @@
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::deteil::device_ptr
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/parameter_train.hpp"                  // plssvm::parameter
 
 #include "sycl/sycl.hpp"  // SYCL stuff
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
@@ -45,7 +45,7 @@ TYPED_TEST_SUITE(SYCL_base, parameter_types);
 
 TYPED_TEST(SYCL_base, write_model) {
     // setup SYCL C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -86,7 +86,7 @@ TYPED_TEST_SUITE(SYCL_generate_q, parameter_types, util::google_test::parameter_
 
 TYPED_TEST(SYCL_generate_q, generate_q) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -122,7 +122,7 @@ TYPED_TEST_SUITE(SYCL_device_kernel, parameter_types, util::google_test::paramet
 
 TYPED_TEST(SYCL_device_kernel, device_kernel) {
     // setup C-SVM
-    plssvm::parameter<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
