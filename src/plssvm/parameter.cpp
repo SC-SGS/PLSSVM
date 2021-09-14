@@ -17,18 +17,19 @@ namespace plssvm {
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
     return out << fmt::format(
-               "kernel_type     {}\n"
-               "degree          {}\n"
-               "gamma           {}\n"
-               "coef0           {}\n"
-               "cost            {}\n"
-               "epsilon         {}\n"
-               "print_info      {}\n"
-               "backend         {}\n"
-               "target platform {}\n"
-               "input_filename  {}\n"
-               "model_filename  {}\n"
-               "real_type       {}\n",
+               "kernel_type      {}\n"
+               "degree           {}\n"
+               "gamma            {}\n"
+               "coef0            {}\n"
+               "cost             {}\n"
+               "epsilon          {}\n"
+               "print_info       {}\n"
+               "backend          {}\n"
+               "target platform  {}\n"
+               "input_filename   {}\n"
+               "model_filename   {}\n"
+               "predict_filename {}\n"
+               "real_type        {}\n",
                params.kernel,
                params.degree,
                params.gamma,
