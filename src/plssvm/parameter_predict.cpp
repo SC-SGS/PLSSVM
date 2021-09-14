@@ -100,6 +100,8 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
     } else {
         predict_name_from_input();
     }
+
+    // TODO: parse other parameters
 }
 
 template <typename T>
