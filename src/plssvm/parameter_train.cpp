@@ -23,6 +23,8 @@ template <typename T>
 parameter_train<T>::parameter_train(std::string input_filename) {
     base_type::input_filename = std::move(input_filename);
     model_name_from_input();
+
+    base_type::parse_file(base_type::input_filename);
 }
 
 template <typename T>
@@ -123,6 +125,8 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     } else {
         model_name_from_input();
     }
+
+    base_type::parse_file(input_filename);
 }
 
 template <typename T>

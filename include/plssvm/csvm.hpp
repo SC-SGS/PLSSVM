@@ -14,6 +14,7 @@
 #include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
+#include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
@@ -54,7 +55,7 @@ class csvm {
      * @param[in] epsilon error tolerance in the CG algorithm
      * @param[in] print_info if `true` additional information will be printed during execution
      */
-    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
+    //    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Virtual destructor to enable safe inheritance.
@@ -75,87 +76,7 @@ class csvm {
     //*************************************************************************************************************************************//
     //                                                             IO functions                                                            //
     //*************************************************************************************************************************************//
-    /**
-     * @brief Parse a file in the [libsvm sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
-     * @details The sparse libsvm file format saves each data point with its respective class as follows:
-     * @code
-     * <label> <index1>:<value1> <index2>:<value2> ... <indexN>:<valueN>
-     * @endcode
-     * Only non-empty lines that don't start with `#` (= optional comments) are parsed.
-     *
-     * An example libsvm file could look as follows:
-     * @code
-     * # this is a comment
-     *  1 1:1.29801019287324655 2:0.51687296029754564
-     * -1 1:1.01405596624706053
-     * -1 1:0.60276937379453293 3:-0.13086851759108944
-     * -1 2:0.298499933047586044 # this is also a comment
-     * @endcode
-     *
-     * Be aware that the parsed output is **always** in a dense format. The above file for example will be parsed to a
-     * @code
-     * std::vector<std::vector<real_type>> data = {
-     *   { 1.29801019287324655, 0.51687296029754564, 0.0 },
-     *   { 1.01405596624706053, 0.0, 0.0 },
-     *   { 0.60276937379453293, 0.0, -0.13086851759108944 },
-     *   { 0.0, 0.298499933047586044, 0.0 }
-     * }
-     * @endcode
-     *
-     * If possible, uses a memory mapped file internally to speed up the file parsing.
-     * @param[in] filename name of the libsvm file to parse
-     */
-    void parse_libsvm(const std::string &filename);
-    /**
-     * @brief Parse a file in the [arff file format](https://www.cs.waikato.ac.nz/ml/weka/arff.html).
-     * @details The arff file format saves each data point with its respective class as follows:
-     * @code
-     * <value1>,<value2>,...,<valueN>,<label>
-     * @endcode
-     * Additionally, the sparse arff file format (or a mix of both) is also supported:
-     * @code
-     * {<index1> <value1>, <index2> <value2>, <label>}
-     * @endcode
-     * Only non-empty lines that don't start with `%` (= optional comments) are parsed.
-     *
-     * An example arff file could look as follows:
-     * @code
-     * % Title
-     * % comments
-     * @RELATION name
-     * @ATTRIBUTE first    NUMERIC
-     * @ATTRIBUTE second   numeric
-     * @ATTRIBUTE third    Numeric
-     * @ATTRIBUTE fourth   NUMERIC
-     * @ATTRIBUTE class    NUMERIC
-     *
-     * @DATA
-     * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1
-     * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1
-     * {1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}
-     * {0 1.88494043717792, 1 1.00518564317278263, 2 0.298499933047586044, 3 1.6464627048813514, 4 -1}
-     * @endcode
-     * The necessary arff header values must be present and the type of the `@ATTRIBUTE` tags must be `NUMERIC`.
-     *
-     * Be aware that the parsed output is **always** in a dense format. The above file for example will be parsed to a
-     * @code
-     * std::vector<std::vector<real_type>> data = {
-     *   { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
-     *   { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
-     *   { 0.0, 0.60276937379453293, -0.13086851759108944, 0.0 },
-     *   { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 }
-     * }
-     * @endcode
-     *
-     * If possible, uses a memory mapped file internally to speed up the file parsing.
-     * @param[in] filename name of the arff file to parse
-     */
-    void parse_arff(const std::string &filename);
-    /**
-     * @brief Parse the given file. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
-     * @param[in] filename name of the file to parse
-     */
-    void parse_file(const std::string &filename);
+
     /**
      * @brief Write the calculated model to the given file.
      * @details Writes the model using the libsvm format:
@@ -192,20 +113,19 @@ class csvm {
      * @param[in] input_filename name of the data file to parse
      * @param[in] model_filename name of the model file to write the model information to
      */
-    void learn(const std::string &input_filename, const std::string &model_filename);
+    void learn();
+    // TODO: absolute vs relative residual
 
     //*************************************************************************************************************************************//
     //                                                               predict                                                               //
     //*************************************************************************************************************************************//
-    // TODO: protected?
-    // virtual std::vector<real_type> predict(real_type *, size_type, size_type) = 0;
 
     /**
      * @brief Evaluates the model on the data used for training.
      *
      * @return real_type The fraction of correct labeled training data
      */
-    real_type accuracy();
+    real_type accuracy();  // TODO: move to predict
 
     /**
      * @brief Uses the already learned model to predict the class of an (new) point
@@ -213,14 +133,11 @@ class csvm {
      * @param point the point to predict
      * @return real_type a negative value if the prediction for point is the negativ class and vice versa
      */
-    real_type predict(std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
+    real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
+
+    //    std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
 
   protected:
-    /**
-     * @brief Learns the Support Vectors previously parsed.
-     * @details Learn the model by solving a minimization problem using the Conjugated Gradients algorithm.
-     */
-    void learn();
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
@@ -289,6 +206,13 @@ class csvm {
     /// If `true` additional information (e.g. timing information) will be printed during execution.
     const bool print_info_;
 
+    /// The data used the train the SVM.
+    const std::shared_ptr<const std::vector<std::vector<real_type>>> data_ptr_{};
+    /// The labels associated to each data point.
+    std::shared_ptr<const std::vector<real_type>> value_ptr_{};
+    /// The result of the CG calculation.
+    std::shared_ptr<const std::vector<real_type>> alpha_ptr_{};
+
     //*************************************************************************************************************************************//
     //                                                         internal variables                                                          //
     //*************************************************************************************************************************************//
@@ -296,16 +220,10 @@ class csvm {
     size_type num_data_points_{};
     /// The number of features per data point.
     size_type num_features_{};
-    /// The data used the train the SVM.
-    std::vector<std::vector<real_type>> data_{};
-    /// The labels associated to each data point.
-    std::vector<real_type> value_{};
     /// The bias after learning.
     real_type bias_{};
     /// The bottom right matrix entry multiplied by cost.
     real_type QA_cost_{};
-    /// The result of the CG calculation.
-    std::vector<real_type> alpha_{};
     /// TODO:doxygen
     std::vector<real_type> w_{};
 };

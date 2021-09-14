@@ -28,10 +28,10 @@ class csvm : public ::plssvm::csvm<T> {
     // protected for test mock class
     /// The template base type of the OpenMP C-SVM class.
     using base_type = ::plssvm::csvm<T>;
-    using base_type::alpha_;
+    using base_type::alpha_ptr_;
     using base_type::coef0_;
     using base_type::cost_;
-    using base_type::data_;
+    using base_type::data_ptr_;
     using base_type::degree_;
     using base_type::gamma_;
     using base_type::kernel_;
@@ -52,20 +52,6 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] params struct encapsulating all possible parameters
      */
     explicit csvm(const parameter<T> &params);
-    /**
-     * @brief Construct an new C-SVM using the OpenMP backend explicitly specifying all necessary parameters.
-     * @param[in] target the target platform
-     * @param[in] kernel the type of the kernel function
-     * @param[in] degree parameter used in the polynomial kernel function
-     * @param[in] gamma parameter used in the polynomial and rbf kernel functions
-     * @param[in] coef0 parameter use din the polynomial kernel function
-     * @param[in] cost parameter of the C-SVM
-     * @param[in] epsilon error tolerance in the CG algorithm
-     * @param[in] print_info if `true` additional information will be printed during execution
-     */
-    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
-
-    // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
 
   protected:
     void setup_data_on_device() override {

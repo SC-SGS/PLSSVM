@@ -23,6 +23,7 @@
 #include <filesystem>  // std::filesystem::remove
 #include <fstream>     // std::ifstream
 #include <iterator>    // std::istreambuf_iterator
+#include <memory>      // std::make_shared
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <string>      // std::string
 #include <vector>      // std::vector
@@ -41,9 +42,6 @@ TYPED_TEST(BASE, parse_libsvm) {
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
-
-    // parse libsvm file
-    csvm.parse_libsvm(params.input_filename);
 
     // check if sizes match
     ASSERT_EQ(csvm.get_num_data_points(), 5);
@@ -79,9 +77,6 @@ TYPED_TEST(BASE, parse_libsvm_sparse) {
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
-    // parse sparse libsvm file
-    csvm.parse_libsvm(params.input_filename);
-
     // check if sizes match
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -116,9 +111,6 @@ TYPED_TEST(BASE, parse_arff) {
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
-    // parse arff file
-    csvm.parse_arff(params.input_filename);
-
     // check if sizes match
     ASSERT_EQ(csvm.get_num_data_points(), 5);
     ASSERT_EQ(csvm.get_num_features(), 4);
@@ -145,46 +137,48 @@ TYPED_TEST(BASE, parse_arff) {
 }
 
 TYPED_TEST(BASE, parse_libsvm_gamma) {
-    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<TypeParam> params;
+    params.input_filename = TEST_PATH "/data/5x4.libsvm";
     params.print_info = false;
 
     // gamma = 1.0 (!= 0.0)
     params.gamma = 1.0;
+    params.parse_libsvm(params.input_filename);
     mock_csvm csvm_gamma{ params };
     using real_type_gamma = typename decltype(csvm_gamma)::real_type;
-    csvm_gamma.parse_libsvm(params.input_filename);
     ASSERT_EQ(csvm_gamma.get_num_data_points(), 5);
     ASSERT_EQ(csvm_gamma.get_num_features(), 4);
     util::gtest_assert_floating_point_eq(real_type_gamma{ 1.0 }, csvm_gamma.get_gamma());
 
     // gamma = 0.0 -> automatically set to (1.0 / num_features)
     params.gamma = 0.0;
+    params.parse_libsvm(params.input_filename);
     mock_csvm csvm_gamma_zero{ params };
     using real_type_gamma_zero = typename decltype(csvm_gamma_zero)::real_type;
-    csvm_gamma_zero.parse_libsvm(params.input_filename);
     EXPECT_EQ(csvm_gamma_zero.get_num_data_points(), 5);
     EXPECT_EQ(csvm_gamma_zero.get_num_features(), 4);
     util::gtest_assert_floating_point_eq(real_type_gamma_zero{ 1.0 } / csvm_gamma_zero.get_num_features(), csvm_gamma_zero.get_gamma());
 }
 
 TYPED_TEST(BASE, parse_arff_gamma) {
-    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
+    plssvm::parameter_train<TypeParam> params;
+    params.input_filename = TEST_PATH "/data/5x4.arff";
     params.print_info = false;
 
     // gamma = 1.0 (!= 0.0)
     params.gamma = 1.0;
+    params.parse_arff(params.input_filename);
     mock_csvm csvm_gamma{ params };
     using real_type_gamma = typename decltype(csvm_gamma)::real_type;
-    csvm_gamma.parse_arff(params.input_filename);
     ASSERT_EQ(csvm_gamma.get_num_data_points(), 5);
     ASSERT_EQ(csvm_gamma.get_num_features(), 4);
     util::gtest_assert_floating_point_eq(real_type_gamma{ 1.0 }, csvm_gamma.get_gamma());
 
     // gamma = 0.0 -> automatically set to (1.0 / num_features)
     params.gamma = 0.0;
+    params.parse_arff(params.input_filename);
     mock_csvm csvm_gamma_zero{ params };
     using real_type_gamma_zero = typename decltype(csvm_gamma_zero)::real_type;
-    csvm_gamma_zero.parse_arff(params.input_filename);
     EXPECT_EQ(csvm_gamma_zero.get_num_data_points(), 5);
     EXPECT_EQ(csvm_gamma_zero.get_num_features(), 4);
     util::gtest_assert_floating_point_eq(real_type_gamma_zero{ 1.0 } / csvm_gamma_zero.get_num_features(), csvm_gamma_zero.get_gamma());
@@ -211,11 +205,11 @@ TYPED_TEST(BASE_write, write_model) {
 
     mock_csvm csvm{ params };
 
-    // parse libsvm file
-    csvm.parse_libsvm(params.input_filename);
-
     // create temporary model file and write model
     std::string model_file = util::create_temp_file();
+    // learn model
+    csvm.learn();
+    // write learned model to file
     csvm.write_model(model_file);
 
     // read content of model file and delete it
@@ -226,7 +220,7 @@ TYPED_TEST(BASE_write, write_model) {
     // check model file content for correctness
     switch (params.kernel) {
         case plssvm::kernel_type::linear:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv 0+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
         case plssvm::kernel_type::polynomial:
             EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
@@ -241,47 +235,31 @@ TYPED_TEST(BASE_write, write_model) {
 }
 
 TYPED_TEST(BASE, parse_libsvm_ill_formed) {
-    // setup C-SVM
+    // setup parameters
     plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.arff" };
     params.print_info = false;
 
-    mock_csvm csvm{ params };
-
     // parsing an arff file using the libsvm parser should result in an exception
-    EXPECT_THROW(csvm.parse_libsvm(params.input_filename), plssvm::invalid_file_format_exception);
+    EXPECT_THROW(params.parse_libsvm(params.input_filename), plssvm::invalid_file_format_exception);
 }
 
 TYPED_TEST(BASE, parse_arff_ill_formed) {
-    // setup C-SVM
+    // setup parameters
     plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
     params.print_info = false;
 
-    mock_csvm csvm{ params };
-
-    // parsing a libsvm file using the arff parser should result in an exception
-    EXPECT_THROW(csvm.parse_arff(params.input_filename), plssvm::invalid_file_format_exception);
+    // parsing an arff file using the libsvm parser should result in an exception
+    EXPECT_THROW(params.parse_arff(params.input_filename), plssvm::invalid_file_format_exception);
 }
 
 TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
-    // setup C-SVM
-    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.lib" };
-    params.print_info = false;
-
-    mock_csvm csvm{ params };
-
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(csvm.parse_libsvm(params.input_filename), plssvm::file_not_found_exception);
+    EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.lib" }, plssvm::file_not_found_exception);
 }
 
 TYPED_TEST(BASE, parse_arff_non_existing_file) {
-    // setup C-SVM
-    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.ar" };
-    params.print_info = false;
-
-    mock_csvm csvm{ params };
-
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(csvm.parse_arff(params.input_filename), plssvm::file_not_found_exception);
+    EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.ar" }, plssvm::file_not_found_exception);
 }
 
 TYPED_TEST(BASE, transform_data) {
@@ -292,9 +270,6 @@ TYPED_TEST(BASE, transform_data) {
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
-
-    // parse libsvm file
-    csvm.parse_libsvm(params.input_filename);
 
     // transform data without and with boundary
     std::vector<real_type> result_no_boundary = csvm.transform_data(0);
@@ -327,9 +302,11 @@ TYPED_TEST_SUITE(BASE_kernel, parameter_types, util::google_test::parameter_defi
 
 TYPED_TEST(BASE_kernel, kernel_function) {
     // setup C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ "" };
+    plssvm::parameter_train<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
+    // set dummy data
+    params.data_ptr = std::make_shared<const std::vector<std::vector<typename decltype(params)::real_type>>>(1);
 
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;

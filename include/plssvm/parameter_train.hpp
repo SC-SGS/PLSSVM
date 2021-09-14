@@ -27,6 +27,7 @@ class parameter_train : public parameter<T> {
     using base_type::backend;
     using base_type::coef0;
     using base_type::cost;
+    using base_type::data_ptr;
     using base_type::degree;
     using base_type::epsilon;
     using base_type::gamma;
@@ -36,12 +37,19 @@ class parameter_train : public parameter<T> {
     using base_type::predict_filename;
     using base_type::print_info;
     using base_type::target;
+    using base_type::value_ptr;
 
     using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
     /**
+     * @brief Default construct all training parameters.
+     */
+    parameter_train() = default;
+
+    /**
      * @brief Set all training parameters to their default values.
+     * @detail Sets the model_filename to "${input_filename}.model".
      * @param[in] input_filename the name of the data file
      */
     explicit parameter_train(std::string input_filename);

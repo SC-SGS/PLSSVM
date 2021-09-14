@@ -53,13 +53,13 @@ class mock_csvm : public plssvm::csvm<T> {
     // getter for internal variables
     size_type get_num_data_points() const { return num_data_points_; }
     size_type get_num_features() const { return num_features_; }
-    const std::vector<std::vector<real_type>> &get_data() const { return data_; }
+    const std::vector<std::vector<real_type>> &get_data() const { return *data_ptr_; }
 
   private:
     // make template ase variables visible
     using base_type::coef0_;
     using base_type::cost_;
-    using base_type::data_;
+    using base_type::data_ptr_;
     using base_type::degree_;
     using base_type::gamma_;
     using base_type::num_data_points_;

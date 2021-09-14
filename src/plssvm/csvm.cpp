@@ -10,48 +10,63 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"        // plssvm::target_platform
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
 
 #include <chrono>  // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
+#include <memory>  // std::make_shared
 #include <string>  // std::string
 #include <vector>  // std::vector
 
-#include <iostream>
 namespace plssvm {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    csvm{ params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info } {}
+    target_{ params.target }, kernel_{ params.kernel }, degree_{ params.degree }, gamma_{ params.gamma }, coef0_{ params.coef0 }, cost_{ params.cost }, epsilon_{ params.epsilon }, print_info_{ params.print_info }, data_ptr_{ params.data_ptr }, value_ptr_{ params.value_ptr }, alpha_ptr_{ params.alphas_ptr } {
+    if (data_ptr_ == nullptr) {
+        throw exception{ "No data points provided!" };
+    }
 
-template <typename T>
-csvm<T>::csvm(const target_platform target, const kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-    target_{ target }, kernel_{ kernel }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 }, cost_{ cost }, epsilon_{ epsilon }, print_info_{ print_info } {}
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+
+    num_data_points_ = data_ptr_->size();
+    num_features_ = (*data_ptr_)[0].size();
+}
 
 template <typename T>
 void csvm<T>::learn() {
     using namespace plssvm::operators;
 
+    if (value_ptr_ == nullptr) {
+        throw exception{ "No labels provided for training!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), value_ptr_->size());
+
+    // setup the data on the device
+    setup_data_on_device();
+
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> q;
-    std::vector<real_type> b = value_;
-#pragma omp parallel sections
+    std::vector<real_type> b = *value_ptr_;
+    #pragma omp parallel sections
     {
-#pragma omp section  // generate q
+        #pragma omp section  // generate q
         {
             q = generate_q();
         }
-#pragma omp section  // generate right-hand side from equation
+        #pragma omp section  // generate right-hand side from equation
         {
             b.pop_back();
-            b -= value_.back();
+            b -= value_ptr_->back();
         }
-#pragma omp section  // generate bottom right from A
+        #pragma omp section  // generate bottom right from A
         {
-            QA_cost_ = kernel_function(data_.back(), data_.back()) + 1 / cost_;
+            QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
         }
     }
 
@@ -63,12 +78,12 @@ void csvm<T>::learn() {
     start_time = std::chrono::steady_clock::now();
 
     // solve minimization
-    alpha_ = solver_CG(b, num_features_, epsilon_, q);
-    // old TODO: which one is correct? -> q.size() != alpha_.size() !!! -> does it have any implications on write_model?
-    //    bias_ = value_.back() - QA_cost_ * alpha_.back() - (transposed{ q } * alpha_);
-    // new
-    bias_ = value_.back() + QA_cost_ * sum(alpha_) - (transposed{ q } * alpha_);
-    alpha_.emplace_back(-sum(alpha_));
+    std::vector<real_type> alpha;
+    alpha = solver_CG(b, num_features_, epsilon_, q);
+    bias_ = value_ptr_->back() + QA_cost_ * sum(alpha) - (transposed{ q } * alpha);
+    alpha.emplace_back(-sum(alpha));
+
+    alpha_ptr_ = std::make_shared<const std::vector<real_type>>(std::move(alpha));
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
@@ -77,17 +92,23 @@ void csvm<T>::learn() {
 }
 
 template <typename T>
-auto csvm<T>::predict(std::vector<real_type> &point) -> real_type {
+auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
     using namespace plssvm::operators;
-    PLSSVM_ASSERT(data_.size() > 0, "No model or trainingsdata read");
-    PLSSVM_ASSERT(data_[0].size() == point.size(), "Prediction point has different amount of features than training data");
-    PLSSVM_ASSERT(alpha_.size() == data_.size(), "Model does not fit the training data");
+
+    if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas provided for prediction!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+    PLSSVM_ASSERT((*data_ptr_)[0].size() == point.size(), "Prediction point has different amount of features than training data!");
 
     real_type temp = bias_;
-    for (size_type data_index = 0; data_index < data_.size(); ++data_index) {
-        temp += alpha_[data_index] * kernel_function(data_[data_index], point);
+    for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+        temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
     }
-    // return sign(temp); // If predict should return +- 1
+    // return sign(temp); // If predict should return +- 1 // TODO:
     return temp;
 }
 
@@ -95,28 +116,21 @@ template <typename T>
 auto csvm<T>::accuracy() -> real_type {
     using namespace plssvm::operators;
 
+    if (value_ptr_ == nullptr) {
+        throw exception{ "No labels provided for accuracy calculation!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+
     int correct = 0;
-    for (size_type dat = 0; dat < data_.size(); ++dat) {
-        if (predict(data_[dat]) * value_[dat] > 0.0) {
+    for (size_type dat = 0; dat < num_data_points_; ++dat) {
+        if (predict((*data_ptr_)[dat]) * (*value_ptr_)[dat] > 0.0) {
             ++correct;
         }
     }
-    return static_cast<real_type>(correct) / static_cast<real_type>(data_.size());
-}
-
-template <typename T>
-void csvm<T>::learn(const std::string &input_filename, const std::string &model_filename) {
-    // parse data file
-    parse_file(input_filename);
-
-    // setup the data on the device
-    setup_data_on_device();
-
-    // learn model
-    learn();
-
-    // write results to model file
-    write_model(model_filename);
+    return static_cast<real_type>(correct) / static_cast<real_type>(num_data_points_);
 }
 
 template <typename T>
@@ -138,10 +152,10 @@ auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type>
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
     for (size_type col = 0; col < num_features_; ++col) {
         for (size_type row = 0; row < num_data_points_ - 1; ++row) {
-            vec[col * (num_data_points_ - 1 + boundary) + row] = data_[row][col];
+            vec[col * (num_data_points_ - 1 + boundary) + row] = (*data_ptr_)[row][col];
         }
     }
 

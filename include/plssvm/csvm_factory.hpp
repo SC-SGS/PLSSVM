@@ -44,36 +44,36 @@ namespace plssvm {
   * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
   */
 template <typename T, typename... Args>
-std::unique_ptr<csvm<T>> make_csvm(const backend_type type, Args... args) {
-    switch (type) {
+std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
+    switch (params.backend) {
         case backend_type::openmp:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-            return std::make_unique<openmp::csvm<T>>(std::forward<Args>(args)...);
+            return std::make_unique<openmp::csvm<T>>(params);
 #else
             throw unsupported_backend_exception{ "No OpenMP backend available!" };
 #endif
 
         case backend_type::cuda:
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-            return std::make_unique<cuda::csvm<T>>(std::forward<Args>(args)...);
+            return std::make_unique<cuda::csvm<T>>(params);
 #else
             throw unsupported_backend_exception{ "No CUDA backend available!" };
 #endif
 
         case backend_type::opencl:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-            return std::make_unique<opencl::csvm<T>>(std::forward<Args>(args)...);
+            return std::make_unique<opencl::csvm<T>>(params);
 #else
             throw unsupported_backend_exception{ "No OpenCL backend available!" };
 #endif
         case backend_type::sycl:
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-            return std::make_unique<sycl::csvm<T>>(std::forward<Args>(args)...);
+            return std::make_unique<sycl::csvm<T>>(params);
 #else
             throw unsupported_backend_exception{ "No SYCL backend available!" };
 #endif
         default:
-            throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(type)) };
+            throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(params.backend)) };
     }
 }
 
@@ -84,9 +84,9 @@ std::unique_ptr<csvm<T>> make_csvm(const backend_type type, Args... args) {
  * @throws unsupported_backend_exception if the requested backend isn't available
  * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
  */
-template <typename T>
-std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
-    return make_csvm<T>(params.backend, params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);
-}
+//template <typename T>
+//std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
+//    return make_csvm<T>(params.backend, params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);
+//}
 
 }  // namespace plssvm

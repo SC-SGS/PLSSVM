@@ -19,7 +19,11 @@ int main(int argc, char *argv[]) {
         auto svm = plssvm::make_csvm(params);
 
         // learn
-        svm->learn(params.input_filename, params.model_filename);
+        svm->learn();
+
+        // save model file
+        svm->write_model(params.model_filename);
+
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {
