@@ -37,7 +37,7 @@ class parameter {
     using size_type = std::size_t;
 
     /// virtual, default destructor.
-    virtual ~parameter();
+    virtual ~parameter() = default;
 
     /**
      * @brief Parse a file in the [libsvm sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
