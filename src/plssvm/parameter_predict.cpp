@@ -1,7 +1,7 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
  */
 
 #include "plssvm/parameter_predict.hpp"
@@ -25,6 +25,7 @@ parameter_predict<T>::parameter_predict(std::string input_filename, std::string 
     base_type::predict_filename = base_type::predict_name_from_input();
 
     base_type::parse_model_file(base_type::model_filename);
+    base_type::parse_test_file(base_type::input_filename);
 }
 
 template <typename T>
@@ -57,7 +58,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
     // parse command line options
     cxxopts::ParseResult result;
     try {
-        options.parse_positional({ "input", "model", "output" });
+        options.parse_positional({ "test", "model", "output" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
         fmt::print("{}\n{}\n", e.what(), options.help());
@@ -99,10 +100,11 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
     if (result.count("output")) {
         predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
-        predict_name_from_input();
+        base_type::predict_name_from_input();
     }
 
     base_type::parse_model_file(model_filename);
+    base_type::parse_test_file(input_filename);
 }
 
 // explicitly instantiate template class

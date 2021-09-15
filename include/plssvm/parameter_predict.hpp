@@ -1,10 +1,10 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
-*
-* @brief Implements a class encapsulating all necessary parameters for predicting using the C-SVM possibly provided through command line arguments.
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Implements a class encapsulating all necessary parameters for predicting using the C-SVM possibly provided through command line arguments.
  */
 
 #pragma once
@@ -53,12 +53,6 @@ class parameter_predict : public parameter<T> {
      * @param[in] argv the command line arguments
      */
     parameter_predict(int argc, char **argv);
-
-  private:
-    /*
-     * Generate predict filename based on the name of the test file.
-     */
-    void predict_name_from_input();
 };
 
 extern template class parameter_predict<float>;
