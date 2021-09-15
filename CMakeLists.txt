@@ -104,16 +104,18 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
 #target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -ffast-math)
 
-
-## create main executable
-set(PLSSVM_EXECUTABLE_NAME svm-train)
-add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
-
 ## add assert option
 option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set" OFF)
 if(PLSSVM_ENABLE_ASSERTS)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
 endif(PLSSVM_ENABLE_ASSERTS)
+
+
+## create main executables
+set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
+set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
+add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
+add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
 
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
@@ -224,6 +226,7 @@ endif()
 
 ## check if ANY backend is available/has been enabled
 get_target_property(PLSSVM_LINKED_BACKENDS svm-train LINK_LIBRARIES)
+get_target_property(PLSSVM_LINKED_BACKENDS svm-predict LINK_LIBRARIES)
 if(NOT PLSSVM_LINKED_BACKENDS)
     message(FATAL_ERROR "At least one backend must be available!")
 endif()
@@ -236,7 +239,8 @@ if(PLSSVM_ENABLE_LTO)
     check_ipo_supported(RESULT PLSSVM_LTO_SUPPORTED OUTPUT PLSSVM_LTO_ERROR LANGUAGES CXX)
     if(PLSSVM_LTO_SUPPORTED)
         message(STATUS "Interprocedural optimization (IPO/LTO) enabled.")
-        set_property(TARGET ${PLSSVM_EXECUTABLE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+        set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+        set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     else()
         message(STATUS "Interprocedural optimization (IPO/LTO) not supported: ${PLSSVM_LTO_ERROR}")
     endif()
