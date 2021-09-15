@@ -57,8 +57,8 @@ Valid targets are:
 
 At least one of the above targets must be present.
 
-To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple python3 script `utility/gpu_name_to_arch.py` is provided
-(requiring python3 [`argparse`](https://docs.python.org/3/library/argparse.html) as dependency):
+To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple Python3 script `utility/gpu_name_to_arch.py` is provided
+(requiring Python3 [`argparse`](https://docs.python.org/3/library/argparse.html) as dependency):
 
 ```bash
 > python3 utility/gpu_name_to_arch.py --help
@@ -79,7 +79,7 @@ gfx906
 ```
 
 If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU 
-(requires the python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
+(requires the Python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
 - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
@@ -114,6 +114,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: ON): enable testing using GoogleTest and ctest
+- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions; if `NDEBUG` is **not** defined (e.g. when using `-DCMAKE_BUILD_TYPE=Debug`), the assertions are active regardless of this option
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files 
@@ -135,9 +136,9 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 
 ### Generating data
 
-The repository comes with a python3 script (in the `data/` directory) to simply generate arbitrarily large data sets.
+The repository comes with a Python3 script (in the `data/` directory) to simply generate arbitrarily large data sets.
 
-In order to use all functionality, the following python3 modules must be installed:
+In order to use all functionality, the following Python3 modules must be installed:
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`numpy`](https://pypi.org/project/numpy/), 
 [`pandas`](https://pypi.org/project/pandas/), [`sklearn`](https://scikit-learn.org/stable/), 
 [`arff`](https://pypi.org/project/arff/), [`matplotlib`](https://pypi.org/project/matplotlib/) and 
@@ -200,36 +201,84 @@ An example invocation using the CUDA backend could look like:
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-> ./svm-train --backend sycl --target_platform nvidia --input /path/to/data_file
+> ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
-The `--target_platform=automatic` flags works as follows:
-- for the `OpenMP` backend: always select a CPU
-- for the `CUDA` backend: always select an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
-- for the `OpenCL` backend: TODO
-- for the `SYCL` backends: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
+The `--target_platform=automatic` flags works for the different backends as follows:
+- `OpenMP`: always selects a CPU
+- `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
+- `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
+- `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
-### Predict
+### Predicting
 
-TODO: write
+```bash
+> ./svm-predict --help
+LS-SVM with multiple (GPU-)backends
+Usage:
+  ./svm-predict [OPTION...] test_file model_file [output_file]
 
+  -b, --backend arg          choose the backend: openmp|cuda|opencl|sycl (default: openmp)
+  -p, --target_platform arg  choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+  -q, --quiet                quiet mode (no outputs)
+  -h, --help                 print this helper message
+      --test test_file       
+      --model model_file     
+      --output output_file 
+```
 
-## Example code using this library
+An example invocation could look like:
+
+```bash
+> ./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
+```
+
+Another example targeting NVIDIA GPUs using the SYCL backend looks like:
+
+```bash
+> ./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+```
+
+The `--target_platform=automatic` flags works like in the training (`./svm-train`) case.
+
+## Example code for usage as library
 
 A simple C++ program using this library could look like:
 
 ```cpp
 #include "plssvm/core.hpp"
 
-int main(int argc, char *argv[]) {
-    // parse SVM parameter from command line
-    plssvm::parameter<double> params{ argc, argv };
+#include <iostream>
+#include <vector>
 
-    // create C-SVM (based on selected backend)
-    auto svm = plssvm::make_csvm(params);
+int main(int argc, char *argv[]) {
+    try {
+        // parse SVM parameter from command line
+        plssvm::parameter<double> params{ argc, argv };
     
-    // learn
-    svm->learn(params.input_filename, params.model_filename);
+        // create C-SVM (based on selected backend)
+        auto svm = plssvm::make_csvm(params);
+        
+        // learn
+        svm->learn();
+        
+        // get accuracy
+        std::cout << "accuracy: " << svm->accuracy() << std::endl;
+        
+        // predict
+        std::vector<double> point = { ... };
+        std::cout << "label: " << svm->predict(point) << std::endl;
+        
+        // write model file to disk
+        svm->write_model();
+    } catch (const plssvm::exception &e) {
+        std::cerr << e.what_with_loc() << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
+        
     return 0;
 }
 ```
+
+TODO: correct library version
