@@ -21,7 +21,7 @@
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <memory>       // std::make_shared
 #include <sstream>      // std::istringstream
-#include <string>       // std::string, std::getline
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::move
 #include <vector>       // std::vector
