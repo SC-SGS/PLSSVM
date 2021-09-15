@@ -36,8 +36,8 @@ class parameter {
     /// Unsigned integer type.
     using size_type = std::size_t;
 
-    /// Pure virtual, default destructor.
-    virtual ~parameter() = 0;
+    /// virtual, default destructor.
+    virtual ~parameter();
 
     /**
      * @brief Parse a file in the [libsvm sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
@@ -160,11 +160,13 @@ class parameter {
     std::shared_ptr<const std::vector<real_type>> alphas_ptr{};
     /// The data to predict.
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
-};
 
-// Default pure virtual destructor.
-template <typename T>
-parameter<T>::~parameter() = default;
+  protected:
+    /*
+     * Generate model filename based on the name of the input file.
+     */
+    std::string model_name_from_input();
+};
 
 extern template class parameter<float>;
 extern template class parameter<double>;
