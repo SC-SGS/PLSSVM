@@ -81,7 +81,7 @@ if(PLSSVM_BUILD_DEPENDENCIES)
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
             GIT_TAG                 d141cdbeb0fb422a3fb7173b285fd38e0d1772dc
             GIT_SHALLOW             TRUE
-            
+
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
             set(FMT_DOC OFF CACHE BOOL "" FORCE)
             set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
@@ -106,6 +106,12 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
 ## create main executable
 set(PLSSVM_EXECUTABLE_NAME svm-train)
 add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp)
+
+## add assert option
+option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set" OFF)
+if(PLSSVM_ENABLE_ASSERTS)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
+endif(PLSSVM_ENABLE_ASSERTS)
 
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
