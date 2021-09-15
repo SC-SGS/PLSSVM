@@ -183,6 +183,7 @@ pipeline {
                 }
             }
         }
+    }
     post {
         always {
             // Process the CTest xml output with the xUnit plugin
