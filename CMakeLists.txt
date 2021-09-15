@@ -109,6 +109,12 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
 set(PLSSVM_EXECUTABLE_NAME svm-train)
 add_executable(${PLSSVM_EXECUTABLE_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
 
+## add assert option
+option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set" OFF)
+if(PLSSVM_ENABLE_ASSERTS)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
+endif(PLSSVM_ENABLE_ASSERTS)
+
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
 if(DEFINED PLSSVM_TARGET_PLATFORMS)

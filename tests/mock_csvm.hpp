@@ -49,6 +49,9 @@ class mock_csvm : public plssvm::csvm<T> {
     real_type get_gamma() const { return gamma_; }
     real_type get_coef0() const { return coef0_; }
     real_type get_cost() const { return cost_; }
+    using base_type::epsilon_;
+    using base_type::kernel_;
+    using base_type::print_info_;
 
     // getter for internal variables
     size_type get_num_data_points() const { return num_data_points_; }

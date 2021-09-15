@@ -1,11 +1,11 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
-*
-* @brief Implements a class encapsulating all necessary parameters for training the C-SVM possibly provided through command line arguments.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Implements a class encapsulating all necessary parameters for training the C-SVM possibly provided through command line arguments.
+ */
 
 #pragma once
 
@@ -60,12 +60,6 @@ class parameter_train : public parameter<T> {
      * @param[in] argv the command line arguments
      */
     parameter_train(int argc, char **argv);
-
-  private:
-    /*
-     * Generate model filename based on the name of the input file.
-     */
-    void model_name_from_input();
 };
 
 extern template class parameter_train<float>;

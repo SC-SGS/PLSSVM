@@ -1,8 +1,8 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ */
 
 #include "plssvm/parameter_train.hpp"
 
@@ -22,7 +22,7 @@ namespace plssvm {
 template <typename T>
 parameter_train<T>::parameter_train(std::string input_filename) {
     base_type::input_filename = std::move(input_filename);
-    model_name_from_input();
+    model_filename = base_type::model_name_from_input();
 
     base_type::parse_file(base_type::input_filename);
 }
@@ -123,16 +123,10 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     if (result.count("model")) {
         model_filename = result["model"].as<decltype(model_filename)>();
     } else {
-        model_name_from_input();
+        model_filename = base_type::model_name_from_input();
     }
 
     base_type::parse_file(input_filename);
-}
-
-template <typename T>
-void parameter_train<T>::model_name_from_input() {
-    std::size_t pos = input_filename.find_last_of("/\\");
-    model_filename = input_filename.substr(pos + 1) + ".model";
 }
 
 // explicitly instantiate template class
