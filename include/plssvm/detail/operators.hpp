@@ -111,7 +111,8 @@ template <typename T>
     PLSSVM_ASSERT(lhs.vec.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.vec.size(), rhs.size());
 
     T val{};
-    #pragma omp simd reduction(+:val)
+#pragma omp simd reduction(+ \
+                           : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
         // val += lhs.vec[i] * rhs[i]; //TODO: enable auto fma
         val = std::fma(lhs.vec[i], rhs[i], val);
@@ -137,7 +138,8 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+:val)
+#pragma omp simd reduction(+ \
+                           : val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -157,13 +159,12 @@ template <typename T>
     PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
-    #pragma omp simd reduction(+:val)
+    // #pragma omp simd reduction(+:val) //TODO: debug gcc ASSERT BUG
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
         val += (lhs[i] - rhs[i]) * (lhs[i] - rhs[i]);
     }
     return val;
 }
-
 
 /**
  * @brief Returns +1 if x is positive and -1 if x is negative.
