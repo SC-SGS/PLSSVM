@@ -92,11 +92,11 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
         fmt::print("{}", options.help());
         std::exit(EXIT_FAILURE);
     }
-    input_filename = result["model"].as<decltype(model_filename)>();
+    model_filename = result["model"].as<decltype(model_filename)>();
 
     // parse output filename
     if (result.count("output")) {
-        model_filename = result["output"].as<decltype(predict_filename)>();
+        predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
         predict_name_from_input();
     }
