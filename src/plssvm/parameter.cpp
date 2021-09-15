@@ -35,12 +35,12 @@ void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<
     size_type max_size = 0;
     std::exception_ptr parallel_exception;
 
-#pragma omp parallel
+    #pragma omp parallel
     {
-#pragma omp for reduction(max \
+        #pragma omp for reduction(max \
                           : max_size)
         for (size_type i = 0; i < data.size(); ++i) {
-#pragma omp cancellation point for
+            #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + start);
 
@@ -79,15 +79,15 @@ void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<
                 max_size = std::max(max_size, vline.size());
                 data[i] = std::move(vline);
             } catch (const std::exception &e) {
-// catch first exception and store it
-#pragma omp critical
+                // catch first exception and store it
+                #pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-// cancel parallel execution, needs env variable OMP_CANCELLATION=true
-#pragma omp cancel for
+                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
+                #pragma omp cancel for
             }
         }
     }
@@ -97,7 +97,7 @@ void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<
         std::rethrow_exception(parallel_exception);
     }
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size);
     }
@@ -148,7 +148,7 @@ void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<con
         // no labels present
         value_ptr = nullptr;
     } else {
-#pragma omp parallel for
+        #pragma omp parallel for
         for (size_type i = 0; i < value.size(); ++i) {
             value[i] = value[i] > real_type{ 0.0 } ? 1 : -1;
         }
@@ -177,7 +177,8 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
 
     detail::file_reader f{ filename, '%' };
     size_type max_size = 0;
-    // TODO: no class given
+    bool has_label{ false };
+
     // parse arff header
     size_type header = 0;
     {
@@ -190,6 +191,11 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
             } else if (detail::starts_with(line, "@ATTRIBUTE")) {
                 if (line.find("NUMERIC") == std::string::npos) {
                     throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", line) };
+                }
+                if (has_label) {
+                    throw invalid_file_format_exception{ "Only the last ATTRIBUTE my be CLASS!" };
+                } else if (line.find("CLASS") != std::string::npos) {
+                    has_label = true;
                 }
                 // add a feature
                 ++max_size;
@@ -208,18 +214,19 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
     std::vector<std::vector<real_type>> data(f.num_lines() - (header + 1));
     std::vector<real_type> value(f.num_lines() - (header + 1));
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size - 1);
     }
 
     std::exception_ptr parallel_exception;
+    const size_type end = has_label ? max_size - 1 : max_size;
 
-#pragma omp parallel
+    #pragma omp parallel
     {
-#pragma omp for
+        #pragma omp for
         for (size_type i = 0; i < data.size(); ++i) {
-#pragma omp cancellation point for
+            #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + header + 1);
                 //
@@ -252,7 +259,7 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
                         next_pos = line.find_first_of(",}", pos);
 
                         // write parsed value depending on the index
-                        if (index == max_size - 1) {
+                        if (index == end) {
                             is_class_set = true;
                             value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                         } else {
@@ -265,32 +272,34 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
                         pos = 0;
                     }
                     // no class label found
-                    if (!is_class_set) {
+                    if (!is_class_set && has_label) {
                         throw invalid_file_format_exception{ "Missing class for data point!" };
                     }
                 } else {
                     // dense line
                     size_type pos = 0;
-                    for (size_type j = 0; j < max_size - 1; ++j) {
+                    for (size_type j = 0; j < end; ++j) {
                         size_type next_pos = line.find_first_of(',', pos);
                         if (next_pos == std::string_view::npos) {
-                            throw invalid_file_format_exception{ fmt::format("Invalid number of features! Found {} but should be {}.", j, max_size - 1) };
+                            throw invalid_file_format_exception{ fmt::format("Invalid number of features! Found {} but should be {}.", j, end) };
                         }
                         data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
                     }
-                    value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                    if (has_label) {
+                        value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                    }
                 }
             } catch (const std::exception &e) {
-// catch first exception and store it
-#pragma omp critical
+                // catch first exception and store it
+                #pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-// cancel parallel execution, needs env variable OMP_CANCELLATION=true
-#pragma omp cancel for
+                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
+                #pragma omp cancel for
             }
         }
     }
