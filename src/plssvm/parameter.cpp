@@ -123,12 +123,14 @@ void parameter<T>::parse_file(const std::string &filename, std::shared_ptr<const
 // read and parse a libsvm file
 template <typename T>
 void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
+    auto start_time = std::chrono::steady_clock::now();
+
+    // set new filenames
     if (model_filename == model_name_from_input() || model_filename.empty()) {
         input_filename = filename;
         model_filename = model_name_from_input();
     }
     input_filename = filename;
-    auto start_time = std::chrono::steady_clock::now();
 
     detail::file_reader f{ filename, '#' };
 
@@ -168,12 +170,14 @@ void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<con
 // read and parse an ARFF file
 template <typename T>
 void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
+    auto start_time = std::chrono::steady_clock::now();
+
+    // set new filenames
     if (model_filename == model_name_from_input() || model_filename.empty()) {
         input_filename = filename;
         model_filename = model_name_from_input();
     }
     input_filename = filename;
-    auto start_time = std::chrono::steady_clock::now();
 
     detail::file_reader f{ filename, '%' };
     size_type max_size = 0;
@@ -517,6 +521,12 @@ template <typename T>
 std::string parameter<T>::model_name_from_input() {
     std::size_t pos = input_filename.find_last_of("/\\");
     return input_filename.substr(pos + 1) + ".model";
+}
+
+template <typename T>
+std::string parameter<T>::predict_name_from_input() {
+    std::size_t pos = input_filename.find_last_of("/\\");
+    return input_filename.substr(pos + 1) + ".predict";
 }
 
 // explicitly instantiate template class

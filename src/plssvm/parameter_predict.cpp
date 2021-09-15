@@ -11,7 +11,6 @@
 
 #include <algorithm>  // std::transform
 #include <cctype>     // std::tolower
-#include <cstddef>    // std::size_t
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <string>     // std::string
@@ -23,7 +22,9 @@ template <typename T>
 parameter_predict<T>::parameter_predict(std::string input_filename, std::string model_filename) {
     base_type::input_filename = std::move(input_filename);
     base_type::model_filename = std::move(model_filename);
-    predict_name_from_input();
+    base_type::predict_filename = base_type::predict_name_from_input();
+
+    base_type::parse_model_file(base_type::model_filename);
 }
 
 template <typename T>
@@ -101,13 +102,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
         predict_name_from_input();
     }
 
-    // TODO: parse other parameters
-}
-
-template <typename T>
-void parameter_predict<T>::predict_name_from_input() {
-    std::size_t pos = input_filename.find_last_of("/\\");
-    predict_filename = input_filename.substr(pos + 1) + ".predict";
+    base_type::parse_model_file(model_filename);
 }
 
 // explicitly instantiate template class

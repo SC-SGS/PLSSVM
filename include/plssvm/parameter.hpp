@@ -204,6 +204,10 @@ class parameter {
      * Generate model filename based on the name of the input file.
      */
     std::string model_name_from_input();
+    /*
+     * Generate predict filename based on the name of the input file.
+     */
+    std::string predict_name_from_input();
 };
 
 extern template class parameter<float>;
