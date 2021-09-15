@@ -10,11 +10,10 @@
 #include <iostream>   // std::clog, std::cerr, std::endl
 
 int main(int argc, char *argv[]) {
-    // parse SVM parameter from command line
-    plssvm::parameter_train<double> params{ argc, argv };
-    //    std::clog << params << std::endl;
-
     try {
+        // parse SVM parameter from command line
+        plssvm::parameter_train<double> params{ argc, argv };
+
         // create SVM
         auto svm = plssvm::make_csvm(params);
 
