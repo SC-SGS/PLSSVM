@@ -100,7 +100,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
     if (result.count("output")) {
         predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
-        base_type::predict_name_from_input();
+        predict_filename = base_type::predict_name_from_input();
     }
 
     base_type::parse_model_file(model_filename);
