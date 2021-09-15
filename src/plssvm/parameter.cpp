@@ -518,13 +518,13 @@ template std::ostream &operator<<(std::ostream &, const parameter<float> &);
 template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
 template <typename T>
-std::string parameter<T>::model_name_from_input() {
+[[nodiscard]] std::string parameter<T>::model_name_from_input() {
     std::size_t pos = input_filename.find_last_of("/\\");
     return input_filename.substr(pos + 1) + ".model";
 }
 
 template <typename T>
-std::string parameter<T>::predict_name_from_input() {
+[[nodiscard]] std::string parameter<T>::predict_name_from_input() {
     std::size_t pos = input_filename.find_last_of("/\\");
     return input_filename.substr(pos + 1) + ".predict";
 }

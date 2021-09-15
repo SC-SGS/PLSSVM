@@ -108,7 +108,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
 option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set" OFF)
 if(PLSSVM_ENABLE_ASSERTS)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
-endif(PLSSVM_ENABLE_ASSERTS)
+endif()
 
 
 ## create main executables
@@ -263,7 +263,7 @@ endif()
 
 
 ## generate scripts
-option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings" ON)
+option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings." ON)
 if(PLSSVM_GENERATE_TIMINGSCRIPT)
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
