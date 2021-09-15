@@ -143,7 +143,7 @@ void parameter<T>::parse_libsvm(const std::string &filename) {
 // read and parse an ARFF file
 template <typename T>
 void parameter<T>::parse_arff(const std::string &filename) {
-    if (model_filename == model_name_from_input() || model_filename == "") {
+    if (model_filename == model_name_from_input() || model_filename.empty()) {
         input_filename = filename;
         model_filename = model_name_from_input();
     }
