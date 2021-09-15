@@ -56,12 +56,12 @@ void parameter<T>::parse_libsvm(const std::string &filename) {
     size_type max_size = 0;
     std::exception_ptr parallel_exception;
 
-#pragma omp parallel
+    #pragma omp parallel
     {
-#pragma omp for reduction(max \
+        #pragma omp for reduction(max \
                           : max_size)
         for (size_type i = 0; i < data.size(); ++i) {
-#pragma omp cancellation point for
+            #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i);
 
@@ -94,15 +94,15 @@ void parameter<T>::parse_libsvm(const std::string &filename) {
                 max_size = std::max(max_size, vline.size());
                 data[i] = std::move(vline);
             } catch (const std::exception &e) {
-// catch first exception and store it
-#pragma omp critical
+                // catch first exception and store it
+                #pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-// cancel parallel execution, needs env variable OMP_CANCELLATION=true
-#pragma omp cancel for
+                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
+                #pragma omp cancel for
             }
         }
     }
@@ -112,7 +112,7 @@ void parameter<T>::parse_libsvm(const std::string &filename) {
         std::rethrow_exception(parallel_exception);
     }
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size);
     }
@@ -183,18 +183,18 @@ void parameter<T>::parse_arff(const std::string &filename) {
     std::vector<std::vector<real_type>> data(f.num_lines() - (header + 1));
     std::vector<real_type> value(f.num_lines() - (header + 1));
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size - 1);
     }
 
     std::exception_ptr parallel_exception;
 
-#pragma omp parallel
+    #pragma omp parallel
     {
-#pragma omp for
+        #pragma omp for
         for (size_type i = 0; i < data.size(); ++i) {
-#pragma omp cancellation point for
+            #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + header + 1);
                 //
@@ -257,15 +257,15 @@ void parameter<T>::parse_arff(const std::string &filename) {
                     value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                 }
             } catch (const std::exception &e) {
-// catch first exception and store it
-#pragma omp critical
+                // catch first exception and store it
+                #pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-// cancel parallel execution, needs env variable OMP_CANCELLATION=true
-#pragma omp cancel for
+                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
+                #pragma omp cancel for
             }
         }
     }
@@ -548,8 +548,7 @@ template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 template <typename T>
 std::string parameter<T>::model_name_from_input() {
     std::size_t pos = input_filename.find_last_of("/\\");
-    std::string model_filename = input_filename.substr(pos + 1) + ".model";
-    return model_filename;
+    return input_filename.substr(pos + 1) + ".model";
 }
 
 // explicitly instantiate template class
