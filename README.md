@@ -248,6 +248,7 @@ A simple C++ program using this library could look like:
 ```cpp
 #include "plssvm/core.hpp"
 
+#include <exception>
 #include <iostream>
 #include <vector>
 
