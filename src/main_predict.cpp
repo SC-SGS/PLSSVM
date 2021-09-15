@@ -4,24 +4,30 @@
 #include <iostream>   // std::clog, std::cerr, std::endl
 
 int main(int argc, char *argv[]) {
-    // // parse SVM parameter from command line
-    // plssvm::parameter<double> params{ argc, argv };
-    // //    std::clog << params << std::endl;
+    // parse SVM parameter from command line
+    plssvm::parameter_predict<double> params{ argc, argv };
+    //    std::clog << params << std::endl;
 
-    // try {
-    //     // create SVM
-    //     auto svm = plssvm::make_csvm(params);
+    try {
+        // create SVM
+        auto svm = plssvm::make_csvm(params);
 
-    //     // learn
-    //     svm->learn(params.input_filename, params.model_filename);
-    //     //         double acc = svm->accuracy();
-    //     //         std::cout << "accuracy: " << acc << std::endl;
-    // } catch (const plssvm::exception &e) {
-    //     std::cerr << e.what_with_loc() << std::endl;
-    // } catch (const std::exception &e) {
-    //     std::cerr << e.what() << std::endl;
-    // }
+        int correct = 0;
+        for (int i = 0; i < params.test_data_ptr->size(); ++i) {
+            double label = svm->predict((*(params.test_data_ptr))[i]);
+            if (params.value_ptr && (*(params.value_ptr))[i] * label > 0.0) {
+                ++correct;
+            }
+        }
 
-    // TODO: implement predict
+        if (params.value_ptr) {
+            std::cout << "accuracy: " << static_cast<double>(correct) / params.test_data_ptr->size() << std::endl;
+        }
+
+    } catch (const plssvm::exception &e) {
+        std::cerr << e.what_with_loc() << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
     return 0;
 }
