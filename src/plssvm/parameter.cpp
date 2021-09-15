@@ -28,31 +28,10 @@
 
 namespace plssvm {
 
-// read and parse file
-template <typename T>
-void parameter<T>::parse_file(const std::string &filename) {
-    if (detail::ends_with(filename, ".arff")) {
-        parse_arff(filename);
-    } else {
-        parse_libsvm(filename);
-    }
-}
+namespace detail {
 
-// read and parse a libsvm file
-template <typename T>
-void parameter<T>::parse_libsvm(const std::string &filename) {
-    if (model_filename == model_name_from_input() || model_filename.empty()) {
-        input_filename = filename;
-        model_filename = model_name_from_input();
-    }
-    input_filename = filename;
-    auto start_time = std::chrono::steady_clock::now();
-
-    detail::file_reader f{ filename, '#' };
-
-    std::vector<std::vector<real_type>> data(f.num_lines());
-    std::vector<real_type> value(f.num_lines());
-
+template <typename real_type, typename size_type>
+void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<std::vector<real_type>> &data, std::vector<real_type> &values) {
     size_type max_size = 0;
     std::exception_ptr parallel_exception;
 
@@ -63,12 +42,18 @@ void parameter<T>::parse_libsvm(const std::string &filename) {
         for (size_type i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
-                std::string_view line = f.line(i);
+                std::string_view line = f.line(i + start);
 
-                // get class
+                // check if class labels are present (not necessarily the case for test files)
                 size_type pos = line.find_first_of(' ');
-                value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos)) > real_type{ 0.0 } ? 1 : -1;
-                // value[i] = std::copysign(1.0, detail::convert_to<real_type>(line.substr(0, pos)));
+                size_type first_colon = line.find_first_of(':');
+                if (first_colon > pos) {
+                    // get class or alpha
+                    values[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos));
+                } else {
+                    values[0] = std::numeric_limits<real_type>::max();
+                    pos = 0;
+                }
 
                 // get data
                 std::vector<real_type> vline(max_size);
@@ -119,30 +104,70 @@ void parameter<T>::parse_libsvm(const std::string &filename) {
 
     // no features were parsed -> invalid file
     if (max_size == 0) {
-        throw invalid_file_format_exception{ fmt::format("Can't parse file '{}'!", filename) };
+        throw invalid_file_format_exception{ fmt::format("Can't parse file!") };
     }
+}
+
+}  // namespace detail
+
+// read and parse file
+template <typename T>
+void parameter<T>::parse_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
+    if (detail::ends_with(filename, ".arff")) {
+        parse_arff(filename, data_ptr_ref);
+    } else {
+        parse_libsvm(filename, data_ptr_ref);
+    }
+}
+
+// read and parse a libsvm file
+template <typename T>
+void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
+    if (model_filename == model_name_from_input() || model_filename.empty()) {
+        input_filename = filename;
+        model_filename = model_name_from_input();
+    }
+    input_filename = filename;
+    auto start_time = std::chrono::steady_clock::now();
+
+    detail::file_reader f{ filename, '#' };
+
+    std::vector<std::vector<real_type>> data(f.num_lines());
+    std::vector<real_type> value(f.num_lines());
+
+    detail::parse_libsvm_file(f, size_type{ 0 }, data, value);
 
     // update gamma
     if (gamma == 0.0) {
-        gamma = real_type{ 1. } / static_cast<real_type>(max_size);
+        gamma = real_type{ 1. } / static_cast<real_type>(data.size());
     }
 
     // update shared pointer
-    data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
-    value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
+    data_ptr_ref = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
+    if (value[0] == std::numeric_limits<real_type>::max()) {
+        // no labels present
+        value_ptr = nullptr;
+    } else {
+        #pragma omp parallel for
+        for (size_type i = 0; i < value.size(); ++i) {
+            value[i] = value[i] > real_type{ 0.0 } ? 1 : -1;
+        }
+
+        value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
+    }
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {
         fmt::print("Read {} data points with {} features in {} using the libsvm parser.\n",
-                   data_ptr->size(),
-                   max_size,
+                   data_ptr_ref->size(),
+                   (*data_ptr_ref)[0].size(),
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
 
 // read and parse an ARFF file
 template <typename T>
-void parameter<T>::parse_arff(const std::string &filename) {
+void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
     if (model_filename == model_name_from_input() || model_filename.empty()) {
         input_filename = filename;
         model_filename = model_name_from_input();
@@ -152,7 +177,7 @@ void parameter<T>::parse_arff(const std::string &filename) {
 
     detail::file_reader f{ filename, '%' };
     size_type max_size = 0;
-
+    // TODO: no class given
     // parse arff header
     size_type header = 0;
     {
@@ -281,7 +306,7 @@ void parameter<T>::parse_arff(const std::string &filename) {
     }
 
     // update shared pointer
-    data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
+    data_ptr_ref = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
     value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
 
     auto end_time = std::chrono::steady_clock::now();
@@ -299,10 +324,8 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
     detail::file_reader f{ filename, '#' };
 
-    // reset data
-    data_ptr = nullptr;
+    // reset values pointer
     value_ptr = nullptr;
-    alphas_ptr = nullptr;
 
     // helper variables
     size_type num_sv{ 0 };
@@ -430,72 +453,8 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     std::vector<std::vector<real_type>> data(num_sv);
     std::vector<real_type> alphas(num_sv);
 
-    size_type max_size = 0;
-    std::exception_ptr parallel_exception;
-
-    #pragma omp parallel
-    {
-        #pragma omp for reduction(max : max_size)
-        for (size_type i = 0; i < data.size(); ++i) {
-            #pragma omp cancellation point for
-            try {
-                std::string_view line = f.line(i + header + 1);
-
-                // get alpha
-                size_type pos = line.find_first_of(' ');
-                alphas[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos));
-
-                // get data
-                std::vector<real_type> vline(max_size);
-                while (true) {
-                    size_type next_pos = line.find_first_of(':', pos);
-                    // no further data points
-                    if (next_pos == std::string_view::npos) {
-                        break;
-                    }
-
-                    // get index
-                    const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-                    if (index >= vline.size()) {
-                        vline.resize(index + 1);
-                    }
-                    pos = next_pos + 1;
-
-                    // get value
-                    next_pos = line.find_first_of(' ', pos);
-                    vline[index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-                    pos = next_pos;
-                }
-                max_size = std::max(max_size, vline.size());
-                data[i] = std::move(vline);
-            } catch (const std::exception &e) {
-                // catch first exception and store it
-                #pragma omp critical
-                {
-                    if (!parallel_exception) {
-                        parallel_exception = std::current_exception();
-                    }
-                }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
-            }
-        }
-    }
-
-    // rethrow if an exception occurred inside the parallel region
-    if (parallel_exception) {
-        std::rethrow_exception(parallel_exception);
-    }
-
-    #pragma omp parallel for
-    for (size_type i = 0; i < data.size(); ++i) {
-        data[i].resize(max_size);
-    }
-
-    // no features were parsed -> invalid file
-    if (max_size == 0) {
-        throw invalid_file_format_exception{ fmt::format("Can't parse file '{}'!", filename) };
-    }
+    // parse support vectors
+    detail::parse_libsvm_file(f, header + 1, data, alphas);
 
     // update shared pointer
     data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
@@ -503,9 +462,9 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {
-        fmt::print("Read {} data points with {} features in {} using the arff parser.\n",
+        fmt::print("Read {} support vectors with {} features in {} using the libsvm model parser.\n",
                    data_ptr->size(),
-                   max_size,
+                   (*data_ptr)[0].size(),
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }

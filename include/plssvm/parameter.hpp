@@ -68,8 +68,9 @@ class parameter {
      *
      * If possible, uses a memory mapped file internally to speed up the file parsing.
      * @param[in] filename name of the libsvm file to parse
+     * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_libsvm(const std::string &filename);
+    void parse_libsvm(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
      * @brief Parse a file in the [arff file format](https://www.cs.waikato.ac.nz/ml/weka/arff.html).
      * @details The arff file format saves each data point with its respective class as follows:
@@ -113,18 +114,53 @@ class parameter {
      *
      * If possible, uses a memory mapped file internally to speed up the file parsing.
      * @param[in] filename name of the arff file to parse
+     * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_arff(const std::string &filename);
+    void parse_arff(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
-     * Parse a model file in the LIBSVM model file format.
+     * @brief Parse a model file in the LIBSVM model file format.
+     * @details An example libsvm file could look as follows:
+     * @code
+     * svm_type c_svc
+     * kernel_type linear
+     * nr_class 2
+     * total_sv 5
+     * rho 0.37330625882191915
+     * label 1 -1
+     * nr_sv 2 3
+     * SV
+     * -0.17609610490769723 0:-1.117828e+00 1:-2.908719e+00 2:6.663834e-01 3:1.097883e+00
+     * 0.8838187731213127 0:-5.282118e-01 1:-3.358810e-01 2:5.168730e-01 3:5.460446e-01
+     * -0.47971257671001616 0:-2.098121e-01 1:6.027694e-01 2:-1.308685e-01 3:1.080525e-01
+     * 0.0034556484621847128 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00
+     * -0.23146573996578407 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01
+     * @endcode
      * @param filename the model file to parse
      */
     void parse_model_file(const std::string &filename);
     /**
      * @brief Parse the given file. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
      * @param[in] filename name of the file to parse
+     * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_file(const std::string &filename);
+    void parse_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
+
+    /**
+     * @brief Parse the given file as training data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
+     * @details Saves the data to the member variable `data_ptr`.
+     * @param[in] filename name of the file to parse
+     */
+    void parse_train_file(const std::string &filename) {
+        parse_file(filename, data_ptr);
+    }
+    /**
+     * @brief Parse the given file as test data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
+     * @details Saves the data to the member variable `test_data_ptr`.
+     * @param[in] filename name of the file to parse
+     */
+    void parse_test_file(const std::string &filename) {
+        parse_file(filename, test_data_ptr);
+    }
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     kernel_type kernel = kernel_type::linear;
