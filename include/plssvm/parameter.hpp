@@ -161,6 +161,8 @@ class parameter {
     /// The data to predict.
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
 
+    real_type rho = 0.0;
+
   protected:
     /*
      * Generate model filename based on the name of the input file.
