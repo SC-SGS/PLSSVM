@@ -163,44 +163,44 @@ pipeline {
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
                     '''
-                    publishCoverage adapters: [ coberturaAdapter('coverage.xml')]
+                    publishCoverage adapters: [ coberturaAdapter('build/Debug_cov/coverage.xml')]
                 }
             }
         }
-        stage('build plssvm hipSYCL Debug') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        module load cuda
-                        module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/hipsycl
-                        cd SVM
-                        mkdir -p build/Debug_hip
-                        cd build/Debug_hip
-                        rm -rf *
-                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_80" -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('build plssvm DPC++ Debug') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        module load cuda
-                        module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/dpcpp
-                        cd SVM
-                        mkdir -p build/Debug_dpcpp
-                        cd build/Debug_dpcpp
-                        rm -rf *
-                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_80" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
+        // stage('build plssvm hipSYCL Debug') {
+        //     steps {
+        //         dir('plssvm') {
+        //             sh '''
+        //                 module load cuda
+        //                 module use /home/breyerml/.modulefiles/
+        //                 module load pcsgs05/hipsycl
+        //                 cd SVM
+        //                 mkdir -p build/Debug_hip
+        //                 cd build/Debug_hip
+        //                 rm -rf *
+        //                 /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_80" -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
+        //                 make -j4
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('build plssvm DPC++ Debug') {
+        //     steps {
+        //         dir('plssvm') {
+        //             sh '''
+        //                 module load cuda
+        //                 module use /home/breyerml/.modulefiles/
+        //                 module load pcsgs05/dpcpp
+        //                 cd SVM
+        //                 mkdir -p build/Debug_dpcpp
+        //                 cd build/Debug_dpcpp
+        //                 rm -rf *
+        //                 /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_80" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
+        //                 make -j4
+        //             '''
+        //         }
+        //     }
+        // }
     }
     post {
         always {
