@@ -117,6 +117,62 @@ set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
 add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
 add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
 
+OPTION(PLSSVM_ENABLE_COV "Enable gcov in DEBUG (Linux builds only)" OFF)
+IF (PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
+  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+  SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
+#   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -Xcompiler 'fprofile-arcs -ftest-coverage'")
+
+
+if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+    # Create the gcov target. Run coverage tests with 'make cov'
+    add_custom_target(cov
+        COMMAND lcov --zerocounters  --directory .
+        COMMAND lcov --capture -d . --initial --output-file test_base.info
+        COMMAND mkdir -p coverage
+        COMMAND ${CMAKE_MAKE_PROGRAM} test || true
+        COMMAND lcov --capture -d . --output-file test_test.info
+        COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
+        COMMAND lcov --remove  test_total.info '/usr/*' '*/build/*' '*/tests/*' -o test_clean.info
+        COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Testcoverage" --show-details --legend
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+
+    add_dependencies(gcov ${PLSSVM_EXECUTABLE_TRAIN_NAME})
+    add_dependencies(gcov ${PLSSVM_EXECUTABLE_PREDICT_NAME})
+endif()
+
+#TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
+
+
+
+    # llvm-cov
+# add_custom_target(${TARGET_NAME}-ccov-preprocessing
+#     COMMAND LLVM_PROFILE_FILE=${TARGET_NAME}.profraw $<TARGET_FILE:${TARGET_NAME}>
+#     COMMAND llvm-profdata merge -sparse ${TARGET_NAME}.profraw -o ${TARGET_NAME}.profdata
+#     DEPENDS ${TARGET_NAME})
+
+# add_custom_target(${TARGET_NAME}-ccov-show
+#     COMMAND llvm-cov show $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata -show-line-counts-or-regions
+#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
+
+# add_custom_target(${TARGET_NAME}-ccov-report
+#     COMMAND llvm-cov report $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata
+#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
+
+# add_custom_target(${TARGET_NAME}-ccov
+#     COMMAND llvm-cov show $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata -show-line-counts-or-regions -output-dir=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-llvm-cov -format="html"
+#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
+
+# add_custom_command(TARGET ${TARGET_NAME}-ccov POST_BUILD
+#     COMMAND ;
+#     COMMENT "Open ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-llvm-cov/index.html in your browser to view the coverage report."
+# )
+
+ENDIF(PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
+
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
 if(DEFINED PLSSVM_TARGET_PLATFORMS)
@@ -286,3 +342,4 @@ endif()
 if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING}")
 endif()
+
