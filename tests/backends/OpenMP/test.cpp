@@ -11,10 +11,11 @@
 #include "../../mock_csvm.hpp"  // mock_csvm
 #include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
-#include "../compare.hpp"                   // compare::generate_q, compare::kernel_function, compare::device_kernel_function
-#include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
-#include "plssvm/kernel_types.hpp"          // plssvm::kernel_type
-#include "plssvm/parameter_train.hpp"       // plssvm::parameter
+#include "../compare.hpp"                         // compare::generate_q, compare::kernel_function, compare::device_kernel_function
+#include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
+#include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
+#include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
+#include "plssvm/parameter_train.hpp"             // plssvm::parameter
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
@@ -39,6 +40,18 @@ using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
     util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 TYPED_TEST_SUITE(OpenMP_base, parameter_types);
+
+TYPED_TEST(OpenMP_base, invalid_target_platform) {
+    // setup OpenMP C-SVM
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    // only automatic or cpu are allowed as target platform for the OpenMP backend
+    params.target = plssvm::target_platform::gpu_nvidia;
+
+    EXPECT_THROW(mock_openmp_csvm{ params }, plssvm::openmp::backend_exception);
+}
 
 TYPED_TEST(OpenMP_base, write_model) {
     // setup OpenMP C-SVM

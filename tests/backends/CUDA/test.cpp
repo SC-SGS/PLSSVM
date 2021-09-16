@@ -42,6 +42,18 @@ using parameter_types = ::testing::Types<
 
 TYPED_TEST_SUITE(CUDA_base, parameter_types);
 
+TYPED_TEST(CUDA_base, invalid_target_platform) {
+    // setup CUDA C-SVM
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    // only automatic or gpu_nvidia are allowed as target platform for the OpenMP backend
+    params.target = plssvm::target_platform::cpu;
+
+    EXPECT_THROW(mock_cuda_csvm{ params }, plssvm::cuda::backend_exception);
+}
+
 TYPED_TEST(CUDA_base, write_model) {
     // setup CUDA C-SVM
     plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
