@@ -53,18 +53,18 @@ void csvm<T>::learn() {
 
     std::vector<real_type> q;
     std::vector<real_type> b = *value_ptr_;
-    #pragma omp parallel sections
+#pragma omp parallel sections
     {
-        #pragma omp section  // generate q
+#pragma omp section  // generate q
         {
             q = generate_q();
         }
-        #pragma omp section  // generate right-hand side from equation
+#pragma omp section  // generate right-hand side from equation
         {
             b.pop_back();
             b -= value_ptr_->back();
         }
-        #pragma omp section  // generate bottom right from A
+#pragma omp section  // generate bottom right from A
         {
             QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
         }
@@ -84,10 +84,23 @@ void csvm<T>::learn() {
     alpha.emplace_back(-sum(alpha));
 
     alpha_ptr_ = std::make_shared<const std::vector<real_type>>(std::move(alpha));
+    w_.clear();
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+}
+
+template <typename T>
+void csvm<T>::update_w() {
+    w_.resize(num_features_);
+    std::fill(w_.begin(), w_.end(), 0.0);
+    for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+        // w_ += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index];
+        for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
+            w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
+        }
     }
 }
 
@@ -105,11 +118,47 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
     PLSSVM_ASSERT((*data_ptr_)[0].size() == point.size(), "Prediction point has different amount of features than training data!");
 
     real_type temp = bias_;
-    for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
-        temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
+
+    if (kernel_ == kernel_type::linear) {
+        if (w_.empty()) {
+            update_w();
+        }
+        temp += transposed{ w_ } * point;
+
+    } else {
+        for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+            temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
+        }
     }
-    // return sign(temp); // If predict should return +- 1 // TODO:
+
     return temp;
+}
+
+template <typename T>
+auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
+    using namespace plssvm::operators;
+
+    return sign(predict(point));
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    std::vector<real_type> classes;
+    classes.reserve(points.size());
+    for (const std::vector<real_type> &point : points) {
+        classes.emplace_back(predict(point));
+    }
+    return classes;
+}
+
+template <typename T>
+auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    std::vector<real_type> classes;
+    classes.reserve(points.size());
+    for (const std::vector<real_type> &point : points) {
+        classes.emplace_back(predict_label(point));
+    }
+    return classes;
 }
 
 template <typename T>
@@ -152,7 +201,7 @@ auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type>
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (size_type col = 0; col < num_features_; ++col) {
         for (size_type row = 0; row < num_data_points_ - 1; ++row) {
             vec[col * (num_data_points_ - 1 + boundary) + row] = (*data_ptr_)[row][col];
