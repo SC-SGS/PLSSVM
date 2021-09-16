@@ -335,6 +335,13 @@ template <typename T>
 void parameter<T>::parse_model_file(const std::string &filename) {
     auto start_time = std::chrono::steady_clock::now();
 
+    // set new filenames
+    if (predict_filename == predict_name_from_input() || predict_filename.empty()) {
+        model_filename = filename;
+        predict_filename = predict_name_from_input();
+    }
+    model_filename = filename;
+
     detail::file_reader f{ filename, '#' };
 
     // reset values pointer

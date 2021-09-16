@@ -10,7 +10,8 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/parameter_train.hpp"        // plssvm::parameter
+#include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
+#include "plssvm/parameter_train.hpp"        // plssvm::parameter_train
 
 #include "backends/compare.hpp"  // linear_kernel
 #include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq
@@ -225,6 +226,51 @@ TYPED_TEST(BASE, parse_file) {
     }
 }
 
+TYPED_TEST(BASE, parse_model_file) {
+    // setup C-SVM class
+    plssvm::parameter<TypeParam> params;
+    params.print_info = false;
+    params.parse_model_file(TEST_PATH "/data/5x4.libsvm.model");
+
+    using real_type = typename decltype(params)::real_type;
+    using size_type = typename decltype(params)::size_type;
+
+    // check if necessary pointers are set
+    ASSERT_NE(params.data_ptr, nullptr);
+    ASSERT_NE(params.value_ptr, nullptr);
+    ASSERT_NE(params.alphas_ptr, nullptr);
+
+    // check if sizes match
+    ASSERT_EQ(params.data_ptr->size(), 5) << "num support vectors mismatch";
+    for (size_type i = 0; i < 5; ++i) {
+        EXPECT_EQ(params.data_ptr->operator[](i).size(), 4) << "mismatch num features in support vector: " << i;
+    }
+
+    // correct support vectors
+    std::vector<std::vector<real_type>> expected_model_support_vectors{
+        { -1.117828, -2.908719, 0.6663834, 1.097883 },
+        { -0.5282118, -0.335881, 0.5168730, 0.5460446 },
+        { -0.2098121, 0.6027694, -0.1308685, 0.1080525 },
+        { 1.884940, 1.005186, 0.2984999, 1.646463 },
+        { 0.5765022, 1.014056, 0.1300943, 0.7261914 },
+    };
+    std::vector<real_type> expected_model_values{ 1, 1, -1, -1, -1 };
+    std::vector<real_type> expected_model_alphas{ -0.17609610490769723, 0.8838187731213127, -0.47971257671001616, 0.0034556484621847128, -0.23146573996578407 };
+
+    // check parsed values for correctness
+    for (size_type i = 0; i < 5; ++i) {
+        for (size_type j = 0; j < 4; ++j) {
+            util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_model_support_vectors[i][j], fmt::format("support vector: {} feature: {}", i, j));
+        }
+        util::gtest_expect_floating_point_eq((*params.value_ptr)[i], expected_model_values[i], fmt::format("support vector: {}", i));
+        util::gtest_expect_floating_point_eq((*params.alphas_ptr)[i], expected_model_alphas[i], fmt::format("support vector: {}", i));
+    }
+
+    // check if other parameter values are set correctly
+    EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
+    util::gtest_expect_floating_point_eq(params.rho, real_type{ 0.37330625882191915 });
+}
+
 TYPED_TEST(BASE, parse_libsvm_ill_formed) {
     // setup parameters
     plssvm::parameter<TypeParam> params;
@@ -239,8 +285,17 @@ TYPED_TEST(BASE, parse_arff_ill_formed) {
     plssvm::parameter<TypeParam> params;
     params.print_info = false;
 
-    // parsing an libsvm file using the arff parser should result in an exception
+    // parsing a libsvm file using the arff parser should result in an exception
     EXPECT_THROW(params.parse_arff(TEST_PATH "/data/5x4.libsvm", params.data_ptr), plssvm::invalid_file_format_exception);
+}
+
+TYPED_TEST(BASE, parse_model_ill_formed) {
+    // setup parameters
+    plssvm::parameter<TypeParam> params;
+    params.print_info = false;
+
+    // parse a libsvm file using the model file parser should result in an exception
+    EXPECT_THROW(params.parse_model_file(TEST_PATH "/data/5x4.libsvm"), plssvm::invalid_file_format_exception);
 }
 
 TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
@@ -251,6 +306,12 @@ TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
 TYPED_TEST(BASE, parse_arff_non_existing_file) {
     // attempting to parse a non-existing file should result in an exception
     EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.ar" }, plssvm::file_not_found_exception);
+}
+
+TYPED_TEST(BASE, parse_model_non_existing_file) {
+    // attempting to parse a non-existing file should result in an exception
+    EXPECT_THROW((plssvm::parameter_predict<TypeParam>{ TEST_PATH "/data/5x4.libsvm", TEST_PATH "/data/5x4.libsvm.mod" }), plssvm::file_not_found_exception);
+    EXPECT_THROW((plssvm::parameter_predict<TypeParam>{ TEST_PATH "/data/5x4.lib", TEST_PATH "/data/5x4.libsvm.model" }), plssvm::file_not_found_exception);
 }
 
 TYPED_TEST(BASE, parameter_train) {
@@ -278,29 +339,28 @@ TYPED_TEST(BASE, parameter_train) {
 }
 
 TYPED_TEST(BASE, parameter_predict) {
-    // TODO:
-    // plssvm::parameter<TypeParam> params;
-    // params.print_info = false;
-    // params.parse_model(TEST_PATH "/data/5x4.libsvm");
+    plssvm::parameter<TypeParam> params;
+    params.parse_test_file(TEST_PATH "/data/5x4.libsvm");
+    params.parse_model_file(TEST_PATH "/data/5x4.libsvm.model");
 
-    // plssvm::parameter_train<TypeParam> params_predict{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_predict<TypeParam> params_predict{ TEST_PATH "/data/5x4.libsvm", TEST_PATH "/data/5x4.libsvm.model" };
 
-    // EXPECT_EQ(params.kernel, params_train.kernel);
-    // EXPECT_EQ(params.degree, params_train.degree);
-    // EXPECT_EQ(params.gamma, params_train.gamma);
-    // EXPECT_EQ(params.coef0, params_train.coef0);
-    // EXPECT_EQ(params.cost, params_train.cost);
-    // EXPECT_EQ(params.epsilon, params_train.epsilon);
-    // EXPECT_EQ(params.print_info, params_train.print_info);
-    // EXPECT_EQ(params.backend, params_train.backend);
-    // EXPECT_EQ(params.target, params_train.target);
-    // EXPECT_EQ(params.input_filename, params_train.input_filename);
-    // EXPECT_EQ(params.model_filename, params_train.model_filename);
-    // EXPECT_EQ(params.predict_filename, params_train.predict_filename);
-    // EXPECT_EQ(params.data_ptr, params_train.data_ptr);
-    // EXPECT_EQ(params.value_ptr, params_train.value_ptr);
-    // EXPECT_EQ(params.alphas_ptr, params_train.alphas_ptr);
-    // EXPECT_EQ(params.test_data_ptr, params_train.test_data_ptr);
+    EXPECT_EQ(params.kernel, params_predict.kernel);
+    EXPECT_EQ(params.degree, params_predict.degree);
+    EXPECT_EQ(params.gamma, params_predict.gamma);
+    EXPECT_EQ(params.coef0, params_predict.coef0);
+    EXPECT_EQ(params.cost, params_predict.cost);
+    EXPECT_EQ(params.epsilon, params_predict.epsilon);
+    EXPECT_EQ(params.print_info, params_predict.print_info);
+    EXPECT_EQ(params.backend, params_predict.backend);
+    EXPECT_EQ(params.target, params_predict.target);
+    EXPECT_EQ(params.input_filename, params_predict.input_filename);
+    EXPECT_EQ(params.model_filename, params_predict.model_filename);
+    EXPECT_EQ(params.predict_filename, params_predict.predict_filename);
+    EXPECT_EQ(*params.data_ptr, *params_predict.data_ptr);
+    EXPECT_EQ(*params.value_ptr, *params_predict.value_ptr);
+    EXPECT_EQ(*params.alphas_ptr, *params_predict.alphas_ptr);
+    EXPECT_EQ(*params.test_data_ptr, *params_predict.test_data_ptr);
 }
 
 TYPED_TEST(BASE, transform_data) {
