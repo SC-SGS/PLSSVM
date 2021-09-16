@@ -133,7 +133,7 @@ class csvm {
      * @param point the point to predict
      * @return real_type a negative value if the prediction for point is the negativ class and vice versa
      */
-    real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
+    virtual real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
 
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) points
@@ -160,13 +160,19 @@ class csvm {
     std::vector<real_type> predict_label(const std::vector<std::vector<real_type>> &points);
 
   protected:
+    /**
+     * @brief updates the w_ vector to the current data and alpha values
+     */
+    virtual void update_w();  // TODO: implement on devices for performance improvement
+
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
     /**
      * @brief Initialize the data on the respective device(s) (e.g. GPUs).
      */
-    virtual void setup_data_on_device() = 0;
+    virtual void
+    setup_data_on_device() = 0;
     /**
      * @brief Generate the vector `q`, a subvector of the least-squares matrix equation.
      * @return the generated `q` vector
@@ -183,10 +189,6 @@ class csvm {
      * @return `x`
      */
     virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
-    /**
-     * @brief TODO:
-     */
-    virtual void load_w() = 0;  // TODO: implemented together with predict
 
     //*************************************************************************************************************************************//
     //                                                          kernel functions                                                           //
@@ -246,7 +248,7 @@ class csvm {
     real_type bias_{};
     /// The bottom right matrix entry multiplied by cost.
     real_type QA_cost_{};
-    /// TODO:doxygen
+    /// normalvector (currently used for prediction with the linear kernel)
     std::vector<real_type> w_{};
 };
 

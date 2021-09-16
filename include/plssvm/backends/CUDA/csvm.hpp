@@ -64,7 +64,6 @@ class csvm : public ::plssvm::csvm<T> {
     void setup_data_on_device() override;
     std::vector<real_type> generate_q() override;
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
-    void load_w() override {}  // TODO: implement correctly
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CUDA @p device.

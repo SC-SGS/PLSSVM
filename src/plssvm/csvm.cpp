@@ -84,10 +84,23 @@ void csvm<T>::learn() {
     alpha.emplace_back(-sum(alpha));
 
     alpha_ptr_ = std::make_shared<const std::vector<real_type>>(std::move(alpha));
+    w_.clear();
 
     end_time = std::chrono::steady_clock::now();
     if (print_info_) {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+}
+
+template <typename T>
+void csvm<T>::update_w() {
+    w_.resize(num_features_);
+    std::fill(w_.begin(), w_.end(), 0.0);
+    for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+        // w_ += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index];
+        for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
+            w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
+        }
     }
 }
 
@@ -105,8 +118,17 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
     PLSSVM_ASSERT((*data_ptr_)[0].size() == point.size(), "Prediction point has different amount of features than training data!");
 
     real_type temp = bias_;
-    for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
-        temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
+
+    if (kernel_ == kernel_type::linear) {
+        if (w_.empty()) {
+            update_w();
+        }
+        temp += transposed{ w_ } * point;
+
+    } else {
+        for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+            temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
+        }
     }
 
     return temp;
