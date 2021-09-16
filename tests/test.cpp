@@ -27,6 +27,7 @@
 #include <iterator>    // std::istreambuf_iterator
 #include <memory>      // std::make_shared
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <sstream>     // std::stringstream
 #include <string>      // std::string
 #include <vector>      // std::vector
 
@@ -366,6 +367,34 @@ TYPED_TEST(BASE, parameter_predict) {
     EXPECT_EQ(*params.value_ptr, *params_predict.value_ptr);
     EXPECT_EQ(*params.alphas_ptr, *params_predict.alphas_ptr);
     EXPECT_EQ(*params.test_data_ptr, *params_predict.test_data_ptr);
+}
+
+TYPED_TEST(BASE, parameter_output) {
+    // setup parameter and get output string
+    plssvm::parameter<TypeParam> params;
+    std::stringstream ss;
+    ss << params;
+
+    // correct output string
+    std::string correct_output =
+        fmt::format("kernel_type       linear\n"
+                    "degree            3\n"
+                    "gamma             0\n"
+                    "coef0             0\n"
+                    "cost              1\n"
+                    "epsilon           0.001\n"
+                    "print_info        true\n"
+                    "backend           OpenMP\n"
+                    "target platform   automatic\n"
+                    "input_filename    ''\n"
+                    "model_filename    ''\n"
+                    "predict_filename  ''\n"
+                    "rho               0\n"
+                    "real_type         {}\n",
+                    plssvm::detail::arithmetic_type_name<TypeParam>());
+
+    // check for equality
+    EXPECT_EQ(ss.str(), correct_output);
 }
 
 TYPED_TEST(BASE, transform_data) {
