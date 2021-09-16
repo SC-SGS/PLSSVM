@@ -373,7 +373,6 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     size_type num_sv{ 0 };
     std::pair<int, int> labels{ 0, 0 };
     bool rho_set{ false };
-    bool sv_set{ false };
 
     // parse libsvm model file header
     size_type header = 0;
@@ -465,7 +464,6 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                 value_ptr = std::make_shared<const std::vector<real_type>>(std::move(values));
             } else if (line == "sv") {
                 // start parsing support vectors, required
-                sv_set = true;
                 break;
             } else {
                 throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'! Maybe SV is missing?", f.line(header)) };
@@ -486,9 +484,9 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     } else if (!rho_set) {
         // no rho set
         throw invalid_file_format_exception{ "Missing rho value!" };
-    } else if (!sv_set) {
+    } else if (header + 1 >= f.num_lines()) {
         // no support vectors given
-        throw invalid_file_format_exception{ "Missing support vectors!" };
+        throw invalid_file_format_exception{ "Can't parse file: no support vectors are given or SV is missing!" };
     }
 
     // parse support vectors

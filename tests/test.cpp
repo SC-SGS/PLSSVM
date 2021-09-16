@@ -324,6 +324,8 @@ TYPED_TEST(BASE, parse_model_ill_formed) {
 
     // parse a libsvm file using the model file parser should result in an exception
     EXPECT_THROW(params.parse_model_file(TEST_PATH "/data/5x4.libsvm"), plssvm::invalid_file_format_exception);
+    // test parsing a file without data points (but with SV)
+    EXPECT_THROW_WHAT(params.parse_model_file(TEST_PATH "/data/models/0x4.model"), plssvm::invalid_file_format_exception, "Can't parse file: no support vectors are given or SV is missing!");
 
     std::ifstream model_ifs(TEST_PATH "/data/models/5x4.libsvm.model");
     std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
