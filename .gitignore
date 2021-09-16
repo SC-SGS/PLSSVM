@@ -79,3 +79,5 @@ tests/data/*
 !tests/data/5x4.sparse.libsvm
 !tests/data/500x200.libsvm
 !tests/data/models/
+!tests/data/libsvm/
+!tests/data/arff/
