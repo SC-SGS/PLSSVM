@@ -41,7 +41,6 @@ TYPED_TEST(BASE, parse_libsvm) {
     // setup C-SVM class
     plssvm::parameter<TypeParam> params;
     params.print_info = false;
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
 
     using real_type = typename decltype(params)::real_type;
     using size_type = typename decltype(params)::size_type;
@@ -56,6 +55,8 @@ TYPED_TEST(BASE, parse_libsvm) {
     };
     std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
     ASSERT_EQ(expected_data.size(), expected_values.size());
+
+    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
 
     // check if sizes match
     ASSERT_NE(params.data_ptr, nullptr);
@@ -73,13 +74,29 @@ TYPED_TEST(BASE, parse_libsvm) {
         }
         EXPECT_EQ((*params.value_ptr)[i], expected_values[i]) << "data point: " << i;
     }
+
+    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm.no_label", params.data_ptr);
+
+    // check if sizes match
+    ASSERT_NE(params.data_ptr, nullptr);
+    ASSERT_EQ(params.data_ptr->size(), expected_data.size()) << "num data points mismatch";
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        ASSERT_EQ((*params.data_ptr)[i].size(), expected_data[i].size()) << "mismatch num features in data point: " << i;
+    }
+    ASSERT_EQ(params.value_ptr, nullptr);
+
+    // check parsed values for correctness
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        for (size_type j = 0; j < (*params.data_ptr)[i].size(); ++j) {
+            util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_data[i][j], fmt::format("data point: {} feature: {}", i, j));
+        }
+    }
 }
 
 TYPED_TEST(BASE, parse_libsvm_sparse) {
     // setup C-SVM class
     plssvm::parameter<TypeParam> params;
     params.print_info = false;
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.sparse.libsvm", params.data_ptr);
 
     using real_type = typename decltype(params)::real_type;
     using size_type = typename decltype(params)::size_type;
@@ -94,6 +111,8 @@ TYPED_TEST(BASE, parse_libsvm_sparse) {
     };
     std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
     ASSERT_EQ(expected_data.size(), expected_values.size());
+
+    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.sparse.libsvm", params.data_ptr);
 
     // check if sizes match
     ASSERT_NE(params.data_ptr, nullptr);
@@ -110,6 +129,23 @@ TYPED_TEST(BASE, parse_libsvm_sparse) {
             util::gtest_expect_floating_point_eq((*(params.data_ptr))[i][j], expected_data[i][j], fmt::format("data point: {} feature: {}", i, j));
         }
         EXPECT_EQ((*params.value_ptr)[i], expected_values[i]) << "data point: " << i;
+    }
+
+    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.sparse.libsvm.no_label", params.data_ptr);
+
+    // check if sizes match
+    ASSERT_NE(params.data_ptr, nullptr);
+    ASSERT_EQ(params.data_ptr->size(), expected_data.size()) << "num data points mismatch";
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        ASSERT_EQ((*params.data_ptr)[i].size(), expected_data[i].size()) << "mismatch num features in data point: " << i;
+    }
+    ASSERT_EQ(params.value_ptr, nullptr);
+
+    // check parsed values for correctness
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        for (size_type j = 0; j < (*params.data_ptr)[i].size(); ++j) {
+            util::gtest_expect_floating_point_eq((*(params.data_ptr))[i][j], expected_data[i][j], fmt::format("data point: {} feature: {}", i, j));
+        }
     }
 }
 
