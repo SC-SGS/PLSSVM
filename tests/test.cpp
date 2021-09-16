@@ -106,30 +106,50 @@ TYPED_TEST(BASE, parse_arff) {
     // setup C-SVM class
     plssvm::parameter<TypeParam> params;
     params.print_info = false;
-    params.parse_arff(TEST_PATH "/data/5x4.arff", params.data_ptr);
 
     using real_type = typename decltype(params)::real_type;
     using size_type = typename decltype(params)::size_type;
 
-    // check if sizes match
-    ASSERT_EQ(params.data_ptr->size(), 5) << "num datapoints mismatch";
-    for (size_type i = 0; i < 5; ++i) {
-        EXPECT_EQ(params.data_ptr->operator[](i).size(), 4) << "mismatch num features in datapoint: " << i;
-    }
-
     // correct values
-    std::vector<std::vector<real_type>> expected{
+    std::vector<std::vector<real_type>> expected_data{
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { 0., 0.60276937379453293, -0.13086851759108944, 0. },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
     };
+    std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+
+    params.parse_arff(TEST_PATH "/data/5x4.arff", params.data_ptr);
+
+    // check if sizes match
+    ASSERT_EQ(params.data_ptr->size(), 5) << "num data points mismatch";
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        EXPECT_EQ((*params.data_ptr)[i].size(), 4) << "mismatch num features in datapoint: " << i;
+    }
+    ASSERT_EQ(params.value_ptr->size(), params.data_ptr->size()) << "num labels mismatch";
 
     // check parsed values for correctness
-    for (size_type i = 0; i < 5; ++i) {
-        for (size_type j = 0; j < 4; ++j) {
-            util::gtest_expect_floating_point_eq((*(params.data_ptr))[i][j], expected[i][j], fmt::format("datapoint: {} feature: {}", i, j));
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        for (size_type j = 0; j < (*params.data_ptr)[i].size(); ++j) {
+            util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_data[i][j], fmt::format("datapoint: {} feature: {}", i, j));
+        }
+        EXPECT_EQ((*params.value_ptr)[i], expected_values[i]) << "data point: " << i;
+    }
+
+    params.parse_arff(TEST_PATH "/data/arff/5x4.arff.no_label", params.data_ptr);
+
+    // check if sizes match
+    ASSERT_EQ(params.data_ptr->size(), 5) << "num data points mismatch";
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        ASSERT_EQ((*params.data_ptr)[i].size(), 4) << "mismatch num features in data point: " << i;
+    }
+    ASSERT_EQ(params.value_ptr, nullptr);
+
+    // check parsed values for correctness
+    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+        for (size_type j = 0; j < (*params.data_ptr)[i].size(); ++j) {
+            util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_data[i][j], fmt::format("datapoint: {} feature: {}", i, j));
         }
     }
 }
@@ -247,6 +267,54 @@ TYPED_TEST(BASE, parse_arff_ill_formed) {
 
     // parsing a libsvm file using the arff parser should result in an exception
     EXPECT_THROW(params.parse_arff(TEST_PATH "/data/5x4.libsvm", params.data_ptr), plssvm::invalid_file_format_exception);
+
+    // test parsing an empty file
+    EXPECT_THROW_WHAT(params.parse_arff(TEST_PATH "/data/libsvm/0x0.libsvm", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no ATTRIBUTES are defined!");
+    // test parsing a file without data points (but with @DATA)
+    EXPECT_THROW_WHAT(params.parse_arff(TEST_PATH "/data/arff/0x4.arff", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given or @DATA is missing!");
+
+    std::ifstream ifs(TEST_PATH "/data/5x4.arff");
+    std::string correct_file((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+
+    const auto ill_formed_tester = [&params, correct_file](const std::string_view correct, const std::string_view altered, const std::string_view msg) {
+        // alter correct file to be ill-formed
+        std::string ill_formed_model{ correct_file };
+        plssvm::detail::replace_all(ill_formed_model, correct, altered);
+
+        // create temporary file with ill-formed arff specification
+        std::string tmp_model_file = util::create_temp_file();
+        std::ofstream ofs{ tmp_model_file };
+        ofs << ill_formed_model;
+        ofs.close();
+
+        // perform actual check
+        EXPECT_THROW_WHAT(params.parse_arff(tmp_model_file, params.data_ptr), plssvm::invalid_file_format_exception, msg);
+
+        // remove temporary file
+        std::filesystem::remove(tmp_model_file);
+    };
+
+    // test for ATTRIBUTE with type not equal to NUMERIC
+    ill_formed_tester("@ATTRIBUTE third    Numeric", "@ATTRIBUTE third    String", "Can only use NUMERIC features, but '@ATTRIBUTE third    String' was given!");
+    // test for ATTRIBUTE with name class which isn't last
+    ill_formed_tester("@ATTRIBUTE fourth   NUMERIC", "@ATTRIBUTE class    NUMERIC", "Only the last ATTRIBUTE may be CLASS!");
+    // test for missing @DATA
+    ill_formed_tester("@DATA", "", "Can't parse file: no data points are given or @DATA is missing!");
+
+    // test for @ in data section
+    ill_formed_tester("0.57650218263054642", "@0.57650218263054642", "Read @ inside data section!: '@0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1'");
+    // test for missing closing } in sparse data point
+    ill_formed_tester("{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}", "{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1", "Missing closing '}' for sparse data point 3 description!");
+    // test for missing label even though @ATTRIBUTE class is defined
+    ill_formed_tester("{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}", "{1 0.60276937379453293, 2 -0.13086851759108944}", "Missing label for data point 3!");
+    // test for missing data point
+    ill_formed_tester("-1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1", "-1.117827500607882,-2.9087188881250993,1", "Invalid number of features/labels! Found 2 but should be 4!");
+    // test for additional data point
+    ill_formed_tester("-1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1", "-1.117827500607882,-2.9087188881250993,1.0978832703949288,1.0978832703949288,1.0978832703949288,1", "Too many features! Superfluous ',1' for data point 0!");
+    // test for additional data point in sparse specification
+    ill_formed_tester("{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}", "{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1, 5 42.1415}", "Too many features given! Trying to add feature at position 5 but max position is 3!");
+    // test for missing label
+    ill_formed_tester("-1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1", "-1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288", "Invalid number of features/labels! Found 3 but should be 4!");
 }
 
 TYPED_TEST(BASE, parse_model_ill_formed) {

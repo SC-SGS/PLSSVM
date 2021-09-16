@@ -194,10 +194,10 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
                 continue;
             } else if (detail::starts_with(line, "@ATTRIBUTE")) {
                 if (line.find("NUMERIC") == std::string::npos) {
-                    throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", line) };
+                    throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", f.line(header)) };
                 }
                 if (has_label) {
-                    throw invalid_file_format_exception{ "Only the last ATTRIBUTE my be CLASS!" };
+                    throw invalid_file_format_exception{ "Only the last ATTRIBUTE may be CLASS!" };
                 } else if (line.find("CLASS") != std::string::npos) {
                     has_label = true;
                 }
@@ -210,21 +210,26 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
         }
     }
 
-    // something went wrong, i.e. no @ATTRIBUTE fields
+    // perform other checks
     if (max_size == 0) {
-        throw invalid_file_format_exception{ "Invalid file format!" };
+        // no @ATTRIBUTE fields
+        throw invalid_file_format_exception{ "Can't parse file: no ATTRIBUTES are defined!" };
+    } else if (header + 1 >= f.num_lines()) {
+        // no data points provided
+        throw invalid_file_format_exception{ "Can't parse file: no data points are given or @DATA is missing!" };
     }
 
     std::vector<std::vector<real_type>> data(f.num_lines() - (header + 1));
     std::vector<real_type> value(f.num_lines() - (header + 1));
 
+    const size_type num_features = has_label ? max_size - 1 : max_size;
+
     #pragma omp parallel for
     for (size_type i = 0; i < data.size(); ++i) {
-        data[i].resize(max_size - 1);
+        data[i].resize(num_features);
     }
 
     std::exception_ptr parallel_exception;
-    const size_type end = has_label ? max_size - 1 : max_size;
 
     #pragma omp parallel
     {
@@ -236,14 +241,14 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
                 //
                 if (detail::starts_with(line, '@')) {
                     // read @ inside data section
-                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: {}", line) };
+                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: '{}'", line) };
                 }
 
                 // parse sparse or dense data point definition
                 if (detail::starts_with(line, '{')) {
                     // missing closing }
                     if (!detail::ends_with(line, '}')) {
-                        throw invalid_file_format_exception{ "Missing closing '}' for sparse data point description!" };
+                        throw invalid_file_format_exception{ fmt::format("Missing closing '}}' for sparse data point {} description!", i) };
                     }
                     // sparse line
                     bool is_class_set = false;
@@ -257,13 +262,17 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
 
                         // get index
                         const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        if (index >= max_size) {
+                            // index too big for specified number of features
+                            throw invalid_file_format_exception{ fmt::format("Too many features given! Trying to add feature at position {} but max position is {}!", index, num_features - 1) };
+                        }
                         pos = next_pos + 1;
 
                         // get value
                         next_pos = line.find_first_of(",}", pos);
 
                         // write parsed value depending on the index
-                        if (index == end) {
+                        if (index == max_size - 1 && has_label) {
                             is_class_set = true;
                             value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
                         } else {
@@ -277,21 +286,30 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
                     }
                     // no class label found
                     if (!is_class_set && has_label) {
-                        throw invalid_file_format_exception{ "Missing class for data point!" };
+                        throw invalid_file_format_exception{ fmt::format("Missing label for data point {}!", i) };
                     }
                 } else {
                     // dense line
                     size_type pos = 0;
-                    for (size_type j = 0; j < end; ++j) {
-                        size_type next_pos = line.find_first_of(',', pos);
+                    size_type next_pos = 0;
+                    for (size_type j = 0; j < max_size - 1; ++j) {
+                        next_pos = line.find_first_of(',', pos);
                         if (next_pos == std::string_view::npos) {
-                            throw invalid_file_format_exception{ fmt::format("Invalid number of features! Found {} but should be {}.", j, end) };
+                            throw invalid_file_format_exception{ fmt::format("Invalid number of features/labels! Found {} but should be {}!", j, max_size - 1) };
                         }
                         data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
                     }
+                    // write last number to the correct vector (based on the fact whether labels are present or not)
                     if (has_label) {
                         value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                    } else {
+                        data[i][num_features - 1] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos));
+                    }
+                    // check whether superfluous data points are left
+                    next_pos = line.find_first_of(',', pos);
+                    if (next_pos != std::string_view::npos) {
+                        throw invalid_file_format_exception{ fmt::format("Too many features! Superfluous '{}' for data point {}!", line.substr(next_pos), i) };
                     }
                 }
             } catch (const std::exception &e) {
@@ -315,18 +333,22 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
 
     // update gamma
     if (gamma == 0.0) {
-        gamma = real_type{ 1. } / static_cast<real_type>(max_size - 1);
+        gamma = real_type{ 1. } / static_cast<real_type>(num_features);
     }
 
     // update shared pointer
     data_ptr_ref = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
-    value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
+    if (has_label) {
+        value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
+    } else {
+        value_ptr = nullptr;
+    }
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {
         fmt::print("Read {} data points with {} features in {} using the arff parser.\n",
-                   data_ptr->size(),
-                   max_size - 1,
+                   data_ptr_ref->size(),
+                   num_features,
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 }
