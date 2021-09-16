@@ -163,7 +163,7 @@ pipeline {
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
                     '''
-                    publishCoverage adapters: [ coberturaAdapter('build/Debug_cov/coverage.xml')]
+                    publishCoverage adapters: [ coberturaAdapter('SVM/build/Debug_cov/coverage.xml')]
                 }
             }
         }
