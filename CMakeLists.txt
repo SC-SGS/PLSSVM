@@ -125,9 +125,9 @@ IF (PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
 #   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -Xcompiler 'fprofile-arcs -ftest-coverage'")
 
 
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+
     # Create the gcov target. Run coverage tests with 'make cov'
-    add_custom_target(cov
+    add_custom_target(gcov
         COMMAND lcov --zerocounters  --directory .
         COMMAND lcov --capture -d . --initial --output-file test_base.info
         COMMAND mkdir -p coverage
@@ -142,7 +142,7 @@ if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
     add_dependencies(gcov ${PLSSVM_EXECUTABLE_TRAIN_NAME})
     add_dependencies(gcov ${PLSSVM_EXECUTABLE_PREDICT_NAME})
-endif()
+
 
 #TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
 

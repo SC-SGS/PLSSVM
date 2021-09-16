@@ -149,7 +149,7 @@ pipeline {
         //         }
         //     }
         // }
-        stage('converage analysis') {
+        stage('coverage analysis') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -159,7 +159,7 @@ pipeline {
                         cd build/Debug_cov
                         rm -rf *
                         /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug  -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86" -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_COV=ON ../../
-                        make -j4 cov
+                        make -j4 gcov
                     '''
                     publishCodeCoverage lcovPathPattern: 'test_clean.info'
                 }
