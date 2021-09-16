@@ -235,6 +235,9 @@ TYPED_TEST(BASE, parse_libsvm_ill_formed) {
 
     // parsing an arff file using the libsvm parser should result in an exception
     EXPECT_THROW(params.parse_libsvm(TEST_PATH "/data/5x4.arff", params.data_ptr), plssvm::invalid_file_format_exception);
+
+    // test parsing an empty file
+    EXPECT_THROW_WHAT(params.parse_libsvm(TEST_PATH "/data/libsvm/0x0.libsvm", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given!");
 }
 
 TYPED_TEST(BASE, parse_arff_ill_formed) {

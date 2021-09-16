@@ -97,14 +97,14 @@ void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<
         std::rethrow_exception(parallel_exception);
     }
 
+    // no features were parsed -> invalid file
+    if (max_size == 0) {
+        throw invalid_file_format_exception{ fmt::format("Can't parse file: no data points are given!") };
+    }
+
     #pragma omp parallel for
     for (size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size);
-    }
-
-    // no features were parsed -> invalid file
-    if (max_size == 0) {
-        throw invalid_file_format_exception{ fmt::format("Can't parse file!") };
     }
 }
 
