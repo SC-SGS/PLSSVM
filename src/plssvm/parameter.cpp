@@ -368,7 +368,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
             if (detail::starts_with(line, "svm_type")) {
                 // svm_type must be c_svc
                 if (value != "c_svc") {
-                    throw invalid_file_format_exception{ fmt::format("Can only use c_svc as svm_type, but '{}' was given!", line) };
+                    throw invalid_file_format_exception{ fmt::format("Can only use c_svc as svm_type, but '{}' was given!", value) };
                 }
             } else if (detail::starts_with(line, "kernel_type")) {
                 // parse kernel_type, must be linear, polynomial or rbf
@@ -409,7 +409,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                 value.remove_prefix(std::min(first_label.size() + 1, value.size()));
                 // parse second label
                 const std::string_view second_label = value.substr(0, value.find_first_of(" \n"));
-                labels.second = detail::convert_to<real_type>(second_label);
+                labels.second = detail::convert_to<real_type, invalid_file_format_exception>(second_label);
                 value.remove_prefix(std::min(second_label.size() + 1, value.size()));
 
                 value = detail::trim_left(value);
@@ -431,7 +431,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
                 if (!value.empty()) {
                     // error if more than two numbers were given
-                    throw invalid_file_format_exception{ fmt::format("Only two numbers are allowed, but more were given {}!", line) };
+                    throw invalid_file_format_exception{ fmt::format("Only two numbers are allowed, but more were given '{}'!", line) };
                 } else if (num_first + num_second != num_sv) {
                     throw invalid_file_format_exception{ fmt::format("The number of positive and negative support vectors doesn't add up to the total number: {} + {} != {}!", num_first, num_second, num_sv) };
                 }
@@ -446,7 +446,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                 sv_set = true;
                 break;
             } else {
-                throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'!", line) };
+                throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'!", f.line(header)) };
             }
         }
     }

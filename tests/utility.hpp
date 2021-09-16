@@ -106,6 +106,28 @@ void gtest_assert_floating_point_near(const T val1, const T val2, const std::str
     EXPECT_LT(diff, std::max(std::numeric_limits<T>::lowest(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
 }
 
+/**
+ * @brief Defines a macro like
+ *        <a href="https://chromium.googlesource.com/external/github.com/google/googletest/+/HEAD/googletest/docs/advanced.md">googletest</a>'s
+ *        `EXPECT_THROW`, but also allows to test for the correct exception's
+ *        [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) message.
+ *
+ * @param[in] statement the statement which should throw (a specific exception)
+ * @param[in] expected_exception the type of the exception which should get thrown
+ * @param[in] msg the expected exception's [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) message
+ */
+#define EXPECT_THROW_WHAT(statement, expected_exception, msg)                   \
+    do {                                                                        \
+        try {                                                                   \
+            statement;                                                          \
+            FAIL() << "Expected " #expected_exception;                          \
+        } catch (const expected_exception &e) {                                 \
+            EXPECT_EQ(std::string_view(e.what()), std::string_view(msg));       \
+        } catch (...) {                                                         \
+            FAIL() << "Expected " #expected_exception " with message: " << msg; \
+        }                                                                       \
+    } while (false);
+
 namespace google_test {
 /**
  * @brief Save the data type and kernel function in a single struct used by GoogleTest's TYPED_TEST_SUITE.

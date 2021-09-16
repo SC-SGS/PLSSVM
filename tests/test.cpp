@@ -8,6 +8,7 @@
 
 #include "mock_csvm.hpp"
 
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
@@ -251,6 +252,46 @@ TYPED_TEST(BASE, parse_model_ill_formed) {
 
     // parse a libsvm file using the model file parser should result in an exception
     EXPECT_THROW(params.parse_model_file(TEST_PATH "/data/5x4.libsvm"), plssvm::invalid_file_format_exception);
+
+    std::ifstream model_ifs(TEST_PATH "/data/models/5x4.libsvm.model");
+    std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+
+    const auto ill_formed_tester = [&params, correct_model](const std::string_view correct, const std::string_view altered, const std::string_view msg) {
+        // alter correct model file to be ill-formed
+        std::string ill_formed_model{ correct_model };
+        plssvm::detail::replace_all(ill_formed_model, correct, altered);
+
+        // create temporary file with ill-formed model specification
+        std::string tmp_model_file = util::create_temp_file();
+        std::ofstream ofs{ tmp_model_file };
+        ofs << ill_formed_model;
+        ofs.close();
+
+        // perform actual check
+        EXPECT_THROW_WHAT(params.parse_model_file(tmp_model_file), plssvm::invalid_file_format_exception, msg);
+
+        // remove temporary file
+        std::filesystem::remove(tmp_model_file);
+    };
+
+    // test svm_type
+    ill_formed_tester("svm_type c_svc", "svm_type c_svc_wrong", "Can only use c_svc as svm_type, but 'c_svc_wrong' was given!");
+    // test kernel
+    ill_formed_tester("kernel_type linear", "kernel_type sigmoid", "Unrecognized kernel type 'sigmoid'!");
+    // test number of classes
+    ill_formed_tester("nr_class 2", "nr_class 3", "Can only use 2 classes, but 3 were given!");
+    // test total number of support vectors
+    ill_formed_tester("total_sv 5", "total_sv 0", "The number of support vectors must be greater than 0, but is 0!");
+    // test labels
+    ill_formed_tester("label 1 -1", "label 2 -1", "Only the labels 1 and -1 are allowed, but 'label 2 -1' were given!");
+    ill_formed_tester("label 1 -1", "label 1 -2", "Only the labels 1 and -1 are allowed, but 'label 1 -2' were given!");
+    ill_formed_tester("label 1 -1", "label 1 -1 2", "Only the labels 1 and -1 are allowed, but 'label 1 -1 2' were given!");
+    ill_formed_tester("label 1 -1", "label 1", fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<TypeParam>()));
+    // test number of support vectors (+/-1)
+    ill_formed_tester("nr_sv 2 3", "nr_sv 2 4", "The number of positive and negative support vectors doesn't add up to the total number: 2 + 4 != 5!");
+    ill_formed_tester("nr_sv 2 3", "nr_sv 2 2 1", "Only two numbers are allowed, but more were given 'nr_sv 2 2 1'!");
+    // test illegal entry
+    ill_formed_tester("SV", "SV_wrong", "Unrecognized header entry 'SV_wrong'!");
 }
 
 TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
