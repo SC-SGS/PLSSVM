@@ -226,51 +226,6 @@ TYPED_TEST(BASE, parse_file) {
     }
 }
 
-TYPED_TEST(BASE, parse_model_file) {
-    // setup C-SVM class
-    plssvm::parameter<TypeParam> params;
-    params.print_info = false;
-    params.parse_model_file(TEST_PATH "/data/5x4.libsvm.model");
-
-    using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
-
-    // check if necessary pointers are set
-    ASSERT_NE(params.data_ptr, nullptr);
-    ASSERT_NE(params.value_ptr, nullptr);
-    ASSERT_NE(params.alphas_ptr, nullptr);
-
-    // check if sizes match
-    ASSERT_EQ(params.data_ptr->size(), 5) << "num support vectors mismatch";
-    for (size_type i = 0; i < 5; ++i) {
-        EXPECT_EQ(params.data_ptr->operator[](i).size(), 4) << "mismatch num features in support vector: " << i;
-    }
-
-    // correct support vectors
-    std::vector<std::vector<real_type>> expected_model_support_vectors{
-        { -1.117828, -2.908719, 0.6663834, 1.097883 },
-        { -0.5282118, -0.335881, 0.5168730, 0.5460446 },
-        { -0.2098121, 0.6027694, -0.1308685, 0.1080525 },
-        { 1.884940, 1.005186, 0.2984999, 1.646463 },
-        { 0.5765022, 1.014056, 0.1300943, 0.7261914 },
-    };
-    std::vector<real_type> expected_model_values{ 1, 1, -1, -1, -1 };
-    std::vector<real_type> expected_model_alphas{ -0.17609610490769723, 0.8838187731213127, -0.47971257671001616, 0.0034556484621847128, -0.23146573996578407 };
-
-    // check parsed values for correctness
-    for (size_type i = 0; i < 5; ++i) {
-        for (size_type j = 0; j < 4; ++j) {
-            util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_model_support_vectors[i][j], fmt::format("support vector: {} feature: {}", i, j));
-        }
-        util::gtest_expect_floating_point_eq((*params.value_ptr)[i], expected_model_values[i], fmt::format("support vector: {}", i));
-        util::gtest_expect_floating_point_eq((*params.alphas_ptr)[i], expected_model_alphas[i], fmt::format("support vector: {}", i));
-    }
-
-    // check if other parameter values are set correctly
-    EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
-    util::gtest_expect_floating_point_eq(params.rho, real_type{ 0.37330625882191915 });
-}
-
 TYPED_TEST(BASE, parse_libsvm_ill_formed) {
     // setup parameters
     plssvm::parameter<TypeParam> params;
@@ -310,8 +265,8 @@ TYPED_TEST(BASE, parse_arff_non_existing_file) {
 
 TYPED_TEST(BASE, parse_model_non_existing_file) {
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW((plssvm::parameter_predict<TypeParam>{ TEST_PATH "/data/5x4.libsvm", TEST_PATH "/data/5x4.libsvm.mod" }), plssvm::file_not_found_exception);
-    EXPECT_THROW((plssvm::parameter_predict<TypeParam>{ TEST_PATH "/data/5x4.lib", TEST_PATH "/data/5x4.libsvm.model" }), plssvm::file_not_found_exception);
+    EXPECT_THROW((plssvm::parameter_predict<TypeParam>{ TEST_PATH "/data/5x4.libsvm", TEST_PATH "/data/models/5x4.libsvm.mod" }), plssvm::file_not_found_exception);
+    EXPECT_THROW((plssvm::parameter_predict<TypeParam>{ TEST_PATH "/data/5x4.lib", TEST_PATH "/data/models/5x4.libsvm.model" }), plssvm::file_not_found_exception);
 }
 
 TYPED_TEST(BASE, parameter_train) {
@@ -341,9 +296,9 @@ TYPED_TEST(BASE, parameter_train) {
 TYPED_TEST(BASE, parameter_predict) {
     plssvm::parameter<TypeParam> params;
     params.parse_test_file(TEST_PATH "/data/5x4.libsvm");
-    params.parse_model_file(TEST_PATH "/data/5x4.libsvm.model");
+    params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.model");
 
-    plssvm::parameter_predict<TypeParam> params_predict{ TEST_PATH "/data/5x4.libsvm", TEST_PATH "/data/5x4.libsvm.model" };
+    plssvm::parameter_predict<TypeParam> params_predict{ TEST_PATH "/data/5x4.libsvm", TEST_PATH "/data/models/5x4.libsvm.model" };
 
     EXPECT_EQ(params.kernel, params_predict.kernel);
     EXPECT_EQ(params.degree, params_predict.degree);
@@ -406,7 +361,81 @@ using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 template <typename T>
-class BASE_csvm : public ::testing::Test {};
+class BASE_parse_model : public ::testing::Test {};
+TYPED_TEST_SUITE(BASE_parse_model, parameter_types, util::google_test::parameter_definition_to_name);
+
+TYPED_TEST(BASE_parse_model, parse_model_file) {
+    // setup C-SVM class
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
+    switch (TypeParam::kernel) {
+        case plssvm::kernel_type::linear:
+            params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.model");
+            break;
+        case plssvm::kernel_type::polynomial:
+            params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.polynomial.model");
+            break;
+        case plssvm::kernel_type::rbf:
+            params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.rbf.model");
+            break;
+    }
+
+    using real_type = typename decltype(params)::real_type;
+    using size_type = typename decltype(params)::size_type;
+
+    // check if necessary pointers are set
+    ASSERT_NE(params.data_ptr, nullptr);
+    ASSERT_NE(params.value_ptr, nullptr);
+    ASSERT_NE(params.alphas_ptr, nullptr);
+
+    // check if sizes match
+    ASSERT_EQ(params.data_ptr->size(), 5) << "num support vectors mismatch";
+    for (size_type i = 0; i < 5; ++i) {
+        EXPECT_EQ(params.data_ptr->operator[](i).size(), 4) << "mismatch num features in support vector: " << i;
+    }
+
+    // correct support vectors
+    std::vector<std::vector<real_type>> expected_model_support_vectors{
+        { -1.117828, -2.908719, 0.6663834, 1.097883 },
+        { -0.5282118, -0.335881, 0.5168730, 0.5460446 },
+        { -0.2098121, 0.6027694, -0.1308685, 0.1080525 },
+        { 1.884940, 1.005186, 0.2984999, 1.646463 },
+        { 0.5765022, 1.014056, 0.1300943, 0.7261914 },
+    };
+    std::vector<real_type> expected_model_values{ 1, 1, -1, -1, -1 };
+    std::vector<real_type> expected_model_alphas{ -0.17609610490769723, 0.8838187731213127, -0.47971257671001616, 0.0034556484621847128, -0.23146573996578407 };
+
+    // check parsed values for correctness
+    for (size_type i = 0; i < 5; ++i) {
+        for (size_type j = 0; j < 4; ++j) {
+            util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_model_support_vectors[i][j], fmt::format("support vector: {} feature: {}", i, j));
+        }
+        EXPECT_EQ((*params.value_ptr)[i], expected_model_values[i]) << "support vector: " << i;
+        util::gtest_expect_floating_point_eq((*params.alphas_ptr)[i], expected_model_alphas[i], fmt::format("support vector: {}", i));
+    }
+
+    // check if other parameter values are set correctly
+    util::gtest_expect_floating_point_eq(params.rho, real_type{ 0.37330625882191915 });
+    switch (TypeParam::kernel) {
+        case plssvm::kernel_type::linear:
+            EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
+            break;
+        case plssvm::kernel_type::polynomial:
+            EXPECT_EQ(params.kernel, plssvm::kernel_type::polynomial);
+            EXPECT_EQ(params.gamma, 0.25);
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_EQ(params.kernel, plssvm::kernel_type::rbf);
+            EXPECT_EQ(params.degree, 2);
+            EXPECT_EQ(params.gamma, 0.25);
+            EXPECT_EQ(params.coef0, 1.0);
+            break;
+    }
+}
+
+template <typename T>
+class BASE_csvm :
+    public ::testing::Test {};
 TYPED_TEST_SUITE(BASE_csvm, parameter_types, util::google_test::parameter_definition_to_name);
 
 TYPED_TEST(BASE_csvm, csvm) {
