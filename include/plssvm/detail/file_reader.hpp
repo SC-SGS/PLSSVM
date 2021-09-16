@@ -110,6 +110,7 @@ class file_reader {
         }
         if (attr.st_size == 0) {
             // can't memory map empty file
+            close(file_descriptor_);
             this->open_file(filename);
         } else {
             // memory map file
