@@ -446,7 +446,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                 sv_set = true;
                 break;
             } else {
-                throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'!", f.line(header)) };
+                throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'! Maybe SV is missing?", f.line(header)) };
             }
         }
     }
@@ -454,7 +454,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     // additional sanity checks
     if (num_sv == 0) {
         // no total number of support vectors given
-        throw invalid_file_format_exception{ "Missing number of support vectors!" };
+        throw invalid_file_format_exception{ "Missing total number of support vectors!" };
     } else if (labels.first == 0 || labels.second == 0) {
         // no labels given
         throw invalid_file_format_exception{ "Missing labels!" };

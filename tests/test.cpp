@@ -287,11 +287,20 @@ TYPED_TEST(BASE, parse_model_ill_formed) {
     ill_formed_tester("label 1 -1", "label 1 -2", "Only the labels 1 and -1 are allowed, but 'label 1 -2' were given!");
     ill_formed_tester("label 1 -1", "label 1 -1 2", "Only the labels 1 and -1 are allowed, but 'label 1 -1 2' were given!");
     ill_formed_tester("label 1 -1", "label 1", fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<TypeParam>()));
-    // test number of support vectors (+/-1)
+    // test number of support vectors per class
     ill_formed_tester("nr_sv 2 3", "nr_sv 2 4", "The number of positive and negative support vectors doesn't add up to the total number: 2 + 4 != 5!");
     ill_formed_tester("nr_sv 2 3", "nr_sv 2 2 1", "Only two numbers are allowed, but more were given 'nr_sv 2 2 1'!");
     // test illegal entry
-    ill_formed_tester("SV", "SV_wrong", "Unrecognized header entry 'SV_wrong'!");
+    ill_formed_tester("SV", "SV_wrong", "Unrecognized header entry 'SV_wrong'! Maybe SV is missing?");
+
+    // test for missing total number of support vectors
+    ill_formed_tester("total_sv 5\nnr_sv 2 3", "", "Missing total number of support vectors!");
+    // test for missing labels
+    ill_formed_tester("label 1 -1", "", "Missing labels!");
+    // test for mussing number of support vectors per class
+    ill_formed_tester("nr_sv 2 3", "", "Missing number of support vectors per class!");
+    // test for missing rho
+    ill_formed_tester("rho 0.37330625882191915", "", "Missing rho value!");
 }
 
 TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
