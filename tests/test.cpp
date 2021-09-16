@@ -225,6 +225,34 @@ TYPED_TEST(BASE, parse_file) {
     }
 }
 
+TYPED_TEST(BASE, parse_libsvm_ill_formed) {
+    // setup parameters
+    plssvm::parameter<TypeParam> params;
+    params.print_info = false;
+
+    // parsing an arff file using the libsvm parser should result in an exception
+    EXPECT_THROW(params.parse_libsvm(TEST_PATH "/data/5x4.arff", params.data_ptr), plssvm::invalid_file_format_exception);
+}
+
+TYPED_TEST(BASE, parse_arff_ill_formed) {
+    // setup parameters
+    plssvm::parameter<TypeParam> params;
+    params.print_info = false;
+
+    // parsing an libsvm file using the arff parser should result in an exception
+    EXPECT_THROW(params.parse_arff(TEST_PATH "/data/5x4.libsvm", params.data_ptr), plssvm::invalid_file_format_exception);
+}
+
+TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
+    // attempting to parse a non-existing file should result in an exception
+    EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.lib" }, plssvm::file_not_found_exception);
+}
+
+TYPED_TEST(BASE, parse_arff_non_existing_file) {
+    // attempting to parse a non-existing file should result in an exception
+    EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.ar" }, plssvm::file_not_found_exception);
+}
+
 TYPED_TEST(BASE, parameter_train) {
     plssvm::parameter<TypeParam> params;
     params.parse_train_file(TEST_PATH "/data/5x4.libsvm");
@@ -273,6 +301,39 @@ TYPED_TEST(BASE, parameter_predict) {
     // EXPECT_EQ(params.value_ptr, params_train.value_ptr);
     // EXPECT_EQ(params.alphas_ptr, params_train.alphas_ptr);
     // EXPECT_EQ(params.test_data_ptr, params_train.test_data_ptr);
+}
+
+TYPED_TEST(BASE, transform_data) {
+    // setup C-SVM
+    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
+    params.print_info = false;
+
+    mock_csvm csvm{ params };
+    using real_type = typename decltype(csvm)::real_type;
+    using size_type = typename decltype(csvm)::size_type;
+
+    // transform data without and with boundary
+    std::vector<real_type> result_no_boundary = csvm.transform_data(0);
+    std::vector<real_type> result_boundary = csvm.transform_data(10);
+
+    // check if sizes match
+    EXPECT_EQ(result_no_boundary.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
+    EXPECT_EQ(result_boundary.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
+
+    // check transformed content for correctness
+    for (size_type datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
+        for (size_type feature = 0; feature < csvm.get_num_features(); ++feature) {
+            util::gtest_expect_floating_point_eq(
+                csvm.get_data()[datapoint][feature],
+                result_no_boundary[datapoint + feature * (csvm.get_num_data_points() - 1)],
+                fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() - 1)));
+
+            util::gtest_expect_floating_point_eq(
+                csvm.get_data()[datapoint][feature],
+                result_boundary[datapoint + feature * (csvm.get_num_data_points() - 1 + 10)],
+                fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() - 1 + 10)));
+        }
+    }
 }
 
 // enumerate all type and kernel combinations to test
@@ -347,67 +408,6 @@ TYPED_TEST(BASE_write, write_model) {
         default:
             FAIL() << "untested kernel" << params.kernel;
             break;
-    }
-}
-
-TYPED_TEST(BASE, parse_libsvm_ill_formed) {
-    // setup parameters
-    plssvm::parameter<TypeParam> params;
-    params.print_info = false;
-
-    // parsing an arff file using the libsvm parser should result in an exception
-    EXPECT_THROW(params.parse_libsvm(TEST_PATH "/data/5x4.arff", params.data_ptr), plssvm::invalid_file_format_exception);
-}
-
-TYPED_TEST(BASE, parse_arff_ill_formed) {
-    // setup parameters
-    plssvm::parameter<TypeParam> params;
-    params.print_info = false;
-
-    // parsing an libsvm file using the arff parser should result in an exception
-    EXPECT_THROW(params.parse_arff(TEST_PATH "/data/5x4.libsvm", params.data_ptr), plssvm::invalid_file_format_exception);
-}
-
-TYPED_TEST(BASE, parse_libsvm_non_existing_file) {
-    // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.lib" }, plssvm::file_not_found_exception);
-}
-
-TYPED_TEST(BASE, parse_arff_non_existing_file) {
-    // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(plssvm::parameter_train<TypeParam>{ TEST_PATH "/data/5x4.ar" }, plssvm::file_not_found_exception);
-}
-
-TYPED_TEST(BASE, transform_data) {
-    // setup C-SVM
-    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/5x4.libsvm" };
-    params.print_info = false;
-
-    mock_csvm csvm{ params };
-    using real_type = typename decltype(csvm)::real_type;
-    using size_type = typename decltype(csvm)::size_type;
-
-    // transform data without and with boundary
-    std::vector<real_type> result_no_boundary = csvm.transform_data(0);
-    std::vector<real_type> result_boundary = csvm.transform_data(10);
-
-    // check if sizes match
-    EXPECT_EQ(result_no_boundary.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
-    EXPECT_EQ(result_boundary.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
-
-    // check transformed content for correctness
-    for (size_type datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
-        for (size_type feature = 0; feature < csvm.get_num_features(); ++feature) {
-            util::gtest_expect_floating_point_eq(
-                csvm.get_data()[datapoint][feature],
-                result_no_boundary[datapoint + feature * (csvm.get_num_data_points() - 1)],
-                fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() - 1)));
-
-            util::gtest_expect_floating_point_eq(
-                csvm.get_data()[datapoint][feature],
-                result_boundary[datapoint + feature * (csvm.get_num_data_points() - 1 + 10)],
-                fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() - 1 + 10)));
-        }
     }
 }
 
