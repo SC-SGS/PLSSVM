@@ -45,7 +45,7 @@ TYPED_TEST_SUITE(SYCL_base, parameter_types);
 
 TYPED_TEST(SYCL_base, write_model) {
     // setup SYCL C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 

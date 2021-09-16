@@ -13,10 +13,10 @@
 
 #include "../compare.hpp"                       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
 #include "plssvm/parameter_train.hpp"           // plssvm::parameter
-#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
@@ -45,7 +45,7 @@ TYPED_TEST_SUITE(CUDA_base, parameter_types);
 
 TYPED_TEST(CUDA_base, invalid_target_platform) {
     // setup CUDA C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -57,7 +57,7 @@ TYPED_TEST(CUDA_base, invalid_target_platform) {
 
 TYPED_TEST(CUDA_base, write_model) {
     // setup CUDA C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 

@@ -45,9 +45,9 @@ void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<
                 std::string_view line = f.line(i + start);
 
                 // check if class labels are present (not necessarily the case for test files)
-                size_type pos = line.find_first_of(' ');
-                size_type first_colon = line.find_first_of(':');
-                if (first_colon > pos) {
+                size_type pos = line.find_first_of(" \n");
+                size_type first_colon = line.find_first_of(":\n");
+                if (first_colon >= pos) {
                     // get class or alpha
                     values[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos));
                 } else {

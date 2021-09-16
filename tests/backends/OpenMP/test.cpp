@@ -43,7 +43,7 @@ TYPED_TEST_SUITE(OpenMP_base, parameter_types);
 
 TYPED_TEST(OpenMP_base, invalid_target_platform) {
     // setup OpenMP C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
@@ -55,7 +55,7 @@ TYPED_TEST(OpenMP_base, invalid_target_platform) {
 
 TYPED_TEST(OpenMP_base, write_model) {
     // setup OpenMP C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/5x4.libsvm" };
+    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
