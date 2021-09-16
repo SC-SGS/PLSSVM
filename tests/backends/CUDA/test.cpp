@@ -11,11 +11,12 @@
 #include "../../mock_csvm.hpp"  // mock_csvm
 #include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
-#include "../compare.hpp"                 // compare::generate_q, compare::kernel_function, compare::device_kernel_function
-#include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm
-#include "plssvm/constants.hpp"           // plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/kernel_types.hpp"        // plssvm::kernel_type
-#include "plssvm/parameter_train.hpp"     // plssvm::parameter
+#include "../compare.hpp"                       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
+#include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
+#include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
+#include "plssvm/parameter_train.hpp"           // plssvm::parameter
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
