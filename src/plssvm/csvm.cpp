@@ -53,18 +53,18 @@ void csvm<T>::learn() {
 
     std::vector<real_type> q;
     std::vector<real_type> b = *value_ptr_;
-    #pragma omp parallel sections
+#pragma omp parallel sections
     {
-        #pragma omp section  // generate q
+#pragma omp section  // generate q
         {
             q = generate_q();
         }
-        #pragma omp section  // generate right-hand side from equation
+#pragma omp section  // generate right-hand side from equation
         {
             b.pop_back();
             b -= value_ptr_->back();
         }
-        #pragma omp section  // generate bottom right from A
+#pragma omp section  // generate bottom right from A
         {
             QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
         }
@@ -108,8 +108,35 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
     for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
         temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
     }
-    // return sign(temp); // If predict should return +- 1 // TODO:
+
     return temp;
+}
+
+template <typename T>
+auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
+    using namespace plssvm::operators;
+
+    return sign(predict(point));
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    std::vector<real_type> classes;
+    classes.reserve(points.size());
+    for (const std::vector<real_type> &point : points) {
+        classes.emplace_back(predict(point));
+    }
+    return classes;
+}
+
+template <typename T>
+auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    std::vector<real_type> classes;
+    classes.reserve(points.size());
+    for (const std::vector<real_type> &point : points) {
+        classes.emplace_back(predict_label(point));
+    }
+    return classes;
 }
 
 template <typename T>
@@ -152,7 +179,7 @@ auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type>
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (size_type col = 0; col < num_features_; ++col) {
         for (size_type row = 0; row < num_data_points_ - 1; ++row) {
             vec[col * (num_data_points_ - 1 + boundary) + row] = (*data_ptr_)[row][col];

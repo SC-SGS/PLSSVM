@@ -135,7 +135,29 @@ class csvm {
      */
     real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
 
-    //    std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) points
+     *
+     * @param poinst the points to predict
+     * @return std::vector<real_type> a vector filled with negative values for each prediction for a point of a negative class and vice versa
+     */
+    std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
+
+    /**
+     * @brief Uses the already learned model to predict the class of an (new) point
+     *
+     * @param point the point to predict
+     * @return real_type -1 if the prediction for point is the negativ class and +1 vice versa
+     */
+    real_type predict_label(const std::vector<real_type> &point);
+
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) points
+     *
+     * @param poinst the points to predict
+     * @return std::vector<real_type> a vector filled with -1 for each prediction for a point of a negative class and +1 vice versa
+     */
+    std::vector<real_type> predict_label(const std::vector<std::vector<real_type>> &points);
 
   protected:
     //*************************************************************************************************************************************//
