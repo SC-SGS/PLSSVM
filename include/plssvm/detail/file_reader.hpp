@@ -108,18 +108,23 @@ class file_reader {
             close(file_descriptor_);
             throw file_not_found_exception{ fmt::format("Couldn't find file: {}!", filename) };
         }
-        // memory map file
-        file_content_ = static_cast<char *>(mmap(nullptr, attr.st_size, PROT_READ, MAP_SHARED, file_descriptor_, 0));
-        // check if memory mapping was successful
-        if (static_cast<void *>(file_content_) == MAP_FAILED) {
-            // memory mapping wasn't successful -> try reading file with std::ifstream
-            close(file_descriptor_);
-            std::cerr << "Memory mapping failed, falling back to std::ifstream." << std::endl;
+        if (attr.st_size == 0) {
+            // can't memory map empty file
             this->open_file(filename);
         } else {
-            // set size
-            num_bytes_ = attr.st_size;
-            must_unmap_file_ = true;
+            // memory map file
+            file_content_ = static_cast<char *>(mmap(nullptr, attr.st_size, PROT_READ, MAP_SHARED, file_descriptor_, 0));
+            // check if memory mapping was successful
+            if (static_cast<void *>(file_content_) == MAP_FAILED) {
+                // memory mapping wasn't successful -> try reading file with std::ifstream
+                close(file_descriptor_);
+                std::cerr << "Memory mapping failed, falling back to std::ifstream." << std::endl;
+                this->open_file(filename);
+            } else {
+                // set size
+                num_bytes_ = attr.st_size;
+                must_unmap_file_ = true;
+            }
         }
     }
 #endif
