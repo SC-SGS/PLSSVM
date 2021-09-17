@@ -134,22 +134,7 @@ pipeline {
                 }
             }
         }
-        stage('build plssvm Debug') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        module load cuda
-                        cd SVM
-                        mkdir -p build/Debug
-                        cd build/Debug
-                        rm -rf *
-                        /import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-cascadelake/clang-12.0.0/cmake-3.20.2-z3urlvzqm5igtwxj25nnd5olciuq7ayb/bin/cmake -DCMAKE_BUILD_TYPE=Debug  -DPLSSVM_TARGET_PLATFORMS="cpu;nvidia:sm_86"  ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('coverage analysis') {
+        stage('build plssvm Debug and coverage analysis') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -163,7 +148,7 @@ pipeline {
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
                     '''
-                    publishCoverage adapters: [ coberturaAdapter('SVM/build/Debug_cov/coverage.xml')]
+                    cobertura coberturaReportFile: 'SVM/build/Debug_cov/coverage.xml'
                 }
             }
         }
