@@ -75,6 +75,11 @@ else()
 endif()
 
 
+# add to coverage as dependencie
+if(TARGET gcov)
+    add_dependencies(gcov ${PLSSVM_BASE_TEST_NAME})
+endif()
+
 include(GoogleTest)
 
 # link against gtest
