@@ -197,17 +197,20 @@ class parameter {
     /// The data to predict.
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
 
+    /// The rho value of the calculated/read model.
     real_type rho = 0.0;
 
   protected:
-    /*
-     * Generate model filename based on the name of the input file.
+    /**
+     * @brief Generate model filename based on the name of the input file.
+     * @return `input_filename`.model ([[nodiscard]])
      */
-    std::string model_name_from_input();
-    /*
-     * Generate predict filename based on the name of the input file.
+    [[nodiscard]] std::string model_name_from_input();
+    /**
+     * @brief Generate predict filename based on the name of the input file.
+     * @return `input_filename`.predict ([[nodiscard]])
      */
-    std::string predict_name_from_input();
+    [[nodiscard]] std::string predict_name_from_input();
 };
 
 extern template class parameter<float>;

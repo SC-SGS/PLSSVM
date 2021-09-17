@@ -120,11 +120,11 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
     real_type temp = bias_;
 
     if (kernel_ == kernel_type::linear) {
+        // use faster methode in case of the linear kernel function
         if (w_.empty()) {
             update_w();
         }
         temp += transposed{ w_ } * point;
-
     } else {
         for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
             temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
@@ -137,7 +137,6 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
 template <typename T>
 auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
     using namespace plssvm::operators;
-
     return static_cast<real_type>(sign(predict(point)));
 }
 

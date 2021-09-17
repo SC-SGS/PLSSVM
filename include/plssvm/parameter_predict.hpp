@@ -37,7 +37,9 @@ class parameter_predict : public parameter<T> {
     using base_type::print_info;
     using base_type::target;
 
+    /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
+    /// Unsigned integer type.
     using size_type = typename base_type::size_type;
 
     /**

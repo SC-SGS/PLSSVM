@@ -39,7 +39,9 @@ class parameter_train : public parameter<T> {
     using base_type::target;
     using base_type::value_ptr;
 
+    /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
+    /// Unsigned integer type.
     using size_type = typename base_type::size_type;
 
     /**
@@ -49,7 +51,7 @@ class parameter_train : public parameter<T> {
 
     /**
      * @brief Set all training parameters to their default values.
-     * @detail Sets the model_filename to "${input_filename}.model".
+     * @details Sets the model_filename to "${input_filename}.model".
      * @param[in] input_filename the name of the data file
      */
     explicit parameter_train(std::string input_filename);

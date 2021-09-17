@@ -35,15 +35,13 @@
 #endif
 
 namespace plssvm {
-
 /**
-  * @brief Construct a new C-SVM with the parameters given by @p args using the requested backend @p type.
-  * @tparam T the type of the data
-  * @tparam Args the types of parameters used to construct the C-SVM
-  * @param[in] type the used backend
-  * @param[in] args the used parameters
-  * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
-  */
+ * @brief Construct a new C-SVM with the parameters given through @p params using the requested backend.
+ * @tparam T the type of the data
+ * @param[in] params struct encapsulating all possible parameters
+ * @throws unsupported_backend_exception if the requested backend isn't available
+ * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
+ */
 template <typename T, typename... Args>
 std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
     switch (params.backend) {

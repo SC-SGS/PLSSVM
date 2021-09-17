@@ -104,14 +104,10 @@ class csvm {
     //                                                             learn model                                                             //
     //*************************************************************************************************************************************//
     /**
-     * @brief Learns the Support Vectors given the data in @p input_filename and writes the results to @p model_filename.
-     * @details Performs 4 steps:
-     * 1. Read and parse the data file
-     * 2. Load the data onto the used device (e.g. one or more GPUs)
-     * 3. Learn the model by solving a minimization problem using the Conjugated Gradients algorithm
-     * 4. Write the results to the model file
-     * @param[in] input_filename name of the data file to parse
-     * @param[in] model_filename name of the model file to write the model information to
+     * @brief Learns the Support Vectors given the data in the provided parameter class.
+     * @details Performs 2 steps:
+     * 1. Load the data onto the used device (e.g. one or more GPUs)
+     * 2. Learn the model by solving a minimization problem using the Conjugated Gradients algorithm
      */
     void learn();
     // TODO: absolute vs relative residual
@@ -122,57 +118,44 @@ class csvm {
 
     /**
      * @brief Evaluates the model on the data used for training.
-     *
-     * @return real_type The fraction of correct labeled training data
+     * @return The fraction of correct labeled training data in percent. ([[nodiscard]])
      */
-    real_type accuracy();  // TODO: move to predict
+    [[nodiscard]] real_type accuracy();  // TODO: move to predict
+
+    /**
+     * @brief Uses the already learned model to predict the class of a (new) data point.
+     * @param[in] point the data point to predict
+     * @return a negative `real_type` value if the prediction for data point point is the negative class and a positive `real_type` value otherwise ([[nodiscard]])
+     */
+    [[nodiscard]] virtual real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @param[in] points the data points to predict
+     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
+     */
+    [[nodiscard]] std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
 
     /**
      * @brief Uses the already learned model to predict the class of an (new) point
-     *
-     * @param point the point to predict
-     * @return real_type a negative value if the prediction for point is the negativ class and vice versa
+     * @param[in] point the data point to predict
+     * @return -1.0 if the prediction for point is the negative class and +1 otherwise ([[nodiscard]])
      */
-    virtual real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
-
+    [[nodiscard]] real_type predict_label(const std::vector<real_type> &point);
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) points
-     *
-     * @param poinst the points to predict
-     * @return std::vector<real_type> a vector filled with negative values for each prediction for a point of a negative class and vice versa
+     * @param[in] points the points to predict
+     * @return a `std::vector<real_type>` filled with -1 for each prediction for a data point the negative class and +1 otherwise ([[nodiscard]])
      */
-    std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
-
-    /**
-     * @brief Uses the already learned model to predict the class of an (new) point
-     *
-     * @param point the point to predict
-     * @return real_type -1 if the prediction for point is the negativ class and +1 vice versa
-     */
-    real_type predict_label(const std::vector<real_type> &point);
-
-    /**
-     * @brief Uses the already learned model to predict the class of multiple (new) points
-     *
-     * @param poinst the points to predict
-     * @return std::vector<real_type> a vector filled with -1 for each prediction for a point of a negative class and +1 vice versa
-     */
-    std::vector<real_type> predict_label(const std::vector<std::vector<real_type>> &points);
+    [[nodiscard]] std::vector<real_type> predict_label(const std::vector<std::vector<real_type>> &points);
 
   protected:
-    /**
-     * @brief updates the w_ vector to the current data and alpha values
-     */
-    virtual void update_w();  // TODO: implement on devices for performance improvement
-
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
     /**
      * @brief Initialize the data on the respective device(s) (e.g. GPUs).
      */
-    virtual void
-    setup_data_on_device() = 0;
+    virtual void setup_data_on_device() = 0;
     /**
      * @brief Generate the vector `q`, a subvector of the least-squares matrix equation.
      * @return the generated `q` vector
@@ -186,9 +169,13 @@ class csvm {
      * @param[in] imax the maximum number of CG iterations
      * @param[in] eps error tolerance
      * @param[in] q subvector of the least-squares matrix equation
-     * @return `x`
+     * @return the alpha values
      */
     virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
+    /**
+     * @brief updates the `w_` vector to the current data and alpha values.
+     */
+    virtual void update_w();  // TODO: implement on devices for performance improvement
 
     //*************************************************************************************************************************************//
     //                                                          kernel functions                                                           //
@@ -248,7 +235,7 @@ class csvm {
     real_type bias_{};
     /// The bottom right matrix entry multiplied by cost.
     real_type QA_cost_{};
-    /// normalvector (currently used for prediction with the linear kernel)
+    /// The normal vector used for speeding up the prediction in case of the linear kernel function.
     std::vector<real_type> w_{};
 };
 
