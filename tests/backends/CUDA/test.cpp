@@ -166,7 +166,7 @@ TYPED_TEST(CUDA_device_kernel, device_kernel) {
     plssvm::cuda::detail::device_ptr<real_type> r_d{ dept + boundary_size };
     r_d.memset(0);
 
-    for (const int add : { -1, 1 }) {
+    for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         csvm_cuda.set_QA_cost(QA_cost);

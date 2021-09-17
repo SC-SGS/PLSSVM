@@ -78,7 +78,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] data_d the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(size_type device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, int add);
+    void run_device_kernel(size_type device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, real_type add);
     /**
      * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
      * @param[in,out] buffer_d the data to gather

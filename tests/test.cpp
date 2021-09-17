@@ -292,7 +292,7 @@ TYPED_TEST(BASE, parse_libsvm_gamma) {
 
     ASSERT_NE(params.data_ptr, nullptr);
     ASSERT_GE(params.data_ptr->size(), 0);
-    util::gtest_assert_floating_point_eq(real_type{ 1.0 } / params.data_ptr->back().size(), params.gamma);
+    util::gtest_assert_floating_point_eq(real_type{ 1.0 } / static_cast<real_type>(params.data_ptr->back().size()), params.gamma);
 }
 
 TYPED_TEST(BASE, parse_arff_gamma) {
@@ -313,7 +313,7 @@ TYPED_TEST(BASE, parse_arff_gamma) {
 
     ASSERT_NE(params.data_ptr, nullptr);
     ASSERT_GE(params.data_ptr->size(), 0);
-    util::gtest_assert_floating_point_eq(real_type{ 1.0 } / params.data_ptr->back().size(), params.gamma);
+    util::gtest_assert_floating_point_eq(real_type{ 1.0 } / static_cast<real_type>(params.data_ptr->back().size()), params.gamma);
 }
 
 TYPED_TEST(BASE, parse_libsvm_ill_formed) {
@@ -635,7 +635,7 @@ TYPED_TEST(BASE_parse_model, parse_model_file) {
     }
 
     // check if other parameter values are set correctly
-    util::gtest_expect_floating_point_eq(params.rho, real_type{ 0.37330625882191915 });
+    util::gtest_expect_floating_point_eq(params.rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
     switch (TypeParam::kernel) {
         case plssvm::kernel_type::linear:
             EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);

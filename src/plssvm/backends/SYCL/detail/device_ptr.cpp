@@ -126,14 +126,14 @@ void device_ptr<T>::swap(device_ptr &other) noexcept {
 }
 
 template <typename T>
-void device_ptr<T>::memset(const value_type value, const size_type pos) {
+void device_ptr<T>::memset(const int value, const size_type pos) {
     PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
     PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
     this->memset(value, pos, size_);
 }
 template <typename T>
-void device_ptr<T>::memset(const value_type value, const size_type pos, const size_type count) {
+void device_ptr<T>::memset(const int value, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
     PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 

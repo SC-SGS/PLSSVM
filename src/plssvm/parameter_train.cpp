@@ -84,13 +84,13 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     // parse gamma
     if (result.count("gamma")) {
         gamma = result["gamma"].as<decltype(gamma)>();
-        if (gamma == 0.0) {
+        if (gamma == decltype(gamma){ 0.0 }) {
             fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
             fmt::print("{}", options.help());
             std::exit(EXIT_FAILURE);
         }
     } else {
-        gamma = 0.0;
+        gamma = decltype(gamma){ 0.0 };
     }
 
     // parse coef0

@@ -111,7 +111,7 @@ template <typename T>
     PLSSVM_ASSERT(lhs.vec.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.vec.size(), rhs.size());
 
     T val{};
-#pragma omp simd reduction(+ \
+    #pragma omp simd reduction(+ \
                            : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
         // val += lhs.vec[i] * rhs[i]; //TODO: enable auto fma
@@ -138,7 +138,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-#pragma omp simd reduction(+ \
+    #pragma omp simd reduction(+ \
                            : val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];

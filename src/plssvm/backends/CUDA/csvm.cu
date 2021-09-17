@@ -91,8 +91,8 @@ void csvm<T>::setup_data_on_device() {
     // set values of member variables
     dept_ = num_data_points_ - 1;
     boundary_size_ = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-    num_rows_ = dept_ + boundary_size_;
-    num_cols_ = num_features_;
+    num_rows_ = static_cast<int>(dept_ + boundary_size_);  // TODO: signed vs unsigned (also in other backends)
+    num_cols_ = static_cast<int>(num_features_);
 
     // initialize data_last on devices
     for (int device = 0; device < num_devices_; ++device) {
@@ -136,8 +136,8 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         const int first_feature = device * num_cols_ / num_devices_;
         const int last_feature = (device + 1) * num_cols_ / num_devices_;
 
-        const auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
-        const size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept_);
+        const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
+        const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(dept_));
 
         switch (kernel_) {
             case kernel_type::linear:
@@ -162,7 +162,7 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void csvm<T>::run_device_kernel(const int device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, const int add) {
+void csvm<T>::run_device_kernel(const int device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, const real_type add) {
     PLSSVM_ASSERT(dept_ != 0, "dept_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(boundary_size_ != 0, "boundary_size_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");

@@ -149,7 +149,7 @@ class device_ptr {
      * @param[in] pos the position to start the memset
      * @throws plssvm::sycl::backend_exception if @p pos is greater or equal than `device_ptr::size()`
      */
-    void memset(value_type value, size_type pos = 0);
+    void memset(int value, size_type pos = 0);
     /**
      * @brief Memset up-to @p count values to @p value starting at position @p pos.
      * @details Memset `[p, rcount)` where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
@@ -158,7 +158,7 @@ class device_ptr {
      * @param[in] count the number of values to set
      * @throws plssvm::sycl::backend_exception if @p pos is greater or equal than `device_ptr::size()`
      */
-    void memset(value_type value, size_type pos, size_type count);
+    void memset(int value, size_type pos, size_type count);
 
     /**
      * @brief Memcpy `device_ptr::size()` many values from @p data_to_copy to the device.

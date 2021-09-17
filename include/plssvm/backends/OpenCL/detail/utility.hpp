@@ -168,7 +168,7 @@ void set_kernel_args(cl_kernel kernel, Args... args) {
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-void run_kernel(const command_queue &queue, cl_kernel kernel, std::vector<std::size_t> grid_size, std::vector<std::size_t> block_size, Args &&...args) {
+void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
     PLSSVM_ASSERT(grid_size.size() == block_size.size(), "grid_size and block_size must have the same number of dimensions!: {} != {}", grid_size.size(), block_size.size());
     PLSSVM_ASSERT(grid_size.size() <= 3, "The number of dimensions must be less or equal than 3!: {} > 3", grid_size.size());
 
@@ -176,7 +176,7 @@ void run_kernel(const command_queue &queue, cl_kernel kernel, std::vector<std::s
     set_kernel_args(kernel, std::forward<Args>(args)...);
 
     // enqueue kernel in command queue
-    error_code err = clEnqueueNDRangeKernel(queue.queue, kernel, grid_size.size(), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr);
+    error_code err = clEnqueueNDRangeKernel(queue.queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr);
     if (!err) {
         throw backend_exception{ fmt::format("Error enqueuing OpenCL kernel ({})!", err) };
     }

@@ -138,7 +138,7 @@ template <typename T>
 auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
     using namespace plssvm::operators;
 
-    return sign(predict(point));
+    return static_cast<real_type>(sign(predict(point)));
 }
 
 template <typename T>
@@ -175,7 +175,7 @@ auto csvm<T>::accuracy() -> real_type {
 
     int correct = 0;
     for (size_type dat = 0; dat < num_data_points_; ++dat) {
-        if (predict((*data_ptr_)[dat]) * (*value_ptr_)[dat] > 0.0) {
+        if (predict((*data_ptr_)[dat]) * (*value_ptr_)[dat] > real_type{ 0.0 }) {
             ++correct;
         }
     }

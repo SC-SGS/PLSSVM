@@ -25,7 +25,7 @@ namespace plssvm::openmp {
  * @param[in] add denotes whether the values are added or subtracted from the result vector
  */
 template <typename real_type>
-void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, int add);
+void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add);
 
 /**
  * @brief Calculates the C-SVM kernel using the polynomial kernel function.
@@ -44,7 +44,7 @@ void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type
  * @attention Currently not implemented!
  */
 template <typename real_type>
-void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, int add, int degree, real_type gamma, real_type coef0);
+void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, int degree, real_type gamma, real_type coef0);
 
 /**
  * @brief Calculates the C-SVM kernel using the radial basis function kernel function.
@@ -61,6 +61,6 @@ void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> 
  * @attention Currently not implemented!
  */
 template <typename real_type>
-void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, int add, real_type gamma);
+void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, real_type gamma);
 
 }  // namespace plssvm::openmp

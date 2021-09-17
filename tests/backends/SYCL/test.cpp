@@ -156,7 +156,7 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     plssvm::sycl::detail::device_ptr<real_type> r_d{ dept + boundary_size, q };
     r_d.memset(0);
 
-    for (const int add : { -1, 1 }) {
+    for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         csvm_sycl.set_QA_cost(QA_cost);

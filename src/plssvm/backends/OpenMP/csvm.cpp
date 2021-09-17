@@ -59,7 +59,7 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
 }
 
 template <typename T>
-void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const int add) {
+void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type add) {
     switch (kernel_) {
         case kernel_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost_, 1 / cost_, add);

@@ -140,7 +140,7 @@ void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<con
     detail::parse_libsvm_file(f, size_type{ 0 }, data, value);
 
     // update gamma
-    if (gamma == 0.0) {
+    if (gamma == real_type{ 0.0 }) {
         gamma = real_type{ 1. } / static_cast<real_type>(data[0].size());
     }
 
@@ -332,7 +332,7 @@ void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const
     }
 
     // update gamma
-    if (gamma == 0.0) {
+    if (gamma == real_type{ 0.0 }) {
         gamma = real_type{ 1. } / static_cast<real_type>(num_features);
     }
 
@@ -371,7 +371,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
     // helper variables
     size_type num_sv{ 0 };
-    std::pair<int, int> labels{ 0, 0 };
+    std::pair<real_type, real_type> labels{ 0, 0 };
     bool rho_set{ false };
 
     // parse libsvm model file header
@@ -445,7 +445,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                 value.remove_prefix(std::min(first_num.size() + 1, value.size()));
                 // parse second number
                 const std::string_view second_num = value.substr(0, value.find_first_of(" \n"));
-                const auto num_second = detail::convert_to<real_type>(second_num);
+                const auto num_second = detail::convert_to<size_type>(second_num);
                 value.remove_prefix(std::min(second_num.size() + 1, value.size()));
 
                 value = detail::trim_left(value);

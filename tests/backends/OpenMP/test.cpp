@@ -135,7 +135,7 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
 
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
-    using size_type = typename decltype(csvm)::real_type;
+    using size_type = typename decltype(csvm)::size_type;
 
     const size_type dept = csvm.get_num_data_points() - 1;
 
@@ -157,7 +157,7 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
     // setup data on device
     csvm_openmp.setup_data_on_device();
 
-    for (const int add : { -1, 1 }) {
+    for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         std::vector<real_type> calculated(dept, 0.0);

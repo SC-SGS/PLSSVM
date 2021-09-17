@@ -116,7 +116,7 @@ std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &dat
  * @return the result vector
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
-std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const int add, [[maybe_unused]] const SVM &csvm) {
+std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const real_type add, [[maybe_unused]] const SVM &csvm) {
     PLSSVM_ASSERT(x.size() == q.size(), "Sizes mismatch!: {} != {}", x.size(), q.size());
     PLSSVM_ASSERT(x.size() == data.size() - 1, "Sizes mismatch!: {} != {}", x.size(), data.size() - 1);
 
@@ -130,7 +130,7 @@ std::vector<real_type> device_kernel_function(const std::vector<std::vector<real
             if (i >= j) {
                 const real_type temp = kernel_function<kernel>(data[i], data[j], csvm) + QA_cost - q[i] - q[j];
                 if (i == j) {
-                    r[i] += (temp + 1.0 / cost) * x[i] * add;
+                    r[i] += (temp + real_type{ 1.0 } / cost) * x[i] * add;
                 } else {
                     r[i] += temp * x[j] * add;
                     r[j] += temp * x[i] * add;

@@ -126,7 +126,7 @@ void csvm<T>::write_model(const std::string &model_name) {
         std::string line;
         line += fmt::format("{} ", a);
         for (size_type j = 0; j < d.size(); ++j) {
-            if (d[j] != 0.0) {
+            if (d[j] != real_type{ 0.0 }) {
                 line += fmt::format("{}:{:e} ", j, d[j]);
             }
         }

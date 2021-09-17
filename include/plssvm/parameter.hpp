@@ -167,13 +167,13 @@ class parameter {
     /// The degree parameter used in the polynomial kernel function.
     int degree = 3;
     /// The gamma parameter used in the polynomial and rbf kernel functions.
-    real_type gamma = 0.0;
+    real_type gamma = real_type{ 0.0 };
     /// The coef0 parameter used in the polynomial kernel function.
-    real_type coef0 = 0.0;
+    real_type coef0 = real_type{ 0.0 };
     /// The cost parameter in the C-SVM.
-    real_type cost = 1.0;
+    real_type cost = real_type{ 1.0 };
     /// The error tolerance parameter for the CG algorithm.
-    real_type epsilon = 0.001;
+    real_type epsilon = static_cast<real_type>(0.001);
     /// If `true` additional information (e.g. timing information) will be printed during execution.
     bool print_info = true;
     /// The used backend: OpenMP, OpenCL, CUDA, or SYCL.

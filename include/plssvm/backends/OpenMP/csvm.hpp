@@ -68,7 +68,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] data the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, int add);
+    void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type add);
 };
 
 extern template class csvm<float>;

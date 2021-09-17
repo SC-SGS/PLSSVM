@@ -104,6 +104,8 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
 #target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -ffast-math)
+#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion) # -Wshadow -Wundef -Wformat=2 -Wformat-truncation
+
 
 ## add assert option
 option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set" OFF)
