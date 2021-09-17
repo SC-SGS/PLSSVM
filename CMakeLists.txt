@@ -101,7 +101,7 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 
 ## additional base library compile options
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra -Werror=switch -fstrict-enums)
 #target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -ffast-math)
 
 ## add assert option

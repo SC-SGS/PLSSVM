@@ -53,18 +53,18 @@ void csvm<T>::learn() {
 
     std::vector<real_type> q;
     std::vector<real_type> b = *value_ptr_;
-#pragma omp parallel sections
+    #pragma omp parallel sections
     {
-#pragma omp section  // generate q
+        #pragma omp section  // generate q
         {
             q = generate_q();
         }
-#pragma omp section  // generate right-hand side from equation
+        #pragma omp section  // generate right-hand side from equation
         {
             b.pop_back();
             b -= value_ptr_->back();
         }
-#pragma omp section  // generate bottom right from A
+        #pragma omp section  // generate bottom right from A
         {
             QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
         }
@@ -191,9 +191,8 @@ auto csvm<T>::kernel_function(const std::vector<real_type> &xi, const std::vecto
             return plssvm::kernel_function<kernel_type::polynomial>(xi, xj, degree_, gamma_, coef0_);
         case kernel_type::rbf:
             return plssvm::kernel_function<kernel_type::rbf>(xi, xj, gamma_);
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
     }
+    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
 }
 
 template <typename T>
@@ -201,7 +200,7 @@ auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type>
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
-#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
     for (size_type col = 0; col < num_features_; ++col) {
         for (size_type row = 0; row < num_data_points_ - 1; ++row) {
             vec[col * (num_data_points_ - 1 + boundary) + row] = (*data_ptr_)[row][col];

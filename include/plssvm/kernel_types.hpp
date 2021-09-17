@@ -50,9 +50,8 @@ inline std::ostream &operator<<(std::ostream &out, const kernel_type kernel) {
             return out << "polynomial";
         case kernel_type::rbf:
             return out << "rbf";
-        default:
-            return out << "unknown";
     }
+    return out << "unknown";
 }
 
 /**

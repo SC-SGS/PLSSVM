@@ -49,9 +49,8 @@ inline std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "OpenCL";
         case backend_type::sycl:
             return out << "SYCL";
-        default:
-            return out << "unknown";
     }
+    return out << "unknown";
 }
 
 /**

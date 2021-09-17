@@ -54,8 +54,6 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         case kernel_type::rbf:
             device_kernel_q_radial(q, *data_ptr_, gamma_);
             break;
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
     }
     return q;
 }
@@ -72,8 +70,6 @@ void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<rea
         case kernel_type::rbf:
             openmp::device_kernel_radial(q, ret, d, data, QA_cost_, 1 / cost_, add, gamma_);
             break;
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", static_cast<int>(kernel_)) };
     }
 }
 

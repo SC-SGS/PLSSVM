@@ -11,6 +11,7 @@
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend
 #include "plssvm/csvm.hpp"                   // plssvm::csvm
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
@@ -72,21 +73,8 @@ std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
 #else
             throw unsupported_backend_exception{ "No SYCL backend available!" };
 #endif
-        default:
-            throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", static_cast<int>(params.backend)) };
     }
+    throw unsupported_backend_exception{ fmt::format("Can't recognize backend with value '{}'!", detail::to_underlying(params.backend)) };
 }
-
-/**
- * @brief Construct a new C-SVM with the parameters given through @p params using the requested backend.
- * @tparam T the type of the data
- * @param[in] params struct encapsulating all possible parameters
- * @throws unsupported_backend_exception if the requested backend isn't available
- * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
- */
-//template <typename T>
-//std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
-//    return make_csvm<T>(params.backend, params.target, params.kernel, params.degree, params.gamma, params.coef0, params.cost, params.epsilon, params.print_info);
-//}
 
 }  // namespace plssvm

@@ -53,9 +53,8 @@ inline std::ostream &operator<<(std::ostream &out, const target_platform target)
             return out << "gpu_amd";
         case target_platform::gpu_intel:
             return out << "gpu_intel";
-        default:
-            return out << "unknown";
     }
+    return out << "unknown";
 }
 
 /**

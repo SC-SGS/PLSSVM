@@ -54,8 +54,6 @@ csvm<T>::csvm(const parameter<T> &params) :
             throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
 #endif
             break;
-        default:
-            break;
     }
 
     if (print_info_) {
@@ -171,8 +169,6 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
             case kernel_type::rbf:
                 detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
-            default:
-                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
         }
     }
 
@@ -206,8 +202,6 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
         case kernel_type::rbf:
             detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
             break;
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
     }
 }
 

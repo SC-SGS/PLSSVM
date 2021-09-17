@@ -67,8 +67,6 @@ std::string get_device_name(const command_queue &queue) {
             return std::make_pair("device_kernel_q_poly", "device_kernel_poly");
         case kernel_type::rbf:
             return std::make_pair("device_kernel_q_radial", "device_kernel_radial");
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel)) };
     }
 }
 

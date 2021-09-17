@@ -714,9 +714,6 @@ TYPED_TEST(BASE_write, write_model) {
         case plssvm::kernel_type::rbf:
             EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
-        default:
-            FAIL() << "untested kernel" << params.kernel;
-            break;
     }
 }
 

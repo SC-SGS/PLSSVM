@@ -110,9 +110,6 @@ void csvm<T>::write_model(const std::string &model_name) {
                 count_pos,
                 count_neg);
             break;
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
-            break;
     }
 
     // terminal output

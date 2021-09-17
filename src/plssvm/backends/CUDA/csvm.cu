@@ -151,8 +151,6 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
                 PLSSVM_ASSERT(num_devices_ == 1, "RBF CUDA kernel is currently only implemented for using one GPU");
                 cuda::device_kernel_q_radial<<<grid, block>>>(q_d[device].get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
                 break;
-            default:
-                throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
         }
 
         detail::peek_at_last_error();
@@ -188,8 +186,6 @@ void csvm<T>::run_device_kernel(const int device, const detail::device_ptr<real_
         case kernel_type::rbf:
             cuda::device_kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
             break;
-        default:
-            throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel_)) };
     }
 }
 
