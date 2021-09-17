@@ -34,6 +34,8 @@ csvm<T>::csvm(const parameter<T> &params) :
     ::plssvm::csvm<T>{ params } {
     // check whether the requested target platform has been enabled
     switch (target_) {
+        case target_platform::automatic:
+            break;
         case target_platform::cpu:
 #if !defined(PLSSVM_HAS_CPU_TARGET)
             throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
