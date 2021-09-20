@@ -220,7 +220,7 @@ TYPED_TEST(OpenMP_predict, predict) {
     ASSERT_EQ(correct_values.size(), predicted_values.size());
     for (size_type i = 0; i < correct_values.size(); ++i) {
         EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_real[i];
-        if (correct_values[i] > real_type{ 0 }) {  // TODO: change based on sign(0) behaviour
+        if (correct_values[i] > real_type{ 0 }) {
             EXPECT_GT(predicted_values_real[i], real_type{ 0 });
         } else {
             EXPECT_LT(predicted_values_real[i], real_type{ 0 });
