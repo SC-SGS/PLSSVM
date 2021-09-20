@@ -642,13 +642,13 @@ TYPED_TEST(BASE_parse_model, parse_model_file) {
             break;
         case plssvm::kernel_type::polynomial:
             EXPECT_EQ(params.kernel, plssvm::kernel_type::polynomial);
-            EXPECT_EQ(params.gamma, 0.25);
-            break;
-        case plssvm::kernel_type::rbf:
-            EXPECT_EQ(params.kernel, plssvm::kernel_type::rbf);
             EXPECT_EQ(params.degree, 2);
             EXPECT_EQ(params.gamma, 0.25);
             EXPECT_EQ(params.coef0, 1.0);
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_EQ(params.kernel, plssvm::kernel_type::rbf);
+            EXPECT_EQ(params.gamma, 0.25);
             break;
     }
 }
@@ -709,10 +709,10 @@ TYPED_TEST(BASE_write, write_model) {
             EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
         case plssvm::kernel_type::polynomial:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
         case plssvm::kernel_type::rbf:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
     }
 }

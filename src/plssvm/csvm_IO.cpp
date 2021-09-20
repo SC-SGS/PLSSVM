@@ -74,24 +74,6 @@ void csvm<T>::write_model(const std::string &model_name) {
             libsvm_model_header = fmt::format(
                 "svm_type c_svc\n"
                 "kernel_type {}\n"
-                "gamma {}\n"
-                "nr_class 2\n"
-                "total_sv {}\n"
-                "rho {}\n"
-                "label 1 -1\n"
-                "nr_sv {} {}\n"
-                "SV\n",
-                kernel_,
-                gamma_,
-                count_pos + count_neg,
-                -bias_,
-                count_pos,
-                count_neg);
-            break;
-        case kernel_type::rbf:
-            libsvm_model_header = fmt::format(
-                "svm_type c_svc\n"
-                "kernel_type {}\n"
                 "degree {}\n"
                 "gamma {}\n"
                 "coef0 {}\n"
@@ -105,6 +87,24 @@ void csvm<T>::write_model(const std::string &model_name) {
                 degree_,
                 gamma_,
                 coef0_,
+                count_pos + count_neg,
+                -bias_,
+                count_pos,
+                count_neg);
+            break;
+        case kernel_type::rbf:
+            libsvm_model_header = fmt::format(
+                "svm_type c_svc\n"
+                "kernel_type {}\n"
+                "gamma {}\n"
+                "nr_class 2\n"
+                "total_sv {}\n"
+                "rho {}\n"
+                "label 1 -1\n"
+                "nr_sv {} {}\n"
+                "SV\n",
+                kernel_,
+                gamma_,
                 count_pos + count_neg,
                 -bias_,
                 count_pos,
