@@ -174,6 +174,58 @@ TYPED_TEST(OpenMP_device_kernel, device_kernel) {
     }
 }
 
+// generate tests for the predict function
+template <typename T>
+class OpenMP_predict : public ::testing::Test {};
+TYPED_TEST_SUITE(OpenMP_predict, parameter_types, util::google_test::parameter_definition_to_name);
+
+TYPED_TEST(OpenMP_predict, predict) {
+    plssvm::parameter_predict<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/500x200.libsvm.test", TEST_PATH "/data/models/500x200.libsvm.model" };
+    params.print_info = false;
+
+    std::ifstream model_ifs{ TEST_PATH "/data/models/500x200.libsvm.model" };
+    std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+
+    // permute correct model
+    std::string new_model{ correct_model };
+    plssvm::detail::replace_all(new_model, "kernel_type linear", fmt::format("kernel_type {}", TypeParam::kernel));
+
+    // create temporary file with permuted model specification
+    std::string tmp_model_file = util::create_temp_file();
+    std::ofstream ofs{ tmp_model_file };
+    ofs << new_model;
+    ofs.close();
+
+    // parse permuted model file
+    params.parse_model_file(tmp_model_file);
+
+    // setup OpenMP C-SVM
+    mock_openmp_csvm csvm_openmp{ params };
+    using real_type = typename decltype(csvm_openmp)::real_type;
+    using size_type = typename decltype(csvm_openmp)::size_type;
+
+    // predict
+    std::vector<real_type> predicted_values = csvm_openmp.predict_label(*params.test_data_ptr);
+    std::vector<real_type> predicted_values_ = csvm_openmp.predict(*params.test_data_ptr);
+
+    // read correct prediction
+    std::ifstream ifs(fmt::format("{}{}.{}", TEST_PATH, "/data/predict/500x200.libsvm.predict", TypeParam::kernel));
+    std::string line;
+    std::vector<real_type> correct_values;
+    correct_values.reserve(500);
+    while (std::getline(ifs, line, '\n')) {
+        correct_values.push_back(plssvm::detail::convert_to<real_type>(line));
+    }
+
+    ASSERT_EQ(correct_values.size(), predicted_values.size());
+    for (size_type i = 0; i < correct_values.size(); ++i) {
+        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_[i];
+    }
+
+    // remove temporary file
+    std::filesystem::remove(tmp_model_file);
+}
+
 // enumerate all type and kernel combinations to test
 using parameter_types_double = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
@@ -198,32 +250,4 @@ TYPED_TEST(OpenMP_accuracy, accuracy) {
 
     real_type_csvm_openmp acc = csvm_openmp.accuracy();
     ASSERT_GT(acc, 0.95);
-}
-
-TEST(OpenMP_predict, predict) {
-    plssvm::parameter_predict<double> params{ TEST_PATH "/data/libsvm/500x200.libsvm.test", TEST_PATH "/data/models/500x200.libsvm.model" };
-    params.print_info = false;
-
-    // setup OpenMP C-SVM
-    mock_openmp_csvm csvm_openmp{ params };
-    using real_type = typename decltype(csvm_openmp)::real_type;
-    using size_type = typename decltype(csvm_openmp)::size_type;
-
-    // predict
-    std::vector<real_type> predicted_values = csvm_openmp.predict_label(*params.test_data_ptr);
-    std::vector<real_type> predicted_values_ = csvm_openmp.predict(*params.test_data_ptr);
-
-    // read correct prediction
-    std::ifstream ifs(TEST_PATH "/data/predict/500x200.libsvm.predict");
-    std::string line;
-    std::vector<real_type> correct_values;
-    correct_values.reserve(500);
-    while (std::getline(ifs, line, '\n')) {
-        correct_values.push_back(plssvm::detail::convert_to<real_type>(line));
-    }
-
-    ASSERT_EQ(correct_values.size(), predicted_values.size());
-    for (size_type i = 0; i < correct_values.size(); ++i) {
-        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_[i];
-    }
 }
