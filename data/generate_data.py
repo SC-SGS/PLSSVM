@@ -14,7 +14,7 @@ from sklearn.datasets import make_gaussian_quantiles
 # parse command line arguments
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--output", help="the output file to write the samples to (without extension)", required=True)
+parser.add_argument("--output", help="the output file to write the samples to (without extension)")
 parser.add_argument("--format", help="the file format; either arff or libsvm", required=True)
 parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
                     default="blobs")
@@ -56,7 +56,7 @@ labels = labels * 2 - 1
 
 
 # set file names
-rawfile = args.output
+rawfile = args.output if args.output is not None else "{}x{}".format(args.sampls, args.features)
 if rawfile.endswith(args.format):
     rawfile = rawfile[:-(len(args.format)+1)]
 file = rawfile + "." + args.format
