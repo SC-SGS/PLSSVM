@@ -3,7 +3,7 @@
  * @author Marcel Breyer
  * @copyright
  *
- * @brief Tests for the functionality related to the OpenMP backend.
+ * @brief Tests for the functionality related to the CUDA backend.
  */
 
 #include "mock_cuda_csvm.hpp"
@@ -49,7 +49,7 @@ TYPED_TEST(CUDA_base, invalid_target_platform) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    // only automatic or gpu_nvidia are allowed as target platform for the OpenMP backend
+    // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
     params.target = plssvm::target_platform::cpu;
 
     EXPECT_THROW(mock_cuda_csvm{ params }, plssvm::cuda::backend_exception);
@@ -183,6 +183,63 @@ TYPED_TEST(CUDA_device_kernel, device_kernel) {
             util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
         }
     }
+}
+
+// generate tests for the predict function
+template <typename T>
+class CUDA_predict : public ::testing::Test {};
+TYPED_TEST_SUITE(CUDA_predict, parameter_types, util::google_test::parameter_definition_to_name);
+
+TYPED_TEST(CUDA_predict, predict) {
+    plssvm::parameter_predict<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/500x200.libsvm.test", TEST_PATH "/data/models/500x200.libsvm.model" };
+    params.print_info = false;
+
+    std::ifstream model_ifs{ TEST_PATH "/data/models/500x200.libsvm.model" };
+    std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+
+    // permute correct model
+    std::string new_model{ correct_model };
+    plssvm::detail::replace_all(new_model, "kernel_type linear", fmt::format("kernel_type {}", TypeParam::kernel));
+
+    // create temporary file with permuted model specification
+    std::string tmp_model_file = util::create_temp_file();
+    std::ofstream ofs{ tmp_model_file };
+    ofs << new_model;
+    ofs.close();
+
+    // parse permuted model file
+    params.parse_model_file(tmp_model_file);
+
+    // setup CUDA C-SVM
+    mock_cuda_csvm csvm_cuda{ params };
+    using real_type = typename decltype(csvm_cuda)::real_type;
+    using size_type = typename decltype(csvm_cuda)::size_type;
+
+    // predict
+    std::vector<real_type> predicted_values = csvm_cuda.predict_label(*params.test_data_ptr);
+    std::vector<real_type> predicted_values_real = csvm_cuda.predict(*params.test_data_ptr);
+
+    // read correct prediction
+    std::ifstream ifs(fmt::format("{}{}.{}", TEST_PATH, "/data/predict/500x200.libsvm.predict", TypeParam::kernel));
+    std::string line;
+    std::vector<real_type> correct_values;
+    correct_values.reserve(500);
+    while (std::getline(ifs, line, '\n')) {
+        correct_values.push_back(plssvm::detail::convert_to<real_type>(line));
+    }
+
+    ASSERT_EQ(correct_values.size(), predicted_values.size());
+    for (size_type i = 0; i < correct_values.size(); ++i) {
+        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_real[i];
+        if (correct_values[i] > real_type{ 0 }) {  // TODO: change based on sign(0) behaviour
+            EXPECT_GT(predicted_values_real[i], real_type{ 0 });
+        } else {
+            EXPECT_LT(predicted_values_real[i], real_type{ 0 });
+        }
+    }
+
+    // remove temporary file
+    std::filesystem::remove(tmp_model_file);
 }
 
 // enumerate all type and kernel combinations to test
