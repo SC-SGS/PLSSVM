@@ -37,7 +37,8 @@ int main(int argc, char *argv[]) {
                     ++correct;
                 }
             }
-            std::cout << "accuracy: " << static_cast<real_type>(correct) / static_cast<real_type>(params.test_data_ptr->size()) * 100 << " %" << std::endl;
+            std::cout << "Accuracy = " << static_cast<real_type>(correct) / static_cast<real_type>(params.test_data_ptr->size()) * 100
+                      << "% (" << correct << "/" << static_cast<real_type>(params.test_data_ptr->size()) << ") (classification)" << std::endl;
         }
 
     } catch (const plssvm::exception &e) {
