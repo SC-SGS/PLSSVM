@@ -23,7 +23,7 @@ namespace plssvm {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    target_{ params.target }, kernel_{ params.kernel }, degree_{ params.degree }, gamma_{ params.gamma }, coef0_{ params.coef0 }, cost_{ params.cost }, epsilon_{ params.epsilon }, print_info_{ params.print_info }, data_ptr_{ params.data_ptr }, value_ptr_{ params.value_ptr }, alpha_ptr_{ params.alphas_ptr } {
+    target_{ params.target }, kernel_{ params.kernel }, degree_{ params.degree }, gamma_{ params.gamma }, coef0_{ params.coef0 }, cost_{ params.cost }, epsilon_{ params.epsilon }, print_info_{ params.print_info }, data_ptr_{ params.data_ptr }, value_ptr_{ params.value_ptr }, alpha_ptr_{ params.alphas_ptr }, bias_{ -params.rho } {
     if (data_ptr_ == nullptr) {
         throw exception{ "No data points provided!" };
     }
