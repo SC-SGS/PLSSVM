@@ -15,6 +15,7 @@ else()
     find_package(GTest REQUIRED)
 endif()
 
+
 set(PLSSVM_BASE_TEST_NAME base_tests)
 
 # list all necessary sources
