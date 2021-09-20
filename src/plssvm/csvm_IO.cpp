@@ -52,65 +52,38 @@ void csvm<T>::write_model(const std::string &model_name) {
     }
 
     // create libsvm model header
-    std::string libsvm_model_header;
+    std::string libsvm_model_header = fmt::format("svm_type c_svc\n"
+                                                  "kernel_type {}\n",
+                                                  kernel_);
     switch (kernel_) {
         case kernel_type::linear:
-            libsvm_model_header = fmt::format(
-                "svm_type c_svc\n"
-                "kernel_type {}\n"
-                "nr_class 2\n"
-                "total_sv {}\n"
-                "rho {}\n"
-                "label 1 -1\n"
-                "nr_sv {} {}\n"
-                "SV\n",
-                kernel_,
-                count_pos + count_neg,
-                -bias_,
-                count_pos,
-                count_neg);
             break;
         case kernel_type::polynomial:
-            libsvm_model_header = fmt::format(
-                "svm_type c_svc\n"
-                "kernel_type {}\n"
+            libsvm_model_header += fmt::format(
                 "degree {}\n"
                 "gamma {}\n"
-                "coef0 {}\n"
-                "nr_class 2\n"
-                "total_sv {}\n"
-                "rho {}\n"
-                "label 1 -1\n"
-                "nr_sv {} {}\n"
-                "SV\n",
-                kernel_,
+                "coef0 {}\n",
                 degree_,
                 gamma_,
-                coef0_,
-                count_pos + count_neg,
-                -bias_,
-                count_pos,
-                count_neg);
+                coef0_);
             break;
         case kernel_type::rbf:
-            libsvm_model_header = fmt::format(
-                "svm_type c_svc\n"
-                "kernel_type {}\n"
-                "gamma {}\n"
-                "nr_class 2\n"
-                "total_sv {}\n"
-                "rho {}\n"
-                "label 1 -1\n"
-                "nr_sv {} {}\n"
-                "SV\n",
-                kernel_,
-                gamma_,
-                count_pos + count_neg,
-                -bias_,
-                count_pos,
-                count_neg);
+            libsvm_model_header += fmt::format(
+                "gamma {}\n",
+                gamma_);
             break;
     }
+    libsvm_model_header += fmt::format(
+        "nr_class 2\n"
+        "total_sv {}\n"
+        "rho {}\n"
+        "label 1 -1\n"
+        "nr_sv {} {}\n"
+        "SV\n",
+        count_pos + count_neg,
+        -bias_,
+        count_pos,
+        count_neg);
 
     // terminal output
     if (print_info_) {
