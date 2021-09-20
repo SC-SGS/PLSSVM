@@ -14,8 +14,10 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::convert_to
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/parameter_train.hpp"                       // plssvm::parameter
+#include "plssvm/parameter_predict.hpp"                     // plssvm::parameter_predict
+#include "plssvm/parameter_train.hpp"                       // plssvm::parameter_train
 
 #include <cmath>       // std::abs
 #include <cstddef>     // std::size_t

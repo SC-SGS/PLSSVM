@@ -15,8 +15,10 @@
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
-#include "plssvm/parameter_train.hpp"           // plssvm::parameter
+#include "plssvm/parameter_predict.hpp"         // plssvm::parameter_predict
+#include "plssvm/parameter_train.hpp"           // plssvm::parameter_train
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 

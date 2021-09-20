@@ -13,10 +13,12 @@
 
 #include "../compare.hpp"                              // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/SYCL/csvm.hpp"               // plssvm::sycl::csvm
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::deteil::device_ptr
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/detail/string_utility.hpp"            // plssvm::detail::replace_all, plssvm::detail::convert_to
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
-#include "plssvm/parameter_train.hpp"                  // plssvm::parameter
+#include "plssvm/parameter_predict.hpp"                // plssvm::parameter_predict
+#include "plssvm/parameter_train.hpp"                  // plssvm::parameter_train
 
 #include "sycl/sycl.hpp"  // SYCL stuff
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
