@@ -206,7 +206,7 @@ TYPED_TEST(OpenMP_predict, predict) {
 
     // predict
     std::vector<real_type> predicted_values = csvm_openmp.predict_label(*params.test_data_ptr);
-    std::vector<real_type> predicted_values_ = csvm_openmp.predict(*params.test_data_ptr);
+    std::vector<real_type> predicted_values_real = csvm_openmp.predict(*params.test_data_ptr);
 
     // read correct prediction
     std::ifstream ifs(fmt::format("{}{}.{}", TEST_PATH, "/data/predict/500x200.libsvm.predict", TypeParam::kernel));
@@ -219,7 +219,12 @@ TYPED_TEST(OpenMP_predict, predict) {
 
     ASSERT_EQ(correct_values.size(), predicted_values.size());
     for (size_type i = 0; i < correct_values.size(); ++i) {
-        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_[i];
+        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_real[i];
+        if (correct_values[i] > real_type{ 0 }) {  // TODO: change based on sign(0) behaviour
+            EXPECT_GT(predicted_values_real[i], real_type{ 0 });
+        } else {
+            EXPECT_LT(predicted_values_real[i], real_type{ 0 });
+        }
     }
 
     // remove temporary file
