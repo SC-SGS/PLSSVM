@@ -14,7 +14,9 @@
 #include "../compare.hpp"                         // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
+#include "plssvm/detail/string_utility.hpp"       // plssvm::detail::convert_to
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
+#include "plssvm/parameter_predict.hpp"           // plssvm::parameter
 #include "plssvm/parameter_train.hpp"             // plssvm::parameter
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
@@ -196,4 +198,32 @@ TYPED_TEST(OpenMP_accuracy, accuracy) {
 
     real_type_csvm_openmp acc = csvm_openmp.accuracy();
     ASSERT_GT(acc, 0.95);
+}
+
+TEST(OpenMP_predict, predict) {
+    plssvm::parameter_predict<double> params{ TEST_PATH "/data/libsvm/500x200.libsvm.test", TEST_PATH "/data/models/500x200.libsvm.model" };
+    params.print_info = false;
+
+    // setup OpenMP C-SVM
+    mock_openmp_csvm csvm_openmp{ params };
+    using real_type = typename decltype(csvm_openmp)::real_type;
+    using size_type = typename decltype(csvm_openmp)::size_type;
+
+    // predict
+    std::vector<real_type> predicted_values = csvm_openmp.predict_label(*params.test_data_ptr);
+    std::vector<real_type> predicted_values_ = csvm_openmp.predict(*params.test_data_ptr);
+
+    // read correct prediction
+    std::ifstream ifs(TEST_PATH "/data/predict/500x200.libsvm.predict");
+    std::string line;
+    std::vector<real_type> correct_values;
+    correct_values.reserve(500);
+    while (std::getline(ifs, line, '\n')) {
+        correct_values.push_back(plssvm::detail::convert_to<real_type>(line));
+    }
+
+    ASSERT_EQ(correct_values.size(), predicted_values.size());
+    for (size_type i = 0; i < correct_values.size(); ++i) {
+        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_[i];
+    }
 }
