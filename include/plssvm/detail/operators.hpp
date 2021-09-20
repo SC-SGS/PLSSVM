@@ -167,18 +167,13 @@ template <typename T>
 }
 
 /**
- * @brief Returns +1 if x is positive and -1 if x is negative.
- *
+ * @brief Returns +1 if x is positive and -1 if x is negative or 0.
  * @param x the number parameter to evaluate
- * @return constexpr int +1 if x is positive and -1 if x is negative.
+ * @return +1 if x is positive and -1 if x is negative or 0 ([[nodiscard]])
  */
 template <typename T>
 [[nodiscard]] inline constexpr int sign(const T x) {
-    if constexpr (std::is_signed<T>()) {
-        return (T{ 0 } < x) - (x < T{ 0 });
-    } else {
-        return T{ 0 } < x;
-    }
+    return x == 0 ? -1 : static_cast<int>(std::copysign(1, x));
 }
 
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
