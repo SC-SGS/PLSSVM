@@ -20,7 +20,7 @@ real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real
 
     real_type result{ 0.0 };
     for (std::size_t i = 0; i < x1.size(); ++i) {
-        result = std::fma(x1[i], x2[i], result);  // TODO: enable auto fma
+        result = std::fma(x1[i], x2[i], result);
     }
     return result;
 }
@@ -33,10 +33,9 @@ real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_t
 
     real_type result{ 0.0 };
     for (std::size_t i = 0; i < x1.size(); ++i) {
-        // result += x1[i] * x2[i];
-        result = std::fma(x1[i], x2[i], result);  // TODO: enable auto fma
+        result = std::fma(x1[i], x2[i], result);
     }
-    return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));  // TODO: enable auto fma
+    return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
 }
 template float poly_kernel(const std::vector<float> &, const std::vector<float> &, const int, const float, const float);
 template double poly_kernel(const std::vector<double> &, const std::vector<double> &, const int, const double, const double);
@@ -47,7 +46,8 @@ real_type radial_kernel(const std::vector<real_type> &x1, const std::vector<real
 
     real_type result{ 0.0 };
     for (std::size_t i = 0; i < x1.size(); ++i) {
-        result += (x1[i] - x2[i]) * (x1[i] - x2[i]);
+        real_type tmp = x1[i] - x2[i];
+        result = std::fma(tmp, tmp, result);
     }
     return std::exp(-gamma * result);
 }
