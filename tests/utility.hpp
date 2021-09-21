@@ -93,7 +93,7 @@ void gtest_assert_floating_point_near(const T val1, const T val2, const std::str
     const T eps = 128 * std::numeric_limits<T>::epsilon();  // TODO: remove magic number?
 
     // sanity checks for picked epsilon value
-    PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon() <= eps);
+    PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon());
     PLSSVM_ASSERT(eps < T{ 1.0 }, "Chosen epsilon too large!: {} >= 1.0", eps);
 
     if (val1 == val2) {
@@ -103,7 +103,7 @@ void gtest_assert_floating_point_near(const T val1, const T val2, const std::str
     const T diff = std::abs(val1 - val2);
     const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
 
-    EXPECT_LT(diff, std::max(std::numeric_limits<T>::lowest(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+    EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
 }
 
 /**
