@@ -120,7 +120,7 @@ void csvm<T>::setup_data_on_device() {
     #pragma omp parallel for
     for (size_type device = 0; device < devices_.size(); ++device) {
         data_last_d_[device].memset(0);
-        data_last_d_[device].memcpy_to_device((*data_ptr_)[dept_], 0, num_features_);
+        data_last_d_[device].memcpy_to_device(data_ptr_->back(), 0, num_features_);
     }
 
     // initialize data on devices
