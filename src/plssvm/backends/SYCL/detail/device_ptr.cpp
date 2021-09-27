@@ -179,14 +179,14 @@ void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy, const size_type
 }
 
 template <typename T>
-void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer) {
+void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer) const {
     PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
     PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
     this->memcpy_to_host(buffer, 0, size_);
 }
 template <typename T>
-void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) {
+void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
     PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
@@ -197,14 +197,14 @@ void device_ptr<T>::memcpy_to_host(std::vector<value_type> &buffer, const size_t
     this->memcpy_to_host(buffer.data(), pos, rcount);
 }
 template <typename T>
-void device_ptr<T>::memcpy_to_host(pointer buffer) {
+void device_ptr<T>::memcpy_to_host(pointer buffer) const {
     PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
     PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
     this->memcpy_to_host(buffer, 0, size_);
 }
 template <typename T>
-void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const size_type count) {
+void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
     PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 

@@ -34,7 +34,7 @@ namespace plssvm::opencl::detail {
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the command queue to synchronize
  */
-void device_synchronize(const command_queue& queue);
+void device_synchronize(const command_queue &queue);
 
 /**
  * @brief Small wrapper class around an OpenCL device pointer together with commonly used device functions.
@@ -202,7 +202,7 @@ class device_ptr {
      * @param[in] buffer the buffer to copy the data to
      * @throws plssvm::opencl::backend_exception if @p buffer is too small
      */
-    void memcpy_to_host(std::vector<value_type> &buffer);
+    void memcpy_to_host(std::vector<value_type> &buffer) const;
     /**
      * @brief Memcpy up-to @p count many values from the device starting at OpenCL device pointer position @p pos to the host buffer @p buffer.
      * @details Copies `[p, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
@@ -211,12 +211,12 @@ class device_ptr {
      * @param[in] count the number of elements to copy
      * @throws plssvm::opencl::backend_exception if @p data_to_copy is too small
      */
-    void memcpy_to_host(std::vector<value_type> &buffer, size_type pos, size_type count);
+    void memcpy_to_host(std::vector<value_type> &buffer, size_type pos, size_type count) const;
     /**
      * @brief Memcpy `device_ptr::size()` many values from the device to the host buffer @p buffer.
      * @param[in] buffer the buffer to copy the data to
      */
-    void memcpy_to_host(pointer buffer);
+    void memcpy_to_host(pointer buffer) const;
     /**
      * @brief Memcpy up-to @p count many values from the device starting at OpenCL device pointer position @p pos to the host buffer @p buffer.
      * @details Copies `[p, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
@@ -224,7 +224,7 @@ class device_ptr {
      * @param[in] pos the starting position for the copying in the OpenCL device pointer
      * @param[in] count the number of elements to copy
      */
-    void memcpy_to_host(pointer buffer, size_type pos, size_type count);
+    void memcpy_to_host(pointer buffer, size_type pos, size_type count) const;
 
   private:
     command_queue *queue_ = nullptr;
