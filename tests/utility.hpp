@@ -28,7 +28,7 @@ namespace util {
  * @brief Create a unique temporary file in the temporary directory and return the file's name.
  * @return the name of the temporary file
  */
-std::string create_temp_file() {
+inline std::string create_temp_file() {
     std::string file = std::filesystem::temp_directory_path().string();
     file += "/tmpfile_XXXXXX";
     // create unique temporary file
@@ -49,7 +49,7 @@ std::string create_temp_file() {
  * @param[in] msg an optional message
  */
 template <typename T>
-void gtest_expect_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
+inline void gtest_expect_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
     if constexpr (std::is_same_v<T, float>) {
         EXPECT_FLOAT_EQ(val1, val2) << msg;
     } else if constexpr (std::is_same_v<T, double>) {
@@ -68,7 +68,7 @@ void gtest_expect_floating_point_eq(const T val1, const T val2, const std::strin
  * @param[in] msg an optional message
  */
 template <typename T>
-void gtest_assert_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
+inline void gtest_assert_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
     if constexpr (std::is_same_v<T, float>) {
         ASSERT_FLOAT_EQ(val1, val2) << msg;
     } else if constexpr (std::is_same_v<T, double>) {
@@ -86,7 +86,7 @@ void gtest_assert_floating_point_eq(const T val1, const T val2, const std::strin
  * @param[in] msg an optional message
  */
 template <typename T>
-void gtest_assert_floating_point_near(const T val1, const T val2, const std::string &msg = "") {
+inline void gtest_assert_floating_point_near(const T val1, const T val2, const std::string &msg = "") {
     // based on: https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
 
     // set epsilon
