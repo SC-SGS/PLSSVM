@@ -143,11 +143,11 @@ TYPED_TEST(CUDA_device_kernel, device_kernel) {
     const size_type dept = csvm.get_num_data_points() - 1;
 
     // create x vector and fill it with random values
-    std::vector<real_type> x(dept);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<real_type> dist(-1, 2.0);
-    std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
+    std::vector<real_type> x(dept, 1.0);
+    //    std::random_device rd;
+    //    std::mt19937 gen(rd());
+    //    std::uniform_real_distribution<real_type> dist(-1, 2.0);
+    //    std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
     // create correct q vector, cost and QA_cost
     const std::vector<real_type> q_vec = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
