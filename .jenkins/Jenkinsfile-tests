@@ -108,7 +108,7 @@ pipeline {
                     sh '''
                         module load cuda
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/dpcpp
+                        module load pcsgs05/dpcpp_rt
                         cd SVM
                         mkdir -p build/Release_dpcpp
                         cd build/Release_dpcpp
@@ -126,7 +126,7 @@ pipeline {
                         sh '''
                             module load cuda
                             module use /home/breyerml/.modulefiles/
-                            module load pcsgs05/dpcpp
+                            module load pcsgs05/dpcpp_rt
                             cd SVM/build/Release_dpcpp
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -175,7 +175,7 @@ pipeline {
                     sh '''
                         module load cuda
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/dpcpp
+                        module load pcsgs05/dpcpp_rt
                         cd SVM
                         mkdir -p build/Debug_dpcpp
                         cd build/Debug_dpcpp
