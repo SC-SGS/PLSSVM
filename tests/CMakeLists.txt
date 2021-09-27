@@ -21,6 +21,7 @@ set(PLSSVM_BASE_TEST_NAME base_tests)
 # list all necessary sources
 set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/parameter_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/compare.cpp
 )
 
@@ -76,7 +77,7 @@ else()
 endif()
 
 
-# add to coverage as dependencie
+# add to coverage as dependency
 if(TARGET gcov)
     add_dependencies(gcov ${PLSSVM_BASE_TEST_NAME})
 endif()
@@ -89,7 +90,7 @@ target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE GTest::gtest_main GTest::
 # add tests
 gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
 
-# add test for help message
+# add test for help message TODO: svm-predict
 add_test(NAME BASE/exe_help COMMAND svm-train --help)
 
 # add tests for the available backends
