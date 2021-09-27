@@ -160,6 +160,7 @@ TYPED_TEST(CUDA_device_kernel, device_kernel) {
     // setup data on device
     csvm_cuda.setup_data_on_device();
 
+    // TODO: multi GPU support
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::cuda::detail::device_ptr<real_type> q_d{ dept + boundary_size };
     q_d.memcpy_to_device(q_vec, 0, dept);
@@ -244,28 +245,34 @@ TYPED_TEST(CUDA_predict, predict) {
     std::filesystem::remove(tmp_model_file);
 }
 
-// enumerate all type and kernel combinations to test
-using parameter_types_double = ::testing::Types<
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
-
 template <typename T>
 class CUDA_accuracy : public ::testing::Test {};
-TYPED_TEST_SUITE(CUDA_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name);  // TODO: float parameter_types accuracy
+TYPED_TEST_SUITE(CUDA_accuracy, parameter_types, util::google_test::parameter_definition_to_name);
 TYPED_TEST(CUDA_accuracy, accuracy) {
     plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
-    params.epsilon = 0.0000000001;
 
     // setup CUDA C-SVM
     mock_cuda_csvm csvm_cuda{ params };
-    using real_type_csvm_cuda = typename decltype(csvm_cuda)::real_type;
+    using real_type = typename decltype(csvm_cuda)::real_type;
+    using size_type = typename decltype(csvm_cuda)::real_type;
 
     // learn
     csvm_cuda.learn();
 
-    real_type_csvm_cuda acc = csvm_cuda.accuracy();
-    ASSERT_GT(acc, 0.95);
+    // predict label and calculate correct accuracy
+    std::vector<real_type> label_predicted = csvm_cuda.predict_label(*params.data_ptr);
+    ASSERT_EQ(label_predicted.size(), params.value_ptr->size());
+    size_type count = 0;
+    for (size_type i = 0; i < label_predicted.size(); ++i) {
+        if (label_predicted[i] == (*params.value_ptr)[i]) {
+            ++count;
+        }
+    }
+    real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
+
+    // calculate accuracy
+    real_type accuracy_calculated = csvm_cuda.accuracy();
+    util::gtest_assert_floating_point_eq(accuracy_calculated, accuracy_correct);
 }

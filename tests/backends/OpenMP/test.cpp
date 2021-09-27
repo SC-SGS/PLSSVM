@@ -231,28 +231,34 @@ TYPED_TEST(OpenMP_predict, predict) {
     std::filesystem::remove(tmp_model_file);
 }
 
-// enumerate all type and kernel combinations to test
-using parameter_types_double = ::testing::Types<
-    util::google_test::parameter_definition<double, plssvm::kernel_type::linear>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
-    util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
-
 template <typename T>
 class OpenMP_accuracy : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenMP_accuracy, parameter_types_double, util::google_test::parameter_definition_to_name);  // TODO: float parameter_types accuracy
+TYPED_TEST_SUITE(OpenMP_accuracy, parameter_types, util::google_test::parameter_definition_to_name);
 TYPED_TEST(OpenMP_accuracy, accuracy) {
     plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
     params.print_info = false;
     params.kernel = TypeParam::kernel;
-    params.epsilon = 0.0000000001;
 
     // setup OpenMP C-SVM
     mock_openmp_csvm csvm_openmp{ params };
-    using real_type_csvm_openmp = typename decltype(csvm_openmp)::real_type;
+    using real_type = typename decltype(csvm_openmp)::real_type;
+    using size_type = typename decltype(csvm_openmp)::size_type;
 
     // learn
     csvm_openmp.learn();
 
-    real_type_csvm_openmp acc = csvm_openmp.accuracy();
-    ASSERT_GT(acc, 0.95);
+    // predict label and calculate correct accuracy
+    std::vector<real_type> label_predicted = csvm_openmp.predict_label(*params.data_ptr);
+    ASSERT_EQ(label_predicted.size(), params.value_ptr->size());
+    size_type count = 0;
+    for (size_type i = 0; i < label_predicted.size(); ++i) {
+        if (label_predicted[i] == (*params.value_ptr)[i]) {
+            ++count;
+        }
+    }
+    real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
+
+    // calculate accuracy
+    real_type accuracy_calculated = csvm_openmp.accuracy();
+    util::gtest_assert_floating_point_eq(accuracy_calculated, accuracy_correct);
 }
