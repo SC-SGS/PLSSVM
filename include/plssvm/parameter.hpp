@@ -198,7 +198,7 @@ class parameter {
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
 
     /// The rho value of the calculated/read model.
-    real_type rho = 0.0;
+    real_type rho = real_type{ 0.0 };
 
   protected:
     /**
