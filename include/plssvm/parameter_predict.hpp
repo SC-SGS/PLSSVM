@@ -43,6 +43,11 @@ class parameter_predict : public parameter<T> {
     using size_type = typename base_type::size_type;
 
     /**
+     * @brief Default construct all parameters for prediction.
+     */
+    parameter_predict() = default;
+
+    /**
      * @brief Set all predict parameters to their default values.
      * @param[in] input_filename the name of the test data file
      * @param[in] model_filename the name of the model file
