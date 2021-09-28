@@ -88,11 +88,11 @@ using floating_point_types = ::testing::Types<float, double>;
 
 template <typename T>
 class BaseKernelFunction : public ::testing::Test {};
-TYPED_TEST_SUITE(BaseTransform, floating_point_types);
+TYPED_TEST_SUITE(BaseKernelFunction, floating_point_types);
 
 // check whether the kernel_function implementation is correct
-TEST(BaseKernelFunction, kernel_function) {
-    using real_type = double;
+TYPED_TEST(BaseKernelFunction, kernel_function) {
+    using real_type = TypeParam;
 
     // create dummy data vectors
     constexpr std::size_t size = 512;
@@ -108,6 +108,6 @@ TEST(BaseKernelFunction, kernel_function) {
     std::generate(x2.begin(), x2.end(), [&]() { return dist(gen); });
 
     util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::linear>(x1, x2), compare::detail::linear_kernel(x1, x2));
-    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, 3, 0.5, 0.0), compare::detail::poly_kernel(x1, x2, 3, 0.5, 0.0));
-    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::rbf>(x1, x2, 0.5), compare::detail::radial_kernel(x1, x2, 0.5));
+    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, 3, 0.5, 0.0), compare::detail::poly_kernel(x1, x2, 3, real_type{ 0.5 }, real_type{ 0.0 }));
+    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::rbf>(x1, x2, 0.5), compare::detail::radial_kernel(x1, x2, real_type{ 0.5 }));
 }
