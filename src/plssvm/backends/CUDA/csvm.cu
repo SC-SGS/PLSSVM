@@ -9,6 +9,7 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device,
                                                        // plssvm::detail::cuda::peek_at_last_error, plssvm::detail::cuda::device_synchronize
 #include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda::backend_exception
+#include "plssvm/backends/CUDA/predict.cuh"            //
 #include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::device_kernel_q_linear, plssvm::cuda::device_kernel_q_poly, plssvm::cuda::device_kernel_q_radial
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::device_kernel_linear, plssvm::cuda::device_kernel_poly, plssvm::cuda::device_kernel_radial
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
@@ -98,7 +99,7 @@ void csvm<T>::setup_data_on_device() {
     for (int device = 0; device < num_devices_; ++device) {
         data_last_d_[device] = detail::device_ptr<real_type>{ num_features_ + boundary_size_, device };
     }
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         data_last_d_[device].memset(0);
         data_last_d_[device].memcpy_to_device(data_ptr_->back(), 0, num_features_);
@@ -110,7 +111,7 @@ void csvm<T>::setup_data_on_device() {
     }
     // transform 2D to 1D data
     const std::vector<real_type> transformed_data = base_type::transform_data(boundary_size_);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (dept_ + boundary_size_));
     }
@@ -200,13 +201,13 @@ void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffe
             detail::device_synchronize(device);
             buffer_d[device].memcpy_to_host(ret, 0, ret.size());
 
-            #pragma omp parallel for
+#pragma omp parallel for
             for (size_type j = 0; j < ret.size(); ++j) {
                 buffer[j] += ret[j];
             }
         }
 
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
         }
@@ -230,7 +231,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         x_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
         r_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         x_d[device].memset(0);
         x_d[device].memcpy_to_device(x, 0, dept_);
@@ -242,14 +243,14 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     for (int device = 0; device < num_devices_; ++device) {
         q_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept_);
     }
 
-    // r = Ax (r = b - Ax)
-    #pragma omp parallel for
+// r = Ax (r = b - Ax)
+#pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         detail::set_device(device);
         run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
@@ -276,13 +277,13 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
 
-        // Ad = A * r (q = A * d)
-        #pragma omp parallel for
+// Ad = A * r (q = A * d)
+#pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept_);
         }
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             detail::set_device(device);
             run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], 1);
@@ -298,7 +299,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         // (x = x + alpha * d)
         x += alpha_cd * d;
 
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             x_d[device].memcpy_to_device(x, 0, dept_);
         }
@@ -307,13 +308,13 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         if (run % 50 == 49) {
             // r = b
             r_d[0].memcpy_to_device(b, 0, dept_);
-            #pragma omp parallel for
+#pragma omp parallel for
             for (int device = 1; device < num_devices_; ++device) {
                 r_d[device].memset(0);
             }
 
-            // r -= A * x
-            #pragma omp parallel for
+// r -= A * x
+#pragma omp parallel for
             for (int device = 0; device < num_devices_; ++device) {
                 detail::set_device(device);
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
@@ -339,8 +340,8 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         // d = beta * d + r
         d = beta * d + r;
 
-        // r_d = d
-        #pragma omp parallel for
+// r_d = d
+#pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             r_d[device].memcpy_to_device(d, 0, dept_);
         }
@@ -350,6 +351,92 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     }
 
     return std::vector<real_type>(x.begin(), x.begin() + dept_);
+}
+
+template <typename T>
+void csvm<T>::update_w() {
+    w_.resize(num_features_);
+    w_d_ = detail::device_ptr<real_type>(num_features_ + THREAD_BLOCK_SIZE);
+    w_d_.memset(0);
+
+    detail::device_ptr<real_type> alpha_d_(num_data_points_ + THREAD_BLOCK_SIZE);
+    alpha_d_.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+    const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
+    const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_features_));
+
+    cuda::kernel_w<<<grid, block>>>(w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_);
+    cuda::detail::device_synchronize(0);
+    w_d_.memcpy_to_host(w_, 0, num_features_);
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
+    using namespace plssvm::operators;
+
+    if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas provided for prediction!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+    PLSSVM_ASSERT((*data_ptr_)[0].size() == point.size(), "Prediction point has different amount of features than training data!");
+
+    if (data_d_[0].empty()) {  // TODO
+        setup_data_on_device();
+    }
+
+    real_type temp = bias_;
+    detail::device_ptr<real_type> out_d(1 + THREAD_BLOCK_SIZE);
+    std::vector<real_type> out(1);
+    detail::device_ptr<real_type> point_d(point.size() + THREAD_BLOCK_SIZE);
+    point_d.memcpy_to_device(point, 0, point.size());
+    detail::device_ptr<real_type> alpha_d_(num_data_points_ + THREAD_BLOCK_SIZE);
+    alpha_d_.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+    const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
+    const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_));
+
+    switch (kernel_) {
+        case kernel_type::linear:
+
+            // use faster methode in case of the linear kernel function
+            if (w_.empty()) {
+                update_w();
+            }
+            // fmt::print("vec: {}\n", fmt::join(w, " "));
+            temp += transposed{ w_ } * point;
+            break;
+        case kernel_type::polynomial:
+
+            cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, degree_, gamma_, coef0_);
+            cuda::detail::device_synchronize(0);
+            out_d.memcpy_to_host(out, 0, 1);
+
+            temp += out[0];
+            break;
+        case kernel_type::rbf:
+
+            cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, gamma_);
+            cuda::detail::device_synchronize(0);
+
+            out_d.memcpy_to_host(out, 0, 1);
+
+            temp += out[0];
+            break;
+    }
+
+    return temp;
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    std::vector<real_type> classes;
+    classes.reserve(points.size());
+    for (const std::vector<real_type> &point : points) {
+        classes.emplace_back(predict(point));
+    }
+    return classes;
 }
 
 template class csvm<float>;

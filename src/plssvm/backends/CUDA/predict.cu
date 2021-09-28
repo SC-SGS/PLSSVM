@@ -5,67 +5,68 @@
  */
 
 #include "plssvm/backends/CUDA/csvm.hpp"
-
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr
+#include "plssvm/constants.hpp"
 
 namespace plssvm::cuda {
 
 template <typename real_type>
-__global__ void kernel_predict(const real_type *data_d, const real_type *w, int dim, real_type *out) {
+__global__ void kernel_w(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp = 0;
-    for (int feature = 0; feature < dim; ++feature) {
-        temp += w[feature] * data_d[index * dim + feature];
+    for (int dat = 0; dat < num_data_points - 1; ++dat) {
+        temp += alpha_d[dat] * data_d[dat + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * index];
     }
-    if (temp > 0) {
-        out[index] = 1;
-    } else {
-        out[index] = -1;
-    }
-}
-template __global__ void kernel_predict(const float *, const float *, int, float *);
-template __global__ void kernel_predict(const double *, const double *, int, double *);
-
-template <typename real_type>
-__global__ void kernel_w(real_type *w_d, const real_type *data_d, const real_type *alpha_d, int count) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    real_type temp = 0;
-    for (int dat = 0; dat < count; ++dat) {
-        temp += alpha_d[index] * data_d[dat * count + index];
-    }
+    temp += alpha_d[num_data_points - 1] * data_last_d[index];
     w_d[index] = temp;
 }
-template __global__ void kernel_w(float *, const float *, const float *, int);
-template __global__ void kernel_w(double *, const double *, const double *, int);
+template __global__ void kernel_w(float *, const float *, const float *, const float *, int);
+template __global__ void kernel_w(double *, const double *, const double *, const double *, int);
 
-//template <typename T>
-//auto csvm<T>::predict(const real_type *data, const size_type dim, const size_type count) -> std::vector<real_type> {
-//    cuda::detail::device_ptr<real_type> data_d{ dim * count };
-//    data_d.memcpy_to_device(data);
-//    cuda::detail::device_ptr<real_type> out{ count };
-//
-//    kernel_predict<<<((int) count / 1024) + 1, std::min(count, static_cast<size_type>(1024))>>>(data_d.get(), w_d_.get(), dim, out.get());
-//
-//    std::vector<real_type> ret(count);
-//    cuda::detail::device_synchronize();
-//    out.memcpy_to_host(ret);
-//
-//    return ret;
-//}
+template <typename real_type>
+__global__ void predict_points_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const int degree, const real_type gamma, const real_type coef0) {
+    int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
+    int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
+    // printf("%i\n", predict_point_index);
 
-//template <typename T>
-//void csvm<T>::load_w() {
-//    w_d_ = cuda::detail::device_ptr<real_type>{ num_features_ };
-//    cuda::detail::device_ptr<real_type> alpha_d{ num_features_ };
-//    alpha_d.memcpy_to_device(alpha_, 0, num_features_);  // TODO: ????
-//
-//    // TODO:
-//    // kernel_w<<<((int) num_features_ / 1024) + 1,  std::min((int) num_features_, 1024)>>>(w_d_.get(), data_d.get(), alpha_d.get(), num_data_points_);
-//
-//    cuda::detail::device_synchronize();
-//}
-//
-//template class csvm<float>;
-//template class csvm<double>;
+    real_type temp = 0;
+    for (int feature_index = 0; feature_index < num_features; ++feature_index) {
+        if (data_point_index == num_data_points) {
+            temp += data_last_d[feature_index] * points[predict_point_index + (num_predict_points) *feature_index];
+        } else {
+            temp += data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] * points[predict_point_index + (num_predict_points) *feature_index];
+        }
+    }
+
+    temp = alpha_d[data_point_index] * pow(gamma * temp + coef0, static_cast<real_type>(degree));
+
+    atomicAdd(&out_d[predict_point_index], temp);
+}
+
+template __global__ void predict_points_poly(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const int, const float, const float);
+template __global__ void predict_points_poly(double *, const double *, const double *, const double *, const int, const double *, const int, const int, const int, const double, const double);
+
+template <typename real_type>
+__global__ void predict_points_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const real_type gamma) {
+    int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
+    int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
+    // printf("%i\n", predict_point_index);
+
+    real_type temp = 0;
+    for (int feature_index = 0; feature_index < num_features; ++feature_index) {
+        if (data_point_index == num_data_points) {
+            temp += data_last_d[feature_index] - points[predict_point_index + (num_predict_points) *feature_index];
+        } else {
+            temp += data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points) *feature_index];
+        }
+    }
+
+    temp = -gamma * alpha_d[data_point_index] * temp * temp;
+
+    atomicAdd(&out_d[predict_point_index], temp);
+}
+
+template __global__ void predict_points_rbf(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const float);
+template __global__ void predict_points_rbf(double *, const double *, const double *, const double *, const int, const double *, const int, const int, const double);
 
 }  // namespace plssvm::cuda

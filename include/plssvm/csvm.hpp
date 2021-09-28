@@ -120,7 +120,7 @@ class csvm {
      * @brief Evaluates the model on the data used for training.
      * @return The fraction of correct labeled training data in percent. ([[nodiscard]])
      */
-    [[nodiscard]] real_type accuracy();  // TODO: move to predict
+    [[nodiscard]] virtual real_type accuracy();  // TODO: move to predict
 
     /**
      * @brief Uses the already learned model to predict the class of a (new) data point.
@@ -133,7 +133,7 @@ class csvm {
      * @param[in] points the data points to predict
      * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
      */
-    [[nodiscard]] std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
+    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
 
     /**
      * @brief Uses the already learned model to predict the class of an (new) point
