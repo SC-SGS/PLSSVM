@@ -10,9 +10,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
-#include "plssvm/kernel_types.hpp"          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"             // plssvm::parameter
-#include "plssvm/target_platform.hpp"       // plssvm::target_platform
 
 #include <vector>  // std::vector
 
