@@ -8,17 +8,12 @@
 
 #include "mock_csvm.hpp"
 
-#include "plssvm/backend_types.hpp"          // plssvm::backend_type
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
-#include "plssvm/parameter_train.hpp"        // plssvm::parameter_train
-#include "plssvm/target_platform.hpp"        // plssvm::target_platform
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "backends/compare.hpp"  // linear_kernel
-#include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq,
-                                 // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion
+#include "backends/compare.hpp"  // compare::kernel_function
+#include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT, EXPECT_CALL
@@ -43,7 +38,7 @@ TYPED_TEST_SUITE(BaseCSVMTransform, floating_point_types);
 // check whether transforming the 2D data into a 1D vector works as intended
 TYPED_TEST(BaseCSVMTransform, transform_data) {
     // create parameter object
-    plssvm::parameter_train<TypeParam> params;
+    plssvm::parameter<TypeParam> params;
     params.print_info = false;
     params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
 
