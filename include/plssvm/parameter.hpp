@@ -9,15 +9,18 @@
 
 #pragma once
 
-#include "plssvm/backend_types.hpp"    // plssvm::backend_type
-#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/backend_types.hpp"          // plssvm::backend_type
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/target_platform.hpp"        // plssvm::target_platform
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
+#include <iosfwd>       // std::ostream (forward declaration only)
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -152,6 +155,9 @@ class parameter {
      */
     void parse_train_file(const std::string &filename) {
         parse_file(filename, data_ptr);
+        if (value_ptr == nullptr) {
+            throw invalid_file_format_exception{ "Missing labels for train file!" };
+        }
     }
     /**
      * @brief Parse the given file as test data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
