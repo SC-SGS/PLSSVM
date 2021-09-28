@@ -15,10 +15,11 @@
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ
+#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_FALSE, EXPECT_TRUE
 
 #include <cstdlib>      // mkstemp
 #include <filesystem>   // std::filesystem::temp_directory_path
+#include <sstream>      // std::ostringstream, std::istringstream
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 
@@ -104,6 +105,46 @@ inline void gtest_assert_floating_point_near(const T val1, const T val2, const s
     const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
 
     EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+}
+
+/**
+ * @brief Check whether converting the enum @p e to a std::string results in the string representation @p str.
+ * @tparam Enum the type of the enum to convert
+ * @param[in] e the enum to convert to a std::string
+ * @param[in] str the expected string representation of the enum @p e
+ */
+template <typename Enum>
+void gtest_expect_enum_to_string_string_conversion(const Enum e, const std::string_view str) {
+    std::ostringstream ss;
+    ss << e;
+    EXPECT_EQ(ss.str(), str);
+    EXPECT_FALSE(ss.fail());
+}
+/**
+ * @brief Check whether converting the string @p str to the enum type @p Enum yields @p e.
+ * @tparam Enum the type of the enum
+ * @param[in] str the string representation of @p e
+ * @param[in] e the expected enum value
+ */
+template <typename Enum>
+void gtest_expect_string_to_enum_conversion(const std::string &str, const Enum e) {
+    std::istringstream ss{ str };
+    Enum parsed;
+    ss >> parsed;
+    EXPECT_EQ(parsed, e);
+    EXPECT_FALSE(ss.fail());
+}
+/**
+ * @brief Check whether converting the illegal string @p str to the enum type @p Enum results in setting the failbit in the stream object.
+ * @tparam Enum the type of the enum
+ * @param[in] str the illegal string representation of an enum value of type @p Enum
+ */
+template <typename Enum>
+void gtest_expect_string_to_enum_conversion(const std::string &str) {
+    std::istringstream ss{ str };
+    Enum parsed;
+    ss >> parsed;
+    EXPECT_TRUE(ss.fail());
 }
 
 /**
