@@ -119,8 +119,8 @@ template <typename Enum>
 inline void gtest_expect_enum_to_string_string_conversion(const Enum e, const std::string_view str) {
     std::ostringstream ss;
     ss << e;
-    EXPECT_EQ(ss.str(), str);
     EXPECT_FALSE(ss.fail());
+    EXPECT_EQ(ss.str(), str);
 }
 /**
  * @brief Check whether converting the string @p str to the enum type @p Enum yields @p e.
@@ -131,10 +131,10 @@ inline void gtest_expect_enum_to_string_string_conversion(const Enum e, const st
 template <typename Enum>
 inline void gtest_expect_string_to_enum_conversion(const std::string &str, const Enum e) {
     std::istringstream ss{ str };
-    Enum parsed;
+    Enum parsed{};
     ss >> parsed;
-    EXPECT_EQ(parsed, e);
     EXPECT_FALSE(ss.fail());
+    EXPECT_EQ(parsed, e);
 }
 /**
  * @brief Check whether converting the illegal string @p str to the enum type @p Enum results in setting the failbit in the stream object.
@@ -144,7 +144,7 @@ inline void gtest_expect_string_to_enum_conversion(const std::string &str, const
 template <typename Enum>
 inline void gtest_expect_string_to_enum_conversion(const std::string &str) {
     std::istringstream ss{ str };
-    Enum parsed;
+    Enum parsed{};
     ss >> parsed;
     EXPECT_TRUE(ss.fail());
 }
