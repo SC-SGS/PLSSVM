@@ -90,8 +90,9 @@ target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE GTest::gtest_main GTest::
 # add tests
 gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
 
-# add test for help message TODO: svm-predict
-add_test(NAME BASE/exe_help COMMAND svm-train --help)
+# add test for help message
+add_test(NAME ParameterTrain/svm-train_help COMMAND svm-train --help)
+add_test(NAME ParameterPredict/svm-predict_help COMMAND svm-predict --help)
 
 # add tests for the available backends
 add_subdirectory(backends)
