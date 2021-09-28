@@ -126,7 +126,7 @@ inline void gtest_assert_floating_point_near(const T val1, const T val2, const s
         } catch (...) {                                                           \
             FAIL() << "Expected " #expected_exception " with message: " << (msg); \
         }                                                                         \
-    } while (false);
+    } while (false)
 
 namespace google_test {
 /**
