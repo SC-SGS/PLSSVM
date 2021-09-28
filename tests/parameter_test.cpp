@@ -13,7 +13,7 @@
 #include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
 #include "plssvm/parameter_train.hpp"        // plssvm::parameter_train
 
-#include "utility.hpp"  // util::create_temp_file, util::gtest_expect_floating_point_eq
+#include "utility.hpp"  // util::create_temp_file, util::gtest_expect_floating_point_eq, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
@@ -209,7 +209,7 @@ TYPED_TEST(Parameter, parse_libsvm_non_existing_file) {
     params.print_info = false;
 
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.lib", params.data_ptr), plssvm::file_not_found_exception);
+    EXPECT_THROW_WHAT(params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.lib", params.data_ptr), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/libsvm/5x4.lib"));
 }
 
 //*************************************************************************************************************************************//
@@ -335,7 +335,7 @@ TYPED_TEST(Parameter, parse_arff_non_existing_file) {
     params.print_info = false;
 
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(params.parse_arff(TEST_PATH "/data/arff/5x4.ar", params.data_ptr), plssvm::file_not_found_exception);
+    EXPECT_THROW_WHAT(params.parse_arff(TEST_PATH "/data/arff/5x4.ar", params.data_ptr), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/arff/5x4.ar"));
 }
 
 // test whether plssvm::parameter<T>::parse_file uses the correct file parser
@@ -600,7 +600,7 @@ TYPED_TEST(ParameterModel, parse_model_non_existing_file) {
     params.print_info = false;
 
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW(params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.mod"), plssvm::file_not_found_exception);
+    EXPECT_THROW_WHAT(params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.mod"), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/models/5x4.libsvm.mod"));
 }
 
 //*************************************************************************************************************************************//
