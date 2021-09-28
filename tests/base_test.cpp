@@ -10,9 +10,12 @@
 #include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
 #include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
-#include "utility.hpp"  // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion
+#include "backends/compare.hpp"  // compare::detail::linear_kernel, compare::detail::poly_kernel, compare::detail::radial_kernel
+#include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion
 
 #include "gtest/gtest.h"  // TEST
+
+#include <random>  // std::random_device, std::mt19937, std::uniform_real_distribution
 
 // check whether the std::string <-> plssvm::backend_type conversions are correct
 TEST(Base, backend_type) {
@@ -78,4 +81,33 @@ TEST(Base, target_platform) {
     util::gtest_expect_string_to_enum_conversion("gpu_intel", plssvm::target_platform::gpu_intel);
     util::gtest_expect_string_to_enum_conversion("GPU_INTEL", plssvm::target_platform::gpu_intel);
     util::gtest_expect_string_to_enum_conversion<plssvm::target_platform>("baz");
+}
+
+// the floating point types to test
+using floating_point_types = ::testing::Types<float, double>;
+
+template <typename T>
+class BaseKernelFunction : public ::testing::Test {};
+TYPED_TEST_SUITE(BaseTransform, floating_point_types);
+
+// check whether the kernel_function implementation is correct
+TEST(BaseKernelFunction, kernel_function) {
+    using real_type = double;
+
+    // create dummy data vectors
+    constexpr std::size_t size = 512;
+    std::vector<real_type> x1(size);
+    std::vector<real_type> x2(size);
+
+    // fill vectors with random values
+    std::random_device rnd_device;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<real_type> dist(1.0, 2.0);
+    std::generate(x1.begin(), x1.end(), [&]() { return dist(gen); });
+    std::generate(x2.begin(), x2.end(), [&]() { return dist(gen); });
+
+    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::linear>(x1, x2), compare::detail::linear_kernel(x1, x2));
+    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, 3, 0.5, 0.0), compare::detail::poly_kernel(x1, x2, 3, 0.5, 0.0));
+    util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::rbf>(x1, x2, 0.5), compare::detail::radial_kernel(x1, x2, 0.5));
 }
