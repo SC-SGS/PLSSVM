@@ -6,9 +6,7 @@
 
 #include "plssvm/csvm.hpp"
 
-#include "plssvm/detail/file_reader.hpp"     // plssvm::detail::file_reader
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::convert_to, plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 
 #include "fmt/chrono.h"  // format std::chrono
@@ -18,15 +16,11 @@
     #include <omp.h>  // omp_get_num_threads
 #endif
 
-#include <algorithm>    // std::max, std::transform
-#include <cctype>       // std::toupper
-#include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
-#include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
-#include <ostream>      // std::ofstream, std::ios::out, std::ios::trunc
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <utility>      // std::move
-#include <vector>       // std::vector
+#include <chrono>   // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
+#include <fstream>  // std::ofstream, std::ios::out, std::ios::trunc
+#include <ios>      // std:streamsize
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm {
 
@@ -34,11 +28,15 @@ template <typename T>
 void csvm<T>::write_model(const std::string &model_name) {
     auto start_time = std::chrono::steady_clock::now();
 
-    // TODO: asserts
+    if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas given! Maybe a call to 'learn()' is missing?" };
+    } else if (value_ptr_ == nullptr) {
+        throw exception{ "No labels given! Maybe the data is only usable for prediction?" };
+    }
 
-    int nBSV = 0;
-    int count_pos = 0;
-    int count_neg = 0;
+    size_type nBSV = 0;
+    size_type count_pos = 0;
+    size_type count_neg = 0;
     for (size_type i = 0; i < alpha_ptr_->size(); ++i) {
         if ((*value_ptr_)[i] > 0) {
             ++count_pos;
