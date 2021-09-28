@@ -624,7 +624,7 @@ TYPED_TEST(Parameter, output_operator) {
                     "cost              1\n"
                     "epsilon           0.001\n"
                     "print_info        true\n"
-                    "backend           OpenMP\n"
+                    "backend           openmp\n"
                     "target platform   automatic\n"
                     "input_filename    ''\n"
                     "model_filename    ''\n"
