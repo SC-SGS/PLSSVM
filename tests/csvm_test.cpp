@@ -1,10 +1,10 @@
 /**
- * @author Alexander Van Craen
- * @author Marcel Breyer
- * @copyright
- *
- * @brief Tests for the base functionality independent of the used backend.
- */
+* @author Alexander Van Craen
+* @author Marcel Breyer
+* @copyright
+*
+* @brief Tests for the base functionality independent of the used backend.
+*/
 
 #include "mock_csvm.hpp"
 
@@ -34,128 +34,13 @@
 #include <string>      // std::string
 #include <vector>      // std::vector
 
-// check whether the std::string <-> plssvm::backend_type conversions are correct
-TEST(Base, backend_type) {
-    // check conversions to std::string
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::openmp, "openmp");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::cuda, "cuda");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::opencl, "opencl");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::sycl, "sycl");
-    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::backend_type>(4), "unknown");
-
-    // check conversion from std::string
-    util::gtest_expect_string_to_enum_conversion("openmp", plssvm::backend_type::openmp);
-    util::gtest_expect_string_to_enum_conversion("OpenMP", plssvm::backend_type::openmp);
-    util::gtest_expect_string_to_enum_conversion("cuda", plssvm::backend_type::cuda);
-    util::gtest_expect_string_to_enum_conversion("CUDA", plssvm::backend_type::cuda);
-    util::gtest_expect_string_to_enum_conversion("opencl", plssvm::backend_type::opencl);
-    util::gtest_expect_string_to_enum_conversion("OpenCL", plssvm::backend_type::opencl);
-    util::gtest_expect_string_to_enum_conversion("sycl", plssvm::backend_type::sycl);
-    util::gtest_expect_string_to_enum_conversion("SYCL", plssvm::backend_type::sycl);
-    util::gtest_expect_string_to_enum_conversion<plssvm::backend_type>("foo");
-}
-
-// check whether the std::string <-> plssvm::kernel_type conversions are correct
-TEST(Base, kernel_type) {
-    // check conversions to std::string
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::kernel_type::linear, "linear");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::kernel_type::polynomial, "polynomial");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::kernel_type::rbf, "rbf");
-    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::kernel_type>(3), "unknown");
-
-    // check conversion from std::string
-    util::gtest_expect_string_to_enum_conversion("linear", plssvm::kernel_type::linear);
-    util::gtest_expect_string_to_enum_conversion("LINEAR", plssvm::kernel_type::linear);
-    util::gtest_expect_string_to_enum_conversion("0", plssvm::kernel_type::linear);
-    util::gtest_expect_string_to_enum_conversion("polynomial", plssvm::kernel_type::polynomial);
-    util::gtest_expect_string_to_enum_conversion("POLynomIAL", plssvm::kernel_type::polynomial);
-    util::gtest_expect_string_to_enum_conversion("1", plssvm::kernel_type::polynomial);
-    util::gtest_expect_string_to_enum_conversion("rbf", plssvm::kernel_type::rbf);
-    util::gtest_expect_string_to_enum_conversion("rBf", plssvm::kernel_type::rbf);
-    util::gtest_expect_string_to_enum_conversion("2", plssvm::kernel_type::rbf);
-    util::gtest_expect_string_to_enum_conversion<plssvm::kernel_type>("bar");
-}
-
-// check whether the std::string <-> plssvm::target_platform conversions are correct
-TEST(Base, target_platform) {
-    // check conversions to std::string
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::target_platform::automatic, "automatic");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::target_platform::cpu, "cpu");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::target_platform::gpu_nvidia, "gpu_nvidia");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::target_platform::gpu_amd, "gpu_amd");
-    util::gtest_expect_enum_to_string_string_conversion(plssvm::target_platform::gpu_intel, "gpu_intel");
-    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::target_platform>(5), "unknown");
-
-    // check conversion from std::string
-    util::gtest_expect_string_to_enum_conversion("automatic", plssvm::target_platform::automatic);
-    util::gtest_expect_string_to_enum_conversion("AUTOmatic", plssvm::target_platform::automatic);
-    util::gtest_expect_string_to_enum_conversion("cpu", plssvm::target_platform::cpu);
-    util::gtest_expect_string_to_enum_conversion("CPU", plssvm::target_platform::cpu);
-    util::gtest_expect_string_to_enum_conversion("gpu_nvidia", plssvm::target_platform::gpu_nvidia);
-    util::gtest_expect_string_to_enum_conversion("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia);
-    util::gtest_expect_string_to_enum_conversion("gpu_amd", plssvm::target_platform::gpu_amd);
-    util::gtest_expect_string_to_enum_conversion("GPU_AMD", plssvm::target_platform::gpu_amd);
-    util::gtest_expect_string_to_enum_conversion("gpu_intel", plssvm::target_platform::gpu_intel);
-    util::gtest_expect_string_to_enum_conversion("GPU_INTEL", plssvm::target_platform::gpu_intel);
-    util::gtest_expect_string_to_enum_conversion<plssvm::target_platform>("baz");
-}
-
 template <typename T>
-class BASE : public ::testing::Test {};
+class BaseCSVM : public ::testing::Test {};
 
 using testing_types = ::testing::Types<float, double>;
-TYPED_TEST_SUITE(BASE, testing_types);
+TYPED_TEST_SUITE(BaseCSVM, testing_types);
 
-TYPED_TEST(BASE, parameter_train) {
-    plssvm::parameter<TypeParam> params;
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-
-    plssvm::parameter_train<TypeParam> params_train{ TEST_PATH "/data/libsvm/5x4.libsvm" };
-
-    EXPECT_EQ(params.kernel, params_train.kernel);
-    EXPECT_EQ(params.degree, params_train.degree);
-    EXPECT_EQ(params.gamma, params_train.gamma);
-    EXPECT_EQ(params.coef0, params_train.coef0);
-    EXPECT_EQ(params.cost, params_train.cost);
-    EXPECT_EQ(params.epsilon, params_train.epsilon);
-    EXPECT_EQ(params.print_info, params_train.print_info);
-    EXPECT_EQ(params.backend, params_train.backend);
-    EXPECT_EQ(params.target, params_train.target);
-    EXPECT_EQ(params.input_filename, params_train.input_filename);
-    EXPECT_EQ(params.model_filename, params_train.model_filename);
-    EXPECT_EQ(params.predict_filename, params_train.predict_filename);
-    EXPECT_EQ(*params.data_ptr, *params_train.data_ptr);
-    EXPECT_EQ(*params.value_ptr, *params_train.value_ptr);
-    EXPECT_EQ(params.alphas_ptr, params_train.alphas_ptr);
-    EXPECT_EQ(params.test_data_ptr, params_train.test_data_ptr);
-}
-
-TYPED_TEST(BASE, parameter_predict) {
-    plssvm::parameter<TypeParam> params;
-    params.parse_test_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-    params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.model");
-
-    plssvm::parameter_predict<TypeParam> params_predict{ TEST_PATH "/data/libsvm/5x4.libsvm", TEST_PATH "/data/models/5x4.libsvm.model" };
-
-    EXPECT_EQ(params.kernel, params_predict.kernel);
-    EXPECT_EQ(params.degree, params_predict.degree);
-    EXPECT_EQ(params.gamma, params_predict.gamma);
-    EXPECT_EQ(params.coef0, params_predict.coef0);
-    EXPECT_EQ(params.cost, params_predict.cost);
-    EXPECT_EQ(params.epsilon, params_predict.epsilon);
-    EXPECT_EQ(params.print_info, params_predict.print_info);
-    EXPECT_EQ(params.backend, params_predict.backend);
-    EXPECT_EQ(params.target, params_predict.target);
-    EXPECT_EQ(params.input_filename, params_predict.input_filename);
-    EXPECT_EQ(params.model_filename, params_predict.model_filename);
-    EXPECT_EQ(params.predict_filename, params_predict.predict_filename);
-    EXPECT_EQ(*params.data_ptr, *params_predict.data_ptr);
-    EXPECT_EQ(*params.value_ptr, *params_predict.value_ptr);
-    EXPECT_EQ(*params.alphas_ptr, *params_predict.alphas_ptr);
-    EXPECT_EQ(*params.test_data_ptr, *params_predict.test_data_ptr);
-}
-
-TYPED_TEST(BASE, transform_data) {
+TYPED_TEST(BaseCSVM, transform_data) {
     // setup C-SVM
     plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
     params.print_info = false;
