@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
 #include <algorithm>  // std::transform
@@ -66,7 +68,7 @@ inline std::ostream &operator<<(std::ostream &out, const target_platform target)
 inline std::istream &operator>>(std::istream &in, target_platform &target) {
     std::string str;
     in >> str;
-    std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return std::tolower(c); });
+    detail::to_lower_case(str);
 
     if (str == "automatic") {
         target = target_platform::automatic;

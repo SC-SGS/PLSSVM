@@ -6,11 +6,12 @@
 
 #include "plssvm/parameter_predict.hpp"
 
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
+
 #include "cxxopts.hpp"  // command line parsing
 #include "fmt/core.h"   // fmt::print, fmt::format
 
-#include <algorithm>  // std::transform
-#include <cctype>     // std::tolower
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <string>     // std::string
@@ -30,13 +31,6 @@ parameter_predict<T>::parameter_predict(std::string input_filename, std::string 
 
 template <typename T>
 parameter_predict<T>::parameter_predict(int argc, char **argv) {
-    // small helper function to convert a string to a lowercase string
-    auto as_lowercase = [](const std::string_view str) -> std::string {
-        std::string lowercase_str{ str };
-        std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const char c) { return std::tolower(c); });
-        return lowercase_str;
-    };
-
     cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
     options
         .positional_help("test_file model_file [output_file]")
@@ -46,8 +40,8 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
         .add_options()
-            ("b,backend", "choose the backend: openmp|cuda|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(as_lowercase(fmt::format("{}", backend))))
-            ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<decltype(target)>()->default_value(as_lowercase(fmt::format("{}", target))))
+            ("b,backend", "choose the backend: openmp|cuda|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
+            ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<decltype(target)>()->default_value(detail::as_lower_case(fmt::format("{}", target))))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")

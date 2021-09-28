@@ -153,4 +153,16 @@ inline std::string &to_lower_case(std::string &str) {
     return str;
 }
 
+/**
+ * @brief Return a new string with the same content as @p str but all lower case.
+ * @details In contrast to `std::string& to_lower_case(std::string&)` this function does not change the input string @p str.
+ * @param[in] str the string to use in the transformation
+ * @return the transformed string (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::string as_lower_case(const std::string_view str) {
+    std::string lowercase_str{ str };
+    std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const char c) { return std::tolower(c); });
+    return lowercase_str;
+}
+
 }  // namespace plssvm::detail

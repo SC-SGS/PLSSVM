@@ -9,13 +9,13 @@
 
 #pragma once
 
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <algorithm>  // std::transform
-#include <cctype>     // std::tolower
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
 
 namespace plssvm {
 
@@ -42,13 +42,13 @@ enum class backend_type {
 inline std::ostream &operator<<(std::ostream &out, const backend_type backend) {
     switch (backend) {
         case backend_type::openmp:
-            return out << "OpenMP";
+            return out << "openmp";
         case backend_type::cuda:
-            return out << "CUDA";
+            return out << "cuda";
         case backend_type::opencl:
-            return out << "OpenCL";
+            return out << "opencl";
         case backend_type::sycl:
-            return out << "SYCL";
+            return out << "sycl";
     }
     return out << "unknown";
 }
@@ -62,7 +62,7 @@ inline std::ostream &operator<<(std::ostream &out, const backend_type backend) {
 inline std::istream &operator>>(std::istream &in, backend_type &backend) {
     std::string str;
     in >> str;
-    std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return std::tolower(c); });
+    detail::to_lower_case(str);
 
     if (str == "openmp") {
         backend = backend_type::openmp;

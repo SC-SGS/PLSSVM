@@ -106,7 +106,7 @@ class file_reader {
         // check if file could be opened
         if (fstat(file_descriptor_, &attr) == -1) {
             close(file_descriptor_);
-            throw file_not_found_exception{ fmt::format("Couldn't find file: {}!", filename) };
+            throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
         }
         if (attr.st_size == 0) {
             // can't memory map empty file

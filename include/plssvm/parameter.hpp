@@ -9,15 +9,18 @@
 
 #pragma once
 
-#include "plssvm/backend_types.hpp"    // plssvm::backend_type
-#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/backend_types.hpp"          // plssvm::backend_type
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/target_platform.hpp"        // plssvm::target_platform
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
+#include <iosfwd>       // std::ostream (forward declaration only)
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -70,7 +73,7 @@ class parameter {
      * @param[in] filename name of the libsvm file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_libsvm(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
+    void parse_libsvm_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
      * @brief Parse a file in the [arff file format](https://www.cs.waikato.ac.nz/ml/weka/arff.html).
      * @details The arff file format saves each data point with its respective class as follows:
@@ -116,7 +119,7 @@ class parameter {
      * @param[in] filename name of the arff file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_arff(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
+    void parse_arff_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
      * @brief Parse a model file in the LIBSVM model file format.
      * @details An example libsvm file could look as follows:
@@ -152,6 +155,9 @@ class parameter {
      */
     void parse_train_file(const std::string &filename) {
         parse_file(filename, data_ptr);
+        if (value_ptr == nullptr) {
+            throw invalid_file_format_exception{ "Missing labels for train file!" };
+        }
     }
     /**
      * @brief Parse the given file as test data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
@@ -198,7 +204,7 @@ class parameter {
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
 
     /// The rho value of the calculated/read model.
-    real_type rho = 0.0;
+    real_type rho = real_type{ 0.0 };
 
   protected:
     /**

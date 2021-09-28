@@ -17,8 +17,7 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#include <memory>   // std::unique_ptr, std::make_unique
-#include <utility>  // std::forward
+#include <memory>  // std::unique_ptr, std::make_unique
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -42,7 +41,7 @@ namespace plssvm {
  * @throws unsupported_backend_exception if the requested backend isn't available
  * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM
  */
-template <typename T, typename... Args>
+template <typename T>
 std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
     switch (params.backend) {
         case backend_type::openmp:
