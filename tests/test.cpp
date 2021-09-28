@@ -13,6 +13,7 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
 #include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
 #include "plssvm/parameter_train.hpp"        // plssvm::parameter_train
+#include "plssvm/target_platform.hpp"        // plssvm::target_platform
 
 #include "backends/compare.hpp"  // linear_kernel
 #include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq
@@ -27,9 +28,76 @@
 #include <iterator>    // std::istreambuf_iterator
 #include <memory>      // std::make_shared
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <sstream>     // std::stringstream
+#include <sstream>     // std::stringstream, std::istringstream
 #include <string>      // std::string
 #include <vector>      // std::vector
+
+template <typename Enum>
+void check_enum_to_string_conversion(const Enum e, const std::string_view str) {
+    std::ostringstream ss;
+    ss << e;
+    EXPECT_EQ(ss.str(), str);
+}
+template <typename Enum>
+void check_string_to_enum_conversion(const std::string &str, const Enum e) {
+    std::istringstream ss{ str };
+    Enum parsed;
+    ss >> parsed;
+    EXPECT_EQ(parsed, e);
+    EXPECT_FALSE(ss.fail());
+}
+template <typename Enum>
+void check_string_to_enum_conversion(const std::string &str) {
+    std::istringstream ss{ str };
+    Enum parsed;
+    ss >> parsed;
+    EXPECT_TRUE(ss.fail());
+}
+
+// check whether the std::string <-> plssvm::kernel_type conversions are correct
+TEST(Base, kernel_type) {
+    // check conversions to std::string
+    check_enum_to_string_conversion(plssvm::kernel_type::linear, "linear");
+    check_enum_to_string_conversion(plssvm::kernel_type::polynomial, "polynomial");
+    check_enum_to_string_conversion(plssvm::kernel_type::rbf, "rbf");
+    check_enum_to_string_conversion(static_cast<plssvm::kernel_type>(3), "unknown");
+
+    // check conversion from std::string
+    check_string_to_enum_conversion("linear", plssvm::kernel_type::linear);
+    check_string_to_enum_conversion("LINEAR", plssvm::kernel_type::linear);
+    check_string_to_enum_conversion("0", plssvm::kernel_type::linear);
+    check_string_to_enum_conversion("polynomial", plssvm::kernel_type::polynomial);
+    check_string_to_enum_conversion("POLynomIAL", plssvm::kernel_type::polynomial);
+    check_string_to_enum_conversion("1", plssvm::kernel_type::polynomial);
+    check_string_to_enum_conversion("rbf", plssvm::kernel_type::rbf);
+    check_string_to_enum_conversion("rBf", plssvm::kernel_type::rbf);
+    check_string_to_enum_conversion("2", plssvm::kernel_type::rbf);
+    check_string_to_enum_conversion<plssvm::kernel_type>("foo");
+}
+
+// check whether the std::string <-> plssvm::target_platform conversions are correct
+TEST(Base, target_platform) {
+    // check conversions to std::string
+    check_enum_to_string_conversion(plssvm::target_platform::automatic, "automatic");
+    check_enum_to_string_conversion(plssvm::target_platform::cpu, "cpu");
+    check_enum_to_string_conversion(plssvm::target_platform::gpu_nvidia, "gpu_nvidia");
+    check_enum_to_string_conversion(plssvm::target_platform::gpu_amd, "gpu_amd");
+    check_enum_to_string_conversion(plssvm::target_platform::gpu_intel, "gpu_intel");
+    check_enum_to_string_conversion(static_cast<plssvm::target_platform>(5), "unknown");
+
+    // check conversion from std::string
+    check_string_to_enum_conversion("automatic", plssvm::target_platform::automatic);
+    check_string_to_enum_conversion("AUTOmatic", plssvm::target_platform::automatic);
+    check_string_to_enum_conversion("cpu", plssvm::target_platform::cpu);
+    check_string_to_enum_conversion("CPU", plssvm::target_platform::cpu);
+    check_string_to_enum_conversion("gpu_nvidia", plssvm::target_platform::gpu_nvidia);
+    check_string_to_enum_conversion("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia);
+    check_string_to_enum_conversion("gpu_amd", plssvm::target_platform::gpu_amd);
+    check_string_to_enum_conversion("GPU_AMD", plssvm::target_platform::gpu_amd);
+    check_string_to_enum_conversion("gpu_intel", plssvm::target_platform::gpu_intel);
+    check_string_to_enum_conversion("GPU_INTEL", plssvm::target_platform::gpu_intel);
+    check_string_to_enum_conversion<plssvm::target_platform>("bar");
+}
 
 template <typename T>
 class BASE : public ::testing::Test {};
