@@ -73,7 +73,7 @@ class parameter {
      * @param[in] filename name of the libsvm file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_libsvm(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
+    void parse_libsvm_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
      * @brief Parse a file in the [arff file format](https://www.cs.waikato.ac.nz/ml/weka/arff.html).
      * @details The arff file format saves each data point with its respective class as follows:
@@ -119,7 +119,7 @@ class parameter {
      * @param[in] filename name of the arff file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
      */
-    void parse_arff(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
+    void parse_arff_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
      * @brief Parse a model file in the LIBSVM model file format.
      * @details An example libsvm file could look as follows:

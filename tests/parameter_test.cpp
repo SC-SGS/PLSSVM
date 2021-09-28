@@ -124,13 +124,13 @@ TYPED_TEST(Parameter, parse_libsvm) {
     //
     // parse libsvm file with labels
     //
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
+    params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
     check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse libsvm file without labels
     //
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm.no_label", params.data_ptr);
+    params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.libsvm.no_label", params.data_ptr);
     check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 }
 
@@ -156,13 +156,13 @@ TYPED_TEST(Parameter, parse_libsvm_sparse) {
     //
     // parse libsvm file with labels
     //
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.sparse.libsvm", params.data_ptr);
+    params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.sparse.libsvm", params.data_ptr);
     check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse libsvm file without labels
     //
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.sparse.libsvm.no_label", params.data_ptr);
+    params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.sparse.libsvm.no_label", params.data_ptr);
     check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 }
 
@@ -174,7 +174,7 @@ TYPED_TEST(Parameter, parse_libsvm_gamma) {
 
     // gamma = 1.0 (!= 0.0)
     params.gamma = 1.0;
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
+    params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
 
     using real_type = typename decltype(params)::real_type;
 
@@ -182,7 +182,7 @@ TYPED_TEST(Parameter, parse_libsvm_gamma) {
 
     // gamma = 0.0 -> automatically set to (1.0 / num_features)
     params.gamma = 0.0;
-    params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
+    params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
 
     ASSERT_NE(params.data_ptr, nullptr);
     ASSERT_GE(params.data_ptr->size(), 0);
@@ -196,10 +196,10 @@ TYPED_TEST(Parameter, parse_libsvm_ill_formed) {
     params.print_info = false;
 
     // parsing an arff file using the libsvm parser should result in an exception
-    EXPECT_THROW(params.parse_libsvm(TEST_PATH "/data/arff/5x4.arff", params.data_ptr), plssvm::invalid_file_format_exception);
+    EXPECT_THROW(params.parse_libsvm_file(TEST_PATH "/data/arff/5x4.arff", params.data_ptr), plssvm::invalid_file_format_exception);
 
     // test parsing an empty file
-    EXPECT_THROW_WHAT(params.parse_libsvm(TEST_PATH "/data/libsvm/0x0.libsvm", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given!");
+    EXPECT_THROW_WHAT(params.parse_libsvm_file(TEST_PATH "/data/libsvm/0x0.libsvm", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given!");
 }
 
 // test whether plssvm::parameter<T>::parse_libsvm correctly fails if the file doesn't exist
@@ -209,7 +209,7 @@ TYPED_TEST(Parameter, parse_libsvm_non_existing_file) {
     params.print_info = false;
 
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW_WHAT(params.parse_libsvm(TEST_PATH "/data/libsvm/5x4.lib", params.data_ptr), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/libsvm/5x4.lib"));
+    EXPECT_THROW_WHAT(params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.lib", params.data_ptr), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/libsvm/5x4.lib"));
 }
 
 //*************************************************************************************************************************************//
@@ -237,13 +237,13 @@ TYPED_TEST(Parameter, parse_arff) {
     //
     // parse arff file with labels
     //
-    params.parse_arff(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
+    params.parse_arff_file(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
     check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse arff file without labels
     //
-    params.parse_arff(TEST_PATH "/data/arff/5x4.arff.no_label", params.data_ptr);
+    params.parse_arff_file(TEST_PATH "/data/arff/5x4.arff.no_label", params.data_ptr);
     check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 }
 
@@ -255,7 +255,7 @@ TYPED_TEST(Parameter, parse_arff_gamma) {
 
     // gamma = 1.0 (!= 0.0)
     params.gamma = 1.0;
-    params.parse_arff(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
+    params.parse_arff_file(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
 
     using real_type = typename decltype(params)::real_type;
 
@@ -263,7 +263,7 @@ TYPED_TEST(Parameter, parse_arff_gamma) {
 
     // gamma = 0.0 -> automatically set to (1.0 / num_features)
     params.gamma = 0.0;
-    params.parse_arff(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
+    params.parse_arff_file(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
 
     ASSERT_NE(params.data_ptr, nullptr);
     ASSERT_GE(params.data_ptr->size(), 0);
@@ -277,12 +277,12 @@ TYPED_TEST(Parameter, parse_arff_ill_formed) {
     params.print_info = false;
 
     // parsing a libsvm file using the arff parser should result in an exception
-    EXPECT_THROW(params.parse_arff(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr), plssvm::invalid_file_format_exception);
+    EXPECT_THROW(params.parse_arff_file(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr), plssvm::invalid_file_format_exception);
 
     // test parsing an empty file
-    EXPECT_THROW_WHAT(params.parse_arff(TEST_PATH "/data/libsvm/0x0.libsvm", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no ATTRIBUTES are defined!");
+    EXPECT_THROW_WHAT(params.parse_arff_file(TEST_PATH "/data/libsvm/0x0.libsvm", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no ATTRIBUTES are defined!");
     // test parsing a file without data points (but with @DATA)
-    EXPECT_THROW_WHAT(params.parse_arff(TEST_PATH "/data/arff/0x4.arff", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given or @DATA is missing!");
+    EXPECT_THROW_WHAT(params.parse_arff_file(TEST_PATH "/data/arff/0x4.arff", params.data_ptr), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given or @DATA is missing!");
 
     std::ifstream ifs(TEST_PATH "/data/arff/5x4.arff");
     std::string correct_file((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -299,7 +299,7 @@ TYPED_TEST(Parameter, parse_arff_ill_formed) {
         ofs.close();
 
         // perform actual check
-        EXPECT_THROW_WHAT(params.parse_arff(tmp_model_file, params.data_ptr), plssvm::invalid_file_format_exception, msg);
+        EXPECT_THROW_WHAT(params.parse_arff_file(tmp_model_file, params.data_ptr), plssvm::invalid_file_format_exception, msg);
 
         // remove temporary file
         std::filesystem::remove(tmp_model_file);
@@ -335,7 +335,7 @@ TYPED_TEST(Parameter, parse_arff_non_existing_file) {
     params.print_info = false;
 
     // attempting to parse a non-existing file should result in an exception
-    EXPECT_THROW_WHAT(params.parse_arff(TEST_PATH "/data/arff/5x4.ar", params.data_ptr), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/arff/5x4.ar"));
+    EXPECT_THROW_WHAT(params.parse_arff_file(TEST_PATH "/data/arff/5x4.ar", params.data_ptr), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", TEST_PATH "/data/arff/5x4.ar"));
 }
 
 // test whether plssvm::parameter<T>::parse_file uses the correct file parser

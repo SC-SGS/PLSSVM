@@ -31,7 +31,7 @@ namespace plssvm {
 namespace detail {
 
 template <typename real_type, typename size_type>
-void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<std::vector<real_type>> &data, std::vector<real_type> &values) {
+void parse_libsvm_content(const file_reader &f, const size_type start, std::vector<std::vector<real_type>> &data, std::vector<real_type> &values) {
     size_type max_size = 0;
     std::exception_ptr parallel_exception;
 
@@ -114,15 +114,15 @@ void parse_libsvm_file(const file_reader &f, const size_type start, std::vector<
 template <typename T>
 void parameter<T>::parse_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
     if (detail::ends_with(filename, ".arff")) {
-        parse_arff(filename, data_ptr_ref);
+        parse_arff_file(filename, data_ptr_ref);
     } else {
-        parse_libsvm(filename, data_ptr_ref);
+        parse_libsvm_file(filename, data_ptr_ref);
     }
 }
 
 // read and parse a libsvm file
 template <typename T>
-void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
+void parameter<T>::parse_libsvm_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
     auto start_time = std::chrono::steady_clock::now();
 
     // set new filenames
@@ -137,7 +137,7 @@ void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<con
     std::vector<std::vector<real_type>> data(f.num_lines());
     std::vector<real_type> value(f.num_lines());
 
-    detail::parse_libsvm_file(f, size_type{ 0 }, data, value);
+    detail::parse_libsvm_content(f, size_type{ 0 }, data, value);
 
     // update gamma
     if (gamma == real_type{ 0.0 }) {
@@ -169,7 +169,7 @@ void parameter<T>::parse_libsvm(const std::string &filename, std::shared_ptr<con
 
 // read and parse an ARFF file
 template <typename T>
-void parameter<T>::parse_arff(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
+void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref) {
     auto start_time = std::chrono::steady_clock::now();
 
     // set new filenames
@@ -494,7 +494,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     std::vector<real_type> alphas(num_sv);
 
     // parse support vectors
-    detail::parse_libsvm_file(f, header + 1, data, alphas);
+    detail::parse_libsvm_content(f, header + 1, data, alphas);
 
     // update shared pointer
     data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
