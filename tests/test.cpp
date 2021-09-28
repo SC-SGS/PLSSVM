@@ -8,6 +8,7 @@
 
 #include "mock_csvm.hpp"
 
+#include "plssvm/backend_types.hpp"          // plssvm::backend_type
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
@@ -54,6 +55,27 @@ void check_string_to_enum_conversion(const std::string &str) {
     EXPECT_TRUE(ss.fail());
 }
 
+// check whether the std::string <-> plssvm::backend_type conversions are correct
+TEST(Base, backend_type) {
+    // check conversions to std::string
+    check_enum_to_string_conversion(plssvm::backend_type::openmp, "openmp");
+    check_enum_to_string_conversion(plssvm::backend_type::cuda, "cuda");
+    check_enum_to_string_conversion(plssvm::backend_type::opencl, "opencl");
+    check_enum_to_string_conversion(plssvm::backend_type::sycl, "sycl");
+    check_enum_to_string_conversion(static_cast<plssvm::backend_type>(4), "unknown");
+
+    // check conversion from std::string
+    check_string_to_enum_conversion("openmp", plssvm::backend_type::openmp);
+    check_string_to_enum_conversion("OpenMP", plssvm::backend_type::openmp);
+    check_string_to_enum_conversion("cuda", plssvm::backend_type::cuda);
+    check_string_to_enum_conversion("CUDA", plssvm::backend_type::cuda);
+    check_string_to_enum_conversion("opencl", plssvm::backend_type::opencl);
+    check_string_to_enum_conversion("OpenCL", plssvm::backend_type::opencl);
+    check_string_to_enum_conversion("sycl", plssvm::backend_type::sycl);
+    check_string_to_enum_conversion("SYCL", plssvm::backend_type::sycl);
+    check_string_to_enum_conversion<plssvm::backend_type>("foo");
+}
+
 // check whether the std::string <-> plssvm::kernel_type conversions are correct
 TEST(Base, kernel_type) {
     // check conversions to std::string
@@ -72,7 +94,7 @@ TEST(Base, kernel_type) {
     check_string_to_enum_conversion("rbf", plssvm::kernel_type::rbf);
     check_string_to_enum_conversion("rBf", plssvm::kernel_type::rbf);
     check_string_to_enum_conversion("2", plssvm::kernel_type::rbf);
-    check_string_to_enum_conversion<plssvm::kernel_type>("foo");
+    check_string_to_enum_conversion<plssvm::kernel_type>("bar");
 }
 
 // check whether the std::string <-> plssvm::target_platform conversions are correct
@@ -96,7 +118,7 @@ TEST(Base, target_platform) {
     check_string_to_enum_conversion("GPU_AMD", plssvm::target_platform::gpu_amd);
     check_string_to_enum_conversion("gpu_intel", plssvm::target_platform::gpu_intel);
     check_string_to_enum_conversion("GPU_INTEL", plssvm::target_platform::gpu_intel);
-    check_string_to_enum_conversion<plssvm::target_platform>("bar");
+    check_string_to_enum_conversion<plssvm::target_platform>("baz");
 }
 
 template <typename T>
