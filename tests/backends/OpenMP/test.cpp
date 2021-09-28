@@ -10,8 +10,8 @@
 
 #include "../../mock_csvm.hpp"  // mock_csvm
 #include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
+#include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
-#include "../compare.hpp"                         // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
 #include "plssvm/detail/string_utility.hpp"       // plssvm::detail::convert_to, plssvm::detail::replace_all
@@ -98,7 +98,7 @@ TYPED_TEST(OpenMP_CSVM, generate_q) {
     // check real_types
     ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_openmp>();
 
-    // parse libsvm file and calculate q vector
+    // calculate q vector
     csvm_openmp.setup_data_on_device();
     const std::vector<real_type_csvm_openmp> calculated = csvm_openmp.generate_q();
 
@@ -111,7 +111,7 @@ TYPED_TEST(OpenMP_CSVM, generate_q) {
 
 // check whether the device kernels are correct
 TYPED_TEST(OpenMP_CSVM, device_kernel) {
-    // setup C-SVM
+    // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
@@ -212,6 +212,7 @@ TYPED_TEST(OpenMP_CSVM, predict) {
 
 // check whether the accuracy calculation is correct
 TYPED_TEST(OpenMP_CSVM, accuracy) {
+    // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;

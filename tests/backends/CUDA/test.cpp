@@ -10,8 +10,8 @@
 
 #include "../../mock_csvm.hpp"  // mock_csvm
 #include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
+#include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
-#include "../compare.hpp"                       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE
@@ -226,6 +226,7 @@ TYPED_TEST(CUDA_CSVM, predict) {
 
 // check whether the accuracy calculation is correct
 TYPED_TEST(CUDA_CSVM, accuracy) {
+    // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
