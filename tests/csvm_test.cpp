@@ -21,7 +21,7 @@
                                  // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
+#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT, EXPECT_CALL
 
 #include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t
@@ -30,21 +30,24 @@
 #include <iterator>    // std::istreambuf_iterator
 #include <memory>      // std::make_shared
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <sstream>     // std::stringstream
 #include <string>      // std::string
 #include <vector>      // std::vector
 
+// the floating point types to test
+using floating_point_types = ::testing::Types<float, double>;
+
 template <typename T>
-class BaseCSVM : public ::testing::Test {};
+class BaseCSVMTransform : public ::testing::Test {};
+TYPED_TEST_SUITE(BaseCSVMTransform, floating_point_types);
 
-using testing_types = ::testing::Types<float, double>;
-TYPED_TEST_SUITE(BaseCSVM, testing_types);
-
-TYPED_TEST(BaseCSVM, transform_data) {
-    // setup C-SVM
-    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
+// check whether transforming the 2D data into a 1D vector works as intended
+TYPED_TEST(BaseCSVMTransform, transform_data) {
+    // create parameter object
+    plssvm::parameter_train<TypeParam> params;
     params.print_info = false;
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
 
+    // create C-SVM
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
@@ -54,8 +57,8 @@ TYPED_TEST(BaseCSVM, transform_data) {
     std::vector<real_type> result_boundary = csvm.transform_data(10);
 
     // check if sizes match
-    EXPECT_EQ(result_no_boundary.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
-    EXPECT_EQ(result_boundary.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
+    ASSERT_EQ(result_no_boundary.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
+    ASSERT_EQ(result_boundary.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
 
     // check transformed content for correctness
     for (size_type datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
@@ -73,7 +76,7 @@ TYPED_TEST(BaseCSVM, transform_data) {
     }
 }
 
-// enumerate all type and kernel combinations to test
+// enumerate all floating point type and kernel combinations to test
 using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
     util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
@@ -83,41 +86,61 @@ using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 template <typename T>
-class BASE_csvm :
-    public ::testing::Test {};
-TYPED_TEST_SUITE(BASE_csvm, parameter_types, util::google_test::parameter_definition_to_name);
+class BaseCSVM : public ::testing::Test {};
+TYPED_TEST_SUITE(BaseCSVM, parameter_types, util::google_test::parameter_definition_to_name);
 
-TYPED_TEST(BASE_csvm, csvm) {
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };  // TODO: change to params and check also parse model
+// check whether the plssvm::csvm<T>::csvm(plssvm::parameter<T>) constructor works as intended
+TYPED_TEST(BaseCSVM, constructor) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
 
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
     mock_csvm csvm{ params };
+    using real_type = typename decltype(csvm)::real_type;
 
-    EXPECT_EQ(params.kernel, csvm.kernel_);
+    // check if constructor correctly initializes all fields
+    EXPECT_EQ(params.target, csvm.get_target());
+    EXPECT_EQ(params.kernel, csvm.get_kernel());
     EXPECT_EQ(params.degree, csvm.get_degree());
     EXPECT_EQ(params.gamma, csvm.get_gamma());
     EXPECT_EQ(params.coef0, csvm.get_coef0());
     EXPECT_EQ(params.cost, csvm.get_cost());
-    EXPECT_EQ(params.epsilon, csvm.epsilon_);
-    EXPECT_EQ(params.print_info, csvm.print_info_);
-    // EXPECT_EQ(params.print_info, csvm.get_alphas());
-    // EXPECT_EQ(params.print_info, csvm.get_values());
+    EXPECT_EQ(params.epsilon, csvm.get_epsilon());
+    EXPECT_EQ(params.print_info, csvm.get_print_info());
 
-    EXPECT_EQ((*(params.data_ptr)), csvm.get_data());
+    EXPECT_EQ(params.data_ptr, csvm.get_data_ptr());
+    EXPECT_EQ(params.value_ptr, csvm.get_value_ptr());
+    EXPECT_EQ(params.alphas_ptr, csvm.get_alpha_ptr());
+
     EXPECT_EQ(params.data_ptr->size(), csvm.get_num_data_points());
-    EXPECT_EQ((*(params.data_ptr))[0].size(), csvm.get_num_features());
+    EXPECT_EQ(params.data_ptr->front().size(), csvm.get_num_features());
+    EXPECT_EQ(-params.rho, csvm.get_bias());
+    EXPECT_EQ(real_type{ 0 }, csvm.get_QA_cost());
 }
 
-template <typename T>
-class BASE_write : public ::testing::Test {};
-TYPED_TEST_SUITE(BASE_write, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(BASE_write, write_model) {
-    // setup C-SVM
+// check whether calling the plssvm::csvm<T>::csvm(plssvm::parameter<T>) constructor without data correctly fails
+TYPED_TEST(BaseCSVM, constructor_missing_data) {
+    // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    EXPECT_THROW_WHAT(mock_csvm csvm{ params }, plssvm::exception, "No data points provided!");
+}
+
+// check whether writing the resulting model file is correct
+TYPED_TEST(BaseCSVM, write_model) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
     params.kernel = TypeParam::kernel;
 
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
     mock_csvm csvm{ params };
 
     // create temporary model file and write model
@@ -146,19 +169,38 @@ TYPED_TEST(BASE_write, write_model) {
     }
 }
 
-// generate tests for the kernel functions
-template <typename T>
-class BASE_kernel : public ::testing::Test {};
-TYPED_TEST_SUITE(BASE_kernel, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(BASE_kernel, kernel_function) {
-    // setup C-SVM
+// check whether attempting to write the model file with missing data correctly fails
+TYPED_TEST(BaseCSVM, write_model_missing_data) {
+    // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // attempting to write a model before a call to learn() should result in an exception
+    EXPECT_THROW_WHAT(csvm.write_model("foo"), plssvm::exception, "No alphas given! Maybe a call to 'learn()' is missing?");
+
+    // attempting to write a model with da data set without labels should result in an exception
+    csvm.get_alpha_ptr() = std::make_shared<const std::vector<typename TypeParam::real_type>>();
+    csvm.get_value_ptr() = nullptr;
+    EXPECT_THROW_WHAT(csvm.write_model("foo"), plssvm::exception, "No labels given! Maybe the data is only usable for prediction?");
+}
+
+// check whether the correct kernel function is executed
+TYPED_TEST(BaseCSVM, kernel_function) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
     // set dummy data
     params.data_ptr = std::make_shared<const std::vector<std::vector<typename decltype(params)::real_type>>>(1);
 
+    // create C-SVM
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
 
@@ -171,16 +213,34 @@ TYPED_TEST(BASE_kernel, kernel_function) {
     std::random_device rnd_device;
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<real_type> dist(-1, 2.0);
+    std::uniform_real_distribution<real_type> dist(1.0, 2.0);
     std::generate(x1.begin(), x1.end(), [&]() { return dist(gen); });
     std::generate(x2.begin(), x2.end(), [&]() { return dist(gen); });
 
     // calculated result
     const real_type calculated = csvm.kernel_function(x1, x2);
-
     // correct result
     const real_type correct = compare::kernel_function<TypeParam::kernel>(x1, x2, csvm);
 
     // check for correctness
     util::gtest_expect_floating_point_eq(correct, calculated);
+}
+
+// check whether plssvm::csvm<T>::learn() internally calls the correct functions
+TYPED_TEST(BaseCSVM, learn) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    EXPECT_CALL(csvm, setup_data_on_device).Times(1);
+    EXPECT_CALL(csvm, generate_q).Times(1);
+    EXPECT_CALL(csvm, solver_CG).Times(1);
+
+    csvm.learn();
 }
