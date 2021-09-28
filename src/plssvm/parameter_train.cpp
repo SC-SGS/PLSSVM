@@ -24,7 +24,7 @@ parameter_train<T>::parameter_train(std::string input_filename) {
     base_type::input_filename = std::move(input_filename);
     model_filename = base_type::model_name_from_input();
 
-    base_type::parse_file(base_type::input_filename, base_type::data_ptr);
+    base_type::parse_train_file(base_type::input_filename);
 }
 
 template <typename T>
@@ -119,7 +119,7 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
         model_filename = base_type::model_name_from_input();
     }
 
-    base_type::parse_file(input_filename, data_ptr);
+    base_type::parse_train_file(input_filename);
 }
 
 // explicitly instantiate template class
