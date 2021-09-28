@@ -18,7 +18,7 @@
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT
 
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
@@ -28,7 +28,7 @@
 #include <string>      // std::string
 #include <vector>      // std::vector
 
-// enumerate all type and kernel combinations to test
+// enumerate all floating point type and kernel combinations to test
 using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
     util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
@@ -38,11 +38,11 @@ using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
 template <typename T>
-class OpenMPCSVM : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenMPCSVM, parameter_types);
+class OpenMP_CSVM : public ::testing::Test {};
+TYPED_TEST_SUITE(OpenMP_CSVM, parameter_types);
 
 // check whether the csvm factory function correctly creates an openmp::csvm
-TYPED_TEST(OpenMPCSVM, csvm_factory) {
+TYPED_TEST(OpenMP_CSVM, csvm_factory) {
     // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
@@ -54,7 +54,7 @@ TYPED_TEST(OpenMPCSVM, csvm_factory) {
 }
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(OpenMPCSVM, constructor_invalid_target_platform) {
+TYPED_TEST(OpenMP_CSVM, constructor_invalid_target_platform) {
     // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
@@ -76,7 +76,7 @@ TYPED_TEST(OpenMPCSVM, constructor_invalid_target_platform) {
 }
 
 // check whether the q vector is generated correctly
-TYPED_TEST(OpenMPCSVM, generate_q) {
+TYPED_TEST(OpenMP_CSVM, generate_q) {
     // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
@@ -110,7 +110,7 @@ TYPED_TEST(OpenMPCSVM, generate_q) {
 }
 
 // check whether the device kernels are correct
-TYPED_TEST(OpenMPCSVM, device_kernel) {
+TYPED_TEST(OpenMP_CSVM, device_kernel) {
     // setup C-SVM
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
@@ -159,7 +159,7 @@ TYPED_TEST(OpenMPCSVM, device_kernel) {
 }
 
 // check whether the correct labels are predicted
-TYPED_TEST(OpenMPCSVM, predict) {
+TYPED_TEST(OpenMP_CSVM, predict) {
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
 
@@ -211,7 +211,7 @@ TYPED_TEST(OpenMPCSVM, predict) {
 }
 
 // check whether the accuracy calculation is correct
-TYPED_TEST(OpenMPCSVM, accuracy) {
+TYPED_TEST(OpenMP_CSVM, accuracy) {
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
