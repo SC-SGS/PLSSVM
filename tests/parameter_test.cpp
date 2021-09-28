@@ -3,31 +3,30 @@
 * @author Marcel Breyer
 * @copyright
 *
-* @brief Tests for the parameter class.
+* @brief Tests for the parameter, parameter_train, and parameter_predict classes.
 */
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 #include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
 #include "plssvm/parameter_train.hpp"        // plssvm::parameter_train
 
-#include "backends/compare.hpp"  // linear_kernel
-#include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq
+#include "utility.hpp"  // util::create_temp_file, util::gtest_expect_floating_point_eq
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
 
-#include <algorithm>   // std::generate
-#include <cstddef>     // std::size_t
-#include <filesystem>  // std::filesystem::remove
-#include <fstream>     // std::ifstream
-#include <iterator>    // std::istreambuf_iterator
-#include <memory>      // std::make_shared
-#include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <sstream>     // std::stringstream
-#include <string>      // std::string
-#include <vector>      // std::vector
+#include <cstddef>      // std::size_t
+#include <filesystem>   // std::filesystem::remove
+#include <fstream>      // std::ifstream
+#include <iterator>     // std::istreambuf_iterator
+#include <memory>       // std::make_shared, std::shared_ptr
+#include <sstream>      // std::stringstream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 // the floating point types to test
 using floating_point_types = ::testing::Types<float, double>;
@@ -381,6 +380,69 @@ TYPED_TEST(Parameter, parse_file) {
     check_content_equal<true, real_type, size_type>(expected_data_arff, expected_values_arff, params.data_ptr, params.value_ptr);
 }
 
+// test whether plssvm::parameter<T>::parse_train_file uses the correct data pointer
+TYPED_TEST(Parameter, parse_train_file) {
+    // create parameter object
+    plssvm::parameter<TypeParam> params;
+    params.print_info = false;
+
+    using real_type = typename decltype(params)::real_type;
+    using size_type = typename decltype(params)::size_type;
+
+    // correct values
+    const std::vector<std::vector<real_type>> expected_data{
+        { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
+        { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
+        { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
+        { -0.20981208921241892, 0.60276937379453293, -0.13086851759108944, 0.10805254527169827 },
+        { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
+    };
+    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+
+    //
+    // parse train file with labels
+    //
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+
+    //
+    // parse train file without labels should result in an exception
+    //
+    EXPECT_THROW_WHAT(params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm.no_label"), plssvm::invalid_file_format_exception, "Missing labels for train file!");
+}
+
+// test whether plssvm::parameter<T>::parse_test_file uses the correct test data pointer
+TYPED_TEST(Parameter, parse_test_file) {
+    // create parameter object
+    plssvm::parameter<TypeParam> params;
+    params.print_info = false;
+
+    using real_type = typename decltype(params)::real_type;
+    using size_type = typename decltype(params)::size_type;
+
+    // correct values
+    const std::vector<std::vector<real_type>> expected_data{
+        { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
+        { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
+        { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
+        { -0.20981208921241892, 0.60276937379453293, -0.13086851759108944, 0.10805254527169827 },
+        { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
+    };
+    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+
+    //
+    // parse test file with labels
+    //
+    params.parse_test_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.test_data_ptr, params.value_ptr);
+
+    //
+    // parse test file without labels
+    //
+    params.parse_test_file(TEST_PATH "/data/libsvm/5x4.libsvm.no_label");
+    check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.test_data_ptr, params.value_ptr);
+}
+
 //*************************************************************************************************************************************//
 //                                                         parse model files                                                           //
 //*************************************************************************************************************************************//
@@ -541,8 +603,6 @@ TYPED_TEST(ParameterModel, parse_model_non_existing_file) {
     EXPECT_THROW(params.parse_model_file(TEST_PATH "/data/models/5x4.libsvm.mod"), plssvm::file_not_found_exception);
 }
 
-// TODO: parse_train_file, parse_test_file
-
 //*************************************************************************************************************************************//
 //                                                         operator>> overload                                                         //
 //*************************************************************************************************************************************//
@@ -583,6 +643,38 @@ TYPED_TEST(Parameter, output_operator) {
 template <typename T>
 class ParameterTrain : public ::testing::Test {};
 TYPED_TEST_SUITE(ParameterTrain, floating_point_types);
+// check whether the single std::string constructor of plssvm::parameter_train<T> is correct
+TYPED_TEST(ParameterTrain, parse_filename) {
+    // create parameter object
+    plssvm::parameter_train<TypeParam> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
+
+    using real_type = TypeParam;
+
+    ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
+    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
+
+    EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
+    EXPECT_EQ(params.degree, 3);
+    EXPECT_EQ(params.gamma, real_type{ 0.25 });
+    EXPECT_EQ(params.coef0, real_type{ 0 });
+    EXPECT_EQ(params.cost, real_type{ 1 });
+    EXPECT_EQ(params.epsilon, real_type{ 0.001 });
+    EXPECT_TRUE(params.print_info);
+    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.target, plssvm::target_platform::automatic);
+
+    EXPECT_EQ(params.input_filename, TEST_PATH "/data/libsvm/5x4.libsvm");
+    EXPECT_EQ(params.model_filename, "5x4.libsvm.model");
+    EXPECT_TRUE(params.predict_filename.empty());
+
+    EXPECT_NE(params.data_ptr, nullptr);
+    EXPECT_NE(params.value_ptr, nullptr);
+    EXPECT_EQ(params.alphas_ptr, nullptr);
+    EXPECT_EQ(params.test_data_ptr, nullptr);
+
+    EXPECT_EQ(params.rho, real_type{ 0 });
+}
+
 // check whether the command line parsing for plssvm::parameter_train<T> is correct
 TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
     // used command line parameters
@@ -621,7 +713,6 @@ TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
 
     EXPECT_EQ(params.rho, real_type{ 0 });
 }
-// TODO: test other constructors
 
 //*************************************************************************************************************************************//
 //                                                          parameter predict                                                          //
@@ -629,7 +720,39 @@ TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
 template <typename T>
 class ParameterPredict : public ::testing::Test {};
 TYPED_TEST_SUITE(ParameterPredict, floating_point_types);
-// check whether the command line parsing for plssvm::parameter_train<T> is correct
+// check whether the std::string constructor of plssvm::parameter_predict<T> is correct
+TYPED_TEST(ParameterPredict, parse_filename) {
+    // create parameter object
+    plssvm::parameter_predict<TypeParam> params{ TEST_PATH "/data/libsvm/5x4.libsvm", TEST_PATH "/data/models/5x4.libsvm.model" };
+
+    using real_type = TypeParam;
+
+    ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
+    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
+
+    EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
+    EXPECT_EQ(params.degree, 3);
+    EXPECT_EQ(params.gamma, real_type{ 0.25 });
+    EXPECT_EQ(params.coef0, real_type{ 0 });
+    EXPECT_EQ(params.cost, real_type{ 1 });
+    EXPECT_EQ(params.epsilon, real_type{ 0.001 });
+    EXPECT_TRUE(params.print_info);
+    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.target, plssvm::target_platform::automatic);
+
+    EXPECT_EQ(params.input_filename, TEST_PATH "/data/libsvm/5x4.libsvm");
+    EXPECT_EQ(params.model_filename, TEST_PATH "/data/models/5x4.libsvm.model");
+    EXPECT_EQ(params.predict_filename, "5x4.libsvm.predict");
+
+    EXPECT_NE(params.data_ptr, nullptr);
+    EXPECT_NE(params.value_ptr, nullptr);
+    EXPECT_NE(params.alphas_ptr, nullptr);
+    EXPECT_NE(params.test_data_ptr, nullptr);
+
+    util::gtest_expect_floating_point_eq(params.rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+}
+
+// check whether the command line parsing for plssvm::parameter_predict<T> is correct
 TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
     // used command line parameters
 
@@ -668,4 +791,3 @@ TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
 
     util::gtest_expect_floating_point_eq(params.rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
 }
-// TODO: test other constructors
