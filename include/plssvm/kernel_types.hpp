@@ -9,18 +9,17 @@
 
 #pragma once
 
-#include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"  // dot product, plssvm::squared_euclidean_dist
-#include "plssvm/detail/utility.hpp"    // plssvm::detail::always_false_v
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <algorithm>  // std::transform
-#include <cctype>     // std::tolower
-#include <cmath>      // std::pow, std::exp
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
+#include <cmath>    // std::pow, std::exp
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
 
 namespace plssvm {
 
@@ -64,7 +63,7 @@ inline std::ostream &operator<<(std::ostream &out, const kernel_type kernel) {
 inline std::istream &operator>>(std::istream &in, kernel_type &kernel) {
     std::string str;
     in >> str;
-    std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return std::tolower(c); });
+    detail::to_lower_case(str);
 
     if (str == "linear" || str == "0") {
         kernel = kernel_type::linear;
