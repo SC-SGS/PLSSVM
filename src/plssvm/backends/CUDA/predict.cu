@@ -31,17 +31,19 @@ __global__ void predict_points_poly(real_type *out_d, const real_type *data_d, c
     const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
     real_type temp = 0;
-    for (int feature_index = 0; feature_index < num_features; ++feature_index) {
-        if (data_point_index == num_data_points) {
-            temp += data_last_d[feature_index] * points[predict_point_index + (num_predict_points) *feature_index];
-        } else {
-            temp += data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] * points[predict_point_index + (num_predict_points) *feature_index];
+    if (predict_point_index > num_predict_points) {
+        for (int feature_index = 0; feature_index < num_features; ++feature_index) {
+            if (data_point_index == num_data_points) {
+                temp += data_last_d[feature_index] * points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
+            } else {
+                temp += data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] * points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
+            }
         }
+
+        temp = alpha_d[data_point_index] * pow(gamma * temp + coef0, degree);
+
+        atomicAdd(&out_d[predict_point_index], temp);
     }
-
-    temp = alpha_d[data_point_index] * pow(gamma * temp + coef0, degree);
-
-    atomicAdd(&out_d[predict_point_index], temp);
 }
 
 template __global__ void predict_points_poly(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const int, const float, const float);
@@ -53,17 +55,19 @@ __global__ void predict_points_rbf(real_type *out_d, const real_type *data_d, co
     const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
     real_type temp = 0;
-    for (int feature_index = 0; feature_index < num_features; ++feature_index) {
-        if (data_point_index == num_data_points) {
-            temp += (data_last_d[feature_index] - points[predict_point_index + (num_predict_points) *feature_index]) * (data_last_d[feature_index] - points[predict_point_index + (num_predict_points) *feature_index]);
-        } else {
-            temp += (data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points) *feature_index]) * (data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points) *feature_index]);
+    if (predict_point_index > num_predict_points) {
+        for (int feature_index = 0; feature_index < num_features; ++feature_index) {
+            if (data_point_index == num_data_points) {
+                temp += (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
+            } else {
+                temp += (data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
+            }
         }
+
+        temp = alpha_d[data_point_index] * exp(-gamma * temp);
+
+        atomicAdd(&out_d[predict_point_index], temp);
     }
-
-    temp = alpha_d[data_point_index] * exp(-gamma * temp);
-
-    atomicAdd(&out_d[predict_point_index], temp);
 }
 
 template __global__ void predict_points_rbf(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const float);

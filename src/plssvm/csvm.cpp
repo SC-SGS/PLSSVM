@@ -152,10 +152,10 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
 
 template <typename T>
 auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
-    std::vector<real_type> classes;
-    classes.reserve(points.size());
-    for (const std::vector<real_type> &point : points) {
-        classes.emplace_back(predict_label(point));
+    using namespace plssvm::operators;
+    std::vector<real_type> classes(predict(points));
+    for (real_type &elem : classes) {
+        elem = sign(elem);
     }
     return classes;
 }
@@ -173,8 +173,9 @@ auto csvm<T>::accuracy() -> real_type {
     PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
 
     int correct = 0;
-    for (size_type dat = 0; dat < num_data_points_; ++dat) {
-        if (predict((*data_ptr_)[dat]) * (*value_ptr_)[dat] > real_type{ 0.0 }) {
+    std::vector<real_type> predictions = predict(*data_ptr_);
+    for (size_type index = 0; index < predictions.size(); ++index) {
+        if (predictions[index] * (*value_ptr_)[index] > real_type{ 0.0 }) {
             ++correct;
         }
     }

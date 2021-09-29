@@ -372,6 +372,11 @@ void csvm<T>::update_w() {
 
 template <typename T>
 auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
+    return predict(std::vector<std::vector<real_type>>(1, point))[0];
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     if (alpha_ptr_ == nullptr) {
@@ -381,24 +386,36 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
     PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
     PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
-    PLSSVM_ASSERT((*data_ptr_)[0].size() == point.size(), "Prediction point has different amount of features than training data!");
+    // TODO: more asserts
 
     if (data_d_[0].empty()) {  // TODO
         setup_data_on_device();
     }
 
-    real_type temp = bias_;
-    detail::device_ptr<real_type> out_d(1 + THREAD_BLOCK_SIZE);
+    std::vector<real_type> temp(points.size(), bias_);
+    detail::device_ptr<real_type> out_d(points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
     out_d.memset(0);
-    std::vector<real_type> out(1);
-    detail::device_ptr<real_type> point_d(point.size() + THREAD_BLOCK_SIZE);
+    std::vector<real_type> out(points.size());
+    detail::device_ptr<real_type> point_d(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
     point_d.memset(0);
-    point_d.memcpy_to_device(point, 0, point.size());
+
+    // TODO: reuse transform function
+    std::vector<real_type> vec(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
+
+#pragma omp parallel for collapse(2)
+    for (size_type col = 0; col < points[0].size(); ++col) {
+        for (size_type row = 0; row < points.size(); ++row) {
+            vec[col * (points[0].size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) + row] = points[row][col];
+        }
+    }
+
+    point_d.memcpy_to_device(vec, 0, vec.size());
+
     detail::device_ptr<real_type> alpha_d_(num_data_points_ + THREAD_BLOCK_SIZE);
     alpha_d_.memset(0);
     alpha_d_.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
-    const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
-    const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_));
+    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE))), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE))));
+    const dim3 block(std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())));
 
     switch (kernel_) {
         case kernel_type::linear:
@@ -407,41 +424,29 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
             if (w_.empty()) {
                 update_w();
             }
-
-            temp += transposed{ w_ } * point;
+            for (size_type i = 0; i < points.size(); ++i) {
+                temp[i] += transposed{ w_ } * points[i];
+            }
             break;
         case kernel_type::polynomial:
-
-            cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, degree_, gamma_, coef0_);
+            cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_);
             cuda::detail::device_synchronize(0);
-            out_d.memcpy_to_host(out, 0, 1);
-
-            temp += out[0];
+            out_d.memcpy_to_host(out, 0, points.size());
+            for (size_type i = 0; i < points.size(); ++i) {
+                temp[i] += out[i];
+            }
             break;
         case kernel_type::rbf:
-
-            cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, gamma_);
-            // cuda::detail::device_synchronize(0);
-
-            // cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, degree_, gamma_, coef0_);
+            cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_);
             cuda::detail::device_synchronize(0);
-            out_d.memcpy_to_host(out, 0, 1);
-
-            temp += out[0];
+            out_d.memcpy_to_host(out, 0, points.size());
+            for (size_type i = 0; i < points.size(); ++i) {
+                temp[i] += out[i];
+            }
             break;
     }
 
     return temp;
-}
-
-template <typename T>
-auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
-    std::vector<real_type> classes;
-    classes.reserve(points.size());
-    for (const std::vector<real_type> &point : points) {
-        classes.emplace_back(predict(point));
-    }
-    return classes;
 }
 
 template class csvm<float>;
