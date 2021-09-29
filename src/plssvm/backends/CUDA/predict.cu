@@ -12,7 +12,7 @@ namespace plssvm::cuda {
 
 template <typename real_type>
 __global__ void kernel_w(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const int num_features) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp = 0;
     if (index < num_features) {
         for (int dat = 0; dat < num_data_points - 1; ++dat) {
@@ -27,8 +27,8 @@ template __global__ void kernel_w(double *, const double *, const double *, cons
 
 template <typename real_type>
 __global__ void predict_points_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const int degree, const real_type gamma, const real_type coef0) {
-    int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
-    int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
+    const int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
+    const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
     real_type temp = 0;
     for (int feature_index = 0; feature_index < num_features; ++feature_index) {
@@ -39,7 +39,7 @@ __global__ void predict_points_poly(real_type *out_d, const real_type *data_d, c
         }
     }
 
-    temp = alpha_d[data_point_index] * pow(gamma * temp + coef0, static_cast<real_type>(degree));
+    temp = alpha_d[data_point_index] * pow(gamma * temp + coef0, degree);
 
     atomicAdd(&out_d[predict_point_index], temp);
 }
@@ -49,8 +49,8 @@ template __global__ void predict_points_poly(double *, const double *, const dou
 
 template <typename real_type>
 __global__ void predict_points_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const real_type gamma) {
-    int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
-    int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
+    const int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
+    const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
     real_type temp = 0;
     for (int feature_index = 0; feature_index < num_features; ++feature_index) {

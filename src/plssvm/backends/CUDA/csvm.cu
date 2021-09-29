@@ -389,10 +389,13 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
 
     real_type temp = bias_;
     detail::device_ptr<real_type> out_d(1 + THREAD_BLOCK_SIZE);
+    out_d.memset(0);
     std::vector<real_type> out(1);
     detail::device_ptr<real_type> point_d(point.size() + THREAD_BLOCK_SIZE);
+    point_d.memset(0);
     point_d.memcpy_to_device(point, 0, point.size());
     detail::device_ptr<real_type> alpha_d_(num_data_points_ + THREAD_BLOCK_SIZE);
+    alpha_d_.memset(0);
     alpha_d_.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
     const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
     const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_));
@@ -418,8 +421,10 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
         case kernel_type::rbf:
 
             cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, gamma_);
-            cuda::detail::device_synchronize(0);
+            // cuda::detail::device_synchronize(0);
 
+            // cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), 1, num_features_, degree_, gamma_, coef0_);
+            cuda::detail::device_synchronize(0);
             out_d.memcpy_to_host(out, 0, 1);
 
             temp += out[0];
