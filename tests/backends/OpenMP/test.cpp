@@ -39,7 +39,7 @@ using parameter_types = ::testing::Types<
 
 template <typename T>
 class OpenMP_CSVM : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenMP_CSVM, parameter_types);
+TYPED_TEST_SUITE(OpenMP_CSVM, parameter_types, util::google_test::parameter_definition_to_name);
 
 // check whether the csvm factory function correctly creates an openmp::csvm
 TYPED_TEST(OpenMP_CSVM, csvm_factory) {

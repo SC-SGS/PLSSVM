@@ -38,7 +38,7 @@ using parameter_types = ::testing::Types<
 
 template <typename T>
 class OpenCL_CSVM : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenCL_CSVM, parameter_types);
+TYPED_TEST_SUITE(OpenCL_CSVM, parameter_types, util::google_test::parameter_definition_to_name);
 
 // check whether the csvm factory function correctly creates an opencl::csvm
 TYPED_TEST(OpenCL_CSVM, csvm_factory) {

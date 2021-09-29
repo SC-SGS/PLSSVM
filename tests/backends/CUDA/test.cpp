@@ -40,7 +40,7 @@ using parameter_types = ::testing::Types<
 
 template <typename T>
 class CUDA_CSVM : public ::testing::Test {};
-TYPED_TEST_SUITE(CUDA_CSVM, parameter_types);
+TYPED_TEST_SUITE(CUDA_CSVM, parameter_types, util::google_test::parameter_definition_to_name);
 
 // check whether the csvm factory function correctly creates a cuda::csvm
 TYPED_TEST(CUDA_CSVM, csvm_factory) {
