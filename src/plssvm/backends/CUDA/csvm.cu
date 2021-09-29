@@ -365,7 +365,7 @@ void csvm<T>::update_w() {
     const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
     const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_features_));
 
-    cuda::kernel_w<<<grid, block>>>(w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_);
+    cuda::kernel_w<<<grid, block>>>(w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, num_features_);
     cuda::detail::device_synchronize(0);
     w_d_.memcpy_to_host(w_, 0, num_features_);
 }
@@ -404,7 +404,7 @@ auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
             if (w_.empty()) {
                 update_w();
             }
-            // fmt::print("vec: {}\n", fmt::join(w, " "));
+
             temp += transposed{ w_ } * point;
             break;
         case kernel_type::polynomial:
