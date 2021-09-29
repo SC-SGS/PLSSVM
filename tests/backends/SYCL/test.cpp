@@ -41,7 +41,7 @@ using parameter_types = ::testing::Types<
 
 template <typename T>
 class SYCL_CSVM : public ::testing::Test {};
-TYPED_TEST_SUITE(SYCL_CSVM, parameter_types);
+TYPED_TEST_SUITE(SYCL_CSVM, parameter_types, util::google_test::parameter_definition_to_name);
 
 // check whether the csvm factory function correctly creates a sycl::csvm
 TYPED_TEST(SYCL_CSVM, csvm_factory) {
