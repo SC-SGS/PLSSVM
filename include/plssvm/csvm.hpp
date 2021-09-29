@@ -44,18 +44,6 @@ class csvm {
      * @param[in] params struct encapsulating all possible parameters
      */
     explicit csvm(const parameter<T> &params);
-    /**
-     * @brief Construct an new C-SVM explicitly specifying all necessary parameters.
-     * @param[in] target the target platform
-     * @param[in] kernel the type of the kernel function
-     * @param[in] degree parameter used in the polynomial kernel function
-     * @param[in] gamma parameter used in the polynomial and rbf kernel functions
-     * @param[in] coef0 parameter use din the polynomial kernel function
-     * @param[in] cost parameter of the C-SVM
-     * @param[in] epsilon error tolerance in the CG algorithm
-     * @param[in] print_info if `true` additional information will be printed during execution
-     */
-    //    csvm(target_platform target, kernel_type kernel, int degree, real_type gamma, real_type coef0, real_type cost, real_type epsilon, bool print_info);
 
     /**
      * @brief Virtual destructor to enable safe inheritance.

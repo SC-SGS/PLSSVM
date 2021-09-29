@@ -11,9 +11,7 @@
 #include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
 #include <vector>  // std::vector
 
@@ -34,23 +32,14 @@ class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
 
     // make non-virtual functions publicly visible
     using base_type::generate_q;
-    using base_type::learn;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
-    using base_type::write_model;
 
     // parameter setter
-    void set_cost(const real_type cost) { cost_ = cost; }
-    void set_QA_cost(const real_type QA_cost) { QA_cost_ = QA_cost; }
+    void set_cost(const real_type cost) { base_type::cost_ = cost; }
+    void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
 
     // getter for internal variables
-    std::vector<plssvm::opencl::detail::device_ptr<real_type>> &get_device_data() { return data_d_; }
-    std::vector<plssvm::opencl::detail::command_queue> &get_devices() { return devices_; }
-
-  private:
-    using base_type::cost_;
-    using base_type::QA_cost_;
-
-    using base_type::data_d_;
-    using base_type::devices_;
+    std::vector<plssvm::opencl::detail::device_ptr<real_type>> &get_device_data() { return base_type::data_d_; }
+    std::vector<plssvm::opencl::detail::command_queue> &get_devices() { return base_type::devices_; }
 };

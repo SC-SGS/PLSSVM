@@ -11,9 +11,7 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"               // plssvm::cuda::csvm
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
-#include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include <vector>  // std::vector
 
@@ -34,21 +32,13 @@ class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
 
     // make non-virtual functions publicly visible
     using base_type::generate_q;
-    using base_type::learn;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
-    using base_type::write_model;
 
     // parameter setter
-    void set_cost(const real_type cost) { cost_ = cost; }
-    void set_QA_cost(const real_type QA_cost) { QA_cost_ = QA_cost; }
+    void set_cost(const real_type cost) { base_type::cost_ = cost; }
+    void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
 
     // getter for internal variables
-    const std::vector<plssvm::cuda::detail::device_ptr<real_type>> &get_device_data() const { return data_d_; }
-
-  private:
-    using base_type::cost_;
-    using base_type::QA_cost_;
-
-    using base_type::data_d_;
+    const std::vector<plssvm::cuda::detail::device_ptr<real_type>> &get_device_data() const { return base_type::data_d_; }
 };

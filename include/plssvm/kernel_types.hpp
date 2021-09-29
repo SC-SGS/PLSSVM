@@ -98,7 +98,7 @@ real_type kernel_function(const std::vector<real_type> &xi, const std::vector<re
         return transposed{ xi } * xj;
     } else if constexpr (kernel == kernel_type::polynomial) {
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
-        const auto degree = static_cast<real_type>(detail::get<0>(args...));
+        const auto degree = static_cast<int>(detail::get<0>(args...));
         const auto gamma = static_cast<real_type>(detail::get<1>(args...));
         const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
         return std::pow(std::fma(gamma, (transposed<real_type>{ xi } * xj), coef0), static_cast<real_type>(degree));

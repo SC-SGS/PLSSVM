@@ -7,19 +7,18 @@
 #include "mock_opencl_csvm.hpp"
 
 #include "../../mock_csvm.hpp"  // mock_csvm
-#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
+#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
 #include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
 #include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::convert_to
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/parameter_predict.hpp"                     // plssvm::parameter_predict
-#include "plssvm/parameter_train.hpp"                       // plssvm::parameter_train
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
 
-#include <cmath>       // std::abs
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT
+
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
 #include <fstream>     // std::ifstream
@@ -28,10 +27,7 @@
 #include <string>      // std::string
 #include <vector>      // std::vector
 
-template <typename T>
-class OpenCL_base : public ::testing::Test {};
-
-// enumerate all type and kernel combinations to test
+// enumerate all floating point type and kernel combinations to test
 using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
     util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
@@ -40,53 +36,32 @@ using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
     util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
-TYPED_TEST_SUITE(OpenCL_base, parameter_types);
+template <typename T>
+class OpenCL_CSVM : public ::testing::Test {};
+TYPED_TEST_SUITE(OpenCL_CSVM, parameter_types);
 
-TYPED_TEST(OpenCL_base, write_model) {
-    // setup OpenCL C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
+// check whether the csvm factory function correctly creates an opencl::csvm
+TYPED_TEST(OpenCL_CSVM, csvm_factory) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
-    params.kernel = TypeParam::kernel;
+    params.backend = plssvm::backend_type::opencl;
 
-    mock_opencl_csvm csvm{ params };
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
 
-    // create temporary model file
-    std::string model_file = util::create_temp_file();
-    // learn model
-    csvm.learn();
-    // write learned model to file
-    csvm.write_model(model_file);
-
-    // read content of model file and delete it
-    std::ifstream model_ifs(model_file);
-    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
-    std::filesystem::remove(model_file);
-
-    // check model file content for correctness
-    switch (params.kernel) {
-        case plssvm::kernel_type::linear:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
-            break;
-        case plssvm::kernel_type::polynomial:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
-            break;
-        case plssvm::kernel_type::rbf:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
-            break;
-    }
+    util::gtest_expect_correct_csvm_factory<plssvm::opencl::csvm>(params);
 }
 
-// generate tests for the generation of the q vector
-template <typename T>
-class OpenCL_generate_q : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenCL_generate_q, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(OpenCL_generate_q, generate_q) {
-    // setup C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+// check whether the q vector is generated correctly
+TYPED_TEST(OpenCL_CSVM, generate_q) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
+    params.parse_train_file(TEST_FILE);
+
+    // create base C-SVM
     mock_csvm csvm{ params };
     using real_type_csvm = typename decltype(csvm)::real_type;
 
@@ -100,7 +75,7 @@ TYPED_TEST(OpenCL_generate_q, generate_q) {
     // check real_types
     ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_opencl>();
 
-    // parse libsvm file and calculate q vector
+    // calculate q vector
     csvm_opencl.setup_data_on_device();
     const std::vector<real_type_csvm_opencl> calculated = csvm_opencl.generate_q();
 
@@ -110,23 +85,21 @@ TYPED_TEST(OpenCL_generate_q, generate_q) {
     }
 }
 
-// generate tests for the device kernel functions
-template <typename T>
-class OpenCL_device_kernel : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenCL_device_kernel, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(OpenCL_device_kernel, device_kernel) {
+// check whether the device kernels are correct
+TYPED_TEST(OpenCL_CSVM, device_kernel) {
     // setup C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
+    params.parse_train_file(TEST_FILE);
+
+    // create base C-SVM
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
 
     const size_type dept = csvm.get_num_data_points() - 1;
-    // const size_type num_features = csvm.get_num_features();
 
     // create x vector and fill it with random values
     std::vector<real_type> x(dept);
@@ -140,13 +113,14 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     const real_type cost = csvm.get_cost();
     const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
-    // setup OpenCL C-SVM
+    // create C-SVM using the OpenCL backend
     mock_opencl_csvm csvm_opencl{ params };
 
     // setup data on device
     csvm_opencl.setup_data_on_device();
 
     // TODO: multi GPU support
+    // setup all additional data
     plssvm::opencl::detail::command_queue &queue = csvm_opencl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, queue };
@@ -175,14 +149,13 @@ TYPED_TEST(OpenCL_device_kernel, device_kernel) {
     }
 }
 
-// generate tests for the predict function
-template <typename T>
-class OpenCL_predict : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenCL_predict, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(OpenCL_predict, predict) {
-    plssvm::parameter_predict<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/500x200.libsvm.test", TEST_PATH "/data/models/500x200.libsvm.model" };
+// check whether the correct labels are predicted
+TYPED_TEST(OpenCL_CSVM, predict) {
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
+
+    params.parse_model_file(TEST_PATH "/data/models/500x200.libsvm.model");
+    params.parse_test_file(TEST_PATH "/data/libsvm/500x200.libsvm.test");
 
     std::ifstream model_ifs{ TEST_PATH "/data/models/500x200.libsvm.model" };
     std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
@@ -200,7 +173,7 @@ TYPED_TEST(OpenCL_predict, predict) {
     // parse permuted model file
     params.parse_model_file(tmp_model_file);
 
-    // setup OpenCL C-SVM
+    // create C-SVM using the OpenCL backend
     mock_opencl_csvm csvm_opencl{ params };
     using real_type = typename decltype(csvm_opencl)::real_type;
     using size_type = typename decltype(csvm_opencl)::size_type;
@@ -232,15 +205,16 @@ TYPED_TEST(OpenCL_predict, predict) {
     std::filesystem::remove(tmp_model_file);
 }
 
-template <typename T>
-class OpenCL_accuracy : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenCL_accuracy, parameter_types, util::google_test::parameter_definition_to_name);
-TYPED_TEST(OpenCL_accuracy, accuracy) {
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+// check whether the accuracy calculation is correct
+TYPED_TEST(OpenCL_CSVM, accuracy) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    // setup OpenCL C-SVM
+    params.parse_train_file(TEST_FILE);
+
+    // create C-SVM using the OpenCL backend
     mock_opencl_csvm csvm_opencl{ params };
     using real_type = typename decltype(csvm_opencl)::real_type;
     using size_type = typename decltype(csvm_opencl)::real_type;

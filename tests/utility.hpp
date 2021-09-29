@@ -9,16 +9,19 @@
 
 #pragma once
 
+#include "plssvm/csvm_factory.hpp"                 // plssvm::make_csvm
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ
+#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_FALSE, EXPECT_TRUE
 
 #include <cstdlib>      // mkstemp
 #include <filesystem>   // std::filesystem::temp_directory_path
+#include <sstream>      // std::ostringstream, std::istringstream
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 
@@ -104,6 +107,60 @@ inline void gtest_assert_floating_point_near(const T val1, const T val2, const s
     const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
 
     EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+}
+
+/**
+ * @brief Check whether converting the enum @p e to a std::string results in the string representation @p str.
+ * @tparam Enum the type of the enum to convert
+ * @param[in] e the enum to convert to a std::string
+ * @param[in] str the expected string representation of the enum @p e
+ */
+template <typename Enum>
+inline void gtest_expect_enum_to_string_string_conversion(const Enum e, const std::string_view str) {
+    std::ostringstream ss;
+    ss << e;
+    EXPECT_FALSE(ss.fail());
+    EXPECT_EQ(ss.str(), str);
+}
+/**
+ * @brief Check whether converting the string @p str to the enum type @p Enum yields @p e.
+ * @tparam Enum the type of the enum
+ * @param[in] str the string representation of @p e
+ * @param[in] e the expected enum value
+ */
+template <typename Enum>
+inline void gtest_expect_string_to_enum_conversion(const std::string &str, const Enum e) {
+    std::istringstream ss{ str };
+    Enum parsed{};
+    ss >> parsed;
+    EXPECT_FALSE(ss.fail());
+    EXPECT_EQ(parsed, e);
+}
+/**
+ * @brief Check whether converting the illegal string @p str to the enum type @p Enum results in setting the failbit in the stream object.
+ * @tparam Enum the type of the enum
+ * @param[in] str the illegal string representation of an enum value of type @p Enum
+ */
+template <typename Enum>
+inline void gtest_expect_string_to_enum_conversion(const std::string &str) {
+    std::istringstream ss{ str };
+    Enum parsed{};
+    ss >> parsed;
+    EXPECT_TRUE(ss.fail());
+}
+/**
+ * @brief Check whether the C-SVM returned by a call to `plssvm::make_csvm` with the parameters @p params returns a C-SVM of type @p Derived
+ * @tparam Derived the expected C-SVM type, based on the backend_type of @þ params
+ * @tparam T the type of the data
+ * @param[in] params the parameter to initialize the C-SVM with
+ */
+template <template <typename> typename Derived, typename T>
+inline void gtest_expect_correct_csvm_factory(const plssvm::parameter<T> &params) {
+    // create csvm
+    auto csvm = plssvm::make_csvm(params);
+    // check if correct csvm has been instantiated
+    auto *res = dynamic_cast<Derived<T> *>(csvm.get());
+    EXPECT_NE(res, nullptr);
 }
 
 /**

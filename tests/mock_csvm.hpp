@@ -9,12 +9,14 @@
 
 #pragma once
 
-#include "plssvm/csvm.hpp"          // plssvm::csvm
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/csvm.hpp"             // plssvm::csvm
+#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
+#include "plssvm/parameter.hpp"        // plssvm::parameter
+#include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
-#include "gmock/gmock.h"  // MOCK_METHOD
+#include "gmock/gmock.h"  // MOCK_METHODn
 
+#include <memory>  // std::shared_ptr
 #include <vector>  // std::vector
 
 /**
@@ -31,39 +33,33 @@ class mock_csvm : public plssvm::csvm<T> {
 
     explicit mock_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
-    explicit mock_csvm(const plssvm::kernel_type kernel, const int degree, const real_type gamma, const real_type coef0, const real_type cost, const real_type epsilon, const bool print_info) :
-        base_type{ kernel, degree, gamma, coef0, cost, epsilon, print_info } {}
 
     // mock pure virtual functions
-    MOCK_METHOD(void, setup_data_on_device, (), (override));
-    MOCK_METHOD(std::vector<real_type>, generate_q, (), (override));
-    MOCK_METHOD(std::vector<real_type>, solver_CG, (const std::vector<real_type> &b, const size_type, const real_type, const std::vector<real_type> &), (override));
+    MOCK_METHOD0(setup_data_on_device, void());
+    MOCK_METHOD0(generate_q, std::vector<real_type>());
+    MOCK_METHOD4(solver_CG, std::vector<real_type>(const std::vector<real_type> &, const size_type, const real_type, const std::vector<real_type> &));
 
     // make non-virtual functions publicly visible
     using base_type::kernel_function;
     using base_type::transform_data;
 
-    // parameter getter
-    int get_degree() const { return degree_; }
-    real_type get_gamma() const { return gamma_; }
-    real_type get_coef0() const { return coef0_; }
-    real_type get_cost() const { return cost_; }
-    using base_type::epsilon_;
-    using base_type::kernel_;
-    using base_type::print_info_;
+    // getter for all parameter
+    plssvm::target_platform get_target() const { return base_type::target_; }
+    plssvm::kernel_type get_kernel() const { return base_type::kernel_; }
+    int get_degree() const { return base_type::degree_; }
+    real_type get_gamma() const { return base_type::gamma_; }
+    real_type get_coef0() const { return base_type::coef0_; }
+    real_type get_cost() const { return base_type::cost_; }
+    real_type get_epsilon() const { return base_type::epsilon_; }
+    bool get_print_info() const { return base_type::print_info_; }
 
-    // getter for internal variables
-    size_type get_num_data_points() const { return num_data_points_; }
-    size_type get_num_features() const { return num_features_; }
-    const std::vector<std::vector<real_type>> &get_data() const { return *data_ptr_; }
+    const std::shared_ptr<const std::vector<std::vector<real_type>>> &get_data_ptr() const { return base_type::data_ptr_; }
+    const std::vector<std::vector<real_type>> &get_data() const { return *base_type::data_ptr_; }
+    std::shared_ptr<const std::vector<real_type>> &get_value_ptr() { return base_type::value_ptr_; }
+    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
 
-  private:
-    // make template ase variables visible
-    using base_type::coef0_;
-    using base_type::cost_;
-    using base_type::data_ptr_;
-    using base_type::degree_;
-    using base_type::gamma_;
-    using base_type::num_data_points_;
-    using base_type::num_features_;
+    size_type get_num_data_points() const { return base_type::num_data_points_; }
+    size_type get_num_features() const { return base_type::num_features_; }
+    real_type get_bias() const { return base_type::bias_; }
+    real_type get_QA_cost() const { return base_type::QA_cost_; }
 };

@@ -9,21 +9,19 @@
 #include "mock_sycl_csvm.hpp"
 
 #include "../../mock_csvm.hpp"  // mock_csvm
-#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
+#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
+#include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
-#include "../compare.hpp"                              // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 #include "plssvm/backends/SYCL/csvm.hpp"               // plssvm::sycl::csvm
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/detail/string_utility.hpp"            // plssvm::detail::replace_all, plssvm::detail::convert_to
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
-#include "plssvm/parameter_predict.hpp"                // plssvm::parameter_predict
-#include "plssvm/parameter_train.hpp"                  // plssvm::parameter_train
+#include "plssvm/parameter.hpp"                        // plssvm::parameter
 
-#include "sycl/sycl.hpp"  // SYCL stuff
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
+#include "sycl/sycl.hpp"  // sycl::queue
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT
 
-#include <cmath>       // std::abs
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
 #include <fstream>     // std::ifstream
@@ -32,9 +30,7 @@
 #include <string>      // std::string
 #include <vector>      // std::vector
 
-template <typename T>
-class SYCL_base : public ::testing::Test {};
-// enumerate all type and kernel combinations to test
+// enumerate all floating point type and kernel combinations to test
 using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<float, plssvm::kernel_type::linear>,
     util::google_test::parameter_definition<float, plssvm::kernel_type::polynomial>,
@@ -43,60 +39,39 @@ using parameter_types = ::testing::Types<
     util::google_test::parameter_definition<double, plssvm::kernel_type::polynomial>,
     util::google_test::parameter_definition<double, plssvm::kernel_type::rbf>>;
 
-TYPED_TEST_SUITE(SYCL_base, parameter_types);
+template <typename T>
+class SYCL_CSVM : public ::testing::Test {};
+TYPED_TEST_SUITE(SYCL_CSVM, parameter_types);
 
-TYPED_TEST(SYCL_base, write_model) {
-    // setup SYCL C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/5x4.libsvm" };
+// check whether the csvm factory function correctly creates a sycl::csvm
+TYPED_TEST(SYCL_CSVM, csvm_factory) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
-    params.kernel = TypeParam::kernel;
+    params.backend = plssvm::backend_type::sycl;
 
-    mock_sycl_csvm csvm{ params };
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
 
-    // create temporary model file
-    std::string model_file = util::create_temp_file();
-    // learn model
-    csvm.learn();
-    // write learned model to file
-    csvm.write_model(model_file);
-
-    // read content of model file and delete it
-    std::ifstream model_ifs(model_file);
-    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
-    std::filesystem::remove(model_file);
-
-    // check model file content for correctness
-    switch (params.kernel) {
-        case plssvm::kernel_type::linear:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
-            break;
-        case plssvm::kernel_type::polynomial:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
-            break;
-        case plssvm::kernel_type::rbf:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV\n( *[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?( +[0-9]+:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+))+ *\n*)+"));
-            break;
-    }
+    util::gtest_expect_correct_csvm_factory<plssvm::sycl::csvm>(params);
 }
 
-// generate tests for the generation of the q vector
-template <typename T>
-class SYCL_generate_q : public ::testing::Test {};
-TYPED_TEST_SUITE(SYCL_generate_q, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(SYCL_generate_q, generate_q) {
-    // setup C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+// check whether the q vector is generated correctly
+TYPED_TEST(SYCL_CSVM, generate_q) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
+    params.parse_train_file(TEST_FILE);
+
+    // create base C-SVM
     mock_csvm csvm{ params };
     using real_type_csvm = typename decltype(csvm)::real_type;
 
-    // parse libsvm file and calculate q vector
+    // calculate q vector
     const std::vector<real_type_csvm> correct = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
 
-    // setup SYCL C-SVM
+    // create C-SVM using the SYCL backend
     mock_sycl_csvm csvm_sycl{ params };
     using real_type_csvm_sycl = typename decltype(csvm_sycl)::real_type;
 
@@ -113,17 +88,16 @@ TYPED_TEST(SYCL_generate_q, generate_q) {
     }
 }
 
-// generate tests for the device kernel functions
-template <typename T>
-class SYCL_device_kernel : public ::testing::Test {};
-TYPED_TEST_SUITE(SYCL_device_kernel, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(SYCL_device_kernel, device_kernel) {
-    // setup C-SVM
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+// check whether the device kernels are correct
+TYPED_TEST(SYCL_CSVM, device_kernel) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
+    params.parse_train_file(TEST_FILE);
+
+    // create base C-SVM
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
     using size_type = typename decltype(csvm)::size_type;
@@ -142,13 +116,14 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     const real_type cost = csvm.get_cost();
     const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
-    // setup SYCL C-SVM
+    // create C-SVM using the SYCL backend
     mock_sycl_csvm csvm_sycl{ params };
 
     // setup data on device
     csvm_sycl.setup_data_on_device();
 
     // TODO: multi GPU support
+    // setup all additional data
     sycl::queue &q = csvm_sycl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     plssvm::sycl::detail::device_ptr<real_type> q_d{ dept + boundary_size, q };
@@ -178,14 +153,13 @@ TYPED_TEST(SYCL_device_kernel, device_kernel) {
     }
 }
 
-// generate tests for the predict function
-template <typename T>
-class SYCL_predict : public ::testing::Test {};
-TYPED_TEST_SUITE(SYCL_predict, parameter_types, util::google_test::parameter_definition_to_name);
-
-TYPED_TEST(SYCL_predict, predict) {
-    plssvm::parameter_predict<typename TypeParam::real_type> params{ TEST_PATH "/data/libsvm/500x200.libsvm.test", TEST_PATH "/data/models/500x200.libsvm.model" };
+// check whether the correct labels are predicted
+TYPED_TEST(SYCL_CSVM, predict) {
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
+
+    params.parse_model_file(TEST_PATH "/data/models/500x200.libsvm.model");
+    params.parse_test_file(TEST_PATH "/data/libsvm/500x200.libsvm.test");
 
     std::ifstream model_ifs{ TEST_PATH "/data/models/500x200.libsvm.model" };
     std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
@@ -235,15 +209,16 @@ TYPED_TEST(SYCL_predict, predict) {
     std::filesystem::remove(tmp_model_file);
 }
 
-template <typename T>
-class SYCL_accuracy : public ::testing::Test {};
-TYPED_TEST_SUITE(SYCL_accuracy, parameter_types, util::google_test::parameter_definition_to_name);
-TYPED_TEST(SYCL_accuracy, accuracy) {
-    plssvm::parameter_train<typename TypeParam::real_type> params{ TEST_FILE };
+// check whether the accuracy calculation is correct
+TYPED_TEST(SYCL_CSVM, accuracy) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    // setup SYCL C-SVM
+    params.parse_train_file(TEST_FILE);
+
+    // create C-SVM using the SYCL backend
     mock_sycl_csvm csvm_sycl{ params };
     using real_type = typename decltype(csvm_sycl)::real_type;
     using size_type = typename decltype(csvm_sycl)::size_type;
