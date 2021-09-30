@@ -183,7 +183,7 @@ class csvm {
      * @attention boundary values can contain random numbers
      * @return an 1D vector in a SoA layout
      */
-    std::vector<real_type> transform_data(size_type boundary);
+    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points);
 
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //

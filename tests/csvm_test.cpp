@@ -1,10 +1,10 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
-*
-* @brief Tests for the base functionality independent of the used backend.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright
+ *
+ * @brief Tests for the base functionality independent of the used backend.
+ */
 
 #include "mock_csvm.hpp"
 
@@ -48,8 +48,8 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
     using size_type = typename decltype(csvm)::size_type;
 
     // transform data without and with boundary
-    std::vector<real_type> result_no_boundary = csvm.transform_data(0);
-    std::vector<real_type> result_boundary = csvm.transform_data(10);
+    std::vector<real_type> result_no_boundary = csvm.transform_data(csvm.get_data(), 0, csvm.get_num_data_points() - 1);
+    std::vector<real_type> result_boundary = csvm.transform_data(csvm.get_data(), 10, csvm.get_num_data_points());
 
     // check if sizes match
     ASSERT_EQ(result_no_boundary.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
@@ -66,7 +66,7 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
             util::gtest_expect_floating_point_eq(
                 csvm.get_data()[datapoint][feature],
                 result_boundary[datapoint + feature * (csvm.get_num_data_points() - 1 + 10)],
-                fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() - 1 + 10)));
+                fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() + 10)));
         }
     }
 }

@@ -110,7 +110,7 @@ void csvm<T>::setup_data_on_device() {
         data_d_[device] = detail::device_ptr<real_type>{ num_features_ * (dept_ + boundary_size_), device };
     }
     // transform 2D to 1D data
-    const std::vector<real_type> transformed_data = base_type::transform_data(boundary_size_);
+    const std::vector<real_type> transformed_data = base_type::transform_data(*data_ptr_, boundary_size_, dept_);
 #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (dept_ + boundary_size_));
@@ -395,61 +395,49 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
         setup_data_on_device();
     }
 
-    std::vector<real_type> temp(points.size(), bias_);
-    detail::device_ptr<real_type> out_d(points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
-    out_d.memset(0);
     std::vector<real_type> out(points.size());
-    detail::device_ptr<real_type> point_d(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
-    point_d.memset(0);
 
-    // TODO: reuse transform function
-    std::vector<real_type> vec(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
+    if (kernel_ == kernel_type::linear) {
+        // use faster methode in case of the linear kernel function
+        if (w_.empty()) {
+            update_w();
+        }
+        for (size_type i = 0; i < points.size(); ++i) {
+            out[i] = transposed{ w_ } * points[i];
+            out[i] += bias_;
+        }
+    } else {
+        detail::device_ptr<real_type> out_d(points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
+        out_d.memset(0);
 
-#pragma omp parallel for collapse(2)
-    for (size_type col = 0; col < points[0].size(); ++col) {
-        for (size_type row = 0; row < points.size(); ++row) {
-            vec[col * (points[0].size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) + row] = points[row][col];
+        std::vector<real_type> transformed_data = base_type::transform_data(points, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, points.size());
+        detail::device_ptr<real_type> point_d(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE));
+        point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
+
+        detail::device_ptr<real_type> alpha_d_(num_data_points_ + THREAD_BLOCK_SIZE);
+        alpha_d_.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE))), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE))));
+        const dim3 block(std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())));
+
+        switch (kernel_) {
+            case kernel_type::linear:
+                break;
+            case kernel_type::polynomial:
+                cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_);
+                break;
+            case kernel_type::rbf:
+                cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_);
+                break;
+        }
+        cuda::detail::device_synchronize(0);
+        out_d.memcpy_to_host(out, 0, points.size());
+        for (size_type i = 0; i < points.size(); ++i) {
+            out[i] += bias_;
         }
     }
 
-    point_d.memcpy_to_device(vec, 0, vec.size());
-
-    detail::device_ptr<real_type> alpha_d_(num_data_points_ + THREAD_BLOCK_SIZE);
-    alpha_d_.memset(0);
-    alpha_d_.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
-    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE))), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE))));
-    const dim3 block(std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())));
-
-    switch (kernel_) {
-        case kernel_type::linear:
-
-            // use faster methode in case of the linear kernel function
-            if (w_.empty()) {
-                update_w();
-            }
-            for (size_type i = 0; i < points.size(); ++i) {
-                temp[i] += transposed{ w_ } * points[i];
-            }
-            break;
-        case kernel_type::polynomial:
-            cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_);
-            cuda::detail::device_synchronize(0);
-            out_d.memcpy_to_host(out, 0, points.size());
-            for (size_type i = 0; i < points.size(); ++i) {
-                temp[i] += out[i];
-            }
-            break;
-        case kernel_type::rbf:
-            cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_);
-            cuda::detail::device_synchronize(0);
-            out_d.memcpy_to_host(out, 0, points.size());
-            for (size_type i = 0; i < points.size(); ++i) {
-                temp[i] += out[i];
-            }
-            break;
-    }
-
-    return temp;
+    return out;
 }
 
 template class csvm<float>;

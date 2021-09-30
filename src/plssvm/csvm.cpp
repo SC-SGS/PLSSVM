@@ -196,14 +196,22 @@ auto csvm<T>::kernel_function(const std::vector<real_type> &xi, const std::vecto
 }
 
 template <typename T>
-auto csvm<T>::transform_data(const size_type boundary) -> std::vector<real_type> {
+auto csvm<T>::transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points) -> std::vector<real_type> {
+    PLSSVM_ASSERT(!matrix.empty(), "Matrix is empty!");
+    PLSSVM_ASSERT(num_points <= matrix.size(), "Num points to transform can not exceed matrix size!");
+
+    const size_type num_features = matrix[0].size();
+
+    for (const std::vector<real_type> &point : matrix) {
+        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
+    }
     auto start_time = std::chrono::steady_clock::now();
 
-    std::vector<real_type> vec(num_features_ * (num_data_points_ - 1 + boundary));
+    std::vector<real_type> vec(num_features * (num_points + boundary));
 #pragma omp parallel for collapse(2)
-    for (size_type col = 0; col < num_features_; ++col) {
-        for (size_type row = 0; row < num_data_points_ - 1; ++row) {
-            vec[col * (num_data_points_ - 1 + boundary) + row] = (*data_ptr_)[row][col];
+    for (size_type col = 0; col < num_features; ++col) {
+        for (size_type row = 0; row < num_points; ++row) {
+            vec[col * (num_points + boundary) + row] = matrix[row][col];
         }
     }
 
