@@ -103,7 +103,9 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
+## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
+## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-ffast-math -march=native>)
 #target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion) # -Wshadow -Wundef -Wformat=2 -Wformat-truncation
 
@@ -115,20 +117,12 @@ if(PLSSVM_ENABLE_ASSERTS)
 endif()
 
 
-## create main executables
-set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
-set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
-add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
-add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
-
+## setup code coverage analysis
 OPTION(PLSSVM_ENABLE_COV "Enable gcov in DEBUG (Linux builds only)" OFF)
-IF (PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
-  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-  SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
-#   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -Xcompiler 'fprofile-arcs -ftest-coverage'")
-
-
+if(PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
 
     # Create the gcov target. Run coverage tests with 'make cov'
     add_custom_target(gcov
@@ -146,36 +140,8 @@ IF (PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
 
     add_dependencies(gcov ${PLSSVM_EXECUTABLE_TRAIN_NAME})
     add_dependencies(gcov ${PLSSVM_EXECUTABLE_PREDICT_NAME})
-
-
-#TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
-
-
-
-    # llvm-cov
-# add_custom_target(${TARGET_NAME}-ccov-preprocessing
-#     COMMAND LLVM_PROFILE_FILE=${TARGET_NAME}.profraw $<TARGET_FILE:${TARGET_NAME}>
-#     COMMAND llvm-profdata merge -sparse ${TARGET_NAME}.profraw -o ${TARGET_NAME}.profdata
-#     DEPENDS ${TARGET_NAME})
-
-# add_custom_target(${TARGET_NAME}-ccov-show
-#     COMMAND llvm-cov show $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata -show-line-counts-or-regions
-#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
-
-# add_custom_target(${TARGET_NAME}-ccov-report
-#     COMMAND llvm-cov report $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata
-#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
-
-# add_custom_target(${TARGET_NAME}-ccov
-#     COMMAND llvm-cov show $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata -show-line-counts-or-regions -output-dir=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-llvm-cov -format="html"
-#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
-
-# add_custom_command(TARGET ${TARGET_NAME}-ccov POST_BUILD
-#     COMMAND ;
-#     COMMENT "Open ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-llvm-cov/index.html in your browser to view the coverage report."
-# )
-
-ENDIF(PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
+    #TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
+endif()
 
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
@@ -228,7 +194,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
 endforeach()
 
 
-## set specific thread block sizes of requested
+## set specific thread block sizes if requested
 if(DEFINED ENV{PLSSVM_THREAD_BLOCK_SIZE})
     set(PLSSVM_THREAD_BLOCK_SIZE $ENV{PLSSVM_THREAD_BLOCK_SIZE} CACHE STRING "The used thread block size." FORCE)
 endif()
@@ -302,7 +268,7 @@ if(PLSSVM_ENABLE_LTO)
         set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     else()
-        message(STATUS "Interprocedural optimization (IPO/LTO) not supported: ${PLSSVM_LTO_ERROR}")
+        message(STATUS "Interprocedural optimization (IPO/LTO) requested but not supported: ${PLSSVM_LTO_ERROR}")
     endif()
 endif()
 
