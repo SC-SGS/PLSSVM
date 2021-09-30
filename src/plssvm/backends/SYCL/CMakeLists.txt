@@ -85,10 +85,11 @@ endif()
 # link base library against SYCL library
 target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# link SYCL library against executable
+# set compile definition that the SYCL backend is available
 target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+
+# link against interface library
+target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 
 
 # generate summary string

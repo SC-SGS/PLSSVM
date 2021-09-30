@@ -26,6 +26,8 @@ set(PLSSVM_BASE_SOURCES
 ## create base library
 set(PLSSVM_BASE_LIBRARY_NAME svm-base)
 add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
+set(PLSSVM_ALL_LIBRARY_NAME svm-all)
+add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
 
 # set library cxx standard and include directory
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
@@ -252,11 +254,20 @@ endif()
 
 
 ## check if ANY backend is available/has been enabled
-get_target_property(PLSSVM_LINKED_BACKENDS svm-train LINK_LIBRARIES)
-get_target_property(PLSSVM_LINKED_BACKENDS svm-predict LINK_LIBRARIES)
+get_target_property(PLSSVM_LINKED_BACKENDS ${PLSSVM_ALL_LIBRARY_NAME} INTERFACE_LINK_LIBRARIES)
 if(NOT PLSSVM_LINKED_BACKENDS)
     message(FATAL_ERROR "At least one backend must be available!")
 endif()
+
+
+## create train executable
+set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
+add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
+target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
+## create predict executable
+set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
+add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
+target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 
 ## enable Link Time Optimization (LTO)

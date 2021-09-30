@@ -58,10 +58,11 @@ set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTU
 # link base library against CUDA library
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# link OpenMP library against executable
+# set compile definition that the CUDA backend is available
 target_compile_definitions(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CUDA_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
+
+# link against interface library
+target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
 
 
 # generate summary string
