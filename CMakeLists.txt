@@ -118,11 +118,12 @@ endif()
 
 
 ## setup code coverage analysis
-OPTION(PLSSVM_ENABLE_COV "Enable gcov in DEBUG (Linux builds only)" OFF)
+option(PLSSVM_ENABLE_COV "Enable gcov in DEBUG (Linux builds only)" OFF)
 if(PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-    SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-    SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
+    # TODO: don't set global?
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
 
     # Create the gcov target. Run coverage tests with 'make cov'
     add_custom_target(gcov
