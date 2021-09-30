@@ -32,7 +32,7 @@ target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
 # check for OpenMP (not for the backend!)
-find_package(OpenMP)
+find_package(OpenMP QUIET)
 if(OPENMP_FOUND)
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
