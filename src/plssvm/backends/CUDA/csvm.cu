@@ -386,9 +386,12 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
     PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
     PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
-    // TODO: more asserts
+    PLSSVM_ASSERT(!points.empty(), "No points to predict");
+    for (const std::vector<real_type> &point : points) {
+        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
+    }
 
-    if (data_d_[0].empty()) {  // TODO
+    if (data_d_[0].empty()) {
         setup_data_on_device();
     }
 
