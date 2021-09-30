@@ -8,9 +8,10 @@ project(ParallelLeastSquaresSupportVectorMachine
 include(${PROJECT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
 ## configure version file
-set(CONFIG_IN ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in)
-set(CONFIG_OUT ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp)
-configure_file(${CONFIG_IN} ${CONFIG_OUT} @ONLY)
+configure_file(
+        ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in
+        ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp
+        @ONLY)
 
 
 ## set base sources
@@ -327,7 +328,6 @@ if(PLSSVM_GENERATE_TIMINGSCRIPT)
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
         ${CMAKE_BINARY_DIR}/time.sh
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         @ONLY)
 endif()
 
