@@ -53,7 +53,7 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
 
     // check if sizes match
     ASSERT_EQ(result_no_boundary.size(), (csvm.get_num_data_points() - 1) * csvm.get_num_features());
-    ASSERT_EQ(result_boundary.size(), (csvm.get_num_data_points() - 1 + 10) * csvm.get_num_features());
+    ASSERT_EQ(result_boundary.size(), (csvm.get_num_data_points() + 10) * csvm.get_num_features());
 
     // check transformed content for correctness
     for (size_type datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
@@ -65,7 +65,7 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
 
             util::gtest_expect_floating_point_eq(
                 csvm.get_data()[datapoint][feature],
-                result_boundary[datapoint + feature * (csvm.get_num_data_points() - 1 + 10)],
+                result_boundary[datapoint + feature * (csvm.get_num_data_points() + 10)],
                 fmt::format("datapoint: {} feature: {} at index: {}", datapoint, feature, datapoint + feature * (csvm.get_num_data_points() + 10)));
         }
     }
