@@ -8,6 +8,7 @@
 */
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::trim_left
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
 
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
@@ -17,6 +18,8 @@
 #include <stdexcept>     // std::runtime_error
 #include <system_error>  // std:errc
 #include <type_traits>   // std::is_floating_point_v, std::is_integral_v
+
+namespace plssvm::detail {
 
 /**
  * @brief Converts the string @p str to a value of type @p T.
@@ -57,3 +60,5 @@ template <typename T, typename Exception = std::runtime_error>
     }
     return val;
 }
+
+}  // namespace plssvm::detail
