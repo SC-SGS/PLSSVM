@@ -160,6 +160,8 @@ add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/m
 set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
 add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
 
+## append executables to installed targets
+list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_EXECUTABLE_PREDICT_NAME})
 
 ########################################################################################################################
 ##                                            setup code coverage analysis                                            ##
