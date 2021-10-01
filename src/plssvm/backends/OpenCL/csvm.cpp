@@ -95,6 +95,18 @@ csvm<T>::csvm(const parameter<T> &params) :
     q_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_names.first);
     // assemble kernel name
     svm_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_names.second);
+
+    switch (kernel_) {
+        case kernel_type::linear:
+            kernel_w_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "kernel_w");
+            break;
+        case kernel_type::polynomial:
+            predict_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "predict_points_poly");
+            break;
+        case kernel_type::rbf:
+            predict_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "predict_points_rbf");
+            break;
+    }
 }
 
 template <typename T>
@@ -158,8 +170,8 @@ auto csvm<T>::generate_q() -> std::vector<real_type> {
         const int first_feature = static_cast<int>(device * static_cast<size_type>(num_cols_) / devices_.size());
         const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
 
-        auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * THREAD_BLOCK_SIZE);
         size_type block = std::min<size_type>(THREAD_BLOCK_SIZE, dept_);
+        auto grid = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * block);
 
         switch (kernel_) {
             case kernel_type::linear:
@@ -190,9 +202,9 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     const int first_feature = static_cast<int>(device * static_cast<size_type>(num_cols_) / devices_.size());
     const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
 
-    const auto grid_dim = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE))) * THREAD_BLOCK_SIZE;
-    std::vector<size_type> grid{ grid_dim, grid_dim };
-    std::vector<size_type> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
+    const auto grid_dim = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE)));
+    std::vector<size_type> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };  // TODO: min?
+    std::vector<size_type> grid{ grid_dim * block[0], grid_dim * block[1] };
 
     switch (kernel_) {
         case kernel_type::linear:
@@ -360,6 +372,95 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     }
 
     return std::vector<real_type>(x.begin(), x.begin() + dept_);
+}
+
+template <typename T>
+void csvm<T>::update_w() {
+    w_.resize(num_features_);
+    w_d_ = detail::device_ptr<real_type>(num_features_ + THREAD_BLOCK_SIZE, devices_[0]);
+    w_d_.memset(0);
+
+    detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
+    alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+    const std::vector<size_type> block{ std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_features_)) };
+    const std::vector<size_type> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) * block[0] };
+
+    detail::run_kernel(devices_[0], kernel_w_kernel_[0], grid, block, w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_);
+    detail::device_synchronize(devices_[0]);
+
+    w_d_.memcpy_to_host(w_, 0, num_features_);
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
+    return predict(std::vector<std::vector<real_type>>(1, point))[0];
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    using namespace plssvm::operators;
+
+    if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas provided for prediction!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+    PLSSVM_ASSERT(!points.empty(), "No points to predict");
+    for (const std::vector<real_type> &point : points) {
+        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
+    }
+
+    if (data_d_[0].empty()) {
+        setup_data_on_device();
+    }
+
+    std::vector<real_type> out(points.size());
+
+    if (kernel_ == kernel_type::linear) {
+        // use faster methode in case of the linear kernel function
+        if (w_.empty()) {
+            update_w();
+        }
+        for (size_type i = 0; i < points.size(); ++i) {
+            out[i] = transposed{ w_ } * points[i];
+            out[i] += bias_;
+        }
+    } else {
+        detail::device_ptr<real_type> out_d(points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, devices_[0]);
+        out_d.memset(0);
+
+        std::vector<real_type> transformed_data = base_type::transform_data(points, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, points.size());
+        detail::device_ptr<real_type> point_d(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), devices_[0]);
+        point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
+
+        detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
+        alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+        std::vector<size_type> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * num_data_points_), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * points.size()) };
+        std::vector<size_type> block{ std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())) };
+
+        switch (kernel_) {
+            case kernel_type::linear:
+                break;
+            case kernel_type::polynomial:
+                detail::run_kernel(devices_[0], predict_kernel_[0], grid, block, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_);
+                break;
+            case kernel_type::rbf:
+                detail::run_kernel(devices_[0], predict_kernel_[0], grid, block, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_);
+                break;
+        }
+        detail::device_synchronize(devices_[0]);
+
+        out_d.memcpy_to_host(out, 0, points.size());
+        for (size_type i = 0; i < points.size(); ++i) {
+            out[i] += bias_;
+        }
+    }
+
+    return out;
 }
 
 // explicitly instantiate template class
