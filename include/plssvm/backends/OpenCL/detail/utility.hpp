@@ -115,7 +115,18 @@ std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queu
     }
     err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
     if (!err) {
-        throw backend_exception{ fmt::format("Error building OpenCL program ({})!:\n{}", err) };
+        // Determine the size of the log
+        size_t log_size;
+        clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+
+        // Allocate memory for the log
+        char *log = (char *) malloc(log_size);
+
+        // Get the log
+        clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+
+        // Print the log
+        throw backend_exception{ fmt::format("Error building OpenCL program ({})!: {}\n", err, log) };
     }
 
     // build kernels
