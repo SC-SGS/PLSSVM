@@ -76,7 +76,7 @@ class csvm : public ::plssvm::csvm<T> {
     /**
      * @brief updates the `w_` vector to the current data and alpha values.
      */
-    virtual void update_w();
+    virtual void update_w() override;
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CUDA @p device.
