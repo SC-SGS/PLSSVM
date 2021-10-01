@@ -6,57 +6,71 @@ project(ParallelLeastSquaresSupportVectorMachine
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
 
-include(${PROJECT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
 ## configure version file
 configure_file(
-        ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in
-        ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp
         @ONLY
 )
 
-
+########################################################################################################################
+##                                      create and set necessary base properties                                      ##
+########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/csvm_IO.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter_train.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter_predict.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm_IO.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
 )
 
-
-## create base library
+## create base library: linked against all backend libraries
 set(PLSSVM_BASE_LIBRARY_NAME svm-base)
 add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
+## create all library: one target against all backends are linked
 set(PLSSVM_ALL_LIBRARY_NAME svm-all)
 add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
-
 
 ## create list of targets to install
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_ALL_LIBRARY_NAME} ${PLSSVM_BASE_LIBRARY_NAME})
 
-
-# set library cxx standard and include directory
-target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
+## set include directory
 target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         )
 
+# set library cxx standard
+target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
+## additional base library compile options
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
+## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
+## enable additional optimization flags only in RELEASE mode
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-ffast-math -march=native>)
+#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion) # -Wshadow -Wundef -Wformat=2 -Wformat-truncation
+# TODO:
 
+
+########################################################################################################################
+##                                    check for optional and necessary dependencies                                   ##
+########################################################################################################################
 # check for OpenMP (not for the backend!)
 find_package(OpenMP QUIET)
 if(OPENMP_FOUND)
+    message(STATUS "Found OpenMP to speed up file parsing.")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()
 
-
 ## setup dependencies
 include(FetchContent)
-# try finding cxxopts
+
+## try finding cxxopts
 find_package(cxxopts QUIET)
 if(cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
@@ -78,7 +92,7 @@ else()
             )
 endif()
 
-# try finding fast_float
+## try finding fast_float
 find_package(fast_float QUIET)
 if(fast_float_FOUND)
     message(STATUS "Found package fast_float.")
@@ -106,7 +120,7 @@ else()
             )
 endif()
 
-# try finding fmt
+## try finding fmt
 find_package(fmt QUIET)
 if(fmt_FOUND)
     message(STATUS "Found package fmt.")
@@ -136,31 +150,21 @@ set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CO
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 
-## additional base library compile options
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
-## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
-## enable additional optimization flags only in RELEASE mode
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-ffast-math -march=native>)
-#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion) # -Wshadow -Wundef -Wformat=2 -Wformat-truncation
-
-
-## add assert option
-option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set" OFF)
-if(PLSSVM_ENABLE_ASSERTS)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
-endif()
-
+########################################################################################################################
+##                                                 create executables                                                 ##
+########################################################################################################################
 ## create train executable
 set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
-add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
+add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_train.cpp)
 ## create predict executable
 set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
-add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
+add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
 
 
-## setup code coverage analysis
-# coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
+########################################################################################################################
+##                                            setup code coverage analysis                                            ##
+########################################################################################################################
+## coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 if(uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
     # must be linux
@@ -198,13 +202,17 @@ if(uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
             DEPENDS clean
             COMMENT "remove all coverage files"
             COMMAND ${CMAKE_MAKE_PROGRAM} clean
-            COMMAND ${CMAKE_COMMAND} -P "${PROJECT_SOURCE_DIR}/cmake/delete_coverage_files.cmake"
+            COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake"
             TARGET clean_coverage
     )
 endif()
 
 
-# the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
+########################################################################################################################
+##                                         parse target platform information                                          ##
+########################################################################################################################
+## the target platforms and architectures must either be set using the CMake command line option
+## PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
 if(DEFINED PLSSVM_TARGET_PLATFORMS)
     set(PLSSVM_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The target platforms to compile for." FORCE)
 elseif(DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
@@ -213,13 +221,13 @@ else()
     message(FATAL_ERROR "PLSSVM_TARGET_PLATFORMS must be defined (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel\"!")
 endif()
 
-# PLSSVM_TARGET_PLATFORMS must not be empty
+## PLSSVM_TARGET_PLATFORMS must not be empty
 if(PLSSVM_TARGET_PLATFORMS STREQUAL "")
     message(FATAL_ERROR "PLSSVM_TARGET_PLATFORMS must not be empty!")
 endif()
 
-# parse provided target platforms
-include(${PROJECT_SOURCE_DIR}/cmake/parse_architecture_info.cmake)
+## parse provided target platforms
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/parse_architecture_info.cmake)
 foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
     if(PLSSVM_PLATFORM MATCHES "^cpu")
         # parse provided CPU architectures
@@ -254,33 +262,9 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
 endforeach()
 
 
-## set specific thread block sizes if requested
-if(DEFINED ENV{PLSSVM_THREAD_BLOCK_SIZE})
-    set(PLSSVM_THREAD_BLOCK_SIZE $ENV{PLSSVM_THREAD_BLOCK_SIZE} CACHE STRING "The used thread block size." FORCE)
-endif()
-if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
-    if (PLSSVM_THREAD_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_THREAD_BLOCK_SIZE GREATER 0)
-        # add target definition
-        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
-    else()
-        message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
-    endif()
-endif()
-
-## set specific internal block sizes of requested
-if(DEFINED ENV{PLSSVM_INTERNAL_BLOCK_SIZE})
-    set(PLSSVM_INTERNAL_BLOCK_SIZE $ENV{PLSSVM_INTERNAL_BLOCK_SIZE} CACHE STRING "The used internal block size." FORCE)
-endif()
-if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
-    if (PLSSVM_INTERNAL_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_INTERNAL_BLOCK_SIZE GREATER 0)
-        # add target definition
-        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
-    else()
-        message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
-    endif()
-endif()
-
-
+########################################################################################################################
+##                                            check for and enable backends                                           ##
+########################################################################################################################
 ## check for OpenMP backend
 set(PLSSVM_ENABLE_OPENMP_BACKEND AUTO CACHE STRING "Enable OpenMP Backend")
 set_property(CACHE PLSSVM_ENABLE_OPENMP_BACKEND PROPERTY STRINGS AUTO ON OFF)
@@ -309,19 +293,59 @@ if(PLSSVM_ENABLE_SYCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_BACKEND)
     add_subdirectory(src/plssvm/backends/SYCL)
 endif()
 
-
 ## check if ANY backend is available/has been enabled
 get_target_property(PLSSVM_LINKED_BACKENDS ${PLSSVM_ALL_LIBRARY_NAME} INTERFACE_LINK_LIBRARIES)
 if(NOT PLSSVM_LINKED_BACKENDS)
     message(FATAL_ERROR "At least one backend must be available!")
 endif()
 
-
 ## link backends against executables
 target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 
+########################################################################################################################
+##                                         add additional compile definitions                                         ##
+########################################################################################################################
+## add assert option
+option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set." OFF)
+if(PLSSVM_ENABLE_ASSERTS)
+    message(STATUS "Enable additional debugging assertions.")
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
+endif()
+
+## set specific thread block sizes if requested
+if(DEFINED ENV{PLSSVM_THREAD_BLOCK_SIZE})
+    set(PLSSVM_THREAD_BLOCK_SIZE $ENV{PLSSVM_THREAD_BLOCK_SIZE} CACHE STRING "The used thread block size." FORCE)
+endif()
+if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
+    if (PLSSVM_THREAD_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_THREAD_BLOCK_SIZE GREATER 0)
+        message(STATUS "Set THREAD_BLOCK_SIZE to ${PLSSVM_THREAD_BLOCK_SIZE}.")
+        # add target definition
+        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
+    else()
+        message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
+    endif()
+endif()
+
+## set specific internal block sizes of requested
+if(DEFINED ENV{PLSSVM_INTERNAL_BLOCK_SIZE})
+    set(PLSSVM_INTERNAL_BLOCK_SIZE $ENV{PLSSVM_INTERNAL_BLOCK_SIZE} CACHE STRING "The used internal block size." FORCE)
+endif()
+if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
+    if (PLSSVM_INTERNAL_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_INTERNAL_BLOCK_SIZE GREATER 0)
+        message(STATUS "Set INTERNAL_BLOCK_SIZE to ${PLSSVM_INTERNAL_BLOCK_SIZE}.")
+        # add target definition
+        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
+    else()
+        message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
+    endif()
+endif()
+
+
+########################################################################################################################
+##                                          check for Link Time Optimization                                          ##
+########################################################################################################################
 ## enable Link Time Optimization (LTO)
 option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
 if(PLSSVM_ENABLE_LTO)
@@ -337,14 +361,18 @@ if(PLSSVM_ENABLE_LTO)
 endif()
 
 
-## enable documentation generation with doxygen
+########################################################################################################################
+##                                    enable documentation generation via doxygen                                     ##
+########################################################################################################################
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if(PLSSVM_ENABLE_DOCUMENTATION)
     add_subdirectory(docs)
 endif()
 
 
-## enable testing
+########################################################################################################################
+##                                           enable testing via google test                                           ##
+########################################################################################################################
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
     enable_testing()
@@ -352,17 +380,9 @@ if(PLSSVM_ENABLE_TESTING)
 endif()
 
 
-## generate scripts
-option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings." ON)
-if(PLSSVM_GENERATE_TIMINGSCRIPT)
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-        ${CMAKE_BINARY_DIR}/time.sh
-        @ONLY
-    )
-endif()
-
-## print summary
+########################################################################################################################
+##                                            print short (backend) summary                                           ##
+########################################################################################################################
 message(STATUS "Enabled backends with respective targets:")
 if(TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENMP_BACKEND_SUMMARY_STRING}")
@@ -378,26 +398,29 @@ if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 endif()
 
 
-# install all necessary library targets
+########################################################################################################################
+##                                           add support for `make install`                                           ##
+########################################################################################################################
+## install all necessary library targets
 install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         EXPORT plssvm_Targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared libraries or header files
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared libraries files
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
         )
 
-# mark header to install via 'make install'
-install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include/"
+## mark header to install via 'make install'
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         )
-# only mark fmt headers to install if build via FetchContent
+## only mark fmt headers to install if build via FetchContent
 if(NOT fmt_FOUND)
     install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
             )
 endif()
 
-# manage version comparison
+## manage version comparison
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "plssvmConfigVersion.cmake"
@@ -405,22 +428,38 @@ write_basic_package_version_file(
         COMPATIBILITY SameMajorVersion
 )
 
-# generate configuration file
+## generate configuration file
 configure_package_config_file(
-        "${PROJECT_SOURCE_DIR}/cmake/plssvmConfig.cmake.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvmConfig.cmake.in"
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 
-# create and copy install-targets file
+## create and copy install-targets file
 install(EXPORT plssvm_Targets
         FILE plssvmTargets.cmake
         NAMESPACE plssvm::
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
         )
 
-# create file containing the build configuration and version information
+## create file containing the build configuration and version information
 install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
         )
+
+
+
+
+
+# TODO: separate repo?
+## generate scripts
+option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings." ON)
+if(PLSSVM_GENERATE_TIMINGSCRIPT)
+    configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
+            ${CMAKE_BINARY_DIR}/time.sh
+            @ONLY
+    )
+endif()
+
