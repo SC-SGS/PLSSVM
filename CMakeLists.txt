@@ -191,7 +191,16 @@ if(uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
     # add executables as coverage target
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
-    #TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
+
+    # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
+    add_custom_target(clean_coverage)
+    add_custom_command(
+            DEPENDS clean
+            COMMENT "remove all coverage files"
+            COMMAND ${CMAKE_MAKE_PROGRAM} clean
+            COMMAND ${CMAKE_COMMAND} -P "${PROJECT_SOURCE_DIR}/cmake/delete_coverage_files.cmake"
+            TARGET clean_coverage
+    )
 endif()
 
 
