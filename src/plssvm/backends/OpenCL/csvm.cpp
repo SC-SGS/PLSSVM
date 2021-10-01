@@ -434,8 +434,8 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
         detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
         alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
 
-        std::vector<size_type> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * num_data_points_), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * points.size()) };
         std::vector<size_type> block{ std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())) };
+        std::vector<size_type> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * block[0]), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * block[1]) };
 
         switch (kernel_) {
             case kernel_type::linear:
