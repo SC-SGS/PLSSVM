@@ -5,6 +5,8 @@ project(ParallelLeastSquaresSupportVectorMachine
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
+
+include(${PROJECT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
 ## configure version file
@@ -149,6 +151,49 @@ if(PLSSVM_ENABLE_ASSERTS)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
 endif()
 
+## create train executable
+set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
+add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
+## create predict executable
+set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
+add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
+
+
+## setup code coverage analysis
+# coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if(uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
+    # must be linux
+    if(WIN32 OR APPLE)
+        message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
+    endif()
+    # must be GCC
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        message(FATAL_ERROR "Only GCC is supported for the coverage analysis.")
+    endif()
+
+    message(STATUS "Enable code coverage analysis using lcov.")
+
+    # Create the coverage target. Run coverage tests with 'make coverage'
+    add_custom_target(coverage
+        COMMAND lcov --zerocounters  --directory .
+        COMMAND lcov --capture -d . --initial --output-file test_base.info
+        COMMAND mkdir -p coverage
+        COMMAND ${CMAKE_MAKE_PROGRAM} test || true
+        COMMAND lcov --capture -d . --output-file test_test.info
+        COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
+        COMMAND lcov --remove  test_total.info '/usr/*' '*/build/*' '*/tests/*' -o test_clean.info
+        COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+
+    # add executables as coverage target
+    add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
+    add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
+    #TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
+endif()
+
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
 if(DEFINED PLSSVM_TARGET_PLATFORMS)
@@ -263,13 +308,8 @@ if(NOT PLSSVM_LINKED_BACKENDS)
 endif()
 
 
-## create train executable
-set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
-add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
+## link backends against executables
 target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
-## create predict executable
-set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
-add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
 target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 
@@ -285,35 +325,6 @@ if(PLSSVM_ENABLE_LTO)
     else()
         message(STATUS "Interprocedural optimization (IPO/LTO) requested but not supported: ${PLSSVM_LTO_ERROR}")
     endif()
-endif()
-
-
-# TODO: only in Release and with GCC
-## setup code coverage analysis
-option(PLSSVM_ENABLE_COV "Enable gcov in DEBUG (Linux builds only)" OFF)
-if(PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
-    # TODO: don't set global?
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
-
-    # Create the gcov target. Run coverage tests with 'make cov'
-    add_custom_target(gcov
-            COMMAND lcov --zerocounters  --directory .
-            COMMAND lcov --capture -d . --initial --output-file test_base.info
-            COMMAND mkdir -p coverage
-            COMMAND ${CMAKE_MAKE_PROGRAM} test || true
-            COMMAND lcov --capture -d . --output-file test_test.info
-            COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
-            COMMAND lcov --remove  test_total.info '/usr/*' '*/build/*' '*/tests/*' -o test_clean.info
-            COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Testcoverage" --show-details --legend
-            BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            )
-
-    add_dependencies(gcov ${PLSSVM_EXECUTABLE_TRAIN_NAME})
-    add_dependencies(gcov ${PLSSVM_EXECUTABLE_PREDICT_NAME})
-    #TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
 endif()
 
 

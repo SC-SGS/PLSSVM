@@ -83,9 +83,9 @@ else()
 endif()
 
 
-# add to coverage as dependency
-if(TARGET gcov)
-    add_dependencies(gcov ${PLSSVM_BASE_TEST_NAME})
+# add test as coverage dependency
+if(TARGET coverage)
+    add_dependencies(coverage ${PLSSVM_BASE_TEST_NAME})
 endif()
 
 include(GoogleTest)
