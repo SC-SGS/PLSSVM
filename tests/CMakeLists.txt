@@ -1,5 +1,9 @@
 ## setup testing wit GoogleTest
-if(PLSSVM_BUILD_DEPENDENCIES)
+find_package(GTest QUIET)
+if(GTEST_FOUND)
+    message(STATUS "Found package GTest.")
+else()
+    message(STATUS "Couldn't find package GTest. Building from source...")
     # fetch testing framework GoogleTest
     include(FetchContent)
     FetchContent_Declare(googletest
@@ -9,10 +13,11 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-else()
-    # use installed GoogleTest
-    find_package(GTest REQUIRED)
+    FetchContent_GetProperties(googletest)
+    if(NOT googletest_POPULATED)
+        FetchContent_Populate(googletest)
+        add_subdirectory(${googletest_SOURCE_DIR} ${googletest_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif()
 endif()
 
 
@@ -78,9 +83,9 @@ else()
 endif()
 
 
-# add to coverage as dependency
-if(TARGET gcov)
-    add_dependencies(gcov ${PLSSVM_BASE_TEST_NAME})
+# add test as coverage dependency
+if(TARGET coverage)
+    add_dependencies(coverage ${PLSSVM_BASE_TEST_NAME})
 endif()
 
 include(GoogleTest)

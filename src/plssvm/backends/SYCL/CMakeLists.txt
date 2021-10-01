@@ -50,7 +50,7 @@ if("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "hipSYCL")
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
 elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
     # enable DPC++ SYCL support
-    target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl -ffast-math)
+    target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
     target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
 
     # TODO: test (somehow?)
@@ -85,10 +85,15 @@ endif()
 # link base library against SYCL library
 target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# link SYCL library against executable
+# set compile definition that the SYCL backend is available
 target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+
+# link against interface library
+target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+
+# mark backend library as install target
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_LIBRARY_NAME}")
+set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 
 # generate summary string

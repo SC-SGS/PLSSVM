@@ -5,12 +5,16 @@ project(ParallelLeastSquaresSupportVectorMachine
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
+
+include(${PROJECT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
 ## configure version file
-set(CONFIG_IN ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in)
-set(CONFIG_OUT ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp)
-configure_file(${CONFIG_IN} ${CONFIG_OUT} @ONLY)
+configure_file(
+        ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in
+        ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp
+        @ONLY
+)
 
 
 ## set base sources
@@ -22,27 +26,42 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter_predict.cpp
 )
 
+
 ## create base library
 set(PLSSVM_BASE_LIBRARY_NAME svm-base)
 add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
+set(PLSSVM_ALL_LIBRARY_NAME svm-all)
+add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
+
+
+## create list of targets to install
+set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_ALL_LIBRARY_NAME} ${PLSSVM_BASE_LIBRARY_NAME})
+
 
 # set library cxx standard and include directory
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        )
+
 
 # check for OpenMP (not for the backend!)
-find_package(OpenMP)
+find_package(OpenMP QUIET)
 if(OPENMP_FOUND)
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()
 
-# if OFF, do not build dependencies but use the already installed ones
-option(PLSSVM_BUILD_DEPENDENCIES "Automatically build all dependencies." ON)
 
 ## setup dependencies
-if(PLSSVM_BUILD_DEPENDENCIES)
-    include(FetchContent)
+include(FetchContent)
+# try finding cxxopts
+find_package(cxxopts QUIET)
+if(cxxopts_FOUND)
+    message(STATUS "Found package cxxopts.")
+else()
+    message(STATUS "Couldn't find package cxxopts. Building from source ...")
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
@@ -53,13 +72,18 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     )
     FetchContent_MakeAvailable(cxxopts)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
-else()
-    # use installed cxxopts
-    find_package(cxxopts REQUIRED)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
 endif()
 
-if(PLSSVM_BUILD_DEPENDENCIES)
+# try finding fast_float
+find_package(fast_float QUIET)
+if(fast_float_FOUND)
+    message(STATUS "Found package fast_float.")
+else()
+    message(STATUS "Couldn't find package fast_float. Building from source ...")
     # fetch float parsing library fast_float
     FetchContent_Declare(fast_float
             GIT_REPOSITORY          https://github.com/fastfloat/fast_float
@@ -69,15 +93,25 @@ if(PLSSVM_BUILD_DEPENDENCIES)
             set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
             set(FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
     )
-    FetchContent_MakeAvailable(fast_float)
+    FetchContent_MakeAvailable(fast_float) # TODO: remove fast_float includes from public header
+#    FetchContent_GetProperties(fast_float)
+#    if(NOT fast_float_POPULATED)
+#        FetchContent_Populate(fast_float)
+#        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
+#    endif()
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
-else()
-    # use installed fast_float
-    find_package(fast_float REQUIRED)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
 endif()
 
-if(PLSSVM_BUILD_DEPENDENCIES)
+# try finding fmt
+find_package(fmt QUIET)
+if(fmt_FOUND)
+    message(STATUS "Found package fmt.")
+else()
+    message(STATUS "Couldn't find package fmt. Building from source ...")
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
@@ -91,10 +125,12 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
-else()
-    # use installed fmt
-    find_package(fmt REQUIRED)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
+    # append fmt to installed targets if build from source
+    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
@@ -102,7 +138,9 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
+## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
+## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-ffast-math -march=native>)
 #target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion) # -Wshadow -Wundef -Wformat=2 -Wformat-truncation
 
@@ -113,24 +151,31 @@ if(PLSSVM_ENABLE_ASSERTS)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
 endif()
 
-
-## create main executables
+## create train executable
 set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
-set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
 add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_train.cpp)
+## create predict executable
+set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
 add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/main_predict.cpp)
 
-OPTION(PLSSVM_ENABLE_COV "Enable gcov in DEBUG (Linux builds only)" OFF)
-IF (PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
-  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
-  SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
-#   set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -Xcompiler 'fprofile-arcs -ftest-coverage'")
 
+## setup code coverage analysis
+# coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if(uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
+    # must be linux
+    if(WIN32 OR APPLE)
+        message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
+    endif()
+    # must be GCC
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        message(FATAL_ERROR "Only GCC is supported for the coverage analysis.")
+    endif()
 
+    message(STATUS "Enable code coverage analysis using lcov.")
 
-    # Create the gcov target. Run coverage tests with 'make cov'
-    add_custom_target(gcov
+    # Create the coverage target. Run coverage tests with 'make coverage'
+    add_custom_target(coverage
         COMMAND lcov --zerocounters  --directory .
         COMMAND lcov --capture -d . --initial --output-file test_base.info
         COMMAND mkdir -p coverage
@@ -138,43 +183,25 @@ IF (PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
         COMMAND lcov --capture -d . --output-file test_test.info
         COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
         COMMAND lcov --remove  test_total.info '/usr/*' '*/build/*' '*/tests/*' -o test_clean.info
-        COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Testcoverage" --show-details --legend
+        COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
         BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         )
 
-    add_dependencies(gcov ${PLSSVM_EXECUTABLE_TRAIN_NAME})
-    add_dependencies(gcov ${PLSSVM_EXECUTABLE_PREDICT_NAME})
+    # add executables as coverage target
+    add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
+    add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
 
-
-#TODO: remove ${CMAKE_BINARY_DIR}/**/*.gcno  ${CMAKE_BINARY_DIR}/**/*.gcda in cleanup
-
-
-
-    # llvm-cov
-# add_custom_target(${TARGET_NAME}-ccov-preprocessing
-#     COMMAND LLVM_PROFILE_FILE=${TARGET_NAME}.profraw $<TARGET_FILE:${TARGET_NAME}>
-#     COMMAND llvm-profdata merge -sparse ${TARGET_NAME}.profraw -o ${TARGET_NAME}.profdata
-#     DEPENDS ${TARGET_NAME})
-
-# add_custom_target(${TARGET_NAME}-ccov-show
-#     COMMAND llvm-cov show $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata -show-line-counts-or-regions
-#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
-
-# add_custom_target(${TARGET_NAME}-ccov-report
-#     COMMAND llvm-cov report $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata
-#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
-
-# add_custom_target(${TARGET_NAME}-ccov
-#     COMMAND llvm-cov show $<TARGET_FILE:${TARGET_NAME}> -instr-profile=${TARGET_NAME}.profdata -show-line-counts-or-regions -output-dir=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-llvm-cov -format="html"
-#     DEPENDS ${TARGET_NAME}-ccov-preprocessing)
-
-# add_custom_command(TARGET ${TARGET_NAME}-ccov POST_BUILD
-#     COMMAND ;
-#     COMMENT "Open ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}-llvm-cov/index.html in your browser to view the coverage report."
-# )
-
-ENDIF(PLSSVM_ENABLE_COV AND NOT WIN32 AND NOT APPLE)
+    # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
+    add_custom_target(clean_coverage)
+    add_custom_command(
+            DEPENDS clean
+            COMMENT "remove all coverage files"
+            COMMAND ${CMAKE_MAKE_PROGRAM} clean
+            COMMAND ${CMAKE_COMMAND} -P "${PROJECT_SOURCE_DIR}/cmake/delete_coverage_files.cmake"
+            TARGET clean_coverage
+    )
+endif()
 
 
 # the target platforms and architectures must either be set using the CMake command line option PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
@@ -227,7 +254,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
 endforeach()
 
 
-## set specific thread block sizes of requested
+## set specific thread block sizes if requested
 if(DEFINED ENV{PLSSVM_THREAD_BLOCK_SIZE})
     set(PLSSVM_THREAD_BLOCK_SIZE $ENV{PLSSVM_THREAD_BLOCK_SIZE} CACHE STRING "The used thread block size." FORCE)
 endif()
@@ -284,11 +311,15 @@ endif()
 
 
 ## check if ANY backend is available/has been enabled
-get_target_property(PLSSVM_LINKED_BACKENDS svm-train LINK_LIBRARIES)
-get_target_property(PLSSVM_LINKED_BACKENDS svm-predict LINK_LIBRARIES)
+get_target_property(PLSSVM_LINKED_BACKENDS ${PLSSVM_ALL_LIBRARY_NAME} INTERFACE_LINK_LIBRARIES)
 if(NOT PLSSVM_LINKED_BACKENDS)
     message(FATAL_ERROR "At least one backend must be available!")
 endif()
+
+
+## link backends against executables
+target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 
 ## enable Link Time Optimization (LTO)
@@ -301,7 +332,7 @@ if(PLSSVM_ENABLE_LTO)
         set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     else()
-        message(STATUS "Interprocedural optimization (IPO/LTO) not supported: ${PLSSVM_LTO_ERROR}")
+        message(STATUS "Interprocedural optimization (IPO/LTO) requested but not supported: ${PLSSVM_LTO_ERROR}")
     endif()
 endif()
 
@@ -327,8 +358,8 @@ if(PLSSVM_GENERATE_TIMINGSCRIPT)
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
         ${CMAKE_BINARY_DIR}/time.sh
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-        @ONLY)
+        @ONLY
+    )
 endif()
 
 ## print summary
@@ -346,3 +377,50 @@ if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING}")
 endif()
 
+
+# install all necessary library targets
+install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
+        EXPORT plssvm_Targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared libraries or header files
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared libraries files
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
+        )
+
+# mark header to install via 'make install'
+install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+# only mark fmt headers to install if build via FetchContent
+if(NOT fmt_FOUND)
+    install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+            )
+endif()
+
+# manage version comparison
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+        "plssvmConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+)
+
+# generate configuration file
+configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/plssvmConfig.cmake.in"
+        "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+
+# create and copy install-targets file
+install(EXPORT plssvm_Targets
+        FILE plssvmTargets.cmake
+        NAMESPACE plssvm::
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+        )
+
+# create file containing the build configuration and version information
+install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
+        "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+        )

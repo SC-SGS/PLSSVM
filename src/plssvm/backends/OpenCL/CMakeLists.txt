@@ -35,10 +35,15 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE
 # set kernel file directory
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/")
 
-# link OpenCL library against executable
+# set compile definition that the OpenCL backend is available
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_OPENCL_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
+
+# link against interface library
+target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
+
+# mark backend library as install target
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME}")
+set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 
 # generate summary string

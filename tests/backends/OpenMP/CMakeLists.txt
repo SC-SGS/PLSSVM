@@ -29,7 +29,7 @@ target_link_libraries(${PLSSVM_OPENMP_TEST_NAME} PRIVATE GTest::gtest_main GTest
 # add tests
 gtest_add_tests(TARGET ${PLSSVM_OPENMP_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
 
-# add to coverage as dependencie
-if(TARGET gcov)
-    add_dependencies(gcov ${PLSSVM_OPENMP_TEST_NAME})
+# add test as coverage dependency
+if(TARGET coverage)
+    add_dependencies(coverage ${PLSSVM_OPENMP_TEST_NAME})
 endif()

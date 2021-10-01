@@ -34,10 +34,15 @@ target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC OpenMP::OpenM
 # link base library against OpenMP library
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# link OpenMP library against executable
+# set compile definition that the OpenMP backend is available
 target_compile_definitions(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
-target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
+
+# link against interface library
+target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
+
+# mark backend library as install target
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME}")
+set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 
 # generate summary string
