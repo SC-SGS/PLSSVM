@@ -154,24 +154,8 @@ TYPED_TEST(OpenCL_CSVM, predict) {
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
 
-    params.parse_model_file(TEST_PATH "/data/models/500x200.libsvm.model");
+    params.parse_model_file(TEST_PATH "/data/models/500x200.libsvm." + fmt::format("{}", TypeParam::kernel) + ".model");
     params.parse_test_file(TEST_PATH "/data/libsvm/500x200.libsvm.test");
-
-    std::ifstream model_ifs{ TEST_PATH "/data/models/500x200.libsvm.model" };
-    std::string correct_model((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
-
-    // permute correct model
-    std::string new_model{ correct_model };
-    plssvm::detail::replace_all(new_model, "kernel_type linear", fmt::format("kernel_type {}", TypeParam::kernel));
-
-    // create temporary file with permuted model specification
-    std::string tmp_model_file = util::create_temp_file();
-    std::ofstream ofs{ tmp_model_file };
-    ofs << new_model;
-    ofs.close();
-
-    // parse permuted model file
-    params.parse_model_file(tmp_model_file);
 
     // create C-SVM using the OpenCL backend
     mock_opencl_csvm csvm_opencl{ params };
@@ -183,7 +167,7 @@ TYPED_TEST(OpenCL_CSVM, predict) {
     std::vector<real_type> predicted_values_real = csvm_opencl.predict(*params.test_data_ptr);
 
     // read correct prediction
-    std::ifstream ifs(fmt::format("{}{}.{}", TEST_PATH, "/data/predict/500x200.libsvm.predict", TypeParam::kernel));
+    std::ifstream ifs(TEST_PATH "/data/predict/500x200.libsvm.predict");
     std::string line;
     std::vector<real_type> correct_values;
     correct_values.reserve(500);
@@ -200,9 +184,6 @@ TYPED_TEST(OpenCL_CSVM, predict) {
             EXPECT_LT(predicted_values_real[i], real_type{ 0 });
         }
     }
-
-    // remove temporary file
-    std::filesystem::remove(tmp_model_file);
 }
 
 // check whether the accuracy calculation is correct
@@ -217,7 +198,7 @@ TYPED_TEST(OpenCL_CSVM, accuracy) {
     // create C-SVM using the OpenCL backend
     mock_opencl_csvm csvm_opencl{ params };
     using real_type = typename decltype(csvm_opencl)::real_type;
-    using size_type = typename decltype(csvm_opencl)::real_type;
+    using size_type = typename decltype(csvm_opencl)::size_type;
 
     // learn
     csvm_opencl.learn();
