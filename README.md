@@ -14,8 +14,8 @@ The currently available backends are:
 General dependencies:
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.18 or newer
-- [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if `PLSSVM_BUILD_DEPENDENCIES` is set to `ON`)
-- [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `PLSSVM_BUILD_DEPENDENCIES` is set to `ON`)
+- [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 
 Additional dependencies for the OpenMP backend:
@@ -29,12 +29,12 @@ Additional dependencies for the OpenCL backend:
 - OpenCL runtime and header files
 
 Additional dependencies for the SYCL backend:
-- the code must be compiled with a SYCL capable compiler; currently tested are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
+- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
-### Installing
+### Building
 
 Building the library can be done using the normal CMake approach:
 
@@ -108,20 +108,19 @@ The `[optional_options]` can be one or multiple of:
 
 **Attention:** at least one backend must be enabled and available!    
 
-- `PLSSVM_THREAD_BLOCK_SIZE`: set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_INTERNAL_BLOCK_SIZE`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_BUILD_DEPENDENCIES=ON|OFF` (default: `ON`): automatically build all necessary dependencies 
+- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
+- `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: ON): enable testing using GoogleTest and ctest
-- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions; if `NDEBUG` is **not** defined (e.g. when using `-DCMAKE_BUILD_TYPE=Debug`), the assertions are active regardless of this option
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files 
     - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
     - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point
 
-If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select the Level-Zero as
+If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.
 
 ### Running the tests
@@ -130,6 +129,25 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 
 ```bash
 > ctest
+```
+
+### Generating test coverage results
+
+To enable the generation of test coverage reports using `locv` the library must be compiled using the custom `Coverage` `CMAKE_BUILD_TYPE`.
+Additionally, it's advisable to use smaller test files to shorten the `ctest` step.
+```bash
+> cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS="..." \
+        -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \
+        -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..
+> cmake --build . -- coverage
+```
+The resulting `html` coverage report is located in the `coverage` folder in the build directory.
+
+## Installing
+
+The library supports the `install` target:
+```bash
+> cmake --build . -- install
 ```
 
 ## Usage
@@ -243,8 +261,7 @@ The `--target_platform=automatic` flags works like in the training (`./svm-train
 
 ## Example code for usage as library
 
-A simple C++ program using this library could look like:
-
+A simple C++ program (`main.cpp`) using this library could look like:
 ```cpp
 #include "plssvm/core.hpp"
 
@@ -252,10 +269,13 @@ A simple C++ program using this library could look like:
 #include <iostream>
 #include <vector>
 
-int main(int argc, char *argv[]) {
+int main(i) {
     try {
         // parse SVM parameter from command line
-        plssvm::parameter<double> params{ argc, argv };
+        plssvm::parameter<double> params;
+        params.backend = plssvm::backend_type::cuda;
+        
+        params.parse_train_file("train_file.libsvm");
     
         // create C-SVM (based on selected backend)
         auto svm = plssvm::make_csvm(params);
@@ -271,7 +291,7 @@ int main(int argc, char *argv[]) {
         std::cout << "label: " << svm->predict(point) << std::endl;
         
         // write model file to disk
-        svm->write_model();
+        svm->write_model("model_file.libsvm");
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {
@@ -281,5 +301,17 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 ```
+With a corresponding minimal CMake file:
+```cmake
+cmake_minimum_required(VERSION 3.16)
 
-TODO: correct library version
+project(LibraryUsageExample 
+        LANGUAGES CXX)
+
+find_package(plssvm CONFIG REQUIRED)
+
+add_executable(prog main.cpp)
+
+target_compile_features(prog PUBLIC cxx_std_17)
+target_link_libraries(prog PUBLIC plssvm::svm-all)
+```
