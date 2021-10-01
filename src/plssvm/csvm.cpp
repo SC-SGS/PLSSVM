@@ -14,10 +14,11 @@
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print
 
-#include <chrono>  // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
-#include <memory>  // std::make_shared
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <algorithm>  // std::all_of
+#include <chrono>     // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
+#include <memory>     // std::make_shared
+#include <string>     // std::string
+#include <vector>     // std::vector
 
 namespace plssvm {
 
@@ -53,18 +54,18 @@ void csvm<T>::learn() {
 
     std::vector<real_type> q;
     std::vector<real_type> b = *value_ptr_;
-#pragma omp parallel sections
+    #pragma omp parallel sections
     {
-#pragma omp section  // generate q
+        #pragma omp section  // generate q
         {
             q = generate_q();
         }
-#pragma omp section  // generate right-hand side from equation
+        #pragma omp section  // generate right-hand side from equation
         {
             b.pop_back();
             b -= value_ptr_->back();
         }
-#pragma omp section  // generate bottom right from A
+        #pragma omp section  // generate bottom right from A
         {
             QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
         }
@@ -155,13 +156,12 @@ auto csvm<T>::transform_data(const std::vector<std::vector<real_type>> &matrix, 
 
     const size_type num_features = matrix[0].size();
 
-    for (const std::vector<real_type> &point : matrix) {
-        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
-    }
+    PLSSVM_ASSERT(std::all_of(matrix.begin(), matrix.end(), [=](const std::vector<real_type> &point) { return point.size() == num_features_; }), "Feature sizes mismatch! All features should have size {}!", num_features_);
+
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> vec(num_features * (num_points + boundary));
-#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
     for (size_type col = 0; col < num_features; ++col) {
         for (size_type row = 0; row < num_points; ++row) {
             vec[col * (num_points + boundary) + row] = matrix[row][col];
