@@ -370,7 +370,6 @@ endif()
 
 
 # install all necessary library targets
-message(STATUS "TARGETS: ${PLSSVM_TARGETS_TO_INSTALL}")
 install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         EXPORT plssvm_Targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared libraries or header files
@@ -382,10 +381,11 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
 install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         )
+# only mark fmt headers to install if build via FetchContent
 if(NOT fmt_FOUND)
-install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        )
+    install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+            )
 endif()
 
 # manage version comparison
