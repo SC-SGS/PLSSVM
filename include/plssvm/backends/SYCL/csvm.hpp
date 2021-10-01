@@ -32,6 +32,7 @@ class csvm : public ::plssvm::csvm<T> {
     /// The template base type of the SYCL C-SVM class.
     using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_ptr_;
+    using base_type::bias_;
     using base_type::coef0_;
     using base_type::cost_;
     using base_type::data_ptr_;
@@ -43,6 +44,7 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::print_info_;
     using base_type::QA_cost_;
     using base_type::target_;
+    using base_type::w_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.

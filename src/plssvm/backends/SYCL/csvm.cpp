@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_count, plssvm::detail::cuda::device_synchronize
 #include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/predict.hpp"            // TODO:
 #include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
@@ -188,7 +189,7 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
 
     const auto grid_dim = static_cast<unsigned int>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(boundary_size_)));
-    const ::sycl::range<2> grid{ grid_dim, grid_dim };
+    const ::sycl::range<2> grid{ grid_dim, grid_dim };  // TODO: min?
     const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
     const ::sycl::nd_range<2> execution_range{ grid * block, block };
 
@@ -321,7 +322,6 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             x_d[device].memcpy_to_device(x, 0, dept_);
         }
 
-        // (r = b - A * x)
         if (run % 50 == 49) {
             // r = b
             r_d[0].memcpy_to_device(b, 0, dept_);
@@ -368,6 +368,98 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     return std::vector<real_type>(x.begin(), x.begin() + dept_);
 }
 
+template <typename T>
+void csvm<T>::update_w() {
+    w_.resize(num_features_);
+    w_d_ = detail::device_ptr<real_type>(num_features_ + THREAD_BLOCK_SIZE, devices_[0]);
+    w_d_.memset(0);
+
+    detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
+    alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+    const ::sycl::range<1> grid{ static_cast<size_type>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) };
+    const ::sycl::range<1> block{ std::min<size_type>(THREAD_BLOCK_SIZE, num_features_) };
+    const ::sycl::nd_range<1> execution_range{ grid * block, block };
+
+    devices_[0].parallel_for(execution_range, kernel_w{ w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_ });
+
+    detail::device_synchronize(devices_[0]);
+
+    w_d_.memcpy_to_host(w_, 0, num_features_);
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    using namespace plssvm::operators;
+
+    if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas provided for prediction!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+    PLSSVM_ASSERT(!points.empty(), "No points to predict");
+    for (const std::vector<real_type> &point : points) {
+        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
+    }
+
+    if (data_d_[0].empty()) {
+        setup_data_on_device();
+    }
+
+    std::vector<real_type> out(points.size());
+
+    if (kernel_ == kernel_type::linear) {
+        // use faster methode in case of the linear kernel function
+        if (w_.empty()) {
+            update_w();
+        }
+        for (size_type i = 0; i < points.size(); ++i) {
+            out[i] = transposed{ w_ } * points[i];
+            out[i] += bias_;
+        }
+    } else {
+        detail::device_ptr<real_type> out_d(points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, devices_[0]);
+        out_d.memset(0);
+
+        std::vector<real_type> transformed_data = base_type::transform_data(points, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, points.size());
+        detail::device_ptr<real_type> point_d(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), devices_[0]);
+        point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
+
+        detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
+        alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+        const ::sycl::range<2> block{ std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())) };
+        const ::sycl::range<2> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE))), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE))) };
+        const ::sycl::nd_range<2> execution_range{ grid * block, block };
+
+        switch (kernel_) {
+            case kernel_type::linear:
+                break;
+            case kernel_type::polynomial:
+                devices_[0].submit([&](::sycl::handler &cgh) {
+                    cgh.parallel_for(execution_range, predict_points_poly{ cgh, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_ });
+                });
+                break;
+            case kernel_type::rbf:
+                devices_[0].submit([&](::sycl::handler &cgh) {
+                    cgh.parallel_for(execution_range, predict_points_rbf{ cgh, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_ });
+                });
+                break;
+        }
+        detail::device_synchronize(devices_[0]);
+
+        out_d.memcpy_to_host(out, 0, points.size());
+        for (size_type i = 0; i < points.size(); ++i) {
+            out[i] += bias_;
+        }
+    }
+
+    return out;
+}
+
+// explicitly instantiate template class
 template class csvm<float>;
 template class csvm<double>;
 
