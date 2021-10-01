@@ -113,7 +113,7 @@ class csvm : public ::plssvm::csvm<T> {
     std::vector<detail::device_ptr<real_type>> data_d_{};
     /// The last row of the data matrix.
     std::vector<detail::device_ptr<real_type>> data_last_d_{};
-    /// TODO:
+    /// The normal vector used for speeding up the prediction in case of the linear kernel function saved on the first device.
     detail::device_ptr<real_type> w_d_{};
 
     /// OpenCL kernel for the generate q function compiled for each device.
@@ -121,8 +121,9 @@ class csvm : public ::plssvm::csvm<T> {
     /// OpenCL kernel for the svm kernel function compiled for each device.
     std::vector<detail::kernel> svm_kernel_{};
 
-    /// TODO
+    /// OpenCL kernel for the kernel_w function compiled for each device.
     std::vector<detail::kernel> kernel_w_kernel_{};
+    /// OpenCL kernel for the prediction function compiled for each device.
     std::vector<detail::kernel> predict_kernel_{};
 };
 
