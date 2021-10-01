@@ -64,6 +64,10 @@ target_compile_definitions(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
 
+# mark backend library as install target
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_CUDA_BACKEND_LIBRARY_NAME}")
+set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
+
 
 # generate summary string
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")

@@ -11,7 +11,8 @@ include(${PROJECT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 configure_file(
         ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp.in
         ${CMAKE_SOURCE_DIR}/include/plssvm/version/version.hpp
-        @ONLY)
+        @ONLY
+)
 
 
 ## set base sources
@@ -23,15 +24,25 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/parameter_predict.cpp
 )
 
+
 ## create base library
 set(PLSSVM_BASE_LIBRARY_NAME svm-base)
 add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
 set(PLSSVM_ALL_LIBRARY_NAME svm-all)
 add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
 
+
+## create list of targets to install
+set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_ALL_LIBRARY_NAME} ${PLSSVM_BASE_LIBRARY_NAME})
+
+
 # set library cxx standard and include directory
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        )
+
 
 # check for OpenMP (not for the backend!)
 find_package(OpenMP QUIET)
@@ -40,12 +51,15 @@ if(OPENMP_FOUND)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()
 
-# if OFF, do not build dependencies but use the already installed ones
-option(PLSSVM_BUILD_DEPENDENCIES "Automatically build all dependencies." ON)
 
 ## setup dependencies
-if(PLSSVM_BUILD_DEPENDENCIES)
-    include(FetchContent)
+include(FetchContent)
+# try finding cxxopts
+find_package(cxxopts QUIET)
+if(cxxopts_FOUND)
+    message(STATUS "Found package cxxopts.")
+else()
+    message(STATUS "Couldn't find package cxxopts. Building from source ...")
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
@@ -56,13 +70,18 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     )
     FetchContent_MakeAvailable(cxxopts)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_SOURCE_DIR}/include)
-else()
-    # use installed cxxopts
-    find_package(cxxopts REQUIRED)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
 endif()
 
-if(PLSSVM_BUILD_DEPENDENCIES)
+# try finding fast_float
+find_package(fast_float QUIET)
+if(fast_float_FOUND)
+    message(STATUS "Found package fast_float.")
+else()
+    message(STATUS "Couldn't find package fast_float. Building from source ...")
     # fetch float parsing library fast_float
     FetchContent_Declare(fast_float
             GIT_REPOSITORY          https://github.com/fastfloat/fast_float
@@ -72,15 +91,25 @@ if(PLSSVM_BUILD_DEPENDENCIES)
             set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
             set(FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
     )
-    FetchContent_MakeAvailable(fast_float)
+    FetchContent_MakeAvailable(fast_float) # TODO: remove fast_float includes from public header
+#    FetchContent_GetProperties(fast_float)
+#    if(NOT fast_float_POPULATED)
+#        FetchContent_Populate(fast_float)
+#        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
+#    endif()
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_SOURCE_DIR}/include)
-else()
-    # use installed fast_float
-    find_package(fast_float REQUIRED)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
 endif()
 
-if(PLSSVM_BUILD_DEPENDENCIES)
+# try finding fmt
+find_package(fmt QUIET)
+if(fmt_FOUND)
+    message(STATUS "Found package fmt.")
+else()
+    message(STATUS "Couldn't find package fmt. Building from source ...")
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
@@ -94,10 +123,12 @@ if(PLSSVM_BUILD_DEPENDENCIES)
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fmt_SOURCE_DIR}/include)
-else()
-    # use installed fmt
-    find_package(fmt REQUIRED)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
+    # append fmt to installed targets if build from source
+    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
@@ -307,7 +338,8 @@ if(PLSSVM_GENERATE_TIMINGSCRIPT)
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
         ${CMAKE_BINARY_DIR}/time.sh
-        @ONLY)
+        @ONLY
+    )
 endif()
 
 ## print summary
@@ -325,3 +357,50 @@ if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING}")
 endif()
 
+
+# install all necessary library targets
+message(STATUS "TARGETS: ${PLSSVM_TARGETS_TO_INSTALL}")
+install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
+        EXPORT plssvm_Targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared libraries or header files
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared libraries files
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
+        )
+
+# mark header to install via 'make install'
+install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+if(NOT fmt_FOUND)
+install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+endif()
+
+# manage version comparison
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+        "plssvmConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+)
+
+# generate configuration file
+configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/plssvmConfig.cmake.in"
+        "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+
+# create and copy install-targets file
+install(EXPORT plssvm_Targets
+        FILE plssvmTargets.cmake
+        NAMESPACE plssvm::
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+        )
+
+# create file containing the build configuration and version information
+install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
+        "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+        )
