@@ -74,7 +74,6 @@ data/*
 # data in test folder
 !tests/data/
 tests/data/*
-!tests/data/500x200.libsvm
 !tests/data/models/
 !tests/data/libsvm/
 !tests/data/arff/

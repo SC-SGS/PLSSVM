@@ -112,7 +112,7 @@ class csvm : public ::plssvm::csvm<T> {
     std::vector<detail::device_ptr<real_type>> data_d_{};
     /// The last row of the data matrix.
     std::vector<detail::device_ptr<real_type>> data_last_d_{};
-    /// TODO:
+    /// The normal vector used for speeding up the prediction in case of the linear kernel function saved on the first device.
     detail::device_ptr<real_type> w_d_{};
 };
 
