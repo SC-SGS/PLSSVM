@@ -108,20 +108,14 @@ class csvm {
      * @brief Evaluates the model on the data used for training.
      * @return The fraction of correct labeled training data in percent. ([[nodiscard]])
      */
-    [[nodiscard]] virtual real_type accuracy();  // TODO: move to predict
+    [[nodiscard]] real_type accuracy();
 
     /**
      * @brief Uses the already learned model to predict the class of a (new) data point.
      * @param[in] point the data point to predict
      * @return a negative `real_type` value if the prediction for data point point is the negative class and a positive `real_type` value otherwise ([[nodiscard]])
      */
-    [[nodiscard]] virtual real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
-    /**
-     * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @param[in] points the data points to predict
-     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
-     */
-    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points);
+    [[nodiscard]] real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
 
     /**
      * @brief Uses the already learned model to predict the class of an (new) point
@@ -163,7 +157,13 @@ class csvm {
     /**
      * @brief updates the `w_` vector to the current data and alpha values.
      */
-    virtual void update_w();  // TODO: implement on devices for performance improvement
+    virtual void update_w() = 0;
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @param[in] points the data points to predict
+     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
+     */
+    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) = 0;
 
     //*************************************************************************************************************************************//
     //                                                          kernel functions                                                           //

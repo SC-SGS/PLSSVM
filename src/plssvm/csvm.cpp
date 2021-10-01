@@ -93,61 +93,14 @@ void csvm<T>::learn() {
 }
 
 template <typename T>
-void csvm<T>::update_w() {
-    w_.resize(num_features_);
-    std::fill(w_.begin(), w_.end(), 0.0);
-    for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
-        // w_ += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index];
-        for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
-            w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
-        }
-    }
-}
-
-template <typename T>
 auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
-    using namespace plssvm::operators;
-
-    if (alpha_ptr_ == nullptr) {
-        throw exception{ "No alphas provided for prediction!" };
-    }
-
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
-    PLSSVM_ASSERT((*data_ptr_)[0].size() == point.size(), "Prediction point has different amount of features than training data!");
-
-    real_type temp = bias_;
-
-    if (kernel_ == kernel_type::linear) {
-        // use faster methode in case of the linear kernel function
-        if (w_.empty()) {
-            update_w();
-        }
-        temp += transposed{ w_ } * point;
-    } else {
-        for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
-            temp += (*alpha_ptr_)[data_index] * kernel_function((*data_ptr_)[data_index], point);
-        }
-    }
-
-    return temp;
+    return predict(std::vector<std::vector<real_type>>(1, point))[0];
 }
 
 template <typename T>
 auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
     using namespace plssvm::operators;
     return static_cast<real_type>(sign(predict(point)));
-}
-
-template <typename T>
-auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
-    std::vector<real_type> classes;
-    classes.reserve(points.size());
-    for (const std::vector<real_type> &point : points) {
-        classes.emplace_back(predict(point));
-    }
-    return classes;
 }
 
 template <typename T>

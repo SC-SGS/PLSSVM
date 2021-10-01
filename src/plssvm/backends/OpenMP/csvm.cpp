@@ -136,6 +136,57 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     return alpha;
 }
 
+template <typename T>
+void csvm<T>::update_w() {
+    w_.resize(num_features_, 0.0);
+    std::fill(w_.begin(), w_.end(), 0.0);
+#pragma omp parallel for
+    for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
+        for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+            w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
+        }
+    }
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    using namespace plssvm::operators;
+
+    if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas provided for prediction!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+    PLSSVM_ASSERT(!points.empty(), "No points to predict");
+    for (const std::vector<real_type> &point : points) {
+        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
+    }
+
+    std::vector<real_type> out(points.size(), bias_);
+    if (kernel_ == kernel_type::linear) {
+        // use faster methode in case of the linear kernel function
+        if (w_.empty()) {
+            update_w();
+        }
+    }
+
+#pragma omp parallel for
+    for (size_type point_index = 0; point_index < points.size(); ++point_index) {
+        if (kernel_ == kernel_type::linear) {
+            // use faster methode in case of the linear kernel function
+            out[point_index] += transposed{ w_ } * points[point_index];
+        } else {
+            for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+                out[point_index] += (*alpha_ptr_)[data_index] * base_type::kernel_function((*data_ptr_)[data_index], points[point_index]);
+            }
+        }
+    }
+
+    return out;
+}
+
 // explicitly instantiate template class
 template class csvm<float>;
 template class csvm<double>;

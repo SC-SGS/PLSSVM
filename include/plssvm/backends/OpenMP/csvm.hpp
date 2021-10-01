@@ -29,6 +29,7 @@ class csvm : public ::plssvm::csvm<T> {
     /// The template base type of the OpenMP C-SVM class.
     using base_type = ::plssvm::csvm<T>;
     using base_type::alpha_ptr_;
+    using base_type::bias_;
     using base_type::coef0_;
     using base_type::cost_;
     using base_type::data_ptr_;
@@ -40,6 +41,7 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::print_info_;
     using base_type::QA_cost_;
     using base_type::target_;
+    using base_type::w_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
@@ -52,6 +54,13 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] params struct encapsulating all possible parameters
      */
     explicit csvm(const parameter<T> &params);
+
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @param[in] points the data points to predict
+     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
+     */
+    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
 
   protected:
     void setup_data_on_device() override {
@@ -69,6 +78,11 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
     void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type add);
+
+    /**
+     * @brief updates the `w_` vector to the current data and alpha values.
+     */
+    virtual void update_w() override;
 };
 
 extern template class csvm<float>;

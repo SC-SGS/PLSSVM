@@ -393,11 +393,6 @@ void csvm<T>::update_w() {
 }
 
 template <typename T>
-auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
-    return predict(std::vector<std::vector<real_type>>(1, point))[0];
-}
-
-template <typename T>
 auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 

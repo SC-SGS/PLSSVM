@@ -38,6 +38,8 @@ class mock_csvm : public plssvm::csvm<T> {
     MOCK_METHOD0(setup_data_on_device, void());
     MOCK_METHOD0(generate_q, std::vector<real_type>());
     MOCK_METHOD4(solver_CG, std::vector<real_type>(const std::vector<real_type> &, const size_type, const real_type, const std::vector<real_type> &));
+    MOCK_METHOD0(update_w, void());
+    MOCK_METHOD1(predict, std::vector<real_type>(const std::vector<std::vector<real_type>> &));
 
     // make non-virtual functions publicly visible
     using base_type::kernel_function;

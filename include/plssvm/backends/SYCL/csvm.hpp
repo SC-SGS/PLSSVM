@@ -62,7 +62,12 @@ class csvm : public ::plssvm::csvm<T> {
      */
     ~csvm() override;
 
-    // std::vector<real_type> predict(real_type *, size_type, size_type) override;  // TODO: implement
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @param[in] points the data points to predict
+     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
+     */
+    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
 
   protected:
     void setup_data_on_device() override;
@@ -85,6 +90,11 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in,out] buffer the reduces data
      */
     void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
+
+    /**
+     * @brief updates the `w_` vector to the current data and alpha values.
+     */
+    virtual void update_w() override;
 
     /// The available/used SYCL devices.
     std::vector<::sycl::queue> devices_{};  // TODO: rename
