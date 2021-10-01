@@ -55,7 +55,7 @@ __kernel void predict_points_poly(__global real_type *out_d, __global const real
     const int predict_point_index = get_global_id(1);
 
     real_type temp = 0;
-    if (predict_point_index > num_predict_points) {
+    if (predict_point_index < num_predict_points) {
         for (int feature_index = 0; feature_index < num_features; ++feature_index) {
             if (data_point_index == num_data_points) {
                 temp += data_last_d[feature_index] * points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
@@ -75,7 +75,7 @@ __kernel void predict_points_rbf(__global real_type *out_d, __global const real_
     const int predict_point_index = get_global_id(1);
 
     real_type temp = 0;
-    if (predict_point_index > num_predict_points) {
+    if (predict_point_index < num_predict_points) {
         for (int feature_index = 0; feature_index < num_features; ++feature_index) {
             if (data_point_index == num_data_points) {
                 temp += (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
