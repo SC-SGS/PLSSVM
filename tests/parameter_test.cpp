@@ -6,12 +6,13 @@
 * @brief Tests for the parameter, parameter_train, and parameter_predict classes.
 */
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
-#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/parameter_predict.hpp"      // plssvm::parameter_predict
-#include "plssvm/parameter_train.hpp"        // plssvm::parameter_train
+#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::replace_all
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
+#include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/parameter_predict.hpp"         // plssvm::parameter_predict
+#include "plssvm/parameter_train.hpp"           // plssvm::parameter_train
 
 #include "utility.hpp"  // util::create_temp_file, util::gtest_expect_floating_point_eq, EXPECT_THROW_WHAT
 

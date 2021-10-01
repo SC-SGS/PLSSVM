@@ -14,7 +14,8 @@
 
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/detail/string_utility.hpp"       // plssvm::detail::convert_to, plssvm::detail::replace_all
+#include "plssvm/detail/string_conversion.hpp"    // plssvm::detail::convert_to
+#include "plssvm/detail/string_utility.hpp"       // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 

@@ -106,12 +106,11 @@ else()
             set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
             set(FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
     )
-    FetchContent_MakeAvailable(fast_float) # TODO: remove fast_float includes from public header
-#    FetchContent_GetProperties(fast_float)
-#    if(NOT fast_float_POPULATED)
-#        FetchContent_Populate(fast_float)
-#        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
-#    endif()
+    FetchContent_GetProperties(fast_float)
+    if(NOT fast_float_POPULATED)
+        FetchContent_Populate(fast_float)
+        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif()
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>

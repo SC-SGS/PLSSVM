@@ -13,7 +13,8 @@
 #include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::convert_to
+#include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::convert_to
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 

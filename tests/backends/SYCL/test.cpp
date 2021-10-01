@@ -15,7 +15,8 @@
 #include "plssvm/backends/SYCL/csvm.hpp"               // plssvm::sycl::csvm
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/detail/string_utility.hpp"            // plssvm::detail::replace_all, plssvm::detail::convert_to
+#include "plssvm/detail/string_conversion.hpp"         // plssvm::detail::convert_to
+#include "plssvm/detail/string_utility.hpp"            // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
