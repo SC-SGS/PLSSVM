@@ -1,9 +1,10 @@
-## setup documentation generation with doxygen
-
-# use installed doxygen
+########################################################################################################################
+##                                     setup documentation generation with doxygen                                    ##
+########################################################################################################################
+## use installed doxygen
 find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
 
-# configure doxygen
+## configure doxygen
 set(DOXYGEN_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/docs")
 set(DOXYGEN_IMAGE_PATH "${PROJECT_SOURCE_DIR}/docs/resources")
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "README.md")
@@ -18,7 +19,7 @@ set(DOXYGEN_NUM_PROC_THREADS 0)
 set(DOXYGEN_WARN_NO_PARAMDOC "YES")
 set(DOXYGEN_SORT_MEMBER_DOCS "NO")
 
-# add doxygen as target
+## add doxygen as target
 doxygen_add_docs(
         doc
         "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/README.md"
@@ -26,7 +27,7 @@ doxygen_add_docs(
         COMMENT "Generating API documentation with Doxygen"
 )
 
-# shortcut for index.html
+## create shortcut for index.html
 add_custom_command(
         TARGET doc
         POST_BUILD
