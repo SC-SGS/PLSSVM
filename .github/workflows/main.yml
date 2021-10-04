@@ -1,0 +1,31 @@
+name: Generate documentation
+
+# only trigger this action on specific events
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout repository
+      - name: Checkout PLSSVM
+        uses: actions/checkout@v2
+
+      # mimic CMake's configure step for current setup
+      - name: Configure
+        run: |
+          mkdir build
+          cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON ..
+          make doc
+      # deploy generated documentation using github.io
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc/html
