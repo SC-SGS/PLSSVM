@@ -1,10 +1,12 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
-*
-* @brief Tests for the parameter, parameter_train, and parameter_predict classes.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Tests for the parameter, parameter_train, and parameter_predict classes.
+ */
 
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::replace_all

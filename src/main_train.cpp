@@ -1,13 +1,17 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief TODO: brief description
  */
 
 #include "plssvm/core.hpp"
 
 #include <exception>  // std::exception
-#include <iostream>   // std::clog, std::cerr, std::endl
+#include <iostream>   // std::cerr, std::endl
 
 int main(int argc, char *argv[]) {
     try {

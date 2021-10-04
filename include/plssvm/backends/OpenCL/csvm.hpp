@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Defines a C-SVM using the OpenCL backend.
  */
@@ -16,8 +18,6 @@
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platform.hpp"                       // plssvm::target_platform
-
-#include "CL/cl.h"  // cl_command_queue, cl_kernel
 
 #include <vector>  // std::vector
 

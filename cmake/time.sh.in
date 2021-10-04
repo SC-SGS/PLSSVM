@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
+
+
 DATAGENERATOR="@PROJECT_SOURCE_DIR@/data/generate_data.py"
 PLSSSVM_TRAIN="@CMAKE_BINARY_DIR@/svm-train"
 COLLECT_RUNTIME="@PROJECT_SOURCE_DIR@/utility/collect_runtimes.py"

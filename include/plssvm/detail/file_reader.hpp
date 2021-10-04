@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Implements a file reader class responsible for reading the input file and parsing it into lines.
  */
@@ -27,8 +29,8 @@
 
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ifstream
-#include <ios>          // std::ios::beg, std::ios::end, std::streamsize
-#include <iostream>     // std::cerr
+#include <ios>          // std::ios, std::streamsize
+#include <iostream>     // std::cerr, std::endl
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 

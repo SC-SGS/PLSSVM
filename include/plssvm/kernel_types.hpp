@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Defines all available kernel types.
  */
@@ -16,10 +18,12 @@
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <cmath>    // std::pow, std::exp
+#include <cmath>    // std::pow, std::exp, std::fma
+#include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm {
 

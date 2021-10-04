@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Small wrapper around a OpenCL device pointer and functions.
  */
@@ -12,7 +14,7 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
-#include "CL/cl.h"  // cl_command_queue, cl_mem
+#include "CL/cl.h"  // cl_mem
 
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector

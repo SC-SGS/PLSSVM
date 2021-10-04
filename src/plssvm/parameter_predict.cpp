@@ -1,15 +1,18 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  */
 
 #include "plssvm/parameter_predict.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "cxxopts.hpp"  // command line parsing
+#include "cxxopts.hpp"  // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"   // fmt::print, fmt::format
 
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE

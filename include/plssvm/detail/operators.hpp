@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Defines (arithmetic) functions on [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) (and scalars).
  */
@@ -11,6 +13,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
+#include <cmath>   // std::fma, std::copysign
 #include <vector>  // std::vector
 
 /**

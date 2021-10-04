@@ -1,7 +1,9 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  */
 
 __kernel void device_kernel_q_linear(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const int num_rows, const int first_feature, const int last_feature) {

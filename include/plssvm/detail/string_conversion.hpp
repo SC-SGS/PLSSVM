@@ -1,11 +1,13 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright
-*
-* @brief Implements a conversion function from a string to an arithmetic type.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Implements a conversion function from a string to an arithmetic type.
+ */
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::trim_left
@@ -16,6 +18,7 @@
 
 #include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error
+#include <string_view>   // std::string_view
 #include <system_error>  // std:errc
 #include <type_traits>   // std::is_floating_point_v, std::is_integral_v
 

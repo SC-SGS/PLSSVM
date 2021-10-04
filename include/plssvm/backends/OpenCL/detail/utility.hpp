@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Utility functions specific to the OpenCL backend.
  */
@@ -19,13 +21,14 @@
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception
 
-#include "CL/cl.h"     // cl_program, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, cl_kernel, clCreateKernel
-                       // clReleaseProgram, cl_uint, clSetKernelArg
+#include "CL/cl.h"     // cl_device_id, cl_program, cl_kernel, cl_uint, cl_int, CL_QUEUE_DEVICE, CL_DEVICE_NAME, CL_PROGRAM_BUILD_LOG
+                       // clGetCommandQueueInfo, clGetDeviceInfo, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo,
+                       // clCreateKernel, clReleaseProgram, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
 #include "fmt/core.h"  // fmt::format
 
 #include <cstddef>  // std::size_t
 #include <fstream>  // std::ifstream
-#include <ios>      // std::ios, std::streamsize
+#include <ios>      // std::iosf, std::streamsize
 #include <string>   // std::string
 #include <utility>  // std::forward, std::pair, std::make_pair
 #include <vector>   // std::vector
@@ -113,8 +116,10 @@ std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queu
     if (!err) {
         throw backend_exception{ fmt::format("Error creating OpenCL program ({})!", err) };
     }
+    // TODO: add optimization flags?
     err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
     if (!err) {
+        // TODO: c++-ify
         // Determine the size of the log
         size_t log_size;
         clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);

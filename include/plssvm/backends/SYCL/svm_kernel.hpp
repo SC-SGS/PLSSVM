@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Defines the kernel functions for the C-SVM using the SYCL backend.
  */
@@ -15,10 +17,12 @@
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::handler, sycl::accessor, sycl::access::mode, sycl::access::target, sycl::range, sycl::group_barrier, sycl::pow,
                           // sycl::exp, sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
 
+#include <cstddef>  // std::size_t
+
 namespace plssvm::sycl {
 
 /// Unsigned integer type.
-using size_type = std::size_t;
+using size_type = std::size_t;  // TODO: consistent in one place (not for each backend?)
 
 namespace detail {
 

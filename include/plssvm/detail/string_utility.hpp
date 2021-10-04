@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Implements utility functions for string manipulation and conversion.
  */
@@ -11,7 +13,7 @@
 
 #include <algorithm>    // std::min, std::transform
 #include <cctype>       // std::tolower
-#include <string>       // std::char_traits
+#include <string>       // std::char_traits, std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm::detail {

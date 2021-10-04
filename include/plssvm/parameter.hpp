@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Implements the base class encapsulating all necessary parameters.
  */
@@ -16,6 +18,7 @@
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
+#include <cstddef>      // std::size_t
 #include <iosfwd>       // std::ostream (forward declaration only)
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string

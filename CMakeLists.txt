@@ -1,3 +1,9 @@
+## Authors: Alexander Van Craen, Marcel Breyer
+## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+## License: This file is part of the PLSSVM project which is released under the MIT license.
+##          See the LICENSE.md file in the project root for full license information.
+########################################################################################################################
+
 cmake_minimum_required(VERSION 3.18)
 
 project(ParallelLeastSquaresSupportVectorMachine
@@ -415,7 +421,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         )
 ## only mark fmt headers to install if build via FetchContent
 if(NOT fmt_FOUND)
-    install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
+    install(DIRECTORY "${fmt_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
             )
 endif()

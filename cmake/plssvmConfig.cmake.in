@@ -1,3 +1,9 @@
+## Authors: Alexander Van Craen, Marcel Breyer
+## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+## License: This file is part of the PLSSVM project which is released under the MIT license.
+##          See the LICENSE.md file in the project root for full license information.
+########################################################################################################################
+
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
@@ -18,7 +24,7 @@ endif()
 # check if the CUDA backend is required
 set(PLSSVM_HAS_CUDA_BACKEND @PLSSVM_CUDA_BACKEND_LIBRARY_NAME@)
 if(PLSSVM_HAS_CUDA_BACKEND)
-    find_dependency(CUDA REQUIRED)
+    enable_language(CUDA)
 endif()
 
 # check if the OpenCL backend is required

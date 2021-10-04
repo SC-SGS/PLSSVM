@@ -1,3 +1,9 @@
+## Authors: Alexander Van Craen, Marcel Breyer
+## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+## License: This file is part of the PLSSVM project which is released under the MIT license.
+##          See the LICENSE.md file in the project root for full license information.
+########################################################################################################################
+
 ########################################################################################################################
 ##                                     setup documentation generation with doxygen                                    ##
 ########################################################################################################################
@@ -18,6 +24,11 @@ set(DOXYGEN_HTML_TIMESTAMP "YES")
 set(DOXYGEN_NUM_PROC_THREADS 0)
 set(DOXYGEN_WARN_NO_PARAMDOC "YES")
 set(DOXYGEN_SORT_MEMBER_DOCS "NO")
+
+set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES)
+set(DOXYGEN_ALIASES
+        [[license="\par License^^\parblock^^"  ]]
+        )
 
 ## add doxygen as target
 doxygen_add_docs(
