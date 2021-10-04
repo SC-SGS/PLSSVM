@@ -19,14 +19,18 @@ jobs:
         with:
           path: PLSSVM
 
-      # mimic CMake's configure step for current setup
+      - name: Dependancies
+        run: sudo apt-get install -y doxygen graphviz
+        
       - name: Configure
         run: |
           cd PLSSVM
           mkdir build
           cd build
-          sudo apt-get install -y doxygen graphviz
           cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON -DPLSSVM_GENERATE_TEST_FILE=OFF PLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ..
+      - name: Generate
+        run: |
+          cd PLSSVM/build
           make doc
       # deploy generated documentation using github.io
       - name: Deploy
