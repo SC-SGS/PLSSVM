@@ -20,6 +20,7 @@ jobs:
       # mimic CMake's configure step for current setup
       - name: Configure
         run: |
+          cd PLSSVM
           mkdir build
           cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON ..
           make doc
@@ -28,4 +29,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./doc/html
+          publish_dir: .PLSSVM/doc/html
