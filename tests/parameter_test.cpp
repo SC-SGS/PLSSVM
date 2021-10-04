@@ -8,24 +8,26 @@
  * @brief Tests for the parameter, parameter_train, and parameter_predict classes.
  */
 
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::replace_all
-#include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
-#include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
-#include "plssvm/parameter_predict.hpp"         // plssvm::parameter_predict
-#include "plssvm/parameter_train.hpp"           // plssvm::parameter_train
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/string_conversion.hpp"     // plssvm::detail::convert_to
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
+#include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception, plssvm::file_not_found_exception
+#include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                    // plssvm::parameter
+#include "plssvm/parameter_predict.hpp"            // plssvm::parameter_predict
+#include "plssvm/parameter_train.hpp"              // plssvm::parameter_train
 
-#include "utility.hpp"  // util::create_temp_file, util::gtest_expect_floating_point_eq, EXPECT_THROW_WHAT
-
+#include "utility.hpp"    // util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name,
+                          // util::create_temp_file, EXPECT_THROW_WHAT
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW
+#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, ASSERT_NE,
+                          // EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, EXPECT_THROW
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
-#include <fstream>      // std::ifstream
+#include <fstream>      // std::ifstream, std::ofstream
 #include <iterator>     // std::istreambuf_iterator
-#include <memory>       // std::make_shared, std::shared_ptr
+#include <memory>       // std::shared_ptr
 #include <sstream>      // std::stringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view

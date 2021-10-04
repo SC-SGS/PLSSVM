@@ -21,7 +21,7 @@
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
-#include <algorithm>  // std::copy
+#include <algorithm>  // std::fill
 #include <vector>     // std::vector
 
 namespace plssvm::openmp {
