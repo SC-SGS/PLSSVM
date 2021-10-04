@@ -6,6 +6,8 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
+// TODO: include?
+
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 static inline void __attribute__((overloadable)) AtomicAdd(__global const double *source, const double delta) {

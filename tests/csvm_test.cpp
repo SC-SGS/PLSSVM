@@ -15,10 +15,11 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "backends/compare.hpp"  // compare::kernel_function
-#include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq
+#include "utility.hpp"           // util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name,
+                                 // util::create_temp_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT, EXPECT_CALL
+#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_THAT, EXPECT_CALL
 
 #include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t

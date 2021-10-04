@@ -15,12 +15,14 @@
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
-#include "CL/cl.h"     // cl_command_queue, cl_context, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer
-                       // clFinish, clEnqueueWriteBuffer, clEnqueueReadBuffer
+#include "CL/cl.h"     // cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU,
+                       // CL_DEVICE_VENDOR, CL_MEM_READ_WRITE, CL_TRUE, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext,
+                       // clCreateCommandQueue, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>    // std::min
 #include <map>          // std::map
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::exchange, std::move, std::swap
 #include <vector>       // std::vector
@@ -37,7 +39,6 @@ inline void device_assert(const error_code ec) {
 
 [[nodiscard]] std::vector<command_queue> get_command_queues_impl(const target_platform target) {
     std::map<cl_platform_id, std::vector<cl_device_id>> platform_devices;
-    //    std::vector<cl_device_id> target_devices;
 
     // get number of platforms
     cl_uint num_platforms;

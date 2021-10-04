@@ -7,6 +7,7 @@
  */
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
+
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 

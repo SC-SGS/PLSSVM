@@ -13,11 +13,14 @@
 #include "plssvm/target_platform.hpp"  // plssvm::target_platform
 
 #include "backends/compare.hpp"  // compare::detail::linear_kernel, compare::detail::poly_kernel, compare::detail::radial_kernel
-#include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion
+#include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion, util::gtest_assert_floating_point_near
 
-#include "gtest/gtest.h"  // TEST
+#include "gtest/gtest.h"  // :testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, TEST
 
-#include <random>  // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <algorithm>  // std::generate
+#include <cstddef>    // std::size_t
+#include <random>     // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <vector>     // std::vector
 
 // check whether the std::string <-> plssvm::backend_type conversions are correct
 TEST(Base, backend_type) {
