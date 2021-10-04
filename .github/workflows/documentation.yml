@@ -25,10 +25,10 @@ jobs:
           cd PLSSVM
           mkdir build
           cd build
-          sudo apt-get install -y doxygen graphviz
+          sudo apt-get install -y doxygen graphviz texlive-full
           python3 -m pip install --upgrade pip
           pip install numpy
-          cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON -DPLSSVM_GENERATE_TEST_FILE=OFF PLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_SYCL=OFF -DPLSSVM_ENABLE_OPENCL=OFF ..
+          cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON -DPLSSVM_GENERATE_TEST_FILE=OFF PLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ..
           make doc
       # deploy generated documentation using github.io
       - name: Deploy
