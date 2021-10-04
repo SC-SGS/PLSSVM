@@ -1,15 +1,22 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief TODO: brief description
  */
 
 #include "plssvm/core.hpp"
 
-#include <bits/c++config.h>
+#include <cstddef>    // std::size_t
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
-#include <iostream>   // std::clog, std::cerr, std::endl
+#include <iostream>   // std::cerr, std::endl, std::cout
+#include <vector>     // std::vector
+
+// TODO: rewrite using now implemented functions?
 
 int main(int argc, char *argv[]) {
     try {

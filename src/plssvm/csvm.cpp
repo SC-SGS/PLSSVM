@@ -1,18 +1,20 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  */
 
 #include "plssvm/csvm.hpp"
 
-#include "plssvm/detail/operators.hpp"
+#include "plssvm/detail/operators.hpp"       // dot product, plssvm::operators::sum, plssvm::operators::sign
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
-#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception, plssvm::exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type, plssvm::kernel_function
 
 #include "fmt/chrono.h"  // format std::chrono
-#include "fmt/core.h"    // fmt::print
+#include "fmt/core.h"    // fmt::print, fmt::format
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds

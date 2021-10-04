@@ -1,3 +1,9 @@
+## Authors: Alexander Van Craen, Marcel Breyer
+## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+## License: This file is part of the PLSSVM project which is released under the MIT license.
+##          See the LICENSE.md file in the project root for full license information.
+########################################################################################################################
+
 function(assemble_summary_string out_var)
     set(PLSSVM_SUMMARY_STRING_ASSEMBLE "")
     if(DEFINED PLSSVM_CPU_TARGET_ARCHS)

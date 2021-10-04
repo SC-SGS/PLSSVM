@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Defines all possible targets. Can also include targets not available on the target platform.
  */
@@ -13,11 +15,10 @@
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <algorithm>  // std::transform
-#include <cctype>     // std::tolower
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
+#include <ios>      // std::ios::failbit
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
 
 namespace plssvm {
 

@@ -1,7 +1,9 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  */
 
 #include "plssvm/backends/OpenMP/csvm.hpp"
@@ -140,7 +142,7 @@ template <typename T>
 void csvm<T>::update_w() {
     w_.resize(num_features_, 0.0);
     std::fill(w_.begin(), w_.end(), 0.0);
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
         for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
             w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
@@ -172,7 +174,7 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
         }
     }
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_type point_index = 0; point_index < points.size(); ++point_index) {
         if (kernel_ == kernel_type::linear) {
             // use faster methode in case of the linear kernel function

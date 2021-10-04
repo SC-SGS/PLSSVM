@@ -2,17 +2,19 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Small wrapper around OpenCL's error codes.
  */
 
 #pragma once
 
-#include "CL/cl.h"        // cl_int
+#include "CL/cl.h"        // cl_int, CL_SUCCESS
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <ostream>      // std::ostream
+#include <iosfwd>       // std::ostream (forward declaration only)
 #include <string_view>  // std::string_view
 
 namespace plssvm::opencl::detail {

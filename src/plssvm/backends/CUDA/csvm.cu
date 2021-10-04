@@ -1,7 +1,9 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  */
 
 #include "plssvm/backends/CUDA/csvm.hpp"
@@ -99,7 +101,7 @@ void csvm<T>::setup_data_on_device() {
     for (int device = 0; device < num_devices_; ++device) {
         data_last_d_[device] = detail::device_ptr<real_type>{ num_features_ + boundary_size_, device };
     }
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         data_last_d_[device].memset(0);
         data_last_d_[device].memcpy_to_device(data_ptr_->back(), 0, num_features_);
@@ -111,7 +113,7 @@ void csvm<T>::setup_data_on_device() {
     }
     // transform 2D to 1D data
     const std::vector<real_type> transformed_data = base_type::transform_data(*data_ptr_, boundary_size_, dept_);
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (dept_ + boundary_size_));
     }
@@ -201,13 +203,13 @@ void csvm<T>::device_reduction(std::vector<detail::device_ptr<real_type>> &buffe
             detail::device_synchronize(device);
             buffer_d[device].memcpy_to_host(ret, 0, ret.size());
 
-#pragma omp parallel for
+            #pragma omp parallel for
             for (size_type j = 0; j < ret.size(); ++j) {
                 buffer[j] += ret[j];
             }
         }
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
         }
@@ -231,7 +233,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         x_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
         r_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         x_d[device].memset(0);
         x_d[device].memcpy_to_device(x, 0, dept_);
@@ -243,14 +245,14 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
     for (int device = 0; device < num_devices_; ++device) {
         q_d[device] = detail::device_ptr<real_type>{ dept_ + boundary_size_, device };
     }
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept_);
     }
 
-// r = Ax (r = b - Ax)
-#pragma omp parallel for
+    // r = Ax (r = b - Ax)
+    #pragma omp parallel for
     for (int device = 0; device < num_devices_; ++device) {
         detail::set_device(device);
         run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
@@ -277,13 +279,13 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
 
-// Ad = A * r (q = A * d)
-#pragma omp parallel for
+        // Ad = A * r (q = A * d)
+        #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept_);
         }
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             detail::set_device(device);
             run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], data_d_[device], 1);
@@ -299,7 +301,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         // (x = x + alpha * d)
         x += alpha_cd * d;
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             x_d[device].memcpy_to_device(x, 0, dept_);
         }
@@ -308,13 +310,13 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         if (run % 50 == 49) {
             // r = b
             r_d[0].memcpy_to_device(b, 0, dept_);
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int device = 1; device < num_devices_; ++device) {
                 r_d[device].memset(0);
             }
 
-// r -= A * x
-#pragma omp parallel for
+            // r -= A * x
+            #pragma omp parallel for
             for (int device = 0; device < num_devices_; ++device) {
                 detail::set_device(device);
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], data_d_[device], -1);
@@ -340,8 +342,8 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
         // d = beta * d + r
         d = beta * d + r;
 
-// r_d = d
-#pragma omp parallel for
+        // r_d = d
+        #pragma omp parallel for
         for (int device = 0; device < num_devices_; ++device) {
             r_d[device].memcpy_to_device(d, 0, dept_);
         }

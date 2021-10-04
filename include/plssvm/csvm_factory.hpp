@@ -2,7 +2,9 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Factory functions for constructing a new C-SVM based on the provided command line arguments.
  */
@@ -21,16 +23,16 @@
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    #include "plssvm/backends/OpenMP/csvm.hpp"
+    #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    #include "plssvm/backends/CUDA/csvm.hpp"
+    #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    #include "plssvm/backends/OpenCL/csvm.hpp"
+    #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    #include "plssvm/backends/SYCL/csvm.hpp"
+    #include "plssvm/backends/SYCL/csvm.hpp"  // plssvm::sycl::csvm
 #endif
 
 namespace plssvm {

@@ -1,7 +1,9 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
- * @copyright
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
  */
 
 #include "plssvm/parameter.hpp"
@@ -16,15 +18,17 @@
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::format, fmt::print
 
-#include <algorithm>    // std::max, std::transform
+#include <algorithm>    // std::max, std::transform, std::min, std::fill
 #include <cctype>       // std::toupper
 #include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
-#include <memory>       // std::make_shared
+#include <iostream>     // std::ostream
+#include <limits>       // std::numeric_limits
+#include <memory>       // std::make_shared, std::shared_ptr
 #include <sstream>      // std::istringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <utility>      // std::move
+#include <utility>      // std::move, std::pair
 #include <vector>       // std::vector
 
 namespace plssvm {
@@ -189,7 +193,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
-            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });
+            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });  // TODO: string_utility?
             if (detail::starts_with(line, "@RELATION")) {
                 // ignore relation
                 continue;
@@ -380,7 +384,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
-            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::tolower(c); });
+            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::tolower(c); });  // TODO: string_utility
 
             // separate value from model header entry
             std::string_view value{ line };
@@ -547,13 +551,13 @@ template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
 template <typename T>
 [[nodiscard]] std::string parameter<T>::model_name_from_input() {
-    std::size_t pos = input_filename.find_last_of("/\\");
+    std::string::size_type pos = input_filename.find_last_of("/\\");
     return input_filename.substr(pos + 1) + ".model";
 }
 
 template <typename T>
 [[nodiscard]] std::string parameter<T>::predict_name_from_input() {
-    std::size_t pos = input_filename.find_last_of("/\\");
+    std::string::size_type pos = input_filename.find_last_of("/\\");
     return input_filename.substr(pos + 1) + ".predict";
 }
 
