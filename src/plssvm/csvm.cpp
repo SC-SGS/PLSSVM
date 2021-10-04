@@ -8,6 +8,8 @@
 
 #include "plssvm/csvm.hpp"
 
+#include "plssvm//parameter.hpp"             // plssvm::parameter
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::operators::sum, plssvm::operators::sign
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception, plssvm::exception
@@ -20,6 +22,7 @@
 #include <chrono>     // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <memory>     // std::make_shared
 #include <string>     // std::string
+#include <utility>    // std::move
 #include <vector>     // std::vector
 
 namespace plssvm {
