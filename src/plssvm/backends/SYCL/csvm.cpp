@@ -8,28 +8,26 @@
 
 #include "plssvm/backends/SYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_count, plssvm::detail::cuda::device_synchronize
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_list, plssvm::detail::sycl::device_synchronize
 #include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
-#include "plssvm/backends/SYCL/predict.hpp"            // TODO:
+#include "plssvm/backends/SYCL/predict.hpp"            // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
 #include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars
-#include "plssvm/detail/utility.hpp"                   // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
+#include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::print, fmt::format
-#include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler
+#include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
-#include <cstdio>     // stderr
-#include <exception>  // std::exception, std::terminate
+#include <exception>  // std::terminate
 #include <vector>     // std::vector
 
 namespace plssvm::sycl {
@@ -102,7 +100,7 @@ csvm<T>::~csvm() {
         for (::sycl::queue &q : devices_) {
             detail::device_synchronize(q);
         }
-    } catch (const std::exception &e) {
+    } catch (const plssvm::exception &e) {
         fmt::print("SYCL exception thrown: {}\n", e.what());
         std::terminate();
     }

@@ -11,24 +11,27 @@
 #include "mock_openmp_csvm.hpp"
 
 #include "../../mock_csvm.hpp"  // mock_csvm
-#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
+#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory, EXPECT_THROW_WHAT,
+                                // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name,
+                                // util::gtest_assert_floating_point_near, util::gtest_assert_floating_point_eq
 #include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
+#include "plssvm/backend_types.hpp"               // plssvm::backend_type
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
 #include "plssvm/detail/string_conversion.hpp"    // plssvm::detail::convert_to
-#include "plssvm/detail/string_utility.hpp"       // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST,
+                          // ASSERT_EQ, EXPECT_EQ, EXPECT_GT, EXPECT_NO_THROW
 
+#include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
 #include <fstream>     // std::ifstream
-#include <iterator>    // std::istreambuf_iterator
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <string>      // std::string
+#include <string>      // std::string, std::getline
 #include <vector>      // std::vector
 
 // enumerate all floating point type and kernel combinations to test
