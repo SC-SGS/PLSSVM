@@ -25,7 +25,7 @@ jobs:
           cd PLSSVM
           mkdir build
           cd build
-          sudo apt-get install -y doxygen dot
+          sudo apt-get install -y doxygen graphviz
           cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON ..
           make doc
       # deploy generated documentation using github.io
