@@ -1,0 +1,13 @@
+var searchData=
+[
+  ['set_5fdevice_388',['set_device',['../namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3',1,'plssvm::cuda::detail']]],
+  ['set_5fkernel_5fargs_389',['set_kernel_args',['../namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8',1,'plssvm::opencl::detail']]],
+  ['setup_5fdata_5fon_5fdevice_390',['setup_data_on_device',['../classplssvm_1_1cuda_1_1csvm.html#a0758683f95f3501a5bee6de33b798e2b',1,'plssvm::cuda::csvm::setup_data_on_device()'],['../classplssvm_1_1opencl_1_1csvm.html#ad2e74b6f51e6f6d05c6ac370573be22c',1,'plssvm::opencl::csvm::setup_data_on_device()'],['../classplssvm_1_1openmp_1_1csvm.html#a9b43d6fec66633275f311189ef6c1903',1,'plssvm::openmp::csvm::setup_data_on_device()'],['../classplssvm_1_1sycl_1_1csvm.html#a7edc3bdd6a6b3568e58d8f145ad9c29e',1,'plssvm::sycl::csvm::setup_data_on_device()'],['../classplssvm_1_1csvm.html#a13b722b41440a22ec00bf00ac1461e3b',1,'plssvm::csvm::setup_data_on_device()']]],
+  ['sign_391',['sign',['../namespaceplssvm_1_1operators.html#a9e89a6816fb71a518c523ef31afdc75d',1,'plssvm::operators']]],
+  ['size_392',['size',['../classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a6f4ab2ea2d7249ef0692b1cf6acd2586',1,'plssvm::cuda::detail::device_ptr::size()'],['../classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0',1,'plssvm::opencl::detail::device_ptr::size()'],['../classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957',1,'plssvm::sycl::detail::device_ptr::size()']]],
+  ['solver_5fcg_393',['solver_CG',['../classplssvm_1_1csvm.html#ad061a97377bac02581f6aa3b5cb7f5fc',1,'plssvm::csvm']]],
+  ['squared_5feuclidean_5fdist_394',['squared_euclidean_dist',['../namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120',1,'plssvm::operators']]],
+  ['starts_5fwith_395',['starts_with',['../namespaceplssvm_1_1detail.html#a81a237b3c126ff659799e017e0ca8376',1,'plssvm::detail::starts_with(const std::string_view str, const std::string_view sv) noexcept'],['../namespaceplssvm_1_1detail.html#a739d03620ebe94c4fa903ad0e839359d',1,'plssvm::detail::starts_with(const std::string_view str, const char c) noexcept']]],
+  ['sum_396',['sum',['../namespaceplssvm_1_1operators.html#a6344cb6d38f1fe59cfd7ba0f8b3382a3',1,'plssvm::operators']]],
+  ['swap_397',['swap',['../classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a68da36c858fb125e80dcc06d697a6143',1,'plssvm::cuda::detail::device_ptr::swap()'],['../classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a818665f0d7e607f36df77c1fb586fe76',1,'plssvm::opencl::detail::device_ptr::swap()'],['../classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aec55d480722a02eb46dedcf380ce42b0',1,'plssvm::sycl::detail::device_ptr::swap()']]]
+];

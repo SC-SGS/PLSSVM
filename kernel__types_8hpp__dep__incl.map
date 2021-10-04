@@ -1,0 +1,13 @@
+<map id="include/plssvm/kernel_types.hpp" name="include/plssvm/kernel_types.hpp">
+<area shape="rect" id="node1" title="Defines all available kernel types." alt="" coords="272,5,436,47"/>
+<area shape="rect" id="node2" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="512,259,697,300"/>
+<area shape="rect" id="node3" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="250,259,436,300"/>
+<area shape="rect" id="node4" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="41,259,226,300"/>
+<area shape="rect" id="node5" href="$backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="956,259,1141,300"/>
+<area shape="rect" id="node6" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="710,348,890,375"/>
+<area shape="rect" id="node7" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="442,177,628,203"/>
+<area shape="rect" id="node9" href="$parameter_8hpp.html" title="Implements the base class encapsulating all necessary parameters." alt="" coords="556,95,775,121"/>
+<area shape="rect" id="node8" href="$csvm__factory_8hpp.html" title="Factory functions for constructing a new C&#45;SVM based on the provided command line arguments." alt="" coords="721,259,880,300"/>
+<area shape="rect" id="node10" href="$parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="754,169,946,211"/>
+<area shape="rect" id="node11" href="$parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="1020,169,1212,211"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="include/plssvm/backends/OpenCL/detail/device_ptr.hpp" name="include/plssvm/backends/OpenCL/detail/device_ptr.hpp">
+<area shape="rect" id="node1" title="Small wrapper around a OpenCL device pointer and functions." alt="" coords="5,5,191,61"/>
+<area shape="rect" id="node2" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,109,191,151"/>
+</map>

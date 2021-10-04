@@ -1,0 +1,6 @@
+var searchData=
+[
+  ['replace_5fall_385',['replace_all',['../namespaceplssvm_1_1detail.html#aad0d9cd127ee910d3fb75ec2842cba84',1,'plssvm::detail']]],
+  ['run_5fdevice_5fkernel_386',['run_device_kernel',['../classplssvm_1_1cuda_1_1csvm.html#a13a79940bccd97f95d6afa1ee10ba11f',1,'plssvm::cuda::csvm::run_device_kernel()'],['../classplssvm_1_1opencl_1_1csvm.html#af5eb150c1c01e67cb31ac9dfa3aaf4b8',1,'plssvm::opencl::csvm::run_device_kernel()'],['../classplssvm_1_1openmp_1_1csvm.html#a461bf0dd2b183cdf5e8766fdb1fd0320',1,'plssvm::openmp::csvm::run_device_kernel()'],['../classplssvm_1_1sycl_1_1csvm.html#abe20af620ed0f0e786ac69ea9e6ea8d2',1,'plssvm::sycl::csvm::run_device_kernel()']]],
+  ['run_5fkernel_387',['run_kernel',['../namespaceplssvm_1_1opencl_1_1detail.html#a41b01f400f96ef7886cfebe5bb97f221',1,'plssvm::opencl::detail::run_kernel(const command_queue &amp;queue, cl_kernel kernel, const std::vector&lt; std::size_t &gt; &amp;grid_size, const std::vector&lt; std::size_t &gt; &amp;block_size, Args &amp;&amp;...args)'],['../namespaceplssvm_1_1opencl_1_1detail.html#aa66b81d1e47451d3d2a631d55727caf6',1,'plssvm::opencl::detail::run_kernel(const command_queue &amp;queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &amp;&amp;...args)']]]
+];

@@ -1,0 +1,4 @@
+<map id="plssvm::exception" name="plssvm::exception">
+<area shape="rect" id="node1" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="5,80,147,107"/>
+<area shape="rect" id="node2" title=" " alt="" coords="7,5,145,32"/>
+</map>

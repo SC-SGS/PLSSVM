@@ -1,0 +1,5 @@
+<map id="include/plssvm/backends/CUDA/detail/device_ptr.cuh" name="include/plssvm/backends/CUDA/detail/device_ptr.cuh">
+<area shape="rect" id="node1" title="Small wrapper around a CUDA device pointer and functions." alt="" coords="5,5,208,47"/>
+<area shape="rect" id="node2" title=" " alt="" coords="26,95,97,121"/>
+<area shape="rect" id="node3" title=" " alt="" coords="121,95,183,121"/>
+</map>

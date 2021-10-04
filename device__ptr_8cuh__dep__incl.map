@@ -1,0 +1,4 @@
+<map id="include/plssvm/backends/CUDA/detail/device_ptr.cuh" name="include/plssvm/backends/CUDA/detail/device_ptr.cuh">
+<area shape="rect" id="node1" title="Small wrapper around a CUDA device pointer and functions." alt="" coords="5,5,208,47"/>
+<area shape="rect" id="node2" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="14,95,199,136"/>
+</map>

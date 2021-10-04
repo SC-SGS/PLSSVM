@@ -1,0 +1,4 @@
+<map id="include/plssvm/csvm_factory.hpp" name="include/plssvm/csvm_factory.hpp">
+<area shape="rect" id="node1" title="Factory functions for constructing a new C&#45;SVM based on the provided command line arguments." alt="" coords="16,5,175,47"/>
+<area shape="rect" id="node2" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="5,95,185,121"/>
+</map>
