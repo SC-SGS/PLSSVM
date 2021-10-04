@@ -24,6 +24,7 @@ jobs:
         run: |
           cd PLSSVM
           mkdir build
+          cd build
           cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON ..
           make doc
       # deploy generated documentation using github.io
