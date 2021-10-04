@@ -17,14 +17,16 @@
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                   // various operator overloads for std::vector and scalars
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
-#include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_kernel_type_exception
+#include "plssvm/exceptions/exceptions.hpp"              // plssvm::exception
+#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/target_platform.hpp"                    // plssvm::target_platform
 
-#include "CL/cl.h"     // clReleaseKernel
 #include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
+#include <exception>  // std::terminate
 #include <string>     // std::string
 #include <utility>    // std::pair
 #include <vector>     // std::vector

@@ -11,13 +11,15 @@
 #include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::sycl::backend_exception
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"     // sycl::detail::to_lower_case, sycl::detail::contains
+#include "plssvm/target_platform.hpp"           // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::format
-#include "sycl/sycl.hpp"  // sycl::queue, sycl::platform, sycl::gpu_selector
+#include "sycl/sycl.hpp"  // sycl::queue, sycl::platform, sycl::device, sycl::property::queue, sycl::info, sycl::gpu_selector, sycl::malloc_device, sycl::free
 
-#include <cstddef>  // std::size_t
-#include <utility>  // std::exchange, std::move, std::swap
-#include <vector>   // std::vector
+#include <algorithm>  // std::min
+#include <string>     // std::string
+#include <utility>    // std::exchange, std::move, std::swap
+#include <vector>     // std::vector
 
 namespace plssvm::sycl::detail {
 

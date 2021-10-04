@@ -11,8 +11,9 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::pow, std::exp, std::fma
-#include <vector>  // std::vector
+#include <cmath>    // std::pow, std::exp, std::fma
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 namespace compare::detail {
 
