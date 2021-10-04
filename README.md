@@ -9,7 +9,7 @@ The currently available backends are:
 
 ## Getting Started
 
-### Dependencies
+### Dependencies 
 
 General dependencies:
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
