@@ -415,7 +415,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         )
 ## only mark fmt headers to install if build via FetchContent
 if(NOT fmt_FOUND)
-    install(DIRECTORY "${fmt_SOURCE_DIR}/include/" # TODO: remove fmt include from public header
+    install(DIRECTORY "${fmt_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
             )
 endif()
