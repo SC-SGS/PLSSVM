@@ -16,6 +16,8 @@ jobs:
       # checkout repository
       - name: Checkout PLSSVM
         uses: actions/checkout@v2
+        with:
+          path: PLSSVM
 
       # mimic CMake's configure step for current setup
       - name: Configure
