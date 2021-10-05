@@ -58,7 +58,7 @@ pipeline {
                                 \\"state\\": \\"pending\\",
                                 \\"context\\": \\"jenkins-ctest\\",
                                 \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                                \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                         }"
                     '''
                 }
@@ -255,7 +255,7 @@ pipeline {
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
@@ -274,7 +274,7 @@ pipeline {
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
@@ -293,7 +293,7 @@ pipeline {
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
