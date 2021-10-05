@@ -11,15 +11,14 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device,
                                                        // plssvm::detail::cuda::peek_at_last_error, plssvm::detail::cuda::device_synchronize
 #include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda::backend_exception
-#include "plssvm/backends/CUDA/predict.cuh"            //
+#include "plssvm/backends/CUDA/predict.cuh"            // plssvm::cuda::kernel_w, plssvm::cuda::predict_points_poly, plssvm::cuda::predict_points_rbf
 #include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::device_kernel_q_linear, plssvm::cuda::device_kernel_q_poly, plssvm::cuda::device_kernel_q_radial
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::device_kernel_linear, plssvm::cuda::device_kernel_poly, plssvm::cuda::device_kernel_radial
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                 // various operator overloads for std::vector and scalars
-#include "plssvm/detail/utility.hpp"                   // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"            // plssvm::unsupported_kernel_type_exception
+#include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platform.hpp"                  // plssvm::target_platform
@@ -28,6 +27,7 @@
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::ceil
+#include <exception>  // std::terminate
 #include <vector>     // std::vector
 
 namespace plssvm::cuda {

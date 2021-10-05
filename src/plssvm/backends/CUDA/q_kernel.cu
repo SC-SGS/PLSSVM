@@ -8,6 +8,8 @@
 
 #include "plssvm/backends/CUDA/q_kernel.cuh"
 
+// TODO: int? -> consistent
+
 namespace plssvm::cuda {
 
 template <typename real_type>

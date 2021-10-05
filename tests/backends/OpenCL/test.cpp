@@ -9,25 +9,30 @@
 #include "mock_opencl_csvm.hpp"
 
 #include "../../mock_csvm.hpp"  // mock_csvm
-#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
+#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory, EXPECT_THROW_WHAT,
+                                // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name,
+                                // util::gtest_assert_floating_point_near, util::gtest_assert_floating_point_eq
 #include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
 
+#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST,
+                          // ASSERT_EQ, EXPECT_EQ, EXPECT_GT
 
+#include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
 #include <fstream>     // std::ifstream
-#include <iterator>    // std::istreambuf_iterator
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <string>      // std::string
+#include <string>      // std::string, std::getline
 #include <vector>      // std::vector
 
 // enumerate all floating point type and kernel combinations to test
@@ -181,11 +186,7 @@ TYPED_TEST(OpenCL_CSVM, predict) {
     ASSERT_EQ(correct_values.size(), predicted_values.size());
     for (size_type i = 0; i < correct_values.size(); ++i) {
         EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_real[i];
-        if (correct_values[i] > real_type{ 0 }) {
-            EXPECT_GT(predicted_values_real[i], real_type{ 0 });
-        } else {
-            EXPECT_LT(predicted_values_real[i], real_type{ 0 });
-        }
+        EXPECT_GT(correct_values[i] * predicted_values_real[i], real_type{ 0 });
     }
 }
 

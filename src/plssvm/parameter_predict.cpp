@@ -9,12 +9,12 @@
 #include "plssvm/parameter_predict.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "cxxopts.hpp"  // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"   // fmt::print, fmt::format
 
+#include <cstdio>     // stderr
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <string>     // std::string

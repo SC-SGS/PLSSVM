@@ -19,12 +19,17 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_FALSE, EXPECT_TRUE
+#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_FALSE, EXPECT_TRUE, EXPECT_LT, SUCCESS, FAIL
 
+// TODO: linux only
+#include <algorithm>    // std::min, std::max
+#include <cmath>        // std::abs
 #include <cstdlib>      // mkstemp
 #include <filesystem>   // std::filesystem::temp_directory_path
+#include <limits>       // std::numeric_limits
 #include <sstream>      // std::ostringstream, std::istringstream
 #include <string>       // std::string
+#include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v
 
 namespace util {
