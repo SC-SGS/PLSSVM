@@ -65,9 +65,9 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-f
 ##                                    check for optional and necessary dependencies                                   ##
 ########################################################################################################################
 # check for OpenMP (not for the backend!)
-find_package(OpenMP QUIET)
-if(OPENMP_FOUND)
-    message(STATUS "Found OpenMP to speed up file parsing.")
+find_package(OpenMP 4.0 QUIET)
+if(OpenMP_FOUND)
+    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed up file parsing.")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()
