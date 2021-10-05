@@ -144,6 +144,14 @@ Additionally, it's advisable to use smaller test files to shorten the `ctest` st
 ```
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
 
+### Creating the documentation
+
+If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
+```bash
+> make doc
+```
+The documentation of the current state of the main branch can be found [here](https://vancraar.github.io/PLSSVM/).
+
 ## Installing
 
 The library supports the `install` target:
