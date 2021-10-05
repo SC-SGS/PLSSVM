@@ -1,22 +1,37 @@
 #!groovy
 pipeline {
     agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
+    options {
+        buildDiscarder(
+            logRotator(
+                daysToKeepStr: "21",
+                numToKeepStr: "50",
+                artifactDaysToKeepStr: "21",
+                artifactNumToKeepStr: "50"
+            )
+        )
+	disableConcurrentBuilds()
+    }
+    triggers {
+        githubPush() // Trigger by push to respective github branch
+        pollSCM 'H/30 * * * *' // Fallback polling solution as some pushes are somehow lost
+    }
     environment {
-        GITLAB_TOKEN = credentials('PLSSVM-GitLab-Api')
+        GITHUB_TOKEN = credentials('PLSSVM-Github')
     }
     stages {
         stage('init') {
             steps {
                 dir('plssvm') {
                     sh '''
-                        gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                        gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                         curl --verbose\
                             --request POST \
                             --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                             --header "Content-Type: application/json" \
                             --header "authorization: Bearer ${gitlab_token}" \
                             --data "{
-                                \\"state\\": \\"running\\",
+                                \\"state\\": \\"in_progress\\",
                                 \\"context\\": \\"jenkins-ctest\\",
                                 \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
                                 \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
@@ -144,7 +159,7 @@ pipeline {
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
                     '''
-                    cobertura coberturaReportFile: 'SVM/build/Debug_cov/coverage.xml'
+                    cobertura coberturaReportFile: 'build/Debug_cov/coverage.xml'
                 }
             }
         }
@@ -203,7 +218,7 @@ pipeline {
         }
         success {
             sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
                     --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
@@ -219,14 +234,14 @@ pipeline {
         }
         failure {
             sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
                     --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
-                        \\"state\\": \\"failed\\",
+                        \\"state\\": \\"failure\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
@@ -235,14 +250,14 @@ pipeline {
         }
         aborted {
             sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
                     --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
-                        \\"state\\": \\"canceled\\",
+                        \\"state\\": \\"error\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
