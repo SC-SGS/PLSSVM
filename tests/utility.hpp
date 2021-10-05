@@ -21,24 +21,31 @@
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_FALSE, EXPECT_TRUE, EXPECT_LT, SUCCESS, FAIL
 
-// TODO: linux only
+#ifdef __unix__
+    #include <cstdlib>  // mkstemp
+#else
+    #include <random>  // std::random_device, std::mt19937, std::uniform_int_distribution
+#endif
+
 #include <algorithm>    // std::min, std::max
 #include <cmath>        // std::abs
-#include <cstdlib>      // mkstemp
-#include <filesystem>   // std::filesystem::temp_directory_path
+#include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists
 #include <limits>       // std::numeric_limits
 #include <sstream>      // std::ostringstream, std::istringstream
-#include <string>       // std::string
+#include <string>       // std::string, std::to_string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v
 
 namespace util {
 
 /**
- * @brief Create a unique temporary file in the temporary directory and return the file's name.
+ * @brief Create a unique temporary file return the file's name.
+ * @details On UNIX systems use `mkstemp` to create a unique file in the temporary directory. On non-UNIX system create
+ *          a file in the current directory using a random `unsigned long long` number.
  * @return the name of the temporary file
  */
 inline std::string create_temp_file() {
+#ifdef __unix__
     std::string file = std::filesystem::temp_directory_path().string();
     file += "/tmpfile_XXXXXX";
     // create unique temporary file
@@ -48,6 +55,16 @@ inline std::string create_temp_file() {
         close(fd);
     }
     return file;
+#else
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned long long> dist;
+    std::string file{ std::to_string(dist(gen)) };
+    while (std::filesystem::exists(std::filesystem::current_path() / file)) {
+        file = std::to_string(dist(gen));
+    }
+    return file;
+#endif
 }
 
 /**
