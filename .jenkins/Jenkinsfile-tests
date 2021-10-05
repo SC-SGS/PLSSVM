@@ -3,17 +3,17 @@
 def buildbadge = addEmbeddableBadgeConfiguration(id: "Jenkins", subject: "Jenkins Tests", status: "skipped")
 
 if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
-    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER}  triggered by branch indexing..."
-    if (env.BRANCH_NAME != "master") {
+    print "INFO: Build on ${BRANCH_NAME}/${env.BUILD_NUMBER}  triggered by branch indexing..."
+    if (BRANCH_NAME != "master") {
         if (env.BUILD_NUMBER != "1") { // Always execute first build to load this configuration and thus the triggers
-            print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} skipped due being triggered by Branch Indexing instead of SCM change!"
+            print "INFO: Build on ${BRANCH_NAME}/${env.BUILD_NUMBER} skipped due being triggered by Branch Indexing instead of SCM change!"
             buildbadge.setStatus('skipped')
             currentBuild.result = 'ABORTED'
             return // early exit to avoid redundant builds
         }
     }
 } else {
-    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} triggered by SCM change..."
+    print "INFO: Build on ${BRANCH_NAME}/${env.BUILD_NUMBER} triggered by SCM change..."
     print "Proceeding!"
 }
 
@@ -40,6 +40,7 @@ pipeline {
 
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        BRANCH_NAME = ${BRANCH_NAME}
     }
 
     stages {
@@ -57,7 +58,7 @@ pipeline {
                                 \\"state\\": \\"pending\\",
                                 \\"context\\": \\"jenkins-ctest\\",
                                 \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                                \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${env.BRANCH_NAME}/$BUILD_NUMBER\\"
+                                \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                         }"
                     '''
                 }
@@ -254,7 +255,7 @@ pipeline {
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${env.BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
@@ -273,7 +274,7 @@ pipeline {
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${env.BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
@@ -292,7 +293,7 @@ pipeline {
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${env.BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
