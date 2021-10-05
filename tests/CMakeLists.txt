@@ -85,7 +85,7 @@ if(PLSSVM_GENERATE_TEST_FILE)
     endif()
 else()
     # set test file to default test file
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/500x200.libsvm" CACHE STRING "Path including name of the test file")
+    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200.libsvm" CACHE STRING "Path including name of the test file")
 endif()
 
 
