@@ -123,6 +123,7 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
 
 If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.
+To use DPC++ as compiler simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang path during CMake invocation.
 
 ### Running the tests
 
