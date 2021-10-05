@@ -17,6 +17,7 @@ General dependencies:
 - [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
+- [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
 
 Additional dependencies for the OpenMP backend:
 - compiler with OpenMP support
