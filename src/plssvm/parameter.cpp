@@ -11,15 +11,15 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/file_reader.hpp"           // plssvm::detail::file_reader
 #include "plssvm/detail/string_conversion.hpp"     // plssvm::detail::convert_to
-#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left,
+                                                   // plssvm::detail::to_lower_case, plssvm::detail::to_upper_case
 #include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::format, fmt::print
 
-#include <algorithm>    // std::max, std::transform, std::min, std::fill
-#include <cctype>       // std::toupper
+#include <algorithm>    // std::max, std::min, std::fill
 #include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <iostream>     // std::ostream
@@ -193,7 +193,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
-            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::toupper(c); });  // TODO: string_utility?
+            detail::to_upper_case(line);
             if (detail::starts_with(line, "@RELATION")) {
                 // ignore relation
                 continue;
@@ -384,7 +384,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
-            std::transform(line.begin(), line.end(), line.begin(), [](const char c) { return std::tolower(c); });  // TODO: string_utility
+            detail::to_lower_case(line);
 
             // separate value from model header entry
             std::string_view value{ line };
