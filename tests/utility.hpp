@@ -117,7 +117,7 @@ inline void gtest_assert_floating_point_near(const T val1, const T val2, const s
     // based on: https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
 
     // set epsilon
-    const T eps = 128 * std::numeric_limits<T>::epsilon();  // TODO: remove magic number?
+    const T eps = 128 * std::numeric_limits<T>::epsilon();
 
     // sanity checks for picked epsilon value
     PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon());
