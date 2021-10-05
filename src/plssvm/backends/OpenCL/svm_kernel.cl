@@ -6,40 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-// TODO: include?
-
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
-static inline void __attribute__((overloadable)) AtomicAdd(__global const double *source, const double delta) {
-    union {
-        double f;
-        ulong i;
-    } oldVal;
-    union {
-        double f;
-        ulong i;
-    } newVal;
-    do {
-        oldVal.f = *source;
-        newVal.f = oldVal.f + delta;
-        // ++i;
-    } while (atom_cmpxchg((volatile __global ulong *) source, oldVal.i, newVal.i) != oldVal.i);
-}
-
-static inline void __attribute__((overloadable)) AtomicAdd(__global const float *source, const float delta) {
-    union {
-        float f;
-        unsigned i;
-    } oldVal;
-    union {
-        float f;
-        unsigned i;
-    } newVal;
-    do {
-        oldVal.f = *source;
-        newVal.f = oldVal.f + delta;
-    } while (atom_cmpxchg((volatile __global unsigned *) source, oldVal.i, newVal.i) != oldVal.i);
-}
+#include "detail/atomics.cl"
 
 __kernel void device_kernel_linear(__global const real_type *q, __global real_type *ret, __global const real_type *d, __global const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const real_type add, const int first_feature, const int last_feature) {
     size_type i = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE;
@@ -97,7 +64,7 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
                 }
                 if (i + x > j + y) {
                     // upper triangular matrix
-                    AtomicAdd(&ret[i + y], temp * d[j + x]);
+                    atomicAdd(&ret[i + y], temp * d[j + x]);
                     ret_jx += temp * d[i + y];
                 } else if (i + x == j + y) {
                     // diagonal
@@ -108,7 +75,7 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
                     }
                 }
             }
-            AtomicAdd(&ret[j + x], ret_jx);
+            atomicAdd(&ret[j + x], ret_jx);
         }
     }
 }
@@ -164,14 +131,14 @@ __kernel void device_kernel_poly(__global const real_type *q, __global real_type
                 const real_type temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + y] - q[j + x]) * add;
                 if (i + x > j + y) {
                     // upper triangular matrix
-                    AtomicAdd(&ret[i + y], temp * d[j + x]);
+                    atomicAdd(&ret[i + y], temp * d[j + x]);
                     ret_jx += temp * d[i + y];
                 } else if (i + x == j + y) {
                     // diagonal
                     ret_jx += (temp + cost * add) * d[i + y];
                 }
             }
-            AtomicAdd(&ret[j + x], ret_jx);
+            atomicAdd(&ret[j + x], ret_jx);
         }
     }
 }
@@ -227,14 +194,14 @@ __kernel void device_kernel_radial(__global const real_type *q, __global real_ty
                 const real_type temp = (exp(-gamma * matr[x][y]) + QA_cost - q[i + y] - q[j + x]) * add;
                 if (i + x > j + y) {
                     // upper triangular matrix
-                    AtomicAdd(&ret[i + y], temp * d[j + x]);
+                    atomicAdd(&ret[i + y], temp * d[j + x]);
                     ret_jx += temp * d[i + y];
                 } else if (i + x == j + y) {
                     // diagonal
                     ret_jx += (temp + cost * add) * d[i + y];
                 }
             }
-            AtomicAdd(&ret[j + x], ret_jx);
+            atomicAdd(&ret[j + x], ret_jx);
         }
     }
 }
