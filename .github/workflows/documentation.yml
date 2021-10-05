@@ -1,0 +1,40 @@
+name: Generate documentation
+
+# only trigger this action on specific events
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout repository
+      - name: Checkout PLSSVM
+        uses: actions/checkout@v2
+        with:
+          path: PLSSVM
+
+      - name: Dependancies
+        run: sudo apt-get install -y doxygen graphviz
+        
+      - name: Configure
+        run: |
+          cd PLSSVM
+          mkdir build
+          cd build
+          cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON -DPLSSVM_GENERATE_TEST_FILE=OFF PLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ..
+      - name: Generate
+        run: |
+          cd PLSSVM/build
+          make doc
+      # deploy generated documentation using github.io
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./PLSSVM/docs/html
