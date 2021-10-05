@@ -6,41 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-// TODO: include?
-
-//TODO: remove copy paste
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
-static inline void __attribute__((overloadable)) AtomicAdd(__global const double *source, const double delta) {
-    union {
-        double f;
-        ulong i;
-    } oldVal;
-    union {
-        double f;
-        ulong i;
-    } newVal;
-    do {
-        oldVal.f = *source;
-        newVal.f = oldVal.f + delta;
-        // ++i;
-    } while (atom_cmpxchg((volatile __global ulong *) source, oldVal.i, newVal.i) != oldVal.i);
-}
-
-static inline void __attribute__((overloadable)) AtomicAdd(__global const float *source, const float delta) {
-    union {
-        float f;
-        unsigned i;
-    } oldVal;
-    union {
-        float f;
-        unsigned i;
-    } newVal;
-    do {
-        oldVal.f = *source;
-        newVal.f = oldVal.f + delta;
-    } while (atom_cmpxchg((volatile __global unsigned *) source, oldVal.i, newVal.i) != oldVal.i);
-}
+#include "detail/atomics.cl"
 
 __kernel void kernel_w(__global real_type *w_d, __global real_type *data_d, __global real_type *data_last_d, __global real_type *alpha_d, const size_type num_data_points, const size_type num_features) {
     size_type index = get_global_id(0);
@@ -70,7 +36,7 @@ __kernel void predict_points_poly(__global real_type *out_d, __global const real
 
         temp = alpha_d[data_point_index] * pow(gamma * temp + coef0, degree);
 
-        AtomicAdd(&out_d[predict_point_index], temp);
+        atomicAdd(&out_d[predict_point_index], temp);
     }
 }
 
@@ -90,6 +56,6 @@ __kernel void predict_points_rbf(__global real_type *out_d, __global const real_
 
         temp = alpha_d[data_point_index] * exp(-gamma * temp);
 
-        AtomicAdd(&out_d[predict_point_index], temp);
+        atomicAdd(&out_d[predict_point_index], temp);
     }
 }
