@@ -208,7 +208,6 @@ TYPED_TEST(BaseCSVM, kernel_function) {
     std::vector<real_type> x2(size);
 
     // fill vectors with random values
-    std::random_device rnd_device;
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<real_type> dist(1.0, 2.0);
