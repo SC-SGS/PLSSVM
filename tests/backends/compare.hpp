@@ -96,7 +96,7 @@ std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &dat
     result.reserve(data.size() - 1);
 
     for (size_type i = 0; i < data.size() - 1; ++i) {
-        result.template emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
+        result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
     }
     return result;
 }
