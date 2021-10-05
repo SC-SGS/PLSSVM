@@ -155,6 +155,7 @@ TYPED_TEST(BaseCSVM, write_model) {
     std::filesystem::remove(model_file);
 
     // check model file content for correctness
+#ifdef GTEST_USES_POSIX_RE
     switch (params.kernel) {
         case plssvm::kernel_type::linear:
             EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
@@ -166,6 +167,7 @@ TYPED_TEST(BaseCSVM, write_model) {
             EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
     }
+#endif
 }
 
 // check whether attempting to write the model file with missing data correctly fails
