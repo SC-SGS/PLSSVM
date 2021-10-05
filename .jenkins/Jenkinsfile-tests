@@ -50,11 +50,11 @@ pipeline {
                         gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                         curl --verbose\
                             --request POST \
-                            --url "https://api.github.com/SC-SGS/PLSSVM/statuses/Jenkins/$GIT_COMMIT" \
+                            --url "https://api.github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                             --header "Content-Type: application/json" \
                             --header "authorization: Bearer ${gitlab_token}" \
                             --data "{
-                                \\"state\\": \\"in_progress\\",
+                                \\"state\\": \\"pending\\",
                                 \\"context\\": \\"jenkins-ctest\\",
                                 \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
                                 \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
@@ -247,7 +247,7 @@ pipeline {
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://api.github.com/SC-SGS/PLSSVM/statuses/Jenkins/$GIT_COMMIT" \
+                    --url "https://api.github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
@@ -266,7 +266,7 @@ pipeline {
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://api.github.com/SC-SGS/PLSSVM/statuses/Jenkins/$GIT_COMMIT" \
+                    --url "https://api.github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
@@ -285,7 +285,7 @@ pipeline {
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://api.github.com/SC-SGS/PLSSVM/statuses/Jenkins/$GIT_COMMIT" \
+                    --url "https://api.github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
