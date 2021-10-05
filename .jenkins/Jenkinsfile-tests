@@ -12,7 +12,7 @@ pipeline {
                         gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                         curl --verbose\
                             --request POST \
-                            --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                            --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                             --header "Content-Type: application/json" \
                             --header "authorization: Bearer ${gitlab_token}" \
                             --data "{
@@ -212,7 +212,7 @@ pipeline {
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
@@ -228,7 +228,7 @@ pipeline {
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
@@ -244,7 +244,7 @@ pipeline {
                 gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --url "https://github.com/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
