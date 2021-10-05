@@ -151,6 +151,7 @@ TYPED_TEST(BaseCSVM, write_model) {
     // read content of model file and delete it
     std::ifstream model_ifs(model_file);
     std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+    model_ifs.close();
     std::filesystem::remove(model_file);
 
     // check model file content for correctness
