@@ -116,8 +116,7 @@ std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queu
     if (!err) {
         throw backend_exception{ fmt::format("Error creating OpenCL program ({})!", err) };
     }
-    // TODO: add optimization flags?
-    err = clBuildProgram(program, 0, nullptr, "-I " PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, nullptr, nullptr);
+    err = clBuildProgram(program, 0, nullptr, "-I " PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY " -cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
     if (!err) {
         // determine the size of the log
         std::size_t log_size;
