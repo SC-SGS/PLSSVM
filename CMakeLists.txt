@@ -28,7 +28,6 @@ configure_file(
 ## set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm_IO.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
@@ -55,7 +54,7 @@ target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra> # -Wdouble-promotion -fno-common -Wconversion -Wshadow> # TODO: make warning free
-        $<$<CXX_COMPILER_ID:MSVC>:/Wall>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
         )
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
