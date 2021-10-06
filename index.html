@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: Least-Squares Support-Vector Machine</title>
+<title>ParallelLeastSquaresSupportVectorMachine: Least-Squares Support-Vector Machine &ensp; &lt;a href=&quot;https://vancraar.github.io/PLSSVM/&quot;&gt;&lt;img src=&quot;https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg&quot; alt=&quot;Generate documentation&quot;/&gt;&lt;/a&gt; &ensp; &lt;a href=&quot;https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/&quot;&gt;&lt;img src=&quot;https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&amp;subject=Linux+CPU/GPU&quot; alt=&quot;Build Status Linux CPU + GPU&quot;/&gt;&lt;/a&gt; &ensp; &lt;a href=&quot;https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml&quot;&gt;&lt;img src=&quot;https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg&quot; alt=&quot;Windows CPU&quot;/&gt;&lt;/a&gt;</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -64,7 +64,7 @@ $(function() {
 
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">Least-Squares Support-Vector Machine </div>  </div>
+<div class="title">Least-Squares Support-Vector Machine &ensp; <a href="https://vancraar.github.io/PLSSVM/"><object type="image/svg+xml" data="https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg" style="pointer-events: none;">Generate documentation</object></a> &ensp; <a href="https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/"><img src="https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&amp;subject=Linux+CPU/GPU" alt="Build Status Linux CPU + GPU" class="inline"/></a> &ensp; <a href="https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml"><object type="image/svg+xml" data="https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg" style="pointer-events: none;">Windows CPU</object></a> </div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Implementation of a parallel <a href="https://en.wikipedia.org/wiki/Least-squares_support-vector_machine">least-squares support-vector machine</a> using multiple different backends. The currently available backends are:</p><ul>
@@ -163,8 +163,7 @@ Optional CMake Options</h3>
 </ul>
 </li>
 </ul>
-<p><b>Attention:</b> at least one backend must be enabled and available! <br  />
-</p>
+<p><b>Attention:</b> at least one backend must be enabled and available!</p>
 <ul>
 <li><code>PLSSVM_ENABLE_ASSERTS=ON|OFF</code> (default: <code>OFF</code>): enables custom assertions regardless whether the <code>DEBUG</code> macro is defined or not</li>
 <li><code>PLSSVM_THREAD_BLOCK_SIZE</code> (default: <code>16</code>): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)</li>
@@ -223,9 +222,9 @@ Training</h2>
 <div class="line">Usage:</div>
 <div class="line">  ./svm-train [OPTION...] training_set_file [model_file]</div>
 <div class="line"> </div>
-<div class="line">  -t, --kernel_type arg         set type of kernel function. </div>
+<div class="line">  -t, --kernel_type arg         set type of kernel function.</div>
 <div class="line">                                         0 -- linear: u&#39;*v</div>
-<div class="line">                                         1 -- polynomial: (gamma*u&#39;*v + coef0)^degree </div>
+<div class="line">                                         1 -- polynomial: (gamma*u&#39;*v + coef0)^degree</div>
 <div class="line">                                         2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)</div>
 <div class="line">  -d, --degree arg              set degree in kernel function (default: 3)</div>
 <div class="line">  -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)</div>
@@ -237,7 +236,7 @@ Training</h2>
 <div class="line">  -q, --quiet                   quiet mode (no outputs)</div>
 <div class="line">  -h, --help                    print this helper message</div>
 <div class="line">      --input training_set_file</div>
-<div class="line">                                </div>
+<div class="line"> </div>
 <div class="line">      --model model_file</div>
 </div><!-- fragment --><p>An example invocation using the CUDA backend could look like:</p>
 <div class="fragment"><div class="line">&gt; ./svm-train --backend cuda --input /path/to/data_file</div>
@@ -260,9 +259,9 @@ Predicting</h2>
 <div class="line">  -p, --target_platform arg  choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)</div>
 <div class="line">  -q, --quiet                quiet mode (no outputs)</div>
 <div class="line">  -h, --help                 print this helper message</div>
-<div class="line">      --test test_file       </div>
-<div class="line">      --model model_file     </div>
-<div class="line">      --output output_file </div>
+<div class="line">      --test test_file</div>
+<div class="line">      --model model_file</div>
+<div class="line">      --output output_file</div>
 </div><!-- fragment --><p>An example invocation could look like:</p>
 <div class="fragment"><div class="line">&gt; ./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file</div>
 </div><!-- fragment --><p>Another example targeting NVIDIA GPUs using the SYCL backend looks like:</p>
@@ -281,22 +280,22 @@ Example code for usage as library</h1>
 <div class="line">        <span class="comment">// parse SVM parameter from command line</span></div>
 <div class="line">        <a class="code" href="classplssvm_1_1parameter.html">plssvm::parameter&lt;double&gt;</a> params;</div>
 <div class="line">        params.<a class="code" href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">backend</a> = <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">plssvm::backend_type::cuda</a>;</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">        params.<a class="code" href="classplssvm_1_1parameter.html#aa1bc08848934c1f38c2fd3d982b97ea3">parse_train_file</a>(<span class="stringliteral">&quot;train_file.libsvm&quot;</span>);</div>
-<div class="line">    </div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// create C-SVM (based on selected backend)</span></div>
 <div class="line">        <span class="keyword">auto</span> svm = <a class="code" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">plssvm::make_csvm</a>(params);</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// learn</span></div>
 <div class="line">        svm-&gt;learn();</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// get accuracy</span></div>
 <div class="line">        std::cout &lt;&lt; <span class="stringliteral">&quot;accuracy: &quot;</span> &lt;&lt; svm-&gt;accuracy() &lt;&lt; std::endl;</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// predict</span></div>
 <div class="line">        std::vector&lt;double&gt; point = { ... };</div>
 <div class="line">        std::cout &lt;&lt; <span class="stringliteral">&quot;label: &quot;</span> &lt;&lt; svm-&gt;predict(point) &lt;&lt; std::endl;</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">        <span class="comment">// write model file to disk</span></div>
 <div class="line">        svm-&gt;write_model(<span class="stringliteral">&quot;model_file.libsvm&quot;</span>);</div>
 <div class="line">    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> <a class="code" href="classplssvm_1_1exception.html">plssvm::exception</a> &amp;e) {</div>
@@ -304,12 +303,12 @@ Example code for usage as library</h1>
 <div class="line">    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> std::exception &amp;e) {</div>
 <div class="line">        std::cerr &lt;&lt; e.what() &lt;&lt; std::endl;</div>
 <div class="line">    }</div>
-<div class="line">        </div>
+<div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>With a corresponding minimal CMake file: </p><div class="fragment"><div class="line">cmake_minimum_required(VERSION 3.16)</div>
 <div class="line"> </div>
-<div class="line">project(LibraryUsageExample </div>
+<div class="line">project(LibraryUsageExample</div>
 <div class="line">        LANGUAGES CXX)</div>
 <div class="line"> </div>
 <div class="line">find_package(plssvm CONFIG REQUIRED)</div>
@@ -330,7 +329,7 @@ Example code for usage as library</h1>
 <div class="ttc" id="aclassplssvm_1_1parameter_html_a002f0530bdb2a5e62cf4bf2111db5494"><div class="ttname"><a href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">plssvm::parameter::backend</a></div><div class="ttdeci">backend_type backend</div><div class="ttdoc">The used backend: OpenMP, OpenCL, CUDA, or SYCL.</div><div class="ttdef"><b>Definition:</b> parameter.hpp:189</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 6 2021 07:58:14 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 6 2021 09:46:20 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>
