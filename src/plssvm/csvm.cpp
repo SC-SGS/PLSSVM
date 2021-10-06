@@ -8,12 +8,12 @@
 
 #include "plssvm/csvm.hpp"
 
-#include "plssvm//parameter.hpp"             // plssvm::parameter
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::operators::sum, plssvm::operators::sign
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception, plssvm::exception
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type, plssvm::kernel_function
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print, fmt::format
