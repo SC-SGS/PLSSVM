@@ -24,25 +24,6 @@ namespace plssvm::sycl {
 /// Unsigned integer type.
 using size_type = std::size_t;  // TODO: consistent in one place (not for each backend?)
 
-namespace detail {
-
-// TODO: remove #if after Intel has a SYCL2020 conformant sycl::atomic_ref implementation
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-using ::sycl::ext::oneapi::atomic_ref;
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-using ::sycl::atomic_ref;
-#endif
-
-}  // namespace detail
-
-/**
- * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references).
- * @tparam real_type the type of the accessed values
- */
-
-template <typename real_type>
-using atomic_op = detail::atomic_ref<real_type, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
-
 // TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
 /**
  * @brief Shortcut alias for a SYCL local accessor.

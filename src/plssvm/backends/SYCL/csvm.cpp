@@ -439,12 +439,12 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
                 break;
             case kernel_type::polynomial:
                 devices_[0].submit([&](::sycl::handler &cgh) {
-                    cgh.parallel_for(execution_range, predict_points_poly{ cgh, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_ });
+                    cgh.parallel_for(execution_range, predict_points_poly{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_ });
                 });
                 break;
             case kernel_type::rbf:
                 devices_[0].submit([&](::sycl::handler &cgh) {
-                    cgh.parallel_for(execution_range, predict_points_rbf{ cgh, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_ });
+                    cgh.parallel_for(execution_range, predict_points_rbf{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_ });
                 });
                 break;
         }

@@ -11,44 +11,15 @@
 
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-#include "plssvm/constants.hpp"                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
+#include "plssvm/constants.hpp"                     // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
-#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::handler, sycl::accessor, sycl::access::mode, sycl::access::target, sycl::range, sycl::pow,
-                          // sycl::exp, sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
+#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::range, sycl::pow, sycl::exp
 
 namespace plssvm::sycl {
 
 /// Unsigned integer type.
 using size_type = std::size_t;
-
-namespace detail {
-
-// TODO: move to separate file
-// TODO: remove #if after Intel has a SYCL2020 conformant sycl::atomic_ref implementation
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-using ::sycl::ext::oneapi::atomic_ref;
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-using ::sycl::atomic_ref;
-#endif
-
-}  // namespace detail
-
-/**
- * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references).
- * @tparam real_type the type of the accessed values
- */
-
-template <typename T>
-using atomic_op = detail::atomic_ref<T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
-
-// TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
-/**
- * @brief Shortcut alias for a SYCL local accessor.
- * @tparam T the type of the accessed values
- */
-template <typename real_type>
-using local_accessor = ::sycl::accessor<real_type, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local>;
 
 template <typename real_type>
 class kernel_w {
@@ -79,8 +50,8 @@ class kernel_w {
 template <typename real_type>
 class predict_points_poly {
   public:
-    predict_points_poly(::sycl::handler &cgh, real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) :
-        data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
+    predict_points_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) :
+        out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     void operator()(::sycl::nd_item<2> nd_idx) const {
         const size_type data_point_index = nd_idx.get_global_id(0);
@@ -103,9 +74,6 @@ class predict_points_poly {
     }
 
   private:
-    local_accessor<real_type> data_intern_i_;
-    local_accessor<real_type> data_intern_j_;
-
     real_type *out_d_;
     const real_type *data_d_;
     const real_type *data_last_d_;
@@ -122,8 +90,8 @@ class predict_points_poly {
 template <typename real_type>
 class predict_points_rbf {
   public:
-    predict_points_rbf(::sycl::handler &cgh, real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) :
-        data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}
+    predict_points_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) :
+        out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}
 
     void operator()(::sycl::nd_item<2> nd_idx) const {
         const size_type data_point_index = nd_idx.get_global_id(0);
@@ -146,9 +114,6 @@ class predict_points_rbf {
     }
 
   private:
-    local_accessor<real_type> data_intern_i_;
-    local_accessor<real_type> data_intern_j_;
-
     real_type *out_d_;
     const real_type *data_d_;
     const real_type *data_last_d_;
