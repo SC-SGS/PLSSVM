@@ -23,15 +23,39 @@
 #include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, ASSERT_NE,
                           // EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, EXPECT_THROW
 
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::remove
-#include <fstream>      // std::ifstream, std::ofstream
-#include <iterator>     // std::istreambuf_iterator
-#include <memory>       // std::shared_ptr
-#include <sstream>      // std::stringstream
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <vector>       // std::vector
+#include <cstddef>           // std::size_t
+#include <filesystem>        // std::filesystem::remove
+#include <fstream>           // std::ifstream, std::ofstream
+#include <initializer_list>  // std::initializer_list
+#include <iterator>          // std::istreambuf_iterator
+#include <memory>            // std::shared_ptr
+#include <sstream>           // std::stringstream
+#include <string>            // std::string
+#include <string_view>       // std::string_view
+#include <vector>            // std::vector
+
+template <typename real_type, typename U>
+std::vector<real_type> initialize_with_correct_type(const std::initializer_list<U> &data_vec) {
+    if constexpr (std::is_same_v<real_type, U>) {
+        return data_vec;
+    } else {
+        std::vector<real_type> correct_data_vec;
+        correct_data_vec.reserve(data_vec.size());
+        for (const U d : data_vec) {
+            correct_data_vec.push_back(static_cast<real_type>(d));
+        }
+        return correct_data_vec;
+    }
+}
+
+template <typename real_type, typename U>
+std::vector<std::vector<real_type>> initialize_with_correct_type(const std::initializer_list<std::initializer_list<U>> &data) {
+    std::vector<std::vector<real_type>> correct_data;
+    for (const std::initializer_list<U> &data_vec : data) {
+        correct_data.emplace_back(initialize_with_correct_type<real_type>(data_vec));
+    }
+    return correct_data;
+}
 
 // the floating point types to test
 using floating_point_types = ::testing::Types<float, double>;
@@ -117,14 +141,14 @@ TYPED_TEST(Parameter, parse_libsvm) {
     using size_type = typename decltype(params)::size_type;
 
     // correct values
-    const std::vector<std::vector<real_type>> expected_data{
+    const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { -0.20981208921241892, 0.60276937379453293, -0.13086851759108944, 0.10805254527169827 },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
-    };
-    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse libsvm file with labels
@@ -149,14 +173,14 @@ TYPED_TEST(Parameter, parse_libsvm_sparse) {
     using size_type = typename decltype(params)::size_type;
 
     // correct values
-    const std::vector<std::vector<real_type>> expected_data{
+    const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
         { 0., 0., 0., 0. },
         { 0., 0., 0.51687296029754564, 0. },
         { 0., 1.01405596624706053, 0., 0. },
         { 0., 0.60276937379453293, 0., -0.13086851759108944 },
         { 0., 0., 0.298499933047586044, 0. },
-    };
-    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse libsvm file with labels
@@ -230,14 +254,14 @@ TYPED_TEST(Parameter, parse_arff) {
     using size_type = typename decltype(params)::size_type;
 
     // correct values
-    const std::vector<std::vector<real_type>> expected_data{
+    const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { 0., 0.60276937379453293, -0.13086851759108944, 0. },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
-    };
-    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse arff file with labels
@@ -353,14 +377,14 @@ TYPED_TEST(Parameter, parse_file) {
     using size_type = typename decltype(params)::size_type;
 
     // correct values for libsvm file
-    const std::vector<std::vector<real_type>> expected_data_libsvm{
+    const std::vector<std::vector<real_type>> expected_data_libsvm = initialize_with_correct_type<real_type>({
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { -0.20981208921241892, 0.60276937379453293, -0.13086851759108944, 0.10805254527169827 },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
-    };
-    const std::vector<real_type> expected_values_libsvm{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values_libsvm = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse libsvm file
@@ -369,14 +393,14 @@ TYPED_TEST(Parameter, parse_file) {
     check_content_equal<true, real_type, size_type>(expected_data_libsvm, expected_values_libsvm, params.data_ptr, params.value_ptr);
 
     // correct values for arff file
-    const std::vector<std::vector<real_type>> expected_data_arff{
+    const std::vector<std::vector<real_type>> expected_data_arff = initialize_with_correct_type<real_type>({
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { 0., 0.60276937379453293, -0.13086851759108944, 0. },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
-    };
-    const std::vector<real_type> expected_values_arff{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values_arff = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse arff file
@@ -395,14 +419,14 @@ TYPED_TEST(Parameter, parse_train_file) {
     using size_type = typename decltype(params)::size_type;
 
     // correct values
-    const std::vector<std::vector<real_type>> expected_data{
+    const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { -0.20981208921241892, 0.60276937379453293, -0.13086851759108944, 0.10805254527169827 },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
-    };
-    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse train file with labels
@@ -426,14 +450,14 @@ TYPED_TEST(Parameter, parse_test_file) {
     using size_type = typename decltype(params)::size_type;
 
     // correct values
-    const std::vector<std::vector<real_type>> expected_data{
+    const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
         { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
         { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
         { 0.57650218263054642, 1.01405596624706053, 0.13009428079760464, 0.7261913886869387 },
         { -0.20981208921241892, 0.60276937379453293, -0.13086851759108944, 0.10805254527169827 },
         { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 },
-    };
-    const std::vector<real_type> expected_values{ 1, 1, -1, -1, -1 };
+    });
+    const std::vector<real_type> expected_values = initialize_with_correct_type<real_type>({ 1, 1, -1, -1, -1 });
 
     //
     // parse test file with labels
@@ -487,14 +511,14 @@ TYPED_TEST(ParameterModel, parse_model_file) {
     using size_type = typename decltype(params)::size_type;
 
     // correct support vectors
-    const std::vector<std::vector<real_type>> expected_model_support_vectors{
+    const std::vector<std::vector<real_type>> expected_model_support_vectors = initialize_with_correct_type<real_type>({
         { -1.117828, -2.908719, 0.6663834, 1.097883 },
         { -0.5282118, -0.335881, 0.5168730, 0.5460446 },
         { -0.2098121, 0.6027694, -0.1308685, 0.1080525 },
         { 1.884940, 1.005186, 0.2984999, 1.646463 },
         { 0.5765022, 1.014056, 0.1300943, 0.7261914 },
-    };
-    const std::vector<real_type> expected_model_alphas{ -0.17609610490769723, 0.8838187731213127, -0.47971257671001616, 0.0034556484621847128, -0.23146573996578407 };
+    });
+    const std::vector<real_type> expected_model_alphas = initialize_with_correct_type<real_type>({ -0.17609610490769723, 0.8838187731213127, -0.47971257671001616, 0.0034556484621847128, -0.23146573996578407 });
 
     // check if necessary pointers are set
     ASSERT_NE(params.value_ptr, nullptr);
@@ -690,7 +714,7 @@ TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
     }
 
     // create parameter object
-    plssvm::parameter_train<TypeParam> params(argv.size(), argv.data());
+    plssvm::parameter_train<TypeParam> params(static_cast<int>(argv.size()), argv.data());
 
     using real_type = TypeParam;
 
@@ -768,7 +792,7 @@ TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
     }
 
     // create parameter object
-    plssvm::parameter_predict<TypeParam> params(argv.size(), argv.data());
+    plssvm::parameter_predict<TypeParam> params(static_cast<int>(argv.size()), argv.data());
 
     using real_type = TypeParam;
 
