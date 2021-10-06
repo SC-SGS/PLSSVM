@@ -207,7 +207,7 @@ void csvm<T>::run_device_kernel(const size_type device, const detail::device_ptr
     const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
 
     const auto grid_dim = static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE)));
-    std::vector<size_type> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };  // TODO: min?
+    std::vector<size_type> block{ std::min<size_type>(THREAD_BLOCK_SIZE, dept_), std::min<size_type>(THREAD_BLOCK_SIZE, dept_) };
     std::vector<size_type> grid{ grid_dim * block[0], grid_dim * block[1] };
 
     switch (kernel_) {
