@@ -119,18 +119,14 @@ std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queu
     // TODO: add optimization flags?
     err = clBuildProgram(program, 0, nullptr, "-I " PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, nullptr, nullptr);
     if (!err) {
-        // TODO: c++-ify
-        // Determine the size of the log
-        size_t log_size;
-        clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-
-        // Allocate memory for the log
-        char *log = (char *) malloc(log_size);
-
-        // Get the log
-        clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
-
-        // Print the log
+        // determine the size of the log
+        std::size_t log_size;
+        clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
+        // allocate memory for the log
+        std::string log(log_size, ' ');
+        // get the log
+        clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+        // print the log
         throw backend_exception{ fmt::format("Error building OpenCL program ({})!: {}\n", err, log) };
     }
 
