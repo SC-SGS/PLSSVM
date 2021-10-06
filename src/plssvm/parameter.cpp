@@ -83,7 +83,7 @@ void parse_libsvm_content(const file_reader &f, const size_type start, std::vect
                 }
                 max_size = std::max(max_size, vline.size());
                 data[i] = std::move(vline);
-            } catch (const std::exception &e) {
+            } catch (const std::exception &) {
                 // catch first exception and store it
                 #pragma omp critical
                 {
@@ -157,7 +157,7 @@ void parameter<T>::parse_libsvm_file(const std::string &filename, std::shared_pt
     } else {
         #pragma omp parallel for
         for (size_type i = 0; i < value.size(); ++i) {
-            value[i] = value[i] > real_type{ 0.0 } ? 1 : -1;
+            value[i] = value[i] > real_type{ 0.0 } ? real_type{ 1. } : real_type{ -1. };
         }
 
         value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
@@ -279,7 +279,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                         // write parsed value depending on the index
                         if (index == max_size - 1 && has_label) {
                             is_class_set = true;
-                            value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                            value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? real_type{ 1. } : real_type{ -1. };
                         } else {
                             data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
@@ -307,7 +307,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                     }
                     // write last number to the correct vector (based on the fact whether labels are present or not)
                     if (has_label) {
-                        value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? 1 : -1;
+                        value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? real_type{ 1. } : real_type{ -1. };
                     } else {
                         data[i][num_features - 1] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos));
                     }
@@ -317,7 +317,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                         throw invalid_file_format_exception{ fmt::format("Too many features! Superfluous '{}' for data point {}!", line.substr(next_pos), i) };
                     }
                 }
-            } catch (const std::exception &e) {
+            } catch (const std::exception &) {
                 // catch first exception and store it
                 #pragma omp critical
                 {
@@ -376,7 +376,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
     // helper variables
     size_type num_sv{ 0 };
-    std::pair<real_type, real_type> labels{ 0, 0 };
+    std::pair labels{ real_type{ 0.0 }, real_type{ 0.0 } };
     bool rho_set{ false };
 
     // parse libsvm model file header
