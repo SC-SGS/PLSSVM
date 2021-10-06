@@ -13,6 +13,7 @@
 #include "plssvm/detail/string_conversion.hpp"     // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::starts_with, plssvm::detail::ends_with, plssvm::detail::trim_left,
                                                    // plssvm::detail::to_lower_case, plssvm::detail::to_upper_case
+#include "plssvm/detail/operators.hpp"             // plssvm::operators::sign
 #include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 
@@ -157,7 +158,7 @@ void parameter<T>::parse_libsvm_file(const std::string &filename, std::shared_pt
     } else {
         #pragma omp parallel for
         for (size_type i = 0; i < value.size(); ++i) {
-            value[i] = value[i] > real_type{ 0.0 } ? real_type{ 1. } : real_type{ -1. };
+            value[i] = plssvm::operators::sign(value[i]);
         }
 
         value_ptr = std::make_shared<const std::vector<real_type>>(std::move(value));
@@ -279,7 +280,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                         // write parsed value depending on the index
                         if (index == max_size - 1 && has_label) {
                             is_class_set = true;
-                            value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? real_type{ 1. } : real_type{ -1. };
+                            value[i] = plssvm::operators::sign(detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)));
                         } else {
                             data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
@@ -307,7 +308,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                     }
                     // write last number to the correct vector (based on the fact whether labels are present or not)
                     if (has_label) {
-                        value[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)) > real_type{ 0.0 } ? real_type{ 1. } : real_type{ -1. };
+                        value[i] = plssvm::operators::sign(detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos)));
                     } else {
                         data[i][num_features - 1] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos));
                     }
