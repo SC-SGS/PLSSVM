@@ -12,7 +12,7 @@
 #pragma once
 
 #include <algorithm>    // std::min, std::transform
-#include <cctype>       // std::tolower
+#include <cctype>       // std::tolower, std::toupper
 #include <string>       // std::char_traits, std::string
 #include <string_view>  // std::string_view
 
@@ -115,6 +115,28 @@ inline std::string &to_lower_case(std::string &str) {
     std::string lowercase_str{ str };
     std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const char c) { return std::tolower(c); });
     return lowercase_str;
+}
+
+/**
+ * @brief Convert the string @p str to its all upper case representation.
+ * @param[in,out] str the string to transform
+ * @return the transformed string
+ */
+inline std::string &to_upper_case(std::string &str) {
+    std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return std::toupper(c); });
+    return str;
+}
+
+/**
+ * @brief Return a new string with the same content as @p str but all upper case.
+ * @details In contrast to `std::string& to_upper_case(std::string&)` this function does not change the input string @p str.
+ * @param[in] str the string to use in the transformation
+ * @return the transformed string (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::string as_upper_case(const std::string_view str) {
+    std::string uppercase_str{ str };
+    std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const char c) { return std::toupper(c); });
+    return uppercase_str;
 }
 
 }  // namespace plssvm::detail

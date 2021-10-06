@@ -50,24 +50,31 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>
         )
 
-# set library cxx standard
+## set library cxx standard
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
-#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion -Wshadow) # TODO: make warning free
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra> # -Wdouble-promotion -fno-common -Wconversion -Wshadow> # TODO: make warning free
+        $<$<CXX_COMPILER_ID:MSVC>:/Wall>
+        )
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4061>
+        )
 ## enable additional optimization flags only in RELEASE mode
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-ffast-math -march=native>)
-
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:GNU,Clang>>:-ffast-math -march=native>
+        $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
+        )
 
 ########################################################################################################################
 ##                                    check for optional and necessary dependencies                                   ##
 ########################################################################################################################
 # check for OpenMP (not for the backend!)
-find_package(OpenMP QUIET)
-if(OPENMP_FOUND)
-    message(STATUS "Found OpenMP to speed up file parsing.")
+find_package(OpenMP 4.0 QUIET)
+if(OpenMP_FOUND)
+    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed up file parsing.")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()

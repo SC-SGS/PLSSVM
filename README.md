@@ -18,6 +18,7 @@ General dependencies:
 - [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
+- [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
 
 Additional dependencies for the OpenMP backend:
 - compiler with OpenMP support
@@ -123,6 +124,7 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
 
 If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.
+To use DPC++ as compiler simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang path during CMake invocation.
 
 ### Running the tests
 
@@ -143,6 +145,14 @@ Additionally, it's advisable to use smaller test files to shorten the `ctest` st
 > cmake --build . -- coverage
 ```
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
+
+### Creating the documentation
+
+If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
+```bash
+> make doc
+```
+The documentation of the current state of the main branch can be found [here](https://vancraar.github.io/PLSSVM/).
 
 ## Installing
 
@@ -316,3 +326,7 @@ add_executable(prog main.cpp)
 target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::svm-all)
 ```
+
+## License
+
+The PLSSVM library is distributed under the MIT [license](LICENSE.md).

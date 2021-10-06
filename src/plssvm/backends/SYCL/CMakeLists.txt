@@ -59,7 +59,6 @@ elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
     target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
     target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
 
-    # TODO: test (somehow?)
     # nvidia targets
     if(DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda)
@@ -67,11 +66,11 @@ elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
     endif()
     # amd targets
     if(DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa-sycldevice)
-        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa-sycldevice)
+        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa)
+        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa)
         foreach(PLSSVM_AMD_TARGET_ARCH_NAME ${PLSSVM_AMD_TARGET_ARCHS})
-            target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -mcpu=${PLSSVM_AMD_TARGET_ARCH_NAME})
-            target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -mcpu=${PLSSVM_AMD_TARGET_ARCH_NAME})
+            target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCH_NAME})
+            target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCH_NAME})
         endforeach()
     endif()
 
