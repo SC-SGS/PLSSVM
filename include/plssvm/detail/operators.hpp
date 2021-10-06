@@ -139,8 +139,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+ \
-                           : val)
+    #pragma omp simd reduction(+:val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -160,10 +159,9 @@ template <typename T>
     PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
-    // #pragma omp simd reduction(+:val) //TODO: debug gcc ASSERT BUG
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
-        T tmp = lhs[i] - rhs[i];
-        val = std::fma(tmp, tmp, val);
+        const T diff = lhs[i] - rhs[i];
+        val = std::fma(diff, diff, val);
     }
     return val;
 }
