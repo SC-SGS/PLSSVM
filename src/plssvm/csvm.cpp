@@ -18,8 +18,7 @@
 #include "fmt/chrono.h"  // format std::chrono
 #include "fmt/core.h"    // fmt::print, fmt::format
 
-// TODO: change to __OPENMP?
-#if __has_include(<omp.h>)
+#ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads
 #endif
 
@@ -297,7 +296,7 @@ void csvm<T>::write_model(const std::string &model_name) {
         }
 
         // wait for all threads to write support vectors for class 1
-#if __has_include(<omp.h>)
+#ifdef _OPENMP
         while (count < omp_get_num_threads()) {
         }
 #else
