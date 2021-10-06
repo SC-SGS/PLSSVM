@@ -31,6 +31,7 @@
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
 #include <iostream>     // std::cerr, std::endl
+#include <limits>       // std::numeric_limits
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
@@ -141,10 +142,16 @@ class file_reader {
         if (f.fail()) {
             throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
         }
-        // get the size of the file
-        f.seekg(0, std::ios::end);
-        num_bytes_ = f.tellg();
-        f.seekg(0);
+
+        // touch all characters in file
+        f.ignore(std::numeric_limits<std::streamsize>::max());
+        // get number of visited characters
+        num_bytes_ = f.gcount();
+        // since ignore will have set eof
+        f.clear();
+        // jump to file start
+        f.seekg(0, std::ios_base::beg);
+
         // allocate the necessary buffer
         file_content_ = new char[num_bytes_];
         // read the whole file in one go
