@@ -36,6 +36,10 @@ set(PLSSVM_OPENMP_SOURCES
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME svm-OpenMP)
 add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OPENMP_SOURCES})
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
+# special command line options for MSVC:
+# -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
+# -openmp:experimental -> enables OpenMP's SIMD instructions
+target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 
 # link base library against OpenMP library
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
