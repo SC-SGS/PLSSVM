@@ -354,6 +354,13 @@ if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
     endif()
 endif()
 
+## change executable floating points from double precision to single precision
+option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the svm-train and svm-predict executables with single precision instead of double precision." OFF)
+if(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    message(STATUS "Using single precision floating point numbers for svm-train and svm-predict.")
+    target_compile_definitions(${PLSSVM_EXECUTABLE_TRAIN_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    target_compile_definitions(${PLSSVM_EXECUTABLE_PREDICT_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+endif()
 
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
