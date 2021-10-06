@@ -102,7 +102,13 @@ inline void device_assert(const error_code ec) {
         PLSSVM_OPENCL_ERROR_CHECK(err);
 
         for (const cl_device_id &device : device_list) {
+#ifdef CL_VERSION_2_0
+            // use new clCreateCommandQueueWithProperties function
+            command_queues.emplace_back(context, clCreateCommandQueueWithProperties(context, device, 0, &err), device);
+#else
+            // use old clCreateCommandQueue function (deprecated in newer OpenCL versions)
             command_queues.emplace_back(context, clCreateCommandQueue(context, device, 0, &err), device);
+#endif
             PLSSVM_OPENCL_ERROR_CHECK(err);
         }
     }
