@@ -1,25 +1,64 @@
 #!groovy
+
+def buildbadge = addEmbeddableBadgeConfiguration(id: "Jenkins", subject: "Jenkins Tests", status: "skipped")
+
+if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
+    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER}  triggered by branch indexing..."
+    if (env.BRANCH_NAME != "master") {
+        if (env.BUILD_NUMBER != "1") { // Always execute first build to load this configuration and thus the triggers
+            print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} skipped due being triggered by Branch Indexing instead of SCM change!"
+            buildbadge.setStatus('skipped')
+            currentBuild.result = 'ABORTED'
+            return // early exit to avoid redundant builds
+        }
+    }
+} else {
+    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} triggered by SCM change..."
+    print "Proceeding!"
+}
+
+
 pipeline {
     agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
-    environment {
-        GITLAB_TOKEN = credentials('PLSSVM-GitLab-Api')
+
+    options {
+        buildDiscarder(
+            logRotator(
+                daysToKeepStr: "21",
+                numToKeepStr: "50",
+                artifactDaysToKeepStr: "21",
+                artifactNumToKeepStr: "50"
+            )
+        )
+	disableConcurrentBuilds()
     }
+
+    triggers {
+        githubPush() // Trigger by push to respective github branch
+        pollSCM 'H/30 * * * *' // Fallback polling solution as some pushes are somehow lost
+    }
+
+    environment {
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        BRANCH_NAME = "${env.BRANCH_NAME}"
+    }
+
     stages {
         stage('init') {
             steps {
                 dir('plssvm') {
                     sh '''
-                        gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                        gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                         curl --verbose\
                             --request POST \
-                            --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                            --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                             --header "Content-Type: application/json" \
                             --header "authorization: Bearer ${gitlab_token}" \
                             --data "{
-                                \\"state\\": \\"running\\",
+                                \\"state\\": \\"pending\\",
                                 \\"context\\": \\"jenkins-ctest\\",
                                 \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
+                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                         }"
                     '''
                 }
@@ -47,7 +86,6 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         module load cuda
-                        cd SVM
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
@@ -63,7 +101,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda
-                            cd SVM/build/Release
+                            cd build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -77,7 +115,6 @@ pipeline {
                         module load cuda
                         module use /home/breyerml/.modulefiles/
                         module load pcsgs05/hipsycl
-                        cd SVM
                         mkdir -p build/Release_hip
                         cd build/Release_hip
                         rm -rf *
@@ -95,7 +132,7 @@ pipeline {
                             module load cuda
                             module use /home/breyerml/.modulefiles/
                             module load pcsgs05/hipsycl
-                            cd SVM/build/Release_hip
+                            cd build/Release_hip
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -109,7 +146,6 @@ pipeline {
                         module load cuda
                         module use /home/breyerml/.modulefiles/
                         module load pcsgs05/dpcpp_rt
-                        cd SVM
                         mkdir -p build/Release_dpcpp
                         cd build/Release_dpcpp
                         rm -rf *
@@ -127,7 +163,7 @@ pipeline {
                             module load cuda
                             module use /home/breyerml/.modulefiles/
                             module load pcsgs05/dpcpp_rt
-                            cd SVM/build/Release_dpcpp
+                            cd build/Release_dpcpp
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -139,7 +175,6 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         module load cuda
-                        cd SVM
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
                         rm -rf *
@@ -148,7 +183,7 @@ pipeline {
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
                     '''
-                    cobertura coberturaReportFile: 'SVM/build/Debug_cov/coverage.xml'
+                    cobertura coberturaReportFile: 'build/Debug_cov/coverage.xml'
                 }
             }
         }
@@ -159,7 +194,6 @@ pipeline {
                         module load cuda
                         module use /home/breyerml/.modulefiles/
                         module load pcsgs05/hipsycl
-                        cd SVM
                         mkdir -p build/Debug_hip
                         cd build/Debug_hip
                         rm -rf *
@@ -176,7 +210,6 @@ pipeline {
                         module load cuda
                         module use /home/breyerml/.modulefiles/
                         module load pcsgs05/dpcpp_rt
-                        cd SVM
                         mkdir -p build/Debug_dpcpp
                         cd build/Debug_dpcpp
                         rm -rf *
@@ -198,7 +231,7 @@ pipeline {
                     failed(failureThreshold: '0')
                 ],
                 tools: [CTest(
-                    pattern: 'plssvm/SVM/build/*/Testing/**/*.xml',
+                    pattern: 'plssvm/build/*/Testing/**/*.xml',
                     deleteOutputFiles: true,
                     failIfNotNew: false,
                     skipNoTestFiles: true,
@@ -208,50 +241,59 @@ pipeline {
 
         }
         success {
+            script {
+                buildbadge.setStatus('success')
+            }
             sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
         failure {
+            script {
+                buildbadge.setStatus('failing')
+            }
             sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
-                        \\"state\\": \\"failed\\",
+                        \\"state\\": \\"failure\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }
         aborted {
+            script {
+                buildbadge.setStatus('aborted')
+            }
             sh '''
-                gitlab_token=$(echo ${GITLAB_TOKEN} | cut -f2 -d':')
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
                     --request POST \
-                    --url "https://gitlab-sim.informatik.uni-stuttgart.de/api/v4/projects/162/statuses/$GIT_COMMIT" \
+                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
                     --header "Content-Type: application/json" \
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
-                        \\"state\\": \\"canceled\\",
+                        \\"state\\": \\"error\\",
                         \\"context\\": \\"jenkins-ctest\\",
                         \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
-                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/All/job/PLSSVM/job/PLSSVM-test/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
         }

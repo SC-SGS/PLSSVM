@@ -1,4 +1,5 @@
-# Least-Squares Support-Vector Machine
+
+# Least-Squares Support-Vector Machine &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://vancraar.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
 
 Implementation of a parallel [least-squares support-vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
 The currently available backends are:
@@ -78,7 +79,7 @@ sm_86
 gfx906
 ```
 
-If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU 
+If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU
 (requires the Python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
@@ -106,7 +107,7 @@ The `[optional_options]` can be one or multiple of:
   - `AUTO`: check for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for the SYCL backend
 
-**Attention:** at least one backend must be enabled and available!    
+**Attention:** at least one backend must be enabled and available!
 
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
@@ -116,7 +117,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: ON): enable testing using GoogleTest and ctest
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
-- `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files 
+- `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
     - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
     - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point
 
@@ -157,9 +158,9 @@ The library supports the `install` target:
 The repository comes with a Python3 script (in the `data/` directory) to simply generate arbitrarily large data sets.
 
 In order to use all functionality, the following Python3 modules must be installed:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`numpy`](https://pypi.org/project/numpy/), 
-[`pandas`](https://pypi.org/project/pandas/), [`sklearn`](https://scikit-learn.org/stable/), 
-[`arff`](https://pypi.org/project/arff/), [`matplotlib`](https://pypi.org/project/matplotlib/) and 
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`numpy`](https://pypi.org/project/numpy/),
+[`pandas`](https://pypi.org/project/pandas/), [`sklearn`](https://scikit-learn.org/stable/),
+[`arff`](https://pypi.org/project/arff/), [`matplotlib`](https://pypi.org/project/matplotlib/) and
 [`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
 ```bash
@@ -192,9 +193,9 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-train [OPTION...] training_set_file [model_file]
 
-  -t, --kernel_type arg         set type of kernel function. 
+  -t, --kernel_type arg         set type of kernel function.
                                          0 -- linear: u'*v
-                                         1 -- polynomial: (gamma*u'*v + coef0)^degree 
+                                         1 -- polynomial: (gamma*u'*v + coef0)^degree
                                          2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
   -d, --degree arg              set degree in kernel function (default: 3)
   -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)
@@ -206,7 +207,7 @@ Usage:
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
       --input training_set_file
-                                
+
       --model model_file
 ```
 
@@ -240,9 +241,9 @@ Usage:
   -p, --target_platform arg  choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
   -q, --quiet                quiet mode (no outputs)
   -h, --help                 print this helper message
-      --test test_file       
-      --model model_file     
-      --output output_file 
+      --test test_file
+      --model model_file
+      --output output_file
 ```
 
 An example invocation could look like:
@@ -274,22 +275,22 @@ int main(i) {
         // parse SVM parameter from command line
         plssvm::parameter<double> params;
         params.backend = plssvm::backend_type::cuda;
-        
+
         params.parse_train_file("train_file.libsvm");
-    
+
         // create C-SVM (based on selected backend)
         auto svm = plssvm::make_csvm(params);
-        
+
         // learn
         svm->learn();
-        
+
         // get accuracy
         std::cout << "accuracy: " << svm->accuracy() << std::endl;
-        
+
         // predict
         std::vector<double> point = { ... };
         std::cout << "label: " << svm->predict(point) << std::endl;
-        
+
         // write model file to disk
         svm->write_model("model_file.libsvm");
     } catch (const plssvm::exception &e) {
@@ -297,7 +298,7 @@ int main(i) {
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
     }
-        
+
     return 0;
 }
 ```
@@ -305,7 +306,7 @@ With a corresponding minimal CMake file:
 ```cmake
 cmake_minimum_required(VERSION 3.16)
 
-project(LibraryUsageExample 
+project(LibraryUsageExample
         LANGUAGES CXX)
 
 find_package(plssvm CONFIG REQUIRED)
