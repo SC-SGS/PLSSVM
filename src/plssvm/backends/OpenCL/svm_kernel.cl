@@ -25,11 +25,11 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
             barrier(CLK_LOCAL_MEM_FENCE);
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                const size_type idx = 0;  // TODO: load parallel
+                const size_type idx = 0;
                 if (get_local_id(1) == idx) {
                     data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i];
                 }
-                const size_type idx_2 = 0;  // TODO: TODO: load parallel
+                const size_type idx_2 = 0;
                 if (get_local_id(0) == idx_2) {
                     data_intern_j[get_local_id(1)][block_id] = data_d[block_id + vec_index + j];
                 }
@@ -97,11 +97,11 @@ __kernel void device_kernel_poly(__global const real_type *q, __global real_type
             barrier(CLK_LOCAL_MEM_FENCE);
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                const size_type idx = 0;  // TODO: load parallel
+                const size_type idx = 0;
                 if (get_local_id(1) == idx) {
                     data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i];
                 }
-                const size_type idx_2 = 0;  // TODO: TODO: load parallel
+                const size_type idx_2 = 0;
                 if (get_local_id(0) == idx_2) {
                     data_intern_j[get_local_id(1)][block_id] = data_d[block_id + vec_index + j];
                 }
@@ -160,11 +160,11 @@ __kernel void device_kernel_radial(__global const real_type *q, __global real_ty
             barrier(CLK_LOCAL_MEM_FENCE);
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                const size_type idx = 0;  // TODO: load parallel
+                const size_type idx = 0;
                 if (get_local_id(1) == idx) {
                     data_intern_i[get_local_id(0)][block_id] = data_d[block_id + vec_index + i];
                 }
-                const size_type idx_2 = 0;  // TODO: TODO: load parallel
+                const size_type idx_2 = 0;
                 if (get_local_id(0) == idx_2) {
                     data_intern_j[get_local_id(1)][block_id] = data_d[block_id + vec_index + j];
                 }
