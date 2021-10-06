@@ -117,7 +117,7 @@ class csvm {
      * @param[in] point the data point to predict
      * @return a negative `real_type` value if the prediction for data point point is the negative class and a positive `real_type` value otherwise ([[nodiscard]])
      */
-    [[nodiscard]] real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
+    [[nodiscard]] real_type predict(const std::vector<real_type> &point);
 
     /**
      * @brief Uses the already learned model to predict the class of an (new) point
