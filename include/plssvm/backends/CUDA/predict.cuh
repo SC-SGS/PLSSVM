@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief TODO: brief description
+ * @brief Defines the functions used for prediction for the C-SVM using the CUDA backend.
  */
 
 #pragma once
