@@ -11,8 +11,6 @@
 
 #pragma once
 
-// TODO: include necessary?
-
 namespace plssvm::cuda::detail {
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
