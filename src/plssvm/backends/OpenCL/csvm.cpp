@@ -102,13 +102,13 @@ csvm<T>::csvm(const parameter<T> &params) :
 
     switch (kernel_) {
         case kernel_type::linear:
-            kernel_w_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "kernel_w");
+            kernel_w_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "device_kernel_w_linear");
             break;
         case kernel_type::polynomial:
-            predict_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "predict_points_poly");
+            predict_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "device_kernel_predict_poly");
             break;
         case kernel_type::rbf:
-            predict_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "predict_points_rbf");
+            predict_kernel_ = detail::create_kernel<real_type, size_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict.cl", "device_kernel_predict_radial");
             break;
     }
 }

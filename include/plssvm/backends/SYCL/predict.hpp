@@ -22,9 +22,9 @@ namespace plssvm::sycl {
 using size_type = std::size_t;
 
 template <typename real_type>
-class kernel_w {
+class device_kernel_w_linear {
   public:
-    kernel_w(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const size_type num_features) :
+    device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const size_type num_features) :
         w_d_{ w_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, num_features_{ num_features } {}
     void operator()(::sycl::nd_item<1> nd_idx) const {
         const auto index = nd_idx.get_global_linear_id();
@@ -48,9 +48,9 @@ class kernel_w {
 };
 
 template <typename real_type>
-class predict_points_poly {
+class device_kernel_predict_poly {
   public:
-    predict_points_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) :
+    device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     void operator()(::sycl::nd_item<2> nd_idx) const {
@@ -88,9 +88,9 @@ class predict_points_poly {
 };
 
 template <typename real_type>
-class predict_points_rbf {
+class device_kernel_predict_radial {
   public:
-    predict_points_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) :
+    device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}
 
     void operator()(::sycl::nd_item<2> nd_idx) const {

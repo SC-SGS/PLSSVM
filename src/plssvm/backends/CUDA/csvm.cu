@@ -367,7 +367,7 @@ void csvm<T>::update_w() {
     const auto grid = static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE)));
     const auto block = std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_features_));
 
-    cuda::kernel_w<<<grid, block>>>(w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, num_features_);
+    cuda::device_kernel_w_linear<<<grid, block>>>(w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, num_features_);
     cuda::detail::device_synchronize(0);
     w_d_.memcpy_to_host(w_, 0, num_features_);
 }
@@ -421,10 +421,10 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
             case kernel_type::linear:
                 break;
             case kernel_type::polynomial:
-                cuda::predict_points_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_);
+                cuda::device_kernel_predict_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_);
                 break;
             case kernel_type::rbf:
-                cuda::predict_points_rbf<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_);
+                cuda::device_kernel_predict_radial<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d_.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_);
                 break;
         }
         cuda::detail::device_synchronize(0);

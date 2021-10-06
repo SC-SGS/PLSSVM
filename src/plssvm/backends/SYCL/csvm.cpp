@@ -381,7 +381,7 @@ void csvm<T>::update_w() {
     const ::sycl::range<1> block{ std::min<size_type>(THREAD_BLOCK_SIZE, num_features_) };
     const ::sycl::nd_range<1> execution_range{ grid * block, block };
 
-    devices_[0].parallel_for(execution_range, kernel_w{ w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_ });
+    devices_[0].parallel_for(execution_range, device_kernel_w_linear{ w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_ });
 
     detail::device_synchronize(devices_[0]);
 
@@ -439,12 +439,12 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
                 break;
             case kernel_type::polynomial:
                 devices_[0].submit([&](::sycl::handler &cgh) {
-                    cgh.parallel_for(execution_range, predict_points_poly{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_ });
+                    cgh.parallel_for(execution_range, device_kernel_predict_poly{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, degree_, gamma_, coef0_ });
                 });
                 break;
             case kernel_type::rbf:
                 devices_[0].submit([&](::sycl::handler &cgh) {
-                    cgh.parallel_for(execution_range, predict_points_rbf{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_ });
+                    cgh.parallel_for(execution_range, device_kernel_predict_radial{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), points.size(), num_features_, gamma_ });
                 });
                 break;
         }

@@ -14,7 +14,7 @@
 namespace plssvm::cuda {
 
 template <typename real_type>
-__global__ void kernel_w(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const int num_features) {
+__global__ void device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const int num_features) {
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp = 0;
     if (index < num_features) {
@@ -25,11 +25,11 @@ __global__ void kernel_w(real_type *w_d, const real_type *data_d, const real_typ
         w_d[index] = temp;
     }
 }
-template __global__ void kernel_w(float *, const float *, const float *, const float *, const int, const int);
-template __global__ void kernel_w(double *, const double *, const double *, const double *, const int, const int);
+template __global__ void device_kernel_w_linear(float *, const float *, const float *, const float *, const int, const int);
+template __global__ void device_kernel_w_linear(double *, const double *, const double *, const double *, const int, const int);
 
 template <typename real_type>
-__global__ void predict_points_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const int degree, const real_type gamma, const real_type coef0) {
+__global__ void device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const int degree, const real_type gamma, const real_type coef0) {
     const int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
     const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -49,11 +49,11 @@ __global__ void predict_points_poly(real_type *out_d, const real_type *data_d, c
     }
 }
 
-template __global__ void predict_points_poly(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const int, const float, const float);
-template __global__ void predict_points_poly(double *, const double *, const double *, const double *, const int, const double *, const int, const int, const int, const double, const double);
+template __global__ void device_kernel_predict_poly(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const int, const float, const float);
+template __global__ void device_kernel_predict_poly(double *, const double *, const double *, const double *, const int, const double *, const int, const int, const int, const double, const double);
 
 template <typename real_type>
-__global__ void predict_points_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const real_type gamma) {
+__global__ void device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const real_type *points, const int num_predict_points, const int num_features, const real_type gamma) {
     const int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
     const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -73,7 +73,7 @@ __global__ void predict_points_rbf(real_type *out_d, const real_type *data_d, co
     }
 }
 
-template __global__ void predict_points_rbf(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const float);
-template __global__ void predict_points_rbf(double *, const double *, const double *, const double *, const int, const double *, const int, const int, const double);
+template __global__ void device_kernel_predict_radial(float *, const float *, const float *, const float *, const int, const float *, const int, const int, const float);
+template __global__ void device_kernel_predict_radial(double *, const double *, const double *, const double *, const int, const double *, const int, const int, const double);
 
 }  // namespace plssvm::cuda
