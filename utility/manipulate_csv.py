@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
 @author Alexander Van Craen
 @author Marcel Breyer
@@ -7,8 +8,6 @@
 @license This file is part of the PLSSVM project which is released under the MIT license.
          See the LICENSE.md file in the project root for full license information.
 """
-
-# TODO: necessary shebang?
 
 import pandas as pd
 import argparse
@@ -26,5 +25,5 @@ try:
 except FileNotFoundError:
     data = pd.DataFrame()
 
-data.at[int(args.row),args.col] = args.val
+data.at[int(args.row), args.col] = args.val
 data.to_csv(args.file, index=False)
