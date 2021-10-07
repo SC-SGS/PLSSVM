@@ -101,7 +101,7 @@ class csvm : public ::plssvm::csvm<T> {
     virtual void update_w() override;
 
     /// The available/used SYCL devices.
-    std::vector<::sycl::queue> devices_{};  // TODO: rename
+    std::vector<::sycl::queue> devices_{};
     /// The number of data points excluding the last data point.
     size_type dept_{};
     /// The boundary size used to remove boundary condition checks inside the kernels.
