@@ -53,8 +53,9 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra> # -Wdouble-promotion -fno-common -Wconversion -Wshadow> # TODO: make warning free
-        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wsuggest-override -Wextra-semi -Wunreachable-code -Wuninitialized>
+        $<$<CXX_COMPILER_ID:GNU>:-Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
         )
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler

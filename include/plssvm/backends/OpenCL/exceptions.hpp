@@ -32,4 +32,4 @@ class backend_exception : public exception {
         ::plssvm::exception{ msg, "opencl::backend_exception", loc } {}
 };
 
-};  // namespace plssvm::opencl
+}  // namespace plssvm::opencl

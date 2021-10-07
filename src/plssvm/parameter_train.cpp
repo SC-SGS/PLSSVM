@@ -23,11 +23,11 @@
 namespace plssvm {
 
 template <typename T>
-parameter_train<T>::parameter_train(std::string input_filename) {
-    base_type::input_filename = std::move(input_filename);
-    model_filename = base_type::model_name_from_input();
+parameter_train<T>::parameter_train(std::string p_input_filename) {
+    base_type::input_filename = std::move(p_input_filename);
+    base_type::model_filename = base_type::model_name_from_input();
 
-    base_type::parse_train_file(base_type::input_filename);
+    base_type::parse_train_file(input_filename);
 }
 
 template <typename T>

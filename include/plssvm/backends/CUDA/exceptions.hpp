@@ -32,4 +32,4 @@ class backend_exception : public exception {
         ::plssvm::exception{ msg, "cuda::backend_exception", loc } {}
 };
 
-};  // namespace plssvm::cuda
+}  // namespace plssvm::cuda

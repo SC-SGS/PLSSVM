@@ -27,12 +27,12 @@ class command_queue {
     command_queue() = default;
     /**
      * @brief Construct a command queue with the provided information.
-     * @param[in] context the associated OpenCL cl_context
-     * @param[in] queue the OpenCL cl_command_queue to wrap
-     * @param[in] device the associated OpenCL cl_device_id
+     * @param[in] p_context the associated OpenCL cl_context
+     * @param[in] p_queue the OpenCL cl_command_queue to wrap
+     * @param[in] p_device the associated OpenCL cl_device_id
      */
-    command_queue(cl_context context, cl_command_queue queue, cl_device_id device) :
-        context{ context }, queue{ queue }, device{ device } {}
+    command_queue(cl_context p_context, cl_command_queue p_queue, cl_device_id p_device) :
+        context{ p_context }, queue{ p_queue }, device{ p_device } {}
 
     /**
      * @brief Release the cl_command_queue resources on destruction.
