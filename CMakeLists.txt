@@ -54,6 +54,7 @@ target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra> # -Wdouble-promotion -fno-common -Wconversion -Wshadow> # TODO: make warning free
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
         )
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler

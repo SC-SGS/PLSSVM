@@ -85,7 +85,6 @@ class device_kernel_predict_poly {
     /**
      * @brief Construct a new device kernel to predict the labels of data points using the polynomial kernel function.
      * @details Currently only single GPU execution is supported.
-     * @tparam real_type the type of the data
      * @param[in] out_d the calculated predictions
      * @param[in] data_d the one-dimension support vector matrix
      * @param[in] data_last_d the last row of the support vector matrix
@@ -154,7 +153,6 @@ class device_kernel_predict_radial {
     /**
      * @brief Construct a new device kernel to predict the labels of data points using the radial basis function kernel function.
      * @details Currently only single GPU execution is supported.
-     * @tparam real_type the type of the data
      * @param[in] out_d the calculated predictions
      * @param[in] data_d the one-dimension support vector matrix
      * @param[in] data_last_d the last row of the support vector matrix

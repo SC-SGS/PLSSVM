@@ -170,7 +170,7 @@ void set_kernel_args(cl_kernel kernel, Args... args) {
 }
 
 /**
- * @brief
+ * @brief Run the 1D @p kernel on the @p queue with the additional parameters @p args.
  * @tparam Args the types of the arguments
  * @param[in,out] queue the command queue on which the kernel should be executed
  * @param[in,out] kernel the kernel to run
@@ -200,7 +200,7 @@ void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<
 }
 
 /**
- * @brief
+ * @brief Run the 1D @p kernel on the @p queue with the additional parameters @p args.
  * @tparam Args the types of the arguments
  * @param[in,out] queue the command queue on which the kernel should be executed
  * @param[in,out] kernel the kernel to run
