@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
 
 #include "sycl/sycl.hpp"  // sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
 
