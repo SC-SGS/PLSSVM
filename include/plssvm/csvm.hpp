@@ -181,11 +181,13 @@ class csvm {
 
     /**
      * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
+     * @param[in] matrix the 2D vector to be transformed into a 1D representation
      * @param[in] boundary the number of boundary cells
+     * @param[in] num_points the number of data points of the 2D vector to transform
      * @attention boundary values can contain random numbers
      * @return an 1D vector in a SoA layout
      */
-    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points);
+    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, size_type boundary, size_type num_points);
 
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //

@@ -18,10 +18,10 @@ namespace plssvm::cuda {
  * @details Supports multi-GPU execution.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data_d the one-dimension data matrix
- * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] QA_cost the bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] num_rows the number of columns in the data matrix
  * @param[in] add denotes whether the values are added or subtracted from the result vector
@@ -36,7 +36,7 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
  * @details Currently only single GPU execution is supported.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data_d the one-dimension data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -56,7 +56,7 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
  * @details Currently only single GPU execution is supported.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data_d the one-dimension data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost

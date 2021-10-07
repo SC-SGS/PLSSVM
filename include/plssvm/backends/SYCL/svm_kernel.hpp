@@ -47,7 +47,7 @@ class device_kernel_linear {
      * @brief Construct a new device kernel calculating the `q` vector using the linear C-SVM kernel.
      * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
      * @param[in] q the `q` vector
-     * @param[in] ret the result vector
+     * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
      * @param[in] data_d the one-dimension data matrix
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -168,7 +168,7 @@ class device_kernel_poly {
      * @brief Construct a new device kernel calculating the `q` vector using the polynomial C-SVM kernel.
      * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
      * @param[in] q the `q` vector
-     * @param[in] ret the result vector
+     * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
      * @param[in] data_d the one-dimension data matrix
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -284,7 +284,7 @@ class device_kernel_radial {
      * @brief Construct a new device kernel calculating the `q` vector using the radial basis functions C-SVM kernel.
      * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
      * @param[in] q the `q` vector
-     * @param[in] ret the result vector
+     * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
      * @param[in] data_d the one-dimension data matrix
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost

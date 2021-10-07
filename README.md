@@ -329,4 +329,4 @@ target_link_libraries(prog PUBLIC plssvm::svm-all)
 
 ## License
 
-The PLSSVM library is distributed under the MIT [license](LICENSE.md).
+The PLSSVM library is distributed under the MIT [license](https://github.com/SC-SGS/PLSSVM/blob/todos/LICENSE.md).
