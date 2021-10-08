@@ -11,7 +11,7 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device,
                                                        // plssvm::detail::cuda::peek_at_last_error, plssvm::detail::cuda::device_synchronize
 #include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda::backend_exception
-#include "plssvm/backends/CUDA/predict.cuh"            // plssvm::cuda::kernel_w, plssvm::cuda::predict_points_poly, plssvm::cuda::predict_points_rbf
+#include "plssvm/backends/CUDA/predict_kernel.cuh"     // plssvm::cuda::kernel_w, plssvm::cuda::predict_points_poly, plssvm::cuda::predict_points_rbf
 #include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::device_kernel_q_linear, plssvm::cuda::device_kernel_q_poly, plssvm::cuda::device_kernel_q_radial
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::device_kernel_linear, plssvm::cuda::device_kernel_poly, plssvm::cuda::device_kernel_radial
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE

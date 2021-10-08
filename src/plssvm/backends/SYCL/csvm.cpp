@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_list, plssvm::detail::sycl::device_synchronize
 #include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
-#include "plssvm/backends/SYCL/predict.hpp"            // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
+#include "plssvm/backends/SYCL/predict_kernel.hpp"     // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
 #include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
 #include "plssvm/constants.hpp"                        // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE

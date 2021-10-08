@@ -110,7 +110,7 @@ class csvm {
      * @brief Evaluates the model on the data used for training.
      * @return The fraction of correct labeled training data in percent. ([[nodiscard]])
      */
-    [[nodiscard]] real_type accuracy();
+    [[nodiscard]] real_type accuracy();  // TODO: with parameters?
 
     /**
      * @brief Uses the already learned model to predict the class of a (new) data point.
