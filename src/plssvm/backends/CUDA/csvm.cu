@@ -389,7 +389,7 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
     PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
     PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
-    PLSSVM_ASSERT(!points.empty(), "No points to predict");
+    PLSSVM_ASSERT(!points.empty(), "No points to predict");  // TODO: exception
     for (const std::vector<real_type> &point : points) {
         PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
     }

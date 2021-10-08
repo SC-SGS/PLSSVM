@@ -238,19 +238,37 @@ auto csvm<T>::accuracy() -> real_type {
     if (value_ptr_ == nullptr) {
         throw exception{ "No labels provided for accuracy calculation!" };
     }
+    return accuracy(*data_ptr_, *value_ptr_);
+}
 
+template <typename T>
+auto csvm<T>::accuracy(const std::vector<real_type> &point, const real_type correct_label) -> real_type {
+    return accuracy(std::vector<std::vector<real_type>>(1, point), std::vector<real_type>(1, correct_label));
+}
+
+template <typename T>
+auto csvm<T>::accuracy(const std::vector<std::vector<real_type>> &points, const std::vector<real_type> &correct_labels) -> real_type {
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
     PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
 
-    size_type correct = 0;
-    const std::vector<real_type> predictions = predict(*data_ptr_);
+    if (points.size() != correct_labels.size()) {
+        throw exception{ fmt::format("Number of data points ({}) must match number of correct labels ({})!", points.size(), correct_labels.size()) };
+    } else if (points.empty()) {
+        return 0.0;  // TODO: ???
+    }
+
+    for (const std::vector<real_type> &point : points) {
+        PLSSVM_ASSERT(point.size() == data_ptr_->front().size(), "Feature sizes mismatch!: {} != {}", point.size(), data_ptr_->front().size());
+    }
+
+    size_type correct{ 0 };
+    const std::vector<real_type> predictions = predict(points);
     for (size_type index = 0; index < predictions.size(); ++index) {
-        if (predictions[index] * (*value_ptr_)[index] > real_type{ 0.0 }) {  // TODO: maybe sign() == sign()?
+        if (predictions[index] * correct_labels[index] > real_type{ 0.0 }) {
             ++correct;
         }
     }
-    return static_cast<real_type>(correct) / static_cast<real_type>(num_data_points_);
+    return static_cast<real_type>(correct) / static_cast<real_type>(points.size());
 }
 
 template <typename T>

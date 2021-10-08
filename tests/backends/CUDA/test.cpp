@@ -237,9 +237,20 @@ TYPED_TEST(CUDA_CSVM, accuracy) {
             ++count;
         }
     }
-    real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
+    const real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
 
-    // calculate accuracy
-    real_type accuracy_calculated = csvm_cuda.accuracy();
-    util::gtest_assert_floating_point_eq(accuracy_calculated, accuracy_correct);
+    // calculate accuracy using the intern data and labels
+    const real_type accuracy_calculated_intern = csvm_cuda.accuracy();
+    util::gtest_assert_floating_point_eq(accuracy_calculated_intern, accuracy_correct);
+    // calculate accuracy using external data and labels
+    const real_type accuracy_calculated_extern = csvm_cuda.accuracy(*params.data_ptr, *params.value_ptr);
+
+    util::gtest_assert_floating_point_eq(accuracy_calculated_extern, accuracy_correct);
+
+    // check single point prediction
+    const real_type prediction_first_point = csvm_cuda.predict_label((*params.data_ptr)[0]);
+    const real_type accuracy_calculated_single_point_correct = csvm_cuda.accuracy((*params.data_ptr)[0], prediction_first_point);
+    util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_correct, real_type{ 1.0 });
+    const real_type accuracy_calculated_single_point_wrong = csvm_cuda.accuracy((*params.data_ptr)[0], -prediction_first_point);
+    util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_wrong, real_type{ 0.0 });
 }
