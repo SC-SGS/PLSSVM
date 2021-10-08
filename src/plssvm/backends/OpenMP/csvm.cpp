@@ -140,8 +140,11 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
 template <typename T>
 void csvm<T>::update_w() {
-    w_.resize(num_features_, real_type{ 0.0 });
+    // resize and reset all values to zero
+    w_.resize(num_features_);
     std::fill(w_.begin(), w_.end(), real_type{ 0.0 });
+
+    // calculate the w vector
     #pragma omp parallel for
     for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
         for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
@@ -154,6 +157,7 @@ template <typename T>
 auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
+    // perform some sanity checks
     if (alpha_ptr_ == nullptr) {
         throw exception{ "No alphas provided for prediction!" };
     }

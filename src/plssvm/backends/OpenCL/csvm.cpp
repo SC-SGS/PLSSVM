@@ -380,19 +380,23 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
 template <typename T>
 void csvm<T>::update_w() {
-    w_.resize(num_features_);
-    w_d_ = detail::device_ptr<real_type>(num_features_ + THREAD_BLOCK_SIZE, devices_[0]);
+    // create the w vector on the device
+    w_d_ = detail::device_ptr<real_type>{ num_features_ + THREAD_BLOCK_SIZE, devices_[0] };
     w_d_.memset(0);
 
-    detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
+    // create the weight vector on the device and copy data
+    detail::device_ptr<real_type> alpha_d{ num_data_points_ + THREAD_BLOCK_SIZE, devices_[0] };
     alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
 
     const std::vector<size_type> block{ std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_features_)) };
     const std::vector<size_type> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) * block[0] };
 
+    // calculate the w vector on the device
     detail::run_kernel(devices_[0], kernel_w_kernel_[0], grid, block, w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_);
     detail::device_synchronize(devices_[0]);
 
+    // copy back to host memory
+    w_.resize(num_features_);
     w_d_.memcpy_to_host(w_, 0, num_features_);
 }
 
@@ -400,6 +404,7 @@ template <typename T>
 auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
+    // perform some sanity checks
     if (alpha_ptr_ == nullptr) {
         throw exception{ "No alphas provided for prediction!" };
     }
@@ -412,6 +417,7 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
         PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
     }
 
+    // check if data already resides on the first device
     if (data_d_[0].empty()) {
         setup_data_on_device();
     }
@@ -423,24 +429,28 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
         if (w_.empty()) {
             update_w();
         }
+        #pragma omp parallel for
         for (size_type i = 0; i < points.size(); ++i) {
-            out[i] = transposed{ w_ } * points[i];
-            out[i] += bias_;
+            out[i] = transposed{ w_ } * points[i] + bias_;
         }
     } else {
-        detail::device_ptr<real_type> out_d(points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, devices_[0]);
+        // create result vector on the device
+        detail::device_ptr<real_type> out_d{ points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, devices_[0] };
         out_d.memset(0);
 
+        // transform prediction data
         std::vector<real_type> transformed_data = base_type::transform_data(points, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, points.size());
-        detail::device_ptr<real_type> point_d(points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), devices_[0]);
+        detail::device_ptr<real_type> point_d{ points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), devices_[0] };
         point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
 
-        detail::device_ptr<real_type> alpha_d(num_data_points_ + THREAD_BLOCK_SIZE, devices_[0]);
+        // create the weight vector on the device and copy data
+        detail::device_ptr<real_type> alpha_d{ num_data_points_ + THREAD_BLOCK_SIZE, devices_[0] };
         alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
 
         std::vector<size_type> block{ std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(num_data_points_)), std::min(THREAD_BLOCK_SIZE, static_cast<unsigned int>(points.size())) };
         std::vector<size_type> grid{ static_cast<unsigned int>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * block[0]), static_cast<unsigned int>(std::ceil(static_cast<real_type>(points.size()) / static_cast<real_type>(THREAD_BLOCK_SIZE)) * block[1]) };
 
+        // perform prediction on the first device
         switch (kernel_) {
             case kernel_type::linear:
                 break;
@@ -452,8 +462,10 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
                 break;
         }
         detail::device_synchronize(devices_[0]);
-
         out_d.memcpy_to_host(out, 0, points.size());
+
+        // add bias_ to all predictions
+        #pragma omp parallel for
         for (size_type i = 0; i < points.size(); ++i) {
             out[i] += bias_;
         }

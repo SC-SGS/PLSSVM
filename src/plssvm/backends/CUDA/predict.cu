@@ -16,7 +16,7 @@ namespace plssvm::cuda {
 template <typename real_type>
 __global__ void device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const int num_data_points, const int num_features) {
     const int index = blockIdx.x * blockDim.x + threadIdx.x;
-    real_type temp = 0;
+    real_type temp{ 0.0 };
     if (index < num_features) {
         for (int dat = 0; dat < num_data_points - 1; ++dat) {
             temp += alpha_d[dat] * data_d[dat + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * index];
@@ -33,7 +33,7 @@ __global__ void device_kernel_predict_poly(real_type *out_d, const real_type *da
     const int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
     const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
-    real_type temp = 0;
+    real_type temp{ 0.0 };
     if (predict_point_index < num_predict_points) {
         for (int feature_index = 0; feature_index < num_features; ++feature_index) {
             if (data_point_index == num_data_points) {
@@ -57,7 +57,7 @@ __global__ void device_kernel_predict_radial(real_type *out_d, const real_type *
     const int data_point_index = blockIdx.x * blockDim.x + threadIdx.x;
     const int predict_point_index = blockIdx.y * blockDim.y + threadIdx.y;
 
-    real_type temp = 0;
+    real_type temp{ 0.0 };
     if (predict_point_index < num_predict_points) {
         for (int feature_index = 0; feature_index < num_features; ++feature_index) {
             if (data_point_index == num_data_points) {

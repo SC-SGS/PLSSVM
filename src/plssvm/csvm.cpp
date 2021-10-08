@@ -47,146 +47,6 @@ csvm<T>::csvm(const parameter<T> &params) :
 }
 
 template <typename T>
-void csvm<T>::learn() {
-    using namespace plssvm::operators;
-
-    if (value_ptr_ == nullptr) {
-        throw exception{ "No labels provided for training!" };
-    }
-
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), value_ptr_->size());
-
-    // setup the data on the device
-    setup_data_on_device();
-
-    auto start_time = std::chrono::steady_clock::now();
-
-    std::vector<real_type> q;
-    std::vector<real_type> b = *value_ptr_;
-    #pragma omp parallel sections
-    {
-        #pragma omp section  // generate q
-        {
-            q = generate_q();
-        }
-        #pragma omp section  // generate right-hand side from equation
-        {
-            b.pop_back();
-            b -= value_ptr_->back();
-        }
-        #pragma omp section  // generate bottom right from A
-        {
-            QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
-        }
-    }
-
-    auto end_time = std::chrono::steady_clock::now();
-    if (print_info_) {
-        fmt::print("Setup for solving the optimization problem done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-    }
-
-    start_time = std::chrono::steady_clock::now();
-
-    // solve minimization
-    std::vector<real_type> alpha;
-    alpha = solver_CG(b, num_features_, epsilon_, q);
-    bias_ = value_ptr_->back() + QA_cost_ * sum(alpha) - (transposed{ q } * alpha);
-    alpha.emplace_back(-sum(alpha));
-
-    alpha_ptr_ = std::make_shared<const std::vector<real_type>>(std::move(alpha));
-    w_.clear();
-
-    end_time = std::chrono::steady_clock::now();
-    if (print_info_) {
-        fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-    }
-}
-
-template <typename T>
-auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
-    return predict(std::vector<std::vector<real_type>>(1, point))[0];
-}
-
-template <typename T>
-auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
-    using namespace plssvm::operators;
-    return static_cast<real_type>(sign(predict(point)));
-}
-
-template <typename T>
-auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
-    using namespace plssvm::operators;
-    std::vector<real_type> classes(predict(points));
-    for (real_type &elem : classes) {
-        elem = sign(elem);
-    }
-    return classes;
-}
-
-template <typename T>
-auto csvm<T>::accuracy() -> real_type {
-    using namespace plssvm::operators;
-
-    if (value_ptr_ == nullptr) {
-        throw exception{ "No labels provided for accuracy calculation!" };
-    }
-
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
-
-    int correct = 0;
-    std::vector<real_type> predictions = predict(*data_ptr_);
-    for (size_type index = 0; index < predictions.size(); ++index) {
-        if (predictions[index] * (*value_ptr_)[index] > real_type{ 0.0 }) {
-            ++correct;
-        }
-    }
-    return static_cast<real_type>(correct) / static_cast<real_type>(num_data_points_);
-}
-
-template <typename T>
-auto csvm<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
-    switch (kernel_) {
-        case kernel_type::linear:
-            return plssvm::kernel_function<kernel_type::linear>(xi, xj);
-        case kernel_type::polynomial:
-            return plssvm::kernel_function<kernel_type::polynomial>(xi, xj, degree_, gamma_, coef0_);
-        case kernel_type::rbf:
-            return plssvm::kernel_function<kernel_type::rbf>(xi, xj, gamma_);
-    }
-    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
-}
-
-template <typename T>
-auto csvm<T>::transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points) -> std::vector<real_type> {
-    PLSSVM_ASSERT(!matrix.empty(), "Matrix is empty!");
-    PLSSVM_ASSERT(num_points <= matrix.size(), "Num points to transform can not exceed matrix size!");
-
-    const size_type num_features = matrix[0].size();
-
-    PLSSVM_ASSERT(std::all_of(matrix.begin(), matrix.end(), [=](const std::vector<real_type> &point) { return point.size() == num_features_; }), "Feature sizes mismatch! All features should have size {}!", num_features_);
-
-    auto start_time = std::chrono::steady_clock::now();
-
-    std::vector<real_type> vec(num_features * (num_points + boundary));
-    #pragma omp parallel for collapse(2)
-    for (size_type col = 0; col < num_features; ++col) {
-        for (size_type row = 0; row < num_points; ++row) {
-            vec[col * (num_points + boundary) + row] = matrix[row][col];
-        }
-    }
-
-    auto end_time = std::chrono::steady_clock::now();
-    if (print_info_) {
-        fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-    }
-    return vec;
-}
-
-template <typename T>
 void csvm<T>::write_model(const std::string &model_name) {
     auto start_time = std::chrono::steady_clock::now();
 
@@ -313,6 +173,145 @@ void csvm<T>::write_model(const std::string &model_name) {
                    count_pos + count_neg,
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
+}
+
+template <typename T>
+void csvm<T>::learn() {
+    using namespace plssvm::operators;
+
+    if (value_ptr_ == nullptr) {
+        throw exception{ "No labels provided for training!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), value_ptr_->size());
+
+    // setup the data on the device
+    setup_data_on_device();
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    std::vector<real_type> q;
+    std::vector<real_type> b = *value_ptr_;
+    #pragma omp parallel sections
+    {
+        #pragma omp section  // generate q
+        {
+            q = generate_q();
+        }
+        #pragma omp section  // generate right-hand side from equation
+        {
+            b.pop_back();
+            b -= value_ptr_->back();
+        }
+        #pragma omp section  // generate bottom right from A
+        {
+            QA_cost_ = kernel_function(data_ptr_->back(), data_ptr_->back()) + 1 / cost_;
+        }
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Setup for solving the optimization problem done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+
+    start_time = std::chrono::steady_clock::now();
+
+    // solve minimization
+    std::vector<real_type> alpha;
+    alpha = solver_CG(b, num_features_, epsilon_, q);
+    bias_ = value_ptr_->back() + QA_cost_ * sum(alpha) - (transposed{ q } * alpha);
+    alpha.emplace_back(-sum(alpha));
+
+    alpha_ptr_ = std::make_shared<const std::vector<real_type>>(std::move(alpha));
+    w_.clear();
+
+    end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+}
+
+template <typename T>
+auto csvm<T>::accuracy() -> real_type {
+    if (value_ptr_ == nullptr) {
+        throw exception{ "No labels provided for accuracy calculation!" };
+    }
+
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
+    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
+
+    size_type correct = 0;
+    const std::vector<real_type> predictions = predict(*data_ptr_);
+    for (size_type index = 0; index < predictions.size(); ++index) {
+        if (predictions[index] * (*value_ptr_)[index] > real_type{ 0.0 }) {  // TODO: maybe sign() == sign()?
+            ++correct;
+        }
+    }
+    return static_cast<real_type>(correct) / static_cast<real_type>(num_data_points_);
+}
+
+template <typename T>
+auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
+    return predict(std::vector<std::vector<real_type>>(1, point))[0];
+}
+
+template <typename T>
+auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
+    return operators::sign(predict(point));
+}
+
+template <typename T>
+auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    std::vector<real_type> classes(predict(points));
+
+    // map prediction values to labels
+    #pragma omp parallel for
+    for (size_type i = 0; i < classes.size(); ++i) {
+        classes[i] = operators::sign(classes[i]);
+    }
+    return classes;
+}
+
+template <typename T>
+auto csvm<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
+    switch (kernel_) {
+        case kernel_type::linear:
+            return plssvm::kernel_function<kernel_type::linear>(xi, xj);
+        case kernel_type::polynomial:
+            return plssvm::kernel_function<kernel_type::polynomial>(xi, xj, degree_, gamma_, coef0_);
+        case kernel_type::rbf:
+            return plssvm::kernel_function<kernel_type::rbf>(xi, xj, gamma_);
+    }
+    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(kernel_)) };
+}
+
+template <typename T>
+auto csvm<T>::transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points) -> std::vector<real_type> {
+    PLSSVM_ASSERT(!matrix.empty(), "Matrix is empty!");
+    PLSSVM_ASSERT(num_points <= matrix.size(), "Num points to transform can not exceed matrix size!");
+
+    const size_type num_features = matrix[0].size();
+
+    PLSSVM_ASSERT(std::all_of(matrix.begin(), matrix.end(), [=](const std::vector<real_type> &point) { return point.size() == num_features_; }), "Feature sizes mismatch! All features should have size {}!", num_features_);
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    std::vector<real_type> vec(num_features * (num_points + boundary));
+    #pragma omp parallel for collapse(2)
+    for (size_type col = 0; col < num_features; ++col) {
+        for (size_type row = 0; row < num_points; ++row) {
+            vec[col * (num_points + boundary) + row] = matrix[row][col];
+        }
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Transformed dataset from 2D AoS to 1D SoA in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
+    return vec;
 }
 
 // explicitly instantiate template class
