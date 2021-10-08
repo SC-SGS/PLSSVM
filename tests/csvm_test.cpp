@@ -143,6 +143,11 @@ TYPED_TEST(BaseCSVM, write_model) {
 
     // create temporary model file and write model
     std::string model_file = util::create_temp_file();
+
+    EXPECT_CALL(csvm, setup_data_on_device).Times(1);
+    EXPECT_CALL(csvm, generate_q).Times(1);
+    EXPECT_CALL(csvm, solver_CG).Times(1);
+
     // learn model
     csvm.learn();
     // write learned model to file
