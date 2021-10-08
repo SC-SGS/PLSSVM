@@ -59,7 +59,7 @@ if(PLSSVM_GENERATE_TEST_FILE)
 
     # check if the requested test file already exists (otherwise create new test file)
     if(EXISTS "${PLSSVM_TEST_FILE}")
-        message(STATUS "Skipped test file generation since it already exists!")
+        message(STATUS "Skipped test file generation since it already exists (${PLSSVM_TEST_FILE})!")
     else()
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
