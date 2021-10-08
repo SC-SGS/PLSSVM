@@ -33,14 +33,22 @@
 
 namespace plssvm {
 
+// TODO: Test all exceptions
+
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
     target_{ params.target }, kernel_{ params.kernel }, degree_{ params.degree }, gamma_{ params.gamma }, coef0_{ params.coef0 }, cost_{ params.cost }, epsilon_{ params.epsilon }, print_info_{ params.print_info }, data_ptr_{ params.data_ptr }, value_ptr_{ params.value_ptr }, alpha_ptr_{ params.alphas_ptr }, bias_{ -params.rho } {
     if (data_ptr_ == nullptr) {
         throw exception{ "No data points provided!" };
+    } else if (data_ptr_->empty()) {
+        throw exception{ "Data set is empty!" };
+    } else if (!std::all_of(data_ptr_->begin(), data_ptr_->end(), [&](const std::vector<real_type> &point) { return point.size() == data_ptr_->front().size(); })) {
+        throw exception{ "All points in the data vector must have the same number of features!" };
+    } else if (data_ptr_->front().empty()) {
+        throw exception{ "No features provided for the data points!" };
+    } else if (alpha_ptr_ != nullptr && alpha_ptr_->size() != data_ptr_->size()) {
+        throw exception{ fmt::format("Number of weights ({}) must match the number of data points ({})!", alpha_ptr_->size(), data_ptr_->size()) };
     }
-
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
 
     num_data_points_ = data_ptr_->size();
     num_features_ = (*data_ptr_)[0].size();
@@ -50,11 +58,20 @@ template <typename T>
 void csvm<T>::write_model(const std::string &model_name) {
     auto start_time = std::chrono::steady_clock::now();
 
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+
     if (alpha_ptr_ == nullptr) {
         throw exception{ "No alphas given! Maybe a call to 'learn()' is missing?" };
     } else if (value_ptr_ == nullptr) {
         throw exception{ "No labels given! Maybe the data is only usable for prediction?" };
+    } else if (data_ptr_->size() != value_ptr_->size()) {
+        throw exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", data_ptr_->size(), value_ptr_->size()) };
     }
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");                                                                    // exception in constructor
+    PLSSVM_ASSERT(std::all_of(data_ptr_->begin(), data_ptr_->end(), [&](const std::vector<real_type> &point) { return point.size() == data_ptr_->front().size(); }),
+                  "All points in the data vector must have the same number of features!");    // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->front().empty(), "No features provided for the data points!");  // exception in constructor
 
     size_type nBSV = 0;
     size_type count_pos = 0;
@@ -179,13 +196,18 @@ template <typename T>
 void csvm<T>::learn() {
     using namespace plssvm::operators;
 
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+
     if (value_ptr_ == nullptr) {
-        throw exception{ "No labels provided for training!" };
+        throw exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
+    } else if (data_ptr_->size() != value_ptr_->size()) {
+        throw exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", data_ptr_->size(), value_ptr_->size()) };
     }
 
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-    PLSSVM_ASSERT(data_ptr_->size() == value_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), value_ptr_->size());
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");  // exception in constructor
+    PLSSVM_ASSERT(std::all_of(data_ptr_->begin(), data_ptr_->end(), [&](const std::vector<real_type> &point) { return point.size() == data_ptr_->front().size(); }),
+                  "All points in the data vector must have the same number of features!");    // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->front().empty(), "No features provided for the data points!");  // exception in constructor
 
     // setup the data on the device
     setup_data_on_device();
@@ -236,29 +258,42 @@ void csvm<T>::learn() {
 template <typename T>
 auto csvm<T>::accuracy() -> real_type {
     if (value_ptr_ == nullptr) {
-        throw exception{ "No labels provided for accuracy calculation!" };
+        throw exception{ "No labels given! Maybe the data is only usable for prediction?" };
     }
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+
     return accuracy(*data_ptr_, *value_ptr_);
 }
 
 template <typename T>
 auto csvm<T>::accuracy(const std::vector<real_type> &point, const real_type correct_label) -> real_type {
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
+    if (point.size() != data_ptr_->front().size()) {
+        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), point.size()) };
+    }
+
     return accuracy(std::vector<std::vector<real_type>>(1, point), std::vector<real_type>(1, correct_label));
 }
 
 template <typename T>
 auto csvm<T>::accuracy(const std::vector<std::vector<real_type>> &points, const std::vector<real_type> &correct_labels) -> real_type {
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-
     if (points.size() != correct_labels.size()) {
         throw exception{ fmt::format("Number of data points ({}) must match number of correct labels ({})!", points.size(), correct_labels.size()) };
-    } else if (points.empty()) {
-        return 0.0;  // TODO: ???
     }
 
-    for (const std::vector<real_type> &point : points) {
-        PLSSVM_ASSERT(point.size() == data_ptr_->front().size(), "Feature sizes mismatch!: {} != {}", point.size(), data_ptr_->front().size());
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
+
+    // return zero as accuracy for predicting no points
+    if (points.empty()) {
+        return real_type{ 0.0 };
+    }
+
+    if (!std::all_of(points.begin(), points.end(), [&](const std::vector<real_type> &point) { return point.size() == points.front().size(); })) {
+        throw exception{ "All points in the prediction point vector must have the same number of features!" };
+    } else if (points.front().size() != data_ptr_->front().size()) {
+        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), points.front().size()) };
     }
 
     size_type correct{ 0 };
@@ -273,16 +308,42 @@ auto csvm<T>::accuracy(const std::vector<std::vector<real_type>> &points, const 
 
 template <typename T>
 auto csvm<T>::predict(const std::vector<real_type> &point) -> real_type {
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
+    if (point.size() != data_ptr_->front().size()) {
+        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), point.size()) };
+    }
+
     return predict(std::vector<std::vector<real_type>>(1, point))[0];
 }
 
 template <typename T>
 auto csvm<T>::predict_label(const std::vector<real_type> &point) -> real_type {
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
+    if (point.size() != data_ptr_->front().size()) {
+        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), point.size()) };
+    }
+
     return operators::sign(predict(point));
 }
 
 template <typename T>
 auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
+
+    // return empty vector if there are no points to predict
+    if (points.empty()) {
+        return {};
+    }
+
+    if (!std::all_of(points.begin(), points.end(), [&](const std::vector<real_type> &point) { return point.size() == points.front().size(); })) {
+        throw exception{ "All points in the prediction point vector must have the same number of features!" };
+    } else if (points.front().size() != data_ptr_->front().size()) {
+        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), points.front().size()) };
+    }
+
     std::vector<real_type> classes(predict(points));
 
     // map prediction values to labels
@@ -295,6 +356,8 @@ auto csvm<T>::predict_label(const std::vector<std::vector<real_type>> &points) -
 
 template <typename T>
 auto csvm<T>::kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj) -> real_type {
+    PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
+
     switch (kernel_) {
         case kernel_type::linear:
             return plssvm::kernel_function<kernel_type::linear>(xi, xj);
