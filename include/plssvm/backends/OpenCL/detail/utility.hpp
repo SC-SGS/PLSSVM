@@ -20,6 +20,7 @@
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 
 #include "CL/cl.h"     // cl_device_id, cl_program, cl_kernel, cl_uint, cl_int, CL_QUEUE_DEVICE, CL_DEVICE_NAME, CL_PROGRAM_BUILD_LOG
                        // clGetCommandQueueInfo, clGetDeviceInfo, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo,
@@ -40,7 +41,7 @@ namespace plssvm::opencl::detail {
  * @param[in] queue the OpenCL command queue
  * @return the device name
  */
-std::string get_device_name(const command_queue &queue) {
+inline std::string get_device_name(const command_queue &queue) {
     error_code err;
     // get device
     cl_device_id device_id;
@@ -62,7 +63,7 @@ std::string get_device_name(const command_queue &queue) {
  * @param[in] kernel the kernel type
  * @return the kernel function names (first: q_kernel name, second: svm_kernel name)
  */
-[[nodiscard]] std::pair<std::string, std::string> kernel_type_to_function_name(const kernel_type kernel) {
+[[nodiscard]] inline std::pair<std::string, std::string> kernel_type_to_function_name(const kernel_type kernel) {
     switch (kernel) {
         case kernel_type::linear:
             return std::make_pair("device_kernel_q_linear", "device_kernel_linear");
@@ -84,7 +85,7 @@ std::string get_device_name(const command_queue &queue) {
  * @return the kernel
  */
 template <typename real_type, typename size_type = std::size_t>
-std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name) {
+inline std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name) {
     // read kernel
     std::string kernel_src_string;
     {
@@ -157,7 +158,7 @@ std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queu
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-void set_kernel_args(cl_kernel kernel, Args... args) {
+inline void set_kernel_args(cl_kernel kernel, Args... args) {
     cl_uint i = 0;
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
@@ -179,7 +180,7 @@ void set_kernel_args(cl_kernel kernel, Args... args) {
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
+inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
     PLSSVM_ASSERT(grid_size.size() == block_size.size(), "grid_size and block_size must have the same number of dimensions!: {} != {}", grid_size.size(), block_size.size());
     PLSSVM_ASSERT(grid_size.size() <= 3, "The number of dimensions must be less or equal than 3!: {} > 3", grid_size.size());
 
@@ -209,7 +210,7 @@ void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-void run_kernel(const command_queue &queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &&...args) {
+inline void run_kernel(const command_queue &queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &&...args) {
     run_kernel(queue, kernel, std::vector<std::size_t>{ grid_size }, std::vector<std::size_t>{ block_size }, std::forward<Args>(args)...);
 }
 
