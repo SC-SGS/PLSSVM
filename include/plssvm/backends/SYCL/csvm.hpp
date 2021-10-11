@@ -12,14 +12,11 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
-#include "plssvm/csvm.hpp"                             // plssvm::csvm
-#include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
+#include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
+#include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::queue
-
-#include <vector>  // std::vector
 
 namespace plssvm::sycl {
 
@@ -28,16 +25,14 @@ namespace plssvm::sycl {
  * @tparam T the type of the data
  */
 template <typename T>
-class csvm : public ::plssvm::csvm<T> {
+class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device_ptr<T>, ::sycl::queue> {
   protected:
     // protected for the test MOCK class
     /// The template base type of the SYCL C-SVM class.
-    using base_type = ::plssvm::csvm<T>;
-    using base_type::alpha_ptr_;
-    using base_type::bias_;
+    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device_ptr<T>, ::sycl::queue>;
+
     using base_type::coef0_;
     using base_type::cost_;
-    using base_type::data_ptr_;
     using base_type::degree_;
     using base_type::gamma_;
     using base_type::kernel_;
@@ -46,13 +41,24 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::print_info_;
     using base_type::QA_cost_;
     using base_type::target_;
-    using base_type::w_;
+
+    using base_type::data_d_;
+    using base_type::data_last_d_;
+    using base_type::devices_;
+    using base_type::num_cols_;
+    using base_type::num_rows_;
+    using base_type::w_d_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
     /// Unsigned integer type.
     using size_type = typename base_type::size_type;
+
+    /// The type of the SYCL device pointer.
+    using device_ptr_type = ::plssvm::sycl::detail::device_ptr<real_type>;
+    /// The type of the SYCL device queue.
+    using queue_type = ::sycl::queue;
 
     /**
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
@@ -66,56 +72,25 @@ class csvm : public ::plssvm::csvm<T> {
      */
     ~csvm() override;
 
-    /**
-     * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @param[in] points the data points to predict
-     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
-     */
-    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
-
   protected:
-    void setup_data_on_device() override;
-    std::vector<real_type> generate_q() override;
-    std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
+    void device_synchronize(queue_type &queue) final;
 
     /**
-     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the SYCL @p device.
-     * @param[in] device the SYCL device to run the kernel on
-     * @param[in] q_d subvector of the least-squares matrix equation
-     * @param[in,out] r_d the result vector
-     * @param[in] x_d the `x` vector
-     * @param[in] data_d the data
-     * @param[in] add denotes whether the values are added or subtracted from the result vector
+     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
      */
-    void run_device_kernel(size_type device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, real_type add);
+    void run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int first_feature, const int last_feature) final;
     /**
-     * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
-     * @param[in,out] buffer_d the data to gather
-     * @param[in,out] buffer the reduces data
+     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
-    void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
-
+    void run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const int first_feature, const int last_feature) final;
     /**
-     * @brief updates the `w_` vector to the current data and alpha values.
+     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    virtual void update_w() override;
-
-    /// The available/used SYCL devices.
-    std::vector<::sycl::queue> devices_{};
-    /// The number of data points excluding the last data point.
-    size_type dept_{};
-    /// The boundary size used to remove boundary condition checks inside the kernels.
-    size_type boundary_size_{};
-    /// The number of rows to calculate including the boundary values.
-    int num_rows_{};
-    /// The number of columns in the data matrix (= the number of features per data point).
-    int num_cols_{};
-    /// The data saved across all devices.
-    std::vector<detail::device_ptr<real_type>> data_d_{};
-    /// The last row of the data matrix.
-    std::vector<detail::device_ptr<real_type>> data_last_d_{};
-    /// The normal vector used for speeding up the prediction in case of the linear kernel function saved on the first device.
-    detail::device_ptr<real_type> w_d_{};
+    void run_w_kernel(const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d) final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
+     */
+    void run_predict_kernel(const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const size_type num_predict_points) final;
 };
 
 extern template class csvm<float>;

@@ -187,7 +187,7 @@ TYPED_TEST(OpenCL_CSVM, device_kernel) {
         csvm_opencl.set_QA_cost(QA_cost);
         csvm_opencl.set_cost(cost);
 
-        csvm_opencl.run_device_kernel(0, q_d, r_d, x_d, csvm_opencl.get_device_data()[0], add);
+        csvm_opencl.run_device_kernel(0, q_d, r_d, x_d, add);
 
         std::vector<real_type> calculated(dept);
         r_d.memcpy_to_host(calculated, 0, dept);

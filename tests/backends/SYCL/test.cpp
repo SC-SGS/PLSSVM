@@ -188,7 +188,7 @@ TYPED_TEST(SYCL_CSVM, device_kernel) {
         csvm_sycl.set_QA_cost(QA_cost);
         csvm_sycl.set_cost(cost);
         plssvm::sycl::detail::device_synchronize(q);
-        csvm_sycl.run_device_kernel(0, q_d, r_d, x_d, csvm_sycl.get_device_data()[0], add);
+        csvm_sycl.run_device_kernel(0, q_d, r_d, x_d, add);
 
         plssvm::sycl::detail::device_synchronize(q);
         std::vector<real_type> calculated(dept);

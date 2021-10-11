@@ -207,7 +207,7 @@ TYPED_TEST(CUDA_CSVM, device_kernel) {
 
         csvm_cuda.set_QA_cost(QA_cost);
         csvm_cuda.set_cost(cost);
-        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, csvm_cuda.get_device_data()[0], add);
+        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, add);
 
         plssvm::cuda::detail::device_synchronize();
         std::vector<real_type> calculated(dept);
