@@ -82,11 +82,11 @@ class device_kernel_linear {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                    const size_type idx = 0;
+                    const size_type idx = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(1) == idx) {
                         data_intern_i_[nd_idx.get_local_id(0)][block_id] = data_d_[block_id + vec_index + i];
                     }
-                    const size_type idx_2 = 0;
+                    const size_type idx_2 = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(0) == idx_2) {
                         data_intern_j_[nd_idx.get_local_id(1)][block_id] = data_d_[block_id + vec_index + j];
                     }
@@ -205,11 +205,11 @@ class device_kernel_poly {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                    const size_type idx = 0;
+                    const size_type idx = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(1) == idx) {
                         data_intern_i_[nd_idx.get_local_id(0)][block_id] = data_d_[block_id + vec_index + i];
                     }
-                    const size_type idx_2 = 0;
+                    const size_type idx_2 = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(0) == idx_2) {
                         data_intern_j_[nd_idx.get_local_id(1)][block_id] = data_d_[block_id + vec_index + j];
                     }
@@ -319,11 +319,11 @@ class device_kernel_radial {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                    const size_type idx = 0;
+                    const size_type idx = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(1) == idx) {
                         data_intern_i_[nd_idx.get_local_id(0)][block_id] = data_d_[block_id + vec_index + i];
                     }
-                    const size_type idx_2 = 0;
+                    const size_type idx_2 = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(0) == idx_2) {
                         data_intern_j_[nd_idx.get_local_id(1)][block_id] = data_d_[block_id + vec_index + j];
                     }

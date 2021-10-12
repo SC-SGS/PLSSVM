@@ -192,27 +192,36 @@ TYPED_TEST(CUDA_CSVM, device_kernel) {
     // setup data on device
     csvm_cuda.setup_data_on_device();
 
-    // TODO: multi GPU support
     // setup all additional data
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    plssvm::cuda::detail::device_ptr<real_type> q_d{ dept + boundary_size };
-    q_d.memcpy_to_device(q_vec, 0, dept);
-    plssvm::cuda::detail::device_ptr<real_type> x_d{ dept + boundary_size };
-    x_d.memcpy_to_device(x, 0, dept);
-    plssvm::cuda::detail::device_ptr<real_type> r_d{ dept + boundary_size };
-    r_d.memset(0);
+    std::vector<plssvm::cuda::detail::device_ptr<real_type>> q_d(csvm_cuda.get_num_devices());
+    std::vector<plssvm::cuda::detail::device_ptr<real_type>> x_d(csvm_cuda.get_num_devices());
+    std::vector<plssvm::cuda::detail::device_ptr<real_type>> r_d(csvm_cuda.get_num_devices());
+
+    for (int device = 0; device < csvm_cuda.get_num_devices(); ++device) {
+        q_d[device] = plssvm::cuda::detail::device_ptr<real_type>{ dept + boundary_size, device };
+        q_d[device].memcpy_to_device(q_vec, 0, dept);
+        x_d[device] = plssvm::cuda::detail::device_ptr<real_type>{ dept + boundary_size, device };
+        x_d[device].memcpy_to_device(x, 0, dept);
+        r_d[device] = plssvm::cuda::detail::device_ptr<real_type>{ dept + boundary_size, device };
+        r_d[device].memset(0);
+    }
 
     for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         csvm_cuda.set_QA_cost(QA_cost);
         csvm_cuda.set_cost(cost);
-        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, add);
 
-        plssvm::cuda::detail::device_synchronize();
+        for (int device = 0; device < csvm_cuda.get_num_devices(); ++device) {
+            csvm_cuda.run_device_kernel(device, q_d[device], r_d[device], x_d[device], add);
+        }
         std::vector<real_type> calculated(dept);
-        r_d.memcpy_to_host(calculated, 0, dept);
-        r_d.memset(0);
+        csvm_cuda.device_reduction(r_d, calculated);
+
+        for (plssvm::cuda::detail::device_ptr<real_type> &r_d_device : r_d) {
+            r_d_device.memset(0);
+        }
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (std::size_t index = 0; index < correct.size(); ++index) {

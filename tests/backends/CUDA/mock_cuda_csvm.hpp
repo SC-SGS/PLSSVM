@@ -33,6 +33,7 @@ class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
         base_type{ params } {}
 
     // make non-virtual functions publicly visible
+    using base_type::device_reduction;
     using base_type::generate_q;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
@@ -43,4 +44,5 @@ class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
 
     // getter for internal variables
     const std::vector<plssvm::cuda::detail::device_ptr<real_type>> &get_device_data() const { return base_type::data_d_; }
+    int get_num_devices() const { return static_cast<int>(base_type::devices_.size()); }
 };

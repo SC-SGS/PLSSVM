@@ -13,6 +13,8 @@
 
 #include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
+#include <utility> // std::exchange
+
 namespace plssvm::opencl::detail {
 
 /**
@@ -26,6 +28,9 @@ class kernel {
      */
     explicit kernel(cl_kernel p_compute_kernel) noexcept :
         compute_kernel{ p_compute_kernel } {}
+
+    kernel(const kernel&) = delete;
+    kernel(kernel&& other) : compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}
 
     /**
      * @brief Release the cl_kernel resources on destruction.

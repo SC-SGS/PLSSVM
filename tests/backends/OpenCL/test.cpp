@@ -170,16 +170,17 @@ TYPED_TEST(OpenCL_CSVM, device_kernel) {
     // setup data on device
     csvm_opencl.setup_data_on_device();
 
-    // TODO: multi GPU support
     // setup all additional data
-    plssvm::opencl::detail::command_queue &queue = csvm_opencl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    plssvm::opencl::detail::device_ptr<real_type> q_d{ dept + boundary_size, queue };
-    q_d.memcpy_to_device(q_vec, 0, dept);
-    plssvm::opencl::detail::device_ptr<real_type> x_d{ dept + boundary_size, queue };
-    x_d.memcpy_to_device(x, 0, dept);
-    plssvm::opencl::detail::device_ptr<real_type> r_d{ dept + boundary_size, queue };
-    r_d.memset(0);
+    std::vector<plssvm::opencl::detail::device_ptr<real_type>> q_d{};
+    std::vector<plssvm::opencl::detail::device_ptr<real_type>> x_d{};
+    std::vector<plssvm::opencl::detail::device_ptr<real_type>> r_d{};
+
+    for (plssvm::opencl::detail::command_queue &queue : csvm_opencl.get_devices()) {
+        q_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(q_vec, 0, dept);
+        x_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(x, 0, dept);
+        r_d.emplace_back(dept + boundary_size, queue).memset(0);
+    }
 
     for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
@@ -187,11 +188,15 @@ TYPED_TEST(OpenCL_CSVM, device_kernel) {
         csvm_opencl.set_QA_cost(QA_cost);
         csvm_opencl.set_cost(cost);
 
-        csvm_opencl.run_device_kernel(0, q_d, r_d, x_d, add);
-
+        for (size_type device = 0; device < csvm_opencl.get_num_devices(); ++device) {
+            csvm_opencl.run_device_kernel(device, q_d[device], r_d[device], x_d[device], add);
+        }
         std::vector<real_type> calculated(dept);
-        r_d.memcpy_to_host(calculated, 0, dept);
-        r_d.memset(0);
+        csvm_opencl.device_reduction(r_d, calculated);
+
+        for (plssvm::opencl::detail::device_ptr<real_type> &r_d_device : r_d) {
+            r_d_device.memset(0);
+        }
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (size_t index = 0; index < correct.size(); ++index) {
