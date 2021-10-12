@@ -171,29 +171,34 @@ TYPED_TEST(SYCL_CSVM, device_kernel) {
     // setup data on device
     csvm_sycl.setup_data_on_device();
 
-    // TODO: multi GPU support
     // setup all additional data
-    sycl::queue &q = csvm_sycl.get_devices()[0];
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    plssvm::sycl::detail::device_ptr<real_type> q_d{ dept + boundary_size, q };
-    q_d.memcpy_to_device(q_vec, 0, dept);
-    plssvm::sycl::detail::device_ptr<real_type> x_d{ dept + boundary_size, q };
-    x_d.memcpy_to_device(x, 0, dept);
-    plssvm::sycl::detail::device_ptr<real_type> r_d{ dept + boundary_size, q };
-    r_d.memset(0);
+    std::vector<plssvm::sycl::detail::device_ptr<real_type>> q_d{};
+    std::vector<plssvm::sycl::detail::device_ptr<real_type>> x_d{};
+    std::vector<plssvm::sycl::detail::device_ptr<real_type>> r_d{};
+
+    for (sycl::queue &queue : csvm_sycl.get_devices()) {
+        q_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(q_vec, 0, dept);
+        x_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(x, 0, dept);
+        r_d.emplace_back(dept + boundary_size, queue).memset(0);
+    }
+
 
     for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         csvm_sycl.set_QA_cost(QA_cost);
         csvm_sycl.set_cost(cost);
-        plssvm::sycl::detail::device_synchronize(q);
-        csvm_sycl.run_device_kernel(0, q_d, r_d, x_d, add);
 
-        plssvm::sycl::detail::device_synchronize(q);
+        for (size_type device = 0; device < csvm_sycl.get_num_devices(); ++device) {
+            csvm_sycl.run_device_kernel(device, q_d[device], r_d[device], x_d[device], add);
+        }
         std::vector<real_type> calculated(dept);
-        r_d.memcpy_to_host(calculated, 0, dept);
-        r_d.memset(0);
+        csvm_sycl.device_reduction(r_d, calculated);
+
+        for (plssvm::sycl::detail::device_ptr<real_type> &r_d_device : r_d) {
+            r_d_device.memset(0);
+        }
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (std::size_t index = 0; index < correct.size(); ++index) {

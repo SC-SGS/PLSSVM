@@ -38,6 +38,7 @@ class mock_sycl_csvm : public plssvm::sycl::csvm<T> {
     using base_type::generate_q;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
+    using base_type::device_reduction;
 
     // parameter setter
     void set_cost(const real_type cost) { base_type::cost_ = cost; }
@@ -46,4 +47,5 @@ class mock_sycl_csvm : public plssvm::sycl::csvm<T> {
     // getter for internal variables
     const std::vector<plssvm::sycl::detail::device_ptr<real_type>> &get_device_data() const { return base_type::data_d_; }
     std::vector<sycl::queue> &get_devices() { return base_type::devices_; }
+    size_type get_num_devices() const { return base_type::devices_.size(); }
 };
