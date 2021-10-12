@@ -24,25 +24,6 @@ namespace plssvm::sycl {
 /// Unsigned integer type.
 using size_type = std::size_t;  // TODO: consistent in one place (not for each backend?)
 
-namespace detail {
-
-// TODO: remove #if after Intel has a SYCL2020 conformant sycl::atomic_ref implementation
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-using ::sycl::ext::oneapi::atomic_ref;
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-using ::sycl::atomic_ref;
-#endif
-
-}  // namespace detail
-
-/**
- * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references).
- * @tparam real_type the type of the accessed values
- */
-
-template <typename real_type>
-using atomic_op = detail::atomic_ref<real_type, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
-
 // TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
 /**
  * @brief Shortcut alias for a SYCL local accessor.
@@ -66,7 +47,7 @@ class device_kernel_linear {
      * @brief Construct a new device kernel calculating the `q` vector using the linear C-SVM kernel.
      * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
      * @param[in] q the `q` vector
-     * @param[in] ret the result vector
+     * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
      * @param[in] data_d the one-dimension data matrix
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -101,11 +82,11 @@ class device_kernel_linear {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                    const size_type idx = 0;  // TODO: load parallel
+                    const size_type idx = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(1) == idx) {
                         data_intern_i_[nd_idx.get_local_id(0)][block_id] = data_d_[block_id + vec_index + i];
                     }
-                    const size_type idx_2 = 0;  // TODO: load parallel
+                    const size_type idx_2 = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(0) == idx_2) {
                         data_intern_j_[nd_idx.get_local_id(1)][block_id] = data_d_[block_id + vec_index + j];
                     }
@@ -187,7 +168,7 @@ class device_kernel_poly {
      * @brief Construct a new device kernel calculating the `q` vector using the polynomial C-SVM kernel.
      * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
      * @param[in] q the `q` vector
-     * @param[in] ret the result vector
+     * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
      * @param[in] data_d the one-dimension data matrix
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -224,11 +205,11 @@ class device_kernel_poly {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                    const size_type idx = 0;  // TODO: load parallel
+                    const size_type idx = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(1) == idx) {
                         data_intern_i_[nd_idx.get_local_id(0)][block_id] = data_d_[block_id + vec_index + i];
                     }
-                    const size_type idx_2 = 0;  // TODO: load parallel
+                    const size_type idx_2 = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(0) == idx_2) {
                         data_intern_j_[nd_idx.get_local_id(1)][block_id] = data_d_[block_id + vec_index + j];
                     }
@@ -303,7 +284,7 @@ class device_kernel_radial {
      * @brief Construct a new device kernel calculating the `q` vector using the radial basis functions C-SVM kernel.
      * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
      * @param[in] q the `q` vector
-     * @param[in] ret the result vector
+     * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
      * @param[in] data_d the one-dimension data matrix
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -338,11 +319,11 @@ class device_kernel_radial {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
-                    const size_type idx = 0;  // TODO: load parallel
+                    const size_type idx = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(1) == idx) {
                         data_intern_i_[nd_idx.get_local_id(0)][block_id] = data_d_[block_id + vec_index + i];
                     }
-                    const size_type idx_2 = 0;  // TODO: load parallel
+                    const size_type idx_2 = block_id % THREAD_BLOCK_SIZE;
                     if (nd_idx.get_local_id(0) == idx_2) {
                         data_intern_j_[nd_idx.get_local_id(1)][block_id] = data_d_[block_id + vec_index + j];
                     }

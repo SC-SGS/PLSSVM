@@ -21,7 +21,7 @@
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
-#include <algorithm>  // std::fill
+#include <algorithm>  // std::fill, std::all_of
 #include <vector>     // std::vector
 
 namespace plssvm::openmp {
@@ -103,7 +103,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
         }
         // Ad = A * d
-        std::fill(Ad.begin(), Ad.end(), 0.0);
+        std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
         run_device_kernel(q, Ad, d, *data_ptr_, 1);
 
         // (alpha = delta_new / (d^T * q))
@@ -140,8 +140,11 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
 template <typename T>
 void csvm<T>::update_w() {
-    w_.resize(num_features_, 0.0);
-    std::fill(w_.begin(), w_.end(), 0.0);
+    // resize and reset all values to zero
+    w_.resize(num_features_);
+    std::fill(w_.begin(), w_.end(), real_type{ 0.0 });
+
+    // calculate the w vector
     #pragma omp parallel for
     for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
         for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
@@ -154,16 +157,23 @@ template <typename T>
 auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
-    if (alpha_ptr_ == nullptr) {
+    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
+    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
+
+    if (!std::all_of(points.begin(), points.end(), [&](const std::vector<real_type> &point) {
+        return point.size() == points.front().size(); })) {
+        throw exception{ "All points in the prediction point vector must have the same number of features!" };
+    } else if (alpha_ptr_ == nullptr) {
         throw exception{ "No alphas provided for prediction!" };
     }
 
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");
-    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());
-    PLSSVM_ASSERT(!points.empty(), "No points to predict");
-    for (const std::vector<real_type> &point : points) {
-        PLSSVM_ASSERT(point.size() == num_features_, "Feature sizes mismatch!: {} != {}", point.size(), num_features_);
+    // return empty vector if there are no points to predict
+    if (points.empty()) {
+        return {};
+    }
+    if (points.front().size() != data_ptr_->front().size()) {
+        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), points.front().size()) };
     }
 
     std::vector<real_type> out(points.size(), bias_);

@@ -25,7 +25,7 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST,
-                          // ASSERT_EQ, EXPECT_EQ, EXPECT_GT, EXPECT_NO_THROW
+                          // ASSERT_EQ, EXPECT_EQ, EXPECT_GT, EXPECT_NO_THROW, EXPECT_THAT
 
 #include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t
@@ -80,6 +80,49 @@ TYPED_TEST(CUDA_CSVM, constructor_invalid_target_platform) {
     EXPECT_THROW_WHAT(mock_cuda_csvm{ params }, plssvm::cuda::backend_exception, "Invalid target platform 'gpu_amd' for the CUDA backend!");
     params.target = plssvm::target_platform::gpu_intel;
     EXPECT_THROW_WHAT(mock_cuda_csvm{ params }, plssvm::cuda::backend_exception, "Invalid target platform 'gpu_intel' for the CUDA backend!");
+}
+
+// check whether writing the resulting model file is correct
+TYPED_TEST(CUDA_CSVM, write_model) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_cuda_csvm csvm{ params };
+
+    // create temporary model file and write model
+    std::string model_file = util::create_temp_file();
+
+    // learn model
+    csvm.learn();
+
+    // write learned model to file
+    csvm.write_model(model_file);
+
+    // read content of model file and delete it
+    std::ifstream model_ifs(model_file);
+    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+    model_ifs.close();
+    std::filesystem::remove(model_file);
+
+    // check model file content for correctness
+#ifdef GTEST_USES_POSIX_RE
+    switch (params.kernel) {
+        case plssvm::kernel_type::linear:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        case plssvm::kernel_type::polynomial:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+    }
+#endif
 }
 
 // check whether the q vector is generated correctly
@@ -149,27 +192,36 @@ TYPED_TEST(CUDA_CSVM, device_kernel) {
     // setup data on device
     csvm_cuda.setup_data_on_device();
 
-    // TODO: multi GPU support
     // setup all additional data
     const size_type boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    plssvm::cuda::detail::device_ptr<real_type> q_d{ dept + boundary_size };
-    q_d.memcpy_to_device(q_vec, 0, dept);
-    plssvm::cuda::detail::device_ptr<real_type> x_d{ dept + boundary_size };
-    x_d.memcpy_to_device(x, 0, dept);
-    plssvm::cuda::detail::device_ptr<real_type> r_d{ dept + boundary_size };
-    r_d.memset(0);
+    std::vector<plssvm::cuda::detail::device_ptr<real_type>> q_d(csvm_cuda.get_num_devices());
+    std::vector<plssvm::cuda::detail::device_ptr<real_type>> x_d(csvm_cuda.get_num_devices());
+    std::vector<plssvm::cuda::detail::device_ptr<real_type>> r_d(csvm_cuda.get_num_devices());
+
+    for (int device = 0; device < csvm_cuda.get_num_devices(); ++device) {
+        q_d[device] = plssvm::cuda::detail::device_ptr<real_type>{ dept + boundary_size, device };
+        q_d[device].memcpy_to_device(q_vec, 0, dept);
+        x_d[device] = plssvm::cuda::detail::device_ptr<real_type>{ dept + boundary_size, device };
+        x_d[device].memcpy_to_device(x, 0, dept);
+        r_d[device] = plssvm::cuda::detail::device_ptr<real_type>{ dept + boundary_size, device };
+        r_d[device].memset(0);
+    }
 
     for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 
         csvm_cuda.set_QA_cost(QA_cost);
         csvm_cuda.set_cost(cost);
-        csvm_cuda.run_device_kernel(0, q_d, r_d, x_d, csvm_cuda.get_device_data()[0], add);
 
-        plssvm::cuda::detail::device_synchronize();
+        for (int device = 0; device < csvm_cuda.get_num_devices(); ++device) {
+            csvm_cuda.run_device_kernel(device, q_d[device], r_d[device], x_d[device], add);
+        }
         std::vector<real_type> calculated(dept);
-        r_d.memcpy_to_host(calculated, 0, dept);
-        r_d.memset(0);
+        csvm_cuda.device_reduction(r_d, calculated);
+
+        for (plssvm::cuda::detail::device_ptr<real_type> &r_d_device : r_d) {
+            r_d_device.memset(0);
+        }
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
         for (std::size_t index = 0; index < correct.size(); ++index) {
@@ -237,9 +289,20 @@ TYPED_TEST(CUDA_CSVM, accuracy) {
             ++count;
         }
     }
-    real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
+    const real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
 
-    // calculate accuracy
-    real_type accuracy_calculated = csvm_cuda.accuracy();
-    util::gtest_assert_floating_point_eq(accuracy_calculated, accuracy_correct);
+    // calculate accuracy using the intern data and labels
+    const real_type accuracy_calculated_intern = csvm_cuda.accuracy();
+    util::gtest_assert_floating_point_eq(accuracy_calculated_intern, accuracy_correct);
+    // calculate accuracy using external data and labels
+    const real_type accuracy_calculated_extern = csvm_cuda.accuracy(*params.data_ptr, *params.value_ptr);
+
+    util::gtest_assert_floating_point_eq(accuracy_calculated_extern, accuracy_correct);
+
+    // check single point prediction
+    const real_type prediction_first_point = csvm_cuda.predict_label((*params.data_ptr)[0]);
+    const real_type accuracy_calculated_single_point_correct = csvm_cuda.accuracy((*params.data_ptr)[0], prediction_first_point);
+    util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_correct, real_type{ 1.0 });
+    const real_type accuracy_calculated_single_point_wrong = csvm_cuda.accuracy((*params.data_ptr)[0], -prediction_first_point);
+    util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_wrong, real_type{ 0.0 });
 }

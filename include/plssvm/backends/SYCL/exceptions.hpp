@@ -32,4 +32,4 @@ class backend_exception : public exception {
         ::plssvm::exception{ msg, "sycl::backend_exception", loc } {}
 };
 
-};  // namespace plssvm::sycl
+}  // namespace plssvm::sycl

@@ -152,10 +152,12 @@ class file_reader {
         // jump to file start
         f.seekg(0, std::ios_base::beg);
 
-        // allocate the necessary buffer
-        file_content_ = new char[num_bytes_];
-        // read the whole file in one go
-        f.read(file_content_, static_cast<std::streamsize>(num_bytes_));
+        if (num_bytes_ > 0) {
+            // allocate the necessary buffer
+            file_content_ = new char[num_bytes_];
+            // read the whole file in one go
+            f.read(file_content_, static_cast<std::streamsize>(num_bytes_));
+        }
     }
 
     /*

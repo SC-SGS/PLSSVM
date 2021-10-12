@@ -13,8 +13,9 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::fma, std::copysign
-#include <vector>  // std::vector
+#include <cmath>        // std::fma, std::copysign
+#include <type_traits>  // std::is_arithmetic_v
+#include <vector>       // std::vector
 
 /**
  * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION
@@ -138,8 +139,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+ \
-                           : val)
+    #pragma omp simd reduction(+:val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -159,10 +159,9 @@ template <typename T>
     PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
-    // #pragma omp simd reduction(+:val) //TODO: debug gcc ASSERT BUG
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
-        T tmp = lhs[i] - rhs[i];
-        val = std::fma(tmp, tmp, val);
+        const T diff = lhs[i] - rhs[i];
+        val = std::fma(diff, diff, val);
     }
     return val;
 }
@@ -173,8 +172,9 @@ template <typename T>
  * @return +1 if x is positive and -1 if x is negative or 0 ([[nodiscard]])
  */
 template <typename T>
-[[nodiscard]] inline constexpr int sign(const T x) {
-    return x == 0 ? -1 : static_cast<int>(std::copysign(1, x));
+[[nodiscard]] inline constexpr T sign(const T x) {
+    static_assert(std::is_arithmetic_v<T>, "The type T must be an arithmetic type!");
+    return x == T{ 0 } ? T{ -1 } : static_cast<T>(std::copysign(T{ 1 }, x));
 }
 
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION

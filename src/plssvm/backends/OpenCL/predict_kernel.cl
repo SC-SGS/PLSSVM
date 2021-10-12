@@ -4,11 +4,13 @@
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Defines the functions used for prediction for the C-SVM using the OpenCL backend.
  */
 
 #include "detail/atomics.cl"
 
-__kernel void kernel_w(__global real_type *w_d, __global real_type *data_d, __global real_type *data_last_d, __global real_type *alpha_d, const size_type num_data_points, const size_type num_features) {
+__kernel void device_kernel_w_linear(__global real_type *w_d, __global real_type *data_d, __global real_type *data_last_d, __global real_type *alpha_d, const size_type num_data_points, const size_type num_features) {
     size_type index = get_global_id(0);
     real_type temp = 0.0;
     if (index < num_features) {
@@ -20,7 +22,7 @@ __kernel void kernel_w(__global real_type *w_d, __global real_type *data_d, __gl
     }
 }
 
-__kernel void predict_points_poly(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const size_type num_data_points, __global const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) {
+__kernel void device_kernel_predict_poly(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const size_type num_data_points, __global const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) {
     const int data_point_index = get_global_id(0);
     const int predict_point_index = get_global_id(1);
 
@@ -40,7 +42,7 @@ __kernel void predict_points_poly(__global real_type *out_d, __global const real
     }
 }
 
-__kernel void predict_points_rbf(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const size_type num_data_points, __global const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) {
+__kernel void device_kernel_predict_radial(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const size_type num_data_points, __global const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) {
     const int data_point_index = get_global_id(0);
     const int predict_point_index = get_global_id(1);
 

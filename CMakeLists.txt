@@ -28,7 +28,6 @@ configure_file(
 ## set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm_IO.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
@@ -54,8 +53,10 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra> # -Wdouble-promotion -fno-common -Wconversion -Wshadow> # TODO: make warning free
-        $<$<CXX_COMPILER_ID:MSVC>:/Wall>
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wsuggest-override -Wextra-semi -Wunreachable-code -Wuninitialized>
+        $<$<CXX_COMPILER_ID:GNU>:-Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
         )
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -67,6 +68,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:GNU,Clang>>:-ffast-math -march=native>
         $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
         )
+
 
 ########################################################################################################################
 ##                                    check for optional and necessary dependencies                                   ##
@@ -355,6 +357,13 @@ if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
     endif()
 endif()
 
+## change executable floating points from double precision to single precision
+option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the svm-train and svm-predict executables with single precision instead of double precision." OFF)
+if(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    message(STATUS "Using single precision floating point numbers for svm-train and svm-predict.")
+    target_compile_definitions(${PLSSVM_EXECUTABLE_TRAIN_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    target_compile_definitions(${PLSSVM_EXECUTABLE_PREDICT_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+endif()
 
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##

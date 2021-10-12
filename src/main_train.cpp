@@ -5,7 +5,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief TODO: brief description
+ * @brief Main function compiled to the `svm-train` executable used for training an C-SVM model.
  */
 
 #include "plssvm/core.hpp"
@@ -13,10 +13,17 @@
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::endl
 
+// perform calculations in single precision if requested
+#ifdef PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION
+using real_type = float;
+#else
+using real_type = double;
+#endif
+
 int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
-        plssvm::parameter_train<double> params{ argc, argv };
+        plssvm::parameter_train<real_type> params{ argc, argv };
 
         // create SVM
         auto svm = plssvm::make_csvm(params);

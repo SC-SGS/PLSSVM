@@ -64,8 +64,6 @@ class csvm : public ::plssvm::csvm<T> {
      */
     [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
 
-    // TODO: write predict
-
   protected:
     void setup_data_on_device() override {
         // OpenMP device is the CPU -> no special load functions

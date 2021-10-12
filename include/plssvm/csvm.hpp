@@ -108,27 +108,41 @@ class csvm {
 
     /**
      * @brief Evaluates the model on the data used for training.
-     * @return The fraction of correct labeled training data in percent. ([[nodiscard]])
+     * @return the fraction of correctly labeled training data in percent (`[[nodiscard]]`)
      */
     [[nodiscard]] real_type accuracy();
+    /**
+     * @brief Evaluate the model on the given data @p point with @p correct_label being the correct label.
+     * @param[in] point the data point to predict
+     * @param[in] correct_label the correct label
+     * @return `1.0` if @p point is predicted correctly, `0.0` otherwise. (`[[nodiscard]]`)
+     */
+    [[nodiscard]] real_type accuracy(const std::vector<real_type> &point, real_type correct_label);
+    /**
+     * @brief Evaluate the model on the given data @p points with @p correct_labels being the correct labels.
+     * @param[in] points the data points to predict
+     * @param[in] correct_labels the correct labels
+     * @return the fraction of correctly labeled data points. (`[[nodiscard]]`)
+     */
+    [[nodiscard]] real_type accuracy(const std::vector<std::vector<real_type>> &points, const std::vector<real_type> &correct_labels);
 
     /**
      * @brief Uses the already learned model to predict the class of a (new) data point.
      * @param[in] point the data point to predict
-     * @return a negative `real_type` value if the prediction for data point point is the negative class and a positive `real_type` value otherwise ([[nodiscard]])
+     * @return a negative `real_type` value if the prediction for data point point is the negative class and a positive `real_type` value otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
+    [[nodiscard]] real_type predict(const std::vector<real_type> &point);
 
     /**
      * @brief Uses the already learned model to predict the class of an (new) point
      * @param[in] point the data point to predict
-     * @return -1.0 if the prediction for point is the negative class and +1 otherwise ([[nodiscard]])
+     * @return -1.0 if the prediction for point is the negative class and +1 otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] real_type predict_label(const std::vector<real_type> &point);
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) points
      * @param[in] points the points to predict
-     * @return a `std::vector<real_type>` filled with -1 for each prediction for a data point the negative class and +1 otherwise ([[nodiscard]])
+     * @return a `std::vector<real_type>` filled with -1 for each prediction for a data point the negative class and +1 otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<real_type> predict_label(const std::vector<std::vector<real_type>> &points);
 
@@ -181,11 +195,13 @@ class csvm {
 
     /**
      * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
+     * @param[in] matrix the 2D vector to be transformed into a 1D representation
      * @param[in] boundary the number of boundary cells
+     * @param[in] num_points the number of data points of the 2D vector to transform
      * @attention boundary values can contain random numbers
      * @return an 1D vector in a SoA layout
      */
-    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points);
+    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, size_type boundary, size_type num_points);
 
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //

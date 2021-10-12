@@ -23,9 +23,9 @@
 namespace plssvm {
 
 template <typename T>
-parameter_predict<T>::parameter_predict(std::string input_filename, std::string model_filename) {
-    base_type::input_filename = std::move(input_filename);
-    base_type::model_filename = std::move(model_filename);
+parameter_predict<T>::parameter_predict(std::string p_input_filename, std::string p_model_filename) {
+    base_type::input_filename = std::move(p_input_filename);
+    base_type::model_filename = std::move(p_model_filename);
     base_type::predict_filename = base_type::predict_name_from_input();
 
     base_type::parse_model_file(base_type::model_filename);

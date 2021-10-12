@@ -26,7 +26,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::queue
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST,
-                          // ASSERT_EQ, EXPECT_EQ, EXPECT_GT
+                          // ASSERT_EQ, EXPECT_EQ, EXPECT_GT, EXPECT_THAT
 
 #include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t
@@ -59,6 +59,49 @@ TYPED_TEST(SYCL_CSVM, csvm_factory) {
     params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
 
     util::gtest_expect_correct_csvm_factory<plssvm::sycl::csvm>(params);
+}
+
+// check whether writing the resulting model file is correct
+TYPED_TEST(SYCL_CSVM, write_model) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_sycl_csvm csvm{ params };
+
+    // create temporary model file and write model
+    std::string model_file = util::create_temp_file();
+
+    // learn model
+    csvm.learn();
+
+    // write learned model to file
+    csvm.write_model(model_file);
+
+    // read content of model file and delete it
+    std::ifstream model_ifs(model_file);
+    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
+    model_ifs.close();
+    std::filesystem::remove(model_file);
+
+    // check model file content for correctness
+#ifdef GTEST_USES_POSIX_RE
+    switch (params.kernel) {
+        case plssvm::kernel_type::linear:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        case plssvm::kernel_type::polynomial:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+        case plssvm::kernel_type::rbf:
+            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            break;
+    }
+#endif
 }
 
 // check whether the q vector is generated correctly
@@ -145,7 +188,7 @@ TYPED_TEST(SYCL_CSVM, device_kernel) {
         csvm_sycl.set_QA_cost(QA_cost);
         csvm_sycl.set_cost(cost);
         plssvm::sycl::detail::device_synchronize(q);
-        csvm_sycl.run_device_kernel(0, q_d, r_d, x_d, csvm_sycl.get_device_data()[0], add);
+        csvm_sycl.run_device_kernel(0, q_d, r_d, x_d, add);
 
         plssvm::sycl::detail::device_synchronize(q);
         std::vector<real_type> calculated(dept);
@@ -218,9 +261,20 @@ TYPED_TEST(SYCL_CSVM, accuracy) {
             ++count;
         }
     }
-    real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
+    const real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
 
-    // calculate accuracy
-    real_type accuracy_calculated = csvm_sycl.accuracy();
-    util::gtest_assert_floating_point_eq(accuracy_calculated, accuracy_correct);
+    // calculate accuracy using the intern data and labels
+    const real_type accuracy_calculated_intern = csvm_sycl.accuracy();
+    util::gtest_assert_floating_point_eq(accuracy_calculated_intern, accuracy_correct);
+    // calculate accuracy using external data and labels
+    const real_type accuracy_calculated_extern = csvm_sycl.accuracy(*params.data_ptr, *params.value_ptr);
+
+    util::gtest_assert_floating_point_eq(accuracy_calculated_extern, accuracy_correct);
+
+    // check single point prediction
+    const real_type prediction_first_point = csvm_sycl.predict_label((*params.data_ptr)[0]);
+    const real_type accuracy_calculated_single_point_correct = csvm_sycl.accuracy((*params.data_ptr)[0], prediction_first_point);
+    util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_correct, real_type{ 1.0 });
+    const real_type accuracy_calculated_single_point_wrong = csvm_sycl.accuracy((*params.data_ptr)[0], -prediction_first_point);
+    util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_wrong, real_type{ 0.0 });
 }
