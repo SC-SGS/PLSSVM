@@ -128,7 +128,9 @@ pipeline {
                                             module load cuda &&\
                                             cd build/Release &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 600; \
-                                            cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing"
+                                            returncode=$? && \
+                                            cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing &&\
+                                            exit $returncode"
                                         '''
                                     }
                                 }
@@ -167,7 +169,9 @@ pipeline {
                                             module load pcsgs05/hipsycl &&\
                                             cd build/Release_hip &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 600; \
-                                            cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_hip"
+                                            returncode=$? && \
+                                            cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_hip && \
+                                            exit $returncode"
                                         '''
                                     }
                                 }
@@ -206,7 +210,9 @@ pipeline {
                                             module load pcsgs05/dpcpp_rt &&\
                                             cd build/Release_dpcpp &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 600; \
-                                            cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_dpcpp"
+                                            returncode=$? && \
+                                            cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_dpcpp &&\
+                                            exit $returncode"
                                         '''
                                     }
                                 }
