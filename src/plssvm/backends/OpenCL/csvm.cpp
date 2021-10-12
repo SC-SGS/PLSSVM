@@ -62,7 +62,6 @@ csvm<T>::csvm(const parameter<T> &params) :
         fmt::print("Using OpenCL as backend.\n");
     }
 
-    // TODO: check multi GPU
     // get all available devices wrt the requested target platform
     devices_ = detail::get_command_queues(target_);
 

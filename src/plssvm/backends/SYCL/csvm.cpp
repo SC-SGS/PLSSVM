@@ -62,7 +62,6 @@ csvm<T>::csvm(const parameter<T> &params) :
         fmt::print("Using SYCL as backend.\n");
     }
 
-    // TODO: check multi GPU
     // get all available devices wrt the requested target platform
     devices_ = detail::get_device_list(target_);
 
