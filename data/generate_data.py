@@ -15,7 +15,7 @@ import argparse
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
-
+from sklearn.preprocessing import minmax_scale
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -70,10 +70,11 @@ else:
 # map labels to -1 and 1
 labels = labels * 2 - 1
 
+minmax_scale(samples, feature_range=[-1, 1], copy=False)
 
 # set file names
 rawfile = args.output if args.output is not None else "{}x{}".format(
-    args.sampls, args.features)
+    args.samples, args.features)
 if rawfile.endswith(args.format):
     rawfile = rawfile[:-(len(args.format)+1)]
 file = rawfile + "." + args.format
@@ -83,7 +84,8 @@ if args.test_samples > 0:
 if args.format == "libsvm":
     from sklearn.datasets import dump_svmlight_file
     # dump data in libsvm format
-    dump_svmlight_file(samples[:args.samples, :], labels[:args.samples], file)
+    dump_svmlight_file(samples[:args.samples, :],
+                       labels[:args.samples], file)
     if args.test_samples > 0:
         dump_svmlight_file(samples[args.samples:, :],
                            labels[args.samples:], test_file)
