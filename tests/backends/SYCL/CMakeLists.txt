@@ -17,14 +17,14 @@ set(PLSSVM_SYCL_TEST_SOURCES
 add_executable(${PLSSVM_SYCL_TEST_NAME} ${PLSSVM_SYCL_TEST_SOURCES})
 
 # set necessary include directories
-target_include_directories(${PLSSVM_SYCL_TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PLSSVM_SYCL_TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # add necessary compile definitions
 target_compile_definitions(${PLSSVM_SYCL_TEST_NAME} PRIVATE TEST_PATH="${PROJECT_SOURCE_DIR}/tests")
 target_compile_definitions(${PLSSVM_SYCL_TEST_NAME} PRIVATE TEST_FILE="${PLSSVM_TEST_FILE}")
 
-# link against CUDA backend
-target_link_libraries(${PLSSVM_SYCL_TEST_NAME} PRIVATE ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+# link against SYCL backend
+target_link_libraries(${PLSSVM_SYCL_TEST_NAME} PUBLIC ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 
 
 include(GoogleTest)
