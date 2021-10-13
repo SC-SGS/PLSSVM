@@ -25,11 +25,11 @@ namespace plssvm::cuda {
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] num_rows the number of columns in the data matrix
  * @param[in] add denotes whether the values are added or subtracted from the result vector
- * @param[in] first_feature the first feature used in the calculations (depending on the current device)
- * @param[in] last_feature the last feature used in the calculations (depending on the current device)
+ * @param[in] num_cols  TODO:
+ * @param[in] id TODO:
  */
 template <typename real_type>
-__global__ void device_kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const real_type add, const int first_feature, const int last_feature);
+__global__ void device_kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const real_type add, const int id);
 
 /**
  * @brief Calculates the C-SVM kernel using the polynomial kernel function.

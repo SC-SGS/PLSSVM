@@ -57,8 +57,8 @@ class device_kernel_linear {
      * @param[in] first_feature the first feature used in the calculations (depending on the current device)
      * @param[in] last_feature the last feature used in the calculations (depending on the current device)
      */
-    device_kernel_linear(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, real_type QA_cost, real_type cost, int num_rows, real_type add, int first_feature, int last_feature) :
-        data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, add_{ add }, first_feature_{ first_feature }, last_feature_{ last_feature } {}
+    device_kernel_linear(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, real_type QA_cost, real_type cost, const int num_rows, const int num_cols, real_type add, const int id) :
+        data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, device_{ id } {}
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -78,7 +78,7 @@ class device_kernel_linear {
             j += nd_idx.get_local_id(1) * INTERNAL_BLOCK_SIZE;
 
             // cache data
-            for (int vec_index = first_feature_ * num_rows_; vec_index < last_feature_ * num_rows_; vec_index += num_rows_) {
+            for (int vec_index = 0; vec_index < num_cols_ * num_rows_; vec_index += num_rows_) {
                 ::sycl::group_barrier(nd_idx.get_group());
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
@@ -114,7 +114,7 @@ class device_kernel_linear {
                 #pragma unroll INTERNAL_BLOCK_SIZE
                 for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                     real_type temp;
-                    if (first_feature_ == 0) {
+                    if (device_ == 0) {
                         temp = (matr[x][y] + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
                     } else {
                         temp = matr[x][y] * add_;
@@ -125,7 +125,7 @@ class device_kernel_linear {
                         ret_jx += temp * d_[i + y];
                     } else if (i + x == j + y) {
                         // diagonal
-                        if (first_feature_ == 0) {
+                        if (device_ == 0) {
                             ret_jx += (temp + cost_ * add_) * d_[i + y];
                         } else {
                             ret_jx += temp * d_[i + y];
@@ -148,9 +148,9 @@ class device_kernel_linear {
     const real_type QA_cost_;
     const real_type cost_;
     const int num_rows_;
+    const int num_cols_;
     const real_type add_;
-    const int first_feature_;
-    const int last_feature_;
+    const int device_;
 };
 
 /**

@@ -32,11 +32,10 @@ class device_kernel_q_linear {
      * @param[in] data_d the one-dimensional data matrix
      * @param[in] data_last the last row in the data matrix
      * @param[in] num_rows the number of rows in the data matrix
-     * @param[in] first_feature the first feature used in the calculations (depending on the current device)
-     * @param[in] last_feature the last feature used in the calculations (depending on the current device)
+     * @param[in] num_äcols TODO:
      */
-    device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int first_feature, int last_feature) :
-        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, first_feature_{ first_feature }, last_feature_{ last_feature } {}
+    device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols) :
+        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols } {}
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -46,7 +45,7 @@ class device_kernel_q_linear {
     void operator()(::sycl::nd_item<1> item) const {
         const auto index = item.get_global_linear_id();
         real_type temp{ 0.0 };
-        for (int i = first_feature_; i < last_feature_; ++i) {
+        for (int i = 0; i < num_cols_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
         }
         q_[index] = temp;
@@ -57,8 +56,7 @@ class device_kernel_q_linear {
     const real_type *data_d_;
     const real_type *data_last_;
     const int num_rows_;
-    const int first_feature_;
-    const int last_feature_;
+    const int num_cols_;
 };
 
 /**

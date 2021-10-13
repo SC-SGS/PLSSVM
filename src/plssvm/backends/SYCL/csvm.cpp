@@ -129,11 +129,11 @@ template <std::size_t I, typename size_type>
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int first_feature, const int last_feature) {
+void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int col_range) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
     switch (kernel_) {
         case kernel_type::linear:
-            devices_[device].parallel_for(execution_range, device_kernel_q_linear{ q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature });
+            devices_[device].parallel_for(execution_range, device_kernel_q_linear{ q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, col_range });
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
@@ -152,7 +152,7 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
     switch (kernel_) {
         case kernel_type::linear:
             devices_[device].submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, device_kernel_linear{ cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature });
+                cgh.parallel_for(execution_range, device_kernel_linear{ cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, last_feature - first_feature, add, static_cast<int>(device) });
             });
             break;
         case kernel_type::polynomial:

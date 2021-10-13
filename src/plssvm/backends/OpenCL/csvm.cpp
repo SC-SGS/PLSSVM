@@ -62,7 +62,6 @@ csvm<T>::csvm(const parameter<T> &params) :
         fmt::print("Using OpenCL as backend.\n");
     }
 
-    // TODO: check multi GPU
     // get all available devices wrt the requested target platform
     devices_ = detail::get_command_queues(target_);
     devices_.resize(std::min(devices_.size(), num_features_));
@@ -139,12 +138,12 @@ std::pair<std::vector<size_type>, std::vector<size_type>> execution_range_to_nat
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int first_feature, const int last_feature) {
+void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int col_range) {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, first_feature, last_feature);
+            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, col_range);
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
@@ -163,7 +162,7 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, add, first_feature, last_feature);
+            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, last_feature - first_feature, add, static_cast<int>(device));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");

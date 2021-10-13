@@ -103,7 +103,9 @@ class gpu_csvm : public csvm<T> {
         }
 
         // check if data already resides on the first device
-        if (data_d_[0].empty()) {
+        if (devices_.size() > 1 || data_d_[0].empty()) {  // TODO: implement update_w for multiple devices and remove device resize
+            if (devices_.size() > 1)
+                devices_.resize(1);
             setup_data_on_device();
         }
 
@@ -166,21 +168,34 @@ class gpu_csvm : public csvm<T> {
         for (size_type device = 0; device < devices_.size(); ++device) {
             data_last_d_[device] = device_ptr_type{ num_features_ + boundary_size_, devices_[device] };
         }
-        #pragma omp parallel for
-        for (size_type device = 0; device < devices_.size(); ++device) {
-            data_last_d_[device].memset(0);
-            data_last_d_[device].memcpy_to_device(data_ptr_->back(), 0, num_features_);
-        }
+        // #pragma omp parallel for
+        // for (size_type device = 0; device < devices_.size(); ++device) {
+        //     data_last_d_[device].memset(0);
+        //     data_last_d_[device].memcpy_to_device(data_ptr_->back(), 0, num_features_);
+        // }
 
         // initialize data on devices
-        for (size_type device = 0; device < devices_.size(); ++device) {
-            data_d_[device] = device_ptr_type{ num_features_ * (dept_ + boundary_size_), devices_[device] };
-        }
+        // for (size_type device = 0; device < devices_.size(); ++device) {
+        //     data_d_[device] = device_ptr_type{ num_features_ * (dept_ + boundary_size_), devices_[device] };
+        // }
+
         // transform 2D to 1D data
         const std::vector<real_type> transformed_data = base_type::transform_data(*data_ptr_, boundary_size_, dept_);
+
         #pragma omp parallel for
         for (size_type device = 0; device < devices_.size(); ++device) {
-            data_d_[device].memcpy_to_device(transformed_data, 0, num_features_ * (dept_ + boundary_size_));
+            const int first_feature = static_cast<int>(device * static_cast<size_type>(num_cols_) / devices_.size());
+            const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
+
+            const std::vector<real_type> device_data_last(data_ptr_->back().begin() + first_feature, data_ptr_->back().begin() + last_feature);
+
+            data_last_d_[device].memset(0);
+            data_last_d_[device].memcpy_to_device(device_data_last, 0, device_data_last.size());
+
+            const std::vector<real_type> device_data(transformed_data.begin() + first_feature * (dept_ + boundary_size_), transformed_data.begin() + last_feature * (dept_ + boundary_size_));
+
+            data_d_[device] = device_ptr_type{ device_data.size(), devices_[device] };
+            data_d_[device].memcpy_to_device(device_data, 0, device_data.size());
         }
     }
     /**
@@ -202,11 +217,10 @@ class gpu_csvm : public csvm<T> {
             // feature splitting on multiple devices
             const int first_feature = static_cast<int>(device * static_cast<size_type>(num_cols_) / devices_.size());
             const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
-
             const detail::execution_range range({ static_cast<size_type>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
                                                 { std::min<size_type>(THREAD_BLOCK_SIZE, dept_) });
 
-            run_q_kernel(device, range, q_d[device], first_feature, last_feature);
+            run_q_kernel(device, range, q_d[device], last_feature - first_feature);  // TODO: range as member?
         }
 
         std::vector<real_type> q(dept_);
@@ -435,10 +449,9 @@ class gpu_csvm : public csvm<T> {
      * @param[in] device the device on which the kernel should be executed
      * @param[in] range the execution range used to launch the kernel
      * @param[out] q_d the `q` vector to fill
-     * @param[in] first_feature the first feature used in the calculations (depending on @p device)
-     * @param[in] last_feature the last feature used in the calculations (depending on @p device)
+     * @param[in] coll_range TODO:
      */
-    virtual void run_q_kernel(const size_type device, const detail::execution_range<size_type> &range, device_ptr_type &q_d, const int first_feature, const int last_feature) = 0;
+    virtual void run_q_kernel(const size_type device, const detail::execution_range<size_type> &range, device_ptr_type &q_d, const int coll_range) = 0;
     /**
      * @brief Run the main GPU kernel used in the CG algorithm.
      * @param[in] device the device on which the kernel should be executed

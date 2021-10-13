@@ -21,11 +21,10 @@ namespace plssvm::cuda {
  * @param[in] data_d the one-dimensional data matrix
  * @param[in] data_last the last row in the data matrix
  * @param[in] num_rows the number of rows in the data matrix
- * @param[in] first_feature the first feature used in the calculations (depending on the current device)
- * @param[in] last_feature the last feature used in the calculations (depending on the current device)
+ * @param[in] range TODO:
  */
 template <typename real_type>
-__global__ void device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int first_feature, const int last_feature);
+__global__ void device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, const int num_rows, const int range);
 
 /**
  * @brief Calculates the `q` vector using the polynomial C-SVM kernel.

@@ -17,7 +17,7 @@ using namespace plssvm::cuda::detail;
 using size_type = unsigned int;
 
 template <typename real_type>
-__global__ void device_kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const real_type add, const int first_feature, const int last_feature) {
+__global__ void device_kernel_linear(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const real_type add, const int id) {
     size_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     size_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -31,7 +31,7 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
         const size_type ji = j + threadIdx.x * INTERNAL_BLOCK_SIZE;
         j += threadIdx.y * INTERNAL_BLOCK_SIZE;
         // cache data
-        for (int vec_index = first_feature * num_rows; vec_index < last_feature * num_rows; vec_index += num_rows) {
+        for (int vec_index = 0; vec_index < num_cols * num_rows; vec_index += num_rows) {
             __syncthreads();
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
@@ -67,7 +67,7 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (size_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                 real_type temp;
-                if (first_feature == 0) {
+                if (id == 0) {
                     temp = (matr[x][y] + QA_cost - q[i + y] - q[j + x]) * add;
                 } else {
                     temp = matr[x][y] * add;
@@ -78,7 +78,7 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
                     ret_jx += temp * d[i + y];
                 } else if (i + x == j + y) {
                     // diagonal
-                    if (first_feature == 0) {
+                    if (id == 0) {
                         ret_jx += (temp + cost * add) * d[i + y];
                     } else {
                         ret_jx += temp * d[i + y];
@@ -90,8 +90,8 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
     }
 }
 
-template __global__ void device_kernel_linear(const float *, float *, const float *, const float *, const float, const float, const int, const float, const int, const int);
-template __global__ void device_kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int, const double, const int, const int);
+template __global__ void device_kernel_linear(const float *, float *, const float *, const float *, const float, const float, const int, const int, const float, const int);
+template __global__ void device_kernel_linear(const double *, double *, const double *, const double *, const double, const double, const int, const int, const double, const int);
 
 template <typename real_type>
 __global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
