@@ -47,7 +47,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     // get all available devices wrt the requested target platform
-    devices_.resize(detail::get_device_count());
+    devices_.resize(std::min(static_cast<size_type>(detail::get_device_count()), num_features_));
     std::iota(devices_.begin(), devices_.end(), 0);
 
     // throw exception if no CUDA devices could be found

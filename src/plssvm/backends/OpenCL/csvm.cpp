@@ -65,6 +65,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     // TODO: check multi GPU
     // get all available devices wrt the requested target platform
     devices_ = detail::get_command_queues(target_);
+    devices_.resize(std::min(devices_.size(), num_features_));
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
