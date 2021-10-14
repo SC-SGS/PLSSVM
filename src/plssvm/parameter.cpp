@@ -36,23 +36,23 @@ namespace plssvm {
 
 namespace detail {
 
-template <typename real_type, typename size_type>
-void parse_libsvm_content(const file_reader &f, const size_type start, std::vector<std::vector<real_type>> &data, std::vector<real_type> &values) {
-    size_type max_size = 0;
+template <typename real_type>
+void parse_libsvm_content(const file_reader &f, const std::size_t start, std::vector<std::vector<real_type>> &data, std::vector<real_type> &values) {
+    std::size_t max_size = 0;
     std::exception_ptr parallel_exception;
 
     #pragma omp parallel
     {
         #pragma omp for reduction(max \
                           : max_size)
-        for (size_type i = 0; i < data.size(); ++i) {
+        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + start);
 
                 // check if class labels are present (not necessarily the case for test files)
-                size_type pos = line.find_first_of(" \n");
-                size_type first_colon = line.find_first_of(":\n");
+                std::string_view::size_type pos = line.find_first_of(" \n");
+                std::string_view::size_type first_colon = line.find_first_of(":\n");
                 if (first_colon >= pos) {
                     // get class or alpha
                     values[i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(0, pos));
@@ -64,7 +64,7 @@ void parse_libsvm_content(const file_reader &f, const size_type start, std::vect
                 // get data
                 std::vector<real_type> vline(max_size);
                 while (true) {
-                    size_type next_pos = line.find_first_of(':', pos);
+                    std::string_view::size_type next_pos = line.find_first_of(':', pos);
                     // no further data points
                     if (next_pos == std::string_view::npos) {
                         break;
@@ -109,7 +109,7 @@ void parse_libsvm_content(const file_reader &f, const size_type start, std::vect
     }
 
     #pragma omp parallel for
-    for (size_type i = 0; i < data.size(); ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
         data[i].resize(max_size);
     }
 }
@@ -143,7 +143,7 @@ void parameter<T>::parse_libsvm_file(const std::string &filename, std::shared_pt
     std::vector<std::vector<real_type>> data(f.num_lines());
     std::vector<real_type> value(f.num_lines());
 
-    detail::parse_libsvm_content(f, size_type{ 0 }, data, value);
+    detail::parse_libsvm_content(f, 0, data, value);
 
     // update gamma
     if (gamma == real_type{ 0.0 }) {
@@ -157,7 +157,7 @@ void parameter<T>::parse_libsvm_file(const std::string &filename, std::shared_pt
         value_ptr = nullptr;
     } else {
         #pragma omp parallel for
-        for (size_type i = 0; i < value.size(); ++i) {
+        for (typename std::vector<real_type>::size_type i = 0; i < value.size(); ++i) {
             value[i] = plssvm::operators::sign(value[i]);
         }
 
@@ -186,11 +186,11 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
     input_filename = filename;
 
     detail::file_reader f{ filename, '%' };
-    size_type max_size = 0;
+    std::size_t max_size = 0;
     bool has_label{ false };
 
     // parse arff header
-    size_type header = 0;
+    std::size_t header = 0;
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
@@ -228,10 +228,10 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
     std::vector<std::vector<real_type>> data(f.num_lines() - (header + 1));
     std::vector<real_type> value(f.num_lines() - (header + 1));
 
-    const size_type num_features = has_label ? max_size - 1 : max_size;
+    const std::size_t num_features = has_label ? max_size - 1 : max_size;
 
     #pragma omp parallel for
-    for (size_type i = 0; i < data.size(); ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
         data[i].resize(num_features);
     }
 
@@ -240,7 +240,7 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
     #pragma omp parallel
     {
         #pragma omp for
-        for (size_type i = 0; i < data.size(); ++i) {
+        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = f.line(i + header + 1);
@@ -258,9 +258,9 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                     }
                     // sparse line
                     bool is_class_set = false;
-                    size_type pos = 1;
+                    std::string_view::size_type pos = 1;
                     while (true) {
-                        size_type next_pos = line.find_first_of(' ', pos);
+                        std::string_view::size_type next_pos = line.find_first_of(' ', pos);
                         // no further data points
                         if (next_pos == std::string_view::npos) {
                             break;
@@ -296,9 +296,9 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
                     }
                 } else {
                     // dense line
-                    size_type pos = 0;
-                    size_type next_pos = 0;
-                    for (size_type j = 0; j < max_size - 1; ++j) {
+                    std::string_view::size_type pos = 0;
+                    std::string_view::size_type next_pos = 0;
+                    for (std::size_t j = 0; j < max_size - 1; ++j) {
                         next_pos = line.find_first_of(',', pos);
                         if (next_pos == std::string_view::npos) {
                             throw invalid_file_format_exception{ fmt::format("Invalid number of features/labels! Found {} but should be {}!", j, max_size - 1) };
@@ -376,12 +376,12 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     value_ptr = nullptr;
 
     // helper variables
-    size_type num_sv{ 0 };
+    unsigned long long num_sv{ 0 };
     std::pair labels{ real_type{ 0.0 }, real_type{ 0.0 } };
     bool rho_set{ false };
 
     // parse libsvm model file header
-    size_type header = 0;
+    std::size_t header = 0;
     {
         for (; header < f.num_lines(); ++header) {
             std::string line{ f.line(header) };
@@ -415,13 +415,13 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                 coef0 = detail::convert_to<decltype(coef0)>(value);
             } else if (detail::starts_with(line, "nr_class")) {
                 // number of classes must be 2
-                const auto nr_class = detail::convert_to<size_type>(value);
+                const auto nr_class = detail::convert_to<unsigned int>(value);
                 if (nr_class != 2) {
                     throw invalid_file_format_exception{ fmt::format("Can only use 2 classes, but {} were given!", nr_class) };
                 }
             } else if (detail::starts_with(line, "total_sv")) {
                 // the total number of support vectors must be greater than 0
-                num_sv = detail::convert_to<size_type>(value);
+                num_sv = detail::convert_to<decltype(num_sv)>(value);
                 if (num_sv <= 0) {
                     throw invalid_file_format_exception{ fmt::format("The number of support vectors must be greater than 0, but is {}!", num_sv) };
                 }
@@ -447,11 +447,11 @@ void parameter<T>::parse_model_file(const std::string &filename) {
             } else if (detail::starts_with(line, "nr_sv")) {
                 // parse first number
                 const std::string_view first_num = value.substr(0, value.find_first_of(' '));
-                const auto num_first = detail::convert_to<size_type>(first_num);
+                const auto num_first = detail::convert_to<unsigned long long>(first_num);
                 value.remove_prefix(std::min(first_num.size() + 1, value.size()));
                 // parse second number
                 const std::string_view second_num = value.substr(0, value.find_first_of(" \n"));
-                const auto num_second = detail::convert_to<size_type>(second_num);
+                const auto num_second = detail::convert_to<unsigned long long>(second_num);
                 value.remove_prefix(std::min(second_num.size() + 1, value.size()));
 
                 value = detail::trim_left(value);
@@ -504,7 +504,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
     // update shared pointer
     data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
-    alphas_ptr = std::make_shared<const std::vector<real_type>>(std::move(alphas));
+    alpha_ptr = std::make_shared<const std::vector<real_type>>(std::move(alphas));
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {

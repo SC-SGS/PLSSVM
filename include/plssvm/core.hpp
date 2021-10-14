@@ -11,14 +11,16 @@
 
 #pragma once
 
+#include "plssvm/csvm.hpp"
 #include "plssvm/csvm_factory.hpp"
 
-#include "plssvm/backend_types.hpp"
-#include "plssvm/csvm.hpp"
-#include "plssvm/exceptions/exceptions.hpp"
-#include "plssvm/kernel_types.hpp"
 #include "plssvm/parameter_predict.hpp"
 #include "plssvm/parameter_train.hpp"
+
+#include "plssvm/backend_types.hpp"
+#include "plssvm/kernel_types.hpp"
+
+#include "plssvm/exceptions/exceptions.hpp"
 #include "plssvm/version/version.hpp"
 
 /// The main namespace containing all API functions.

@@ -8,8 +8,9 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 
-#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
-#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
+#include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::get_device_count
+#include "plssvm/backends/CUDA/exceptions.hpp"      // plssvm::cuda::backend_exception
+#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
 
 #include "fmt/core.h"  // fmt::format
 
@@ -17,46 +18,7 @@
 #include <utility>    // std::exchange, std::move, std::swap
 #include <vector>     // std::vector
 
-#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::cuda::detail::gpu_assert((err))
-
 namespace plssvm::cuda::detail {
-
-/**
- * @brief Check the CUDA error code. If @p code signals an error, throw a `plssvm::cuda_backend_exception`.
- * @details The exception contains the error name and error string for more debug information.
- * @param[in] code the CUDA error code to check
- * @throws plssvm::cuda_backend_exception if the error code signals a failure
- */
-inline void gpu_assert(const cudaError_t code) {
-    if (code != cudaSuccess) {
-        throw backend_exception{ fmt::format("CUDA assert {}: {}", cudaGetErrorName(code), cudaGetErrorString(code)) };
-    }
-}
-
-int get_device_count() {
-    int count;
-    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceCount(&count));
-    return count;
-}
-void set_device(const int device) {
-    PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device));
-}
-
-void peek_at_last_error() {
-    PLSSVM_CUDA_ERROR_CHECK(cudaPeekAtLastError());
-}
-void device_synchronize() {
-    peek_at_last_error();
-    PLSSVM_CUDA_ERROR_CHECK(cudaDeviceSynchronize());
-}
-void device_synchronize(const int device) {
-    if (device < 0 || device >= static_cast<int>(get_device_count())) {
-        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device) };
-    }
-    peek_at_last_error();
-    PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device));
-    PLSSVM_CUDA_ERROR_CHECK(cudaDeviceSynchronize());
-}
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const int device) :

@@ -15,6 +15,7 @@
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                             // plssvm::kernel_index_type
 #include "plssvm/detail/execution_range.hpp"                // plssvm::detail::execution_range
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 
@@ -49,13 +50,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     using base_type::devices_;
     using base_type::num_cols_;
     using base_type::num_rows_;
-    using base_type::w_d_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
-    /// Unsigned integer type.
-    using size_type = typename base_type::size_type;
 
     /// The type of the OpenCL device pointer.
     using device_ptr_type = ::plssvm::opencl::detail::device_ptr<real_type>;
@@ -80,19 +78,19 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
      */
-    void run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int coll_range) final;
+    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, kernel_index_type coll_range) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
-    void run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const int first_feature, const int last_feature) final;
+    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type add, kernel_index_type first_feature, kernel_index_type last_feature) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void run_w_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) final;
+    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, kernel_index_type num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    void run_predict_kernel(const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const size_type num_predict_points) final;
+    void run_predict_kernel(const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
 
     /// OpenCL kernel for the generate q function compiled for each device.
     std::vector<detail::kernel> q_kernel_{};

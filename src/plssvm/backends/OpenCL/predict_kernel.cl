@@ -10,11 +10,11 @@
 
 #include "detail/atomics.cl"
 
-__kernel void device_kernel_w_linear(__global real_type *w_d, __global real_type *data_d, __global real_type *data_last_d, __global real_type *alpha_d, const size_type num_data_points, const size_type num_features) {
-    size_type index = get_global_id(0);
+__kernel void device_kernel_w_linear(__global real_type *w_d, __global real_type *data_d, __global real_type *data_last_d, __global real_type *alpha_d, const kernel_index_type num_data_points, const kernel_index_type num_features) {
+    const kernel_index_type index = get_global_id(0);
     real_type temp = 0.0;
     if (index < num_features) {
-        for (int dat = 0; dat < num_data_points - 1; ++dat) {
+        for (kernel_index_type dat = 0; dat < num_data_points - 1; ++dat) {
             temp += alpha_d[dat] * data_d[dat + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * index];
         }
         temp += alpha_d[num_data_points - 1] * data_last_d[index];
@@ -22,13 +22,13 @@ __kernel void device_kernel_w_linear(__global real_type *w_d, __global real_type
     }
 }
 
-__kernel void device_kernel_predict_poly(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const size_type num_data_points, __global const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) {
-    const int data_point_index = get_global_id(0);
-    const int predict_point_index = get_global_id(1);
+__kernel void device_kernel_predict_poly(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const kernel_index_type num_data_points, __global const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0) {
+    const kernel_index_type data_point_index = get_global_id(0);
+    const kernel_index_type predict_point_index = get_global_id(1);
 
-    real_type temp = 0;
+    real_type temp = 0.0;
     if (predict_point_index < num_predict_points) {
-        for (int feature_index = 0; feature_index < num_features; ++feature_index) {
+        for (kernel_index_type feature_index = 0; feature_index < num_features; ++feature_index) {
             if (data_point_index == num_data_points) {
                 temp += data_last_d[feature_index] * points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
             } else {
@@ -42,13 +42,13 @@ __kernel void device_kernel_predict_poly(__global real_type *out_d, __global con
     }
 }
 
-__kernel void device_kernel_predict_radial(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const size_type num_data_points, __global const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) {
-    const int data_point_index = get_global_id(0);
-    const int predict_point_index = get_global_id(1);
+__kernel void device_kernel_predict_radial(__global real_type *out_d, __global const real_type *data_d, __global const real_type *data_last_d, __global const real_type *alpha_d, const kernel_index_type num_data_points, __global const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma) {
+    const kernel_index_type data_point_index = get_global_id(0);
+    const kernel_index_type predict_point_index = get_global_id(1);
 
-    real_type temp = 0;
+    real_type temp = 0.0;
     if (predict_point_index < num_predict_points) {
-        for (int feature_index = 0; feature_index < num_features; ++feature_index) {
+        for (kernel_index_type feature_index = 0; feature_index < num_features; ++feature_index) {
             if (data_point_index == num_data_points) {
                 temp += (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
             } else {

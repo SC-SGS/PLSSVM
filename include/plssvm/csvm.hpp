@@ -35,8 +35,6 @@ class csvm {
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
-    /// Unsigned integer type.
-    using size_type = std::size_t;
 
     //*************************************************************************************************************************************//
     //                                                      special member functions                                                       //
@@ -169,7 +167,7 @@ class csvm {
      * @param[in] q subvector of the least-squares matrix equation
      * @return the alpha values
      */
-    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
+    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, std::size_t imax, real_type eps, const std::vector<real_type> &q) = 0;
     /**
      * @brief updates the `w_` vector to the current data and alpha values.
      */
@@ -201,7 +199,7 @@ class csvm {
      * @attention boundary values can contain random numbers
      * @return an 1D vector in a SoA layout
      */
-    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, size_type boundary, size_type num_points);
+    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, std::size_t boundary, std::size_t num_points);
 
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //
@@ -234,9 +232,9 @@ class csvm {
     //                                                         internal variables                                                          //
     //*************************************************************************************************************************************//
     /// The number of data points in the data set.
-    size_type num_data_points_{};
+    std::size_t num_data_points_{};
     /// The number of features per data point.
-    size_type num_features_{};
+    std::size_t num_features_{};
     /// The bias after learning.
     real_type bias_{};
     /// The bottom right matrix entry multiplied by cost.

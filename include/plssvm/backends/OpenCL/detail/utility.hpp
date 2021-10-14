@@ -14,88 +14,95 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
-#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
-#include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK
+#include "plssvm/constants.hpp"                             // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
-#include "CL/cl.h"     // cl_device_id, cl_program, cl_kernel, cl_uint, cl_int, CL_QUEUE_DEVICE, CL_DEVICE_NAME, CL_PROGRAM_BUILD_LOG
-                       // clGetCommandQueueInfo, clGetDeviceInfo, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo,
-                       // clCreateKernel, clReleaseProgram, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
+#include "CL/cl.h"  // cl_program, cl_kernel, cl_uint, cl_int, CL_PROGRAM_BUILD_LOG, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo,
+                    // clCreateKernel, clReleaseProgram, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
+
 #include "fmt/core.h"  // fmt::format
 
 #include <cstddef>  // std::size_t
 #include <fstream>  // std::ifstream
-#include <ios>      // std::iosf, std::streamsize
+#include <ios>      // std::ios, std::streamsize
+#include <limits>   // std::numeric_limits
 #include <string>   // std::string
-#include <utility>  // std::forward, std::pair, std::make_pair
+#include <utility>  // std::forward, std::pair
 #include <vector>   // std::vector
 
+#define PLSSVM_OPENCL_ERROR_CHECK(err, ...) plssvm::opencl::detail::device_assert((err), ##__VA_ARGS__)
+
 namespace plssvm::opencl::detail {
+
+/**
+ * @brief Check the OpenCL error @p code. If @p code signals an error, throw a `plssvm::opencl::backend_exception`.
+ * @details The exception contains the error name and additional debug information.
+ * @param[in] code the OpenCL error code to check
+ * @throws `plssvm::opencl::backend_exception` if the error code signals a failure
+ */
+void device_assert(error_code code, std::string_view msg = "");
+
+/**
+ * @brief Returns the list devices matching the target platform @p target.
+ * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
+ *          1. NVIDIA GPUs
+ *          2. AMD GPUs
+ *          3. Intel GPUs
+ *          4. CPUs
+ * @param[in] target the target platform for which the devices must match
+ * @return the command queues (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<command_queue> get_command_queues(target_platform target);
+
+/**
+ * @brief Wait for the compute device associated with @p queue to finish.
+ * @param[in] queue the command queue to synchronize
+ */
+void device_synchronize(const command_queue &queue);
 
 /**
  * @brief Get the name of the device associated with the OpenCL command queue @p queue.
  * @param[in] queue the OpenCL command queue
  * @return the device name
  */
-inline std::string get_device_name(const command_queue &queue) {
-    error_code err;
-    // get device
-    cl_device_id device_id;
-    err = clGetCommandQueueInfo(queue.queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error obtaining device ({})!", err) };
-    }
-    // get device name
-    std::string device_name(128, '\0');
-    err = clGetDeviceInfo(device_id, CL_DEVICE_NAME, device_name.size() * sizeof(char), device_name.data(), nullptr);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error obtaining device name ({})!", err) };
-    }
-    return device_name.substr(0, device_name.find_first_of('\0'));
-}
+[[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
  * @brief Convert the kernel type @p kernel to the function names for the q and svm kernel functions.
  * @param[in] kernel the kernel type
  * @return the kernel function names (first: q_kernel name, second: svm_kernel name)
  */
-[[nodiscard]] inline std::pair<std::string, std::string> kernel_type_to_function_name(const kernel_type kernel) {
-    switch (kernel) {
-        case kernel_type::linear:
-            return std::make_pair("device_kernel_q_linear", "device_kernel_linear");
-        case kernel_type::polynomial:
-            return std::make_pair("device_kernel_q_poly", "device_kernel_poly");
-        case kernel_type::rbf:
-            return std::make_pair("device_kernel_q_radial", "device_kernel_radial");
-    }
-    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel)) };
-}
+[[nodiscard]] std::pair<std::string, std::string> kernel_type_to_function_name(kernel_type kernel);
 
 /**
  * @brief Create a kernel with @p kernel_name for the given command queues from the file @p file.
  * @tparam real_type the floating point type used to replace the placeholders in the kernel file
- * @tparam size_type the unsigned integer type used to replace the placeholders in the kernel file
+ * @tparam kernel_index_type the unsigned integer type used to replace the placeholders in the kernel file
  * @param[in] queues the used OpenCL command queues
  * @param[in] file the file containing the kernel
  * @param[in] kernel_name the name of the kernel to create
  * @return the kernel
  */
-template <typename real_type, typename size_type = std::size_t>
-inline std::vector<detail::kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name) {
+template <typename real_type, typename kernel_index_type>
+[[nodiscard]] inline std::vector<kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name) {
     // read kernel
     std::string kernel_src_string;
     {
         std::ifstream in{ file };
-        if (in.fail()) {
-            throw backend_exception{ fmt::format("Couldn't open kernel source file: {}!", file) };
-        }
-        in.seekg(0, std::ios::end);
-        std::streamsize len = in.tellg();
+
+        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({})", file));
+
+        in.ignore(std::numeric_limits<std::streamsize>::max());
+        std::streamsize len = in.gcount();
+        in.clear();
         in.seekg(0, std::ios::beg);
+
+        PLSSVM_ASSERT(len > 0, fmt::format("empty file ({})", file));
 
         kernel_src_string.resize(len);
         in.read(kernel_src_string.data(), len);
@@ -103,7 +110,7 @@ inline std::vector<detail::kernel> create_kernel(const std::vector<command_queue
 
     // replace type
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
-    ::plssvm::detail::replace_all(kernel_src_string, "size_type", ::plssvm::detail::arithmetic_type_name<size_type>());
+    ::plssvm::detail::replace_all(kernel_src_string, "kernel_index_type", ::plssvm::detail::arithmetic_type_name<kernel_index_type>());
     // replace constants
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
@@ -114,9 +121,7 @@ inline std::vector<detail::kernel> create_kernel(const std::vector<command_queue
     const char *kernel_src_ptr = kernel_src_string.c_str();
     // TODO: not all command queue must have the same context (but this would be highly unlikely)
     cl_program program = clCreateProgramWithSource(queues[0].context, 1, &kernel_src_ptr, nullptr, &err);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error creating OpenCL program ({})!", err) };
-    }
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating OpenCL program");
     err = clBuildProgram(program, 0, nullptr, "-I " PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY " -cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
     if (!err) {
         // determine the size of the log
@@ -127,25 +132,20 @@ inline std::vector<detail::kernel> create_kernel(const std::vector<command_queue
         // get the log
         clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
         // print the log
-        throw backend_exception{ fmt::format("Error building OpenCL program ({})!: {}\n", err, log) };
+        PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program ({})", log));
     }
 
     // build kernels
-    std::vector<detail::kernel> kernels;
+    std::vector<kernel> kernels;
     for ([[maybe_unused]] const command_queue &q : queues) {
         // create kernel
         kernels.emplace_back(clCreateKernel(program, kernel_name.c_str(), &err));
-        if (!err) {
-            throw backend_exception{ fmt::format("Error creating OpenCL kernel ({})!", err) };
-        }
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating OpenCL kernel");
     }
 
     // release resource
     if (program) {
-        err = clReleaseProgram(program);
-        if (!err) {
-            throw backend_exception{ fmt::format("Error releasing OpenCL program resources ({})!", err) };
-        }
+        PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources");
     }
 
     return kernels;
@@ -162,10 +162,8 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
     cl_uint i = 0;
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
-        error_code err = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
-        if (!err) {
-            throw backend_exception{ fmt::format("Error setting OpenCL kernel argument {} ({})!", i - 1, err) };
-        }
+        const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
+        PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1));
     }(args),
      ...);
 }
@@ -188,16 +186,9 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::
     set_kernel_args(kernel, std::forward<Args>(args)...);
 
     // enqueue kernel in command queue
-    error_code err = clEnqueueNDRangeKernel(queue.queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error enqueuing OpenCL kernel ({})!", err) };
-    }
-
+    PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue.queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
     // wait until kernel computation finished
-    err = clFinish(queue.queue);
-    if (!err) {
-        throw backend_exception{ fmt::format("Error running OpenCL kernel ({})!", err) };
-    }
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue.queue), "error running OpenCL kernel");
 }
 
 /**

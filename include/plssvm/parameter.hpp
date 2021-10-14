@@ -18,7 +18,6 @@
 
 #include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
-#include <cstddef>      // std::size_t
 #include <iosfwd>       // std::ostream (forward declaration only)
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string
@@ -39,8 +38,6 @@ class parameter {
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
-    /// Unsigned integer type.
-    using size_type = std::size_t;
 
     /// virtual, default destructor.
     virtual ~parameter() = default;
@@ -202,7 +199,7 @@ class parameter {
     /// The labels associated to each data point.
     std::shared_ptr<const std::vector<real_type>> value_ptr{};
     /// The weights associated to each data point after training.
-    std::shared_ptr<const std::vector<real_type>> alphas_ptr{};
+    std::shared_ptr<const std::vector<real_type>> alpha_ptr{};
     /// The data to predict.
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
 

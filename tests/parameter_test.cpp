@@ -72,7 +72,6 @@ TYPED_TEST(Parameter, default_constructor) {
     using real_type = TypeParam;
 
     ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
-    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
 
     EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
     EXPECT_EQ(params.degree, 3);
@@ -90,14 +89,14 @@ TYPED_TEST(Parameter, default_constructor) {
 
     EXPECT_EQ(params.data_ptr, nullptr);
     EXPECT_EQ(params.value_ptr, nullptr);
-    EXPECT_EQ(params.alphas_ptr, nullptr);
+    EXPECT_EQ(params.alpha_ptr, nullptr);
     EXPECT_EQ(params.test_data_ptr, nullptr);
 
     EXPECT_EQ(params.rho, real_type{ 0 });
 }
 
 // utility function to reduce cody duplication
-template <bool has_label, typename real_type, typename size_type>
+template <bool has_label, typename real_type>
 void check_content_equal(const std::vector<std::vector<real_type>> &correct_data,
                          const std::vector<real_type> &correct_label,
                          const std::shared_ptr<const std::vector<std::vector<real_type>>> &parsed_data,
@@ -107,7 +106,7 @@ void check_content_equal(const std::vector<std::vector<real_type>> &correct_data
     // check if sizes match
     ASSERT_NE(parsed_data, nullptr);
     ASSERT_EQ(parsed_data->size(), correct_data.size()) << "num data points mismatch";
-    for (size_type i = 0; i < parsed_data->size(); ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < parsed_data->size(); ++i) {
         ASSERT_EQ((*parsed_data)[i].size(), correct_data[i].size()) << "mismatch num features in data point: " << i;
     }
     if constexpr (has_label) {
@@ -118,8 +117,8 @@ void check_content_equal(const std::vector<std::vector<real_type>> &correct_data
     }
 
     // check parsed values for correctness
-    for (size_type i = 0; i < parsed_data->size(); ++i) {
-        for (size_type j = 0; j < (*parsed_data)[i].size(); ++j) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < parsed_data->size(); ++i) {
+        for (typename std::vector<std::vector<real_type>>::size_type j = 0; j < (*parsed_data)[i].size(); ++j) {
             util::gtest_expect_floating_point_eq((*parsed_data)[i][j], correct_data[i][j], fmt::format("data point: {} feature: {}", i, j));
         }
         if constexpr (has_label) {
@@ -138,7 +137,6 @@ TYPED_TEST(Parameter, parse_libsvm) {
     params.print_info = false;
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct values
     const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
@@ -154,13 +152,13 @@ TYPED_TEST(Parameter, parse_libsvm) {
     // parse libsvm file with labels
     //
     params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.libsvm", params.data_ptr);
-    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse libsvm file without labels
     //
     params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.libsvm.no_label", params.data_ptr);
-    check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<false, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 }
 
 // test whether plssvm::parameter<T>::parse_libsvm correctly parses sparse libsvm files
@@ -170,7 +168,6 @@ TYPED_TEST(Parameter, parse_libsvm_sparse) {
     params.print_info = false;
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct values
     const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
@@ -186,13 +183,13 @@ TYPED_TEST(Parameter, parse_libsvm_sparse) {
     // parse libsvm file with labels
     //
     params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.sparse.libsvm", params.data_ptr);
-    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse libsvm file without labels
     //
     params.parse_libsvm_file(TEST_PATH "/data/libsvm/5x4.sparse.libsvm.no_label", params.data_ptr);
-    check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<false, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 }
 
 // test whether plssvm::parameter<T>::parse_libsvm correctly sets gamma
@@ -251,7 +248,6 @@ TYPED_TEST(Parameter, parse_arff) {
     params.print_info = false;
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct values
     const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
@@ -267,13 +263,13 @@ TYPED_TEST(Parameter, parse_arff) {
     // parse arff file with labels
     //
     params.parse_arff_file(TEST_PATH "/data/arff/5x4.arff", params.data_ptr);
-    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse arff file without labels
     //
     params.parse_arff_file(TEST_PATH "/data/arff/5x4.arff.no_label", params.data_ptr);
-    check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<false, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 }
 
 // test whether plssvm::parameter<T>::parse_arff correctly sets gamma
@@ -374,7 +370,6 @@ TYPED_TEST(Parameter, parse_file) {
     params.print_info = false;
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct values for libsvm file
     const std::vector<std::vector<real_type>> expected_data_libsvm = initialize_with_correct_type<real_type>({
@@ -390,7 +385,7 @@ TYPED_TEST(Parameter, parse_file) {
     // parse libsvm file
     //
     params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-    check_content_equal<true, real_type, size_type>(expected_data_libsvm, expected_values_libsvm, params.data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data_libsvm, expected_values_libsvm, params.data_ptr, params.value_ptr);
 
     // correct values for arff file
     const std::vector<std::vector<real_type>> expected_data_arff = initialize_with_correct_type<real_type>({
@@ -406,7 +401,7 @@ TYPED_TEST(Parameter, parse_file) {
     // parse arff file
     //
     params.parse_train_file(TEST_PATH "/data/arff/5x4.arff");
-    check_content_equal<true, real_type, size_type>(expected_data_arff, expected_values_arff, params.data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data_arff, expected_values_arff, params.data_ptr, params.value_ptr);
 }
 
 // test whether plssvm::parameter<T>::parse_train_file uses the correct data pointer
@@ -416,7 +411,6 @@ TYPED_TEST(Parameter, parse_train_file) {
     params.print_info = false;
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct values
     const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
@@ -432,7 +426,7 @@ TYPED_TEST(Parameter, parse_train_file) {
     // parse train file with labels
     //
     params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data, expected_values, params.data_ptr, params.value_ptr);
 
     //
     // parse train file without labels should result in an exception
@@ -447,7 +441,6 @@ TYPED_TEST(Parameter, parse_test_file) {
     params.print_info = false;
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct values
     const std::vector<std::vector<real_type>> expected_data = initialize_with_correct_type<real_type>({
@@ -463,13 +456,13 @@ TYPED_TEST(Parameter, parse_test_file) {
     // parse test file with labels
     //
     params.parse_test_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-    check_content_equal<true, real_type, size_type>(expected_data, expected_values, params.test_data_ptr, params.value_ptr);
+    check_content_equal<true, real_type>(expected_data, expected_values, params.test_data_ptr, params.value_ptr);
 
     //
     // parse test file without labels
     //
     params.parse_test_file(TEST_PATH "/data/libsvm/5x4.libsvm.no_label");
-    check_content_equal<false, real_type, size_type>(expected_data, expected_values, params.test_data_ptr, params.value_ptr);
+    check_content_equal<false, real_type>(expected_data, expected_values, params.test_data_ptr, params.value_ptr);
 }
 
 //*************************************************************************************************************************************//
@@ -508,7 +501,6 @@ TYPED_TEST(ParameterModel, parse_model_file) {
     }
 
     using real_type = typename decltype(params)::real_type;
-    using size_type = typename decltype(params)::size_type;
 
     // correct support vectors
     const std::vector<std::vector<real_type>> expected_model_support_vectors = initialize_with_correct_type<real_type>({
@@ -526,18 +518,18 @@ TYPED_TEST(ParameterModel, parse_model_file) {
     // check if sizes match
     ASSERT_NE(params.data_ptr, nullptr);
     ASSERT_EQ(params.data_ptr->size(), expected_model_support_vectors.size()) << "num support vectors mismatch";
-    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < params.data_ptr->size(); ++i) {
         EXPECT_EQ((*params.data_ptr)[i].size(), expected_model_support_vectors[i].size()) << "mismatch num features in support vector: " << i;
     }
-    ASSERT_NE(params.alphas_ptr, nullptr);
-    ASSERT_EQ(params.alphas_ptr->size(), expected_model_alphas.size()) << "num alphas mismatch";
+    ASSERT_NE(params.alpha_ptr, nullptr);
+    ASSERT_EQ(params.alpha_ptr->size(), expected_model_alphas.size()) << "num alphas mismatch";
 
     // check parsed values for correctness
-    for (size_type i = 0; i < params.data_ptr->size(); ++i) {
-        for (size_type j = 0; j < (*params.data_ptr)[i].size(); ++j) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < params.data_ptr->size(); ++i) {
+        for (typename std::vector<std::vector<real_type>>::size_type j = 0; j < (*params.data_ptr)[i].size(); ++j) {
             util::gtest_expect_floating_point_eq((*params.data_ptr)[i][j], expected_model_support_vectors[i][j], fmt::format("support vector: {} feature: {}", i, j));
         }
-        util::gtest_expect_floating_point_eq((*params.alphas_ptr)[i], expected_model_alphas[i], fmt::format("support vector: {}", i));
+        util::gtest_expect_floating_point_eq((*params.alpha_ptr)[i], expected_model_alphas[i], fmt::format("support vector: {}", i));
     }
 
     // check if other parameter values are set correctly
@@ -680,7 +672,6 @@ TYPED_TEST(ParameterTrain, parse_filename) {
     using real_type = TypeParam;
 
     ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
-    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
 
     EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
     EXPECT_EQ(params.degree, 3);
@@ -698,7 +689,7 @@ TYPED_TEST(ParameterTrain, parse_filename) {
 
     EXPECT_NE(params.data_ptr, nullptr);
     EXPECT_NE(params.value_ptr, nullptr);
-    EXPECT_EQ(params.alphas_ptr, nullptr);
+    EXPECT_EQ(params.alpha_ptr, nullptr);
     EXPECT_EQ(params.test_data_ptr, nullptr);
 
     EXPECT_EQ(params.rho, real_type{ 0 });
@@ -719,7 +710,6 @@ TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
     using real_type = TypeParam;
 
     ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
-    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
 
     EXPECT_EQ(params.kernel, plssvm::kernel_type::polynomial);
     EXPECT_EQ(params.degree, 5);
@@ -737,7 +727,7 @@ TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
 
     EXPECT_NE(params.data_ptr, nullptr);
     EXPECT_NE(params.value_ptr, nullptr);
-    EXPECT_EQ(params.alphas_ptr, nullptr);
+    EXPECT_EQ(params.alpha_ptr, nullptr);
     EXPECT_EQ(params.test_data_ptr, nullptr);
 
     EXPECT_EQ(params.rho, real_type{ 0 });
@@ -757,7 +747,6 @@ TYPED_TEST(ParameterPredict, parse_filename) {
     using real_type = TypeParam;
 
     ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
-    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
 
     EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
     EXPECT_EQ(params.degree, 3);
@@ -775,7 +764,7 @@ TYPED_TEST(ParameterPredict, parse_filename) {
 
     EXPECT_NE(params.data_ptr, nullptr);
     EXPECT_NE(params.value_ptr, nullptr);
-    EXPECT_NE(params.alphas_ptr, nullptr);
+    EXPECT_NE(params.alpha_ptr, nullptr);
     EXPECT_NE(params.test_data_ptr, nullptr);
 
     util::gtest_expect_floating_point_eq(params.rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
@@ -797,7 +786,6 @@ TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
     using real_type = TypeParam;
 
     ::testing::StaticAssertTypeEq<real_type, typename decltype(params)::real_type>();
-    ::testing::StaticAssertTypeEq<std::size_t, typename decltype(params)::size_type>();
 
     EXPECT_EQ(params.kernel, plssvm::kernel_type::linear);
     EXPECT_EQ(params.degree, 3);
@@ -815,7 +803,7 @@ TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
 
     EXPECT_NE(params.data_ptr, nullptr);
     EXPECT_NE(params.value_ptr, nullptr);
-    EXPECT_NE(params.alphas_ptr, nullptr);
+    EXPECT_NE(params.alpha_ptr, nullptr);
     EXPECT_NE(params.test_data_ptr, nullptr);
 
     util::gtest_expect_floating_point_eq(params.rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));

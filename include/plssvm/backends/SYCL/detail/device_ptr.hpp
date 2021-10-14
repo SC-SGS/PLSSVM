@@ -11,31 +11,12 @@
 
 #pragma once
 
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
-
 #include "sycl/sycl.hpp"  // sycl::queue
 
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
 namespace plssvm::sycl::detail {
-
-/**
- * @brief Returns the list devices matching the target platform @p target.
- * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
- *          1. NVIDIA GPUs
- *          2. AMD GPUs
- *          3. Intel GPUs
- *          4. CPUs
- * @param[in] target the target platform for which the devices must match
- * @return the devices (`[[nodiscard]]`)
- */
-[[nodiscard]] std::vector<::sycl::queue> get_device_list(target_platform target);
-/**
- * @brief Wait for the compute device associated with @p queue to finish.
- * @param[in] queue the SYCL queue to synchronize
- */
-void device_synchronize(::sycl::queue &queue);
 
 /**
  * @brief Small wrapper class around a SYCL device pointer together with commonly used device functions.

@@ -22,11 +22,13 @@ message(CHECK_PASS "found")
 # explicitly set sources
 set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gpu_csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cl
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/atomics.cl
 )
 

@@ -76,11 +76,11 @@ void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<rea
 }
 
 template <typename T>
-auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     std::vector<real_type> alpha(b.size(), 1.0);
-    const size_type dept = b.size();
+    const typename std::vector<real_type>::size_type dept = b.size();
 
     // sanity checks
     PLSSVM_ASSERT(dept == num_data_points_ - 1, "Sizes mismatch!: {} != {}", dept, num_data_points_ - 1);
@@ -97,7 +97,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const size_type imax, c
 
     std::vector<real_type> d(r);
 
-    size_type run = 0;
+    std::size_t run = 0;
     for (; run < imax; ++run) {
         if (print_info_) {
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
@@ -146,8 +146,8 @@ void csvm<T>::update_w() {
 
     // calculate the w vector
     #pragma omp parallel for
-    for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
-        for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+    for (std::size_t feature_index = 0; feature_index < num_features_; ++feature_index) {
+        for (std::size_t data_index = 0; data_index < num_data_points_; ++data_index) {
             w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
         }
     }
@@ -159,22 +159,22 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
 
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
     PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
-    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
-
-    if (!std::all_of(points.begin(), points.end(), [&](const std::vector<real_type> &point) {
-        return point.size() == points.front().size(); })) {
-        throw exception{ "All points in the prediction point vector must have the same number of features!" };
-    } else if (alpha_ptr_ == nullptr) {
-        throw exception{ "No alphas provided for prediction!" };
-    }
 
     // return empty vector if there are no points to predict
     if (points.empty()) {
         return {};
     }
-    if (points.front().size() != data_ptr_->front().size()) {
+
+    // sanity checks
+    if (!std::all_of(points.begin(), points.end(), [&](const std::vector<real_type> &point) { return point.size() == points.front().size(); })) {
+        throw exception{ "All points in the prediction point vector must have the same number of features!" };
+    } else if (points.front().size() != data_ptr_->front().size()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), points.front().size()) };
+    } else if (alpha_ptr_ == nullptr) {
+        throw exception{ "No alphas provided for prediction!" };
     }
+
+    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
 
     std::vector<real_type> out(points.size(), bias_);
     if (kernel_ == kernel_type::linear) {
@@ -185,12 +185,12 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
     }
 
     #pragma omp parallel for
-    for (size_type point_index = 0; point_index < points.size(); ++point_index) {
+    for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < points.size(); ++point_index) {
         if (kernel_ == kernel_type::linear) {
             // use faster methode in case of the linear kernel function
             out[point_index] += transposed{ w_ } * points[point_index];
         } else {
-            for (size_type data_index = 0; data_index < num_data_points_; ++data_index) {
+            for (std::size_t data_index = 0; data_index < num_data_points_; ++data_index) {
                 out[point_index] += (*alpha_ptr_)[data_index] * base_type::kernel_function((*data_ptr_)[data_index], points[point_index]);
             }
         }

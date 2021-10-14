@@ -48,8 +48,6 @@ class csvm : public ::plssvm::csvm<T> {
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
-    /// Unsigned integer type.
-    using size_type = typename base_type::size_type;
 
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
@@ -69,7 +67,7 @@ class csvm : public ::plssvm::csvm<T> {
         // OpenMP device is the CPU -> no special load functions
     }
     std::vector<real_type> generate_q() override;
-    std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
+    std::vector<real_type> solver_CG(const std::vector<real_type> &b, std::size_t imax, real_type eps, const std::vector<real_type> &q) override;
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.

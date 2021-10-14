@@ -24,6 +24,8 @@
 #include <random>     // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <vector>     // std::vector
 
+#include <regex>
+
 // check whether the std::string <-> plssvm::backend_type conversions are correct
 TEST(Base, backend_type) {
     // check conversions to std::string
@@ -120,7 +122,8 @@ TEST(Base, arithmetic_type_name) {
 TEST(BaseDeathTest, plssvm_assert) {
     PLSSVM_ASSERT(true, "TRUE");
 
-    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "");  // TODO: matcher
+    // can't use a matcher due to the used emphasis and color specification in assertion message
+    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "");
 }
 #endif
 

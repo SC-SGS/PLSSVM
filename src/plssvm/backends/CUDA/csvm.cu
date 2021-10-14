@@ -10,11 +10,13 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device,
                                                        // plssvm::detail::cuda::peek_at_last_error, plssvm::detail::cuda::device_synchronize
+#include "plssvm/backends/CUDA/detail/utility.cuh"     // plssvm::cuda::device_synchronize
 #include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"     // plssvm::cuda::kernel_w, plssvm::cuda::predict_points_poly, plssvm::cuda::predict_points_rbf
 #include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::device_kernel_q_linear, plssvm::cuda::device_kernel_q_poly, plssvm::cuda::device_kernel_q_radial
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::device_kernel_linear, plssvm::cuda::device_kernel_poly, plssvm::cuda::device_kernel_radial
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                        // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
@@ -47,7 +49,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     // get all available devices wrt the requested target platform
-    devices_.resize(std::min(static_cast<size_type>(detail::get_device_count()), num_features_));
+    devices_.resize(std::min<std::size_t>(detail::get_device_count(), num_features_));
     std::iota(devices_.begin(), devices_.end(), 0);
 
     // throw exception if no CUDA devices could be found
@@ -67,10 +69,10 @@ csvm<T>::csvm(const parameter<T> &params) :
     if (print_info_) {
         // print found CUDA devices
         fmt::print("Found {} CUDA device(s):\n", devices_.size());
-        for (size_type device = 0; device < devices_.size(); ++device) {
+        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             cudaDeviceProp prop{};
-            cudaGetDeviceProperties(&prop, device);
-            fmt::print("  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+            cudaGetDeviceProperties(&prop, devices_[device]);
+            fmt::print("  [{}, {}, {}.{}]\n", devices_[device], prop.name, prop.major, prop.minor);
         }
         fmt::print("\n");
     }
@@ -80,7 +82,7 @@ template <typename T>
 csvm<T>::~csvm() {
     try {
         // be sure that all operations on the CUDA devices have finished before destruction
-        for (size_type device = 0; device < devices_.size(); ++device) {
+        for (const queue_type &device : devices_) {
             detail::device_synchronize(device);
         }
     } catch (const plssvm::exception &e) {
@@ -102,13 +104,13 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int col_range) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const kernel_index_type feature_range) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
     switch (kernel_) {
         case kernel_type::linear:
-            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, col_range);
+            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range);
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
@@ -120,11 +122,10 @@ void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execu
             break;
     }
     detail::peek_at_last_error();
-    // TODO: ASSERTS in other backends
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const int first_feature, const int last_feature) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const kernel_index_type first_feature, const kernel_index_type last_feature) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
@@ -145,16 +146,16 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const kernel_index_type num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
-    cuda::device_kernel_w_linear<<<grid, block>>>(w_d_.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features);
+    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features);
     detail::peek_at_last_error();
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const size_type num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(0);

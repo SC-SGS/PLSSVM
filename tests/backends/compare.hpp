@@ -90,12 +90,10 @@ real_type kernel_function(const std::vector<real_type> &x1, const std::vector<re
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
 std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const SVM &csvm) {
-    using size_type = typename std::vector<std::vector<real_type>>::size_type;
-
     std::vector<real_type> result;
     result.reserve(data.size() - 1);
 
-    for (size_type i = 0; i < data.size() - 1; ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
         result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
     }
     return result;

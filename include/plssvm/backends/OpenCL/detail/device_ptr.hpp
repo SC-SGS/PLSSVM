@@ -6,13 +6,12 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Small wrapper around a OpenCL device pointer and functions.
+ * @brief Small wrapper around a OpenCL device pointer.
  */
 
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_mem
 
@@ -20,23 +19,6 @@
 #include <vector>   // std::vector
 
 namespace plssvm::opencl::detail {
-
-/**
- * @brief Returns the list devices matching the target platform @p target.
- * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
- *          1. NVIDIA GPUs
- *          2. AMD GPUs
- *          3. Intel GPUs
- *          4. CPUs
- * @param[in] target the target platform for which the devices must match
- * @return the command queues (`[[nodiscard]]`)
- */
-[[nodiscard]] std::vector<command_queue> get_command_queues(target_platform target);
-/**
- * @brief Wait for the compute device associated with @p queue to finish.
- * @param[in] queue the command queue to synchronize
- */
-void device_synchronize(const command_queue &queue);
 
 /**
  * @brief Small wrapper class around an OpenCL device pointer together with commonly used device functions.

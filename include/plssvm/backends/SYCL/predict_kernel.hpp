@@ -12,14 +12,11 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
-#include "plssvm/constants.hpp"                     // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::range, sycl::pow, sycl::exp
 
 namespace plssvm::sycl {
-
-/// Unsigned integer type.
-using size_type = std::size_t;
 
 /**
  * @brief Calculate the w vector to heavily speed-up the prediction of the labels of data points using the linear kernel function.
@@ -42,7 +39,7 @@ class device_kernel_w_linear {
      * @param[in] num_data_points the total number of support vectors
      * @param[in] num_features the number of features per support vector
      */
-    device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const size_type num_features) :
+    device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const kernel_index_type num_features) :
         w_d_{ w_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, num_features_{ num_features } {}
 
     /**
@@ -51,10 +48,10 @@ class device_kernel_w_linear {
      *                   identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
     void operator()(::sycl::nd_item<1> nd_idx) const {
-        const auto index = nd_idx.get_global_linear_id();
+        const kernel_index_type index = nd_idx.get_global_linear_id();
         real_type temp = 0;
         if (index < num_features_) {
-            for (size_type dat = 0; dat < num_data_points_ - 1; ++dat) {
+            for (kernel_index_type dat = 0; dat < num_data_points_ - 1; ++dat) {
                 temp += alpha_d_[dat] * data_d_[dat + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * index];
             }
             temp += alpha_d_[num_data_points_ - 1] * data_last_d_[index];
@@ -67,8 +64,8 @@ class device_kernel_w_linear {
     const real_type *data_d_;
     const real_type *data_last_d_;
     const real_type *alpha_d_;
-    const size_type num_data_points_;
-    const size_type num_features_;
+    const kernel_index_type num_data_points_;
+    const kernel_index_type num_features_;
 };
 
 /**
@@ -97,7 +94,7 @@ class device_kernel_predict_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const int degree, const real_type gamma, const real_type coef0) :
+    device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -106,12 +103,12 @@ class device_kernel_predict_poly {
      *                   identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
-        const size_type data_point_index = nd_idx.get_global_id(0);
-        const size_type predict_point_index = nd_idx.get_global_id(1);
+        const kernel_index_type data_point_index = nd_idx.get_global_id(0);
+        const kernel_index_type predict_point_index = nd_idx.get_global_id(1);
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
-            for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
+            for (kernel_index_type feature_index = 0; feature_index < num_features_; ++feature_index) {
                 if (data_point_index == num_data_points_) {
                     temp += data_last_d_[feature_index] * points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
                 } else {
@@ -130,10 +127,10 @@ class device_kernel_predict_poly {
     const real_type *data_d_;
     const real_type *data_last_d_;
     const real_type *alpha_d_;
-    const size_type num_data_points_;
+    const kernel_index_type num_data_points_;
     const real_type *points_;
-    const size_type num_predict_points_;
-    const size_type num_features_;
+    const kernel_index_type num_predict_points_;
+    const kernel_index_type num_features_;
     const int degree_;
     const real_type gamma_;
     const real_type coef0_;
@@ -163,7 +160,7 @@ class device_kernel_predict_radial {
      * @param[in] num_features the number of features per support vector and point to predict
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      */
-    device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const size_type num_data_points, const real_type *points, const size_type num_predict_points, const size_type num_features, const real_type gamma) :
+    device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}
 
     /**
@@ -172,12 +169,12 @@ class device_kernel_predict_radial {
      *                   identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
-        const size_type data_point_index = nd_idx.get_global_id(0);
-        const size_type predict_point_index = nd_idx.get_global_id(1);
+        const kernel_index_type data_point_index = nd_idx.get_global_id(0);
+        const kernel_index_type predict_point_index = nd_idx.get_global_id(1);
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
-            for (size_type feature_index = 0; feature_index < num_features_; ++feature_index) {
+            for (kernel_index_type feature_index = 0; feature_index < num_features_; ++feature_index) {
                 if (data_point_index == num_data_points_) {
                     temp += (data_last_d_[feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d_[feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
                 } else {
@@ -196,10 +193,10 @@ class device_kernel_predict_radial {
     const real_type *data_d_;
     const real_type *data_last_d_;
     const real_type *alpha_d_;
-    const size_type num_data_points_;
+    const kernel_index_type num_data_points_;
     const real_type *points_;
-    const size_type num_predict_points_;
-    const size_type num_features_;
+    const kernel_index_type num_predict_points_;
+    const kernel_index_type num_features_;
     const real_type gamma_;
 };
 

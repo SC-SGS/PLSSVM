@@ -22,7 +22,7 @@ real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real
     PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
 
     real_type result{ 0.0 };
-    for (std::size_t i = 0; i < x1.size(); ++i) {
+    for (typename std::vector<real_type>::size_type i = 0; i < x1.size(); ++i) {
         result = std::fma(x1[i], x2[i], result);
     }
     return result;
@@ -35,7 +35,7 @@ real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_t
     PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
 
     real_type result{ 0.0 };
-    for (std::size_t i = 0; i < x1.size(); ++i) {
+    for (typename std::vector<real_type>::size_type i = 0; i < x1.size(); ++i) {
         result = std::fma(x1[i], x2[i], result);
     }
     return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
@@ -48,7 +48,7 @@ real_type radial_kernel(const std::vector<real_type> &x1, const std::vector<real
     PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
 
     real_type result{ 0.0 };
-    for (std::size_t i = 0; i < x1.size(); ++i) {
+    for (typename std::vector<real_type>::size_type i = 0; i < x1.size(); ++i) {
         real_type tmp = x1[i] - x2[i];
         result = std::fma(tmp, tmp, result);
     }

@@ -27,7 +27,6 @@
     #define PLSSVM_HAS_MEMORY_MAPPING
 #endif
 
-#include <cstddef>      // std::size_t
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
 #include <iostream>     // std::cerr, std::endl
@@ -84,7 +83,7 @@ class file_reader {
      * @details All empty lines or lines starting with a comment are ignored.
      * @return the number of lines after preprocessing (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::size_t num_lines() const noexcept {
+    [[nodiscard]] typename std::vector<std::string_view>::size_type num_lines() const noexcept {
         return lines_.size();
     }
     /**
@@ -92,7 +91,7 @@ class file_reader {
      * @param[in] pos the line to return
      * @return the line without leading whitespaces
      */
-    [[nodiscard]] std::string_view line(const std::size_t pos) const {
+    [[nodiscard]] std::string_view line(const typename std::vector<std::string_view>::size_type pos) const {
         PLSSVM_ASSERT(pos < this->num_lines(), "Out-of-bounce access!: {} >= {}", pos, this->num_lines());
         return lines_[pos];
     }
@@ -126,7 +125,7 @@ class file_reader {
                 this->open_file(filename);
             } else {
                 // set size
-                num_bytes_ = attr.st_size;
+                num_bytes_ = static_cast<std::streamsize>(attr.st_size);
                 must_unmap_file_ = true;
             }
         }
@@ -156,7 +155,7 @@ class file_reader {
             // allocate the necessary buffer
             file_content_ = new char[num_bytes_];
             // read the whole file in one go
-            f.read(file_content_, static_cast<std::streamsize>(num_bytes_));
+            f.read(file_content_, num_bytes_);
         }
     }
 
@@ -165,16 +164,16 @@ class file_reader {
      */
     void parse_lines(const char comment) {
         // create view from buffer
-        std::string_view file_content_view{ file_content_, num_bytes_ };
-        std::size_t pos = 0;
+        std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
+        std::string_view::size_type pos = 0;
         while (true) {
             // find newline
-            std::size_t next_pos = file_content_view.find_first_of('\n', pos);
+            const std::string_view::size_type next_pos = file_content_view.find_first_of('\n', pos);
             if (next_pos == std::string_view::npos) {
                 break;
             }
             // remove trailing whitespaces
-            std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
+            const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
             // add line iff the line is not empty and doesn't with a comment
             if (!sv.empty() && !starts_with(sv, comment)) {
                 lines_.push_back(sv);
@@ -182,7 +181,7 @@ class file_reader {
             pos = next_pos + 1;
         }
         // add last line
-        std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
+        const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
         if (!sv.empty() && !starts_with(sv, comment)) {
             lines_.push_back(sv);
         }
@@ -193,7 +192,7 @@ class file_reader {
     bool must_unmap_file_ = false;
 #endif
     char *file_content_ = nullptr;
-    std::size_t num_bytes_ = 0;
+    std::streamsize num_bytes_ = 0;
     std::vector<std::string_view> lines_{};
 };
 

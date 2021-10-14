@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "plssvm/constants.hpp"  // plssvm::kernel_index_type
+
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
 namespace plssvm::sycl {
@@ -32,10 +34,10 @@ class device_kernel_q_linear {
      * @param[in] data_d the one-dimensional data matrix
      * @param[in] data_last the last row in the data matrix
      * @param[in] num_rows the number of rows in the data matrix
-     * @param[in] num_cols TODO:
+     * @param[in] feature_range number of features used for the calculation
      */
-    device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols) :
-        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols } {}
+    device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type feature_range) :
+        q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, feature_range_{ feature_range } {}
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -43,9 +45,9 @@ class device_kernel_q_linear {
      *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
     void operator()(::sycl::nd_item<1> item) const {
-        const auto index = item.get_global_linear_id();
+        const kernel_index_type index = item.get_global_linear_id();
         real_type temp{ 0.0 };
-        for (int i = 0; i < num_cols_; ++i) {
+        for (kernel_index_type i = 0; i < feature_range_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
         }
         q_[index] = temp;
@@ -55,8 +57,8 @@ class device_kernel_q_linear {
     real_type *q_;
     const real_type *data_d_;
     const real_type *data_last_;
-    const int num_rows_;
-    const int num_cols_;
+    const kernel_index_type num_rows_;
+    const kernel_index_type feature_range_;
 };
 
 /**
@@ -81,7 +83,7 @@ class device_kernel_q_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols, int degree, real_type gamma, real_type coef0) :
+    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -90,9 +92,9 @@ class device_kernel_q_poly {
      *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
     void operator()(::sycl::nd_item<1> item) const {
-        const auto index = item.get_global_linear_id();
+        const kernel_index_type index = item.get_global_linear_id();
         real_type temp{ 0.0 };
-        for (int i = 0; i < num_cols_; ++i) {
+        for (kernel_index_type i = 0; i < num_cols_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
         }
         q_[index] = ::sycl::pow(gamma_ * temp + coef0_, static_cast<real_type>(degree_));
@@ -102,8 +104,8 @@ class device_kernel_q_poly {
     real_type *q_;
     const real_type *data_d_;
     const real_type *data_last_;
-    const int num_rows_;
-    const int num_cols_;
+    const kernel_index_type num_rows_;
+    const kernel_index_type num_cols_;
     const int degree_;
     const real_type gamma_;
     const real_type coef0_;
@@ -129,7 +131,7 @@ class device_kernel_q_radial {
      * @param[in] num_cols the number of columns in the data matrix
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      */
-    device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols, real_type gamma) :
+    device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, gamma_{ gamma } {}
 
     /**
@@ -138,9 +140,9 @@ class device_kernel_q_radial {
      *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
     void operator()(::sycl::nd_item<1> item) const {
-        const auto index = item.get_global_linear_id();
+        const kernel_index_type index = item.get_global_linear_id();
         real_type temp{ 0.0 };
-        for (int i = 0; i < num_cols_; ++i) {
+        for (kernel_index_type i = 0; i < num_cols_; ++i) {
             temp += (data_d_[i * num_rows_ + index] - data_last_[i]) * (data_d_[i * num_rows_ + index] - data_last_[i]);
         }
         q_[index] = ::sycl::exp(-gamma_ * temp);
@@ -150,8 +152,8 @@ class device_kernel_q_radial {
     real_type *q_;
     const real_type *data_d_;
     const real_type *data_last_;
-    const int num_rows_;
-    const int num_cols_;
+    const kernel_index_type num_rows_;
+    const kernel_index_type num_cols_;
     const real_type gamma_;
 };
 

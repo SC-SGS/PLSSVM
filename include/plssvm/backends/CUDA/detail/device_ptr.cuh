@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Small wrapper around a CUDA device pointer and functions.
+ * @brief Small wrapper around a CUDA device pointer.
  */
 
 #pragma once
@@ -15,34 +15,6 @@
 #include <vector>   // std::vector
 
 namespace plssvm::cuda::detail {
-
-/**
- * @brief Returns the number of available devices.
- * @return the number of devices (`[[nodiscard]]`)
- */
-[[nodiscard]] int get_device_count();
-/**
- * @brief Set the device @p device to the active CUDA device.
- * @param[in] device the now active device
- */
-void set_device(int device);
-
-/**
- * @brief Returns the last error from a runtime call.
- */
-void peek_at_last_error();
-/**
- * @brief Wait for the current compute device to finish.
- * @details Calls `peek_at_last_error()` before synchronizing.
- */
-void device_synchronize();
-/**
- * @brief Wait for the compute device @p device to finish.
- * @details Calls `peek_at_last_error()` before synchronizing.
- * @param[in] device the CUDA device to synchronize
- * @throws plssvm::cuda::backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
- */
-void device_synchronize(int device);
 
 /**
  * @brief Small wrapper class around a CUDA device pointer together with commonly used device functions.

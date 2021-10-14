@@ -8,12 +8,14 @@
 
 #include "plssvm/backends/SYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr, plssvm::detail::sycl::get_device_list, plssvm::detail::sycl::device_synchronize
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::sycl::device_ptr
+#include "plssvm/backends/SYCL/detail/utility.hpp"     // plssvm::detail::sycl::get_device_list, plssvm::detail::sycl::device_synchronize
 #include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"     // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
 #include "plssvm/backends/SYCL/q_kernel.hpp"           // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel.hpp"         // plssvm::sycl::device_kernel_linear, plssvm::sycl::device_kernel_poly, plssvm::sycl::device_kernel_radial
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                        // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
@@ -62,7 +64,6 @@ csvm<T>::csvm(const parameter<T> &params) :
         fmt::print("Using SYCL as backend.\n");
     }
 
-    // TODO: check multi GPU
     // get all available devices wrt the requested target platform
     devices_ = detail::get_device_list(target_);
     devices_.resize(std::min(devices_.size(), num_features_));
@@ -84,7 +85,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     if (print_info_) {
         // print found SYCL devices
         fmt::print("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), target_);
-        for (size_type device = 0; device < devices_.size(); ++device) {
+        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             fmt::print("  [{}, {}]\n", device, devices_[device].get_device().template get_info<::sycl::info::device::name>());
         }
         fmt::print("\n");
@@ -129,64 +130,64 @@ template <std::size_t I, typename size_type>
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int col_range) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const kernel_index_type feature_range) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
     switch (kernel_) {
         case kernel_type::linear:
-            devices_[device].parallel_for(execution_range, device_kernel_q_linear{ q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, col_range });
+            devices_[device].parallel_for(execution_range, device_kernel_q_linear(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            devices_[device].parallel_for(execution_range, device_kernel_q_poly{ q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_ });
+            devices_[device].parallel_for(execution_range, device_kernel_q_poly(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range, degree_, gamma_, coef0_));
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            devices_[device].parallel_for(execution_range, device_kernel_q_radial{ q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_ });
+            devices_[device].parallel_for(execution_range, device_kernel_q_radial(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range, gamma_));
             break;
     }
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const int first_feature, const int last_feature) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const kernel_index_type first_feature, const kernel_index_type last_feature) {
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
     switch (kernel_) {
         case kernel_type::linear:
             devices_[device].submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, device_kernel_linear{ cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, last_feature - first_feature, add, static_cast<int>(device) });
+                cgh.parallel_for(execution_range, device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, last_feature - first_feature, add, device));
             });
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
             devices_[device].submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, device_kernel_poly{ cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_ });
+                cgh.parallel_for(execution_range, device_kernel_poly(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_));
             });
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
             devices_[device].submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, device_kernel_radial{ cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_ });
+                cgh.parallel_for(execution_range, device_kernel_radial(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_));
             });
             break;
     }
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const kernel_index_type num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
-    devices_[device].parallel_for(execution_range, device_kernel_w_linear{ w_d_.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features });
+    devices_[device].parallel_for(execution_range, device_kernel_w_linear(w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features));
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const size_type num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
     switch (kernel_) {
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-            devices_[0].parallel_for(execution_range, device_kernel_predict_poly{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, degree_, gamma_, coef0_ });
+            devices_[0].parallel_for(execution_range, device_kernel_predict_poly(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, degree_, gamma_, coef0_));
             break;
         case kernel_type::rbf:
-            devices_[0].parallel_for(execution_range, device_kernel_predict_radial{ out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, gamma_ });
+            devices_[0].parallel_for(execution_range, device_kernel_predict_radial(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, gamma_));
             break;
     }
 }
