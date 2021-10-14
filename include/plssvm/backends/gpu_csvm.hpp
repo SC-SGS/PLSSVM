@@ -164,11 +164,6 @@ class gpu_csvm : public csvm<T> {
         num_rows_ = static_cast<int>(dept_ + boundary_size_);
         num_cols_ = static_cast<int>(num_features_);
 
-        // initialize data_last on device
-        for (size_type device = 0; device < devices_.size(); ++device) {
-            data_last_d_[device] = device_ptr_type{ num_features_ + boundary_size_, devices_[device] };
-        }
-
         // transform 2D to 1D data
         const std::vector<real_type> transformed_data = base_type::transform_data(*data_ptr_, boundary_size_, dept_);
 
@@ -177,15 +172,14 @@ class gpu_csvm : public csvm<T> {
             const int first_feature = static_cast<int>(device * static_cast<size_type>(num_cols_) / devices_.size());
             const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_cols_) / devices_.size());
 
-            const std::vector<real_type> device_data_last(data_ptr_->back().begin() + first_feature, data_ptr_->back().begin() + last_feature);
-
+            // initialize data_last on device
+            data_last_d_[device] = device_ptr_type{ last_feature - first_feature + boundary_size_, devices_[device] };
             data_last_d_[device].memset(0);
-            data_last_d_[device].memcpy_to_device(device_data_last, 0, device_data_last.size());
+            data_last_d_[device].memcpy_to_device(data_ptr_->back().data() + first_feature, 0, last_feature - first_feature);
 
-            const std::vector<real_type> device_data(transformed_data.begin() + first_feature * (dept_ + boundary_size_), transformed_data.begin() + last_feature * (dept_ + boundary_size_));
-
-            data_d_[device] = device_ptr_type{ device_data.size(), devices_[device] };
-            data_d_[device].memcpy_to_device(device_data, 0, device_data.size());
+            std::size_t device_data_size = (last_feature - first_feature) * (dept_ + boundary_size_);
+            data_d_[device] = device_ptr_type{ device_data_size, devices_[device] };
+            data_d_[device].memcpy_to_device(transformed_data.data() + first_feature * (dept_ + boundary_size_), 0, device_data_size);
         }
     }
     /**
