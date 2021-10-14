@@ -168,16 +168,6 @@ class gpu_csvm : public csvm<T> {
         for (size_type device = 0; device < devices_.size(); ++device) {
             data_last_d_[device] = device_ptr_type{ num_features_ + boundary_size_, devices_[device] };
         }
-        // #pragma omp parallel for
-        // for (size_type device = 0; device < devices_.size(); ++device) {
-        //     data_last_d_[device].memset(0);
-        //     data_last_d_[device].memcpy_to_device(data_ptr_->back(), 0, num_features_);
-        // }
-
-        // initialize data on devices
-        // for (size_type device = 0; device < devices_.size(); ++device) {
-        //     data_d_[device] = device_ptr_type{ num_features_ * (dept_ + boundary_size_), devices_[device] };
-        // }
 
         // transform 2D to 1D data
         const std::vector<real_type> transformed_data = base_type::transform_data(*data_ptr_, boundary_size_, dept_);

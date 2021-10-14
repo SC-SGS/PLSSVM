@@ -32,7 +32,7 @@ class device_kernel_q_linear {
      * @param[in] data_d the one-dimensional data matrix
      * @param[in] data_last the last row in the data matrix
      * @param[in] num_rows the number of rows in the data matrix
-     * @param[in] num_äcols TODO:
+     * @param[in] num_cols TODO:
      */
     device_kernel_q_linear(real_type *q, const real_type *data_d, const real_type *data_last, int num_rows, int num_cols) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols } {}
