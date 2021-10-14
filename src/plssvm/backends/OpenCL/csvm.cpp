@@ -176,10 +176,10 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d) {
+void csvm<T>::run_w_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
-    detail::run_kernel(devices_[0], kernel_w_kernel_[0], grid, block, w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_);
+    detail::run_kernel(devices_[device], kernel_w_kernel_[device], grid, block, w_d_.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features);
 }
 
 template <typename T>

@@ -24,8 +24,8 @@ namespace plssvm::cuda {
  * @param[in] QA_cost the bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] num_rows the number of columns in the data matrix
- * @param[in] add denotes whether the values are added or subtracted from the result vector
  * @param[in] num_cols  TODO:
+ * @param[in] add denotes whether the values are added or subtracted from the result vector
  * @param[in] id TODO:
  */
 template <typename real_type>

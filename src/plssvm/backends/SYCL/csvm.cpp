@@ -171,9 +171,9 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d) {
+void csvm<T>::run_w_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
-    devices_[0].parallel_for(execution_range, device_kernel_w_linear{ w_d_.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, num_features_ });
+    devices_[device].parallel_for(execution_range, device_kernel_w_linear{ w_d_.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features });
 }
 
 template <typename T>

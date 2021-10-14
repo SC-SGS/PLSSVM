@@ -103,9 +103,7 @@ class gpu_csvm : public csvm<T> {
         }
 
         // check if data already resides on the first device
-        if (devices_.size() > 1 || data_d_[0].empty()) {  // TODO: implement update_w for multiple devices and remove device resize
-            if (devices_.size() > 1)
-                devices_.resize(1);
+        if (data_d_[0].empty()) {
             setup_data_on_device();
         }
 
@@ -348,23 +346,29 @@ class gpu_csvm : public csvm<T> {
      * @copydoc plssvm::csvm::update_w
      */
     void update_w() final {
-        // create the w vector on the device
-        w_d_ = device_ptr_type{ num_features_ + THREAD_BLOCK_SIZE, devices_[0] };
-        w_d_.memset(0);
-
-        // create the weight vector on the device and copy data
-        device_ptr_type alpha_d{ num_data_points_ + THREAD_BLOCK_SIZE, devices_[0] };
-        alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
-
-        const detail::execution_range range({ static_cast<size_type>(std::ceil(static_cast<real_type>(num_features_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
-                                            { std::min<size_type>(THREAD_BLOCK_SIZE, num_features_) });
-
-        // calculate the w vector on the device
-        run_w_kernel(range, alpha_d);
-
-        // copy back to host memory
         w_.resize(num_features_);
-        w_d_.memcpy_to_host(w_, 0, num_features_);
+        #pragma omp parallel for
+        for (size_type device = 0; device < devices_.size(); ++device) {
+            // feature splitting on multiple devices
+            const int first_feature = static_cast<int>(device * static_cast<size_type>(num_features_) / devices_.size());
+            const int last_feature = static_cast<int>((device + 1) * static_cast<size_type>(num_features_) / devices_.size());
+
+            // create the w vector on the device
+            w_d_ = device_ptr_type{ static_cast<size_type>(last_feature - first_feature), devices_[device] };
+            // create the weight vector on the device and copy data
+            device_ptr_type alpha_d{ num_data_points_ + THREAD_BLOCK_SIZE, devices_[device] };
+            alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
+
+            const detail::execution_range range({ static_cast<size_type>(std::ceil(static_cast<real_type>(last_feature - first_feature) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
+                                                { std::min<size_type>(THREAD_BLOCK_SIZE, last_feature - first_feature) });
+
+            // calculate the w vector on the device
+            run_w_kernel(device, range, alpha_d, last_feature - first_feature);
+            device_synchronize(devices_[device]);
+
+            // copy back to host memory
+            w_d_.memcpy_to_host(w_.data() + first_feature, 0, last_feature - first_feature);
+        }
     }
 
   protected:
@@ -453,7 +457,7 @@ class gpu_csvm : public csvm<T> {
      * @param[in] range the execution range used to launch the kernel
      * @param[out] alpha_d the previously calculated weight for each data point
      */
-    virtual void run_w_kernel(const detail::execution_range<size_type> &range, const device_ptr_type &alpha_d) = 0;
+    virtual void run_w_kernel(const size_type device, const detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) = 0;
     /**
      * @brief Run the GPU kernel (only on the first GPU) to predict the new data points @p point_d.
      * @param[in] range the execution range used to launch the kernel

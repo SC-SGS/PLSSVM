@@ -53,9 +53,9 @@ class device_kernel_linear {
      * @param[in] QA_cost he bottom right matrix entry multiplied by cost
      * @param[in] cost 1 / the cost parameter in the C-SVM
      * @param[in] num_rows the number of columns in the data matrix
+     * @param[in] num_cols TODO:
      * @param[in] add denotes whether the values are added or subtracted from the result vector
-     * @param[in] first_feature the first feature used in the calculations (depending on the current device)
-     * @param[in] last_feature the last feature used in the calculations (depending on the current device)
+     * @param[in] id TODO:
      */
     device_kernel_linear(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, real_type QA_cost, real_type cost, const int num_rows, const int num_cols, real_type add, const int id) :
         data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, device_{ id } {}

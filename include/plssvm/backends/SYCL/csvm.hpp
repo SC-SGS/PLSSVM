@@ -86,7 +86,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void run_w_kernel(const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d) final;
+    void run_w_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d, const size_type num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
