@@ -100,8 +100,8 @@ If the architectural information for the requested GPU could not be retrieved, o
 The `[optional_options]` can be one or multiple of:
 
 - `PLSSVM_ENABLE_OPENMP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
- - `ON`: check for the OpenMP backend and fail if not available
- - `AUTO`: check for the OpenMP backend but **do not** fail if not available
+  - `ON`: check for the OpenMP backend and fail if not available
+  - `AUTO`: check for the OpenMP backend but **do not** fail if not available
   - `OFF`: do not check for the OpenMP backend
 - `PLSSVM_ENABLE_CUDA_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for the CUDA backend and fail if not available
