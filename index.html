@@ -67,7 +67,8 @@ $(function() {
 <div class="title">Least-Squares Support-Vector Machine &ensp; <a href="https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af" alt="Codacy Badge" class="inline"/></a> &ensp; <a href="https://vancraar.github.io/PLSSVM/"><object type="image/svg+xml" data="https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg" style="pointer-events: none;">Generate documentation</object></a> &ensp; <a href="https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/"><img src="https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&amp;subject=Linux+CPU/GPU" alt="Build Status Linux CPU + GPU" class="inline"/></a> &ensp; <a href="https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml"><object type="image/svg+xml" data="https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg" style="pointer-events: none;">Windows CPU</object></a> </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Implementation of a parallel <a href="https://en.wikipedia.org/wiki/Least-squares_support-vector_machine">least-squares support-vector machine</a> using multiple different backends. The currently available backends are:</p><ul>
+<div class="textblock"><p>Implementation of a parallel <a href="https://en.wikipedia.org/wiki/Least-squares_support-vector_machine">least-squares support-vector machine</a> using multiple different backends. The currently available backends are:</p>
+<ul>
 <li><a href="https://www.openmp.org/">OpenMP</a></li>
 <li><a href="https://developer.nvidia.com/cuda-zone">CUDA</a></li>
 <li><a href="https://www.khronos.org/opencl/">OpenCL</a></li>
@@ -77,27 +78,33 @@ $(function() {
 Getting Started</h1>
 <h2><a class="anchor" id="autotoc_md2"></a>
 Dependencies</h2>
-<p>General dependencies:</p><ul>
+<p>General dependencies:</p>
+<ul>
 <li>a C++17 capable compiler (e.g. <a href="https://gcc.gnu.org/"><code>gcc</code></a> or <a href="https://clang.llvm.org/"><code>clang</code></a>)</li>
 <li><a href="https://cmake.org/">CMake</a> 3.18 or newer</li>
 <li><a href="https://github.com/jarro2783/cxxopts">cxxopts</a>, <a href="https://github.com/fastfloat/fast_float">fast_float</a> and <a href="https://github.com/fmtlib/fmt">{fmt}</a> (all three are automatically build during the CMake configuration if they couldn't be found using the respective <code>find_package</code> call)</li>
 <li><a href="https://github.com/google/googletest">GoogleTest</a> if testing is enabled (automatically build during the CMake configuration if <code>find_package(GTest)</code> wasn't successful)</li>
 <li><a href="https://www.doxygen.nl/index.html">doxygen</a> if documentation generation is enabled</li>
 </ul>
-<p>Additional dependencies for the OpenMP backend:</p><ul>
+<p>Additional dependencies for the OpenMP backend:</p>
+<ul>
 <li>compiler with OpenMP support</li>
 </ul>
-<p>Additional dependencies for the CUDA backend:</p><ul>
+<p>Additional dependencies for the CUDA backend:</p>
+<ul>
 <li>CUDA SDK</li>
 <li>either NVIDIA <a href="https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html"><code>nvcc</code></a> or <a href="https://llvm.org/docs/CompileCudaWithLLVM.html"><code>clang</code> with CUDA support enabled</a></li>
 </ul>
-<p>Additional dependencies for the OpenCL backend:</p><ul>
+<p>Additional dependencies for the OpenCL backend:</p>
+<ul>
 <li>OpenCL runtime and header files</li>
 </ul>
-<p>Additional dependencies for the SYCL backend:</p><ul>
+<p>Additional dependencies for the SYCL backend:</p>
+<ul>
 <li>the code must be compiled with a SYCL capable compiler; currently tested with <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a></li>
 </ul>
-<p>Additional dependencies if <code>PLSSVM_ENABLE_TESTING</code> and <code>PLSSVM_GENERATE_TEST_FILE</code> are both set to <code>ON</code>:</p><ul>
+<p>Additional dependencies if <code>PLSSVM_ENABLE_TESTING</code> and <code>PLSSVM_GENERATE_TEST_FILE</code> are both set to <code>ON</code>:</p>
+<ul>
 <li><a href="https://www.python.org/">Python3</a> with the <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a> and <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a> modules</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md3"></a>
@@ -110,7 +117,8 @@ Building</h2>
 <div class="line">&gt; cmake --build .</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md4"></a>
 Target Platform Selection</h3>
-<p>The <b>required</b> CMake option <code>PLSSVM_TARGET_PLATFORMS</code> is used to determine for which targets the backends should be compiled. Valid targets are:</p><ul>
+<p>The <b>required</b> CMake option <code>PLSSVM_TARGET_PLATFORMS</code> is used to determine for which targets the backends should be compiled. Valid targets are:</p>
+<ul>
 <li><code>cpu</code>: compile for the CPU; <b>no</b> architectural specifications is allowed</li>
 <li><code>nvidia</code>: compile for NVIDIA GPUs; <b>at least one</b> architectural specification is necessary, e.g. <code>nvidia:sm_86,sm_70</code></li>
 <li><code>amd</code>: compile for AMD GPUs; <b>at least one</b> architectural specification is necessary, e.g. <code>amd:gfx906</code></li>
@@ -130,7 +138,8 @@ Target Platform Selection</h3>
 <div class="line">&gt; python3 utility/gpu_name_to_arch.py --name &quot;Radeon VII&quot;</div>
 <div class="line">gfx906</div>
 </div><!-- fragment --><p>If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU (requires the Python3 dependencies <a href="https://pypi.org/project/GPUtil/"><code>GPUtil</code></a> and <a href="https://pypi.org/project/pyamdgpuinfo/"><code>pyamdgpuinfo</code></a>).</p>
-<p>If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:</p><ul>
+<p>If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:</p>
+<ul>
 <li>for NVIDIA GPUs: <a href="https://developer.nvidia.com/cuda-gpus">Your GPU Compute Capability</a></li>
 <li>for AMD GPUs: <a href="https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst">ROCm Documentation</a></li>
 </ul>
@@ -172,7 +181,8 @@ Optional CMake Options</h3>
 <li><code>PLSSVM_ENABLE_DOCUMENTATION=ON|OFF</code> (default: <code>OFF</code>): enable the <code>doc</code> target using doxygen</li>
 <li><code>PLSSVM_ENABLE_TESTING=ON|OFF</code> (default: ON): enable testing using GoogleTest and ctest</li>
 </ul>
-<p>If <code>PLSSVM_ENABLE_TESTING</code> is set to <code>ON</code>, the following options can also be set:</p><ul>
+<p>If <code>PLSSVM_ENABLE_TESTING</code> is set to <code>ON</code>, the following options can also be set:</p>
+<ul>
 <li><code>PLSSVM_GENERATE_TEST_FILE=ON|OFF</code> (default: <code>ON</code>): automatically generate test files<ul>
 <li><code>PLSSVM_TEST_FILE_NUM_DATA_POINTS</code> (default: <code>5000</code>): the number of data points in the test file</li>
 <li><code>PLSSVM_TEST_FILE_NUM_FEATURES</code> (default: <code>2000</code>): the number of features per data point</li>
@@ -186,14 +196,16 @@ Running the tests</h2>
 <div class="fragment"><div class="line">&gt; ctest</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md7"></a>
 Generating test coverage results</h2>
-<p>To enable the generation of test coverage reports using <code>locv</code> the library must be compiled using the custom <code>Coverage</code> <code>CMAKE_BUILD_TYPE</code>. Additionally, it's advisable to use smaller test files to shorten the <code>ctest</code> step. </p><div class="fragment"><div class="line">&gt; cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS=&quot;...&quot; \</div>
+<p>To enable the generation of test coverage reports using <code>locv</code> the library must be compiled using the custom <code>Coverage</code> <code>CMAKE_BUILD_TYPE</code>. Additionally, it's advisable to use smaller test files to shorten the <code>ctest</code> step.</p>
+<div class="fragment"><div class="line">&gt; cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS=&quot;...&quot; \</div>
 <div class="line">        -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \</div>
 <div class="line">        -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..</div>
 <div class="line">&gt; cmake --build . -- coverage</div>
 </div><!-- fragment --><p>The resulting <code>html</code> coverage report is located in the <code>coverage</code> folder in the build directory.</p>
 <h1><a class="anchor" id="autotoc_md8"></a>
 Installing</h1>
-<p>The library supports the <code>install</code> target: </p><div class="fragment"><div class="line">&gt; cmake --build . -- install</div>
+<p>The library supports the <code>install</code> target:</p>
+<div class="fragment"><div class="line">&gt; cmake --build . -- install</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md9"></a>
 Usage</h1>
 <h2><a class="anchor" id="autotoc_md10"></a>
@@ -242,7 +254,8 @@ Training</h2>
 <div class="fragment"><div class="line">&gt; ./svm-train --backend cuda --input /path/to/data_file</div>
 </div><!-- fragment --><p>Another example targeting NVIDIA GPUs using the SYCL backend looks like:</p>
 <div class="fragment"><div class="line">&gt; ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file</div>
-</div><!-- fragment --><p>The <code>--target_platform=automatic</code> flags works for the different backends as follows:</p><ul>
+</div><!-- fragment --><p>The <code>--target_platform=automatic</code> flags works for the different backends as follows:</p>
+<ul>
 <li><code>OpenMP</code>: always selects a CPU</li>
 <li><code>CUDA</code>: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)</li>
 <li><code>OpenCL</code>: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU</li>
@@ -269,7 +282,8 @@ Predicting</h2>
 </div><!-- fragment --><p>The <code>--target_platform=automatic</code> flags works like in the training (<code>./svm-train</code>) case.</p>
 <h1><a class="anchor" id="autotoc_md13"></a>
 Example code for usage as library</h1>
-<p>A simple C++ program (<code>main.cpp</code>) using this library could look like: </p><div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="core_8hpp.html">plssvm/core.hpp</a>&quot;</span></div>
+<p>A simple C++ program (<code>main.cpp</code>) using this library could look like:</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="core_8hpp.html">plssvm/core.hpp</a>&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#include &lt;exception&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
@@ -306,7 +320,8 @@ Example code for usage as library</h1>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-</div><!-- fragment --><p>With a corresponding minimal CMake file: </p><div class="fragment"><div class="line">cmake_minimum_required(VERSION 3.16)</div>
+</div><!-- fragment --><p>With a corresponding minimal CMake file:</p>
+<div class="fragment"><div class="line">cmake_minimum_required(VERSION 3.16)</div>
 <div class="line"> </div>
 <div class="line">project(LibraryUsageExample</div>
 <div class="line">        LANGUAGES CXX)</div>
@@ -329,7 +344,7 @@ Example code for usage as library</h1>
 <div class="ttc" id="aclassplssvm_1_1parameter_html_a002f0530bdb2a5e62cf4bf2111db5494"><div class="ttname"><a href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">plssvm::parameter::backend</a></div><div class="ttdeci">backend_type backend</div><div class="ttdoc">The used backend: OpenMP, OpenCL, CUDA, or SYCL.</div><div class="ttdef"><b>Definition:</b> parameter.hpp:189</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 18 2021 12:00:16 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 18 2021 13:11:33 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>
