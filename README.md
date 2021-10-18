@@ -107,6 +107,7 @@ The `[optional_options]` can be one or multiple of:
   - `ON`: check for the CUDA backend and fail if not available
   - `AUTO`: check for the CUDA backend but **do not** fail if not available
   - `OFF`: do not check for the CUDA backend
+
 - `PLSSVM_ENABLE_OPENCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for the OpenCL backend and fail if not available
   - `AUTO`: check for the OpenCL backend but **do not** fail if not available
