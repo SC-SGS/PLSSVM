@@ -13,7 +13,7 @@
 
 #include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
-#include <utility> // std::exchange
+#include <utility>  // std::exchange
 
 namespace plssvm::opencl::detail {
 
@@ -29,8 +29,31 @@ class kernel {
     explicit kernel(cl_kernel p_compute_kernel) noexcept :
         compute_kernel{ p_compute_kernel } {}
 
-    kernel(const kernel&) = delete;
-    kernel(kernel&& other) : compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}
+    /**
+     * @brief Delete copy-constructor to make `kernel` a move only type.
+     */
+    kernel(const kernel &) = delete;
+    /**
+     * @brief Move-constructor as `kernel` is a move-only type-
+     * @param[in,out] other the kernel to move the resources from
+     */
+    kernel(kernel &&other) noexcept :
+        compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}
+    /**
+     * @brief Delete copy-assignment-operator to make `kernel` a move only type.
+     */
+    kernel &operator=(const kernel &) = delete;
+    /**
+     * @brief Move-assignment-operator as `kernel` is a move-only type-
+     * @param[in,out] other the kernel to move the resources from
+     * @return `*this`
+     */
+    kernel &operator=(kernel &&other) {
+        if (this != std::addressof(other)) {
+            compute_kernel = std::exchange(other.compute_kernel, nullptr);
+        }
+        return *this;
+    }
 
     /**
      * @brief Release the cl_kernel resources on destruction.

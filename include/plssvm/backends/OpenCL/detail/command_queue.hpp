@@ -13,7 +13,8 @@
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
 
-#include <utility> // std::exchange
+#include <memory>   // std::addressof
+#include <utility>  // std::exchange
 
 namespace plssvm::opencl::detail {
 
@@ -36,8 +37,33 @@ class command_queue {
     command_queue(cl_context p_context, cl_command_queue p_queue, cl_device_id p_device) :
         context{ p_context }, queue{ p_queue }, device{ p_device } {}
 
-    command_queue(const command_queue&) = delete;
-    command_queue(command_queue&& other) : context{ std::exchange(other.context, nullptr) }, queue{ std::exchange(other.queue, nullptr) }, device{ std::exchange(other.device, nullptr) } { }
+    /**
+     * @brief Delete copy-constructor to make `command_queue` a move only type.
+     */
+    command_queue(const command_queue &) = delete;
+    /**
+     * @brief Move-constructor as `command_queue` is a move-only type.
+     * @param[in,out] other the command_queue to move the resources from
+     */
+    command_queue(command_queue &&other) noexcept :
+        context{ std::exchange(other.context, nullptr) }, queue{ std::exchange(other.queue, nullptr) }, device{ std::exchange(other.device, nullptr) } {}
+    /**
+     * @brief Delete copy-assignment-operator to make `command_queue` a move only type.
+     */
+    command_queue &operator=(const command_queue &) = delete;
+    /**
+     * @brief Move-assignment-operator as `command_queue` is a move-only type-
+     * @param[in,out] other the command_queue to move the resources from
+     * @return `*this`
+     */
+    command_queue &operator=(command_queue &&other) {
+        if (this != std::addressof(other)) {
+            context = std::exchange(other.context, nullptr);
+            queue = std::exchange(other.queue, nullptr);
+            device = std::exchange(other.device, nullptr);
+        }
+        return *this;
+    }
 
     /**
      * @brief Release the cl_command_queue resources on destruction.
