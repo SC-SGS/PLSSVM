@@ -35,6 +35,10 @@
 #include <utility>  // std::forward, std::pair
 #include <vector>   // std::vector
 
+/**
+ * @def PLSSVM_OPENCL_ERROR_CHECK
+ * @brief Macro used for error checking OpenCL runtime functions.
+ */
 #define PLSSVM_OPENCL_ERROR_CHECK(err, ...) plssvm::opencl::detail::device_assert((err), ##__VA_ARGS__)
 
 namespace plssvm::opencl::detail {
@@ -43,6 +47,7 @@ namespace plssvm::opencl::detail {
  * @brief Check the OpenCL error @p code. If @p code signals an error, throw a `plssvm::opencl::backend_exception`.
  * @details The exception contains the error name and additional debug information.
  * @param[in] code the OpenCL error code to check
+ * @param[in] msg optional message printed if the error code check failed
  * @throws `plssvm::opencl::backend_exception` if the error code signals a failure
  */
 void device_assert(error_code code, std::string_view msg = "");

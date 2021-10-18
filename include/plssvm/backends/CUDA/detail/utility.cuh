@@ -11,6 +11,10 @@
 
 #pragma once
 
+/**
+ * @def PLSSVM_CUDA_ERROR_CHECK
+ * @brief Macro used for error checking CUDA runtime functions.
+ */
 #define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::cuda::detail::gpu_assert((err))
 
 namespace plssvm::cuda::detail {
