@@ -98,7 +98,6 @@ class csvm {
      * 2. Learn the model by solving a minimization problem using the Conjugated Gradients algorithm
      */
     void learn();
-    // TODO: absolute vs relative residual
 
     //*************************************************************************************************************************************//
     //                                                               predict                                                               //

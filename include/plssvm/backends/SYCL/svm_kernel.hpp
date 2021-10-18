@@ -305,7 +305,7 @@ class device_kernel_radial {
         real_type data_j[INTERNAL_BLOCK_SIZE];
 
         if (i >= j) {
-            i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;  // TODO: CUDA like ji?
+            i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
             j += nd_idx.get_local_id(1) * INTERNAL_BLOCK_SIZE;
 
             // cache data
