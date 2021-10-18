@@ -147,9 +147,12 @@ void csvm<T>::update_w() {
     // calculate the w vector
     #pragma omp parallel for
     for (std::size_t feature_index = 0; feature_index < num_features_; ++feature_index) {
+        real_type temp{ 0.0 };
+        #pragma omp simd reduction(+: temp)
         for (std::size_t data_index = 0; data_index < num_data_points_; ++data_index) {
-            w_[feature_index] += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
+            temp += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
         }
+        w_[feature_index] = temp;
     }
 }
 
@@ -162,7 +165,7 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
 
     // return empty vector if there are no points to predict
     if (points.empty()) {
-        return {};
+        return std::vector<real_type>{};
     }
 
     // sanity checks
@@ -190,9 +193,12 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
             // use faster methode in case of the linear kernel function
             out[point_index] += transposed{ w_ } * points[point_index];
         } else {
+            real_type temp{ 0.0 };
+            #pragma omp simd reduction(+: temp)
             for (std::size_t data_index = 0; data_index < num_data_points_; ++data_index) {
-                out[point_index] += (*alpha_ptr_)[data_index] * base_type::kernel_function((*data_ptr_)[data_index], points[point_index]);
+                temp += (*alpha_ptr_)[data_index] * base_type::kernel_function((*data_ptr_)[data_index], points[point_index]);
             }
+            out[point_index] += temp;
         }
     }
 

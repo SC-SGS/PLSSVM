@@ -96,10 +96,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
         out_d.memcpy_to_host(out, 0, points.size());
 
         // add bias_ to all predictions
-        #pragma omp parallel for
-        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < points.size(); ++i) {
-            out[i] += bias_;
-        }
+        out += bias_;
     }
 
     return out;
@@ -143,12 +140,12 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::generate_q() -> std::vector<real_type> 
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
     std::vector<device_ptr_type> q_d(devices_.size());
+
+    #pragma omp parallel for
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         q_d[device] = device_ptr_type{ dept_ + boundary_size_, devices_[device] };
         q_d[device].memset(0);
-    }
 
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         // feature splitting on multiple devices
         const detail::execution_range range({ static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
                                             { std::min<std::size_t>(THREAD_BLOCK_SIZE, dept_) });
@@ -174,34 +171,27 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
     std::vector<real_type> r(dept_, 0.0);
     std::vector<device_ptr_type> r_d(devices_.size());
 
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        x_d[device] = device_ptr_type{ dept_ + boundary_size_, devices_[device] };
-        r_d[device] = device_ptr_type{ dept_ + boundary_size_, devices_[device] };
-    }
     #pragma omp parallel for
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        x_d[device] = device_ptr_type{ dept_ + boundary_size_, devices_[device] };
         x_d[device].memset(0);
         x_d[device].memcpy_to_device(x, 0, dept_);
+
+        r_d[device] = device_ptr_type{ dept_ + boundary_size_, devices_[device] };
         r_d[device].memset(0);
     }
     r_d[0].memcpy_to_device(b, 0, dept_);
 
     std::vector<device_ptr_type> q_d(devices_.size());
+    #pragma omp parallel for
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         q_d[device] = device_ptr_type{ dept_ + boundary_size_, devices_[device] };
-    }
-    #pragma omp parallel for
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept_);
-    }
 
-    // r = Ax (r = b - Ax)
-    #pragma omp parallel for
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        // r = Ax (r = b - Ax)
         run_device_kernel(device, q_d[device], r_d[device], x_d[device], -1);
     }
-
     device_reduction(r_d, r);
 
     // delta = r.T * r
@@ -226,12 +216,9 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept_);
-        }
-        #pragma omp parallel for
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+
             run_device_kernel(device, q_d[device], Ad_d[device], r_d[device], 1);
         }
-
         // update Ad (q)
         device_reduction(Ad_d, Ad);
 
@@ -252,11 +239,8 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
             #pragma omp parallel for
             for (typename std::vector<queue_type>::size_type device = 1; device < devices_.size(); ++device) {
                 r_d[device].memset(0);
-            }
 
-            // r -= A * x
-            #pragma omp parallel for
-            for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+                // r -= A * x
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], -1);
             }
 
@@ -334,6 +318,8 @@ void gpu_csvm<T, device_ptr_t, queue_t>::run_device_kernel(const std::size_t dev
 
 template <typename T, typename device_ptr_t, typename queue_t>
 void gpu_csvm<T, device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_type> &buffer_d, std::vector<real_type> &buffer) {
+    using namespace plssvm::operators;
+
     device_synchronize(devices_[0]);
     buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
 
@@ -343,10 +329,7 @@ void gpu_csvm<T, device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr
             device_synchronize(devices_[device]);
             buffer_d[device].memcpy_to_host(ret, 0, ret.size());
 
-            #pragma omp parallel for
-            for (typename std::vector<real_type>::size_type j = 0; j < ret.size(); ++j) {
-                buffer[j] += ret[j];
-            }
+            buffer += ret;
         }
 
         #pragma omp parallel for
