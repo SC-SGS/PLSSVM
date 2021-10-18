@@ -1,4 +1,3 @@
-
 # Least-Squares Support-Vector Machine &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://vancraar.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
 
 Implementation of a parallel [least-squares support-vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
