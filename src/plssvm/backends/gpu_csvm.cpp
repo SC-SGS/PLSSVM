@@ -112,24 +112,26 @@ void gpu_csvm<T, device_ptr_t, queue_t>::setup_data_on_device() {
     boundary_size_ = static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
     num_rows_ = dept_ + boundary_size_;
     num_cols_ = num_features_;
+    feature_ranges_.reserve(devices_.size() + 1);
+    for (typename std::vector<queue_type>::size_type device = 0; device <= devices_.size(); ++device) {
+        feature_ranges_.push_back(device * num_cols_ / devices_.size());
+    }
 
     // transform 2D to 1D data
     const std::vector<real_type> transformed_data = base_type::transform_data(*data_ptr_, boundary_size_, dept_);
 
     #pragma omp parallel for
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        const std::size_t first_feature = device * num_cols_ / devices_.size();
-        const std::size_t last_feature = (device + 1) * num_cols_ / devices_.size();
-        const std::size_t num_features = last_feature - first_feature;
+        const std::size_t num_features = feature_ranges_[device + 1] - feature_ranges_[device];
 
         // initialize data_last on device
         data_last_d_[device] = device_ptr_type{ num_features + boundary_size_, devices_[device] };
         data_last_d_[device].memset(0);
-        data_last_d_[device].memcpy_to_device(data_ptr_->back().data() + first_feature, 0, num_features);
+        data_last_d_[device].memcpy_to_device(data_ptr_->back().data() + feature_ranges_[device], 0, num_features);
 
         const std::size_t device_data_size = num_features * (dept_ + boundary_size_);
         data_d_[device] = device_ptr_type{ device_data_size, devices_[device] };
-        data_d_[device].memcpy_to_device(transformed_data.data() + first_feature * (dept_ + boundary_size_), 0, device_data_size);
+        data_d_[device].memcpy_to_device(transformed_data.data() + feature_ranges_[device] * (dept_ + boundary_size_), 0, device_data_size);
     }
 }
 
@@ -148,12 +150,10 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::generate_q() -> std::vector<real_type> 
 
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         // feature splitting on multiple devices
-        const std::size_t first_feature = device * num_cols_ / devices_.size();
-        const std::size_t last_feature = (device + 1) * num_cols_ / devices_.size();
         const detail::execution_range range({ static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
                                             { std::min<std::size_t>(THREAD_BLOCK_SIZE, dept_) });
 
-        run_q_kernel(device, range, q_d[device], last_feature - first_feature);  // TODO: range as member?
+        run_q_kernel(device, range, q_d[device], feature_ranges_[device + 1] - feature_ranges_[device]);
     }
 
     std::vector<real_type> q(dept_);
@@ -298,9 +298,7 @@ void gpu_csvm<T, device_ptr_t, queue_t>::update_w() {
     #pragma omp parallel for
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         // feature splitting on multiple devices
-        const std::size_t first_feature = device * num_features_ / devices_.size();
-        const std::size_t last_feature = (device + 1) * num_features_ / devices_.size();
-        const std::size_t num_features = last_feature - first_feature;
+        const std::size_t num_features = feature_ranges_[device + 1] - feature_ranges_[device];
 
         // create the w vector on the device
         device_ptr_type w_d = device_ptr_type{ num_features, devices_[device] };
@@ -316,7 +314,7 @@ void gpu_csvm<T, device_ptr_t, queue_t>::update_w() {
         device_synchronize(devices_[device]);
 
         // copy back to host memory
-        w_d.memcpy_to_host(w_.data() + first_feature, 0, num_features);
+        w_d.memcpy_to_host(w_.data() + feature_ranges_[device], 0, num_features);
     }
 }
 
@@ -327,15 +325,11 @@ void gpu_csvm<T, device_ptr_t, queue_t>::run_device_kernel(const std::size_t dev
     PLSSVM_ASSERT(num_rows_ != 0, "num_rows_ not initialized! Maybe a call to setup_data_on_device() is missing?");
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
-    // feature splitting on multiple devices
-    const std::size_t first_feature = device * num_cols_ / devices_.size();
-    const std::size_t last_feature = (device + 1) * num_cols_ / devices_.size();
-
     const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(boundary_size_)));
     const auto block = std::min<std::size_t>(THREAD_BLOCK_SIZE, dept_);
     const detail::execution_range range({ grid, grid }, { block, block });
 
-    run_svm_kernel(device, range, q_d, r_d, x_d, add, last_feature - first_feature);
+    run_svm_kernel(device, range, q_d, r_d, x_d, add, feature_ranges_[device + 1] - feature_ranges_[device]);
 }
 
 template <typename T, typename device_ptr_t, typename queue_t>

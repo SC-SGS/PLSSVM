@@ -169,6 +169,8 @@ class gpu_csvm : public csvm<T> {
     std::size_t num_rows_{};
     /// The number of columns in the data matrix (= the number of features per data point).
     std::size_t num_cols_{};
+    /// The feature range per GPU. GPU i uses the features: `[feature_ranges_[i], feature_ranges_[i + 1])`.
+    std::vector<std::size_t> feature_ranges_;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
