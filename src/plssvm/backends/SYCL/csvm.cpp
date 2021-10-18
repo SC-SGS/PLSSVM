@@ -130,30 +130,30 @@ template <std::size_t I, typename size_type>
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const kernel_index_type feature_range) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const std::size_t num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
     switch (kernel_) {
         case kernel_type::linear:
-            devices_[device].parallel_for(execution_range, device_kernel_q_linear(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range));
+            devices_[device].parallel_for(execution_range, device_kernel_q_linear(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_features));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            devices_[device].parallel_for(execution_range, device_kernel_q_poly(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range, degree_, gamma_, coef0_));
+            devices_[device].parallel_for(execution_range, device_kernel_q_poly(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_));
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            devices_[device].parallel_for(execution_range, device_kernel_q_radial(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range, gamma_));
+            devices_[device].parallel_for(execution_range, device_kernel_q_radial(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_));
             break;
     }
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const kernel_index_type first_feature, const kernel_index_type last_feature) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
     switch (kernel_) {
         case kernel_type::linear:
             devices_[device].submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, last_feature - first_feature, add, device));
+                cgh.parallel_for(execution_range, device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_features, add, device));
             });
             break;
         case kernel_type::polynomial:
@@ -172,7 +172,7 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const kernel_index_type num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
     devices_[device].parallel_for(execution_range, device_kernel_w_linear(w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features));
 }

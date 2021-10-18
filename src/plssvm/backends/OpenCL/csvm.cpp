@@ -139,31 +139,31 @@ std::pair<std::vector<size_type>, std::vector<size_type>> execution_range_to_nat
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const kernel_index_type feature_range) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), feature_range);
+            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_features));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), feature_range, degree_, gamma_, coef0_);
+            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), feature_range, gamma_);
+            detail::run_kernel(devices_[device], q_kernel_[device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), gamma_);
             break;
     }
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const kernel_index_type first_feature, const kernel_index_type last_feature) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), last_feature - first_feature, add, static_cast<kernel_index_type>(device));
+            detail::run_kernel(devices_[device], svm_kernel_[device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
@@ -177,10 +177,10 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const kernel_index_type num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
-    detail::run_kernel(devices_[device], kernel_w_kernel_[device], grid, block, w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), num_features);
+    detail::run_kernel(devices_[device], kernel_w_kernel_[device], grid, block, w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), static_cast<kernel_index_type>(num_features));
 }
 
 template <typename T>

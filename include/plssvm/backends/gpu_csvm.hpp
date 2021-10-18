@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include "plssvm/constants.hpp"               // plssvm::kernel_index_type
 #include "plssvm/csvm.hpp"                    // plssvm::csvm
 #include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
 #include "plssvm/parameter.hpp"               // plssvm::parameter
@@ -126,9 +125,9 @@ class gpu_csvm : public csvm<T> {
      * @param[in] device the device on which the kernel should be executed
      * @param[in] range the execution range used to launch the kernel
      * @param[out] q_d the `q` vector to fill
-     * @param[in] feature_range number of features used for the calculation on the @p device
+     * @param[in] num_features number of features used for the calculation on the @p device
      */
-    virtual void run_q_kernel(std::size_t device, const detail::execution_range<std::size_t> &range, device_ptr_type &q_d, kernel_index_type feature_range) = 0;
+    virtual void run_q_kernel(std::size_t device, const detail::execution_range<std::size_t> &range, device_ptr_type &q_d, std::size_t num_features) = 0;
     /**
      * @brief Run the main GPU kernel used in the CG algorithm.
      * @param[in] device the device on which the kernel should be executed
@@ -137,19 +136,18 @@ class gpu_csvm : public csvm<T> {
      * @param[in,out] r_d the result vector
      * @param[in] x_d the right-hand side of the equation
      * @param[in] add denotes whether the values are added or subtracted from the result vector
-     * @param[in] first_feature the first feature used in the calculations (depending on @p device)
-     * @param[in] last_feature the last feature used in the calculations (depending on @p device)
+     * @param[in] num_features number of features used for the calculation in the @p device
      */
-    virtual void run_svm_kernel(std::size_t device, const detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type add, kernel_index_type first_feature, kernel_index_type last_feature) = 0;  // TODO: remove first/last_feature
+    virtual void run_svm_kernel(std::size_t device, const detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type add, std::size_t num_features) = 0;
     /**
      * @brief Run the GPU kernel (only on the first GPU) the calculate the `w` vector used to speedup the prediction when using the linear kernel function.
      * @param[in] device the device on which the kernel should be executed
      * @param[in] range the execution range used to launch the
-     * @param[out] w_d TODO:
+     * @param[out] w_d the `w` vector to fill, used to speed-up the prediction when using the linear kernel
      * @param[in] alpha_d the previously calculated weight for each data point
      * @param[in] num_features number of features used for the calculation on the @p device
      */
-    virtual void run_w_kernel(std::size_t device, const detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, kernel_index_type num_features) = 0;
+    virtual void run_w_kernel(std::size_t device, const detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_features) = 0;
     /**
      * @brief Run the GPU kernel (only on the first GPU) to predict the new data points @p point_d.
      * @param[in] range the execution range used to launch the kernel

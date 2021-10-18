@@ -16,7 +16,6 @@
 #include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::device_kernel_q_linear, plssvm::cuda::device_kernel_q_poly, plssvm::cuda::device_kernel_q_radial
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::device_kernel_linear, plssvm::cuda::device_kernel_poly, plssvm::cuda::device_kernel_radial
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                        // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
@@ -104,13 +103,13 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const kernel_index_type feature_range) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
     switch (kernel_) {
         case kernel_type::linear:
-            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, feature_range);
+            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_features);
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
@@ -125,13 +124,13 @@ void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const kernel_index_type first_feature, const kernel_index_type last_feature) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
     switch (kernel_) {
         case kernel_type::linear:
-            cuda::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, last_feature - first_feature, add, device);
+            cuda::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_features, add, device);
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
@@ -146,7 +145,7 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const kernel_index_type num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
