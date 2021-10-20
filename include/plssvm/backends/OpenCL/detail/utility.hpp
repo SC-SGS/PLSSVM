@@ -95,23 +95,30 @@ void device_synchronize(const command_queue &queue);
  */
 template <typename real_type, typename kernel_index_type>
 [[nodiscard]] inline std::vector<kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name) {
-    // read kernel
     std::string kernel_src_string;
-    {
-        std::ifstream in{ file };
 
-        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({})", file));
+    // append kernel file to kernel string
+    const auto append_to_kernel_src_string = [&kernel_src_string](const std::string &file_name) {
+        std::ifstream in{ file_name };
+
+        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({})", file_name));
 
         in.ignore(std::numeric_limits<std::streamsize>::max());
         std::streamsize len = in.gcount();
         in.clear();
         in.seekg(0, std::ios::beg);
 
-        PLSSVM_ASSERT(len > 0, fmt::format("empty file ({})", file));
+        PLSSVM_ASSERT(len > 0, fmt::format("empty file ({})", file_name));
 
-        kernel_src_string.resize(len);
-        in.read(kernel_src_string.data(), len);
-    }
+        const std::string::size_type old_size = kernel_src_string.size();
+        kernel_src_string.resize(old_size + len);
+        in.read(kernel_src_string.data() + old_size, len);
+    };
+
+    // read atomic
+    append_to_kernel_src_string(PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "detail/atomics.cl");
+    // read kernel
+    append_to_kernel_src_string(file);
 
     // replace type
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
@@ -126,8 +133,7 @@ template <typename real_type, typename kernel_index_type>
     const char *kernel_src_ptr = kernel_src_string.c_str();
     // TODO: not all command queue must have the same context (but this would be highly unlikely)
     cl_program program = clCreateProgramWithSource(queues[0].context, 1, &kernel_src_ptr, nullptr, &err);
-    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating OpenCL program");
-    err = clBuildProgram(program, 0, nullptr, "-I " PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY " -cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
+    err = clBuildProgram(program, 0, nullptr, "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
     if (!err) {
         // determine the size of the log
         std::size_t log_size;
