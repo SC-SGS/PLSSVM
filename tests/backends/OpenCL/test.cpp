@@ -6,10 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "mock_opencl_csvm.hpp"
+#include "backends/OpenCL/mock_opencl_csvm.hpp"
 
-#include "../../utility.hpp"     // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
-#include "../generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
+#include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
+#include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
 #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
 #include "plssvm/kernel_types.hpp"          // plssvm::kernel_type

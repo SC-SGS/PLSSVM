@@ -43,7 +43,7 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
     // create parameter object
     plssvm::parameter<TypeParam> params;
     params.print_info = false;
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -92,7 +92,7 @@ TYPED_TEST(BaseCSVM, constructor) {
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -157,7 +157,7 @@ TYPED_TEST(BaseCSVM, write_model_exceptions) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -218,7 +218,7 @@ TYPED_TEST(BaseCSVM, learn) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -237,7 +237,7 @@ TYPED_TEST(BaseCSVM, learn_exceptions) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -264,7 +264,7 @@ TYPED_TEST(BaseCSVM, accuracy_empty_points) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -286,7 +286,7 @@ TYPED_TEST(BaseCSVM, accuracy_exceptions) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -325,7 +325,7 @@ TYPED_TEST(BaseCSVM, predict_label_empty_points) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -346,7 +346,7 @@ TYPED_TEST(BaseCSVM, predict_label_exceptions) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -377,7 +377,7 @@ TYPED_TEST(BaseCSVM, predict_exceptions) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };

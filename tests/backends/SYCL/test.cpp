@@ -8,10 +8,10 @@
  * @brief Tests for the functionality related to the SYCL backend.
  */
 
-#include "mock_sycl_csvm.hpp"
+#include "backends/SYCL/mock_sycl_csvm.hpp"
 
-#include "../../utility.hpp"     // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
-#include "../generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
+#include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
+#include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
 #include "plssvm/backends/SYCL/csvm.hpp"  // plssvm::sycl::csvm
 #include "plssvm/kernel_types.hpp"        // plssvm::kernel_type

@@ -8,11 +8,11 @@
  * @brief Tests for the functionality related to the OpenMP backend.
  */
 
-#include "mock_openmp_csvm.hpp"
+#include "backends/OpenMP/mock_openmp_csvm.hpp"
 
-#include "../../mock_csvm.hpp"   // mock_csvm
-#include "../../utility.hpp"     // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
-#include "../generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::predict_test, generic::accuracy_test
+#include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::predict_test, generic::accuracy_test
+#include "mock_csvm.hpp"               // mock_csvm
+#include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
 
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
@@ -50,7 +50,7 @@ TYPED_TEST(OpenMP_CSVM, constructor_invalid_target_platform) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // only automatic or cpu are allowed as target platform for the OpenMP backend
     params.target = plssvm::target_platform::automatic;
@@ -82,7 +82,7 @@ TYPED_TEST(OpenMP_CSVM, device_kernel) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_FILE);
+    params.parse_train_file(PLSSVM_TEST_FILE);
 
     // create base C-SVM
     mock_csvm csvm{ params };

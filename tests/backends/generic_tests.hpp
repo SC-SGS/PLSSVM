@@ -2,7 +2,7 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
- *  @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include "../mock_csvm.hpp"  // mock_csvm
-#include "../utility.hpp"    // util::gtest_assert_floating_point_near, util::gtest_assert_floating_point_eq, util::gtest_expect_correct_csvm_factory, util::create_temp_file
-#include "compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
+#include "backends/compare.hpp"  // compare::generate_q, compare::kernel_function, compare::device_kernel_function
+#include "mock_csvm.hpp"         // mock_csvm
+#include "utility.hpp"           // util::gtest_assert_floating_point_near, util::gtest_assert_floating_point_eq, util::gtest_expect_correct_csvm_factory, util::create_temp_file
 
 #include "plssvm/backend_types.hpp"             // plssvm::backend_type
 #include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
@@ -43,7 +43,7 @@ inline void csvm_factory_test() {
     params.print_info = false;
     params.backend = backend;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     util::gtest_expect_correct_csvm_factory<csvm_type>(params);
 }
@@ -55,7 +55,7 @@ inline void write_model_test() {
     params.print_info = false;
     params.kernel = kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM based on specified backend
     csvm_type csvm{ params };
@@ -98,7 +98,7 @@ inline void generate_q_test() {
     params.print_info = false;
     params.kernel = kernel;
 
-    params.parse_train_file(TEST_FILE);
+    params.parse_train_file(PLSSVM_TEST_FILE);
 
     // create base C-SVM
     mock_csvm csvm{ params };
@@ -131,7 +131,7 @@ inline void device_kernel_test() {
     params.print_info = false;
     params.kernel = kernel;
 
-    params.parse_train_file(TEST_FILE);
+    params.parse_train_file(PLSSVM_TEST_FILE);
 
     // create base C-SVM
     mock_csvm csvm{ params };
@@ -204,8 +204,8 @@ inline void predict_test() {
     plssvm::parameter<real_type> params;
     params.print_info = false;
 
-    params.parse_model_file(fmt::format(TEST_PATH "/data/models/500x200.libsvm.{}.model", kernel));
-    params.parse_test_file(TEST_PATH "/data/libsvm/500x200.libsvm.test");
+    params.parse_model_file(fmt::format(PLSSVM_TEST_PATH "/data/models/500x200.libsvm.{}.model", kernel));
+    params.parse_test_file(PLSSVM_TEST_PATH "/data/libsvm/500x200.libsvm.test");
 
     // create C-SVM using the specified backend
     csvm_type csvm{ params };
@@ -215,7 +215,7 @@ inline void predict_test() {
     std::vector<real_type> predicted_values_real = csvm.predict(*params.test_data_ptr);
 
     // read correct prediction
-    std::ifstream ifs(TEST_PATH "/data/predict/500x200.libsvm.predict");
+    std::ifstream ifs(PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict");
     std::string line;
     std::vector<real_type> correct_values;
     correct_values.reserve(500);
@@ -255,7 +255,7 @@ inline void accuracy_test() {
     params.print_info = false;
     params.kernel = kernel;
 
-    params.parse_train_file(TEST_FILE);
+    params.parse_train_file(PLSSVM_TEST_FILE);
 
     // create C-SVM using the specified backend
     csvm_type csvm{ params };

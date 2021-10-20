@@ -8,10 +8,10 @@
  * @brief Tests for the functionality related to the CUDA backend.
  */
 
-#include "mock_cuda_csvm.hpp"
+#include "backends/CUDA/mock_cuda_csvm.hpp"
 
-#include "../../utility.hpp"     // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, EXPECT_THROW_WHAT
-#include "../generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
+#include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
+#include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, EXPECT_THROW_WHAT
 
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
@@ -46,7 +46,7 @@ TYPED_TEST(CUDA_CSVM, constructor_invalid_target_platform) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
     params.target = plssvm::target_platform::automatic;
