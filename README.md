@@ -3,38 +3,38 @@
 
 Implementation of a parallel [least-squares support-vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
 The currently available backends are:
-- [OpenMP](https://www.openmp.org/)
-- [CUDA](https://developer.nvidia.com/cuda-zone)
-- [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/)
+  - [OpenMP](https://www.openmp.org/)
+  - [CUDA](https://developer.nvidia.com/cuda-zone)
+  - [OpenCL](https://www.khronos.org/opencl/)
+  - [SYCL](https://www.khronos.org/sycl/)
 
 ## Getting Started
 
 ### Dependencies
 
-General dependencies:
-- a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
-- [CMake](https://cmake.org/) 3.18 or newer
-- [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-- [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
-- [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
+General dependencies: 
+  - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
+  - [CMake](https://cmake.org/) 3.18 or newer
+  - [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+  - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
+  - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
+  - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
 
 Additional dependencies for the OpenMP backend:
-- compiler with OpenMP support
+  - compiler with OpenMP support
 
 Additional dependencies for the CUDA backend:
-- CUDA SDK
-- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
+  - CUDA SDK
+  - either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
 
 Additional dependencies for the OpenCL backend:
-- OpenCL runtime and header files
+  - OpenCL runtime and header files
 
 Additional dependencies for the SYCL backend:
-- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
+  - the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
-- [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
+  - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
 ### Building
 
@@ -52,10 +52,10 @@ Building the library can be done using the normal CMake approach:
 
 The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
-- `cpu`: compile for the CPU; **no** architectural specifications  is allowed
-- `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g. `nvidia:sm_86,sm_70`
-- `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g. `amd:gfx906`
-- `intel`: compile for Intel GPUs; **no** architectural specification is allowed
+  - `cpu`: compile for the CPU; **no** architectural specifications  is allowed
+  - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g. `nvidia:sm_86,sm_70`
+  - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g. `amd:gfx906`
+  - `intel`: compile for Intel GPUs; **no** architectural specification is allowed
 
 At least one of the above targets must be present.
 
@@ -84,43 +84,43 @@ If no GPU name is provided, the script tries to automatically detect any NVIDIA 
 (requires the Python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
-- for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-- for AMD GPUs: [ROCm Documentation](https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst)
+  - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
+  - for AMD GPUs: [ROCm Documentation](https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst)
 
 #### Optional CMake Options
 
 The `[optional_options]` can be one or multiple of:
 
-- `PLSSVM_ENABLE_OPENMP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `PLSSVM_ENABLE_OPENMP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
     - `ON`: check for the OpenMP backend and fail if not available
     - `AUTO`: check for the OpenMP backend but **do not** fail if not available
     - `OFF`: do not check for the OpenMP backend
-- `PLSSVM_ENABLE_CUDA_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `PLSSVM_ENABLE_CUDA_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
     - `ON`: check for the CUDA backend and fail if not available
     - `AUTO`: check for the CUDA backend but **do not** fail if not available
     - `OFF`: do not check for the CUDA backend
-- `PLSSVM_ENABLE_OPENCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `PLSSVM_ENABLE_OPENCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
     - `ON`: check for the OpenCL backend and fail if not available
     - `AUTO`: check for the OpenCL backend but **do not** fail if not available
     - `OFF`: do not check for the OpenCL backend
-- `PLSSVM_ENABLE_SYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-  - `ON`: check for the SYCL backend and fail if not available
-  - `AUTO`: check for the SYCL backend but **do not** fail if not available
-  - `OFF`: do not check for the SYCL backend
+  - `PLSSVM_ENABLE_SYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: check for the SYCL backend and fail if not available
+    - `AUTO`: check for the SYCL backend but **do not** fail if not available
+    - `OFF`: do not check for the SYCL backend
 
 **Attention:** at least one backend must be enabled and available!
 
-- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
-- `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `svm-train` and `svm-predict` executables
-- `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
-- `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
-- `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
-- `PLSSVM_GENERATE_TIMING_SCRIPT=ON|OFF` (default: `OFF`): configure a timing script usable for performance measurement
+  - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
+  - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
+  - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
+  - `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `svm-train` and `svm-predict` executables
+  - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
+  - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
+  - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
+  - `PLSSVM_GENERATE_TIMING_SCRIPT=ON|OFF` (default: `OFF`): configure a timing script usable for performance measurement
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
-- `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
+  - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
     - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
     - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point
 
