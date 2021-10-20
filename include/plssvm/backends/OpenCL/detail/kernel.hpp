@@ -13,8 +13,6 @@
 
 #include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
-#include <utility>  // std::exchange
-
 namespace plssvm::opencl::detail {
 
 /**
@@ -24,56 +22,45 @@ class kernel {
   public:
     /**
      * @brief Construct a new wrapper around the provided @p compute_kernel.
-     * @param[in] p_compute_kernel the cl_kernel to wrap
+     * @param[in] compute_kernel the cl_kernel to wrap
      */
-    explicit kernel(cl_kernel p_compute_kernel) noexcept :
-        compute_kernel{ p_compute_kernel } {}
+    explicit kernel(cl_kernel compute_kernel) noexcept;
 
     /**
-     * @brief Delete copy-constructor to make `kernel` a move only type.
+     * @brief Delete copy-constructor to make #kernel a move only type.
      */
     kernel(const kernel &) = delete;
     /**
-     * @brief Move-constructor as `kernel` is a move-only type-
+     * @brief Move-constructor as #kernel is a move-only type.
      * @param[in,out] other the kernel to move the resources from
      */
-    kernel(kernel &&other) noexcept :
-        compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}
+    kernel(kernel &&other) noexcept;
     /**
-     * @brief Delete copy-assignment-operator to make `kernel` a move only type.
+     * @brief Delete copy-assignment-operator to make #kernel a move only type.
      */
     kernel &operator=(const kernel &) = delete;
     /**
-     * @brief Move-assignment-operator as `kernel` is a move-only type-
+     * @brief Move-assignment-operator as #kernel is a move-only type.
      * @param[in,out] other the kernel to move the resources from
      * @return `*this`
      */
-    kernel &operator=(kernel &&other) {
-        if (this != std::addressof(other)) {
-            compute_kernel = std::exchange(other.compute_kernel, nullptr);
-        }
-        return *this;
-    }
+    kernel &operator=(kernel &&other);
 
     /**
      * @brief Release the cl_kernel resources on destruction.
      */
-    ~kernel() {
-        if (compute_kernel) {
-            clReleaseKernel(compute_kernel);
-        }
-    }
+    ~kernel();
 
     /**
      * @brief Implicitly convert a kernel wrapper to an OpenCL cl_kernel.
-     * @return the wrapped OpenCL cl_kernel
+     * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)
      */
-    operator cl_kernel &() noexcept { return compute_kernel; }
+    [[nodiscard]] operator cl_kernel &() noexcept { return compute_kernel; }
     /**
      * @brief Implicitly convert a kernel wrapper to an OpenCL cl_kernel.
-     * @return the wrapped OpenCL cl_kernel
+     * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)
      */
-    operator const cl_kernel &() const noexcept { return compute_kernel; }
+    [[nodiscard]] operator const cl_kernel &() const noexcept { return compute_kernel; }
 
     /// The wrapped OpenCL cl_kernel.
     cl_kernel compute_kernel;

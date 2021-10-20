@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/detail/string_utility.hpp"           // sycl::detail::to_lower_case, sycl::detail::contains
-#include "plssvm/target_platform.hpp"                 // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::platform, sycl::device, sycl::property::queue, sycl::info, sycl::gpu_selector
 

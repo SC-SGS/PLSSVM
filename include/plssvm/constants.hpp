@@ -13,31 +13,33 @@
 
 namespace plssvm {
 
-/// Integer used inside kernels.
+/// Integer type used inside kernels.
 using kernel_index_type = int;
 
-/// Used for internal caching.
+/// Global compile-time constant used for internal caching.
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
 constexpr kernel_index_type THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 #else
 constexpr kernel_index_type THREAD_BLOCK_SIZE = 16;
 #endif
 
-/// Used for internal caching.
+/// Global compile-time constant used for internal caching.
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
 constexpr kernel_index_type INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 #else
 constexpr kernel_index_type INTERNAL_BLOCK_SIZE = 6;
 #endif
 
-/// Used for internal caching in the OpenMP kernel.
+/// Global compile-time constant used for internal caching in the OpenMP kernel.
 #if defined(PLSSVM_OPENMP_BLOCK_SIZE)
 constexpr kernel_index_type OPENMP_BLOCK_SIZE = PLSSVM_OPENMP_BLOCK_SIZE;
 #else
 constexpr kernel_index_type OPENMP_BLOCK_SIZE = 64;
 #endif
 
+// perform sanity checks
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
+static_assert(OPENMP_BLOCK_SIZE > 0, "OPENMP_BLOCK_SIZE must be greater than 0!");
 
 }  // namespace plssvm

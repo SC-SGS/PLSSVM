@@ -24,12 +24,11 @@ namespace plssvm::sycl {
 class backend_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
-    explicit backend_exception(const std::string &msg, source_location loc = source_location::current()) :
-        ::plssvm::exception{ msg, "sycl::backend_exception", loc } {}
+    explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 }  // namespace plssvm::sycl

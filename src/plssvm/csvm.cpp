@@ -15,8 +15,9 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type, plssvm::kernel_function
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "fmt/chrono.h"  // format std::chrono
-#include "fmt/core.h"    // fmt::print, fmt::format
+#include "fmt/chrono.h"   // format std::chrono
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads

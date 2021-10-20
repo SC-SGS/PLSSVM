@@ -11,17 +11,20 @@
 
 #pragma once
 
-#include "plssvm/csvm.hpp"             // plssvm::csvm
-#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"        // plssvm::parameter
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/csvm.hpp"  // plssvm::csvm
 
 #include <vector>  // std::vector
 
-namespace plssvm::openmp {
+namespace plssvm {
+
+// forward declare parameter class
+template <typename T>
+class parameter;
+
+namespace openmp {
 
 /**
- * @brief The C-SVM class using the OpenMP backend.
+ * @brief A C-SVM implementation using OpenMP as backend.
  * @tparam T the type of the data
  */
 template <typename T>
@@ -52,40 +55,50 @@ class csvm : public ::plssvm::csvm<T> {
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
     explicit csvm(const parameter<T> &params);
 
     /**
-     * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @param[in] points the data points to predict
-     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
+     * @copydoc plssvm::csvm::predict(const std::vector<std::vector<real_type>>&)
      */
-    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
+    [[nodiscard]] std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
 
   protected:
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_device
+     */
     void setup_data_on_device() override {
         // OpenMP device is the CPU -> no special load functions
     }
-    std::vector<real_type> generate_q() override;
+    /**
+     * @copydoc plssvm::csvm::generate_q
+     */
+    [[nodiscard]] std::vector<real_type> generate_q() override;
+    /**
+     * @copydoc plssvm::csvm::solver_CG
+     */
     std::vector<real_type> solver_CG(const std::vector<real_type> &b, std::size_t imax, real_type eps, const std::vector<real_type> &q) override;
+    /**
+     * @copydoc plssvm::csvm::update_w
+     */
+    void update_w() override;
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.
      * @param[in] q the `q` vector
      * @param[out] ret the result vector
-     * @param[in] d the right-hand side
+     * @param[in] d the right-hand side of the equation
      * @param[in] data the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
     void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type add);
-
-    /**
-     * @brief updates the `w_` vector to the current data and alpha values.
-     */
-    virtual void update_w() override;
 };
 
 extern template class csvm<float>;
 extern template class csvm<double>;
 
-}  // namespace plssvm::openmp
+}  // namespace openmp
+}  // namespace plssvm

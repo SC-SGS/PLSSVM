@@ -20,6 +20,7 @@
 #include "utility.hpp"    // util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name,
                           // util::create_temp_file, EXPECT_THROW_WHAT
 #include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 #include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, ASSERT_NE,
                           // EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, EXPECT_THROW
 

@@ -19,8 +19,8 @@
 namespace plssvm::sycl {
 
 /**
- * @brief Calculate the w vector to heavily speed-up the prediction of the labels of data points using the linear kernel function.
- * @details Currently only single GPU execution is supported.
+ * @brief Calculate the `w` vector to speed up the prediction of the labels for data points using the linear kernel function.
+ * @details Supports multi-GPU execution.
  * @tparam T the type of the data
  */
 template <typename T>
@@ -32,7 +32,7 @@ class device_kernel_w_linear {
     /**
      * @brief Construct a new device kernel generating the `w` vector used to speedup the prediction when using the linear kernel function.
      * @details Currently only single GPU execution is supported.
-     * @param[out] w_d the w vector to assemble
+     * @param[out] w_d the `w` vector to assemble
      * @param[in] data_d the one-dimension support vector matrix
      * @param[in] data_last_d the last row of the support vector matrix
      * @param[in] alpha_d the previously calculated weight for each data point
@@ -69,7 +69,7 @@ class device_kernel_w_linear {
 };
 
 /**
- * @brief Predicts the labels of data points using the polynomial kernel function.
+ * @brief Predicts the labels for data points using the polynomial kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam T the type of the data points
  */
@@ -80,7 +80,7 @@ class device_kernel_predict_poly {
     using real_type = T;
 
     /**
-     * @brief Construct a new device kernel to predict the labels of data points using the polynomial kernel function.
+     * @brief Construct a new device kernel to predict the labels for data points using the polynomial kernel function.
      * @details Currently only single GPU execution is supported.
      * @param[in] out_d the calculated predictions
      * @param[in] data_d the one-dimension support vector matrix
@@ -137,7 +137,7 @@ class device_kernel_predict_poly {
 };
 
 /**
- * @brief Predicts the labels of data points using the radial basis functions kernel function.
+ * @brief Predicts the labels for data points using the radial basis functions kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam T the type of the data points
  */
@@ -148,7 +148,7 @@ class device_kernel_predict_radial {
     using real_type = T;
 
     /**
-     * @brief Construct a new device kernel to predict the labels of data points using the radial basis function kernel function.
+     * @brief Construct a new device kernel to predict the labels for data points using the radial basis function kernel function.
      * @details Currently only single GPU execution is supported.
      * @param[in] out_d the calculated predictions
      * @param[in] data_d the one-dimension support vector matrix
@@ -158,7 +158,7 @@ class device_kernel_predict_radial {
      * @param[in] points the data points to predict
      * @param[in] num_predict_points the total number of data points to predict
      * @param[in] num_features the number of features per support vector and point to predict
-     * @param[in] gamma the gamma parameter used in the polynomial kernel function
+     * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
     device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}

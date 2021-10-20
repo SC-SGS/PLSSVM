@@ -18,11 +18,14 @@
 #include "plssvm/backend_types.hpp"             // plssvm::backend_type
 #include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception
 #include "plssvm/kernel_types.hpp"              // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include "fmt/format.h"   // fmt::format
-#include "gtest/gtest.h"  // GTEST_USES_POSIX_RE, EXPECT_THAT, ASSERT_EQ, EXPECT_EQ, EXPECT_GT, testing::ContainsRegex, testing::StaticAssertTypeEq
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "gmock/gmock.h"  // EXPECT_THAT
+#include "gtest/gtest.h"  // GTEST_USES_POSIX_RE, ASSERT_EQ, EXPECT_EQ, EXPECT_GT, testing::ContainsRegex, testing::StaticAssertTypeEq
 
 #include <algorithm>   // std::generate
 #include <filesystem>  // std::filesystem::remove

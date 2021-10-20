@@ -17,8 +17,9 @@
 #include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 
-#include "fmt/chrono.h"  // format std::chrono
-#include "fmt/core.h"    // fmt::format, fmt::print
+#include "fmt/chrono.h"   // format std::chrono
+#include "fmt/core.h"     // fmt::format, fmt::print
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <algorithm>    // std::max, std::min, std::fill
 #include <chrono>       // std::chrono::stead_clock, std::chrono::duration_cast, std::chrono::milliseconds
@@ -513,6 +514,19 @@ void parameter<T>::parse_model_file(const std::string &filename) {
                    (*data_ptr)[0].size(),
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
+}
+
+template <typename T>
+void parameter<T>::parse_train_file(const std::string &filename) {
+    parse_file(filename, data_ptr);
+    if (value_ptr == nullptr) {
+        throw invalid_file_format_exception{ "Missing labels for train file!" };
+    }
+}
+
+template <typename T>
+void parameter<T>::parse_test_file(const std::string &filename) {
+    parse_file(filename, test_data_ptr);
 }
 
 template <typename T>

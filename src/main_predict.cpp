@@ -12,7 +12,6 @@
 
 #include "fmt/format.h"  // fmt::format, fmt::print
 
-#include <cstddef>    // std::size_t
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
 #include <iostream>   // std::cerr, std::endl
@@ -34,7 +33,7 @@ int main(int argc, char *argv[]) {
         auto svm = plssvm::make_csvm(params);
 
         // predict labels
-        std::vector<real_type> labels = svm->predict_label(*params.test_data_ptr);
+        const std::vector<real_type> labels = svm->predict_label(*params.test_data_ptr);
 
         // write prediction file
         {
@@ -44,8 +43,8 @@ int main(int argc, char *argv[]) {
 
         // print achieved accuracy if possible
         if (params.value_ptr) {
-            std::size_t correct = 0;
-            for (std::size_t i = 0; i < labels.size(); ++i) {
+            unsigned long long correct = 0;
+            for (typename std::vector<real_type>::size_type i = 0; i < labels.size(); ++i) {
                 // check of prediction was correct
                 if ((*params.value_ptr)[i] * labels[i] > real_type{ 0.0 }) {
                     ++correct;

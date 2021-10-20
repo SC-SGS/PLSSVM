@@ -19,9 +19,10 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "fmt/core.h"  // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <exception>  // std::terminate
 #include <string>     // std::string
@@ -108,6 +109,17 @@ csvm<T>::csvm(const parameter<T> &params) :
             predict_kernel_ = detail::create_kernel<real_type, kernel_index_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_predict_radial");
             break;
     }
+
+    // sanity checks for the number of OpenCL kernels
+    PLSSVM_ASSERT(devices_.size() == q_kernel_.size(), fmt::format("Number of kernels for the q kernel ({}) must match the number of devices ({})!", q_kernel_.size(), devices_.size()));
+    PLSSVM_ASSERT(devices_.size() == svm_kernel_.size(), fmt::format("Number of kernels for the svm kernel ({}) must match the number of devices ({})!", svm_kernel_.size(), devices_.size()));
+    if (kernel_ == kernel_type::linear) {
+        PLSSVM_ASSERT(devices_.size() == kernel_w_kernel_.size(), fmt::format("Number of kernels for the w kernel ({}) must match the number of devices ({})!", kernel_w_kernel_.size(), devices_.size()));
+        PLSSVM_ASSERT(predict_kernel_.empty(), "No predict kernel used for the linear kernel function!");
+    } else {
+        PLSSVM_ASSERT(kernel_w_kernel_.empty(), "No w kernel used for the polynomial or radial basis function kernel functions!");
+        PLSSVM_ASSERT(devices_.size() == predict_kernel_.size(), fmt::format("Number of kernels for the predict kernel ({}) must match the number of devices ({})!", predict_kernel_.size(), devices_.size()));
+    }
 }
 
 template <typename T>
@@ -128,18 +140,17 @@ void csvm<T>::device_synchronize(queue_type &queue) {
     detail::device_synchronize(queue);
 }
 
-template <typename size_type>
-std::pair<std::vector<size_type>, std::vector<size_type>> execution_range_to_native(const ::plssvm::detail::execution_range<size_type> &range) {
-    std::vector<size_type> grid = { range.grid[0], range.grid[1], range.grid[2] };
-    std::vector<size_type> block = { range.block[0], range.block[1], range.block[2] };
-    for (size_type i = 0; i < grid.size(); ++i) {
+std::pair<std::vector<std::size_t>, std::vector<std::size_t>> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
+    std::vector<std::size_t> grid = { range.grid[0], range.grid[1], range.grid[2] };
+    std::vector<std::size_t> block = { range.block[0], range.block[1], range.block[2] };
+    for (typename std::vector<std::size_t>::size_type i = 0; i < grid.size(); ++i) {
         grid[i] *= block[i];
     }
     return std::make_pair(std::move(grid), std::move(block));
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const std::size_t num_features) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (kernel_) {
@@ -158,7 +169,7 @@ void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (kernel_) {
@@ -177,14 +188,14 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::run_kernel(devices_[device], kernel_w_kernel_[device], grid, block, w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), static_cast<kernel_index_type>(num_features));
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (kernel_) {

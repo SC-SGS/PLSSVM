@@ -20,7 +20,7 @@
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_program, cl_kernel, cl_uint, cl_int, CL_PROGRAM_BUILD_LOG, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo,
                     // clCreateKernel, clReleaseProgram, clSetKernelArg, clEnqueueNDRangeKernel, clFinish

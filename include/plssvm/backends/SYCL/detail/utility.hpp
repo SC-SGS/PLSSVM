@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
@@ -26,6 +26,7 @@ namespace plssvm::sycl::detail {
  *          2. AMD GPUs
  *          3. Intel GPUs
  *          4. CPUs
+ *
  * @param[in] target the target platform for which the devices must match
  * @return the devices (`[[nodiscard]]`)
  */

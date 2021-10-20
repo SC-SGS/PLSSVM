@@ -20,15 +20,15 @@
 namespace plssvm::cuda::detail {
 
 /**
- * @brief Check the CUDA error @p code. If @p code signals an error, throw a `plssvm::cuda::backend_exception`.
- * @details The exception contains the error name and error string for more debug information.
+ * @brief Check the CUDA error @p code. If @p code signals an error, throw a plssvm::cuda::backend_exception.
+ * @details The exception contains the error name and error string.
  * @param[in] code the CUDA error code to check
- * @throws `plssvm::cuda::backend_exception` if the error code signals a failure
+ * @throws plssvm::cuda::backend_exception if the error code signals a failure
  */
 void gpu_assert(cudaError_t code);
 
 /**
- * @brief Returns the number of available devices.
+ * @brief Returns the number of available CUDA devices.
  * @return the number of devices (`[[nodiscard]]`)
  */
 [[nodiscard]] int get_device_count();
@@ -40,15 +40,15 @@ void gpu_assert(cudaError_t code);
 void set_device(int device);
 
 /**
- * @brief Returns the last error from a runtime call.
+ * @brief Returns the last error from a CUDA runtime call.
  */
 void peek_at_last_error();
 
 /**
- * @brief Wait for the compute device @p device to finish.
- * @details Calls `peek_at_last_error()` before synchronizing.
+ * @brief Wait for the compute @p device to finish.
+ * @details Calls plssvm::cuda::detail::peek_at_last_error() before synchronizing.
  * @param[in] device the CUDA device to synchronize
- * @throws plssvm::cuda::backend_exception if the given device ID is smaller than `0` or greater or equal than the available number of devices
+ * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
  */
 void device_synchronize(int device);
 

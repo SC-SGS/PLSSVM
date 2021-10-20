@@ -16,7 +16,7 @@
 namespace plssvm {
 
 /**
- * @brief The `plssvm::source_location` class represents certain information about the source code, such as file names, line numbers or function names.
+ * @brief The plssvm::source_location class represents certain information about the source code, such as file names, line numbers or function names.
  * @details Based on [`std::source_location`](https://en.cppreference.com/w/cpp/utility/source_location).
  */
 class source_location {
@@ -32,45 +32,37 @@ class source_location {
     [[nodiscard]] static source_location current(
         const char *file_name = __builtin_FILE(),
         const char *function_name = __builtin_FUNCTION(),
-        const int line = __builtin_LINE(),
-        const int column = 0) noexcept {
-        source_location loc;
-
-        loc.file_name_ = file_name;
-        loc.function_name_ = function_name;
-        loc.line_ = line;
-        loc.column_ = column;
-
-        return loc;
-    }
+        int line = __builtin_LINE(),
+        int column = 0) noexcept;
 
     /**
      * @brief Returns the absolute path name of the file or `"unknown"` if no information could be retrieved.
      * @return the file name (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::string_view function_name() const noexcept { return function_name_; }
+    [[nodiscard]] std::string_view function_name() const noexcept;
     /**
      * @brief Returns the function name without additional signature information (i.e. return type and parameters)
      *        or `"unknown"` if no information could be retrieved.
      * @return the function name (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::string_view file_name() const noexcept { return file_name_; }
+    [[nodiscard]] std::string_view file_name() const noexcept;
     /**
      * @brief Returns the line number or `0` if no information could be retrieved.
      * @return the line number (`[[nodiscard]]`)
      */
-    [[nodiscard]] int line() const noexcept { return line_; }
+    [[nodiscard]] int line() const noexcept;
     /**
-     * @brief Returns the column number. Always `0`!
+     * @brief Returns the column number.
+     * @attention Always `0`!
      * @return `0` (`[[nodiscard]]`)
      */
-    [[nodiscard]] int column() const noexcept { return column_; }
+    [[nodiscard]] int column() const noexcept;
 
   private:
-    std::string_view function_name_ = "unknown";
-    std::string_view file_name_ = "unknown";
-    int line_ = 0;
-    int column_ = 0;
+    std::string_view function_name_{ "unknown" };
+    std::string_view file_name_{ "unknown" };
+    int line_{ 0 };
+    int column_{ 0 };
 };
 
 }  // namespace plssvm

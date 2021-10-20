@@ -27,10 +27,18 @@ configure_file(
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
 )
 
 ## create base library: linked against all backend libraries

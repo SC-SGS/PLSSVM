@@ -287,7 +287,7 @@ class device_kernel_radial {
      * @param[in] num_rows the number of columns in the data matrix
      * @param[in] num_cols the number of rows in the data matrix
      * @param[in] add denotes whether the values are added or subtracted from the result vector
-     * @param[in] gamma the gamma parameter used in the polynomial kernel function
+     * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
     device_kernel_radial(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
         data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, gamma_{ gamma } {}

@@ -26,36 +26,42 @@ class parameter_predict : public parameter<T> {
   public:
     /// The template base type of the parameter_predict class.
     using base_type = parameter<T>;
+
     using base_type::backend;
     using base_type::coef0;
     using base_type::cost;
     using base_type::degree;
     using base_type::epsilon;
     using base_type::gamma;
-    using base_type::input_filename;
     using base_type::kernel;
-    using base_type::model_filename;
-    using base_type::predict_filename;
     using base_type::print_info;
     using base_type::target;
 
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
+    using base_type::input_filename;
+    using base_type::model_filename;
+    using base_type::predict_filename;
 
+    using base_type::alpha_ptr;
+    using base_type::data_ptr;
+    using base_type::test_data_ptr;
+    using base_type::value_ptr;
+
+    using base_type::rho;
     /**
      * @brief Default construct all parameters for prediction.
      */
     parameter_predict() = default;
 
     /**
-     * @brief Set all predict parameters to their default values.
+     * @brief Set all predict parameters to their default values and parse the given model and test file.
+     * @details Sets the predict_filename to `${input_filename}.predict`.
      * @param[in] input_filename the name of the test data file
      * @param[in] model_filename the name of the model file
      */
     explicit parameter_predict(std::string input_filename, std::string model_filename);
 
     /**
-     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
+     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly. Parse the given model and test file.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */

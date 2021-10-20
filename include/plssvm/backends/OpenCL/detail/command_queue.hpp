@@ -13,9 +13,6 @@
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
 
-#include <memory>   // std::addressof
-#include <utility>  // std::exchange
-
 namespace plssvm::opencl::detail {
 
 /**
@@ -30,49 +27,36 @@ class command_queue {
     command_queue() = default;
     /**
      * @brief Construct a command queue with the provided information.
-     * @param[in] p_context the associated OpenCL cl_context
-     * @param[in] p_queue the OpenCL cl_command_queue to wrap
-     * @param[in] p_device the associated OpenCL cl_device_id
+     * @param[in] context the associated OpenCL cl_context
+     * @param[in] queue the OpenCL cl_command_queue to wrap
+     * @param[in] device the associated OpenCL cl_device_id
      */
-    command_queue(cl_context p_context, cl_command_queue p_queue, cl_device_id p_device) :
-        context{ p_context }, queue{ p_queue }, device{ p_device } {}
+    command_queue(cl_context context, cl_command_queue queue, cl_device_id device);
 
     /**
-     * @brief Delete copy-constructor to make `command_queue` a move only type.
+     * @brief Delete copy-constructor to make command_queue a move only type.
      */
     command_queue(const command_queue &) = delete;
     /**
-     * @brief Move-constructor as `command_queue` is a move-only type.
+     * @brief Move-constructor as command_queue is a move-only type.
      * @param[in,out] other the command_queue to move the resources from
      */
-    command_queue(command_queue &&other) noexcept :
-        context{ std::exchange(other.context, nullptr) }, queue{ std::exchange(other.queue, nullptr) }, device{ std::exchange(other.device, nullptr) } {}
+    command_queue(command_queue &&other) noexcept;
     /**
-     * @brief Delete copy-assignment-operator to make `command_queue` a move only type.
+     * @brief Delete copy-assignment-operator to make command_queue a move only type.
      */
     command_queue &operator=(const command_queue &) = delete;
     /**
-     * @brief Move-assignment-operator as `command_queue` is a move-only type-
+     * @brief Move-assignment-operator as command_queue is a move-only type.
      * @param[in,out] other the command_queue to move the resources from
      * @return `*this`
      */
-    command_queue &operator=(command_queue &&other) {
-        if (this != std::addressof(other)) {
-            context = std::exchange(other.context, nullptr);
-            queue = std::exchange(other.queue, nullptr);
-            device = std::exchange(other.device, nullptr);
-        }
-        return *this;
-    }
+    command_queue &operator=(command_queue &&other);
 
     /**
      * @brief Release the cl_command_queue resources on destruction.
      */
-    ~command_queue() {
-        if (queue) {
-            clReleaseCommandQueue(queue);
-        }
-    }
+    ~command_queue();
 
     /// The OpenCL context associated with the wrapped cl_command_queue.
     cl_context context{};

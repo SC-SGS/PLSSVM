@@ -129,7 +129,7 @@ class device_kernel_q_radial {
      * @param[in] data_last the last row in the data matrix
      * @param[in] num_rows the number of rows in the data matrix
      * @param[in] num_cols the number of columns in the data matrix
-     * @param[in] gamma the gamma parameter used in the polynomial kernel function
+     * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
     device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, gamma_{ gamma } {}

@@ -4,19 +4,20 @@
 #include "plssvm/csvm.hpp"                    // plssvm::csvm
 #include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
 #include "plssvm/detail/operators.hpp"        // various operator overloads for std::vector and scalars
+#include "plssvm/exceptions/exceptions.hpp"   // plssvm::exception
 #include "plssvm/parameter.hpp"               // plssvm::parameter
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    // used for explicitly instantiating the CUDA version
+    // used for explicitly instantiating the CUDA backend
     #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    // used for explicitly instantiating the OpenCL version
+    // used for explicitly instantiating the OpenCL backend
     #include "plssvm/backends/OpenCL/detail/command_queue.hpp"
     #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    // used for explicitly instantiating the SYCL version
+    // used for explicitly instantiating the SYCL backend
     #include "plssvm/backends/SYCL/detail/device_ptr.hpp"
     #include "sycl/sycl.hpp"
 #endif
@@ -26,7 +27,6 @@
 #include <cstddef>    // std::size_t
 #include <vector>     // std::vector
 
-#include <iostream>
 namespace plssvm::detail {
 
 template <typename T, typename device_ptr_t, typename queue_t>

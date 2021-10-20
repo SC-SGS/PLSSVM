@@ -18,7 +18,7 @@
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
-#include "plssvm/target_platform.hpp"             // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ
 

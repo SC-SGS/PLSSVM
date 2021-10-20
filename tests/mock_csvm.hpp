@@ -14,7 +14,7 @@
 #include "plssvm/csvm.hpp"             // plssvm::csvm
 #include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"        // plssvm::parameter
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include "gmock/gmock.h"  // MOCK_METHOD
 

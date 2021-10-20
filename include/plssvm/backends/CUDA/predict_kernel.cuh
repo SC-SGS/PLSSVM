@@ -16,10 +16,10 @@
 namespace plssvm::cuda {
 
 /**
- * @brief Calculate the w vector to heavily speed-up the prediction of the labels of data points using the linear kernel function.
- * @details Currently only single GPU execution is supported.
+ * @brief Calculate the `w` vector to speed up the prediction of the labels for data points using the linear kernel function.
+ * @details Supports multi-GPU execution.
  * @tparam real_type the type of the data
- * @param[out] w_d the w vector to assemble
+ * @param[out] w_d the `w` vector to assemble
  * @param[in] data_d the one-dimension support vector matrix
  * @param[in] data_last_d the last row of the support vector matrix
  * @param[in] alpha_d the previously calculated weight for each data point
@@ -30,7 +30,7 @@ template <typename real_type>
 __global__ void device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const kernel_index_type num_features);
 
 /**
- * @brief Predicts the labels of data points using the polynomial kernel function.
+ * @brief Predicts the labels for data points using the polynomial kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam real_type the type of the data
  * @param[in] out_d the calculated predictions
@@ -49,7 +49,7 @@ template <typename real_type>
 __global__ void device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0);
 
 /**
- * @brief Predicts the labels of data points using the radial basis functions kernel function.
+ * @brief Predicts the labels for data points using the radial basis functions kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam real_type the type of the data
  * @param[in] out_d the calculated predictions

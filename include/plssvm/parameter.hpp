@@ -6,19 +6,16 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements the base class encapsulating all necessary parameters.
+ * @brief Implements the parameter base class encapsulating all necessary parameters.
  */
 
 #pragma once
 
-#include "plssvm/backend_types.hpp"          // plssvm::backend_type
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
-#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"        // plssvm::target_platform
+#include "plssvm/backend_types.hpp"     // plssvm::backend_type
+#include "plssvm/kernel_types.hpp"      // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
-
-#include <iosfwd>       // std::ostream (forward declaration only)
+#include <iosfwd>       // forward declare std::ostream
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
@@ -39,18 +36,20 @@ class parameter {
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
-    /// virtual, default destructor.
+    /**
+     * @brief Virtual destructor to enable safe inheritance.
+     */
     virtual ~parameter() = default;
 
     /**
-     * @brief Parse a file in the [libsvm sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
-     * @details The sparse libsvm file format saves each data point with its respective class as follows:
+     * @brief Parse a file in the [LIBSVM sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
+     * @details The sparse LIBSVM file format saves each data point with its respective class as follows:
      * @code
      * <label> <index1>:<value1> <index2>:<value2> ... <indexN>:<valueN>
      * @endcode
      * Only non-empty lines that don't start with `#` (= optional comments) are parsed.
      *
-     * An example libsvm file could look as follows:
+     * An example LIBSVM file could look as follows:
      * @code
      * # this is a comment
      *  1 1:1.29801019287324655 2:0.51687296029754564
@@ -70,8 +69,10 @@ class parameter {
      * @endcode
      *
      * If possible, uses a memory mapped file internally to speed up the file parsing.
-     * @param[in] filename name of the libsvm file to parse
+     * @param[in] filename name of the LIBSVM file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, a file not using the LIBSVM file format, ...)
      */
     void parse_libsvm_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
@@ -118,11 +119,13 @@ class parameter {
      * If possible, uses a memory mapped file internally to speed up the file parsing.
      * @param[in] filename name of the arff file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, invalid arff header, ...)
      */
     void parse_arff_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
     /**
-     * @brief Parse a model file in the LIBSVM model file format.
-     * @details An example libsvm file could look as follows:
+     * @brief Parse a model file in the [LIBSVM model file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f402).
+     * @details An example LIBSVM file could look as follows:
      * @code
      * svm_type c_svc
      * kernel_type linear
@@ -138,35 +141,36 @@ class parameter {
      * 0.0034556484621847128 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00
      * -0.23146573996578407 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01
      * @endcode
-     * @param filename the model file to parse
+     * @param[in] filename the model file to parse
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, invalid LIBSVM model file header, ...)
      */
     void parse_model_file(const std::string &filename);
     /**
-     * @brief Parse the given file. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
+     * @brief Parse the given file. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the LIBSVM parser is used.
      * @param[in] filename name of the file to parse
      * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, ...)
      */
     void parse_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
 
     /**
-     * @brief Parse the given file as training data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
-     * @details Saves the data to the member variable `data_ptr`.
+     * @brief Parse the given file as training data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the LIBSVM parser is used.
+     * @details Saves the data to the member variable #data_ptr.
      * @param[in] filename name of the file to parse
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, ...)
      */
-    void parse_train_file(const std::string &filename) {
-        parse_file(filename, data_ptr);
-        if (value_ptr == nullptr) {
-            throw invalid_file_format_exception{ "Missing labels for train file!" };
-        }
-    }
+    void parse_train_file(const std::string &filename);
     /**
-     * @brief Parse the given file as test data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the libsvm parser is used.
-     * @details Saves the data to the member variable `test_data_ptr`.
+     * @brief Parse the given file as test data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the LIBSVM parser is used.
+     * @details Saves the data to the member variable #test_data_ptr.
      * @param[in] filename name of the file to parse
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, ...)
      */
-    void parse_test_file(const std::string &filename) {
-        parse_file(filename, test_data_ptr);
-    }
+    void parse_test_file(const std::string &filename);
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     kernel_type kernel = kernel_type::linear;
@@ -180,27 +184,27 @@ class parameter {
     real_type cost = real_type{ 1.0 };
     /// The error tolerance parameter for the CG algorithm.
     real_type epsilon = static_cast<real_type>(0.001);
-    /// If `true` additional information (e.g. timing information) will be printed during execution.
+    /// If `true` additional information (e.g. timings) will be printed during execution.
     bool print_info = true;
     /// The used backend: OpenMP, OpenCL, CUDA, or SYCL.
     backend_type backend = backend_type::openmp;
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
     target_platform target = target_platform::automatic;
 
-    /// The name of the data file to parse.
+    /// The name of the data/test file to parse.
     std::string input_filename{};
-    /// The name of the model file to write the learned Support Vectors to.
+    /// The name of the model file to write the learned support vectors to/to parse the saved model from.
     std::string model_filename{};
     /// The name of the file to write the prediction to.
     std::string predict_filename{};
 
     /// The data used the train the SVM.
     std::shared_ptr<const std::vector<std::vector<real_type>>> data_ptr{};
-    /// The labels associated to each data point.
+    /// The labels associated with each data point.
     std::shared_ptr<const std::vector<real_type>> value_ptr{};
-    /// The weights associated to each data point after training.
+    /// The weights associated with each data point after training.
     std::shared_ptr<const std::vector<real_type>> alpha_ptr{};
-    /// The data to predict.
+    /// The test data to predict.
     std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
 
     /// The rho value of the calculated/read model.
@@ -208,13 +212,13 @@ class parameter {
 
   protected:
     /**
-     * @brief Generate model filename based on the name of the input file.
-     * @return `input_filename`.model ([[nodiscard]])
+     * @brief Generate a model filename based on the name of the input file.
+     * @return `${input_filename}.model` (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string model_name_from_input();
     /**
-     * @brief Generate predict filename based on the name of the input file.
-     * @return `input_filename`.predict ([[nodiscard]])
+     * @brief Generate a predict filename based on the name of the input file.
+     * @return `${input_filename}.predict` (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string predict_name_from_input();
 };
@@ -223,9 +227,9 @@ extern template class parameter<float>;
 extern template class parameter<double>;
 
 /**
- * @brief Stream-insertion operator overload for convenient printing of all parameters encapsulated by @p params.
+ * @brief Output all parameters encapsulated by @p params to the given output-stream @p out.
  * @tparam T the type of the data
- * @param[in,out] out the output-stream to write the kernel type to
+ * @param[in,out] out the output-stream to write the parameters to
  * @param[in] params the parameters
  * @return the output-stream
  */

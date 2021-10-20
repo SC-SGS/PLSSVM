@@ -13,11 +13,12 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"       // cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context, CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU,
-                         // CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clCreateCommandQueue, clGetCommandQueueInfo
-#include "fmt/format.h"  // fmt::format
+#include "CL/cl.h"        // cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context, CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU,
+                          // CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clCreateCommandQueue, clGetCommandQueueInfo
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <map>          // std::map
 #include <string>       // std::string

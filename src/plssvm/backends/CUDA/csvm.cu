@@ -8,21 +8,22 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"
 
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::detail::cuda::device_ptr, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device,
-                                                       // plssvm::detail::cuda::peek_at_last_error, plssvm::detail::cuda::device_synchronize
-#include "plssvm/backends/CUDA/detail/utility.cuh"     // plssvm::cuda::device_synchronize
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
+#include "plssvm/backends/CUDA/detail/utility.cuh"     // plssvm::cuda::detail::device_synchronize, plssvm::detail::cuda::get_device_count, plssvm::detail::cuda::set_device, plssvm::detail::cuda::peek_at_last_error
 #include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"     // plssvm::cuda::kernel_w, plssvm::cuda::predict_points_poly, plssvm::cuda::predict_points_rbf
 #include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::device_kernel_q_linear, plssvm::cuda::device_kernel_q_poly, plssvm::cuda::device_kernel_q_radial
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::device_kernel_linear, plssvm::cuda::device_kernel_poly, plssvm::cuda::device_kernel_radial
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
+#include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
-#include "fmt/core.h"  // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <exception>  // std::terminate
 #include <numeric>    // std::iota
@@ -95,15 +96,14 @@ void csvm<T>::device_synchronize(queue_type &queue) {
     detail::device_synchronize(queue);
 }
 
-template <typename size_type>
-std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::execution_range<size_type> &range) {
+std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
     dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
     dim3 block(range.block[0], range.block[1], range.block[2]);
     return std::make_pair(grid, block);
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const std::size_t num_features) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
@@ -124,7 +124,7 @@ void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
@@ -145,7 +145,7 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
@@ -154,7 +154,7 @@ void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(0);

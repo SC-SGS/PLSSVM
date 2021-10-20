@@ -12,7 +12,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"              // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
 #include "backends/compare.hpp"  // compare::detail::linear_kernel, compare::detail::poly_kernel, compare::detail::radial_kernel
 #include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion, util::gtest_assert_floating_point_near

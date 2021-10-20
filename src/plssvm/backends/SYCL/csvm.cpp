@@ -17,12 +17,14 @@
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                        // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
+#include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_types.hpp"                     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platform.hpp"                  // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
 
 #include <cstddef>    // std::size_t
@@ -110,8 +112,8 @@ void csvm<T>::device_synchronize(queue_type &queue) {
     detail::device_synchronize(queue);
 }
 
-template <std::size_t I, typename size_type>
-::sycl::nd_range<I> execution_range_to_native(const ::plssvm::detail::execution_range<size_type> &range) {
+template <std::size_t I>
+::sycl::nd_range<I> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
     if constexpr (I == 1) {
         ::sycl::range<1> grid{ range.grid[0] * range.block[0] };
         ::sycl::range<1> block{ range.block[0] };
@@ -125,12 +127,12 @@ template <std::size_t I, typename size_type>
         ::sycl::range<3> block{ range.block[0], range.block[1], range.block[2] };
         return ::sycl::nd_range<3>{ grid, block };
     } else {
-        static_assert(::plssvm::detail::always_false_v<size_type>, "Illegal nd_range size!");
+        static_assert(I <= 3, "Illegal nd_range size!");
     }
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &q_d, const std::size_t num_features) {
+void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, const std::size_t num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
     switch (kernel_) {
         case kernel_type::linear:
@@ -148,7 +150,7 @@ void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
+void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
     switch (kernel_) {
         case kernel_type::linear:
@@ -172,13 +174,13 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
+void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     const ::sycl::nd_range execution_range = execution_range_to_native<1>(range);
     devices_[device].parallel_for(execution_range, device_kernel_w_linear(w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features));
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range<std::size_t> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
     switch (kernel_) {
         case kernel_type::linear:

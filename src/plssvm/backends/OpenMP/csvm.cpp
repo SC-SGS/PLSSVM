@@ -17,9 +17,10 @@
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
-#include "plssvm/target_platform.hpp"             // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "fmt/core.h"  // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <algorithm>  // std::fill, std::all_of
 #include <vector>     // std::vector
