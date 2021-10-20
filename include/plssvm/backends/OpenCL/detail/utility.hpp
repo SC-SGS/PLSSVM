@@ -19,6 +19,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
+#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -91,6 +92,7 @@ void device_synchronize(const command_queue &queue);
  * @param[in] queues the used OpenCL command queues
  * @param[in] file the file containing the kernel
  * @param[in] kernel_name the name of the kernel to create
+ * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return the kernel
  */
 template <typename real_type, typename kernel_index_type>
@@ -112,7 +114,9 @@ template <typename real_type, typename kernel_index_type>
 
         const std::string::size_type old_size = kernel_src_string.size();
         kernel_src_string.resize(old_size + len);
-        in.read(kernel_src_string.data() + old_size, len);
+        if (!in.read(kernel_src_string.data() + old_size, len)) {
+            throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", file_name) };
+        }
     };
 
     // read atomic

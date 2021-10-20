@@ -35,6 +35,7 @@ class file_reader {
      * @param[in] filename the file to read and split into lines
      * @param[in] comment the character used to denote comments
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
      */
     file_reader(const std::string &filename, char comment);
 

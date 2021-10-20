@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::invalid_file_format_exception
 
 #include "fmt/core.h"  // fmt::format
 
@@ -120,7 +120,9 @@ void file_reader::open_file(const std::string_view filename) {
         // allocate the necessary buffer
         file_content_ = new char[num_bytes_];
         // read the whole file in one go
-        f.read(file_content_, num_bytes_);
+        if (!f.read(file_content_, num_bytes_)) {
+            throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
+        }
     }
 }
 
