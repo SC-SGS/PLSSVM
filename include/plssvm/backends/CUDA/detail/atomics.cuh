@@ -13,15 +13,16 @@
 
 namespace plssvm::cuda::detail {
 
-#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
-#else
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600
 /**
- * @brief Atomically add the double precision value @p val to the value denoted by @p address.
- * @param[in,out] address the value to increment
+ * @brief Atomically add the double precision @p val to the value denoted by @p addr.
+ * @details Needed since CUDA versions before 6 don't nativelly support double-precisions floating point atomics.
+ * @param[in,out] addr the value to increment
  * @param[in] val the value to add
+ * @return the old value before atomically adding @p val
  */
-__device__ __forceinline__ double atomicAdd(double *address, const double val) {
-    unsigned long long int *address_as_ull = (unsigned long long int *) address;
+__device__ __forceinline__ double atomicAdd(double *addr, const double val) {
+    unsigned long long int *address_as_ull = (unsigned long long int *) addr;
     unsigned long long int old = *address_as_ull, assumed;
     do {
         assumed = old;
