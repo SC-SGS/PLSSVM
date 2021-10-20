@@ -94,19 +94,19 @@ csvm<T>::csvm(const parameter<T> &params) :
     // get kernel names
     std::pair<std::string, std::string> kernel_names = detail::kernel_type_to_function_name(kernel_);
     // build necessary kernel
-    q_kernel_ = detail::create_kernel<real_type, kernel_index_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_names.first);
+    q_kernel_ = detail::create_kernel<real_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "q_kernel.cl", kernel_names.first);
     // assemble kernel name
-    svm_kernel_ = detail::create_kernel<real_type, kernel_index_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_names.second);
+    svm_kernel_ = detail::create_kernel<real_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "svm_kernel.cl", kernel_names.second);
 
     switch (kernel_) {
         case kernel_type::linear:
-            kernel_w_kernel_ = detail::create_kernel<real_type, kernel_index_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_w_linear");
+            kernel_w_kernel_ = detail::create_kernel<real_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_w_linear");
             break;
         case kernel_type::polynomial:
-            predict_kernel_ = detail::create_kernel<real_type, kernel_index_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_predict_poly");
+            predict_kernel_ = detail::create_kernel<real_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_predict_poly");
             break;
         case kernel_type::rbf:
-            predict_kernel_ = detail::create_kernel<real_type, kernel_index_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_predict_radial");
+            predict_kernel_ = detail::create_kernel<real_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_predict_radial");
             break;
     }
 
