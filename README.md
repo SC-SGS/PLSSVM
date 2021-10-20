@@ -74,9 +74,9 @@ optional arguments:
 Example invocations:
 
 ```bash
-> python3 utility/gpu_name_to_arch.py --name "GeForce RTX 3080"
+> python3 utility_scripts/gpu_name_to_arch.py --name "GeForce RTX 3080"
 sm_86
-> python3 utility/gpu_name_to_arch.py --name "Radeon VII"
+> python3 utility_scripts/gpu_name_to_arch.py --name "Radeon VII"
 gfx906
 ```
 
