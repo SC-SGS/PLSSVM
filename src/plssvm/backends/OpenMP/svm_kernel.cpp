@@ -8,28 +8,26 @@
 
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"
 
+#include "plssvm/constants.hpp"     // plssvm::kernel_index_type, plssvm::OPENMP_BLOCK_SIZE
 #include "plssvm/kernel_types.hpp"  // plssvm::kernel_type, plssvm::kernel_function
 
-#include <cstddef>  // std::size_t
 #include <utility>  // std::forward
 #include <vector>   // std::vector
 
 namespace plssvm::openmp {
 
+namespace detail {
+
 template <kernel_type kernel, typename real_type, typename... Args>
 void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add, Args &&...args) {
-    using size_type = std::size_t;
+    const auto dept = static_cast<kernel_index_type>(d.size());
 
-    constexpr size_type BLOCK_SIZE = 64;
-
-    const size_type dept = d.size();
-
-    #pragma omp parallel for collapse(2)
-    for (size_type i = 0; i < dept; i += BLOCK_SIZE) {
-        for (size_type j = 0; j < dept; j += BLOCK_SIZE) {
-            for (size_type ii = 0; ii < BLOCK_SIZE && ii + i < dept; ++ii) {
+    #pragma omp parallel for collapse(2) schedule(dynamic)
+    for (kernel_index_type i = 0; i < dept; i += OPENMP_BLOCK_SIZE) {
+        for (kernel_index_type j = 0; j < dept; j += OPENMP_BLOCK_SIZE) {
+            for (kernel_index_type ii = 0; ii < OPENMP_BLOCK_SIZE && ii + i < dept; ++ii) {
                 real_type ret_iii = 0.0;
-                for (size_type jj = 0; jj < BLOCK_SIZE && jj + j < dept; ++jj) {
+                for (kernel_index_type jj = 0; jj < OPENMP_BLOCK_SIZE && jj + j < dept; ++jj) {
                     if (ii + i >= jj + j) {
                         const real_type temp = (kernel_function<kernel>(data[ii + i], data[jj + j], std::forward<Args>(args)...) + QA_cost - q[ii + i] - q[jj + j]) * add;
                         if (ii + i == jj + j) {
@@ -48,23 +46,25 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
     }
 }
 
+}  // namespace detail
+
 template <typename real_type>
 void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add) {
-    device_kernel<kernel_type::linear>(q, ret, d, data, QA_cost, cost, add);
+    detail::device_kernel<kernel_type::linear>(q, ret, d, data, QA_cost, cost, add);
 }
 template void device_kernel_linear(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const float);
 template void device_kernel_linear(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const double);
 
 template <typename real_type>
 void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
-    device_kernel<kernel_type::polynomial>(q, ret, d, data, QA_cost, cost, add, degree, gamma, coef0);
+    detail::device_kernel<kernel_type::polynomial>(q, ret, d, data, QA_cost, cost, add, degree, gamma, coef0);
 }
 template void device_kernel_poly(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const float, const int, const float, const float);
 template void device_kernel_poly(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const double, const int, const double, const double);
 
 template <typename real_type>
 void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add, const real_type gamma) {
-    device_kernel<kernel_type::rbf>(q, ret, d, data, QA_cost, cost, add, gamma);
+    detail::device_kernel<kernel_type::rbf>(q, ret, d, data, QA_cost, cost, add, gamma);
 }
 template void device_kernel_radial(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const float, const float);
 template void device_kernel_radial(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const double, const double);

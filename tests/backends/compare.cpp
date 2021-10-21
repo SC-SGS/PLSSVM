@@ -11,19 +11,18 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>    // std::pow, std::exp, std::fma
-#include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include <cmath>   // std::pow, std::exp, std::fma
+#include <vector>  // std::vector
 
 namespace compare::detail {
 
 template <typename real_type>
-real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2) {
-    PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
+real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
     real_type result{ 0.0 };
-    for (std::size_t i = 0; i < x1.size(); ++i) {
-        result = std::fma(x1[i], x2[i], result);
+    for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
+        result = std::fma(x[i], y[i], result);
     }
     return result;
 }
@@ -31,12 +30,12 @@ template float linear_kernel(const std::vector<float> &, const std::vector<float
 template double linear_kernel(const std::vector<double> &, const std::vector<double> &);
 
 template <typename real_type>
-real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, const int degree, const real_type gamma, const real_type coef0) {
-    PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
+real_type poly_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const int degree, const real_type gamma, const real_type coef0) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
     real_type result{ 0.0 };
-    for (std::size_t i = 0; i < x1.size(); ++i) {
-        result = std::fma(x1[i], x2[i], result);
+    for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
+        result = std::fma(x[i], y[i], result);
     }
     return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
 }
@@ -44,13 +43,13 @@ template float poly_kernel(const std::vector<float> &, const std::vector<float> 
 template double poly_kernel(const std::vector<double> &, const std::vector<double> &, const int, const double, const double);
 
 template <typename real_type>
-real_type radial_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, const real_type gamma) {
-    PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
+real_type radial_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const real_type gamma) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
     real_type result{ 0.0 };
-    for (std::size_t i = 0; i < x1.size(); ++i) {
-        real_type tmp = x1[i] - x2[i];
-        result = std::fma(tmp, tmp, result);
+    for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
+        const real_type diff = x[i] - y[i];
+        result = std::fma(diff, diff, result);
     }
     return std::exp(-gamma * result);
 }

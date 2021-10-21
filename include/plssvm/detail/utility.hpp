@@ -24,11 +24,11 @@ template <typename>
 constexpr bool always_false_v = false;
 
 /**
- * @brief Get the @p I-th element of the parameter pack @p ts.
+ * @brief Get the @p I-th element of the parameter pack @p args.
  * @tparam I the index of the element to get
  * @tparam Types the types inside the parameter pack
  * @param[in] args the values of the parameter pack
- * @return the @p I-th element of @p args
+ * @return the @p I-th element of @p args (`[[nodiscard]]`)
  */
 template <std::size_t I, typename... Types>
 [[nodiscard]] constexpr decltype(auto) get(Types &&...args) noexcept {
@@ -40,7 +40,7 @@ template <std::size_t I, typename... Types>
  * @brief Converts an enumeration to its underlying type.
  * @tparam Enum the enumeration type
  * @param[in] e enumeration value to convert
- * @return the integer value of the underlying type of `Enum`, converted from @p e
+ * @return the integer value of the underlying type of `Enum`, converted from @p e (`[[nodiscard]]`)
  */
 template <typename Enum>
 [[nodiscard]] constexpr std::underlying_type_t<Enum> to_underlying(const Enum e) noexcept {

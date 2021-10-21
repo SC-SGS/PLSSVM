@@ -15,16 +15,16 @@
 
 namespace plssvm::opencl::detail {
 
-error_code::error_code(const cl_int err) noexcept :
-    err_{ err } {}
+error_code::error_code(const cl_int error) noexcept :
+    err_{ error } {}
 
-error_code &error_code::operator=(const cl_int err) noexcept {
-    err_ = err;
+error_code &error_code::operator=(const cl_int error) noexcept {
+    err_ = error;
     return *this;
 }
 
-void error_code::assign(cl_int err) noexcept {
-    err_ = err;
+void error_code::assign(cl_int error) noexcept {
+    err_ = error;
 }
 
 void error_code::clear() noexcept {

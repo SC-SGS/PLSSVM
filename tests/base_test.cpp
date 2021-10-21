@@ -12,7 +12,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"              // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
 #include "backends/compare.hpp"  // compare::detail::linear_kernel, compare::detail::poly_kernel, compare::detail::radial_kernel
 #include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion, util::gtest_assert_floating_point_near
@@ -23,6 +23,8 @@
 #include <cstddef>    // std::size_t
 #include <random>     // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <vector>     // std::vector
+
+#include <regex>
 
 // check whether the std::string <-> plssvm::backend_type conversions are correct
 TEST(Base, backend_type) {
@@ -120,7 +122,8 @@ TEST(Base, arithmetic_type_name) {
 TEST(BaseDeathTest, plssvm_assert) {
     PLSSVM_ASSERT(true, "TRUE");
 
-    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "");  // TODO: matcher
+    // can't use a matcher due to the used emphasis and color specification in assertion message
+    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "");
 }
 #endif
 

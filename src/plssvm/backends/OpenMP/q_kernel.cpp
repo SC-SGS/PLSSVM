@@ -20,7 +20,7 @@ void device_kernel_q_linear(std::vector<real_type> &q, const std::vector<std::ve
     PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
 
     #pragma omp parallel for
-    for (typename std::vector<real_type>::size_type i = 0; i < data.size() - 1; ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
         q[i] = kernel_function<kernel_type::linear>(data[i], data.back());
     }
 }
@@ -32,7 +32,7 @@ void device_kernel_q_poly(std::vector<real_type> &q, const std::vector<std::vect
     PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
 
     #pragma omp parallel for
-    for (typename std::vector<real_type>::size_type i = 0; i < data.size() - 1; ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
         q[i] = kernel_function<kernel_type::polynomial>(data[i], data.back(), degree, gamma, coef0);
     }
 }
@@ -44,7 +44,7 @@ void device_kernel_q_radial(std::vector<real_type> &q, const std::vector<std::ve
     PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
 
     #pragma omp parallel for
-    for (typename std::vector<real_type>::size_type i = 0; i < data.size() - 1; ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
         q[i] = kernel_function<kernel_type::rbf>(data[i], data.back(), gamma);
     }
 }

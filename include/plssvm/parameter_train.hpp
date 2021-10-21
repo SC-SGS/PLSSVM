@@ -26,25 +26,27 @@ class parameter_train : public parameter<T> {
   public:
     /// The template base type of the parameter_train class.
     using base_type = parameter<T>;
+
     using base_type::backend;
     using base_type::coef0;
     using base_type::cost;
-    using base_type::data_ptr;
     using base_type::degree;
     using base_type::epsilon;
     using base_type::gamma;
-    using base_type::input_filename;
     using base_type::kernel;
-    using base_type::model_filename;
-    using base_type::predict_filename;
     using base_type::print_info;
     using base_type::target;
+
+    using base_type::input_filename;
+    using base_type::model_filename;
+    using base_type::predict_filename;
+
+    using base_type::alpha_ptr;
+    using base_type::data_ptr;
+    using base_type::test_data_ptr;
     using base_type::value_ptr;
 
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
-    /// Unsigned integer type.
-    using size_type = typename base_type::size_type;
+    using base_type::rho;
 
     /**
      * @brief Default construct all training parameters.
@@ -52,14 +54,14 @@ class parameter_train : public parameter<T> {
     parameter_train() = default;
 
     /**
-     * @brief Set all training parameters to their default values.
-     * @details Sets the model_filename to "${input_filename}.model".
+     * @brief Set all training parameters to their default values and parse the data file.
+     * @details Sets the model_filename to `${input_filename}.model`.
      * @param[in] input_filename the name of the data file
      */
     explicit parameter_train(std::string input_filename);
 
     /**
-     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly.
+     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly. Parse the given data file.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */

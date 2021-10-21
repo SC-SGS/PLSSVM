@@ -28,7 +28,7 @@ using ::sycl::atomic_ref;
 }  // namespace detail
 
 /**
- * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references).
+ * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references) targeting global memory.
  * @tparam T the type of the accessed values
  */
 template <typename T>

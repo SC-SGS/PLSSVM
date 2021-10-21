@@ -23,7 +23,8 @@
 namespace plssvm::detail {
 
 /**
- * @brief Function called by the `PLSSVM_ASSERT` macro. Checks the assertion condition and prints and aborts the program if the condition evaluates to `false`.
+ * @brief Function called by the `PLSSVM_ASSERT` macro. Checks the assertion condition. If the condition evaluates to `false`,
+ *        prints the assertion condition together with additional information (e.g. plssvm::source_location information) and aborts the program.
  * @tparam Args the placeholder types
  * @param[in] cond the assertion condition, aborts the program if evaluated to `false`
  * @param[in] cond_str the assertion condition as string

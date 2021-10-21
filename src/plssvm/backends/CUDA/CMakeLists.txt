@@ -43,10 +43,13 @@ endif()
 # explicitly set sources
 set(PLSSVM_CUDA_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cu
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cu
     ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
     ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
 )
 
 # set target properties

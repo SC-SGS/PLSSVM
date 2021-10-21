@@ -6,14 +6,12 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements utility functions for string manipulation and conversion.
+ * @brief Implements utility functions for string manipulation and querying.
  */
 
 #pragma once
 
-#include <algorithm>    // std::min, std::transform
-#include <cctype>       // std::tolower, std::toupper
-#include <string>       // std::char_traits, std::string
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm::detail {
@@ -24,64 +22,61 @@ namespace plssvm::detail {
  * @param[in] sv the string to match against the start of @p str
  * @return `true` if @p str starts with the string @p sv, otherwise `false` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline bool starts_with(const std::string_view str, const std::string_view sv) noexcept {
-    return str.substr(0, sv.size()) == sv;
-}
+[[nodiscard]] bool starts_with(std::string_view str, std::string_view sv) noexcept;
 /**
  * @brief Checks if the string @p str starts with the character @p c.
  * @param[in] str the string to check
  * @param[in] c the character to match against the first character of @p str
  * @return `true` if @p str starts with the character @p c, otherwise `false` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline bool starts_with(const std::string_view str, const char c) noexcept {
-    return !str.empty() && std::char_traits<char>::eq(str.front(), c);
-}
+[[nodiscard]] bool starts_with(std::string_view str, char c) noexcept;
 /**
  * @brief Checks if the string @p str ends with the suffix @p sv.
  * @param[in] str the string to check
  * @param[in] sv the string to match against the end of @p str
  * @return `true` if @p str ends with the string @p sv, otherwise `false` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline bool ends_with(const std::string_view str, const std::string_view sv) noexcept {
-    return str.size() >= sv.size() && str.compare(str.size() - sv.size(), std::string_view::npos, sv) == 0;
-}
+[[nodiscard]] bool ends_with(std::string_view str, std::string_view sv) noexcept;
 /**
  * @brief Checks if the string @p str ends with the character @p c.
  * @param[in] str the string to check
  * @param[in] c the character to match against the last character of @p str
  * @return `true` if @p str ends with the character @p c, otherwise `false` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline bool ends_with(const std::string_view str, const char c) noexcept {
-    return !str.empty() && std::char_traits<char>::eq(str.back(), c);
-}
+[[nodiscard]] bool ends_with(std::string_view str, char c) noexcept;
 /**
  * @brief Checks if the string @p str contains the string @p sv.
  * @param[in] str the string to check
  * @param[in] sv the string to find
  * @return `true` if @p str contains the string @p sv, otherwise `false` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline bool contains(const std::string_view str, const std::string_view sv) noexcept {
-    return str.find(sv) != std::string_view::npos;
-}
+[[nodiscard]] bool contains(std::string_view str, std::string_view sv) noexcept;
 /**
  * @brief Checks if the string @p str contains the character @p c.
  * @param[in] str the string to check
  * @param[in] c the character to find
  * @return `true` if @p str contains the character @p c, otherwise `false` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline bool contains(const std::string_view str, const char c) noexcept {
-    return str.find(c) != std::string_view::npos;
-}
+[[nodiscard]] bool contains(std::string_view str, char c) noexcept;
 
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leding whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading whitespaces are removed.
  * @param[in] str the string to remove the leading whitespaces
  * @return the string @p str without leading whitespace (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::string_view trim_left(const std::string_view str) noexcept {
-    std::string_view::size_type pos = std::min(str.find_first_not_of(' '), str.size());
-    return str.substr(pos);
-}
+[[nodiscard]] std::string_view trim_left(std::string_view str) noexcept;
+/**
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all trailing whitespaces are removed.
+ * @param[in] str the string to remove the trailing whitespaces
+ * @return the string @p str without trailing whitespace (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string_view trim_right(std::string_view str) noexcept;
+/**
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading and trailing whitespaces are removed.
+ * @param[in] str the string to remove the leading and trailing whitespaces
+ * @return the string @p str without leading and trailing whitespace (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string_view trim(std::string_view str) noexcept;
 
 /**
  * @brief Replaces all occurrences of @p what with @p with in the string @p str.
@@ -89,54 +84,36 @@ namespace plssvm::detail {
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
  */
-inline void replace_all(std::string &str, const std::string_view what, const std::string_view with) {
-    for (std::string::size_type pos = 0; std::string::npos != (pos = str.find(what.data(), pos, what.length())); pos += with.length()) {
-        str.replace(pos, what.length(), with.data(), with.length());
-    }
-}
+void replace_all(std::string &str, std::string_view what, std::string_view with);
 
 /**
  * @brief Convert the string @p str to its all lower case representation.
  * @param[in,out] str the string to transform
  * @return the transformed string
  */
-inline std::string &to_lower_case(std::string &str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return str;
-}
+std::string &to_lower_case(std::string &str);
 
 /**
  * @brief Return a new string with the same content as @p str but all lower case.
- * @details In contrast to `std::string& to_lower_case(std::string&)` this function does not change the input string @p str.
+ * @details In contrast to to_lower_case(std::string&) this function does not change the input string @p str.
  * @param[in] str the string to use in the transformation
  * @return the transformed string (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::string as_lower_case(const std::string_view str) {
-    std::string lowercase_str{ str };
-    std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return lowercase_str;
-}
+[[nodiscard]] std::string as_lower_case(std::string_view str);
 
 /**
  * @brief Convert the string @p str to its all upper case representation.
  * @param[in,out] str the string to transform
  * @return the transformed string
  */
-inline std::string &to_upper_case(std::string &str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
-    return str;
-}
+std::string &to_upper_case(std::string &str);
 
 /**
  * @brief Return a new string with the same content as @p str but all upper case.
- * @details In contrast to `std::string& to_upper_case(std::string&)` this function does not change the input string @p str.
+ * @details In contrast to to_upper_case(std::string&) this function does not change the input string @p str.
  * @param[in] str the string to use in the transformation
  * @return the transformed string (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::string as_upper_case(const std::string_view str) {
-    std::string uppercase_str{ str };
-    std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
-    return uppercase_str;
-}
+[[nodiscard]] std::string as_upper_case(std::string_view str);
 
 }  // namespace plssvm::detail

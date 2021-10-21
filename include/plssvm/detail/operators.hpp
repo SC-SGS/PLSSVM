@@ -36,7 +36,7 @@
  * vec1 + scalar;  // operator+(vector, scalar)
  * scalar + vec1;  // operator+(scalar, vector)
  * @endcode
- * Also checks that both vectors have the same size.
+ * Also checks that both vectors have the same size using the PLSSVM_ASSERT macro.
  * @param[in] Op the operator to generate
  */
 // clang-format off
@@ -108,7 +108,7 @@ transposed(const std::vector<T> &) -> transposed<T>;
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
- * @return the dot product
+ * @return the dot product (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T operator*(const transposed<T> &lhs, const std::vector<T> &rhs) {
@@ -134,7 +134,7 @@ template <typename T>
  * @details Uses OpenMP SIMD reduction to speedup the calculation.
  * @tparam T the value type
  * @param[in] vec the elements to accumulate
- * @return the sum of all elements
+ * @return the sum of all elements (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
@@ -152,7 +152,7 @@ template <typename T>
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
- * @return the squared euclidean distance
+ * @return the squared euclidean distance (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T squared_euclidean_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
@@ -168,8 +168,8 @@ template <typename T>
 
 /**
  * @brief Returns +1 if x is positive and -1 if x is negative or 0.
- * @param x the number parameter to evaluate
- * @return +1 if x is positive and -1 if x is negative or 0 ([[nodiscard]])
+ * @param[in] x the number parameter to evaluate
+ * @return +1 if x is positive and -1 if x is negative or 0 (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline constexpr T sign(const T x) {

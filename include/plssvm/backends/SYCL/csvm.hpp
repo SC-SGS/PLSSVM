@@ -13,15 +13,26 @@
 
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
-#include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
-namespace plssvm::sycl {
+namespace plssvm {
+
+// forward declare parameter class
+template <typename T>
+class parameter;
+
+namespace detail {
+
+// forward declare execution_range class
+class execution_range;
+
+}  // namespace detail
+
+namespace sycl {
 
 /**
- * @brief The C-SVM class using the SYCL backend.
+ * @brief A C-SVM implementation using SYCL as backend.
  * @tparam T the type of the data
  */
 template <typename T>
@@ -47,13 +58,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     using base_type::devices_;
     using base_type::num_cols_;
     using base_type::num_rows_;
-    using base_type::w_d_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
-    /// Unsigned integer type.
-    using size_type = typename base_type::size_type;
 
     /// The type of the SYCL device pointer.
     using device_ptr_type = ::plssvm::sycl::detail::device_ptr<real_type>;
@@ -63,37 +71,44 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     /**
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::sycl::backend_exception if the requested plssvm::target_platform isn't available
+     * @throws plssvm::sycl::backend_exception if no possible OpenCL devices could be found
      */
     explicit csvm(const parameter<T> &params);
 
     /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
-     * @details Terminates the program, if any asynchronous exceptions are thrown.
+     * @details Terminates the program, if any asynchronous exception is thrown.
      */
     ~csvm() override;
 
   protected:
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
+     */
     void device_synchronize(queue_type &queue) final;
 
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
      */
-    void run_q_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &q_d, const int first_feature, const int last_feature) final;
+    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
-    void run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const int first_feature, const int last_feature) final;
+    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void run_w_kernel(const ::plssvm::detail::execution_range<size_type> &range, const device_ptr_type &alpha_d) final;
+    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    void run_predict_kernel(const ::plssvm::detail::execution_range<size_type> &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const size_type num_predict_points) final;
+    void run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
 };
 
 extern template class csvm<float>;
 extern template class csvm<double>;
 
-}  // namespace plssvm::sycl
+}  // namespace sycl
+}  // namespace plssvm

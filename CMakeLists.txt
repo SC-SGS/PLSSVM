@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project(ParallelLeastSquaresSupportVectorMachine
+project("PLSSVM - Parallel Least-Squares Support Vector Machine"
         VERSION 0.1.0
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
@@ -27,10 +27,18 @@ configure_file(
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
 )
 
 ## create base library: linked against all backend libraries
@@ -337,7 +345,7 @@ if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
     if (PLSSVM_THREAD_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_THREAD_BLOCK_SIZE GREATER 0)
         message(STATUS "Set THREAD_BLOCK_SIZE to ${PLSSVM_THREAD_BLOCK_SIZE}.")
         # add target definition
-        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
+        target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
     else()
         message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
     endif()
@@ -351,9 +359,23 @@ if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
     if (PLSSVM_INTERNAL_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_INTERNAL_BLOCK_SIZE GREATER 0)
         message(STATUS "Set INTERNAL_BLOCK_SIZE to ${PLSSVM_INTERNAL_BLOCK_SIZE}.")
         # add target definition
-        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
+        target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
     else()
         message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
+    endif()
+endif()
+
+## set specific internal block sizes of requested
+if(DEFINED ENV{PLSSVM_OPENMP_BLOCK_SIZE})
+    set(PLSSVM_OPENMP_BLOCK_SIZE $ENV{PLSSVM_OPENMP_BLOCK_SIZE} CACHE STRING "The used block size for the OpenMP kernel." FORCE)
+endif()
+if(DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
+    if (PLSSVM_OPENMP_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_OPENMP_BLOCK_SIZE GREATER 0)
+        message(STATUS "Set PLSSVM_OPENMP_BLOCK_SIZE to ${PLSSVM_OPENMP_BLOCK_SIZE}.")
+        # add target definition
+        target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} PUBLIC PLSSVM_OPENMP_BLOCK_SIZE=${PLSSVM_OPENMP_BLOCK_SIZE})
+    else()
+        message(FATAL_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
     endif()
 endif()
 
@@ -399,6 +421,20 @@ option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+
+
+########################################################################################################################
+##                                        enable timing generation via a script                                       ##
+########################################################################################################################
+option(PLSSVM_GENERATE_TIMING_SCRIPT "Generate a timing script used for performance measurement." OFF)
+if(PLSSVM_GENERATE_TIMING_SCRIPT)
+    configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
+            ${CMAKE_BINARY_DIR}/time.sh
+            @ONLY
+    )
 endif()
 
 
@@ -469,19 +505,3 @@ install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
         )
-
-
-
-
-
-# TODO: separate repo?
-## generate scripts
-option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings." ON)
-if(PLSSVM_GENERATE_TIMINGSCRIPT)
-    configure_file(
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-            ${CMAKE_BINARY_DIR}/time.sh
-            @ONLY
-    )
-endif()
-

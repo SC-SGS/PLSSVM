@@ -21,13 +21,14 @@ message(CHECK_PASS "found")
 
 # explicitly set sources
 set(PLSSVM_OPENCL_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cl
-    ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cl
-    ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cl
+    ${CMAKE_CURRENT_LIST_DIR}/detail/command_queue.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/atomics.cl
+    ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
 )
 
 # set target properties
@@ -40,7 +41,10 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set kernel file directory
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/")
+#get_target_property(PLSSVM_BASE_LIBRARY_NAME_INCLUDE_DIR ${PLSSVM_BASE_LIBRARY_NAME} INCLUDE_DIRECTORIES)
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY="${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/")
+
+# set OpenCL target version
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)
 
 # set compile definition that the OpenCL backend is available
