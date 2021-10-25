@@ -1,5 +1,4 @@
-
-# Least-Squares Support-Vector Machine &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://vancraar.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
+# Least-Squares Support-Vector Machine &ensp; [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://vancraar.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml) 
 
 Implementation of a parallel [least-squares support-vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
 The currently available backends are:
@@ -35,6 +34,7 @@ Additional dependencies for the SYCL backend:
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
   - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
+
 
 ### Building
 
@@ -87,6 +87,7 @@ If the architectural information for the requested GPU could not be retrieved, o
   - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
   - for AMD GPUs: [ROCm Documentation](https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst)
 
+
 #### Optional CMake Options
 
 The `[optional_options]` can be one or multiple of:
@@ -122,7 +123,6 @@ The `[optional_options]` can be one or multiple of:
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
   - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
     - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
-    - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point
 
 If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.
@@ -140,12 +140,14 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 
 To enable the generation of test coverage reports using `locv` the library must be compiled using the custom `Coverage` `CMAKE_BUILD_TYPE`.
 Additionally, it's advisable to use smaller test files to shorten the `ctest` step.
+
 ```bash
 > cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS="..." \
         -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \
         -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..
 > cmake --build . -- coverage
 ```
+
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
 
 ### Creating the documentation
@@ -159,6 +161,7 @@ The documentation of the current state of the main branch can be found [here](ht
 ## Installing
 
 The library supports the `install` target:
+
 ```bash
 > cmake --build . -- install
 ```
@@ -236,6 +239,7 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 ```
 
 The `--target_platform=automatic` flags works for the different backends as follows:
+
 - `OpenMP`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
@@ -275,6 +279,7 @@ The `--target_platform=automatic` flags works like in the training (`./svm-train
 ## Example code for usage as library
 
 A simple C++ program (`main.cpp`) using this library could look like:
+
 ```cpp
 #include "plssvm/core.hpp"
 
@@ -314,7 +319,9 @@ int main(i) {
     return 0;
 }
 ```
+
 With a corresponding minimal CMake file:
+
 ```cmake
 cmake_minimum_required(VERSION 3.16)
 
@@ -328,6 +335,7 @@ add_executable(prog main.cpp)
 target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::svm-all)
 ```
+
 
 ## License
 
