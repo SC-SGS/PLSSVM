@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/OpenCL/detail/device_ptr.hpp File Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/OpenCL/detail/device_ptr.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -69,40 +69,30 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle">
 <div class="title">device_ptr.hpp File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Small wrapper around a OpenCL device pointer and functions.  
+<p>Small wrapper around a OpenCL device pointer.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="command__queue_8hpp_source.html">plssvm/backends/OpenCL/detail/command_queue.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="target__platform_8hpp_source.html">plssvm/target_platform.hpp</a>&quot;</code><br />
 <code>#include &quot;CL/cl.h&quot;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for device_ptr.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="OpenCL_2detail_2device__ptr_8hpp__incl.png" border="0" usemap="#include_2plssvm_2backends_2OpenCL_2detail_2device__ptr_8hpp" alt=""/></div>
 <map name="include_2plssvm_2backends_2OpenCL_2detail_2device__ptr_8hpp" id="include_2plssvm_2backends_2OpenCL_2detail_2device__ptr_8hpp">
-<area shape="rect" title="Small wrapper around a OpenCL device pointer and functions." alt="" coords="350,5,535,61"/>
-<area shape="rect" href="command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="37,109,243,151"/>
-<area shape="rect" title=" " alt="" coords="78,206,143,233"/>
-<area shape="rect" href="target__platform_8hpp.html" title="Defines all possible targets. Can also include targets not available on the target platform." alt="" coords="341,117,544,143"/>
-<area shape="rect" title=" " alt="" coords="569,117,639,143"/>
-<area shape="rect" title=" " alt="" coords="663,117,726,143"/>
-<area shape="rect" href="string__utility_8hpp.html" title="Implements utility functions for string manipulation and conversion." alt="" coords="167,199,318,240"/>
-<area shape="rect" title=" " alt="" coords="327,288,385,315"/>
-<area shape="rect" title=" " alt="" coords="393,206,508,233"/>
-<area shape="rect" title=" " alt="" coords="533,206,574,233"/>
-<area shape="rect" title=" " alt="" coords="599,206,671,233"/>
-<area shape="rect" title=" " alt="" coords="695,206,771,233"/>
-<area shape="rect" title=" " alt="" coords="5,288,91,315"/>
-<area shape="rect" title=" " alt="" coords="115,288,181,315"/>
-<area shape="rect" title=" " alt="" coords="205,288,302,315"/>
+<area shape="rect" title="Small wrapper around a OpenCL device pointer." alt="" coords="231,5,416,61"/>
+<area shape="rect" href="command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="5,109,212,151"/>
+<area shape="rect" title=" " alt="" coords="147,199,212,225"/>
+<area shape="rect" title=" " alt="" coords="288,117,359,143"/>
+<area shape="rect" title=" " alt="" coords="383,117,475,143"/>
+<area shape="rect" title=" " alt="" coords="499,117,561,143"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -110,7 +100,7 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="OpenCL_2detail_2device__ptr_8hpp__dep__incl.png" border="0" usemap="#include_2plssvm_2backends_2OpenCL_2detail_2device__ptr_8hppdep" alt=""/></div>
 <map name="include_2plssvm_2backends_2OpenCL_2detail_2device__ptr_8hppdep" id="include_2plssvm_2backends_2OpenCL_2detail_2device__ptr_8hppdep">
-<area shape="rect" title="Small wrapper around a OpenCL device pointer and functions." alt="" coords="5,5,191,61"/>
+<area shape="rect" title="Small wrapper around a OpenCL device pointer." alt="" coords="5,5,191,61"/>
 <area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,109,191,151"/>
 </map>
 </div>
@@ -126,7 +116,7 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html">plssvm</a></td></tr>
-<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all API functions. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all public API functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1opencl"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl.html">plssvm::opencl</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1opencl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the OpenCL backend. <br /></td></tr>
@@ -134,18 +124,9 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm_1_1opencl_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html">plssvm::opencl::detail</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1opencl_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing OpenCL backend specific implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:afbd15ddd63f50c2404f86c2fdf64982b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; command_queue &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#afbd15ddd63f50c2404f86c2fdf64982b">plssvm::opencl::detail::get_command_queues</a> (target_platform target)</td></tr>
-<tr class="memdesc:afbd15ddd63f50c2404f86c2fdf64982b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#afbd15ddd63f50c2404f86c2fdf64982b">More...</a><br /></td></tr>
-<tr class="separator:afbd15ddd63f50c2404f86c2fdf64982b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8795d201b3800826ec311f66c58f66e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">plssvm::opencl::detail::device_synchronize</a> (const command_queue &amp;queue)</td></tr>
-<tr class="memdesc:ad8795d201b3800826ec311f66c58f66e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">More...</a><br /></td></tr>
-<tr class="separator:ad8795d201b3800826ec311f66c58f66e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Small wrapper around a OpenCL device pointer and functions. </p>
+<div class="textblock"><p>Small wrapper around a OpenCL device pointer. </p>
 <dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
 <dd>
 Marcel Breyer </dd></dl>
@@ -154,7 +135,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

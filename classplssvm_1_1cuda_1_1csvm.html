@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::cuda::csvm&lt; T &gt; Class Template Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::cuda::csvm&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -72,14 +72,13 @@ $(function() {
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-types">Protected Types</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classplssvm_1_1cuda_1_1csvm-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">plssvm::cuda::csvm&lt; T &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>The C-SVM class using the CUDA backend.  
+<p>A C-SVM implementation using CUDA as backend.  
  <a href="classplssvm_1_1cuda_1_1csvm.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="backends_2CUDA_2csvm_8hpp_source.html">csvm.hpp</a>&gt;</code></p>
@@ -88,7 +87,8 @@ Inheritance diagram for plssvm::cuda::csvm&lt; T &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="classplssvm_1_1cuda_1_1csvm__inherit__graph.png" border="0" usemap="#plssvm_1_1cuda_1_1csvm_3_01T_01_4_inherit__map" alt="Inheritance graph"/></div>
 <map name="plssvm_1_1cuda_1_1csvm_3_01T_01_4_inherit__map" id="plssvm_1_1cuda_1_1csvm_3_01T_01_4_inherit__map">
-<area shape="rect" title="The C&#45;SVM class using the CUDA backend." alt="" coords="5,80,195,107"/>
+<area shape="rect" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="5,199,195,225"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="21,80,179,151"/>
 <area shape="rect" href="classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="25,5,175,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
@@ -97,7 +97,8 @@ Collaboration diagram for plssvm::cuda::csvm&lt; T &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="classplssvm_1_1cuda_1_1csvm__coll__graph.png" border="0" usemap="#plssvm_1_1cuda_1_1csvm_3_01T_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="plssvm_1_1cuda_1_1csvm_3_01T_01_4_coll__map" id="plssvm_1_1cuda_1_1csvm_3_01T_01_4_coll__map">
-<area shape="rect" title="The C&#45;SVM class using the CUDA backend." alt="" coords="5,80,195,107"/>
+<area shape="rect" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="5,199,195,225"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="21,80,179,151"/>
 <area shape="rect" href="classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="25,5,175,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
@@ -105,22 +106,35 @@ Collaboration diagram for plssvm::cuda::csvm&lt; T &gt;:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a31d75350f62f2e65e228df1052a3fa13"><td class="memItemLeft" align="right" valign="top"><a id="a31d75350f62f2e65e228df1052a3fa13"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> = typename <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">base_type::real_type</a></td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> = typename <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a4e66b9e000ccdb252b6e459b5ba3e8a0">base_type::real_type</a></td></tr>
 <tr class="memdesc:a31d75350f62f2e65e228df1052a3fa13"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the data. Must be either <code>float</code> or <code>double</code>. <br /></td></tr>
 <tr class="separator:a31d75350f62f2e65e228df1052a3fa13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeac7b944ae306a9fdee3bdb7c9fa6589"><td class="memItemLeft" align="right" valign="top"><a id="aeac7b944ae306a9fdee3bdb7c9fa6589"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aeac7b944ae306a9fdee3bdb7c9fa6589">size_type</a> = typename <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">base_type::size_type</a></td></tr>
-<tr class="memdesc:aeac7b944ae306a9fdee3bdb7c9fa6589"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsigned integer type. <br /></td></tr>
-<tr class="separator:aeac7b944ae306a9fdee3bdb7c9fa6589"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9909c529ca18e40bdcbd36e1b1174b6"><td class="memItemLeft" align="right" valign="top"><a id="ac9909c529ca18e40bdcbd36e1b1174b6"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> = ::<a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">plssvm::cuda::detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;</td></tr>
+<tr class="memdesc:ac9909c529ca18e40bdcbd36e1b1174b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the CUDA device pointer. <br /></td></tr>
+<tr class="separator:ac9909c529ca18e40bdcbd36e1b1174b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca44fb69d54e48e7063fdca8c5d17649"><td class="memItemLeft" align="right" valign="top"><a id="aca44fb69d54e48e7063fdca8c5d17649"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aca44fb69d54e48e7063fdca8c5d17649">queue_type</a> = int</td></tr>
+<tr class="memdesc:aca44fb69d54e48e7063fdca8c5d17649"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the CUDA device queue. <br /></td></tr>
+<tr class="separator:aca44fb69d54e48e7063fdca8c5d17649"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classplssvm_1_1detail_1_1gpu__csvm')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td></tr>
+<tr class="memitem:a4e66b9e000ccdb252b6e459b5ba3e8a0 inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a4e66b9e000ccdb252b6e459b5ba3e8a0"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a4e66b9e000ccdb252b6e459b5ba3e8a0">real_type</a> = typename <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">base_type::real_type</a></td></tr>
+<tr class="memdesc:a4e66b9e000ccdb252b6e459b5ba3e8a0 inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the data. Must be either <code>float</code> or <code>double</code>. <br /></td></tr>
+<tr class="separator:a4e66b9e000ccdb252b6e459b5ba3e8a0 inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac893b4571aad149525b43402289168cb inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ac893b4571aad149525b43402289168cb"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> = ::<a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">plssvm::cuda::detail::device_ptr</a>&lt; T &gt;</td></tr>
+<tr class="memdesc:ac893b4571aad149525b43402289168cb inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the device pointer (dependent on the used backend). <br /></td></tr>
+<tr class="separator:ac893b4571aad149525b43402289168cb inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d9fe4bad5ad345774ef3e24c31fbfcf inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a5d9fe4bad5ad345774ef3e24c31fbfcf"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a5d9fe4bad5ad345774ef3e24c31fbfcf">queue_type</a> = int</td></tr>
+<tr class="memdesc:a5d9fe4bad5ad345774ef3e24c31fbfcf inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the device queue (dependent on the used backend). <br /></td></tr>
+<tr class="separator:a5d9fe4bad5ad345774ef3e24c31fbfcf inherit pub_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classplssvm_1_1csvm"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classplssvm_1_1csvm')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td></tr>
 <tr class="memitem:a6d21fdb49c960425dd00f35c95248426 inherit pub_types_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a6d21fdb49c960425dd00f35c95248426"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> = T</td></tr>
 <tr class="memdesc:a6d21fdb49c960425dd00f35c95248426 inherit pub_types_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the data. Must be either <code>float</code> or <code>double</code>. <br /></td></tr>
 <tr class="separator:a6d21fdb49c960425dd00f35c95248426 inherit pub_types_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d5be042acc1a446416256d682c19c3c inherit pub_types_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a8d5be042acc1a446416256d682c19c3c"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> = std::size_t</td></tr>
-<tr class="memdesc:a8d5be042acc1a446416256d682c19c3c inherit pub_types_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsigned integer type. <br /></td></tr>
-<tr class="separator:a8d5be042acc1a446416256d682c19c3c inherit pub_types_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -128,175 +142,230 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a67b503e5a9923eee19470dd58233a4a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new C-SVM using the CUDA backend with the parameters given through <code>params</code>.  <a href="classplssvm_1_1cuda_1_1csvm.html#a67b503e5a9923eee19470dd58233a4a0">More...</a><br /></td></tr>
 <tr class="separator:a67b503e5a9923eee19470dd58233a4a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4ebdfbe2026daad7e07d2b421d71cb6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ae4ebdfbe2026daad7e07d2b421d71cb6">~csvm</a> () override</td></tr>
-<tr class="memdesc:ae4ebdfbe2026daad7e07d2b421d71cb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for all operations on all devices to finish.  <a href="classplssvm_1_1cuda_1_1csvm.html#ae4ebdfbe2026daad7e07d2b421d71cb6">More...</a><br /></td></tr>
+<tr class="memdesc:ae4ebdfbe2026daad7e07d2b421d71cb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for all operations on all CUDA devices to finish.  <a href="classplssvm_1_1cuda_1_1csvm.html#ae4ebdfbe2026daad7e07d2b421d71cb6">More...</a><br /></td></tr>
 <tr class="separator:ae4ebdfbe2026daad7e07d2b421d71cb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f1901601c1b401408a10d805c1037b6"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a0f1901601c1b401408a10d805c1037b6">predict</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&gt; &amp;points) override</td></tr>
-<tr class="memdesc:a0f1901601c1b401408a10d805c1037b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) data points.  <a href="classplssvm_1_1cuda_1_1csvm.html#a0f1901601c1b401408a10d805c1037b6">More...</a><br /></td></tr>
-<tr class="separator:a0f1901601c1b401408a10d805c1037b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classplssvm_1_1detail_1_1gpu__csvm')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td></tr>
+<tr class="memitem:ad735acce662cb53960cfd379722b66a7 inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ad735acce662cb53960cfd379722b66a7">gpu_csvm</a> (const <a class="el" href="classplssvm_1_1parameter.html">parameter</a>&lt; T &gt; &amp;params)</td></tr>
+<tr class="memdesc:ad735acce662cb53960cfd379722b66a7 inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new C-SVM using any GPU backend with the parameters given through <code>params</code>.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#ad735acce662cb53960cfd379722b66a7">More...</a><br /></td></tr>
+<tr class="separator:ad735acce662cb53960cfd379722b66a7 inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3a9c538804b15b904ac1835e1452442 inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="aa3a9c538804b15b904ac1835e1452442"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#aa3a9c538804b15b904ac1835e1452442">~gpu_csvm</a> ()=default</td></tr>
+<tr class="memdesc:aa3a9c538804b15b904ac1835e1452442 inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor to enable safe inheritance. <br /></td></tr>
+<tr class="separator:aa3a9c538804b15b904ac1835e1452442 inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7089c984b25e1c34a1c97f5a3083c9c inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">predict</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points) final</td></tr>
+<tr class="memdesc:ac7089c984b25e1c34a1c97f5a3083c9c inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) data points.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">More...</a><br /></td></tr>
+<tr class="separator:ac7089c984b25e1c34a1c97f5a3083c9c inherit pub_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classplssvm_1_1csvm"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classplssvm_1_1csvm')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td></tr>
 <tr class="memitem:a4395f95de0e6360163b45a911a180d4d inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a4395f95de0e6360163b45a911a180d4d">csvm</a> (const <a class="el" href="classplssvm_1_1parameter.html">parameter</a>&lt; T &gt; &amp;params)</td></tr>
 <tr class="memdesc:a4395f95de0e6360163b45a911a180d4d inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new C-SVM with the parameters given through <code>params</code>.  <a href="classplssvm_1_1csvm.html#a4395f95de0e6360163b45a911a180d4d">More...</a><br /></td></tr>
 <tr class="separator:a4395f95de0e6360163b45a911a180d4d inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5750fc39472bc01d6bc1391bde763f44 inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a5750fc39472bc01d6bc1391bde763f44"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a5750fc39472bc01d6bc1391bde763f44">csvm</a> (const <a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a5750fc39472bc01d6bc1391bde763f44 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable copy-constructor. <br /></td></tr>
+<tr class="memdesc:a5750fc39472bc01d6bc1391bde763f44 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete expensive copy-constructor to make csvm a move only type. <br /></td></tr>
 <tr class="separator:a5750fc39472bc01d6bc1391bde763f44 inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af09fa42b9e680003eb4b5b87bf22609d inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="af09fa42b9e680003eb4b5b87bf22609d"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#af09fa42b9e680003eb4b5b87bf22609d">csvm</a> (<a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&amp;) noexcept=default</td></tr>
-<tr class="memdesc:af09fa42b9e680003eb4b5b87bf22609d inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Explicitly allow move-construction. <br /></td></tr>
+<tr class="memdesc:af09fa42b9e680003eb4b5b87bf22609d inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as csvm is a move-only type. <br /></td></tr>
 <tr class="separator:af09fa42b9e680003eb4b5b87bf22609d inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a512e8d5286b9278968c47a9c5e3708de inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a512e8d5286b9278968c47a9c5e3708de"></a>
+<a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a512e8d5286b9278968c47a9c5e3708de">operator=</a> (const <a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;)=delete</td></tr>
+<tr class="memdesc:a512e8d5286b9278968c47a9c5e3708de inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete expensive copy-assignment-operator to make csvm a move only type. <br /></td></tr>
+<tr class="separator:a512e8d5286b9278968c47a9c5e3708de inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3125bc8f1cee0adb06497e6789049c9d inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a3125bc8f1cee0adb06497e6789049c9d">operator=</a> (<a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&amp;) noexcept=default</td></tr>
+<tr class="memdesc:a3125bc8f1cee0adb06497e6789049c9d inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as csvm is a move-only type.  <a href="classplssvm_1_1csvm.html#a3125bc8f1cee0adb06497e6789049c9d">More...</a><br /></td></tr>
+<tr class="separator:a3125bc8f1cee0adb06497e6789049c9d inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07baf4f680a01057bf9a141618499d3e inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e">write_model</a> (const std::string &amp;filename)</td></tr>
-<tr class="memdesc:a07baf4f680a01057bf9a141618499d3e inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the calculated model to the given file.  <a href="classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e">More...</a><br /></td></tr>
+<tr class="memdesc:a07baf4f680a01057bf9a141618499d3e inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the calculated model to the file denoted by @þ filename.  <a href="classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e">More...</a><br /></td></tr>
 <tr class="separator:a07baf4f680a01057bf9a141618499d3e inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af54a2f0f53af7c0fa6b1be469462d3ca inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca">learn</a> ()</td></tr>
-<tr class="memdesc:af54a2f0f53af7c0fa6b1be469462d3ca inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Learns the Support Vectors given the data in the provided parameter class.  <a href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca">More...</a><br /></td></tr>
+<tr class="memdesc:af54a2f0f53af7c0fa6b1be469462d3ca inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Learns the support vectors given the data in the provided parameter class.  <a href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca">More...</a><br /></td></tr>
 <tr class="separator:af54a2f0f53af7c0fa6b1be469462d3ca inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c22123cf00db88656a4aa1fcedca9bd inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a4c22123cf00db88656a4aa1fcedca9bd">accuracy</a> ()</td></tr>
 <tr class="memdesc:a4c22123cf00db88656a4aa1fcedca9bd inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluates the model on the data used for training.  <a href="classplssvm_1_1csvm.html#a4c22123cf00db88656a4aa1fcedca9bd">More...</a><br /></td></tr>
 <tr class="separator:a4c22123cf00db88656a4aa1fcedca9bd inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad48b415364c0fb1b7392047572a39d1d inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ad48b415364c0fb1b7392047572a39d1d">accuracy</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;point, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> correct_label)</td></tr>
+<tr class="memdesc:ad48b415364c0fb1b7392047572a39d1d inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the model on the given data <code>point</code> with <code>correct_label</code> being the correct label.  <a href="classplssvm_1_1csvm.html#ad48b415364c0fb1b7392047572a39d1d">More...</a><br /></td></tr>
+<tr class="separator:ad48b415364c0fb1b7392047572a39d1d inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6112420b9f68519e2b3e8808c5df0672 inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a6112420b9f68519e2b3e8808c5df0672">accuracy</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;correct_labels)</td></tr>
+<tr class="memdesc:a6112420b9f68519e2b3e8808c5df0672 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the model on the given data <code>points</code> with <code>correct_labels</code> being the correct labels.  <a href="classplssvm_1_1csvm.html#a6112420b9f68519e2b3e8808c5df0672">More...</a><br /></td></tr>
+<tr class="separator:a6112420b9f68519e2b3e8808c5df0672 inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5b7acfc6d7c2cb76aab9ad06b8f7806 inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">predict</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;point)</td></tr>
-<tr class="memdesc:ae5b7acfc6d7c2cb76aab9ad06b8f7806 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of a (new) data point.  <a href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">More...</a><br /></td></tr>
+<tr class="memdesc:ae5b7acfc6d7c2cb76aab9ad06b8f7806 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict a (new) data point.  <a href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">More...</a><br /></td></tr>
 <tr class="separator:ae5b7acfc6d7c2cb76aab9ad06b8f7806 inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70aeac109c92024a8621d2fc955705a7 inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">predict_label</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;point)</td></tr>
-<tr class="memdesc:a70aeac109c92024a8621d2fc955705a7 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of an (new) point.  <a href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">More...</a><br /></td></tr>
+<tr class="memdesc:a70aeac109c92024a8621d2fc955705a7 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of a (new) data point.  <a href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">More...</a><br /></td></tr>
 <tr class="separator:a70aeac109c92024a8621d2fc955705a7 inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab29462ff03a9c2f4a0a44cd24a4f26f2 inherit pub_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">predict_label</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points)</td></tr>
-<tr class="memdesc:ab29462ff03a9c2f4a0a44cd24a4f26f2 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) points.  <a href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">More...</a><br /></td></tr>
+<tr class="memdesc:ab29462ff03a9c2f4a0a44cd24a4f26f2 inherit pub_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) data points.  <a href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">More...</a><br /></td></tr>
 <tr class="separator:ab29462ff03a9c2f4a0a44cd24a4f26f2 inherit pub_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
 Protected Types</h2></td></tr>
-<tr class="memitem:af22abd77a0adf7abd52747f2eb3aaac3"><td class="memItemLeft" align="right" valign="top"><a id="af22abd77a0adf7abd52747f2eb3aaac3"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#af22abd77a0adf7abd52747f2eb3aaac3">base_type</a> = ::<a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm</a>&lt; T &gt;</td></tr>
-<tr class="memdesc:af22abd77a0adf7abd52747f2eb3aaac3"><td class="mdescLeft">&#160;</td><td class="mdescRight">The template base type of the CUDA C-SVM class. <br /></td></tr>
-<tr class="separator:af22abd77a0adf7abd52747f2eb3aaac3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae10bba2a12f466d1e5c4c18ce96be31a"><td class="memItemLeft" align="right" valign="top"><a id="ae10bba2a12f466d1e5c4c18ce96be31a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ae10bba2a12f466d1e5c4c18ce96be31a">base_type</a> = ::<a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm</a>&lt; T, ::<a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">plssvm::cuda::detail::device_ptr</a>&lt; T &gt;, int &gt;</td></tr>
+<tr class="memdesc:ae10bba2a12f466d1e5c4c18ce96be31a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The template base type of the CUDA C-SVM class. <br /></td></tr>
+<tr class="separator:ae10bba2a12f466d1e5c4c18ce96be31a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_types_classplssvm_1_1detail_1_1gpu__csvm"><td colspan="2" onclick="javascript:toggleInherit('pro_types_classplssvm_1_1detail_1_1gpu__csvm')"><img src="closed.png" alt="-"/>&#160;Protected Types inherited from <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td></tr>
+<tr class="memitem:a143d63f3ac8472c00c7f711b3250fe8a inherit pro_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a143d63f3ac8472c00c7f711b3250fe8a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a143d63f3ac8472c00c7f711b3250fe8a">base_type</a> = ::<a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm</a>&lt; T &gt;</td></tr>
+<tr class="memdesc:a143d63f3ac8472c00c7f711b3250fe8a inherit pro_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The template base type of the C-SVM class. <br /></td></tr>
+<tr class="separator:a143d63f3ac8472c00c7f711b3250fe8a inherit pro_types_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a0758683f95f3501a5bee6de33b798e2b"><td class="memItemLeft" align="right" valign="top"><a id="a0758683f95f3501a5bee6de33b798e2b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a0758683f95f3501a5bee6de33b798e2b">setup_data_on_device</a> () override</td></tr>
-<tr class="memdesc:a0758683f95f3501a5bee6de33b798e2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the data on the respective device(s) (e.g. GPUs). <br /></td></tr>
-<tr class="separator:a0758683f95f3501a5bee6de33b798e2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c41965679ec0004e94420bf20b4d385"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a4c41965679ec0004e94420bf20b4d385">generate_q</a> () override</td></tr>
-<tr class="memdesc:a4c41965679ec0004e94420bf20b4d385"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate the vector <code>q</code>, a subvector of the least-squares matrix equation.  <a href="classplssvm_1_1cuda_1_1csvm.html#a4c41965679ec0004e94420bf20b4d385">More...</a><br /></td></tr>
-<tr class="separator:a4c41965679ec0004e94420bf20b4d385"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22491b35a2b013571e876c3aab1cd216"><td class="memItemLeft" align="right" valign="top"><a id="a22491b35a2b013571e876c3aab1cd216"></a>
-std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>solver_CG</b> (const std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;b, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aeac7b944ae306a9fdee3bdb7c9fa6589">size_type</a> imax, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> eps, const std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;q) override</td></tr>
-<tr class="separator:a22491b35a2b013571e876c3aab1cd216"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7d5b9877af4f866d80c43fc80540b46"><td class="memItemLeft" align="right" valign="top"><a id="ae7d5b9877af4f866d80c43fc80540b46"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ae7d5b9877af4f866d80c43fc80540b46">update_w</a> () override</td></tr>
-<tr class="memdesc:ae7d5b9877af4f866d80c43fc80540b46"><td class="mdescLeft">&#160;</td><td class="mdescRight">updates the <code>w_</code> vector to the current data and alpha values. <br /></td></tr>
-<tr class="separator:ae7d5b9877af4f866d80c43fc80540b46"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13a79940bccd97f95d6afa1ee10ba11f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a13a79940bccd97f95d6afa1ee10ba11f">run_device_kernel</a> (int device, const <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;q_d, <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;r_d, const <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;x_d, const <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;data_d, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> add)</td></tr>
-<tr class="memdesc:a13a79940bccd97f95d6afa1ee10ba11f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the correct kernel based on the value of <code>kernel_</code> and run it on the CUDA <code>device</code>.  <a href="classplssvm_1_1cuda_1_1csvm.html#a13a79940bccd97f95d6afa1ee10ba11f">More...</a><br /></td></tr>
-<tr class="separator:a13a79940bccd97f95d6afa1ee10ba11f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76bc0bbb079913424a461a9de3acf5be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a76bc0bbb079913424a461a9de3acf5be">device_reduction</a> (std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&gt; &amp;buffer_d, std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;buffer)</td></tr>
-<tr class="memdesc:a76bc0bbb079913424a461a9de3acf5be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines the data in <code>buffer_d</code> from all devices into <code>buffer</code> and distributes them back to each devices.  <a href="classplssvm_1_1cuda_1_1csvm.html#a76bc0bbb079913424a461a9de3acf5be">More...</a><br /></td></tr>
-<tr class="separator:a76bc0bbb079913424a461a9de3acf5be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9b2db9dcea9fd6cd37734810ac15e13"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad9b2db9dcea9fd6cd37734810ac15e13">device_synchronize</a> (<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aca44fb69d54e48e7063fdca8c5d17649">queue_type</a> &amp;queue) final</td></tr>
+<tr class="memdesc:ad9b2db9dcea9fd6cd37734810ac15e13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Synchronize the device denoted by <code>queue</code>.  <a href="classplssvm_1_1cuda_1_1csvm.html#ad9b2db9dcea9fd6cd37734810ac15e13">More...</a><br /></td></tr>
+<tr class="separator:ad9b2db9dcea9fd6cd37734810ac15e13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f5b432aee85e2fa79b288fc229ee7fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a0f5b432aee85e2fa79b288fc229ee7fa">run_q_kernel</a> (std::size_t device, const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;q_d, std::size_t num_features) final</td></tr>
+<tr class="memdesc:a0f5b432aee85e2fa79b288fc229ee7fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel filling the <code>q</code> vector.  <a href="classplssvm_1_1cuda_1_1csvm.html#a0f5b432aee85e2fa79b288fc229ee7fa">More...</a><br /></td></tr>
+<tr class="separator:a0f5b432aee85e2fa79b288fc229ee7fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0a9796f4e708147bf1e0a3d5fa68694"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aa0a9796f4e708147bf1e0a3d5fa68694">run_svm_kernel</a> (std::size_t device, const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;q_d, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;r_d, const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;x_d, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> add, std::size_t num_features) final</td></tr>
+<tr class="memdesc:aa0a9796f4e708147bf1e0a3d5fa68694"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the main GPU kernel used in the CG algorithm.  <a href="classplssvm_1_1cuda_1_1csvm.html#aa0a9796f4e708147bf1e0a3d5fa68694">More...</a><br /></td></tr>
+<tr class="separator:aa0a9796f4e708147bf1e0a3d5fa68694"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3fefe380d23808f4779ad747f6f7d77"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ab3fefe380d23808f4779ad747f6f7d77">run_w_kernel</a> (std::size_t device, const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;w_d, const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;alpha_d, std::size_t num_features) final</td></tr>
+<tr class="memdesc:ab3fefe380d23808f4779ad747f6f7d77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) the calculate the <code>w</code> vector used to speed up the prediction when using the linear kernel function.  <a href="classplssvm_1_1cuda_1_1csvm.html#ab3fefe380d23808f4779ad747f6f7d77">More...</a><br /></td></tr>
+<tr class="separator:ab3fefe380d23808f4779ad747f6f7d77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4dc605a13f86f04d601906386163b7a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad4dc605a13f86f04d601906386163b7a">run_predict_kernel</a> (const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;out_d, const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;alpha_d, const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;point_d, std::size_t num_predict_points) final</td></tr>
+<tr class="memdesc:ad4dc605a13f86f04d601906386163b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) to predict the new data points <code>point_d</code>.  <a href="classplssvm_1_1cuda_1_1csvm.html#ad4dc605a13f86f04d601906386163b7a">More...</a><br /></td></tr>
+<tr class="separator:ad4dc605a13f86f04d601906386163b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classplssvm_1_1detail_1_1gpu__csvm')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td></tr>
+<tr class="memitem:a12d1da26312c544c5983df069c84ffce inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a12d1da26312c544c5983df069c84ffce">setup_data_on_device</a> () final</td></tr>
+<tr class="memdesc:a12d1da26312c544c5983df069c84ffce inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the data on the respective device(s) (e.g. GPUs).  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#a12d1da26312c544c5983df069c84ffce">More...</a><br /></td></tr>
+<tr class="separator:a12d1da26312c544c5983df069c84ffce inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cb7a3727202a2e524f279e85d0b9c61 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">generate_q</a> () final</td></tr>
+<tr class="memdesc:a8cb7a3727202a2e524f279e85d0b9c61 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate the vector <code>q</code>, a subvector of the least-squares matrix equation.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">More...</a><br /></td></tr>
+<tr class="separator:a8cb7a3727202a2e524f279e85d0b9c61 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b805d4e6b987d5bf3dbe7fc5fc648a0 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">solver_CG</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;b, std::size_t imax, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> eps, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;q) final</td></tr>
+<tr class="memdesc:a8b805d4e6b987d5bf3dbe7fc5fc648a0 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> using the Conjugated Gradients algorithm.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">More...</a><br /></td></tr>
+<tr class="separator:a8b805d4e6b987d5bf3dbe7fc5fc648a0 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae59fec02673bdf84cfe523f311e8cc4f inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae59fec02673bdf84cfe523f311e8cc4f">update_w</a> () final</td></tr>
+<tr class="memdesc:ae59fec02673bdf84cfe523f311e8cc4f inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates the normal vector <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a0af207da77ac4abb56e571d0bc1927b5" title="The normal vector used for speeding up the prediction in case of the linear kernel function.">w_</a>, used to speed-up the prediction in case of the linear kernel function, to the current data and alpha values.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#ae59fec02673bdf84cfe523f311e8cc4f">More...</a><br /></td></tr>
+<tr class="separator:ae59fec02673bdf84cfe523f311e8cc4f inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaad20702854d5b6d13610f6871269f41 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#aaad20702854d5b6d13610f6871269f41">run_device_kernel</a> (std::size_t device, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;q_d, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;r_d, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;x_d, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> add)</td></tr>
+<tr class="memdesc:aaad20702854d5b6d13610f6871269f41 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the SVM kernel on the GPU denoted by the <code>device</code> ID.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#aaad20702854d5b6d13610f6871269f41">More...</a><br /></td></tr>
+<tr class="separator:aaad20702854d5b6d13610f6871269f41 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44d77ba8fc431214240fd11c49c030f0 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a44d77ba8fc431214240fd11c49c030f0">device_reduction</a> (std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &gt; &amp;buffer_d, std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;buffer)</td></tr>
+<tr class="memdesc:a44d77ba8fc431214240fd11c49c030f0 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines the data in <code>buffer_d</code> from all devices into <code>buffer</code> and distributes them back to each device.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#a44d77ba8fc431214240fd11c49c030f0">More...</a><br /></td></tr>
+<tr class="separator:a44d77ba8fc431214240fd11c49c030f0 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4e28fc6f96108a367001c8aa5353c83 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#af4e28fc6f96108a367001c8aa5353c83">run_q_kernel</a> (std::size_t device, const <a class="el" href="classplssvm_1_1detail_1_1execution__range.html">detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;q_d, std::size_t num_features)=0</td></tr>
+<tr class="memdesc:af4e28fc6f96108a367001c8aa5353c83 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel filling the <code>q</code> vector.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#af4e28fc6f96108a367001c8aa5353c83">More...</a><br /></td></tr>
+<tr class="separator:af4e28fc6f96108a367001c8aa5353c83 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7dc5d00bca4f4e4971f0c2da7ce6464 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae7dc5d00bca4f4e4971f0c2da7ce6464">run_svm_kernel</a> (std::size_t device, const <a class="el" href="classplssvm_1_1detail_1_1execution__range.html">detail::execution_range</a> &amp;range, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;q_d, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;r_d, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;x_d, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> add, std::size_t num_features)=0</td></tr>
+<tr class="memdesc:ae7dc5d00bca4f4e4971f0c2da7ce6464 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the main GPU kernel used in the CG algorithm.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#ae7dc5d00bca4f4e4971f0c2da7ce6464">More...</a><br /></td></tr>
+<tr class="separator:ae7dc5d00bca4f4e4971f0c2da7ce6464 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a679e61d55d3602e3fcb76e80264a8835 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a679e61d55d3602e3fcb76e80264a8835">run_w_kernel</a> (std::size_t device, const <a class="el" href="classplssvm_1_1detail_1_1execution__range.html">detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;w_d, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;alpha_d, std::size_t num_features)=0</td></tr>
+<tr class="memdesc:a679e61d55d3602e3fcb76e80264a8835 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) the calculate the <code>w</code> vector used to speed up the prediction when using the linear kernel function.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#a679e61d55d3602e3fcb76e80264a8835">More...</a><br /></td></tr>
+<tr class="separator:a679e61d55d3602e3fcb76e80264a8835 inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbe87d34236a651d5791db2a751b1c4e inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#acbe87d34236a651d5791db2a751b1c4e">run_predict_kernel</a> (const <a class="el" href="classplssvm_1_1detail_1_1execution__range.html">detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;out_d, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;alpha_d, const <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &amp;point_d, std::size_t num_predict_points)=0</td></tr>
+<tr class="memdesc:acbe87d34236a651d5791db2a751b1c4e inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) to predict the new data points <code>point_d</code>.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#acbe87d34236a651d5791db2a751b1c4e">More...</a><br /></td></tr>
+<tr class="separator:acbe87d34236a651d5791db2a751b1c4e inherit pro_methods_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classplssvm_1_1csvm"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classplssvm_1_1csvm')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td></tr>
-<tr class="memitem:ad061a97377bac02581f6aa3b5cb7f5fc inherit pro_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ad061a97377bac02581f6aa3b5cb7f5fc">solver_CG</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;b, <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> imax, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> eps, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;q)=0</td></tr>
-<tr class="memdesc:ad061a97377bac02581f6aa3b5cb7f5fc inherit pro_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> using the Conjugated Gradients algorithm.  <a href="classplssvm_1_1csvm.html#ad061a97377bac02581f6aa3b5cb7f5fc">More...</a><br /></td></tr>
-<tr class="separator:ad061a97377bac02581f6aa3b5cb7f5fc inherit pro_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac9deef03f546477a0f0336d8fcec8921 inherit pro_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ac9deef03f546477a0f0336d8fcec8921">predict</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points)=0</td></tr>
-<tr class="memdesc:ac9deef03f546477a0f0336d8fcec8921 inherit pro_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) data points.  <a href="classplssvm_1_1csvm.html#ac9deef03f546477a0f0336d8fcec8921">More...</a><br /></td></tr>
-<tr class="separator:ac9deef03f546477a0f0336d8fcec8921 inherit pro_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa76f726a5833539fc23d76d5b709ecd1 inherit pro_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#aa76f726a5833539fc23d76d5b709ecd1">kernel_function</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;xi, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;xj)</td></tr>
 <tr class="memdesc:aa76f726a5833539fc23d76d5b709ecd1 inherit pro_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the value of the two vectors <code>xi</code> and <code>xj</code> using the kernel function specified during construction.  <a href="classplssvm_1_1csvm.html#aa76f726a5833539fc23d76d5b709ecd1">More...</a><br /></td></tr>
 <tr class="separator:aa76f726a5833539fc23d76d5b709ecd1 inherit pro_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ee9f22c9f1fff81d585b2496f1cfba4 inherit pro_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a9ee9f22c9f1fff81d585b2496f1cfba4">transform_data</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;matrix, const <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> boundary, const <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> num_points)</td></tr>
-<tr class="memdesc:a9ee9f22c9f1fff81d585b2496f1cfba4 inherit pro_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.  <a href="classplssvm_1_1csvm.html#a9ee9f22c9f1fff81d585b2496f1cfba4">More...</a><br /></td></tr>
-<tr class="separator:a9ee9f22c9f1fff81d585b2496f1cfba4 inherit pro_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ccb4ade1cb4037b9bb32be97a188f7f inherit pro_methods_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a2ccb4ade1cb4037b9bb32be97a188f7f">transform_data</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;matrix, std::size_t boundary, std::size_t num_points)</td></tr>
+<tr class="memdesc:a2ccb4ade1cb4037b9bb32be97a188f7f inherit pro_methods_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transforms <code>num_points</code> entries of the 2D data from AoS to a 1D SoA layout and adding <code>boundary</code> points.  <a href="classplssvm_1_1csvm.html#a2ccb4ade1cb4037b9bb32be97a188f7f">More...</a><br /></td></tr>
+<tr class="separator:a2ccb4ade1cb4037b9bb32be97a188f7f inherit pro_methods_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:a90582d3505bbae804b4088bfaa2c8de9"><td class="memItemLeft" align="right" valign="top"><a id="a90582d3505bbae804b4088bfaa2c8de9"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a90582d3505bbae804b4088bfaa2c8de9">num_devices_</a> {}</td></tr>
-<tr class="memdesc:a90582d3505bbae804b4088bfaa2c8de9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of available/used CUDA devices. <br /></td></tr>
-<tr class="separator:a90582d3505bbae804b4088bfaa2c8de9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8bdc0177eb3eef97482026b3d9feccc6"><td class="memItemLeft" align="right" valign="top"><a id="a8bdc0177eb3eef97482026b3d9feccc6"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aeac7b944ae306a9fdee3bdb7c9fa6589">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a8bdc0177eb3eef97482026b3d9feccc6">dept_</a> {}</td></tr>
-<tr class="memdesc:a8bdc0177eb3eef97482026b3d9feccc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points excluding the last data point. <br /></td></tr>
-<tr class="separator:a8bdc0177eb3eef97482026b3d9feccc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05ede98124957c3744d286bd4c52a499"><td class="memItemLeft" align="right" valign="top"><a id="a05ede98124957c3744d286bd4c52a499"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aeac7b944ae306a9fdee3bdb7c9fa6589">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a05ede98124957c3744d286bd4c52a499">boundary_size_</a> {}</td></tr>
-<tr class="memdesc:a05ede98124957c3744d286bd4c52a499"><td class="mdescLeft">&#160;</td><td class="mdescRight">The boundary size used to remove boundary condition checks inside the kernels. <br /></td></tr>
-<tr class="separator:a05ede98124957c3744d286bd4c52a499"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4c1b3d2d904027cc09cd72cbdda6f5e"><td class="memItemLeft" align="right" valign="top"><a id="af4c1b3d2d904027cc09cd72cbdda6f5e"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#af4c1b3d2d904027cc09cd72cbdda6f5e">num_rows_</a> {}</td></tr>
-<tr class="memdesc:af4c1b3d2d904027cc09cd72cbdda6f5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of rows to calculate including the boundary values. <br /></td></tr>
-<tr class="separator:af4c1b3d2d904027cc09cd72cbdda6f5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae27bddaf1664c76856cb7d9fb3691aef"><td class="memItemLeft" align="right" valign="top"><a id="ae27bddaf1664c76856cb7d9fb3691aef"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ae27bddaf1664c76856cb7d9fb3691aef">num_cols_</a> {}</td></tr>
-<tr class="memdesc:ae27bddaf1664c76856cb7d9fb3691aef"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of columns in the data matrix (= the number of features per data point). <br /></td></tr>
-<tr class="separator:ae27bddaf1664c76856cb7d9fb3691aef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e6a469b79fb8db95af63e0185085998"><td class="memItemLeft" align="right" valign="top"><a id="a5e6a469b79fb8db95af63e0185085998"></a>
-std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a5e6a469b79fb8db95af63e0185085998">data_d_</a> {}</td></tr>
-<tr class="memdesc:a5e6a469b79fb8db95af63e0185085998"><td class="mdescLeft">&#160;</td><td class="mdescRight">The data saved across all devices. <br /></td></tr>
-<tr class="separator:a5e6a469b79fb8db95af63e0185085998"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e378299f66e28dcfbc54d21d25cd529"><td class="memItemLeft" align="right" valign="top"><a id="a6e378299f66e28dcfbc54d21d25cd529"></a>
-std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a6e378299f66e28dcfbc54d21d25cd529">data_last_d_</a> {}</td></tr>
-<tr class="memdesc:a6e378299f66e28dcfbc54d21d25cd529"><td class="mdescLeft">&#160;</td><td class="mdescRight">The last row of the data matrix. <br /></td></tr>
-<tr class="separator:a6e378299f66e28dcfbc54d21d25cd529"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70c9bdd8ae28d0a45c1332cf024900b5"><td class="memItemLeft" align="right" valign="top"><a id="a70c9bdd8ae28d0a45c1332cf024900b5"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a70c9bdd8ae28d0a45c1332cf024900b5">w_d_</a> {}</td></tr>
-<tr class="memdesc:a70c9bdd8ae28d0a45c1332cf024900b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The normal vector used for speeding up the prediction in case of the linear kernel function saved on the first device. <br /></td></tr>
-<tr class="separator:a70c9bdd8ae28d0a45c1332cf024900b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba229d9cf7489ad5da75da57efaf638a"><td class="memItemLeft" align="right" valign="top"><a id="aba229d9cf7489ad5da75da57efaf638a"></a>
-std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aba229d9cf7489ad5da75da57efaf638a">alpha_ptr_</a></td></tr>
-<tr class="memdesc:aba229d9cf7489ad5da75da57efaf638a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result of the CG calculation. <br /></td></tr>
-<tr class="separator:aba229d9cf7489ad5da75da57efaf638a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab105d7fae1bc097698d9821b7486862d"><td class="memItemLeft" align="right" valign="top"><a id="ab105d7fae1bc097698d9821b7486862d"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ab105d7fae1bc097698d9821b7486862d">bias_</a></td></tr>
-<tr class="memdesc:ab105d7fae1bc097698d9821b7486862d"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bias after learning. <br /></td></tr>
-<tr class="separator:ab105d7fae1bc097698d9821b7486862d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4ecbdb12ad8e7aeaf4714c193e0fa0c"><td class="memItemLeft" align="right" valign="top"><a id="ae4ecbdb12ad8e7aeaf4714c193e0fa0c"></a>
-const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ae4ecbdb12ad8e7aeaf4714c193e0fa0c">coef0_</a></td></tr>
-<tr class="memdesc:ae4ecbdb12ad8e7aeaf4714c193e0fa0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The coef0 parameter used in the polynomial kernel function. <br /></td></tr>
-<tr class="separator:ae4ecbdb12ad8e7aeaf4714c193e0fa0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad41e8c97c4c20324ade7819a02040fd4"><td class="memItemLeft" align="right" valign="top"><a id="ad41e8c97c4c20324ade7819a02040fd4"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad41e8c97c4c20324ade7819a02040fd4">cost_</a></td></tr>
-<tr class="memdesc:ad41e8c97c4c20324ade7819a02040fd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The cost parameter in the C-SVM. <br /></td></tr>
-<tr class="separator:ad41e8c97c4c20324ade7819a02040fd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a585004988939ec75b503defcdf85b0d8"><td class="memItemLeft" align="right" valign="top"><a id="a585004988939ec75b503defcdf85b0d8"></a>
-const std::shared_ptr&lt; const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a585004988939ec75b503defcdf85b0d8">data_ptr_</a></td></tr>
-<tr class="memdesc:a585004988939ec75b503defcdf85b0d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">The data used the train the SVM. <br /></td></tr>
-<tr class="separator:a585004988939ec75b503defcdf85b0d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2698b52ada4287e0521e6004620b6063"><td class="memItemLeft" align="right" valign="top"><a id="a2698b52ada4287e0521e6004620b6063"></a>
-const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a2698b52ada4287e0521e6004620b6063">degree_</a></td></tr>
-<tr class="memdesc:a2698b52ada4287e0521e6004620b6063"><td class="mdescLeft">&#160;</td><td class="mdescRight">The degree parameter used in the polynomial kernel function. <br /></td></tr>
-<tr class="separator:a2698b52ada4287e0521e6004620b6063"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3256f7cfa86e3267c4a8a881d3c27615"><td class="memItemLeft" align="right" valign="top"><a id="a3256f7cfa86e3267c4a8a881d3c27615"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a3256f7cfa86e3267c4a8a881d3c27615">gamma_</a></td></tr>
-<tr class="memdesc:a3256f7cfa86e3267c4a8a881d3c27615"><td class="mdescLeft">&#160;</td><td class="mdescRight">The gamma parameter used in the polynomial and rbf kernel functions. <br /></td></tr>
-<tr class="separator:a3256f7cfa86e3267c4a8a881d3c27615"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fcc0c89bb50614cd634817f3c154f61"><td class="memItemLeft" align="right" valign="top"><a id="a4fcc0c89bb50614cd634817f3c154f61"></a>
-const <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a4fcc0c89bb50614cd634817f3c154f61">kernel_</a></td></tr>
-<tr class="memdesc:a4fcc0c89bb50614cd634817f3c154f61"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used kernel function: linear, polynomial or radial basis functions (rbf). <br /></td></tr>
-<tr class="separator:a4fcc0c89bb50614cd634817f3c154f61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4e041b15828416c300fc066f6e8a039"><td class="memItemLeft" align="right" valign="top"><a id="ac4e041b15828416c300fc066f6e8a039"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aeac7b944ae306a9fdee3bdb7c9fa6589">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac4e041b15828416c300fc066f6e8a039">num_data_points_</a></td></tr>
-<tr class="memdesc:ac4e041b15828416c300fc066f6e8a039"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points in the data set. <br /></td></tr>
-<tr class="separator:ac4e041b15828416c300fc066f6e8a039"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2e51a9a4729c35deedd8dc3ef28be06"><td class="memItemLeft" align="right" valign="top"><a id="aa2e51a9a4729c35deedd8dc3ef28be06"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aeac7b944ae306a9fdee3bdb7c9fa6589">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aa2e51a9a4729c35deedd8dc3ef28be06">num_features_</a></td></tr>
-<tr class="memdesc:aa2e51a9a4729c35deedd8dc3ef28be06"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of features per data point. <br /></td></tr>
-<tr class="separator:aa2e51a9a4729c35deedd8dc3ef28be06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a789ba86c88cc056edfbcd716877827ce"><td class="memItemLeft" align="right" valign="top"><a id="a789ba86c88cc056edfbcd716877827ce"></a>
-const bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a789ba86c88cc056edfbcd716877827ce">print_info_</a></td></tr>
-<tr class="memdesc:a789ba86c88cc056edfbcd716877827ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <code>true</code> additional information (e.g. timing information) will be printed during execution. <br /></td></tr>
-<tr class="separator:a789ba86c88cc056edfbcd716877827ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c09e6d53b39d6c56f54cf729f8c6385"><td class="memItemLeft" align="right" valign="top"><a id="a6c09e6d53b39d6c56f54cf729f8c6385"></a>
-<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a6c09e6d53b39d6c56f54cf729f8c6385">QA_cost_</a></td></tr>
-<tr class="memdesc:a6c09e6d53b39d6c56f54cf729f8c6385"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bottom right matrix entry multiplied by cost. <br /></td></tr>
-<tr class="separator:a6c09e6d53b39d6c56f54cf729f8c6385"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad37033c70367c2f7667ed68d0a3cfecd"><td class="memItemLeft" align="right" valign="top"><a id="ad37033c70367c2f7667ed68d0a3cfecd"></a>
-const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad37033c70367c2f7667ed68d0a3cfecd">target_</a></td></tr>
-<tr class="memdesc:ad37033c70367c2f7667ed68d0a3cfecd"><td class="mdescLeft">&#160;</td><td class="mdescRight">The target platform. <br /></td></tr>
-<tr class="separator:ad37033c70367c2f7667ed68d0a3cfecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0af207da77ac4abb56e571d0bc1927b5"><td class="memItemLeft" align="right" valign="top"><a id="a0af207da77ac4abb56e571d0bc1927b5"></a>
-std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a0af207da77ac4abb56e571d0bc1927b5">w_</a></td></tr>
-<tr class="memdesc:a0af207da77ac4abb56e571d0bc1927b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The normal vector used for speeding up the prediction in case of the linear kernel function. <br /></td></tr>
-<tr class="separator:a0af207da77ac4abb56e571d0bc1927b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classplssvm_1_1detail_1_1gpu__csvm')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td></tr>
+<tr class="memitem:a7219b67d6506e8aa056c4f9b5af7a363 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a7219b67d6506e8aa056c4f9b5af7a363"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a7219b67d6506e8aa056c4f9b5af7a363">dept_</a></td></tr>
+<tr class="memdesc:a7219b67d6506e8aa056c4f9b5af7a363 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points excluding the last data point. <br /></td></tr>
+<tr class="separator:a7219b67d6506e8aa056c4f9b5af7a363 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad81a37444de1aefa94c6f508ccf819a5 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ad81a37444de1aefa94c6f508ccf819a5"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ad81a37444de1aefa94c6f508ccf819a5">boundary_size_</a></td></tr>
+<tr class="memdesc:ad81a37444de1aefa94c6f508ccf819a5 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The boundary size used to remove boundary condition checks inside the kernels. <br /></td></tr>
+<tr class="separator:ad81a37444de1aefa94c6f508ccf819a5 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6690ab0687f72b5e75a52c7c19015e8 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="aa6690ab0687f72b5e75a52c7c19015e8"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#aa6690ab0687f72b5e75a52c7c19015e8">num_rows_</a></td></tr>
+<tr class="memdesc:aa6690ab0687f72b5e75a52c7c19015e8 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of rows to calculate including the boundary values. <br /></td></tr>
+<tr class="separator:aa6690ab0687f72b5e75a52c7c19015e8 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a053ad856b2b2ab402c439098b45a9de9 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a053ad856b2b2ab402c439098b45a9de9"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a053ad856b2b2ab402c439098b45a9de9">num_cols_</a></td></tr>
+<tr class="memdesc:a053ad856b2b2ab402c439098b45a9de9 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of columns in the data matrix (= the number of features per data point). <br /></td></tr>
+<tr class="separator:a053ad856b2b2ab402c439098b45a9de9 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afeb75c1a33eb392fa41fbd8ad92bb3d0 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="afeb75c1a33eb392fa41fbd8ad92bb3d0"></a>
+std::vector&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#afeb75c1a33eb392fa41fbd8ad92bb3d0">feature_ranges_</a></td></tr>
+<tr class="memdesc:afeb75c1a33eb392fa41fbd8ad92bb3d0 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The feature range per GPU. The GPU with the ID <code>i</code> uses the features: <code>[feature_ranges_[i], feature_ranges_[i + 1])</code>. <br /></td></tr>
+<tr class="separator:afeb75c1a33eb392fa41fbd8ad92bb3d0 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1856f3ad4365915ca839de9c7aa5e2da inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a1856f3ad4365915ca839de9c7aa5e2da"></a>
+std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a5d9fe4bad5ad345774ef3e24c31fbfcf">queue_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a1856f3ad4365915ca839de9c7aa5e2da">devices_</a></td></tr>
+<tr class="memdesc:a1856f3ad4365915ca839de9c7aa5e2da inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The available/used backend devices. <br /></td></tr>
+<tr class="separator:a1856f3ad4365915ca839de9c7aa5e2da inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac37aa662295e1a5d2c065527920904b2 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ac37aa662295e1a5d2c065527920904b2"></a>
+std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac37aa662295e1a5d2c065527920904b2">data_d_</a></td></tr>
+<tr class="memdesc:ac37aa662295e1a5d2c065527920904b2 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The data saved across all devices. <br /></td></tr>
+<tr class="separator:ac37aa662295e1a5d2c065527920904b2 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7667fad44f3560df281e167b7d3a1a46 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a7667fad44f3560df281e167b7d3a1a46"></a>
+std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a7667fad44f3560df281e167b7d3a1a46">data_last_d_</a></td></tr>
+<tr class="memdesc:a7667fad44f3560df281e167b7d3a1a46 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The last row of the data matrix. <br /></td></tr>
+<tr class="separator:a7667fad44f3560df281e167b7d3a1a46 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="aba229d9cf7489ad5da75da57efaf638a"></a>
+std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#aba229d9cf7489ad5da75da57efaf638a">alpha_ptr_</a></td></tr>
+<tr class="memdesc:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result of the CG calculation: the weights of the support vectors. <br /></td></tr>
+<tr class="separator:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab105d7fae1bc097698d9821b7486862d inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ab105d7fae1bc097698d9821b7486862d"></a>
+<a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ab105d7fae1bc097698d9821b7486862d">bias_</a></td></tr>
+<tr class="memdesc:ab105d7fae1bc097698d9821b7486862d inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bias after learning. <br /></td></tr>
+<tr class="separator:ab105d7fae1bc097698d9821b7486862d inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4ecbdb12ad8e7aeaf4714c193e0fa0c inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ae4ecbdb12ad8e7aeaf4714c193e0fa0c"></a>
+const <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae4ecbdb12ad8e7aeaf4714c193e0fa0c">coef0_</a></td></tr>
+<tr class="memdesc:ae4ecbdb12ad8e7aeaf4714c193e0fa0c inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The coef0 parameter used in the polynomial kernel function. <br /></td></tr>
+<tr class="separator:ae4ecbdb12ad8e7aeaf4714c193e0fa0c inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad41e8c97c4c20324ade7819a02040fd4 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ad41e8c97c4c20324ade7819a02040fd4"></a>
+<a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ad41e8c97c4c20324ade7819a02040fd4">cost_</a></td></tr>
+<tr class="memdesc:ad41e8c97c4c20324ade7819a02040fd4 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The cost parameter in the C-SVM. <br /></td></tr>
+<tr class="separator:ad41e8c97c4c20324ade7819a02040fd4 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a585004988939ec75b503defcdf85b0d8 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a585004988939ec75b503defcdf85b0d8"></a>
+const std::shared_ptr&lt; const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a585004988939ec75b503defcdf85b0d8">data_ptr_</a></td></tr>
+<tr class="memdesc:a585004988939ec75b503defcdf85b0d8 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The data used the train the SVM. <br /></td></tr>
+<tr class="separator:a585004988939ec75b503defcdf85b0d8 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2698b52ada4287e0521e6004620b6063 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a2698b52ada4287e0521e6004620b6063"></a>
+const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a2698b52ada4287e0521e6004620b6063">degree_</a></td></tr>
+<tr class="memdesc:a2698b52ada4287e0521e6004620b6063 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The degree parameter used in the polynomial kernel function. <br /></td></tr>
+<tr class="separator:a2698b52ada4287e0521e6004620b6063 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae47bdbeabc71a7ad46e45a1f8c8ba7c6 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ae47bdbeabc71a7ad46e45a1f8c8ba7c6"></a>
+const <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae47bdbeabc71a7ad46e45a1f8c8ba7c6">epsilon_</a></td></tr>
+<tr class="memdesc:ae47bdbeabc71a7ad46e45a1f8c8ba7c6 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The error tolerance parameter for the CG algorithm. <br /></td></tr>
+<tr class="separator:ae47bdbeabc71a7ad46e45a1f8c8ba7c6 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3256f7cfa86e3267c4a8a881d3c27615 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a3256f7cfa86e3267c4a8a881d3c27615"></a>
+<a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a3256f7cfa86e3267c4a8a881d3c27615">gamma_</a></td></tr>
+<tr class="memdesc:a3256f7cfa86e3267c4a8a881d3c27615 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The gamma parameter used in the polynomial and rbf kernel functions. <br /></td></tr>
+<tr class="separator:a3256f7cfa86e3267c4a8a881d3c27615 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a4fcc0c89bb50614cd634817f3c154f61"></a>
+const <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a4fcc0c89bb50614cd634817f3c154f61">kernel_</a></td></tr>
+<tr class="memdesc:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used kernel function. <br /></td></tr>
+<tr class="separator:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84422b83aefe7aaa5117efd107252027 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a84422b83aefe7aaa5117efd107252027"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a84422b83aefe7aaa5117efd107252027">num_data_points_</a></td></tr>
+<tr class="memdesc:a84422b83aefe7aaa5117efd107252027 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points in the data set. <br /></td></tr>
+<tr class="separator:a84422b83aefe7aaa5117efd107252027 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8396f56bd6271264f15a2da0815a5306 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a8396f56bd6271264f15a2da0815a5306"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8396f56bd6271264f15a2da0815a5306">num_features_</a></td></tr>
+<tr class="memdesc:a8396f56bd6271264f15a2da0815a5306 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of features per data point. <br /></td></tr>
+<tr class="separator:a8396f56bd6271264f15a2da0815a5306 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a789ba86c88cc056edfbcd716877827ce inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a789ba86c88cc056edfbcd716877827ce"></a>
+const bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a789ba86c88cc056edfbcd716877827ce">print_info_</a></td></tr>
+<tr class="memdesc:a789ba86c88cc056edfbcd716877827ce inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <code>true</code> additional information (e.g. timing information) will be printed during execution. <br /></td></tr>
+<tr class="separator:a789ba86c88cc056edfbcd716877827ce inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c09e6d53b39d6c56f54cf729f8c6385 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a6c09e6d53b39d6c56f54cf729f8c6385"></a>
+<a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a6c09e6d53b39d6c56f54cf729f8c6385">QA_cost_</a></td></tr>
+<tr class="memdesc:a6c09e6d53b39d6c56f54cf729f8c6385 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bottom right matrix entry multiplied by cost. <br /></td></tr>
+<tr class="separator:a6c09e6d53b39d6c56f54cf729f8c6385 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad37033c70367c2f7667ed68d0a3cfecd inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ad37033c70367c2f7667ed68d0a3cfecd"></a>
+const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ad37033c70367c2f7667ed68d0a3cfecd">target_</a></td></tr>
+<tr class="memdesc:ad37033c70367c2f7667ed68d0a3cfecd inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The target platform. <br /></td></tr>
+<tr class="separator:ad37033c70367c2f7667ed68d0a3cfecd inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1bfd504381a3736ab238e878a931345 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="ac1bfd504381a3736ab238e878a931345"></a>
+std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac1bfd504381a3736ab238e878a931345">value_ptr_</a></td></tr>
+<tr class="memdesc:ac1bfd504381a3736ab238e878a931345 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The labels associated to each data point. <br /></td></tr>
+<tr class="separator:ac1bfd504381a3736ab238e878a931345 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0af207da77ac4abb56e571d0bc1927b5 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memItemLeft" align="right" valign="top"><a id="a0af207da77ac4abb56e571d0bc1927b5"></a>
+std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a0af207da77ac4abb56e571d0bc1927b5">w_</a></td></tr>
+<tr class="memdesc:a0af207da77ac4abb56e571d0bc1927b5 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The normal vector used for speeding up the prediction in case of the linear kernel function. <br /></td></tr>
+<tr class="separator:a0af207da77ac4abb56e571d0bc1927b5 inherit pro_attribs_classplssvm_1_1detail_1_1gpu__csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_classplssvm_1_1csvm"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classplssvm_1_1csvm')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td></tr>
 <tr class="memitem:ad37033c70367c2f7667ed68d0a3cfecd inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="ad37033c70367c2f7667ed68d0a3cfecd"></a>
 const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ad37033c70367c2f7667ed68d0a3cfecd">target_</a></td></tr>
@@ -304,7 +373,7 @@ const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500
 <tr class="separator:ad37033c70367c2f7667ed68d0a3cfecd inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a4fcc0c89bb50614cd634817f3c154f61"></a>
 const <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a4fcc0c89bb50614cd634817f3c154f61">kernel_</a></td></tr>
-<tr class="memdesc:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used kernel function: linear, polynomial or radial basis functions (rbf). <br /></td></tr>
+<tr class="memdesc:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used kernel function. <br /></td></tr>
 <tr class="separator:a4fcc0c89bb50614cd634817f3c154f61 inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2698b52ada4287e0521e6004620b6063 inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a2698b52ada4287e0521e6004620b6063"></a>
 const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a2698b52ada4287e0521e6004620b6063">degree_</a></td></tr>
@@ -340,16 +409,16 @@ std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1csv
 <tr class="separator:ac1bfd504381a3736ab238e878a931345 inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="aba229d9cf7489ad5da75da57efaf638a"></a>
 std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#aba229d9cf7489ad5da75da57efaf638a">alpha_ptr_</a> {}</td></tr>
-<tr class="memdesc:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result of the CG calculation. <br /></td></tr>
+<tr class="memdesc:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result of the CG calculation: the weights of the support vectors. <br /></td></tr>
 <tr class="separator:aba229d9cf7489ad5da75da57efaf638a inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4e041b15828416c300fc066f6e8a039 inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="ac4e041b15828416c300fc066f6e8a039"></a>
-<a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ac4e041b15828416c300fc066f6e8a039">num_data_points_</a> {}</td></tr>
-<tr class="memdesc:ac4e041b15828416c300fc066f6e8a039 inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points in the data set. <br /></td></tr>
-<tr class="separator:ac4e041b15828416c300fc066f6e8a039 inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2e51a9a4729c35deedd8dc3ef28be06 inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="aa2e51a9a4729c35deedd8dc3ef28be06"></a>
-<a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#aa2e51a9a4729c35deedd8dc3ef28be06">num_features_</a> {}</td></tr>
-<tr class="memdesc:aa2e51a9a4729c35deedd8dc3ef28be06 inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of features per data point. <br /></td></tr>
-<tr class="separator:aa2e51a9a4729c35deedd8dc3ef28be06 inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84422b83aefe7aaa5117efd107252027 inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a84422b83aefe7aaa5117efd107252027"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a84422b83aefe7aaa5117efd107252027">num_data_points_</a> {}</td></tr>
+<tr class="memdesc:a84422b83aefe7aaa5117efd107252027 inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points in the data set. <br /></td></tr>
+<tr class="separator:a84422b83aefe7aaa5117efd107252027 inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8396f56bd6271264f15a2da0815a5306 inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="a8396f56bd6271264f15a2da0815a5306"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a8396f56bd6271264f15a2da0815a5306">num_features_</a> {}</td></tr>
+<tr class="memdesc:a8396f56bd6271264f15a2da0815a5306 inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of features per data point. <br /></td></tr>
+<tr class="separator:a8396f56bd6271264f15a2da0815a5306 inherit pro_attribs_classplssvm_1_1csvm"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab105d7fae1bc097698d9821b7486862d inherit pro_attribs_classplssvm_1_1csvm"><td class="memItemLeft" align="right" valign="top"><a id="ab105d7fae1bc097698d9821b7486862d"></a>
 <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ab105d7fae1bc097698d9821b7486862d">bias_</a> {}</td></tr>
 <tr class="memdesc:ab105d7fae1bc097698d9821b7486862d inherit pro_attribs_classplssvm_1_1csvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bias after learning. <br /></td></tr>
@@ -367,7 +436,7 @@ std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd
 <div class="textblock"><h3>template&lt;typename T&gt;<br />
 class plssvm::cuda::csvm&lt; T &gt;</h3>
 
-<p>The C-SVM class using the CUDA backend. </p>
+<p>A C-SVM implementation using CUDA as backend. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the type of the data </td></tr>
@@ -408,6 +477,15 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1csvm.html#a4395f95de0e6360163b45a911a180d4d" title="Construct a new C-SVM with the parameters given through params.">plssvm::csvm::csvm()</a></td><td>exceptions </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a></td><td>if the target platform isn't <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8">plssvm::target_platform::automatic</a> or <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a9ec77054f198cbc11e8a492869379be0">plssvm::target_platform::gpu_nvidia</a> </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a></td><td>if the <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a9ec77054f198cbc11e8a492869379be0">plssvm::target_platform::gpu_nvidia</a> target isn't available </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a></td><td>if no CUDA devices could be found </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -436,16 +514,16 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Wait for all operations on all devices to finish. </p>
-<p>Terminates the program, if any exceptions are thrown. </p>
+<p>Wait for all operations on all CUDA devices to finish. </p>
+<p>Terminates the program, if any exception is thrown. </p>
 
 <p>Reimplemented from <a class="el" href="classplssvm_1_1csvm.html#a8948a705676af8edb005d29445905b03">plssvm::csvm&lt; T &gt;</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a0f1901601c1b401408a10d805c1037b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0f1901601c1b401408a10d805c1037b6">&#9670;&nbsp;</a></span>predict()</h2>
+<a id="ad9b2db9dcea9fd6cd37734810ac15e13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9b2db9dcea9fd6cd37734810ac15e13">&#9670;&nbsp;</a></span>device_synchronize()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -456,33 +534,34 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::vector&lt;<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&gt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::predict </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::device_synchronize </td>
           <td>(</td>
-          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&gt; &amp;&#160;</td>
-          <td class="paramname"><em>points</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aca44fb69d54e48e7063fdca8c5d17649">queue_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>queue</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Uses the already learned model to predict the class of multiple (new) data points. </p>
+<p>Synchronize the device denoted by <code>queue</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">points</td><td>the data points to predict </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">queue</td><td>the queue denoting the device to synchronize </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>a <code>std::vector&lt;real_type&gt;</code> filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]]) </dd></dl>
+
+<p>Implements <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a7b469988135da27717c43e5fba032cb9">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>.</p>
 
 </div>
 </div>
-<a id="a4c41965679ec0004e94420bf20b4d385"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c41965679ec0004e94420bf20b4d385">&#9670;&nbsp;</a></span>generate_q()</h2>
+<a id="a0f5b432aee85e2fa79b288fc229ee7fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f5b432aee85e2fa79b288fc229ee7fa">&#9670;&nbsp;</a></span>run_q_kernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -493,72 +572,28 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;<a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&gt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::generate_q </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::run_q_kernel </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Generate the vector <code>q</code>, a subvector of the least-squares matrix equation. </p>
-<dl class="section return"><dt>Returns</dt><dd>the generated <code>q</code> vector </dd></dl>
-
-<p>Implements <a class="el" href="classplssvm_1_1csvm.html#ad4f3f38f6540c049046027a64cbe42a1">plssvm::csvm&lt; T &gt;</a>.</p>
-
-</div>
-</div>
-<a id="a13a79940bccd97f95d6afa1ee10ba11f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a13a79940bccd97f95d6afa1ee10ba11f">&#9670;&nbsp;</a></span>run_device_kernel()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::run_device_kernel </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>device</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;&#160;</td>
+          <td class="paramtype">const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
+          <td class="paramname"><em>range</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
           <td class="paramname"><em>q_d</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>r_d</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>x_d</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>data_d</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td>
-          <td class="paramname"><em>add</em>&#160;</td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>num_features</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -568,28 +603,26 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Select the correct kernel based on the value of <code>kernel_</code> and run it on the CUDA <code>device</code>. </p>
+<p>Run the GPU kernel filling the <code>q</code> vector. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>the CUDA device to run the kernel on </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">q_d</td><td>subvector of the least-squares matrix equation </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">r_d</td><td>the result vector </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">x_d</td><td>the <code>x</code> vector </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">data_d</td><td>the data </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">add</td><td>denotes whether the values are added or subtracted from the result vector </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>the device ID denoting the GPU on which the kernel should be executed </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">range</td><td>the execution range used to launch the kernel </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">q_d</td><td>the <code>q</code> vector to fill </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num_features</td><td>number of features used for the calculation on the <code>device</code> </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="a76bc0bbb079913424a461a9de3acf5be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a76bc0bbb079913424a461a9de3acf5be">&#9670;&nbsp;</a></span>device_reduction()</h2>
+<a id="aa0a9796f4e708147bf1e0a3d5fa68694"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0a9796f4e708147bf1e0a3d5fa68694">&#9670;&nbsp;</a></span>run_svm_kernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -600,16 +633,46 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::device_reduction </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::run_svm_kernel </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html">detail::device_ptr</a>&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt;&gt; &amp;&#160;</td>
-          <td class="paramname"><em>buffer_d</em>, </td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>device</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>buffer</em>&#160;</td>
+          <td class="paramtype">const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
+          <td class="paramname"><em>range</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>q_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>r_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>x_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a>&#160;</td>
+          <td class="paramname"><em>add</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>num_features</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -619,16 +682,157 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Combines the data in <code>buffer_d</code> from all devices into <code>buffer</code> and distributes them back to each devices. </p>
+<p>Run the main GPU kernel used in the CG algorithm. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">buffer_d</td><td>the data to gather </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">buffer</td><td>the reduces data </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>the device ID denoting the GPU on which the kernel should be executed </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">range</td><td>the execution range used to launch the kernel </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">q_d</td><td>the <code>q</code> vector </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">r_d</td><td>the result vector </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">x_d</td><td>the right-hand side of the equation </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">add</td><td>denotes whether the values are added or subtracted from the result vector </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num_features</td><td>number of features used for the calculation in the <code>device</code> </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ab3fefe380d23808f4779ad747f6f7d77"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3fefe380d23808f4779ad747f6f7d77">&#9670;&nbsp;</a></span>run_w_kernel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::run_w_kernel </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>device</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
+          <td class="paramname"><em>range</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>w_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>alpha_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>num_features</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Run the GPU kernel (only on the first GPU) the calculate the <code>w</code> vector used to speed up the prediction when using the linear kernel function. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>the device ID denoting the GPU on which the kernel should be executed </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">range</td><td>the execution range used to launch the </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">w_d</td><td>the <code>w</code> vector to fill, used to speed up the prediction when using the linear kernel </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">alpha_d</td><td>the previously calculated weight for each data point </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num_features</td><td>number of features used for the calculation on the <code>device</code> </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ad4dc605a13f86f04d601906386163b7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4dc605a13f86f04d601906386163b7a">&#9670;&nbsp;</a></span>run_predict_kernel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm</a>&lt; T &gt;::run_predict_kernel </td>
+          <td>(</td>
+          <td class="paramtype">const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
+          <td class="paramname"><em>range</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>out_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>alpha_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> &amp;&#160;</td>
+          <td class="paramname"><em>point_d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>num_predict_points</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Run the GPU kernel (only on the first GPU) to predict the new data points <code>point_d</code>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">range</td><td>the execution range used to launch the kernel </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_d</td><td>the calculated prediction </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">alpha_d</td><td>the previously calculated weight for each data point </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">point_d</td><td>the data points to predict </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num_predict_points</td><td>the number of data points to predict </td></tr>
   </table>
   </dd>
 </dl>
@@ -641,7 +845,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

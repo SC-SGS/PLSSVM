@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/detail/arithmetic_type_name.hpp File Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/detail/arithmetic_type_name.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -93,9 +93,8 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="arithmetic__type__name_8hpp__dep__incl.png" border="0" usemap="#include_2plssvm_2detail_2arithmetic__type__name_8hppdep" alt=""/></div>
 <map name="include_2plssvm_2detail_2arithmetic__type__name_8hppdep" id="include_2plssvm_2detail_2arithmetic__type__name_8hppdep">
-<area shape="rect" title="Implements conversion functions from arithmetic types to their name as string representation." alt="" coords="97,5,299,47"/>
-<area shape="rect" href="backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="5,95,191,136"/>
-<area shape="rect" href="string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="215,95,384,136"/>
+<area shape="rect" title="Implements conversion functions from arithmetic types to their name as string representation." alt="" coords="5,5,207,47"/>
+<area shape="rect" href="string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="21,95,191,136"/>
 </map>
 </div>
 </div>
@@ -104,7 +103,7 @@ This graph shows which files directly or indirectly include this file:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html">plssvm</a></td></tr>
-<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all API functions. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all public API functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html">plssvm::detail</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
@@ -120,7 +119,7 @@ Macros</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:af8698438ef6011ea60c0231b9cadaa36"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:af8698438ef6011ea60c0231b9cadaa36"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::string_view&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">plssvm::detail::arithmetic_type_name</a> ()=delete</td></tr>
-<tr class="memdesc:af8698438ef6011ea60c0231b9cadaa36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to convert the given type to its name as string representation.  <a href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">More...</a><br /></td></tr>
+<tr class="memdesc:af8698438ef6011ea60c0231b9cadaa36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to convert the given type to its name as string representation including possible const and/or volatile attributes.  <a href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">More...</a><br /></td></tr>
 <tr class="separator:af8698438ef6011ea60c0231b9cadaa36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -146,8 +145,14 @@ Marcel Breyer </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">template</span> &lt;&gt;                                  \</div>
-<div class="line">    [[nodiscard]] constexpr <span class="keyword">inline</span> std::string_view arithmetic_type_name&lt;type&gt;() { <span class="keywordflow">return</span> #type; }</div>
+<b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">template</span> &lt;&gt;                                                                                                         \</div>
+<div class="line">    [[nodiscard]] constexpr <span class="keyword">inline</span> std::string_view arithmetic_type_name&lt;type&gt;() { <span class="keywordflow">return</span> #type; }                      \</div>
+<div class="line">    template &lt;&gt;                                                                                                         \</div>
+<div class="line">    [[nodiscard]] constexpr <span class="keyword">inline</span> std::string_view arithmetic_type_name&lt;const type&gt;() { <span class="keywordflow">return</span> <span class="stringliteral">&quot;const &quot;</span> #type; }       \</div>
+<div class="line">    template &lt;&gt;                                                                                                         \</div>
+<div class="line">    [[nodiscard]] constexpr <span class="keyword">inline</span> std::string_view arithmetic_type_name&lt;volatile type&gt;() { <span class="keywordflow">return</span> <span class="stringliteral">&quot;volatile &quot;</span> #type; } \</div>
+<div class="line">    template &lt;&gt;                                                                                                         \</div>
+<div class="line">    [[nodiscard]] constexpr <span class="keyword">inline</span> std::string_view arithmetic_type_name&lt;const volatile type&gt;() { <span class="keywordflow">return</span> <span class="stringliteral">&quot;const volatile &quot;</span> #type; }</div>
 </div><!-- fragment -->
 <p>Defines a macro to create all possible conversion functions from arithmetic types to their name as string representation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -162,7 +167,7 @@ Marcel Breyer </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

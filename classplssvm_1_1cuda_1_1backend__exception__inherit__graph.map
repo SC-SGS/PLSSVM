@@ -1,5 +1,5 @@
 <map id="plssvm::cuda::backend_exception" name="plssvm::cuda::backend_exception">
 <area shape="rect" id="node1" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="5,155,176,196"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="20,80,161,107"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="20,80,161,107"/>
 <area shape="rect" id="node3" title=" " alt="" coords="21,5,160,32"/>
 </map>

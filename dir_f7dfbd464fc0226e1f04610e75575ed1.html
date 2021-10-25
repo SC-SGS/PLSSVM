@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/detail Directory Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/detail Directory Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -71,6 +71,10 @@ $(function() {
 <div class="title">detail Directory Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p><p>Directory containing implementation details which <b>should not</b> be used by users. </p>
+ 
+<a href="#details">More...</a></p>
 <div class="dynheader">
 Directory dependency graph for detail:</div>
 <div class="dyncontent">
@@ -78,7 +82,7 @@ Directory dependency graph for detail:</div>
 <map name="dir__f7dfbd464fc0226e1f04610e75575ed1__dep" id="dir__f7dfbd464fc0226e1f04610e75575ed1__dep">
 <area shape="rect" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="27,52,99,100"/>
 <area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="16,148,109,196"/>
-<area shape="rect" href="dir_000011_000008.html" title="2" alt="" coords="66,122,76,137"/>
+<area shape="rect" href="dir_000013_000010.html" title="1" alt="" coords="66,122,76,137"/>
 <area shape="rect" href="dir_9696d1624c88fbb4b2358edab2255cb6.html" title="plssvm" alt="" coords="16,16,109,111"/>
 </map>
 </div>
@@ -91,6 +95,9 @@ Files</h2></td></tr>
 <tr class="memitem:assert_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="assert_8hpp.html">assert.hpp</a> <a href="assert_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:assert_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements a custom assert macro. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:execution__range_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="execution__range_8hpp.html">execution_range.hpp</a> <a href="execution__range_8hpp_source.html">[code]</a></td></tr>
+<tr class="memdesc:execution__range_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implement a backend independent class used to specify the execution range for all kernel invocations. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:file__reader_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="file__reader_8hpp.html">file_reader.hpp</a> <a href="file__reader_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:file__reader_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements a file reader class responsible for reading the input file and parsing it into lines. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -101,16 +108,23 @@ Files</h2></td></tr>
 <tr class="memdesc:string__conversion_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements a conversion function from a string to an arithmetic type. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:string__utility_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="string__utility_8hpp.html">string_utility.hpp</a> <a href="string__utility_8hpp_source.html">[code]</a></td></tr>
-<tr class="memdesc:string__utility_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements utility functions for string manipulation and conversion. <br /></td></tr>
+<tr class="memdesc:string__utility_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements utility functions for string manipulation and querying. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:detail_2utility_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="detail_2utility_8hpp.html">utility.hpp</a> <a href="detail_2utility_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:detail_2utility_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines universal utility functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>Directory containing implementation details which <b>should not</b> be used by users. </p>
+<dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
+<dd>
+Marcel Breyer </dd></dl>
+<dl class="section copyright"><dt>Copyright</dt><dd>2018-today The PLSSVM project - All Rights Reserved </dd></dl>
+<dl class="section user"><dt>License</dt><dd>\_linebr This file is part of the PLSSVM project which is released under the MIT license. See the LICENSE.md file in the project root for full license information. </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['not_5fimplemented_5fexception_257',['not_implemented_exception',['../classplssvm_1_1not__implemented__exception.html',1,'plssvm']]]
+  ['kernel_293',['kernel',['../classplssvm_1_1opencl_1_1detail_1_1kernel.html',1,'plssvm::opencl::detail']]]
 ];

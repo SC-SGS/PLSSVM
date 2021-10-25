@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: Class Hierarchy</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: Class Hierarchy</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -72,21 +72,25 @@ $(function() {
 </div><table border="0" cellspacing="10" cellpadding="0">
 <tr><td><img src="inherit_graph_0.png" border="0" usemap="#plssvm_1_1csvm_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1csvm_3_01T_01_4" id="plssvm_1_1csvm_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,81,156,108"/>
-<area shape="rect" href="classplssvm_1_1cuda_1_1csvm.html" title="The C&#45;SVM class using the CUDA backend." alt="" coords="215,5,404,32"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="The C&#45;SVM class using the OpenCL backend." alt="" coords="209,56,410,83"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="The C&#45;SVM class using the OpenMP backend." alt="" coords="204,107,415,133"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="The C&#45;SVM class using the SYCL backend." alt="" coords="217,157,401,184"/>
+<area shape="rect" href="classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,233,156,259"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="230,5,389,76"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,101,411,186"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="214,211,405,281"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="228,306,391,362"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,386,415,413"/>
+<area shape="rect" href="classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="469,27,658,54"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,130,664,157"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,233,655,259"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_1.png" border="0" usemap="#plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01real__type_01_4" alt=""/>
-<map name="plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01real__type_01_4" id="plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01real__type_01_4">
-<area shape="rect" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html" title=" " alt="" coords="5,5,195,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_2.png" border="0" usemap="#plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_1.png" border="0" usemap="#plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4" id="plssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html" title="Small wrapper class around a CUDA device pointer together with commonly used device functions." alt="" coords="5,5,159,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_2.png" border="0" usemap="#plssvm_1_1detail_1_1execution__range" alt=""/>
+<map name="plssvm_1_1detail_1_1execution__range" id="plssvm_1_1detail_1_1execution__range">
+<area shape="rect" href="classplssvm_1_1detail_1_1execution__range.html" title="Class specifying a backend independent execution range." alt="" coords="5,5,191,47"/>
 </map>
 </td></tr>
 <tr><td><img src="inherit_graph_3.png" border="0" usemap="#plssvm_1_1detail_1_1file__reader" alt=""/>
@@ -96,16 +100,15 @@ $(function() {
 </td></tr>
 <tr><td><img src="inherit_graph_4.png" border="0" usemap="#plssvm_1_1exception" alt=""/>
 <map name="plssvm_1_1exception" id="plssvm_1_1exception">
-<area shape="rect" href="classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided data set file has an invalid format for the selected parser (e...." alt="" coords="5,235,153,276"/>
-<area shape="rect" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="201,242,343,269"/>
+<area shape="rect" href="classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="5,201,153,243"/>
+<area shape="rect" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="201,209,343,235"/>
 <area shape="rect" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="401,5,572,47"/>
-<area shape="rect" href="classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided data set file couldn&#39;t be found." alt="" coords="402,71,571,112"/>
-<area shape="rect" href="classplssvm_1_1not__implemented__exception.html" title="Exception type thrown if the requested operation is currently not implemented." alt="" coords="391,136,583,177"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="395,201,578,243"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="391,267,583,308"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="404,332,569,373"/>
-<area shape="rect" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="407,397,566,439"/>
-<area shape="rect" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="399,463,575,504"/>
+<area shape="rect" href="classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided file couldn&#39;t be found." alt="" coords="402,71,571,112"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="395,136,578,177"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="391,201,583,243"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="404,267,569,308"/>
+<area shape="rect" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="407,332,566,373"/>
+<area shape="rect" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="399,397,575,439"/>
 </map>
 </td></tr>
 <tr><td><img src="inherit_graph_5.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1command__queue" alt=""/>
@@ -113,61 +116,61 @@ $(function() {
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_6.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01real__type_01_4" alt=""/>
-<map name="plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01real__type_01_4" id="plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01real__type_01_4">
-<area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title=" " alt="" coords="5,5,195,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_7.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_6.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4" id="plssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_8.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1error__code" alt=""/>
+<tr><td><img src="inherit_graph_7.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1error__code" alt=""/>
 <map name="plssvm_1_1opencl_1_1detail_1_1error__code" id="plssvm_1_1opencl_1_1detail_1_1error__code">
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1error__code.html" title="Class wrapping an OpenCL error code." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_9.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1kernel" alt=""/>
+<tr><td><img src="inherit_graph_8.png" border="0" usemap="#plssvm_1_1opencl_1_1detail_1_1kernel" alt=""/>
 <map name="plssvm_1_1opencl_1_1detail_1_1kernel" id="plssvm_1_1opencl_1_1detail_1_1kernel">
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html" title="RAII wrapper class around a cl_kernel." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_10.png" border="0" usemap="#plssvm_1_1operators_1_1transposed_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_9.png" border="0" usemap="#plssvm_1_1operators_1_1transposed_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1operators_1_1transposed_3_01T_01_4" id="plssvm_1_1operators_1_1transposed_3_01T_01_4">
 <area shape="rect" href="structplssvm_1_1operators_1_1transposed.html" title="Wrapper struct for overloading the dot product operator." alt="" coords="5,5,152,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_11.png" border="0" usemap="#plssvm_1_1parameter_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_10.png" border="0" usemap="#plssvm_1_1parameter_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1parameter_3_01T_01_4" id="plssvm_1_1parameter_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1parameter.html" title="Base class for encapsulating all necessary parameters possibly provided through command line argument..." alt="" coords="5,31,188,57"/>
 <area shape="rect" href="classplssvm_1_1parameter__predict.html" title="Class for encapsulating all necessary parameters for predicting possibly provided through command lin..." alt="" coords="236,5,471,32"/>
 <area shape="rect" href="classplssvm_1_1parameter__train.html" title="Class for encapsulating all necessary parameters for training possibly provided through command line ..." alt="" coords="243,56,463,83"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_12.png" border="0" usemap="#plssvm_1_1source__location" alt=""/>
+<tr><td><img src="inherit_graph_11.png" border="0" usemap="#plssvm_1_1source__location" alt=""/>
 <map name="plssvm_1_1source__location" id="plssvm_1_1source__location">
 <area shape="rect" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,..." alt="" coords="5,5,184,32"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_13.png" border="0" usemap="#plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01real__type_01_4" alt=""/>
-<map name="plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01real__type_01_4" id="plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01real__type_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title=" " alt="" coords="5,5,195,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_14.png" border="0" usemap="#plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_12.png" border="0" usemap="#plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4" id="plssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="5,5,153,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_15.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_13.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4" id="plssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the linear kernel function." alt="" coords="5,5,160,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_16.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_14.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4" alt=""/>
 <map name="plssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4" id="plssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the polynomial kernel function." alt="" coords="5,5,160,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_15.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" alt=""/>
+<map name="plssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" id="plssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html" title="Predicts the labels for data points using the polynomial kernel function." alt="" coords="5,5,200,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_16.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" alt=""/>
+<map name="plssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" id="plssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html" title="Predicts the labels for data points using the radial basis functions kernel function." alt="" coords="5,5,208,47"/>
 </map>
 </td></tr>
 <tr><td><img src="inherit_graph_17.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4" alt=""/>
@@ -190,26 +193,16 @@ $(function() {
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the radial basis functions kernel function." alt="" coords="5,5,160,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_21.png" border="0" usemap="#plssvm_1_1sycl_1_1kernel__w_3_01real__type_01_4" alt=""/>
-<map name="plssvm_1_1sycl_1_1kernel__w_3_01real__type_01_4" id="plssvm_1_1sycl_1_1kernel__w_3_01real__type_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1kernel__w.html" title=" " alt="" coords="5,5,156,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_22.png" border="0" usemap="#plssvm_1_1sycl_1_1predict__points__poly_3_01real__type_01_4" alt=""/>
-<map name="plssvm_1_1sycl_1_1predict__points__poly_3_01real__type_01_4" id="plssvm_1_1sycl_1_1predict__points__poly_3_01real__type_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1predict__points__poly.html" title=" " alt="" coords="5,5,200,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_23.png" border="0" usemap="#plssvm_1_1sycl_1_1predict__points__rbf_3_01real__type_01_4" alt=""/>
-<map name="plssvm_1_1sycl_1_1predict__points__rbf_3_01real__type_01_4" id="plssvm_1_1sycl_1_1predict__points__rbf_3_01real__type_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1predict__points__rbf.html" title=" " alt="" coords="5,5,191,47"/>
+<tr><td><img src="inherit_graph_21.png" border="0" usemap="#plssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" alt=""/>
+<map name="plssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" id="plssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html" title="Calculate the w vector to speed up the prediction of the labels for data points using the linear kern..." alt="" coords="5,5,175,47"/>
 </map>
 </td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

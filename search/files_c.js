@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['utility_2ehpp_305',['utility.hpp',['../backends_2OpenCL_2detail_2utility_8hpp.html',1,'(Global Namespace)'],['../detail_2utility_8hpp.html',1,'(Global Namespace)']]]
+  ['target_5fplatforms_2ehpp_345',['target_platforms.hpp',['../target__platforms_8hpp.html',1,'']]]
 ];

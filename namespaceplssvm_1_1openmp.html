@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::openmp Namespace Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::openmp Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -84,7 +84,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if a problem with the OpenMP backend occurs.  <a href="classplssvm_1_1openmp_1_1backend__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html">csvm</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The C-SVM class using the OpenMP backend.  <a href="classplssvm_1_1openmp_1_1csvm.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A C-SVM implementation using OpenMP as backend.  <a href="classplssvm_1_1openmp_1_1csvm.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -454,11 +454,10 @@ template&lt;typename real_type &gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname">add</td><td>denotes whether the values are added or subtracted from the result vector </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">degree</td><td>the degree parameter used in the polynomial kernel function </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">gamma</td><td>the gamma parameter used in the polynomial kernel function </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">coef0</td><td>the coef0 parameter used in the polynomial kernel function</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">coef0</td><td>the coef0 parameter used in the polynomial kernel function </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section attention"><dt>Attention</dt><dd>Currently not implemented! </dd></dl>
 
 </div>
 </div>
@@ -542,18 +541,17 @@ template&lt;typename real_type &gt; </div>
     <tr><td class="paramdir">[in]</td><td class="paramname">QA_cost</td><td>he bottom right matrix entry multiplied by cost </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cost</td><td>1 / the cost parameter in the C-SVM </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">add</td><td>denotes whether the values are added or subtracted from the result vector </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">gamma</td><td>the gamma parameter used in the rbf kernel function</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">gamma</td><td>the gamma parameter used in the rbf kernel function </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section attention"><dt>Attention</dt><dd>Currently not implemented! </dd></dl>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

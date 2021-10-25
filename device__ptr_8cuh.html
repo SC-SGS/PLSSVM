@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/CUDA/detail/device_ptr.cuh File Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/CUDA/detail/device_ptr.cuh File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -69,25 +69,26 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle">
 <div class="title">device_ptr.cuh File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Small wrapper around a CUDA device pointer and functions.  
+<p>Small wrapper around a CUDA device pointer.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for device_ptr.cuh:</div>
 <div class="dyncontent">
 <div class="center"><img src="device__ptr_8cuh__incl.png" border="0" usemap="#include_2plssvm_2backends_2CUDA_2detail_2device__ptr_8cuh" alt=""/></div>
 <map name="include_2plssvm_2backends_2CUDA_2detail_2device__ptr_8cuh" id="include_2plssvm_2backends_2CUDA_2detail_2device__ptr_8cuh">
-<area shape="rect" title="Small wrapper around a CUDA device pointer and functions." alt="" coords="5,5,208,47"/>
-<area shape="rect" title=" " alt="" coords="26,95,97,121"/>
-<area shape="rect" title=" " alt="" coords="121,95,183,121"/>
+<area shape="rect" title="Small wrapper around a CUDA device pointer." alt="" coords="45,5,247,47"/>
+<area shape="rect" title=" " alt="" coords="5,95,76,121"/>
+<area shape="rect" title=" " alt="" coords="100,95,192,121"/>
+<area shape="rect" title=" " alt="" coords="216,95,279,121"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -95,7 +96,7 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="device__ptr_8cuh__dep__incl.png" border="0" usemap="#include_2plssvm_2backends_2CUDA_2detail_2device__ptr_8cuhdep" alt=""/></div>
 <map name="include_2plssvm_2backends_2CUDA_2detail_2device__ptr_8cuhdep" id="include_2plssvm_2backends_2CUDA_2detail_2device__ptr_8cuhdep">
-<area shape="rect" title="Small wrapper around a CUDA device pointer and functions." alt="" coords="5,5,208,47"/>
+<area shape="rect" title="Small wrapper around a CUDA device pointer." alt="" coords="5,5,208,47"/>
 <area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="14,95,199,136"/>
 </map>
 </div>
@@ -109,7 +110,7 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html">plssvm</a></td></tr>
-<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all API functions. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all public API functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1cuda"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html">plssvm::cuda</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1cuda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the CUDA backend. <br /></td></tr>
@@ -117,28 +118,9 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm_1_1cuda_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html">plssvm::cuda::detail</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1cuda_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing CUDA backend specific implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:ab3bc9188e57901f69f30f1d81285db93"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ab3bc9188e57901f69f30f1d81285db93">plssvm::cuda::detail::get_device_count</a> ()</td></tr>
-<tr class="memdesc:ab3bc9188e57901f69f30f1d81285db93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of available devices.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ab3bc9188e57901f69f30f1d81285db93">More...</a><br /></td></tr>
-<tr class="separator:ab3bc9188e57901f69f30f1d81285db93"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30e0f355508ac40b44e98dee923c85f3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3">plssvm::cuda::detail::set_device</a> (int device)</td></tr>
-<tr class="memdesc:a30e0f355508ac40b44e98dee923c85f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the device <code>device</code> to the active CUDA device.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3">More...</a><br /></td></tr>
-<tr class="separator:a30e0f355508ac40b44e98dee923c85f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a797a65ca9b45f109994320a65a4aa1"><td class="memItemLeft" align="right" valign="top"><a id="a2a797a65ca9b45f109994320a65a4aa1"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a2a797a65ca9b45f109994320a65a4aa1">plssvm::cuda::detail::peek_at_last_error</a> ()</td></tr>
-<tr class="memdesc:a2a797a65ca9b45f109994320a65a4aa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the last error from a runtime call. <br /></td></tr>
-<tr class="separator:a2a797a65ca9b45f109994320a65a4aa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2c0b0e4df88ad495a61ab05762d5a85"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ab2c0b0e4df88ad495a61ab05762d5a85">plssvm::cuda::detail::device_synchronize</a> ()</td></tr>
-<tr class="memdesc:ab2c0b0e4df88ad495a61ab05762d5a85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the current compute device to finish.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ab2c0b0e4df88ad495a61ab05762d5a85">More...</a><br /></td></tr>
-<tr class="separator:ab2c0b0e4df88ad495a61ab05762d5a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a993ed255276400b7b0b1d05a66c4d78d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a993ed255276400b7b0b1d05a66c4d78d">plssvm::cuda::detail::device_synchronize</a> (int device)</td></tr>
-<tr class="memdesc:a993ed255276400b7b0b1d05a66c4d78d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device <code>device</code> to finish.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#a993ed255276400b7b0b1d05a66c4d78d">More...</a><br /></td></tr>
-<tr class="separator:a993ed255276400b7b0b1d05a66c4d78d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Small wrapper around a CUDA device pointer and functions. </p>
+<div class="textblock"><p>Small wrapper around a CUDA device pointer. </p>
 <dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
 <dd>
 Marcel Breyer </dd></dl>
@@ -147,7 +129,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

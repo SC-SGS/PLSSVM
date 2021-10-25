@@ -1,17 +1,8 @@
 <map id="include/plssvm/backends/OpenCL/detail/device_ptr.hpp" name="include/plssvm/backends/OpenCL/detail/device_ptr.hpp">
-<area shape="rect" id="node1" title="Small wrapper around a OpenCL device pointer and functions." alt="" coords="350,5,535,61"/>
-<area shape="rect" id="node2" href="$command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="37,109,243,151"/>
-<area shape="rect" id="node3" title=" " alt="" coords="78,206,143,233"/>
-<area shape="rect" id="node4" href="$target__platform_8hpp.html" title="Defines all possible targets. Can also include targets not available on the target platform." alt="" coords="341,117,544,143"/>
-<area shape="rect" id="node14" title=" " alt="" coords="569,117,639,143"/>
-<area shape="rect" id="node15" title=" " alt="" coords="663,117,726,143"/>
-<area shape="rect" id="node5" href="$string__utility_8hpp.html" title="Implements utility functions for string manipulation and conversion." alt="" coords="167,199,318,240"/>
-<area shape="rect" id="node8" title=" " alt="" coords="327,288,385,315"/>
-<area shape="rect" id="node10" title=" " alt="" coords="393,206,508,233"/>
-<area shape="rect" id="node11" title=" " alt="" coords="533,206,574,233"/>
-<area shape="rect" id="node12" title=" " alt="" coords="599,206,671,233"/>
-<area shape="rect" id="node13" title=" " alt="" coords="695,206,771,233"/>
-<area shape="rect" id="node6" title=" " alt="" coords="5,288,91,315"/>
-<area shape="rect" id="node7" title=" " alt="" coords="115,288,181,315"/>
-<area shape="rect" id="node9" title=" " alt="" coords="205,288,302,315"/>
+<area shape="rect" id="node1" title="Small wrapper around a OpenCL device pointer." alt="" coords="231,5,416,61"/>
+<area shape="rect" id="node2" href="$command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="5,109,212,151"/>
+<area shape="rect" id="node3" title=" " alt="" coords="147,199,212,225"/>
+<area shape="rect" id="node4" title=" " alt="" coords="288,117,359,143"/>
+<area shape="rect" id="node5" title=" " alt="" coords="383,117,475,143"/>
+<area shape="rect" id="node6" title=" " alt="" coords="499,117,561,143"/>
 </map>

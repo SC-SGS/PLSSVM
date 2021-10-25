@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::sycl Namespace Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::sycl Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -91,13 +91,19 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if a problem with the SYCL backend occurs.  <a href="classplssvm_1_1sycl_1_1backend__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html">csvm</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The C-SVM class using the SYCL backend.  <a href="classplssvm_1_1sycl_1_1csvm.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A C-SVM implementation using SYCL as backend.  <a href="classplssvm_1_1sycl_1_1csvm.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__linear.html">device_kernel_linear</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the linear kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__linear.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html">device_kernel_poly</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the polynomial kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__poly.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html">device_kernel_predict_poly</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicts the labels for data points using the polynomial kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html">device_kernel_predict_radial</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicts the labels for data points using the radial basis functions kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html">device_kernel_q_linear</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functor to calculate the <code>q</code> vector using the linear C-SVM kernel.  <a href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html#details">More...</a><br /></td></tr>
@@ -111,33 +117,26 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__radial.html">device_kernel_radial</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the radial basis functions kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__radial.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1kernel__w.html">kernel_w</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1predict__points__poly.html">predict_points_poly</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1predict__points__rbf.html">predict_points_rbf</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html">device_kernel_w_linear</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the <code>w</code> vector to speed up the prediction of the labels for data points using the linear kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a65024cce87d0373cb761f5f95982f731"><td class="memItemLeft" align="right" valign="top"><a id="a65024cce87d0373cb761f5f95982f731"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a65024cce87d0373cb761f5f95982f731">size_type</a> = std::size_t</td></tr>
-<tr class="memdesc:a65024cce87d0373cb761f5f95982f731"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsigned integer type. <br /></td></tr>
-<tr class="separator:a65024cce87d0373cb761f5f95982f731"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab329618d1356072669c4cc876faa218d"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ab329618d1356072669c4cc876faa218d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ab329618d1356072669c4cc876faa218d">atomic_op</a> = detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
-<tr class="memdesc:ab329618d1356072669c4cc876faa218d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a>.  <a href="namespaceplssvm_1_1sycl.html#ab329618d1356072669c4cc876faa218d">More...</a><br /></td></tr>
-<tr class="separator:ab329618d1356072669c4cc876faa218d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
-<tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">local_accessor</a> = ::sycl::accessor&lt; real_type, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local &gt;</td></tr>
+<tr class="memitem:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op</a> = detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
+<tr class="memdesc:ae710df47ac7d24e571ab9bc2b2816c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory.  <a href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">More...</a><br /></td></tr>
+<tr class="separator:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">local_accessor</a> = ::sycl::accessor&lt; T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local &gt;</td></tr>
 <tr class="memdesc:a2565372115455bf9e79f1aa67067175a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a SYCL local accessor.  <a href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">More...</a><br /></td></tr>
 <tr class="separator:a2565372115455bf9e79f1aa67067175a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Namespace containing the C-SVM using the SYCL backend. </p>
 </div><h2 class="groupheader">Typedef Documentation</h2>
-<a id="ab329618d1356072669c4cc876faa218d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab329618d1356072669c4cc876faa218d">&#9670;&nbsp;</a></span>atomic_op</h2>
+<a id="ae710df47ac7d24e571ab9bc2b2816c16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae710df47ac7d24e571ab9bc2b2816c16">&#9670;&nbsp;</a></span>atomic_op</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -145,15 +144,15 @@ using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="nam
 template&lt;typename T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#ab329618d1356072669c4cc876faa218d">plssvm::sycl::atomic_op</a> = typedef detail::atomic_ref&lt;real_type, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;</td>
+          <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl::atomic_op</a> = typedef detail::atomic_ref&lt;T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a>. </p>
+<p>Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">real_type</td><td>the type of the accessed values </td></tr>
+    <tr><td class="paramname">T</td><td>the type of the accessed values </td></tr>
   </table>
   </dd>
 </dl>
@@ -166,7 +165,7 @@ template&lt;typename T &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename real_type &gt; </div>
+template&lt;typename T &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">plssvm::sycl::local_accessor</a> = typedef ::sycl::accessor&lt;T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local&gt;</td>
@@ -187,7 +186,7 @@ template&lt;typename real_type &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

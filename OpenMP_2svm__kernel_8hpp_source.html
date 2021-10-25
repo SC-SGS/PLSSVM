@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/OpenMP/svm_kernel.hpp Source File</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/OpenMP/svm_kernel.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -81,21 +81,21 @@ $(function() {
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> real_type&gt;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1openmp.html#ab01f32f2d4ddd4cce75272b73fc360fd">device_kernel_linear</a>(<span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;q, std::vector&lt;real_type&gt; &amp;ret, <span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;d, <span class="keyword">const</span> std::vector&lt;std::vector&lt;real_type&gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add);</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160; </div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> real_type&gt;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1openmp.html#a73fe5a62e222b17f6765c178aecdc82a">device_kernel_poly</a>(<span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;q, std::vector&lt;real_type&gt; &amp;ret, <span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;d, <span class="keyword">const</span> std::vector&lt;std::vector&lt;real_type&gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add, <span class="keywordtype">int</span> degree, real_type gamma, real_type coef0);</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160; </div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> real_type&gt;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1openmp.html#a0d9e72c91f7473b7e78f7354dcda3399">device_kernel_radial</a>(<span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;q, std::vector&lt;real_type&gt; &amp;ret, <span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;d, <span class="keyword">const</span> std::vector&lt;std::vector&lt;real_type&gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add, real_type gamma);</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160; </div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;}  <span class="comment">// namespace plssvm::openmp</span></div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> real_type&gt;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1openmp.html#a73fe5a62e222b17f6765c178aecdc82a">device_kernel_poly</a>(<span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;q, std::vector&lt;real_type&gt; &amp;ret, <span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;d, <span class="keyword">const</span> std::vector&lt;std::vector&lt;real_type&gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add, <span class="keywordtype">int</span> degree, real_type gamma, real_type coef0);</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160; </div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> real_type&gt;</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1openmp.html#a0d9e72c91f7473b7e78f7354dcda3399">device_kernel_radial</a>(<span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;q, std::vector&lt;real_type&gt; &amp;ret, <span class="keyword">const</span> std::vector&lt;real_type&gt; &amp;d, <span class="keyword">const</span> std::vector&lt;std::vector&lt;real_type&gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add, real_type gamma);</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160; </div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;}  <span class="comment">// namespace plssvm::openmp</span></div>
 </div><!-- fragment --></div><!-- contents -->
-<div class="ttc" id="anamespaceplssvm_1_1openmp_html"><div class="ttname"><a href="namespaceplssvm_1_1openmp.html">plssvm::openmp</a></div><div class="ttdoc">Namespace containing the C-SVM using the OpenMP backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:21</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1openmp_html"><div class="ttname"><a href="namespaceplssvm_1_1openmp.html">plssvm::openmp</a></div><div class="ttdoc">Namespace containing the C-SVM using the OpenMP backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:24</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1openmp_html_a0d9e72c91f7473b7e78f7354dcda3399"><div class="ttname"><a href="namespaceplssvm_1_1openmp.html#a0d9e72c91f7473b7e78f7354dcda3399">plssvm::openmp::device_kernel_radial</a></div><div class="ttdeci">void device_kernel_radial(const std::vector&lt; real_type &gt; &amp;q, std::vector&lt; real_type &gt; &amp;ret, const std::vector&lt; real_type &gt; &amp;d, const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add, real_type gamma)</div><div class="ttdoc">Calculates the C-SVM kernel using the radial basis function kernel function.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1openmp_html_ab01f32f2d4ddd4cce75272b73fc360fd"><div class="ttname"><a href="namespaceplssvm_1_1openmp.html#ab01f32f2d4ddd4cce75272b73fc360fd">plssvm::openmp::device_kernel_linear</a></div><div class="ttdeci">void device_kernel_linear(const std::vector&lt; real_type &gt; &amp;q, std::vector&lt; real_type &gt; &amp;ret, const std::vector&lt; real_type &gt; &amp;d, const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add)</div><div class="ttdoc">Calculates the C-SVM kernel using the linear kernel function.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1openmp_html_a73fe5a62e222b17f6765c178aecdc82a"><div class="ttname"><a href="namespaceplssvm_1_1openmp.html#a73fe5a62e222b17f6765c178aecdc82a">plssvm::openmp::device_kernel_poly</a></div><div class="ttdeci">void device_kernel_poly(const std::vector&lt; real_type &gt; &amp;q, std::vector&lt; real_type &gt; &amp;ret, const std::vector&lt; real_type &gt; &amp;d, const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;data, real_type QA_cost, real_type cost, real_type add, int degree, real_type gamma, real_type coef0)</div><div class="ttdoc">Calculates the C-SVM kernel using the polynomial kernel function.</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

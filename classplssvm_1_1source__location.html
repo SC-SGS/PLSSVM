@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::source_location Class Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::source_location Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -76,7 +76,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>The <code><a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a></code> class represents certain information about the source code, such as file names, line numbers or function names.  
+<p>The <a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a> class represents certain information about the source code, such as file names, line numbers or function names.  
  <a href="classplssvm_1_1source__location.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="source__location_8hpp_source.html">source_location.hpp</a>&gt;</code></p>
@@ -93,21 +93,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a28c3a2b57d878cee5619037483b24031"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the line number or <code>0</code> if no information could be retrieved.  <a href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">More...</a><br /></td></tr>
 <tr class="separator:a28c3a2b57d878cee5619037483b24031"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a000e21391f018ea7750b749bba6cf4eb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1source__location.html#a000e21391f018ea7750b749bba6cf4eb">column</a> () const noexcept</td></tr>
-<tr class="memdesc:a000e21391f018ea7750b749bba6cf4eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the column number. Always <code>0</code>!  <a href="classplssvm_1_1source__location.html#a000e21391f018ea7750b749bba6cf4eb">More...</a><br /></td></tr>
+<tr class="memdesc:a000e21391f018ea7750b749bba6cf4eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the column number.  <a href="classplssvm_1_1source__location.html#a000e21391f018ea7750b749bba6cf4eb">More...</a><br /></td></tr>
 <tr class="separator:a000e21391f018ea7750b749bba6cf4eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ae9a30b6c8f7154c34c9bc088c253d47f"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classplssvm_1_1source__location.html">source_location</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1source__location.html#ae9a30b6c8f7154c34c9bc088c253d47f">current</a> (const char *<a class="el" href="classplssvm_1_1source__location.html#aac98afaff78ec800772bc7269c8cf109">file_name</a>=__builtin_FILE(), const char *<a class="el" href="classplssvm_1_1source__location.html#ac64385f9ddda4f491850775d453de785">function_name</a>=__builtin_FUNCTION(), const int <a class="el" href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">line</a>=__builtin_LINE(), const int <a class="el" href="classplssvm_1_1source__location.html#a000e21391f018ea7750b749bba6cf4eb">column</a>=0) noexcept</td></tr>
-<tr class="memdesc:ae9a30b6c8f7154c34c9bc088c253d47f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct new source location information about the current call side.  <a href="classplssvm_1_1source__location.html#ae9a30b6c8f7154c34c9bc088c253d47f">More...</a><br /></td></tr>
-<tr class="separator:ae9a30b6c8f7154c34c9bc088c253d47f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae255505ce7f9c4c9ed970e9788732b23"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classplssvm_1_1source__location.html">source_location</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1source__location.html#ae255505ce7f9c4c9ed970e9788732b23">current</a> (const char *<a class="el" href="classplssvm_1_1source__location.html#aac98afaff78ec800772bc7269c8cf109">file_name</a>=__builtin_FILE(), const char *<a class="el" href="classplssvm_1_1source__location.html#ac64385f9ddda4f491850775d453de785">function_name</a>=__builtin_FUNCTION(), int <a class="el" href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">line</a>=__builtin_LINE(), int <a class="el" href="classplssvm_1_1source__location.html#a000e21391f018ea7750b749bba6cf4eb">column</a>=0) noexcept</td></tr>
+<tr class="memdesc:ae255505ce7f9c4c9ed970e9788732b23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct new source location information about the current call side.  <a href="classplssvm_1_1source__location.html#ae255505ce7f9c4c9ed970e9788732b23">More...</a><br /></td></tr>
+<tr class="separator:ae255505ce7f9c4c9ed970e9788732b23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The <code><a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a></code> class represents certain information about the source code, such as file names, line numbers or function names. </p>
+<div class="textblock"><p>The <a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a> class represents certain information about the source code, such as file names, line numbers or function names. </p>
 <p>Based on <a href="https://en.cppreference.com/w/cpp/utility/source_location"><code>std::source_location</code></a>. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ae9a30b6c8f7154c34c9bc088c253d47f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9a30b6c8f7154c34c9bc088c253d47f">&#9670;&nbsp;</a></span>current()</h2>
+<a id="ae255505ce7f9c4c9ed970e9788732b23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae255505ce7f9c4c9ed970e9788732b23">&#9670;&nbsp;</a></span>current()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -130,13 +130,13 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const int&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>line</em> = <code>__builtin_LINE()</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const int&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>column</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
@@ -147,7 +147,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -184,7 +184,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -212,7 +212,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -240,7 +240,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -268,12 +268,13 @@ Static Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the column number. Always <code>0</code>! </p>
+<p>Returns the column number. </p>
+<dl class="section attention"><dt>Attention</dt><dd>Always <code>0</code>! </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd><code>0</code> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
@@ -284,7 +285,7 @@ Static Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

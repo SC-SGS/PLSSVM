@@ -1,5 +1,5 @@
 <map id="plssvm::unsupported_backend_exception" name="plssvm::unsupported_backend_exception">
 <area shape="rect" id="node1" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="5,155,164,196"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="14,80,155,107"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="14,80,155,107"/>
 <area shape="rect" id="node3" title=" " alt="" coords="15,5,154,32"/>
 </map>

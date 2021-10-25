@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/OpenCL/detail Directory Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/OpenCL/detail Directory Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -71,28 +71,32 @@ $(function() {
 <div class="title">detail Directory Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p><p>Directory containing implementation details for the OpenCL backend. </p>
+ 
+<a href="#details">More...</a></p>
 <div class="dynheader">
 Directory dependency graph for detail:</div>
 <div class="dyncontent">
 <div class="center"><img src="dir_26d9ce1ebc5b1115119c3c93b3a20999_dep.png" border="0" usemap="#dir__26d9ce1ebc5b1115119c3c93b3a20999__dep" alt="include/plssvm/backends/OpenCL/detail"/></div>
 <map name="dir__26d9ce1ebc5b1115119c3c93b3a20999__dep" id="dir__26d9ce1ebc5b1115119c3c93b3a20999__dep">
 <area shape="rect" href="dir_26d9ce1ebc5b1115119c3c93b3a20999.html" title="detail" alt="" coords="27,52,99,100"/>
-<area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="15,244,108,292"/>
-<area shape="rect" href="dir_000009_000008.html" title="1" alt="" coords="58,217,67,232"/>
-<area shape="rect" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="63,148,135,196"/>
-<area shape="rect" href="dir_000009_000011.html" title="3" alt="" coords="87,121,96,135"/>
-<area shape="rect" href="dir_000011_000008.html" title="2" alt="" coords="80,223,90,238"/>
+<area shape="rect" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="27,148,99,196"/>
+<area shape="rect" href="dir_000011_000013.html" title="1" alt="" coords="66,122,76,137"/>
 <area shape="rect" href="dir_d7c00eaa22908fd671a35ffbda10ce1f.html" title="OpenCL" alt="" coords="16,16,109,111"/>
 </map>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="files"></a>
 Files</h2></td></tr>
+<tr class="memitem:atomics_8cl"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="atomics_8cl.html">atomics.cl</a></td></tr>
+<tr class="memdesc:atomics_8cl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines atomic functions for floating point types. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:command__queue_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="command__queue_8hpp.html">command_queue.hpp</a> <a href="command__queue_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:command__queue_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines a very small RAII wrapper around a cl_command_queue including information about its associated OpenCL context and device. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:OpenCL_2detail_2device__ptr_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="OpenCL_2detail_2device__ptr_8hpp.html">device_ptr.hpp</a> <a href="OpenCL_2detail_2device__ptr_8hpp_source.html">[code]</a></td></tr>
-<tr class="memdesc:OpenCL_2detail_2device__ptr_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Small wrapper around a OpenCL device pointer and functions. <br /></td></tr>
+<tr class="memdesc:OpenCL_2detail_2device__ptr_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Small wrapper around a OpenCL device pointer. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:error__code_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="error__code_8hpp.html">error_code.hpp</a> <a href="error__code_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:error__code_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Small wrapper around OpenCL's error codes. <br /></td></tr>
@@ -104,10 +108,17 @@ Files</h2></td></tr>
 <tr class="memdesc:backends_2OpenCL_2detail_2utility_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility functions specific to the OpenCL backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>Directory containing implementation details for the OpenCL backend. </p>
+<dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
+<dd>
+Marcel Breyer </dd></dl>
+<dl class="section copyright"><dt>Copyright</dt><dd>2018-today The PLSSVM project - All Rights Reserved </dd></dl>
+<dl class="section user"><dt>License</dt><dd>\_linebr This file is part of the PLSSVM project which is released under the MIT license. See the LICENSE.md file in the project root for full license information. </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

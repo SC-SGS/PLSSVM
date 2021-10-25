@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/CUDA/svm_kernel.cuh File Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/CUDA/svm_kernel.cuh File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -77,11 +77,21 @@ $(function() {
 
 <p>Defines the kernel functions for the C-SVM using the CUDA backend.  
 <a href="#details">More...</a></p>
-<table class="memberdecls">
+<div class="textblock"><code>#include &quot;<a class="el" href="constants_8hpp_source.html">plssvm/constants.hpp</a>&quot;</code><br />
+</div><div class="textblock"><div class="dynheader">
+Include dependency graph for svm_kernel.cuh:</div>
+<div class="dyncontent">
+<div class="center"><img src="svm__kernel_8cuh__incl.png" border="0" usemap="#include_2plssvm_2backends_2CUDA_2svm__kernel_8cuh" alt=""/></div>
+<map name="include_2plssvm_2backends_2CUDA_2svm__kernel_8cuh" id="include_2plssvm_2backends_2CUDA_2svm__kernel_8cuh">
+<area shape="rect" title="Defines the kernel functions for the C&#45;SVM using the CUDA backend." alt="" coords="5,5,191,47"/>
+<area shape="rect" href="constants_8hpp.html" title="Global type definitions and compile&#45;time constants." alt="" coords="16,95,180,121"/>
+</map>
+</div>
+</div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html">plssvm</a></td></tr>
-<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all API functions. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all public API functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1cuda"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html">plssvm::cuda</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1cuda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the CUDA backend. <br /></td></tr>
@@ -89,18 +99,18 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5f576e9e0fea6a7284b4ce6a45b4c370"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
-<tr class="memitem:a5f576e9e0fea6a7284b4ce6a45b4c370"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html#a5f576e9e0fea6a7284b4ce6a45b4c370">plssvm::cuda::device_kernel_linear</a> (const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const real_type add, const int first_feature, const int last_feature)</td></tr>
-<tr class="memdesc:a5f576e9e0fea6a7284b4ce6a45b4c370"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the linear kernel function.  <a href="namespaceplssvm_1_1cuda.html#a5f576e9e0fea6a7284b4ce6a45b4c370">More...</a><br /></td></tr>
-<tr class="separator:a5f576e9e0fea6a7284b4ce6a45b4c370"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab12bac2ecd8b970e3081de2ffe9a054a"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
-<tr class="memitem:ab12bac2ecd8b970e3081de2ffe9a054a"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html#ab12bac2ecd8b970e3081de2ffe9a054a">plssvm::cuda::device_kernel_poly</a> (const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0)</td></tr>
-<tr class="memdesc:ab12bac2ecd8b970e3081de2ffe9a054a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the polynomial kernel function.  <a href="namespaceplssvm_1_1cuda.html#ab12bac2ecd8b970e3081de2ffe9a054a">More...</a><br /></td></tr>
-<tr class="separator:ab12bac2ecd8b970e3081de2ffe9a054a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fbb80742821b757da638c8d620eae58"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
-<tr class="memitem:a2fbb80742821b757da638c8d620eae58"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html#a2fbb80742821b757da638c8d620eae58">plssvm::cuda::device_kernel_radial</a> (const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const int num_rows, const int num_cols, const real_type add, const real_type gamma)</td></tr>
-<tr class="memdesc:a2fbb80742821b757da638c8d620eae58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the radial basis function kernel function.  <a href="namespaceplssvm_1_1cuda.html#a2fbb80742821b757da638c8d620eae58">More...</a><br /></td></tr>
-<tr class="separator:a2fbb80742821b757da638c8d620eae58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c2125b3a4b5a518e072bd1caef9d33a"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
+<tr class="memitem:a6c2125b3a4b5a518e072bd1caef9d33a"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html#a6c2125b3a4b5a518e072bd1caef9d33a">plssvm::cuda::device_kernel_linear</a> (const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type feature_range, const real_type add, const kernel_index_type id)</td></tr>
+<tr class="memdesc:a6c2125b3a4b5a518e072bd1caef9d33a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the linear kernel function.  <a href="namespaceplssvm_1_1cuda.html#a6c2125b3a4b5a518e072bd1caef9d33a">More...</a><br /></td></tr>
+<tr class="separator:a6c2125b3a4b5a518e072bd1caef9d33a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a377b5f08539d29ccac670a26f6d162d1"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
+<tr class="memitem:a377b5f08539d29ccac670a26f6d162d1"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html#a377b5f08539d29ccac670a26f6d162d1">plssvm::cuda::device_kernel_poly</a> (const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0)</td></tr>
+<tr class="memdesc:a377b5f08539d29ccac670a26f6d162d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the polynomial kernel function.  <a href="namespaceplssvm_1_1cuda.html#a377b5f08539d29ccac670a26f6d162d1">More...</a><br /></td></tr>
+<tr class="separator:a377b5f08539d29ccac670a26f6d162d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60f6257c6a085ee50690922294bdf3c7"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
+<tr class="memitem:a60f6257c6a085ee50690922294bdf3c7"><td class="memTemplItemLeft" align="right" valign="top">__global__ void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda.html#a60f6257c6a085ee50690922294bdf3c7">plssvm::cuda::device_kernel_radial</a> (const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma)</td></tr>
+<tr class="memdesc:a60f6257c6a085ee50690922294bdf3c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the radial basis function kernel function.  <a href="namespaceplssvm_1_1cuda.html#a60f6257c6a085ee50690922294bdf3c7">More...</a><br /></td></tr>
+<tr class="separator:a60f6257c6a085ee50690922294bdf3c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Defines the kernel functions for the C-SVM using the CUDA backend. </p>
@@ -112,7 +122,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

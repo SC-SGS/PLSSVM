@@ -1,5 +1,4 @@
 <map id="include/plssvm/detail/arithmetic_type_name.hpp" name="include/plssvm/detail/arithmetic_type_name.hpp">
-<area shape="rect" id="node1" title="Implements conversion functions from arithmetic types to their name as string representation." alt="" coords="97,5,299,47"/>
-<area shape="rect" id="node2" href="$backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="5,95,191,136"/>
-<area shape="rect" id="node3" href="$string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="215,95,384,136"/>
+<area shape="rect" id="node1" title="Implements conversion functions from arithmetic types to their name as string representation." alt="" coords="5,5,207,47"/>
+<area shape="rect" id="node2" href="$string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="21,95,191,136"/>
 </map>

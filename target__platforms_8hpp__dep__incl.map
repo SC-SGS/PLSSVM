@@ -1,0 +1,16 @@
+<map id="include/plssvm/target_platforms.hpp" name="include/plssvm/target_platforms.hpp">
+<area shape="rect" id="node1" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="611,5,774,47"/>
+<area shape="rect" id="node2" href="$backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="180,95,365,136"/>
+<area shape="rect" id="node3" href="$backends_2SYCL_2detail_2utility_8hpp.html" title="Utility functions specific to the SYCL backend." alt="" coords="389,95,575,136"/>
+<area shape="rect" id="node4" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="941,281,1121,307"/>
+<area shape="rect" id="node5" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="599,102,786,129"/>
+<area shape="rect" id="node12" href="$parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="855,102,1074,129"/>
+<area shape="rect" id="node6" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="215,184,400,225"/>
+<area shape="rect" id="node10" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="424,184,609,225"/>
+<area shape="rect" id="node11" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="685,184,844,225"/>
+<area shape="rect" id="node7" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="424,273,609,315"/>
+<area shape="rect" id="node8" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,273,191,315"/>
+<area shape="rect" id="node9" href="$backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="215,273,400,315"/>
+<area shape="rect" id="node13" href="$parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="1135,184,1327,225"/>
+<area shape="rect" id="node14" href="$parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="869,184,1061,225"/>
+</map>

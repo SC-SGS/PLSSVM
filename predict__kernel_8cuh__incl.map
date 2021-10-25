@@ -1,0 +1,4 @@
+<map id="include/plssvm/backends/CUDA/predict_kernel.cuh" name="include/plssvm/backends/CUDA/predict_kernel.cuh">
+<area shape="rect" id="node1" title="Defines the functions used for prediction for the C&#45;SVM using the CUDA backend." alt="" coords="5,5,192,47"/>
+<area shape="rect" id="node2" href="$constants_8hpp.html" title="Global type definitions and compile&#45;time constants." alt="" coords="17,95,181,121"/>
+</map>

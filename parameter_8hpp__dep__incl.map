@@ -1,12 +1,7 @@
 <map id="include/plssvm/parameter.hpp" name="include/plssvm/parameter.hpp">
-<area shape="rect" id="node1" title="Implements the base class encapsulating all necessary parameters." alt="" coords="603,5,822,32"/>
-<area shape="rect" id="node2" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="5,169,191,211"/>
-<area shape="rect" id="node3" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="215,169,400,211"/>
-<area shape="rect" id="node4" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="424,169,609,211"/>
-<area shape="rect" id="node5" href="$backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="685,169,871,211"/>
-<area shape="rect" id="node6" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="554,87,741,114"/>
-<area shape="rect" id="node8" href="$csvm__factory_8hpp.html" title="Factory functions for constructing a new C&#45;SVM based on the provided command line arguments." alt="" coords="895,169,1053,211"/>
-<area shape="rect" id="node9" href="$parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="866,80,1058,121"/>
-<area shape="rect" id="node10" href="$parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="1082,80,1274,121"/>
-<area shape="rect" id="node7" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="943,259,1123,285"/>
+<area shape="rect" id="node1" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="97,5,316,32"/>
+<area shape="rect" id="node2" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="116,169,296,196"/>
+<area shape="rect" id="node3" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="27,80,186,121"/>
+<area shape="rect" id="node4" href="$parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="210,80,402,121"/>
+<area shape="rect" id="node5" href="$parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="426,80,618,121"/>
 </map>

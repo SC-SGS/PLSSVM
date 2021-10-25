@@ -1,7 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,81,156,108"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1cuda_1_1csvm.html" title="The C&#45;SVM class using the CUDA backend." alt="" coords="215,5,404,32"/>
-<area shape="rect" id="node3" href="$classplssvm_1_1opencl_1_1csvm.html" title="The C&#45;SVM class using the OpenCL backend." alt="" coords="209,56,410,83"/>
-<area shape="rect" id="node4" href="$classplssvm_1_1openmp_1_1csvm.html" title="The C&#45;SVM class using the OpenMP backend." alt="" coords="204,107,415,133"/>
-<area shape="rect" id="node5" href="$classplssvm_1_1sycl_1_1csvm.html" title="The C&#45;SVM class using the SYCL backend." alt="" coords="217,157,401,184"/>
+<area shape="rect" id="node1" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,233,156,259"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="230,5,389,76"/>
+<area shape="rect" id="node4" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,101,411,186"/>
+<area shape="rect" id="node6" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="214,211,405,281"/>
+<area shape="rect" id="node8" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="228,306,391,362"/>
+<area shape="rect" id="node9" href="$classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,386,415,413"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="469,27,658,54"/>
+<area shape="rect" id="node5" href="$classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,130,664,157"/>
+<area shape="rect" id="node7" href="$classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,233,655,259"/>
 </map>

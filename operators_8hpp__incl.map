@@ -1,8 +1,9 @@
 <map id="include/plssvm/detail/operators.hpp" name="include/plssvm/detail/operators.hpp">
-<area shape="rect" id="node1" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="441,5,603,47"/>
+<area shape="rect" id="node1" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="492,5,653,47"/>
 <area shape="rect" id="node2" href="$assert_8hpp.html" title="Implements a custom assert macro." alt="" coords="284,95,467,121"/>
 <area shape="rect" id="node9" title=" " alt="" coords="491,95,553,121"/>
-<area shape="rect" id="node10" title=" " alt="" coords="577,95,640,121"/>
+<area shape="rect" id="node10" title=" " alt="" coords="577,95,669,121"/>
+<area shape="rect" id="node11" title=" " alt="" coords="693,95,756,121"/>
 <area shape="rect" id="node3" href="$source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="5,169,196,211"/>
 <area shape="rect" id="node4" title=" " alt="" coords="119,259,216,285"/>
 <area shape="rect" id="node5" title=" " alt="" coords="272,177,364,203"/>

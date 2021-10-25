@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/detail/assert.hpp Source File</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/detail/assert.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -85,46 +85,46 @@ $(function() {
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160; </div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1detail.html">plssvm::detail</a> {</div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160; </div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt;</div>
-<div class="line"><a name="l00035"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">   35</a></span>&#160;<span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">check_assertion</a>(<span class="keyword">const</span> <span class="keywordtype">bool</span> cond, <span class="keyword">const</span> std::string_view cond_str, <span class="keyword">const</span> <a class="code" href="classplssvm_1_1source__location.html">source_location</a> &amp;loc, <span class="keyword">const</span> std::string_view msg, Args &amp;&amp;...args) {</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <span class="comment">// check if assertion holds</span></div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <span class="keywordflow">if</span> (!cond) {</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        <span class="comment">// print assertion error message</span></div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        fmt::print(stderr,</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;                   <span class="stringliteral">&quot;Assertion &#39;{}&#39; failed!\n&quot;</span></div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;                   <span class="stringliteral">&quot;  in file      {}\n&quot;</span></div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;                   <span class="stringliteral">&quot;  in function  {}\n&quot;</span></div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;                   <span class="stringliteral">&quot;  @ line       {}\n\n&quot;</span></div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;                   <span class="stringliteral">&quot;{}\n&quot;</span>,</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), cond_str),</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;                   loc.<a class="code" href="classplssvm_1_1source__location.html#aac98afaff78ec800772bc7269c8cf109">file_name</a>(),</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;                   loc.<a class="code" href="classplssvm_1_1source__location.html#ac64385f9ddda4f491850775d453de785">function_name</a>(),</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;                   loc.<a class="code" href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">line</a>(),</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::red), msg, std::forward&lt;Args&gt;(args)...));</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160; </div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;        <span class="comment">// abort further execution</span></div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;        std::abort();</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    }</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;}</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160; </div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;<span class="preprocessor">#if defined(PLSSVM_ENABLE_ASSERTS) || !defined(NDEBUG)</span></div>
-<div class="line"><a name="l00061"></a><span class="lineno"><a class="line" href="assert_8hpp.html#a28407e46cbc8177900a39f81512e501a">   61</a></span>&#160;<span class="preprocessor">    #define PLSSVM_ASSERT(cond, msg, ...) plssvm::detail::check_assertion(cond, #cond, plssvm::source_location::current(), msg, ##__VA_ARGS__)</span></div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor">    #define PLSSVM_ASSERT(cond, msg, ...)</span></div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160; </div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;}  <span class="comment">// namespace plssvm::detail</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Args&gt;</div>
+<div class="line"><a name="l00036"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">   36</a></span>&#160;<span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">check_assertion</a>(<span class="keyword">const</span> <span class="keywordtype">bool</span> cond, <span class="keyword">const</span> std::string_view cond_str, <span class="keyword">const</span> <a class="code" href="classplssvm_1_1source__location.html">source_location</a> &amp;loc, <span class="keyword">const</span> std::string_view msg, Args &amp;&amp;...args) {</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <span class="comment">// check if assertion holds</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    <span class="keywordflow">if</span> (!cond) {</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        <span class="comment">// print assertion error message</span></div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        fmt::print(stderr,</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;                   <span class="stringliteral">&quot;Assertion &#39;{}&#39; failed!\n&quot;</span></div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;                   <span class="stringliteral">&quot;  in file      {}\n&quot;</span></div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;                   <span class="stringliteral">&quot;  in function  {}\n&quot;</span></div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;                   <span class="stringliteral">&quot;  @ line       {}\n\n&quot;</span></div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;                   <span class="stringliteral">&quot;{}\n&quot;</span>,</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), cond_str),</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;                   loc.<a class="code" href="classplssvm_1_1source__location.html#aac98afaff78ec800772bc7269c8cf109">file_name</a>(),</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;                   loc.<a class="code" href="classplssvm_1_1source__location.html#ac64385f9ddda4f491850775d453de785">function_name</a>(),</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;                   loc.<a class="code" href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">line</a>(),</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::red), msg, std::forward&lt;Args&gt;(args)...));</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160; </div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;        <span class="comment">// abort further execution</span></div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        std::abort();</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    }</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;}</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160; </div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="preprocessor">#if defined(PLSSVM_ENABLE_ASSERTS) || !defined(NDEBUG)</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno"><a class="line" href="assert_8hpp.html#a28407e46cbc8177900a39f81512e501a">   62</a></span>&#160;<span class="preprocessor">    #define PLSSVM_ASSERT(cond, msg, ...) plssvm::detail::check_assertion(cond, #cond, plssvm::source_location::current(), msg, ##__VA_ARGS__)</span></div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">    #define PLSSVM_ASSERT(cond, msg, ...)</span></div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;}  <span class="comment">// namespace plssvm::detail</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <div class="ttc" id="aclassplssvm_1_1source__location_html"><div class="ttname"><a href="classplssvm_1_1source__location.html">plssvm::source_location</a></div><div class="ttdoc">The plssvm::source_location class represents certain information about the source code,...</div><div class="ttdef"><b>Definition:</b> source_location.hpp:22</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1detail.html">plssvm::detail</a></div><div class="ttdoc">Namespace containing implementation details. Should not directly be used by users.</div><div class="ttdef"><b>Definition:</b> core.hpp:31</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1detail.html">plssvm::detail</a></div><div class="ttdoc">Namespace containing implementation details. Should not directly be used by users.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:25</div></div>
 <div class="ttc" id="asource__location_8hpp_html"><div class="ttname"><a href="source__location_8hpp.html">source_location.hpp</a></div><div class="ttdoc">Implements a custom std::source_location implementation for C++17.</div></div>
-<div class="ttc" id="aclassplssvm_1_1source__location_html_a28c3a2b57d878cee5619037483b24031"><div class="ttname"><a href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">plssvm::source_location::line</a></div><div class="ttdeci">int line() const noexcept</div><div class="ttdoc">Returns the line number or 0 if no information could be retrieved.</div><div class="ttdef"><b>Definition:</b> source_location.hpp:62</div></div>
-<div class="ttc" id="aclassplssvm_1_1source__location_html_aac98afaff78ec800772bc7269c8cf109"><div class="ttname"><a href="classplssvm_1_1source__location.html#aac98afaff78ec800772bc7269c8cf109">plssvm::source_location::file_name</a></div><div class="ttdeci">std::string_view file_name() const noexcept</div><div class="ttdoc">Returns the function name without additional signature information (i.e. return type and parameters) ...</div><div class="ttdef"><b>Definition:</b> source_location.hpp:57</div></div>
-<div class="ttc" id="aclassplssvm_1_1source__location_html_ac64385f9ddda4f491850775d453de785"><div class="ttname"><a href="classplssvm_1_1source__location.html#ac64385f9ddda4f491850775d453de785">plssvm::source_location::function_name</a></div><div class="ttdeci">std::string_view function_name() const noexcept</div><div class="ttdoc">Returns the absolute path name of the file or &quot;unknown&quot; if no information could be retrieved.</div><div class="ttdef"><b>Definition:</b> source_location.hpp:51</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1detail_html_a6b3118299281c534910c13f9fa1f82d5"><div class="ttname"><a href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">plssvm::detail::check_assertion</a></div><div class="ttdeci">void check_assertion(const bool cond, const std::string_view cond_str, const source_location &amp;loc, const std::string_view msg, Args &amp;&amp;...args)</div><div class="ttdoc">Function called by the PLSSVM_ASSERT macro. Checks the assertion condition and prints and aborts the ...</div><div class="ttdef"><b>Definition:</b> assert.hpp:35</div></div>
+<div class="ttc" id="aclassplssvm_1_1source__location_html_a28c3a2b57d878cee5619037483b24031"><div class="ttname"><a href="classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031">plssvm::source_location::line</a></div><div class="ttdeci">int line() const noexcept</div><div class="ttdoc">Returns the line number or 0 if no information could be retrieved.</div></div>
+<div class="ttc" id="aclassplssvm_1_1source__location_html_aac98afaff78ec800772bc7269c8cf109"><div class="ttname"><a href="classplssvm_1_1source__location.html#aac98afaff78ec800772bc7269c8cf109">plssvm::source_location::file_name</a></div><div class="ttdeci">std::string_view file_name() const noexcept</div><div class="ttdoc">Returns the function name without additional signature information (i.e. return type and parameters) ...</div></div>
+<div class="ttc" id="aclassplssvm_1_1source__location_html_ac64385f9ddda4f491850775d453de785"><div class="ttname"><a href="classplssvm_1_1source__location.html#ac64385f9ddda4f491850775d453de785">plssvm::source_location::function_name</a></div><div class="ttdeci">std::string_view function_name() const noexcept</div><div class="ttdoc">Returns the absolute path name of the file or &quot;unknown&quot; if no information could be retrieved.</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1detail_html_a6b3118299281c534910c13f9fa1f82d5"><div class="ttname"><a href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">plssvm::detail::check_assertion</a></div><div class="ttdeci">void check_assertion(const bool cond, const std::string_view cond_str, const source_location &amp;loc, const std::string_view msg, Args &amp;&amp;...args)</div><div class="ttdoc">Function called by the PLSSVM_ASSERT macro. Checks the assertion condition. If the condition evaluate...</div><div class="ttdef"><b>Definition:</b> assert.hpp:36</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

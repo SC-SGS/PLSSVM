@@ -1,0 +1,4 @@
+<map id="include/plssvm/backends/CUDA/svm_kernel.cuh" name="include/plssvm/backends/CUDA/svm_kernel.cuh">
+<area shape="rect" id="node1" title="Defines the kernel functions for the C&#45;SVM using the CUDA backend." alt="" coords="5,5,191,47"/>
+<area shape="rect" id="node2" href="$constants_8hpp.html" title="Global type definitions and compile&#45;time constants." alt="" coords="16,95,180,121"/>
+</map>

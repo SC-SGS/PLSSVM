@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/constants.hpp Source File</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/constants.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -76,29 +76,41 @@ $(function() {
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {</div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160; </div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor">#if defined(PLSSVM_THREAD_BLOCK_SIZE)</span></div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;constexpr <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code" href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">THREAD_BLOCK_SIZE</a> = PLSSVM_THREAD_BLOCK_SIZE;</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00020"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">   20</a></span>&#160;constexpr <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code" href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">THREAD_BLOCK_SIZE</a> = 16;</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160; </div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#if defined(PLSSVM_INTERNAL_BLOCK_SIZE)</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;constexpr <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code" href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">INTERNAL_BLOCK_SIZE</a> = PLSSVM_INTERNAL_BLOCK_SIZE;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00027"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">   27</a></span>&#160;constexpr <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code" href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">INTERNAL_BLOCK_SIZE</a> = 6;</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;static_assert(<a class="code" href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">THREAD_BLOCK_SIZE</a> &gt; 0, <span class="stringliteral">&quot;THREAD_BLOCK_SIZE must be greater than 0!&quot;</span>);</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;static_assert(<a class="code" href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">INTERNAL_BLOCK_SIZE</a> &gt; 0, <span class="stringliteral">&quot;INTERNAL_BLOCK_SIZE must be greater than 0!&quot;</span>);</div>
+<div class="line"><a name="l00017"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">   17</a></span>&#160;<span class="keyword">using</span> <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> = int;</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160; </div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor">#if defined(PLSSVM_THREAD_BLOCK_SIZE)</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;constexpr <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> <a class="code" href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">THREAD_BLOCK_SIZE</a> = PLSSVM_THREAD_BLOCK_SIZE;</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">   23</a></span>&#160;constexpr <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> <a class="code" href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">THREAD_BLOCK_SIZE</a> = 16;</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160; </div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#if defined(PLSSVM_INTERNAL_BLOCK_SIZE)</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;constexpr <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> <a class="code" href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">INTERNAL_BLOCK_SIZE</a> = PLSSVM_INTERNAL_BLOCK_SIZE;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">   30</a></span>&#160;constexpr <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> <a class="code" href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">INTERNAL_BLOCK_SIZE</a> = 6;</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;}  <span class="comment">// namespace plssvm</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#if defined(PLSSVM_OPENMP_BLOCK_SIZE)</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;constexpr <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> <a class="code" href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">OPENMP_BLOCK_SIZE</a> = PLSSVM_OPENMP_BLOCK_SIZE;</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00037"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">   37</a></span>&#160;constexpr <a class="code" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> <a class="code" href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">OPENMP_BLOCK_SIZE</a> = 64;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="comment">// perform sanity checks</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;static_assert(<a class="code" href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">THREAD_BLOCK_SIZE</a> &gt; 0, <span class="stringliteral">&quot;THREAD_BLOCK_SIZE must be greater than 0!&quot;</span>);</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;static_assert(<a class="code" href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">INTERNAL_BLOCK_SIZE</a> &gt; 0, <span class="stringliteral">&quot;INTERNAL_BLOCK_SIZE must be greater than 0!&quot;</span>);</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;static_assert(<a class="code" href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">OPENMP_BLOCK_SIZE</a> &gt; 0, <span class="stringliteral">&quot;OPENMP_BLOCK_SIZE must be greater than 0!&quot;</span>);</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160; </div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;}  <span class="comment">// namespace plssvm</span></div>
 </div><!-- fragment --></div><!-- contents -->
-<div class="ttc" id="anamespaceplssvm_html_ad106e6f834f00516a1e85fd5a5dffe11"><div class="ttname"><a href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">plssvm::THREAD_BLOCK_SIZE</a></div><div class="ttdeci">constexpr unsigned int THREAD_BLOCK_SIZE</div><div class="ttdoc">Used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:20</div></div>
-<div class="ttc" id="anamespaceplssvm_html_ae7407a6a2b77e3257032c78ed04dd350"><div class="ttname"><a href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">plssvm::INTERNAL_BLOCK_SIZE</a></div><div class="ttdeci">constexpr unsigned int INTERNAL_BLOCK_SIZE</div><div class="ttdoc">Used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:27</div></div>
-<div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:23</div></div>
+<div class="ttc" id="anamespaceplssvm_html_a76052beb2b262c165f1811c5064ca1b5"><div class="ttname"><a href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">plssvm::THREAD_BLOCK_SIZE</a></div><div class="ttdeci">constexpr kernel_index_type THREAD_BLOCK_SIZE</div><div class="ttdoc">Global compile-time constant used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:23</div></div>
+<div class="ttc" id="anamespaceplssvm_html_ac7c75fadcf6b7f3ea0d1bb831a70933d"><div class="ttname"><a href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">plssvm::INTERNAL_BLOCK_SIZE</a></div><div class="ttdeci">constexpr kernel_index_type INTERNAL_BLOCK_SIZE</div><div class="ttdoc">Global compile-time constant used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:30</div></div>
+<div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all public API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:16</div></div>
+<div class="ttc" id="anamespaceplssvm_html_a646c8f67a5f4710c6cb5231c5b8894f6"><div class="ttname"><a href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">plssvm::OPENMP_BLOCK_SIZE</a></div><div class="ttdeci">constexpr kernel_index_type OPENMP_BLOCK_SIZE</div><div class="ttdoc">Global compile-time constant used for internal caching in the OpenMP kernel.</div><div class="ttdef"><b>Definition:</b> constants.hpp:37</div></div>
+<div class="ttc" id="anamespaceplssvm_html_aab3a343173d93c72cd62edcde3934f1a"><div class="ttname"><a href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">plssvm::kernel_index_type</a></div><div class="ttdeci">int kernel_index_type</div><div class="ttdoc">Integer type used inside kernels.</div><div class="ttdef"><b>Definition:</b> constants.hpp:17</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

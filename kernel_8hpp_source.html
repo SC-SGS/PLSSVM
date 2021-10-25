@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/OpenCL/detail/kernel.hpp Source File</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/OpenCL/detail/kernel.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -80,31 +80,32 @@ $(function() {
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160; </div>
 <div class="line"><a name="l00021"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">   21</a></span>&#160;<span class="keyword">class </span><a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> {</div>
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;  <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00027"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">   27</a></span>&#160;    <span class="keyword">explicit</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a>(cl_kernel <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>) noexcept :</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;        <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>{ <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a> } {}</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
-<div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">   33</a></span>&#160;    <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">~kernel</a>() {</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        <span class="keywordflow">if</span> (<a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>) {</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;            clReleaseKernel(<a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>);</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        }</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    }</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160; </div>
-<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac891ce33929186a5d0b53e7053d1a0d8">   43</a></span>&#160;    <span class="keyword">operator</span> cl_kernel &amp;() noexcept { <span class="keywordflow">return</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>; }</div>
-<div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a795f16bd68f6048ecbd2ee572bb78824">   48</a></span>&#160;    <span class="keyword">operator</span> <span class="keyword">const</span> cl_kernel &amp;() <span class="keyword">const</span> noexcept { <span class="keywordflow">return</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>; }</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160; </div>
-<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">   51</a></span>&#160;    cl_kernel <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>;</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;};</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    <span class="keyword">explicit</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a>(cl_kernel <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>) noexcept;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160; </div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a>(<span class="keyword">const</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a>(<a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&amp;other) noexcept;</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;<a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a0cc00ce5221850a14631075901f1a71f">operator=</a>(<span class="keyword">const</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;<a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a0cc00ce5221850a14631075901f1a71f">operator=</a>(<a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&amp;other);</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160; </div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">~kernel</a>();</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160; </div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;}  <span class="comment">// namespace plssvm::opencl::detail</span></div>
+<div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac891ce33929186a5d0b53e7053d1a0d8">   58</a></span>&#160;    [[nodiscard]] <span class="keyword">operator</span> cl_kernel &amp;() noexcept { <span class="keywordflow">return</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>; }</div>
+<div class="line"><a name="l00063"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a795f16bd68f6048ecbd2ee572bb78824">   63</a></span>&#160;    [[nodiscard]] <span class="keyword">operator</span> <span class="keyword">const</span> cl_kernel &amp;() <span class="keyword">const</span> noexcept { <span class="keywordflow">return</span> <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>; }</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160; </div>
+<div class="line"><a name="l00066"></a><span class="lineno"><a class="line" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">   66</a></span>&#160;    cl_kernel <a class="code" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>;</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;};</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160; </div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;}  <span class="comment">// namespace plssvm::opencl::detail</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></div><div class="ttdoc">RAII wrapper class around a cl_kernel.</div><div class="ttdef"><b>Definition:</b> kernel.hpp:21</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1opencl_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1opencl_1_1detail.html">plssvm::opencl::detail</a></div><div class="ttdoc">Namespace containing OpenCL backend specific implementation details. Should not directly be used by u...</div><div class="ttdef"><b>Definition:</b> command_queue.hpp:16</div></div>
-<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_a3200376dcf21ed5515873d767339325e"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">plssvm::opencl::detail::kernel::compute_kernel</a></div><div class="ttdeci">cl_kernel compute_kernel</div><div class="ttdoc">The wrapped OpenCL cl_kernel.</div><div class="ttdef"><b>Definition:</b> kernel.hpp:51</div></div>
-<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_ab86c9501dfc58c742ec8fe49bbfdec4e"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">plssvm::opencl::detail::kernel::~kernel</a></div><div class="ttdeci">~kernel()</div><div class="ttdoc">Release the cl_kernel resources on destruction.</div><div class="ttdef"><b>Definition:</b> kernel.hpp:33</div></div>
-<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_ae74fa6ca62df335493f405e7e450cce1"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">plssvm::opencl::detail::kernel::kernel</a></div><div class="ttdeci">kernel(cl_kernel compute_kernel) noexcept</div><div class="ttdoc">Construct a new wrapper around the provided compute_kernel.</div><div class="ttdef"><b>Definition:</b> kernel.hpp:27</div></div>
+<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_a3200376dcf21ed5515873d767339325e"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">plssvm::opencl::detail::kernel::compute_kernel</a></div><div class="ttdeci">cl_kernel compute_kernel</div><div class="ttdoc">The wrapped OpenCL cl_kernel.</div><div class="ttdef"><b>Definition:</b> kernel.hpp:66</div></div>
+<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_ab86c9501dfc58c742ec8fe49bbfdec4e"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">plssvm::opencl::detail::kernel::~kernel</a></div><div class="ttdeci">~kernel()</div><div class="ttdoc">Release the cl_kernel resources on destruction.</div></div>
+<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_ae74fa6ca62df335493f405e7e450cce1"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">plssvm::opencl::detail::kernel::kernel</a></div><div class="ttdeci">kernel(cl_kernel compute_kernel) noexcept</div><div class="ttdoc">Construct a new wrapper around the provided compute_kernel.</div></div>
+<div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1kernel_html_a0cc00ce5221850a14631075901f1a71f"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a0cc00ce5221850a14631075901f1a71f">plssvm::opencl::detail::kernel::operator=</a></div><div class="ttdeci">kernel &amp; operator=(const kernel &amp;)=delete</div><div class="ttdoc">Delete copy-assignment-operator to make kernel a move only type.</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

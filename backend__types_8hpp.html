@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backend_types.hpp File Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backend_types.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -76,29 +76,16 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Defines all possible backends. Can also include backends not available on the target platform.  
+<p>Defines all possible backends. Can also include backends not available on the current target platform.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="string__utility_8hpp_source.html">plssvm/detail/string_utility.hpp</a>&quot;</code><br />
-<code>#include &quot;fmt/ostream.h&quot;</code><br />
-<code>#include &lt;ios&gt;</code><br />
-<code>#include &lt;istream&gt;</code><br />
-<code>#include &lt;ostream&gt;</code><br />
-<code>#include &lt;string&gt;</code><br />
+<div class="textblock"><code>#include &lt;iosfwd&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for backend_types.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="backend__types_8hpp__incl.png" border="0" usemap="#include_2plssvm_2backend__types_8hpp" alt=""/></div>
 <map name="include_2plssvm_2backend__types_8hpp" id="include_2plssvm_2backend__types_8hpp">
-<area shape="rect" title="Defines all possible backends. Can also include backends not available on the target platform." alt="" coords="412,5,591,47"/>
-<area shape="rect" href="string__utility_8hpp.html" title="Implements utility functions for string manipulation and conversion." alt="" coords="167,95,318,136"/>
-<area shape="rect" title=" " alt="" coords="327,184,385,211"/>
-<area shape="rect" title=" " alt="" coords="393,102,508,129"/>
-<area shape="rect" title=" " alt="" coords="533,102,574,129"/>
-<area shape="rect" title=" " alt="" coords="599,102,671,129"/>
-<area shape="rect" title=" " alt="" coords="695,102,771,129"/>
-<area shape="rect" title=" " alt="" coords="5,184,91,211"/>
-<area shape="rect" title=" " alt="" coords="115,184,181,211"/>
-<area shape="rect" title=" " alt="" coords="205,184,302,211"/>
+<area shape="rect" title="Defines all possible backends. Can also include backends not available on the current target platform..." alt="" coords="5,5,184,47"/>
+<area shape="rect" title=" " alt="" coords="63,95,127,121"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -106,17 +93,12 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="backend__types_8hpp__dep__incl.png" border="0" usemap="#include_2plssvm_2backend__types_8hppdep" alt=""/></div>
 <map name="include_2plssvm_2backend__types_8hppdep" id="include_2plssvm_2backend__types_8hppdep">
-<area shape="rect" title="Defines all possible backends. Can also include backends not available on the target platform." alt="" coords="32,5,210,47"/>
-<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="567,348,747,375"/>
-<area shape="rect" href="csvm__factory_8hpp.html" title="Factory functions for constructing a new C&#45;SVM based on the provided command line arguments." alt="" coords="42,259,200,300"/>
-<area shape="rect" href="parameter_8hpp.html" title="Implements the base class encapsulating all necessary parameters." alt="" coords="545,95,764,121"/>
-<area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="904,259,1090,300"/>
-<area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="224,259,410,300"/>
-<area shape="rect" href="backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="434,259,619,300"/>
-<area shape="rect" href="backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="695,259,880,300"/>
-<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="561,177,748,203"/>
-<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="873,169,1065,211"/>
-<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="1089,169,1281,211"/>
+<area shape="rect" title="Defines all possible backends. Can also include backends not available on the current target platform..." alt="" coords="6,5,185,47"/>
+<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="137,259,317,285"/>
+<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="31,169,189,211"/>
+<area shape="rect" href="parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="133,95,351,121"/>
+<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="265,169,457,211"/>
+<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="481,169,673,211"/>
 </map>
 </div>
 </div>
@@ -125,30 +107,30 @@ This graph shows which files directly or indirectly include this file:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html">plssvm</a></td></tr>
-<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all API functions. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all public API functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:abdb476fa824886f6d3ec438d86579c70"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">plssvm::backend_type</a> { <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">plssvm::backend_type::openmp</a> = 0, 
-<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">plssvm::backend_type::cuda</a> = 1, 
-<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">plssvm::backend_type::opencl</a> = 2, 
-<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">plssvm::backend_type::sycl</a> = 3
+<tr class="memitem:abdb476fa824886f6d3ec438d86579c70"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">plssvm::backend_type</a> { <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">plssvm::backend_type::openmp</a>, 
+<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">plssvm::backend_type::cuda</a>, 
+<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">plssvm::backend_type::opencl</a>, 
+<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">plssvm::backend_type::sycl</a>
  }</td></tr>
-<tr class="memdesc:abdb476fa824886f6d3ec438d86579c70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for the different backend types.  <a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">More...</a><br /></td></tr>
+<tr class="memdesc:abdb476fa824886f6d3ec438d86579c70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all possible backend types.  <a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">More...</a><br /></td></tr>
 <tr class="separator:abdb476fa824886f6d3ec438d86579c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ab86c4270f9de62b265ac5652ae0aac6a"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ab86c4270f9de62b265ac5652ae0aac6a">plssvm::operator&lt;&lt;</a> (std::ostream &amp;out, const backend_type backend)</td></tr>
-<tr class="memdesc:ab86c4270f9de62b265ac5652ae0aac6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-insertion-operator overload for convenient printing of the backend type <code>backend</code>.  <a href="namespaceplssvm.html#ab86c4270f9de62b265ac5652ae0aac6a">More...</a><br /></td></tr>
-<tr class="separator:ab86c4270f9de62b265ac5652ae0aac6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86f8cc05a5611ef6448948acc48a1ea1"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">plssvm::operator&lt;&lt;</a> (std::ostream &amp;out, backend_type backend)</td></tr>
+<tr class="memdesc:a86f8cc05a5611ef6448948acc48a1ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>backend</code> to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">More...</a><br /></td></tr>
+<tr class="separator:a86f8cc05a5611ef6448948acc48a1ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cb98983f3c24b91db983a8078e8f165"><td class="memItemLeft" align="right" valign="top">std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">plssvm::operator&gt;&gt;</a> (std::istream &amp;in, backend_type &amp;backend)</td></tr>
-<tr class="memdesc:a3cb98983f3c24b91db983a8078e8f165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-extraction-operator overload for convenient converting a string to a backend type.  <a href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">More...</a><br /></td></tr>
+<tr class="memdesc:a3cb98983f3c24b91db983a8078e8f165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the input-stream <code>in</code> to initialize the <code>backend</code> type.  <a href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">More...</a><br /></td></tr>
 <tr class="separator:a3cb98983f3c24b91db983a8078e8f165"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Defines all possible backends. Can also include backends not available on the target platform. </p>
+<div class="textblock"><p>Defines all possible backends. Can also include backends not available on the current target platform. </p>
 <dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
 <dd>
 Marcel Breyer </dd></dl>
@@ -157,7 +139,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

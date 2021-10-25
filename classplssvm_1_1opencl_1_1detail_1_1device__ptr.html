@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::opencl::detail::device_ptr&lt; T &gt; Class Template Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::opencl::detail::device_ptr&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -104,24 +104,24 @@ using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa2d3259d2d32ce35259c6098a8dba103"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aa2d3259d2d32ce35259c6098a8dba103">device_ptr</a> ()=default</td></tr>
-<tr class="memdesc:aa2d3259d2d32ce35259c6098a8dba103"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default construct a <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> with a size of <code>0</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aa2d3259d2d32ce35259c6098a8dba103">More...</a><br /></td></tr>
+<tr class="memdesc:aa2d3259d2d32ce35259c6098a8dba103"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default construct a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> with a size of 0.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aa2d3259d2d32ce35259c6098a8dba103">More...</a><br /></td></tr>
 <tr class="separator:aa2d3259d2d32ce35259c6098a8dba103"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60cf7064a5f3876fb072aec6a0cdeda4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a60cf7064a5f3876fb072aec6a0cdeda4">device_ptr</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0">size</a>, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &amp;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ab1393fe3a7e3d3f5f4e4917e94886c4b">queue</a>)</td></tr>
 <tr class="memdesc:a60cf7064a5f3876fb072aec6a0cdeda4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates <code>size * sizeof(T)</code> bytes on the device with ID <code>device</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a60cf7064a5f3876fb072aec6a0cdeda4">More...</a><br /></td></tr>
 <tr class="separator:a60cf7064a5f3876fb072aec6a0cdeda4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6da59f9974f7173734f42e63122739d4"><td class="memItemLeft" align="right" valign="top"><a id="a6da59f9974f7173734f42e63122739d4"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a6da59f9974f7173734f42e63122739d4">device_ptr</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a6da59f9974f7173734f42e63122739d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move only type, therefore deleted copy-constructor. <br /></td></tr>
+<tr class="memdesc:a6da59f9974f7173734f42e63122739d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-constructor to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> a move only type. <br /></td></tr>
 <tr class="separator:a6da59f9974f7173734f42e63122739d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86571411534d79bd5f94a1025acea802"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a86571411534d79bd5f94a1025acea802">device_ptr</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&amp;other) noexcept</td></tr>
-<tr class="memdesc:a86571411534d79bd5f94a1025acea802"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a86571411534d79bd5f94a1025acea802">More...</a><br /></td></tr>
+<tr class="memdesc:a86571411534d79bd5f94a1025acea802"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a86571411534d79bd5f94a1025acea802">More...</a><br /></td></tr>
 <tr class="separator:a86571411534d79bd5f94a1025acea802"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a437713953d946d89b2573260af2064ca"><td class="memItemLeft" align="right" valign="top"><a id="a437713953d946d89b2573260af2064ca"></a>
 <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a437713953d946d89b2573260af2064ca">operator=</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a437713953d946d89b2573260af2064ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move only type, therefore deleted copy-assignment operator. <br /></td></tr>
+<tr class="memdesc:a437713953d946d89b2573260af2064ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-assignment-operator to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> a move only type. <br /></td></tr>
 <tr class="separator:a437713953d946d89b2573260af2064ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5141c864257220bac55f9d3018a2624"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ad5141c864257220bac55f9d3018a2624">operator=</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&amp;other) noexcept</td></tr>
-<tr class="memdesc:ad5141c864257220bac55f9d3018a2624"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment operator. Uses the copy-and-swap idiom.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ad5141c864257220bac55f9d3018a2624">More...</a><br /></td></tr>
+<tr class="memdesc:ad5141c864257220bac55f9d3018a2624"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ad5141c864257220bac55f9d3018a2624">More...</a><br /></td></tr>
 <tr class="separator:ad5141c864257220bac55f9d3018a2624"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f5a797e3f495855022cafc97596417a"><td class="memItemLeft" align="right" valign="top"><a id="a0f5a797e3f495855022cafc97596417a"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a0f5a797e3f495855022cafc97596417a">~device_ptr</a> ()</td></tr>
@@ -131,7 +131,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a818665f0d7e607f36df77c1fb586fe76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swap the contents of <code>*this</code> with the contents of <code>other</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a818665f0d7e607f36df77c1fb586fe76">More...</a><br /></td></tr>
 <tr class="separator:a818665f0d7e607f36df77c1fb586fe76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d659736bea05994e28e0a12f5c199bb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a7d659736bea05994e28e0a12f5c199bb">operator bool</a> () const noexcept</td></tr>
-<tr class="memdesc:a7d659736bea05994e28e0a12f5c199bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks whether <code>*this</code> currently wraps a OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a7d659736bea05994e28e0a12f5c199bb">More...</a><br /></td></tr>
+<tr class="memdesc:a7d659736bea05994e28e0a12f5c199bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks whether <code>*this</code> currently wraps an OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a7d659736bea05994e28e0a12f5c199bb">More...</a><br /></td></tr>
 <tr class="separator:a7d659736bea05994e28e0a12f5c199bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aede9e8d84c8b9d9b39fa2eb5b6230c0f"><td class="memItemLeft" align="right" valign="top">cl_mem &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aede9e8d84c8b9d9b39fa2eb5b6230c0f">get</a> () noexcept</td></tr>
 <tr class="memdesc:aede9e8d84c8b9d9b39fa2eb5b6230c0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the underlying OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aede9e8d84c8b9d9b39fa2eb5b6230c0f">More...</a><br /></td></tr>
@@ -140,10 +140,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a75984f3519a30769672dffc57c88ca52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the underlying OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a75984f3519a30769672dffc57c88ca52">More...</a><br /></td></tr>
 <tr class="separator:a75984f3519a30769672dffc57c88ca52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af90d7e0901077c0ead9849f91e4998a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0">size</a> () const noexcept</td></tr>
-<tr class="memdesc:af90d7e0901077c0ead9849f91e4998a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of elements in the wrapped OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0">More...</a><br /></td></tr>
+<tr class="memdesc:af90d7e0901077c0ead9849f91e4998a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of elements in the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0">More...</a><br /></td></tr>
 <tr class="separator:af90d7e0901077c0ead9849f91e4998a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a611062597cf482ddc9fc2600f38595d3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a611062597cf482ddc9fc2600f38595d3">empty</a> () const noexcept</td></tr>
-<tr class="memdesc:a611062597cf482ddc9fc2600f38595d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether no elements are currently associated to the OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a611062597cf482ddc9fc2600f38595d3">More...</a><br /></td></tr>
+<tr class="memdesc:a611062597cf482ddc9fc2600f38595d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> currently maps zero elements.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a611062597cf482ddc9fc2600f38595d3">More...</a><br /></td></tr>
 <tr class="separator:a611062597cf482ddc9fc2600f38595d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1393fe3a7e3d3f5f4e4917e94886c4b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ab1393fe3a7e3d3f5f4e4917e94886c4b">queue</a> () noexcept</td></tr>
 <tr class="memdesc:ab1393fe3a7e3d3f5f4e4917e94886c4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the command queue associated with the wrapped OpenCL device pointer.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ab1393fe3a7e3d3f5f4e4917e94886c4b">More...</a><br /></td></tr>
@@ -158,25 +158,25 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac8bc46209ea4972eaaab4a1e4559253e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memset up-to <code>count</code> values to <code>value</code> starting at position <code>pos</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ac8bc46209ea4972eaaab4a1e4559253e">More...</a><br /></td></tr>
 <tr class="separator:ac8bc46209ea4972eaaab4a1e4559253e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b93ed0a8a9ac33d50d182f2f47f7ddb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a5b93ed0a8a9ac33d50d182f2f47f7ddb">memcpy_to_device</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aee0e33102032e18607bdb49ffc4d7b8b">value_type</a> &gt; &amp;data_to_copy)</td></tr>
-<tr class="memdesc:a5b93ed0a8a9ac33d50d182f2f47f7ddb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a5b93ed0a8a9ac33d50d182f2f47f7ddb">More...</a><br /></td></tr>
+<tr class="memdesc:a5b93ed0a8a9ac33d50d182f2f47f7ddb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a5b93ed0a8a9ac33d50d182f2f47f7ddb">More...</a><br /></td></tr>
 <tr class="separator:a5b93ed0a8a9ac33d50d182f2f47f7ddb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae98477a8f5039783851da967075b33bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ae98477a8f5039783851da967075b33bf">memcpy_to_device</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aee0e33102032e18607bdb49ffc4d7b8b">value_type</a> &gt; &amp;data_to_copy, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> pos, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> count)</td></tr>
 <tr class="memdesc:ae98477a8f5039783851da967075b33bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at OpenCL device pointer position <code>pos</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ae98477a8f5039783851da967075b33bf">More...</a><br /></td></tr>
 <tr class="separator:ae98477a8f5039783851da967075b33bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5afce44a803196bb3f8cba54e3809fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ad5afce44a803196bb3f8cba54e3809fa">memcpy_to_device</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a2d06ebe14b1890b83a149ae6ee6f35c2">const_pointer</a> data_to_copy)</td></tr>
-<tr class="memdesc:ad5afce44a803196bb3f8cba54e3809fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ad5afce44a803196bb3f8cba54e3809fa">More...</a><br /></td></tr>
+<tr class="memdesc:ad5afce44a803196bb3f8cba54e3809fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ad5afce44a803196bb3f8cba54e3809fa">More...</a><br /></td></tr>
 <tr class="separator:ad5afce44a803196bb3f8cba54e3809fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22b8b079f693e612c836050702a853bd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a22b8b079f693e612c836050702a853bd">memcpy_to_device</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a2d06ebe14b1890b83a149ae6ee6f35c2">const_pointer</a> data_to_copy, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> pos, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> count)</td></tr>
 <tr class="memdesc:a22b8b079f693e612c836050702a853bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at OpenCL device pointer position <code>pos</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a22b8b079f693e612c836050702a853bd">More...</a><br /></td></tr>
 <tr class="separator:a22b8b079f693e612c836050702a853bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab36fdf62044f47895b1e20d0dd1645ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ab36fdf62044f47895b1e20d0dd1645ba">memcpy_to_host</a> (std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aee0e33102032e18607bdb49ffc4d7b8b">value_type</a> &gt; &amp;buffer) const</td></tr>
-<tr class="memdesc:ab36fdf62044f47895b1e20d0dd1645ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ab36fdf62044f47895b1e20d0dd1645ba">More...</a><br /></td></tr>
+<tr class="memdesc:ab36fdf62044f47895b1e20d0dd1645ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ab36fdf62044f47895b1e20d0dd1645ba">More...</a><br /></td></tr>
 <tr class="separator:ab36fdf62044f47895b1e20d0dd1645ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a484e7ce18060a8b077158870a046f488"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a484e7ce18060a8b077158870a046f488">memcpy_to_host</a> (std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aee0e33102032e18607bdb49ffc4d7b8b">value_type</a> &gt; &amp;buffer, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> pos, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> count) const</td></tr>
 <tr class="memdesc:a484e7ce18060a8b077158870a046f488"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from the device starting at OpenCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a484e7ce18060a8b077158870a046f488">More...</a><br /></td></tr>
 <tr class="separator:a484e7ce18060a8b077158870a046f488"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af71b7952d6a01a6bd6d4e5e74db04308"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af71b7952d6a01a6bd6d4e5e74db04308">memcpy_to_host</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a8be5251b0c977544d5701e1ac4f5cd9c">pointer</a> buffer) const</td></tr>
-<tr class="memdesc:af71b7952d6a01a6bd6d4e5e74db04308"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af71b7952d6a01a6bd6d4e5e74db04308">More...</a><br /></td></tr>
+<tr class="memdesc:af71b7952d6a01a6bd6d4e5e74db04308"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af71b7952d6a01a6bd6d4e5e74db04308">More...</a><br /></td></tr>
 <tr class="separator:af71b7952d6a01a6bd6d4e5e74db04308"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add99245a2d58889259674260a4d9b9b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#add99245a2d58889259674260a4d9b9b0">memcpy_to_host</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a8be5251b0c977544d5701e1ac4f5cd9c">pointer</a> buffer, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> pos, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a53f7840a9ca1fc7e6d9be2725fdd3154">size_type</a> count) const</td></tr>
 <tr class="memdesc:add99245a2d58889259674260a4d9b9b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from the device starting at OpenCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#add99245a2d58889259674260a4d9b9b0">More...</a><br /></td></tr>
@@ -225,8 +225,8 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Default construct a <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> with a size of <code>0</code>. </p>
-<p>Always associated with device <code>0</code>. </p>
+<p>Default construct a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> with a size of 0. </p>
+<p>Always associated with device 0. </p>
 
 </div>
 </div>
@@ -269,14 +269,8 @@ template&lt;typename T &gt; </div>
 <p>Allocates <code>size * sizeof(T)</code> bytes on the device with ID <code>device</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>the number of elements represented by the device pointer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>the number of elements represented by the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">queue</td><td>the associated command queue </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></td><td>if the given device ID is smaller than <code>0</code> or greater or equal than the available number of devices </td></tr>
   </table>
   </dd>
 </dl>
@@ -309,10 +303,10 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Move-constructor. </p>
+<p>Move-constructor as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> to move-construct from </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> to move-construct from </td></tr>
   </table>
   </dd>
 </dl>
@@ -346,10 +340,10 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Move-assignment operator. Uses the copy-and-swap idiom. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Move-assignment-operator as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type. </p>
+<p>Uses the copy-and-swap idiom. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">other</td><td>the <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> to move-assign from </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> to move-assign from </td></tr>
   </table>
   </dd>
 </dl>
@@ -386,7 +380,7 @@ template&lt;typename T &gt; </div>
 <p>Swap the contents of <code>*this</code> with the contents of <code>other</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the other <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the other <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -418,8 +412,8 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Checks whether <code>*this</code> currently wraps a OpenCL device pointer. </p>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if <code>*this</code> wraps a device pointer, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
+<p>Checks whether <code>*this</code> currently wraps an OpenCL device pointer. </p>
+<p>Same as <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aede9e8d84c8b9d9b39fa2eb5b6230c0f" title="Access the underlying OpenCL device pointer.">device_ptr::get()</a> != nullptr</code>. </p><dl class="section return"><dt>Returns</dt><dd><code>true</code> if <code>*this</code> wraps an OpenCL device pointer, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -449,7 +443,7 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Access the underlying OpenCL device pointer. </p>
-<dl class="section return"><dt>Returns</dt><dd>the device pointer (<code>[[nodiscard]]</code>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -479,7 +473,7 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Access the underlying OpenCL device pointer. </p>
-<dl class="section return"><dt>Returns</dt><dd>the device pointer (<code>[[nodiscard]]</code>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -508,7 +502,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Get the number of elements in the wrapped OpenCL device pointer. </p>
+<p>Get the number of elements in the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a>. </p>
 <dl class="section return"><dt>Returns</dt><dd>the size (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
@@ -538,7 +532,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Check whether no elements are currently associated to the OpenCL device pointer. </p>
+<p>Check whether the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> currently maps zero elements. </p>
 <dl class="section return"><dt>Returns</dt><dd><code>true</code> if no elements are wrapped, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
@@ -635,13 +629,13 @@ template&lt;typename T &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>the memset value </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset (default: <code>0</code>) </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></td><td>if <code>pos</code> is greater or equal than <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></td><td>if <code>pos</code> is greater or equal than <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -683,7 +677,7 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Memset up-to <code>count</code> values to <code>value</code> starting at position <code>pos</code>. </p>
-<p>Memset <code>[p, rcount)</code> where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Memset <code>[p, rcount)</code> where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>the memset value </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset </td></tr>
@@ -693,7 +687,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></td><td>if <code>pos</code> is greater or equal than <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></td><td>if <code>pos</code> is greater or equal than <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -718,7 +712,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from <code>data_to_copy</code> to the device. </p>
+<p>Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
@@ -769,10 +763,10 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at OpenCL device pointer position <code>pos</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the CUDA device pointer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
   </table>
   </dd>
@@ -804,7 +798,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from <code>data_to_copy</code> to the device. </p>
+<p>Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
@@ -849,7 +843,7 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at OpenCL device pointer position <code>pos</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the OpenCL device pointer </td></tr>
@@ -878,10 +872,10 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from the device to the host buffer <code>buffer</code>. </p>
+<p>Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
   </table>
   </dd>
 </dl>
@@ -929,9 +923,9 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Memcpy up-to <code>count</code> many values from the device starting at OpenCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the OpenCL device pointer </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
   </table>
@@ -964,10 +958,10 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Memcpy <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a></code> many values from the device to the host buffer <code>buffer</code>. </p>
+<p>Memcpy <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
   </table>
   </dd>
 </dl>
@@ -1009,9 +1003,9 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Memcpy up-to <code>count</code> many values from the device starting at OpenCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the wrapped OpenCL device pointer.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the OpenCL device pointer </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
   </table>
@@ -1060,8 +1054,8 @@ template&lt;typename T &gt; </div>
 <p>Swap the contents of <code>lhs</code> and <code>rhs</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">lhs</td><td>a <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">rhs</td><td>a <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a></code> </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">lhs</td><td>a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">rhs</td><td>a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -1074,7 +1068,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

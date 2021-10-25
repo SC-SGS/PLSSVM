@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: Namespace Members</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: Namespace Members</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -73,10 +73,16 @@ $(function() {
 : <a class="el" href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">plssvm::detail</a>
 </li>
 <li>as_lower_case()
-: <a class="el" href="namespaceplssvm_1_1detail.html#a39b7f6af847bd65e4b783ca97b219caa">plssvm::detail</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#aa9fd1aa67fdd8cf51b3aa80783ca058e">plssvm::detail</a>
+</li>
+<li>as_upper_case()
+: <a class="el" href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">plssvm::detail</a>
 </li>
 <li>atomic_op
-: <a class="el" href="namespaceplssvm_1_1sycl.html#ab329618d1356072669c4cc876faa218d">plssvm::sycl</a>
+: <a class="el" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl</a>
+</li>
+<li>atomicAdd()
+: <a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ae8b5a21e9df7f0ea01328f068dbde1ea">plssvm::cuda::detail</a>
 </li>
 </ul>
 
@@ -93,44 +99,56 @@ $(function() {
 : <a class="el" href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">plssvm::detail</a>
 </li>
 <li>contains()
-: <a class="el" href="namespaceplssvm_1_1detail.html#a1e942c2a9c9ea77ff6dd749027c1bfcb">plssvm::detail</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#a7b5b57e64196047d4469d52cd9e49fba">plssvm::detail</a>
 </li>
 <li>convert_to()
 : <a class="el" href="namespaceplssvm_1_1detail.html#ad63cc4410cd69b2c85a71c19b3e6c566">plssvm::detail</a>
 </li>
 <li>create_kernel()
-: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a5b07a1be12a90c2cd60ad1e1e7223d59">plssvm::opencl::detail</a>
+: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#af84a4a8cee6def24ce4cc2e06e56b217">plssvm::opencl::detail</a>
 </li>
 </ul>
 
 
 <h3><a id="index_d"></a>- d -</h3><ul>
+<li>device_assert()
+: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">plssvm::opencl::detail</a>
+</li>
 <li>device_kernel_linear()
-: <a class="el" href="namespaceplssvm_1_1cuda.html#a5f576e9e0fea6a7284b4ce6a45b4c370">plssvm::cuda</a>
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a6c2125b3a4b5a518e072bd1caef9d33a">plssvm::cuda</a>
 , <a class="el" href="namespaceplssvm_1_1openmp.html#ab01f32f2d4ddd4cce75272b73fc360fd">plssvm::openmp</a>
 </li>
 <li>device_kernel_poly()
-: <a class="el" href="namespaceplssvm_1_1cuda.html#ab12bac2ecd8b970e3081de2ffe9a054a">plssvm::cuda</a>
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a377b5f08539d29ccac670a26f6d162d1">plssvm::cuda</a>
 , <a class="el" href="namespaceplssvm_1_1openmp.html#a73fe5a62e222b17f6765c178aecdc82a">plssvm::openmp</a>
 </li>
+<li>device_kernel_predict_poly()
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a8e2d9bf0aec114e38cb17566255c2777">plssvm::cuda</a>
+</li>
+<li>device_kernel_predict_radial()
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a034c39b25b59144c31d8d7f9caa86e74">plssvm::cuda</a>
+</li>
 <li>device_kernel_q_linear()
-: <a class="el" href="namespaceplssvm_1_1cuda.html#a23b61ecde9df1c84890ffe991876da7e">plssvm::cuda</a>
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a05d5acc6cef4e733891401a0bbc549b6">plssvm::cuda</a>
 , <a class="el" href="namespaceplssvm_1_1openmp.html#ae7501c1a52dd35f081636da82d48649f">plssvm::openmp</a>
 </li>
 <li>device_kernel_q_poly()
-: <a class="el" href="namespaceplssvm_1_1cuda.html#a3235bf4162aa1609c36c5a9455695d2a">plssvm::cuda</a>
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a44114ada7a1a1d8ff9e8803a3b2bff54">plssvm::cuda</a>
 , <a class="el" href="namespaceplssvm_1_1openmp.html#adfe021c93b5c7b51c5ec64c4378c776e">plssvm::openmp</a>
 </li>
 <li>device_kernel_q_radial()
-: <a class="el" href="namespaceplssvm_1_1cuda.html#a33fd7510fd520c41efd507a8981de514">plssvm::cuda</a>
+: <a class="el" href="namespaceplssvm_1_1cuda.html#af286d9b671f90111c14eff9acf5dee9c">plssvm::cuda</a>
 , <a class="el" href="namespaceplssvm_1_1openmp.html#a9764354f8385c0dbc959bdf8bf2b3dbd">plssvm::openmp</a>
 </li>
 <li>device_kernel_radial()
-: <a class="el" href="namespaceplssvm_1_1cuda.html#a2fbb80742821b757da638c8d620eae58">plssvm::cuda</a>
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a60f6257c6a085ee50690922294bdf3c7">plssvm::cuda</a>
 , <a class="el" href="namespaceplssvm_1_1openmp.html#a0d9e72c91f7473b7e78f7354dcda3399">plssvm::openmp</a>
 </li>
+<li>device_kernel_w_linear()
+: <a class="el" href="namespaceplssvm_1_1cuda.html#a5119ef882eb61ed76aa24ccfca312b60">plssvm::cuda</a>
+</li>
 <li>device_synchronize()
-: <a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ab2c0b0e4df88ad495a61ab05762d5a85">plssvm::cuda::detail</a>
+: <a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a993ed255276400b7b0b1d05a66c4d78d">plssvm::cuda::detail</a>
 , <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">plssvm::opencl::detail</a>
 , <a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">plssvm::sycl::detail</a>
 </li>
@@ -142,7 +160,7 @@ $(function() {
 
 <h3><a id="index_e"></a>- e -</h3><ul>
 <li>ends_with()
-: <a class="el" href="namespaceplssvm_1_1detail.html#af50476e5ab825a89858b5d4ea8108f37">plssvm::detail</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#a45cda6e5d8c0f48f77aa5867d46bfd7c">plssvm::detail</a>
 </li>
 </ul>
 
@@ -163,12 +181,15 @@ $(function() {
 <li>get_device_name()
 : <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a79ee86d89b83d4d9606ea594be8f15d4">plssvm::opencl::detail</a>
 </li>
+<li>gpu_assert()
+: <a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ad850e58ca2e65308610f4e208ccea144">plssvm::cuda::detail</a>
+</li>
 </ul>
 
 
 <h3><a id="index_i"></a>- i -</h3><ul>
 <li>INTERNAL_BLOCK_SIZE
-: <a class="el" href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">plssvm</a>
+: <a class="el" href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">plssvm</a>
 </li>
 </ul>
 
@@ -177,11 +198,14 @@ $(function() {
 <li>kernel_function()
 : <a class="el" href="namespaceplssvm.html#ae76872fe47a5337ea0c783648835554d">plssvm</a>
 </li>
+<li>kernel_index_type
+: <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">plssvm</a>
+</li>
 <li>kernel_type
 : <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">plssvm</a>
 </li>
 <li>kernel_type_to_function_name()
-: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a27922ed60147729587800e3be865645b">plssvm::opencl::detail</a>
+: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8293538e911985d718aff72ff9a392c">plssvm::opencl::detail</a>
 </li>
 </ul>
 
@@ -214,6 +238,9 @@ $(function() {
 
 
 <h3><a id="index_o"></a>- o -</h3><ul>
+<li>OPENMP_BLOCK_SIZE
+: <a class="el" href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">plssvm</a>
+</li>
 <li>operator!=()
 : <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad13d5a0fd0160bc863d42f5c6500b665">plssvm::opencl::detail</a>
 </li>
@@ -221,14 +248,15 @@ $(function() {
 : <a class="el" href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">plssvm::operators</a>
 </li>
 <li>operator&lt;&lt;()
-: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a7db472d06389f906a246c21cb7c03cfc">plssvm::opencl::detail</a>
-, <a class="el" href="namespaceplssvm.html#a331ee86a0ee8d966cfe246709db1ccb5">plssvm</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#abd4215e381fac0432aabeaa1eeed31ef">plssvm::detail</a>
+, <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a7db472d06389f906a246c21cb7c03cfc">plssvm::opencl::detail</a>
+, <a class="el" href="namespaceplssvm.html#a31abc66537d12be11141e35554e7f337">plssvm</a>
 </li>
 <li>operator==()
 : <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad624f1a5f87d774e1c931ffcf1c58dfc">plssvm::opencl::detail</a>
 </li>
 <li>operator&gt;&gt;()
-: <a class="el" href="namespaceplssvm.html#a86bccc0b9982928081e1ffe1b5c9b1b5">plssvm</a>
+: <a class="el" href="namespaceplssvm.html#a76d5f3b9ef202de69580ae727fe7dd63">plssvm</a>
 </li>
 </ul>
 
@@ -245,7 +273,7 @@ $(function() {
 
 <h3><a id="index_r"></a>- r -</h3><ul>
 <li>replace_all()
-: <a class="el" href="namespaceplssvm_1_1detail.html#aad0d9cd127ee910d3fb75ec2842cba84">plssvm::detail</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#a58f34fc0d4116742fa8fa20a4623429e">plssvm::detail</a>
 </li>
 <li>run_kernel()
 : <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a41b01f400f96ef7886cfebe5bb97f221">plssvm::opencl::detail</a>
@@ -261,16 +289,13 @@ $(function() {
 : <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8">plssvm::opencl::detail</a>
 </li>
 <li>sign()
-: <a class="el" href="namespaceplssvm_1_1operators.html#a9e89a6816fb71a518c523ef31afdc75d">plssvm::operators</a>
-</li>
-<li>size_type
-: <a class="el" href="namespaceplssvm_1_1sycl.html#a65024cce87d0373cb761f5f95982f731">plssvm::sycl</a>
+: <a class="el" href="namespaceplssvm_1_1operators.html#a211feceac31d226f493966f14e7332d8">plssvm::operators</a>
 </li>
 <li>squared_euclidean_dist()
 : <a class="el" href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">plssvm::operators</a>
 </li>
 <li>starts_with()
-: <a class="el" href="namespaceplssvm_1_1detail.html#a81a237b3c126ff659799e017e0ca8376">plssvm::detail</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">plssvm::detail</a>
 </li>
 <li>string
 : <a class="el" href="namespaceplssvm_1_1version.html#acbfea9704390b4a4d348dd4ee3557700">plssvm::version</a>
@@ -286,7 +311,7 @@ $(function() {
 : <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">plssvm</a>
 </li>
 <li>THREAD_BLOCK_SIZE
-: <a class="el" href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">plssvm</a>
+: <a class="el" href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">plssvm</a>
 </li>
 <li>to_lower_case()
 : <a class="el" href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78">plssvm::detail</a>
@@ -294,17 +319,26 @@ $(function() {
 <li>to_underlying()
 : <a class="el" href="namespaceplssvm_1_1detail.html#af016317e5d75fd36d039076dd2356e31">plssvm::detail</a>
 </li>
+<li>to_upper_case()
+: <a class="el" href="namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178">plssvm::detail</a>
+</li>
 <li>transposed()
 : <a class="el" href="namespaceplssvm_1_1operators.html#ae017cdbf38a31b897a890bc17c756f54">plssvm::operators</a>
 </li>
+<li>trim()
+: <a class="el" href="namespaceplssvm_1_1detail.html#a3696c2d5ab58d839cf1a93ca0e3a1e52">plssvm::detail</a>
+</li>
 <li>trim_left()
-: <a class="el" href="namespaceplssvm_1_1detail.html#ac0882033af62f8fa112ebfde8a2e7dfe">plssvm::detail</a>
+: <a class="el" href="namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6">plssvm::detail</a>
+</li>
+<li>trim_right()
+: <a class="el" href="namespaceplssvm_1_1detail.html#a60211d1df70301d8c5167fa105e15bc7">plssvm::detail</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

@@ -1,13 +1,12 @@
 <map id="plssvm::exception" name="plssvm::exception">
-<area shape="rect" id="node1" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="192,274,333,301"/>
+<area shape="rect" id="node1" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="192,242,333,269"/>
 <area shape="rect" id="node3" href="$classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="392,5,563,47"/>
-<area shape="rect" id="node4" href="$classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided data set file couldn&#39;t be found." alt="" coords="393,71,562,112"/>
-<area shape="rect" id="node5" href="$classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided data set file has an invalid format for the selected parser (e...." alt="" coords="403,136,551,177"/>
-<area shape="rect" id="node6" href="$classplssvm_1_1not__implemented__exception.html" title="Exception type thrown if the requested operation is currently not implemented." alt="" coords="381,201,573,243"/>
-<area shape="rect" id="node7" href="$classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="386,267,569,308"/>
-<area shape="rect" id="node8" href="$classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="381,332,573,373"/>
-<area shape="rect" id="node9" href="$classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="395,397,560,439"/>
-<area shape="rect" id="node10" href="$classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="398,463,557,504"/>
-<area shape="rect" id="node11" href="$classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="389,528,565,569"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,274,144,301"/>
+<area shape="rect" id="node4" href="$classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided file couldn&#39;t be found." alt="" coords="393,71,562,112"/>
+<area shape="rect" id="node5" href="$classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="403,136,551,177"/>
+<area shape="rect" id="node6" href="$classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="386,201,569,243"/>
+<area shape="rect" id="node7" href="$classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="381,267,573,308"/>
+<area shape="rect" id="node8" href="$classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="395,332,560,373"/>
+<area shape="rect" id="node9" href="$classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="398,397,557,439"/>
+<area shape="rect" id="node10" href="$classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="389,463,565,504"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,242,144,269"/>
 </map>

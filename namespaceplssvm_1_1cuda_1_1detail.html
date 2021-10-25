@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::cuda::detail Namespace Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::cuda::detail Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -86,26 +86,99 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ae8b5a21e9df7f0ea01328f068dbde1ea"><td class="memItemLeft" align="right" valign="top">__device__ __forceinline__ double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ae8b5a21e9df7f0ea01328f068dbde1ea">atomicAdd</a> (double *addr, const double val)</td></tr>
+<tr class="memdesc:ae8b5a21e9df7f0ea01328f068dbde1ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Atomically add the double precision <code>val</code> to the value denoted by <code>addr</code>.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ae8b5a21e9df7f0ea01328f068dbde1ea">More...</a><br /></td></tr>
+<tr class="separator:ae8b5a21e9df7f0ea01328f068dbde1ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad850e58ca2e65308610f4e208ccea144"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ad850e58ca2e65308610f4e208ccea144">gpu_assert</a> (cudaError_t code)</td></tr>
+<tr class="memdesc:ad850e58ca2e65308610f4e208ccea144"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the CUDA error <code>code</code>. If <code>code</code> signals an error, throw a <a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a>.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ad850e58ca2e65308610f4e208ccea144">More...</a><br /></td></tr>
+<tr class="separator:ad850e58ca2e65308610f4e208ccea144"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3bc9188e57901f69f30f1d81285db93"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ab3bc9188e57901f69f30f1d81285db93">get_device_count</a> ()</td></tr>
-<tr class="memdesc:ab3bc9188e57901f69f30f1d81285db93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of available devices.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ab3bc9188e57901f69f30f1d81285db93">More...</a><br /></td></tr>
+<tr class="memdesc:ab3bc9188e57901f69f30f1d81285db93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of available CUDA devices.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ab3bc9188e57901f69f30f1d81285db93">More...</a><br /></td></tr>
 <tr class="separator:ab3bc9188e57901f69f30f1d81285db93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30e0f355508ac40b44e98dee923c85f3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3">set_device</a> (int device)</td></tr>
 <tr class="memdesc:a30e0f355508ac40b44e98dee923c85f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the device <code>device</code> to the active CUDA device.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3">More...</a><br /></td></tr>
 <tr class="separator:a30e0f355508ac40b44e98dee923c85f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a797a65ca9b45f109994320a65a4aa1"><td class="memItemLeft" align="right" valign="top"><a id="a2a797a65ca9b45f109994320a65a4aa1"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a2a797a65ca9b45f109994320a65a4aa1">peek_at_last_error</a> ()</td></tr>
-<tr class="memdesc:a2a797a65ca9b45f109994320a65a4aa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the last error from a runtime call. <br /></td></tr>
+<tr class="memdesc:a2a797a65ca9b45f109994320a65a4aa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the last error from a CUDA runtime call. <br /></td></tr>
 <tr class="separator:a2a797a65ca9b45f109994320a65a4aa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2c0b0e4df88ad495a61ab05762d5a85"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#ab2c0b0e4df88ad495a61ab05762d5a85">device_synchronize</a> ()</td></tr>
-<tr class="memdesc:ab2c0b0e4df88ad495a61ab05762d5a85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the current compute device to finish.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#ab2c0b0e4df88ad495a61ab05762d5a85">More...</a><br /></td></tr>
-<tr class="separator:ab2c0b0e4df88ad495a61ab05762d5a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a993ed255276400b7b0b1d05a66c4d78d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a993ed255276400b7b0b1d05a66c4d78d">device_synchronize</a> (int device)</td></tr>
-<tr class="memdesc:a993ed255276400b7b0b1d05a66c4d78d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device <code>device</code> to finish.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#a993ed255276400b7b0b1d05a66c4d78d">More...</a><br /></td></tr>
+<tr class="memdesc:a993ed255276400b7b0b1d05a66c4d78d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute <code>device</code> to finish.  <a href="namespaceplssvm_1_1cuda_1_1detail.html#a993ed255276400b7b0b1d05a66c4d78d">More...</a><br /></td></tr>
 <tr class="separator:a993ed255276400b7b0b1d05a66c4d78d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Namespace containing CUDA backend specific implementation details. <b>Should not</b> directly be used by users. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="ae8b5a21e9df7f0ea01328f068dbde1ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8b5a21e9df7f0ea01328f068dbde1ea">&#9670;&nbsp;</a></span>atomicAdd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">__device__ __forceinline__ double plssvm::cuda::detail::atomicAdd </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const double&#160;</td>
+          <td class="paramname"><em>val</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Atomically add the double precision <code>val</code> to the value denoted by <code>addr</code>. </p>
+<p>Needed since CUDA versions before 6 don't nativelly support double-precisions floating point atomics. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">addr</td><td>the value to increment </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">val</td><td>the value to add </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the old value before atomically adding <code>val</code> </dd></dl>
+
+</div>
+</div>
+<a id="ad850e58ca2e65308610f4e208ccea144"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad850e58ca2e65308610f4e208ccea144">&#9670;&nbsp;</a></span>gpu_assert()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void plssvm::cuda::detail::gpu_assert </td>
+          <td>(</td>
+          <td class="paramtype">cudaError_t&#160;</td>
+          <td class="paramname"><em>code</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check the CUDA error <code>code</code>. If <code>code</code> signals an error, throw a <a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a>. </p>
+<p>The exception contains the error name and error string. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">code</td><td>the CUDA error code to check </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a></td><td>if the error code signals a failure </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ab3bc9188e57901f69f30f1d81285db93"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab3bc9188e57901f69f30f1d81285db93">&#9670;&nbsp;</a></span>get_device_count()</h2>
 
@@ -121,7 +194,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="name
       </table>
 </div><div class="memdoc">
 
-<p>Returns the number of available devices. </p>
+<p>Returns the number of available CUDA devices. </p>
 <dl class="section return"><dt>Returns</dt><dd>the number of devices (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
@@ -152,28 +225,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="name
 
 </div>
 </div>
-<a id="ab2c0b0e4df88ad495a61ab05762d5a85"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab2c0b0e4df88ad495a61ab05762d5a85">&#9670;&nbsp;</a></span>device_synchronize() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void plssvm::cuda::detail::device_synchronize </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Wait for the current compute device to finish. </p>
-<p>Calls <code><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a2a797a65ca9b45f109994320a65a4aa1" title="Returns the last error from a runtime call.">peek_at_last_error()</a></code> before synchronizing. </p>
-
-</div>
-</div>
 <a id="a993ed255276400b7b0b1d05a66c4d78d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a993ed255276400b7b0b1d05a66c4d78d">&#9670;&nbsp;</a></span>device_synchronize() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a993ed255276400b7b0b1d05a66c4d78d">&#9670;&nbsp;</a></span>device_synchronize()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -188,8 +241,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="name
       </table>
 </div><div class="memdoc">
 
-<p>Wait for the compute device <code>device</code> to finish. </p>
-<p>Calls <code><a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a2a797a65ca9b45f109994320a65a4aa1" title="Returns the last error from a runtime call.">peek_at_last_error()</a></code> before synchronizing. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Wait for the compute <code>device</code> to finish. </p>
+<p>Calls <a class="el" href="namespaceplssvm_1_1cuda_1_1detail.html#a2a797a65ca9b45f109994320a65a4aa1" title="Returns the last error from a CUDA runtime call.">plssvm::cuda::detail::peek_at_last_error()</a> before synchronizing. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>the CUDA device to synchronize </td></tr>
   </table>
@@ -197,7 +250,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="name
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a></td><td>if the given device ID is smaller than <code>0</code> or greater or equal than the available number of devices </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs.">plssvm::cuda::backend_exception</a></td><td>if the given device ID is smaller than 0 or greater or equal than the available number of devices </td></tr>
   </table>
   </dd>
 </dl>
@@ -207,7 +260,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="name
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

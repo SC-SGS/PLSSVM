@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm Namespace Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -66,6 +66,7 @@ $(function() {
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
@@ -74,7 +75,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>The main namespace containing all API functions.  
+<p>The main namespace containing all public API functions.  
 <a href="namespaceplssvm.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -107,16 +108,13 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all C-SVM backends.  <a href="classplssvm_1_1csvm.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1exception.html">exception</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all custom exception types. Forwards its message to <a href="https://en.cppreference.com/w/cpp/error/runtime_error"><code>std::runtime_error</code></a> and saves the call side source location information.  <a href="classplssvm_1_1exception.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all custom exception types. Forwards its message to <a href="https://en.cppreference.com/w/cpp/error/runtime_error"><code>std::runtime_error</code></a> and saves the exception name and the call side source location information.  <a href="classplssvm_1_1exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1file__not__found__exception.html">file_not_found_exception</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the provided data set file couldn't be found.  <a href="classplssvm_1_1file__not__found__exception.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the provided file couldn't be found.  <a href="classplssvm_1_1file__not__found__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1invalid__file__format__exception.html">invalid_file_format_exception</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the provided data set file has an invalid format for the selected parser (e.g. if the arff parser tries to parse a libsvm file).  <a href="classplssvm_1_1invalid__file__format__exception.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1not__implemented__exception.html">not_implemented_exception</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the requested operation is currently not implemented.  <a href="classplssvm_1_1not__implemented__exception.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the provided file has an invalid format for the selected parser (e.g. if the arff parser tries to parse a LIBSVM file).  <a href="classplssvm_1_1invalid__file__format__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1parameter.html">parameter</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for encapsulating all necessary parameters possibly provided through command line arguments.  <a href="classplssvm_1_1parameter.html#details">More...</a><br /></td></tr>
@@ -128,7 +126,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class for encapsulating all necessary parameters for training possibly provided through command line arguments.  <a href="classplssvm_1_1parameter__train.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1source__location.html">source_location</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <code><a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a></code> class represents certain information about the source code, such as file names, line numbers or function names.  <a href="classplssvm_1_1source__location.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a> class represents certain information about the source code, such as file names, line numbers or function names.  <a href="classplssvm_1_1source__location.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the requested backend is not supported on the target machine.  <a href="classplssvm_1_1unsupported__backend__exception.html#details">More...</a><br /></td></tr>
@@ -137,20 +135,27 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the requested kernel type is not supported.  <a href="classplssvm_1_1unsupported__kernel__type__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:aab3a343173d93c72cd62edcde3934f1a"><td class="memItemLeft" align="right" valign="top"><a id="aab3a343173d93c72cd62edcde3934f1a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> = int</td></tr>
+<tr class="memdesc:aab3a343173d93c72cd62edcde3934f1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integer type used inside kernels. <br /></td></tr>
+<tr class="separator:aab3a343173d93c72cd62edcde3934f1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:abdb476fa824886f6d3ec438d86579c70"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> { <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">backend_type::openmp</a> = 0, 
-<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">backend_type::cuda</a> = 1, 
-<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">backend_type::opencl</a> = 2, 
-<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">backend_type::sycl</a> = 3
+<tr class="memitem:abdb476fa824886f6d3ec438d86579c70"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> { <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">backend_type::openmp</a>, 
+<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">backend_type::cuda</a>, 
+<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">backend_type::opencl</a>, 
+<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">backend_type::sycl</a>
  }</td></tr>
-<tr class="memdesc:abdb476fa824886f6d3ec438d86579c70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for the different backend types.  <a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">More...</a><br /></td></tr>
+<tr class="memdesc:abdb476fa824886f6d3ec438d86579c70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all possible backend types.  <a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">More...</a><br /></td></tr>
 <tr class="separator:abdb476fa824886f6d3ec438d86579c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13d04ccec8f2cd5794a5d2d73dd99703"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> { <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa">kernel_type::linear</a> = 0, 
 <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea">kernel_type::polynomial</a> = 1, 
 <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a1c2fc056f2b0d4685d95adb8764a3912">kernel_type::rbf</a> = 2
  }</td></tr>
-<tr class="memdesc:a13d04ccec8f2cd5794a5d2d73dd99703"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for the different kernel types.  <a href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">More...</a><br /></td></tr>
+<tr class="memdesc:a13d04ccec8f2cd5794a5d2d73dd99703"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all implemented kernel functions.  <a href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">More...</a><br /></td></tr>
 <tr class="separator:a13d04ccec8f2cd5794a5d2d73dd99703"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10012a8132e88fb2c2ea2e2f1737c500"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> { <br />
 &#160;&#160;<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8">target_platform::automatic</a>, 
@@ -161,55 +166,59 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a14f5d066e6910bdb29ce61fcd1452598">target_platform::gpu_intel</a>
 <br />
  }</td></tr>
-<tr class="memdesc:a10012a8132e88fb2c2ea2e2f1737c500"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for the different targets.  <a href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">More...</a><br /></td></tr>
+<tr class="memdesc:a10012a8132e88fb2c2ea2e2f1737c500"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all possible targets.  <a href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">More...</a><br /></td></tr>
 <tr class="separator:a10012a8132e88fb2c2ea2e2f1737c500"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ab86c4270f9de62b265ac5652ae0aac6a"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ab86c4270f9de62b265ac5652ae0aac6a">operator&lt;&lt;</a> (std::ostream &amp;out, const <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> backend)</td></tr>
-<tr class="memdesc:ab86c4270f9de62b265ac5652ae0aac6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-insertion-operator overload for convenient printing of the backend type <code>backend</code>.  <a href="namespaceplssvm.html#ab86c4270f9de62b265ac5652ae0aac6a">More...</a><br /></td></tr>
-<tr class="separator:ab86c4270f9de62b265ac5652ae0aac6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86f8cc05a5611ef6448948acc48a1ea1"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">operator&lt;&lt;</a> (std::ostream &amp;out, <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> backend)</td></tr>
+<tr class="memdesc:a86f8cc05a5611ef6448948acc48a1ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>backend</code> to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">More...</a><br /></td></tr>
+<tr class="separator:a86f8cc05a5611ef6448948acc48a1ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cb98983f3c24b91db983a8078e8f165"><td class="memItemLeft" align="right" valign="top">std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">operator&gt;&gt;</a> (std::istream &amp;in, <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> &amp;backend)</td></tr>
-<tr class="memdesc:a3cb98983f3c24b91db983a8078e8f165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-extraction-operator overload for convenient converting a string to a backend type.  <a href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">More...</a><br /></td></tr>
+<tr class="memdesc:a3cb98983f3c24b91db983a8078e8f165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the input-stream <code>in</code> to initialize the <code>backend</code> type.  <a href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">More...</a><br /></td></tr>
 <tr class="separator:a3cb98983f3c24b91db983a8078e8f165"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad170b84d08afc8714fd1eb4bec4ff49d"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ad170b84d08afc8714fd1eb4bec4ff49d"><td class="memTemplItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classplssvm_1_1csvm.html">csvm</a>&lt; T &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">make_csvm</a> (const <a class="el" href="classplssvm_1_1parameter.html">parameter</a>&lt; T &gt; &amp;params)</td></tr>
 <tr class="memdesc:ad170b84d08afc8714fd1eb4bec4ff49d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new C-SVM with the parameters given through <code>params</code> using the requested backend.  <a href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">More...</a><br /></td></tr>
 <tr class="separator:ad170b84d08afc8714fd1eb4bec4ff49d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a331ee86a0ee8d966cfe246709db1ccb5"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a331ee86a0ee8d966cfe246709db1ccb5">operator&lt;&lt;</a> (std::ostream &amp;out, const <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> kernel)</td></tr>
-<tr class="memdesc:a331ee86a0ee8d966cfe246709db1ccb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-insertion operator overload for convenient printing of the kernel type <code>kernel</code>.  <a href="namespaceplssvm.html#a331ee86a0ee8d966cfe246709db1ccb5">More...</a><br /></td></tr>
-<tr class="separator:a331ee86a0ee8d966cfe246709db1ccb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31abc66537d12be11141e35554e7f337"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a31abc66537d12be11141e35554e7f337">operator&lt;&lt;</a> (std::ostream &amp;out, <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> kernel)</td></tr>
+<tr class="memdesc:a31abc66537d12be11141e35554e7f337"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>kernel</code> type to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#a31abc66537d12be11141e35554e7f337">More...</a><br /></td></tr>
+<tr class="separator:a31abc66537d12be11141e35554e7f337"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86bccc0b9982928081e1ffe1b5c9b1b5"><td class="memItemLeft" align="right" valign="top">std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a86bccc0b9982928081e1ffe1b5c9b1b5">operator&gt;&gt;</a> (std::istream &amp;in, <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> &amp;kernel)</td></tr>
-<tr class="memdesc:a86bccc0b9982928081e1ffe1b5c9b1b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-extraction operator overload for convenient converting a string to a kernel type.  <a href="namespaceplssvm.html#a86bccc0b9982928081e1ffe1b5c9b1b5">More...</a><br /></td></tr>
+<tr class="memdesc:a86bccc0b9982928081e1ffe1b5c9b1b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the input-stream <code>in</code> to initialize the <code>kernel</code> type.  <a href="namespaceplssvm.html#a86bccc0b9982928081e1ffe1b5c9b1b5">More...</a><br /></td></tr>
 <tr class="separator:a86bccc0b9982928081e1ffe1b5c9b1b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae76872fe47a5337ea0c783648835554d"><td class="memTemplParams" colspan="2">template&lt;kernel_type kernel, typename real_type , typename... Args&gt; </td></tr>
 <tr class="memitem:ae76872fe47a5337ea0c783648835554d"><td class="memTemplItemLeft" align="right" valign="top">real_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ae76872fe47a5337ea0c783648835554d">kernel_function</a> (const std::vector&lt; real_type &gt; &amp;xi, const std::vector&lt; real_type &gt; &amp;xj, Args &amp;&amp;...args)</td></tr>
-<tr class="memdesc:ae76872fe47a5337ea0c783648835554d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the value of the two vectors <code>xi</code> and <code>xj</code> using the kernel function determined at compile-time.  <a href="namespaceplssvm.html#ae76872fe47a5337ea0c783648835554d">More...</a><br /></td></tr>
+<tr class="memdesc:ae76872fe47a5337ea0c783648835554d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the value of the two vectors <code>xi</code> and <code>xj</code> using the <code>kernel</code> function determined at compile-time.  <a href="namespaceplssvm.html#ae76872fe47a5337ea0c783648835554d">More...</a><br /></td></tr>
 <tr class="separator:ae76872fe47a5337ea0c783648835554d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb0cb3ce206767127c82f6c2cdff79ab"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:abb0cb3ce206767127c82f6c2cdff79ab"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abb0cb3ce206767127c82f6c2cdff79ab">operator&lt;&lt;</a> (std::ostream &amp;out, const <a class="el" href="classplssvm_1_1parameter.html">parameter</a>&lt; T &gt; &amp;params)</td></tr>
-<tr class="memdesc:abb0cb3ce206767127c82f6c2cdff79ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-insertion operator overload for convenient printing of all parameters encapsulated by <code>params</code>.  <a href="namespaceplssvm.html#abb0cb3ce206767127c82f6c2cdff79ab">More...</a><br /></td></tr>
+<tr class="memdesc:abb0cb3ce206767127c82f6c2cdff79ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output all parameters encapsulated by <code>params</code> to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#abb0cb3ce206767127c82f6c2cdff79ab">More...</a><br /></td></tr>
 <tr class="separator:abb0cb3ce206767127c82f6c2cdff79ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a869d41e0bcc4f45a6f02dc1dab9b4973"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a869d41e0bcc4f45a6f02dc1dab9b4973">operator&lt;&lt;</a> (std::ostream &amp;out, const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
-<tr class="memdesc:a869d41e0bcc4f45a6f02dc1dab9b4973"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-insertion-operator overload for convenient printing of the target platform <code>target</code>.  <a href="namespaceplssvm.html#a869d41e0bcc4f45a6f02dc1dab9b4973">More...</a><br /></td></tr>
-<tr class="separator:a869d41e0bcc4f45a6f02dc1dab9b4973"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a510a230d19d4dd416e1bf4aaa6db9328"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a510a230d19d4dd416e1bf4aaa6db9328">operator&lt;&lt;</a> (std::ostream &amp;out, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
+<tr class="memdesc:a510a230d19d4dd416e1bf4aaa6db9328"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>target</code> platform to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#a510a230d19d4dd416e1bf4aaa6db9328">More...</a><br /></td></tr>
+<tr class="separator:a510a230d19d4dd416e1bf4aaa6db9328"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76d5f3b9ef202de69580ae727fe7dd63"><td class="memItemLeft" align="right" valign="top">std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a76d5f3b9ef202de69580ae727fe7dd63">operator&gt;&gt;</a> (std::istream &amp;in, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &amp;target)</td></tr>
-<tr class="memdesc:a76d5f3b9ef202de69580ae727fe7dd63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream-extraction-operator overload for convenient converting a string to a target platform.  <a href="namespaceplssvm.html#a76d5f3b9ef202de69580ae727fe7dd63">More...</a><br /></td></tr>
+<tr class="memdesc:a76d5f3b9ef202de69580ae727fe7dd63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the input-stream <code>in</code> to initialize the <code>target</code> platform.  <a href="namespaceplssvm.html#a76d5f3b9ef202de69580ae727fe7dd63">More...</a><br /></td></tr>
 <tr class="separator:a76d5f3b9ef202de69580ae727fe7dd63"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:ad106e6f834f00516a1e85fd5a5dffe11"><td class="memItemLeft" align="right" valign="top"><a id="ad106e6f834f00516a1e85fd5a5dffe11"></a>
-constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ad106e6f834f00516a1e85fd5a5dffe11">THREAD_BLOCK_SIZE</a> = 16</td></tr>
-<tr class="memdesc:ad106e6f834f00516a1e85fd5a5dffe11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used for internal caching. <br /></td></tr>
-<tr class="separator:ad106e6f834f00516a1e85fd5a5dffe11"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7407a6a2b77e3257032c78ed04dd350"><td class="memItemLeft" align="right" valign="top"><a id="ae7407a6a2b77e3257032c78ed04dd350"></a>
-constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ae7407a6a2b77e3257032c78ed04dd350">INTERNAL_BLOCK_SIZE</a> = 6</td></tr>
-<tr class="memdesc:ae7407a6a2b77e3257032c78ed04dd350"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used for internal caching. <br /></td></tr>
-<tr class="separator:ae7407a6a2b77e3257032c78ed04dd350"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76052beb2b262c165f1811c5064ca1b5"><td class="memItemLeft" align="right" valign="top"><a id="a76052beb2b262c165f1811c5064ca1b5"></a>
+constexpr <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">THREAD_BLOCK_SIZE</a> = 16</td></tr>
+<tr class="memdesc:a76052beb2b262c165f1811c5064ca1b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global compile-time constant used for internal caching. <br /></td></tr>
+<tr class="separator:a76052beb2b262c165f1811c5064ca1b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7c75fadcf6b7f3ea0d1bb831a70933d"><td class="memItemLeft" align="right" valign="top"><a id="ac7c75fadcf6b7f3ea0d1bb831a70933d"></a>
+constexpr <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">INTERNAL_BLOCK_SIZE</a> = 6</td></tr>
+<tr class="memdesc:ac7c75fadcf6b7f3ea0d1bb831a70933d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global compile-time constant used for internal caching. <br /></td></tr>
+<tr class="separator:ac7c75fadcf6b7f3ea0d1bb831a70933d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a646c8f67a5f4710c6cb5231c5b8894f6"><td class="memItemLeft" align="right" valign="top"><a id="a646c8f67a5f4710c6cb5231c5b8894f6"></a>
+constexpr <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a646c8f67a5f4710c6cb5231c5b8894f6">OPENMP_BLOCK_SIZE</a> = 64</td></tr>
+<tr class="memdesc:a646c8f67a5f4710c6cb5231c5b8894f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global compile-time constant used for internal caching in the OpenMP kernel. <br /></td></tr>
+<tr class="separator:a646c8f67a5f4710c6cb5231c5b8894f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The main namespace containing all API functions. </p>
+<div class="textblock"><p>The main namespace containing all public API functions. </p>
 </div><h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="abdb476fa824886f6d3ec438d86579c70"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abdb476fa824886f6d3ec438d86579c70">&#9670;&nbsp;</a></span>backend_type</h2>
@@ -231,15 +240,15 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
 </table>
 </div><div class="memdoc">
 
-<p>Enum class for the different backend types. </p>
+<p>Enum class for all possible backend types. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f"></a>openmp&#160;</td><td class="fielddoc"><p><a href="https://www.openmp.org/">OpenMP</a> </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f"></a>openmp&#160;</td><td class="fielddoc"><p><a href="https://www.openmp.org/">OpenMP</a> to target CPUs only. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868"></a>cuda&#160;</td><td class="fielddoc"><p><a href="https://developer.nvidia.com/cuda-zone">CUDA</a> </p>
+<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868"></a>cuda&#160;</td><td class="fielddoc"><p><a href="https://developer.nvidia.com/cuda-zone">CUDA</a> to target NVIDIA GPUs only. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887"></a>opencl&#160;</td><td class="fielddoc"><p><a href="https://www.khronos.org/opencl/">OpenCL</a> </p>
+<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887"></a>opencl&#160;</td><td class="fielddoc"><p><a href="https://www.khronos.org/opencl/">OpenCL</a> to target GPUs from different vendors and CPUs. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6"></a>sycl&#160;</td><td class="fielddoc"><p><a href="https://www.khronos.org/sycl/">SYCL</a> </p>
+<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6"></a>sycl&#160;</td><td class="fielddoc"><p><a href="https://www.khronos.org/sycl/">SYCL</a> to target GPUs from different vendors and CPUs. Currently tested SYCL implementations are <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a>. </p>
 </td></tr>
 </table>
 
@@ -265,13 +274,13 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
 </table>
 </div><div class="memdoc">
 
-<p>Enum class for the different kernel types. </p>
+<p>Enum class for all implemented kernel functions. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa"></a>linear&#160;</td><td class="fielddoc"><p><img class="formulaInl" alt="$\vec{u}^T \cdot \vec{v}$" src="form_3.png"/> </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa"></a>linear&#160;</td><td class="fielddoc"><p>Linear kernel function: <img class="formulaInl" alt="$\vec{u}^T \cdot \vec{v}$" src="form_3.png"/>. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea"></a>polynomial&#160;</td><td class="fielddoc"><p><img class="formulaInl" alt="$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}$" src="form_4.png"/> </p>
+<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea"></a>polynomial&#160;</td><td class="fielddoc"><p>Polynomial kernel function: <img class="formulaInl" alt="$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}$" src="form_4.png"/>. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a1c2fc056f2b0d4685d95adb8764a3912"></a>rbf&#160;</td><td class="fielddoc"><p><img class="formulaInl" alt="$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}$" src="form_5.png"/> </p>
+<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a1c2fc056f2b0d4685d95adb8764a3912"></a>rbf&#160;</td><td class="fielddoc"><p>Radial basis function: <img class="formulaInl" alt="$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}$" src="form_5.png"/>. </p>
 </td></tr>
 </table>
 
@@ -297,31 +306,28 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
 </table>
 </div><div class="memdoc">
 
-<p>Enum class for the different targets. </p>
+<p>Enum class for all possible targets. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8"></a>automatic&#160;</td><td class="fielddoc"><p>The default target with respect to the used backend type. Checks for available devices in the following order: NVIDIA GPUs -&gt; AMD GPUs -&gt; Intel GPUs -&gt; CPUs </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8"></a>automatic&#160;</td><td class="fielddoc"><p>The default target with respect to the used backend type. Checks for available devices in the following order: NVIDIA GPUs -&gt; AMD GPUs -&gt; Intel GPUs -&gt; CPUs. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500ad9747e2da342bdb995f6389533ad1a3d"></a>cpu&#160;</td><td class="fielddoc"><p>Target CPUs. </p>
+<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500ad9747e2da342bdb995f6389533ad1a3d"></a>cpu&#160;</td><td class="fielddoc"><p>Target CPUs only (Intel, AMD, IBM, ...). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500a9ec77054f198cbc11e8a492869379be0"></a>gpu_nvidia&#160;</td><td class="fielddoc"><p>Target GPUs from NVIDIA </p>
+<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500a9ec77054f198cbc11e8a492869379be0"></a>gpu_nvidia&#160;</td><td class="fielddoc"><p>Target GPUs from NVIDIA. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500ad728f22a6cc35ec6cc635a7ffa220a45"></a>gpu_amd&#160;</td><td class="fielddoc"><p>Target GPUs from AMD </p>
+<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500ad728f22a6cc35ec6cc635a7ffa220a45"></a>gpu_amd&#160;</td><td class="fielddoc"><p>Target GPUs from AMD. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500a14f5d066e6910bdb29ce61fcd1452598"></a>gpu_intel&#160;</td><td class="fielddoc"><p>Target GPUs from Intel </p>
+<tr><td class="fieldname"><a id="a10012a8132e88fb2c2ea2e2f1737c500a14f5d066e6910bdb29ce61fcd1452598"></a>gpu_intel&#160;</td><td class="fielddoc"><p>Target GPUs from Intel. </p>
 </td></tr>
 </table>
 
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="ab86c4270f9de62b265ac5652ae0aac6a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab86c4270f9de62b265ac5652ae0aac6a">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/4]</span></h2>
+<a id="a86f8cc05a5611ef6448948acc48a1ea1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86f8cc05a5611ef6448948acc48a1ea1">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::ostream&amp; plssvm::operator&lt;&lt; </td>
@@ -332,7 +338,7 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a>&#160;</td>
           <td class="paramname"><em>backend</em>&#160;</td>
         </tr>
         <tr>
@@ -341,14 +347,9 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Stream-insertion-operator overload for convenient printing of the backend type <code>backend</code>. </p>
+<p>Output the <code>backend</code> to the given output-stream <code>out</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the backend type to </td></tr>
@@ -365,9 +366,6 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::istream&amp; plssvm::operator&gt;&gt; </td>
@@ -387,14 +385,9 @@ constexpr unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a cla
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Stream-extraction-operator overload for convenient converting a string to a backend type. </p>
+<p>Use the input-stream <code>in</code> to initialize the <code>backend</code> type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">in</td><td>input-stream to extract the backend type from </td></tr>
@@ -433,28 +426,25 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">params</td><td>struct encapsulating all possible parameters </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">params</td><td>class encapsulating all possible parameters </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine.">unsupported_backend_exception</a></td><td>if the requested backend isn't available </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine.">plssvm::unsupported_backend_exception</a></td><td>if the requested backend isn't available </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a href="https://en.cppreference.com/w/cpp/memory/unique_ptr"><code>std::unique_ptr</code></a> to the constructed C-SVM </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a href="https://en.cppreference.com/w/cpp/memory/unique_ptr"><code>std::unique_ptr</code></a> to the constructed C-SVM (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a331ee86a0ee8d966cfe246709db1ccb5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a331ee86a0ee8d966cfe246709db1ccb5">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/4]</span></h2>
+<a id="a31abc66537d12be11141e35554e7f337"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31abc66537d12be11141e35554e7f337">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[2/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::ostream&amp; plssvm::operator&lt;&lt; </td>
@@ -465,7 +455,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td>
           <td class="paramname"><em>kernel</em>&#160;</td>
         </tr>
         <tr>
@@ -474,14 +464,9 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Stream-insertion operator overload for convenient printing of the kernel type <code>kernel</code>. </p>
+<p>Output the <code>kernel</code> type to the given output-stream <code>out</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the kernel type to </td></tr>
@@ -498,9 +483,6 @@ template&lt;typename T &gt; </div>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::istream&amp; plssvm::operator&gt;&gt; </td>
@@ -520,14 +502,9 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Stream-extraction operator overload for convenient converting a string to a kernel type. </p>
+<p>Use the input-stream <code>in</code> to initialize the <code>kernel</code> type. </p>
 <p>The extracted value is matched case-insensitive and can be the integer value of the kernel_type. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">in</td><td>input-stream to extract the kernel type from </td></tr>
@@ -546,6 +523,9 @@ template&lt;typename T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;kernel_type kernel, typename real_type , typename... Args&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">real_type plssvm::kernel_function </td>
@@ -571,14 +551,19 @@ template&lt;kernel_type kernel, typename real_type , typename... Args&gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Computes the value of the two vectors <code>xi</code> and <code>xj</code> using the kernel function determined at compile-time. </p>
+<p>Computes the value of the two vectors <code>xi</code> and <code>xj</code> using the <code>kernel</code> function determined at compile-time. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">kernel</td><td>the type of the kernel </td></tr>
     <tr><td class="paramname">real_type</td><td>the type of the values </td></tr>
-    <tr><td class="paramname">Args</td><td>additional parameters used in the respective kernel functions </td></tr>
+    <tr><td class="paramname">Args</td><td>additional parameters used in the respective kernel function </td></tr>
   </table>
   </dd>
 </dl>
@@ -590,7 +575,7 @@ template&lt;kernel_type kernel, typename real_type , typename... Args&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the value computed by the kernel function </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the value computed by the <code>kernel</code> function (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -622,7 +607,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Stream-insertion operator overload for convenient printing of all parameters encapsulated by <code>params</code>. </p>
+<p>Output all parameters encapsulated by <code>params</code> to the given output-stream <code>out</code>. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the type of the data </td></tr>
@@ -631,7 +616,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the kernel type to </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the parameters to </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">params</td><td>the parameters </td></tr>
   </table>
   </dd>
@@ -640,14 +625,11 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a869d41e0bcc4f45a6f02dc1dab9b4973"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a869d41e0bcc4f45a6f02dc1dab9b4973">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/4]</span></h2>
+<a id="a510a230d19d4dd416e1bf4aaa6db9328"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a510a230d19d4dd416e1bf4aaa6db9328">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::ostream&amp; plssvm::operator&lt;&lt; </td>
@@ -658,7 +640,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
           <td class="paramname"><em>target</em>&#160;</td>
         </tr>
         <tr>
@@ -667,14 +649,9 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Stream-insertion-operator overload for convenient printing of the target platform <code>target</code>. </p>
+<p>Output the <code>target</code> platform to the given output-stream <code>out</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the target platform to </td></tr>
@@ -691,9 +668,6 @@ template&lt;typename T &gt; </div>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::istream&amp; plssvm::operator&gt;&gt; </td>
@@ -713,14 +687,9 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Stream-extraction-operator overload for convenient converting a string to a target platform. </p>
+<p>Use the input-stream <code>in</code> to initialize the <code>target</code> platform. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">in</td><td>input-stream to extract the target platform from </td></tr>
@@ -735,7 +704,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

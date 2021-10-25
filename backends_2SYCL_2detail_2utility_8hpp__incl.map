@@ -1,0 +1,7 @@
+<map id="include/plssvm/backends/SYCL/detail/utility.hpp" name="include/plssvm/backends/SYCL/detail/utility.hpp">
+<area shape="rect" id="node1" title="Utility functions specific to the SYCL backend." alt="" coords="201,5,386,47"/>
+<area shape="rect" id="node2" href="$target__platforms_8hpp.html" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="5,95,216,121"/>
+<area shape="rect" id="node4" title=" " alt="" coords="240,95,347,121"/>
+<area shape="rect" id="node5" title=" " alt="" coords="371,95,434,121"/>
+<area shape="rect" id="node3" title=" " alt="" coords="79,169,143,196"/>
+</map>

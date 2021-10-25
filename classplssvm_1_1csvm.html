@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::csvm&lt; T &gt; Class Template Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::csvm&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -87,11 +87,15 @@ Inheritance diagram for plssvm::csvm&lt; T &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="classplssvm_1_1csvm__inherit__graph.png" border="0" usemap="#plssvm_1_1csvm_3_01T_01_4_inherit__map" alt="Inheritance graph"/></div>
 <map name="plssvm_1_1csvm_3_01T_01_4_inherit__map" id="plssvm_1_1csvm_3_01T_01_4_inherit__map">
-<area shape="rect" title="Base class for all C&#45;SVM backends." alt="" coords="5,81,156,108"/>
-<area shape="rect" href="classplssvm_1_1cuda_1_1csvm.html" title="The C&#45;SVM class using the CUDA backend." alt="" coords="215,5,404,32"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="The C&#45;SVM class using the OpenCL backend." alt="" coords="209,56,410,83"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="The C&#45;SVM class using the OpenMP backend." alt="" coords="204,107,415,133"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="The C&#45;SVM class using the SYCL backend." alt="" coords="217,157,401,184"/>
+<area shape="rect" title="Base class for all C&#45;SVM backends." alt="" coords="5,196,156,223"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="222,5,397,61"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,86,411,157"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="214,181,405,237"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="236,262,383,303"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,328,415,355"/>
+<area shape="rect" href="classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="469,20,658,47"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,108,664,135"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,196,655,223"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -101,10 +105,6 @@ Public Types</h2></td></tr>
 using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> = T</td></tr>
 <tr class="memdesc:a6d21fdb49c960425dd00f35c95248426"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the data. Must be either <code>float</code> or <code>double</code>. <br /></td></tr>
 <tr class="separator:a6d21fdb49c960425dd00f35c95248426"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d5be042acc1a446416256d682c19c3c"><td class="memItemLeft" align="right" valign="top"><a id="a8d5be042acc1a446416256d682c19c3c"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> = std::size_t</td></tr>
-<tr class="memdesc:a8d5be042acc1a446416256d682c19c3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsigned integer type. <br /></td></tr>
-<tr class="separator:a8d5be042acc1a446416256d682c19c3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -117,29 +117,42 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 <tr class="separator:a8948a705676af8edb005d29445905b03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5750fc39472bc01d6bc1391bde763f44"><td class="memItemLeft" align="right" valign="top"><a id="a5750fc39472bc01d6bc1391bde763f44"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a5750fc39472bc01d6bc1391bde763f44">csvm</a> (const <a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a5750fc39472bc01d6bc1391bde763f44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable copy-constructor. <br /></td></tr>
+<tr class="memdesc:a5750fc39472bc01d6bc1391bde763f44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete expensive copy-constructor to make csvm a move only type. <br /></td></tr>
 <tr class="separator:a5750fc39472bc01d6bc1391bde763f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af09fa42b9e680003eb4b5b87bf22609d"><td class="memItemLeft" align="right" valign="top"><a id="af09fa42b9e680003eb4b5b87bf22609d"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#af09fa42b9e680003eb4b5b87bf22609d">csvm</a> (<a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&amp;) noexcept=default</td></tr>
-<tr class="memdesc:af09fa42b9e680003eb4b5b87bf22609d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Explicitly allow move-construction. <br /></td></tr>
+<tr class="memdesc:af09fa42b9e680003eb4b5b87bf22609d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as csvm is a move-only type. <br /></td></tr>
 <tr class="separator:af09fa42b9e680003eb4b5b87bf22609d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a512e8d5286b9278968c47a9c5e3708de"><td class="memItemLeft" align="right" valign="top"><a id="a512e8d5286b9278968c47a9c5e3708de"></a>
+<a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a512e8d5286b9278968c47a9c5e3708de">operator=</a> (const <a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;)=delete</td></tr>
+<tr class="memdesc:a512e8d5286b9278968c47a9c5e3708de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete expensive copy-assignment-operator to make csvm a move only type. <br /></td></tr>
+<tr class="separator:a512e8d5286b9278968c47a9c5e3708de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3125bc8f1cee0adb06497e6789049c9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a3125bc8f1cee0adb06497e6789049c9d">operator=</a> (<a class="el" href="classplssvm_1_1csvm.html">csvm</a> &amp;&amp;) noexcept=default</td></tr>
+<tr class="memdesc:a3125bc8f1cee0adb06497e6789049c9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as csvm is a move-only type.  <a href="classplssvm_1_1csvm.html#a3125bc8f1cee0adb06497e6789049c9d">More...</a><br /></td></tr>
+<tr class="separator:a3125bc8f1cee0adb06497e6789049c9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07baf4f680a01057bf9a141618499d3e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e">write_model</a> (const std::string &amp;filename)</td></tr>
-<tr class="memdesc:a07baf4f680a01057bf9a141618499d3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the calculated model to the given file.  <a href="classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e">More...</a><br /></td></tr>
+<tr class="memdesc:a07baf4f680a01057bf9a141618499d3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the calculated model to the file denoted by @þ filename.  <a href="classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e">More...</a><br /></td></tr>
 <tr class="separator:a07baf4f680a01057bf9a141618499d3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af54a2f0f53af7c0fa6b1be469462d3ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca">learn</a> ()</td></tr>
-<tr class="memdesc:af54a2f0f53af7c0fa6b1be469462d3ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Learns the Support Vectors given the data in the provided parameter class.  <a href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca">More...</a><br /></td></tr>
+<tr class="memdesc:af54a2f0f53af7c0fa6b1be469462d3ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Learns the support vectors given the data in the provided parameter class.  <a href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca">More...</a><br /></td></tr>
 <tr class="separator:af54a2f0f53af7c0fa6b1be469462d3ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c22123cf00db88656a4aa1fcedca9bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a4c22123cf00db88656a4aa1fcedca9bd">accuracy</a> ()</td></tr>
 <tr class="memdesc:a4c22123cf00db88656a4aa1fcedca9bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluates the model on the data used for training.  <a href="classplssvm_1_1csvm.html#a4c22123cf00db88656a4aa1fcedca9bd">More...</a><br /></td></tr>
 <tr class="separator:a4c22123cf00db88656a4aa1fcedca9bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad48b415364c0fb1b7392047572a39d1d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ad48b415364c0fb1b7392047572a39d1d">accuracy</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;point, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> correct_label)</td></tr>
+<tr class="memdesc:ad48b415364c0fb1b7392047572a39d1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the model on the given data <code>point</code> with <code>correct_label</code> being the correct label.  <a href="classplssvm_1_1csvm.html#ad48b415364c0fb1b7392047572a39d1d">More...</a><br /></td></tr>
+<tr class="separator:ad48b415364c0fb1b7392047572a39d1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6112420b9f68519e2b3e8808c5df0672"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a6112420b9f68519e2b3e8808c5df0672">accuracy</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;correct_labels)</td></tr>
+<tr class="memdesc:a6112420b9f68519e2b3e8808c5df0672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Evaluate the model on the given data <code>points</code> with <code>correct_labels</code> being the correct labels.  <a href="classplssvm_1_1csvm.html#a6112420b9f68519e2b3e8808c5df0672">More...</a><br /></td></tr>
+<tr class="separator:a6112420b9f68519e2b3e8808c5df0672"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5b7acfc6d7c2cb76aab9ad06b8f7806"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">predict</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;point)</td></tr>
-<tr class="memdesc:ae5b7acfc6d7c2cb76aab9ad06b8f7806"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of a (new) data point.  <a href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">More...</a><br /></td></tr>
+<tr class="memdesc:ae5b7acfc6d7c2cb76aab9ad06b8f7806"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict a (new) data point.  <a href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">More...</a><br /></td></tr>
 <tr class="separator:ae5b7acfc6d7c2cb76aab9ad06b8f7806"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70aeac109c92024a8621d2fc955705a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">predict_label</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;point)</td></tr>
-<tr class="memdesc:a70aeac109c92024a8621d2fc955705a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of an (new) point.  <a href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">More...</a><br /></td></tr>
+<tr class="memdesc:a70aeac109c92024a8621d2fc955705a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of a (new) data point.  <a href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">More...</a><br /></td></tr>
 <tr class="separator:a70aeac109c92024a8621d2fc955705a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab29462ff03a9c2f4a0a44cd24a4f26f2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">predict_label</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points)</td></tr>
-<tr class="memdesc:ab29462ff03a9c2f4a0a44cd24a4f26f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) points.  <a href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">More...</a><br /></td></tr>
+<tr class="memdesc:ab29462ff03a9c2f4a0a44cd24a4f26f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) data points.  <a href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">More...</a><br /></td></tr>
 <tr class="separator:ab29462ff03a9c2f4a0a44cd24a4f26f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
@@ -151,12 +164,12 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="memitem:ad4f3f38f6540c049046027a64cbe42a1"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ad4f3f38f6540c049046027a64cbe42a1">generate_q</a> ()=0</td></tr>
 <tr class="memdesc:ad4f3f38f6540c049046027a64cbe42a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate the vector <code>q</code>, a subvector of the least-squares matrix equation.  <a href="classplssvm_1_1csvm.html#ad4f3f38f6540c049046027a64cbe42a1">More...</a><br /></td></tr>
 <tr class="separator:ad4f3f38f6540c049046027a64cbe42a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad061a97377bac02581f6aa3b5cb7f5fc"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ad061a97377bac02581f6aa3b5cb7f5fc">solver_CG</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;b, <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> imax, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> eps, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;q)=0</td></tr>
-<tr class="memdesc:ad061a97377bac02581f6aa3b5cb7f5fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> using the Conjugated Gradients algorithm.  <a href="classplssvm_1_1csvm.html#ad061a97377bac02581f6aa3b5cb7f5fc">More...</a><br /></td></tr>
-<tr class="separator:ad061a97377bac02581f6aa3b5cb7f5fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bf3d98bc9011725e27016a0b404bf7a"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a">solver_CG</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;b, std::size_t imax, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> eps, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;q)=0</td></tr>
+<tr class="memdesc:a5bf3d98bc9011725e27016a0b404bf7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> using the Conjugated Gradients algorithm.  <a href="classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a">More...</a><br /></td></tr>
+<tr class="separator:a5bf3d98bc9011725e27016a0b404bf7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74c694fde6d4180a95be8a275296ef1f"><td class="memItemLeft" align="right" valign="top"><a id="a74c694fde6d4180a95be8a275296ef1f"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a74c694fde6d4180a95be8a275296ef1f">update_w</a> ()=0</td></tr>
-<tr class="memdesc:a74c694fde6d4180a95be8a275296ef1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">updates the <code>w_</code> vector to the current data and alpha values. <br /></td></tr>
+<tr class="memdesc:a74c694fde6d4180a95be8a275296ef1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates the normal vector <a class="el" href="classplssvm_1_1csvm.html#a0af207da77ac4abb56e571d0bc1927b5" title="The normal vector used for speeding up the prediction in case of the linear kernel function.">w_</a>, used to speed-up the prediction in case of the linear kernel function, to the current data and alpha values. <br /></td></tr>
 <tr class="separator:a74c694fde6d4180a95be8a275296ef1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9deef03f546477a0f0336d8fcec8921"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ac9deef03f546477a0f0336d8fcec8921">predict</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;points)=0</td></tr>
 <tr class="memdesc:ac9deef03f546477a0f0336d8fcec8921"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uses the already learned model to predict the class of multiple (new) data points.  <a href="classplssvm_1_1csvm.html#ac9deef03f546477a0f0336d8fcec8921">More...</a><br /></td></tr>
@@ -164,9 +177,9 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="memitem:aa76f726a5833539fc23d76d5b709ecd1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#aa76f726a5833539fc23d76d5b709ecd1">kernel_function</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;xi, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;xj)</td></tr>
 <tr class="memdesc:aa76f726a5833539fc23d76d5b709ecd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the value of the two vectors <code>xi</code> and <code>xj</code> using the kernel function specified during construction.  <a href="classplssvm_1_1csvm.html#aa76f726a5833539fc23d76d5b709ecd1">More...</a><br /></td></tr>
 <tr class="separator:aa76f726a5833539fc23d76d5b709ecd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ee9f22c9f1fff81d585b2496f1cfba4"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a9ee9f22c9f1fff81d585b2496f1cfba4">transform_data</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;matrix, const <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> boundary, const <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a> num_points)</td></tr>
-<tr class="memdesc:a9ee9f22c9f1fff81d585b2496f1cfba4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.  <a href="classplssvm_1_1csvm.html#a9ee9f22c9f1fff81d585b2496f1cfba4">More...</a><br /></td></tr>
-<tr class="separator:a9ee9f22c9f1fff81d585b2496f1cfba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ccb4ade1cb4037b9bb32be97a188f7f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a2ccb4ade1cb4037b9bb32be97a188f7f">transform_data</a> (const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;matrix, std::size_t boundary, std::size_t num_points)</td></tr>
+<tr class="memdesc:a2ccb4ade1cb4037b9bb32be97a188f7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transforms <code>num_points</code> entries of the 2D data from AoS to a 1D SoA layout and adding <code>boundary</code> points.  <a href="classplssvm_1_1csvm.html#a2ccb4ade1cb4037b9bb32be97a188f7f">More...</a><br /></td></tr>
+<tr class="separator:a2ccb4ade1cb4037b9bb32be97a188f7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -176,7 +189,7 @@ const <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500
 <tr class="separator:ad37033c70367c2f7667ed68d0a3cfecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fcc0c89bb50614cd634817f3c154f61"><td class="memItemLeft" align="right" valign="top"><a id="a4fcc0c89bb50614cd634817f3c154f61"></a>
 const <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a4fcc0c89bb50614cd634817f3c154f61">kernel_</a></td></tr>
-<tr class="memdesc:a4fcc0c89bb50614cd634817f3c154f61"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used kernel function: linear, polynomial or radial basis functions (rbf). <br /></td></tr>
+<tr class="memdesc:a4fcc0c89bb50614cd634817f3c154f61"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used kernel function. <br /></td></tr>
 <tr class="separator:a4fcc0c89bb50614cd634817f3c154f61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2698b52ada4287e0521e6004620b6063"><td class="memItemLeft" align="right" valign="top"><a id="a2698b52ada4287e0521e6004620b6063"></a>
 const int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a2698b52ada4287e0521e6004620b6063">degree_</a></td></tr>
@@ -212,16 +225,16 @@ std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1csv
 <tr class="separator:ac1bfd504381a3736ab238e878a931345"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba229d9cf7489ad5da75da57efaf638a"><td class="memItemLeft" align="right" valign="top"><a id="aba229d9cf7489ad5da75da57efaf638a"></a>
 std::shared_ptr&lt; const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#aba229d9cf7489ad5da75da57efaf638a">alpha_ptr_</a> {}</td></tr>
-<tr class="memdesc:aba229d9cf7489ad5da75da57efaf638a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result of the CG calculation. <br /></td></tr>
+<tr class="memdesc:aba229d9cf7489ad5da75da57efaf638a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result of the CG calculation: the weights of the support vectors. <br /></td></tr>
 <tr class="separator:aba229d9cf7489ad5da75da57efaf638a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4e041b15828416c300fc066f6e8a039"><td class="memItemLeft" align="right" valign="top"><a id="ac4e041b15828416c300fc066f6e8a039"></a>
-<a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ac4e041b15828416c300fc066f6e8a039">num_data_points_</a> {}</td></tr>
-<tr class="memdesc:ac4e041b15828416c300fc066f6e8a039"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points in the data set. <br /></td></tr>
-<tr class="separator:ac4e041b15828416c300fc066f6e8a039"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2e51a9a4729c35deedd8dc3ef28be06"><td class="memItemLeft" align="right" valign="top"><a id="aa2e51a9a4729c35deedd8dc3ef28be06"></a>
-<a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#aa2e51a9a4729c35deedd8dc3ef28be06">num_features_</a> {}</td></tr>
-<tr class="memdesc:aa2e51a9a4729c35deedd8dc3ef28be06"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of features per data point. <br /></td></tr>
-<tr class="separator:aa2e51a9a4729c35deedd8dc3ef28be06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84422b83aefe7aaa5117efd107252027"><td class="memItemLeft" align="right" valign="top"><a id="a84422b83aefe7aaa5117efd107252027"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a84422b83aefe7aaa5117efd107252027">num_data_points_</a> {}</td></tr>
+<tr class="memdesc:a84422b83aefe7aaa5117efd107252027"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of data points in the data set. <br /></td></tr>
+<tr class="separator:a84422b83aefe7aaa5117efd107252027"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8396f56bd6271264f15a2da0815a5306"><td class="memItemLeft" align="right" valign="top"><a id="a8396f56bd6271264f15a2da0815a5306"></a>
+std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a8396f56bd6271264f15a2da0815a5306">num_features_</a> {}</td></tr>
+<tr class="memdesc:a8396f56bd6271264f15a2da0815a5306"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of features per data point. <br /></td></tr>
+<tr class="separator:a8396f56bd6271264f15a2da0815a5306"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab105d7fae1bc097698d9821b7486862d"><td class="memItemLeft" align="right" valign="top"><a id="ab105d7fae1bc097698d9821b7486862d"></a>
 <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#ab105d7fae1bc097698d9821b7486862d">bias_</a> {}</td></tr>
 <tr class="memdesc:ab105d7fae1bc097698d9821b7486862d"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bias after learning. <br /></td></tr>
@@ -280,10 +293,51 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the given data pointer is the <code>nullptr</code> </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the data matrix is empty </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if not all points in the data matrix have the same number of features </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no features are provided for the data points </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if weights are given, but the number of weights doesn't match the number of data points </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a3125bc8f1cee0adb06497e6789049c9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3125bc8f1cee0adb06497e6789049c9d">&#9670;&nbsp;</a></span>operator=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classplssvm_1_1csvm.html">csvm</a>&amp; <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm</a>&lt; T &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1csvm.html">csvm</a>&lt; T &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move-assignment-operator as csvm is a move-only type. </p>
+<dl class="section return"><dt>Returns</dt><dd><code>*this</code> </dd></dl>
+
+</div>
+</div>
 <a id="a07baf4f680a01057bf9a141618499d3e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a07baf4f680a01057bf9a141618499d3e">&#9670;&nbsp;</a></span>write_model()</h2>
 
@@ -302,8 +356,8 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Write the calculated model to the given file. </p>
-<p>Writes the model using the libsvm format: </p><div class="fragment"><div class="line">svm_type c_svc</div>
+<p>Write the calculated model to the file denoted by @þ filename. </p>
+<p>Writes the model using the LIBSVM format: </p><div class="fragment"><div class="line">svm_type c_svc</div>
 <div class="line"><a class="code" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> <a class="code" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa">linear</a></div>
 <div class="line">nr_class 2</div>
 <div class="line">total_sv 5</div>
@@ -316,15 +370,17 @@ template&lt;typename T &gt; </div>
 <div class="line">-0.47971326 0:-2.098121e-01 1:6.027694e-01 2:-1.308685e-01 3:1.080525e-01</div>
 <div class="line">-0.23146635 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01</div>
 <div class="line">0.0034576654 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00</div>
-</div><!-- fragment --> <dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported.">unsupported_kernel_type_exception</a></td><td>if the kernel_type cannot be recognized </td></tr>
+</div><!-- fragment --> <dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">filename</td><td>name of the file to write the model information to </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">filename</td><td>name of the file to write the model information to </td></tr>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no labels are given </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of labels and number of data points mismatch </td></tr>
   </table>
   </dd>
 </dl>
@@ -348,16 +404,23 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Learns the Support Vectors given the data in the provided parameter class. </p>
+<p>Learns the support vectors given the data in the provided parameter class. </p>
 <p>Performs 2 steps:</p><ol type="1">
 <li>Load the data onto the used device (e.g. one or more GPUs)</li>
-<li>Learn the model by solving a minimization problem using the Conjugated Gradients algorithm </li>
+<li>Learn the model by solving a minimization problem using the Conjugated Gradients algorithm</li>
 </ol>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no labels are given for training </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of labels and number of data points mismatch </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
 <a id="a4c22123cf00db88656a4aa1fcedca9bd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c22123cf00db88656a4aa1fcedca9bd">&#9670;&nbsp;</a></span>accuracy()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c22123cf00db88656a4aa1fcedca9bd">&#9670;&nbsp;</a></span>accuracy() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -374,7 +437,110 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Evaluates the model on the data used for training. </p>
-<dl class="section return"><dt>Returns</dt><dd>The fraction of correct labeled training data in percent. ([[nodiscard]]) </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no labels are given for the accuracy calculation </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no weights are provided for calculating the accuracy (possibly a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the fraction of correctly labeled training data in percent (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="ad48b415364c0fb1b7392047572a39d1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad48b415364c0fb1b7392047572a39d1d">&#9670;&nbsp;</a></span>accuracy() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm</a>&lt; T &gt;::accuracy </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>point</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a>&#160;</td>
+          <td class="paramname"><em>correct_label</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Evaluate the model on the given data <code>point</code> with <code>correct_label</code> being the correct label. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">point</td><td>the data point to predict </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">correct_label</td><td>the correct label </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of features in <code>point</code> doesn't match the number of features in the data matrix </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no weights are provided for calculating the accuracy (possibly a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>1.0</code> if <code>point</code> is predicted correctly, <code>0.0</code> otherwise. (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a6112420b9f68519e2b3e8808c5df0672"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6112420b9f68519e2b3e8808c5df0672">&#9670;&nbsp;</a></span>accuracy() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> <a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm</a>&lt; T &gt;::accuracy </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&gt; &amp;&#160;</td>
+          <td class="paramname"><em>points</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>correct_labels</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Evaluate the model on the given data <code>points</code> with <code>correct_labels</code> being the correct labels. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">points</td><td>the data points to predict </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">correct_labels</td><td>the correct labels </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of points to predict mismatch the number of provided, correct label </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if not all <code>points</code> to predict have the same number of features </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of features per point to predict and per point in data matrix mismatch </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no weights are provided for calculating the accuracy (possibly a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the fraction of correctly labeled data points. (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -396,14 +562,21 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Uses the already learned model to predict the class of a (new) data point. </p>
+<p>Uses the already learned model to predict a (new) data point. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">point</td><td>the data point to predict </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>a negative <code>real_type</code> value if the prediction for data point point is the negative class and a positive <code>real_type</code> value otherwise ([[nodiscard]]) </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of features in <code>point</code> doesn't match the number of features in the data matrix </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no weights are provided for calculating the accuracy (possibly a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a negative <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426" title="The type of the data. Must be either float or double.">real_type</a> value if the prediction for data point point is the negative class and a positive <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426" title="The type of the data. Must be either float or double.">real_type</a> value otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -425,14 +598,21 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Uses the already learned model to predict the class of an (new) point. </p>
+<p>Uses the already learned model to predict the class of a (new) data point. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">point</td><td>the data point to predict </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>-1.0 if the prediction for point is the negative class and +1 otherwise ([[nodiscard]]) </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of features in <code>point</code> doesn't match the number of features in the data matrix </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no weights are provided for calculating the accuracy (possibly a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>-1.0 if the prediction for <code>point</code> is the negative class and +1 otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -454,14 +634,22 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Uses the already learned model to predict the class of multiple (new) points. </p>
+<p>Uses the already learned model to predict the class of multiple (new) data points. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">points</td><td>the points to predict </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">points</td><td>the data points to predict </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>a <code>std::vector&lt;real_type&gt;</code> filled with -1 for each prediction for a data point the negative class and +1 otherwise ([[nodiscard]]) </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if not all <code>points</code> to predict have the same number of features </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if the number of features per point to predict and per point in data matrix mismatch </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a></td><td>if no weights are provided for calculating the accuracy (possibly a call to <a class="el" href="classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca" title="Learns the support vectors given the data in the provided parameter class.">learn()</a> is missing) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector&lt;real_type&gt;</code></a> filled with -1 for each prediction for a data point with the negative class and +1 otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -491,14 +679,14 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Generate the vector <code>q</code>, a subvector of the least-squares matrix equation. </p>
-<dl class="section return"><dt>Returns</dt><dd>the generated <code>q</code> vector </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the generated <code>q</code> vector (<code>[[nodiscard]]</code>) </dd></dl>
 
-<p>Implemented in <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#a12b19ad84f56aab5288abc30ef05c89f">plssvm::opencl::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#aaad2f95127f157ef2dc24906954ab7e6">plssvm::sycl::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a4c41965679ec0004e94420bf20b4d385">plssvm::cuda::csvm&lt; T &gt;</a>, and <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#afe0c0095bee281b2c8ebc80e639a2569">plssvm::openmp::csvm&lt; T &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#afe0c0095bee281b2c8ebc80e639a2569">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::sycl::detail::device_ptr&lt; T &gt;, ::sycl::queue &gt;</a>.</p>
 
 </div>
 </div>
-<a id="ad061a97377bac02581f6aa3b5cb7f5fc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad061a97377bac02581f6aa3b5cb7f5fc">&#9670;&nbsp;</a></span>solver_CG()</h2>
+<a id="a5bf3d98bc9011725e27016a0b404bf7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bf3d98bc9011725e27016a0b404bf7a">&#9670;&nbsp;</a></span>solver_CG()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -517,7 +705,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td>
+          <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>imax</em>, </td>
         </tr>
         <tr>
@@ -560,6 +748,8 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the alpha values </dd></dl>
 
+<p>Implemented in <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::sycl::detail::device_ptr&lt; T &gt;, ::sycl::queue &gt;</a>.</p>
+
 </div>
 </div>
 <a id="ac9deef03f546477a0f0336d8fcec8921"></a>
@@ -595,7 +785,9 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>a <code>std::vector&lt;real_type&gt;</code> filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]]) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>a <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector&lt;real_type&gt;</code></a> filled with negative values for each prediction for a data point with the negative class and positive values otherwise (<code>[[nodiscard]]</code>) </dd></dl>
+
+<p>Implemented in <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::sycl::detail::device_ptr&lt; T &gt;, ::sycl::queue &gt;</a>.</p>
 
 </div>
 </div>
@@ -645,16 +837,16 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported.">unsupported_kernel_type_exception</a></td><td>if the kernel_type cannot be recognized </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported.">plssvm::unsupported_kernel_type_exception</a></td><td>if the kernel type cannot be recognized </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the value computed by the kernel function </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the value computed by the kernel function (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a9ee9f22c9f1fff81d585b2496f1cfba4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9ee9f22c9f1fff81d585b2496f1cfba4">&#9670;&nbsp;</a></span>transform_data()</h2>
+<a id="a2ccb4ade1cb4037b9bb32be97a188f7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ccb4ade1cb4037b9bb32be97a188f7f">&#9670;&nbsp;</a></span>transform_data()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -673,13 +865,13 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td>
+          <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>boundary</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1csvm.html#a8d5be042acc1a446416256d682c19c3c">size_type</a>&#160;</td>
+          <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>num_points</em>&#160;</td>
         </tr>
         <tr>
@@ -695,15 +887,17 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points. </p>
+<p>Transforms <code>num_points</code> entries of the 2D data from AoS to a 1D SoA layout and adding <code>boundary</code> points. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">boundary</td><td>the number of boundary cells </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">matrix</td><td>the 2D vector to be transformed into a 1D representation </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">boundary</td><td>the number of boundary points </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num_points</td><td>the number of data points of the 2D vector to transform </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section attention"><dt>Attention</dt><dd>boundary values can contain random numbers </dd></dl>
-<dl class="section return"><dt>Returns</dt><dd>an 1D vector in a SoA layout </dd></dl>
+<dl class="section attention"><dt>Attention</dt><dd>Boundary values can contain random numbers! </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>an 1D vector in a SoA layout (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -712,10 +906,10 @@ template&lt;typename T &gt; </div>
 </ul>
 </div><!-- contents -->
 <div class="ttc" id="anamespaceplssvm_html_a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa"><div class="ttname"><a href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa">plssvm::kernel_type::linear</a></div><div class="ttdeci">@ linear</div></div>
-<div class="ttc" id="anamespaceplssvm_html_a13d04ccec8f2cd5794a5d2d73dd99703"><div class="ttname"><a href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">plssvm::kernel_type</a></div><div class="ttdeci">kernel_type</div><div class="ttdoc">Enum class for the different kernel types.</div><div class="ttdef"><b>Definition:</b> kernel_types.hpp:33</div></div>
+<div class="ttc" id="anamespaceplssvm_html_a13d04ccec8f2cd5794a5d2d73dd99703"><div class="ttname"><a href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">plssvm::kernel_type</a></div><div class="ttdeci">kernel_type</div><div class="ttdoc">Enum class for all implemented kernel functions.</div><div class="ttdef"><b>Definition:</b> kernel_types.hpp:27</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

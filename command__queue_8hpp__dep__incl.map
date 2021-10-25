@@ -1,6 +1,6 @@
 <map id="include/plssvm/backends/OpenCL/detail/command_queue.hpp" name="include/plssvm/backends/OpenCL/detail/command_queue.hpp">
 <area shape="rect" id="node1" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="70,5,257,61"/>
 <area shape="rect" id="node2" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,213,191,255"/>
-<area shape="rect" id="node3" href="$OpenCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a OpenCL device pointer and functions." alt="" coords="71,109,256,165"/>
+<area shape="rect" id="node3" href="$OpenCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a OpenCL device pointer." alt="" coords="71,109,256,165"/>
 <area shape="rect" id="node4" href="$backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="280,117,465,158"/>
 </map>

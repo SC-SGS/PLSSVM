@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::detail Namespace Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::detail Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -81,57 +81,78 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1execution__range.html">execution_range</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class specifying a backend independent execution range.  <a href="classplssvm_1_1detail_1_1execution__range.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1file__reader.html">file_reader</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <code><a class="el" href="classplssvm_1_1detail_1_1file__reader.html" title="The plssvm::detail::file_reader class is responsible for reading a file and splitting it into its lin...">plssvm::detail::file_reader</a></code> class is responsible for reading a file and splitting it into its lines.  <a href="classplssvm_1_1detail_1_1file__reader.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classplssvm_1_1detail_1_1file__reader.html" title="The plssvm::detail::file_reader class is responsible for reading a file and splitting it into its lin...">plssvm::detail::file_reader</a> class is responsible for reading a file and splitting it into its lines.  <a href="classplssvm_1_1detail_1_1file__reader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">gpu_csvm</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A C-SVM implementation for all GPU backends to reduce code duplication.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:af8698438ef6011ea60c0231b9cadaa36"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:af8698438ef6011ea60c0231b9cadaa36"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::string_view&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">arithmetic_type_name</a> ()=delete</td></tr>
-<tr class="memdesc:af8698438ef6011ea60c0231b9cadaa36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to convert the given type to its name as string representation.  <a href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">More...</a><br /></td></tr>
+<tr class="memdesc:af8698438ef6011ea60c0231b9cadaa36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to convert the given type to its name as string representation including possible const and/or volatile attributes.  <a href="namespaceplssvm_1_1detail.html#af8698438ef6011ea60c0231b9cadaa36">More...</a><br /></td></tr>
 <tr class="separator:af8698438ef6011ea60c0231b9cadaa36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b3118299281c534910c13f9fa1f82d5"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a6b3118299281c534910c13f9fa1f82d5"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">check_assertion</a> (const bool cond, const std::string_view cond_str, const <a class="el" href="classplssvm_1_1source__location.html">source_location</a> &amp;loc, const std::string_view msg, Args &amp;&amp;...args)</td></tr>
-<tr class="memdesc:a6b3118299281c534910c13f9fa1f82d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function called by the <code>PLSSVM_ASSERT</code> macro. Checks the assertion condition and prints and aborts the program if the condition evaluates to <code>false</code>.  <a href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">More...</a><br /></td></tr>
+<tr class="memdesc:a6b3118299281c534910c13f9fa1f82d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function called by the <code>PLSSVM_ASSERT</code> macro. Checks the assertion condition. If the condition evaluates to <code>false</code>, prints the assertion condition together with additional information (e.g. <a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a> information) and aborts the program.  <a href="namespaceplssvm_1_1detail.html#a6b3118299281c534910c13f9fa1f82d5">More...</a><br /></td></tr>
 <tr class="separator:a6b3118299281c534910c13f9fa1f82d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd4215e381fac0432aabeaa1eeed31ef"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#abd4215e381fac0432aabeaa1eeed31ef">operator&lt;&lt;</a> (std::ostream &amp;out, const <a class="el" href="classplssvm_1_1detail_1_1execution__range.html">execution_range</a> &amp;range)</td></tr>
+<tr class="memdesc:abd4215e381fac0432aabeaa1eeed31ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the execution <code>range</code> to the given output-stream <code>out</code>.  <a href="namespaceplssvm_1_1detail.html#abd4215e381fac0432aabeaa1eeed31ef">More...</a><br /></td></tr>
+<tr class="separator:abd4215e381fac0432aabeaa1eeed31ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="memTemplParams" colspan="2">template&lt;typename T , typename Exception  = std::runtime_error&gt; </td></tr>
 <tr class="memitem:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ad63cc4410cd69b2c85a71c19b3e6c566">convert_to</a> (std::string_view str)</td></tr>
 <tr class="memdesc:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the string <code>str</code> to a value of type <code>T</code>.  <a href="namespaceplssvm_1_1detail.html#ad63cc4410cd69b2c85a71c19b3e6c566">More...</a><br /></td></tr>
 <tr class="separator:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81a237b3c126ff659799e017e0ca8376"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a81a237b3c126ff659799e017e0ca8376">starts_with</a> (const std::string_view str, const std::string_view sv) noexcept</td></tr>
-<tr class="memdesc:a81a237b3c126ff659799e017e0ca8376"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the prefix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a81a237b3c126ff659799e017e0ca8376">More...</a><br /></td></tr>
-<tr class="separator:a81a237b3c126ff659799e017e0ca8376"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a739d03620ebe94c4fa903ad0e839359d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a739d03620ebe94c4fa903ad0e839359d">starts_with</a> (const std::string_view str, const char c) noexcept</td></tr>
-<tr class="memdesc:a739d03620ebe94c4fa903ad0e839359d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a739d03620ebe94c4fa903ad0e839359d">More...</a><br /></td></tr>
-<tr class="separator:a739d03620ebe94c4fa903ad0e839359d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af50476e5ab825a89858b5d4ea8108f37"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#af50476e5ab825a89858b5d4ea8108f37">ends_with</a> (const std::string_view str, const std::string_view sv) noexcept</td></tr>
-<tr class="memdesc:af50476e5ab825a89858b5d4ea8108f37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the suffix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#af50476e5ab825a89858b5d4ea8108f37">More...</a><br /></td></tr>
-<tr class="separator:af50476e5ab825a89858b5d4ea8108f37"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a040eeed3799718c9fdc73e009a3cbe84"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a040eeed3799718c9fdc73e009a3cbe84">ends_with</a> (const std::string_view str, const char c) noexcept</td></tr>
-<tr class="memdesc:a040eeed3799718c9fdc73e009a3cbe84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a040eeed3799718c9fdc73e009a3cbe84">More...</a><br /></td></tr>
-<tr class="separator:a040eeed3799718c9fdc73e009a3cbe84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e942c2a9c9ea77ff6dd749027c1bfcb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a1e942c2a9c9ea77ff6dd749027c1bfcb">contains</a> (const std::string_view str, const std::string_view sv) noexcept</td></tr>
-<tr class="memdesc:a1e942c2a9c9ea77ff6dd749027c1bfcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the string <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a1e942c2a9c9ea77ff6dd749027c1bfcb">More...</a><br /></td></tr>
-<tr class="separator:a1e942c2a9c9ea77ff6dd749027c1bfcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeb595da9dba8bdbd3eb3d9c0658e2841"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#aeb595da9dba8bdbd3eb3d9c0658e2841">contains</a> (const std::string_view str, const char c) noexcept</td></tr>
-<tr class="memdesc:aeb595da9dba8bdbd3eb3d9c0658e2841"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#aeb595da9dba8bdbd3eb3d9c0658e2841">More...</a><br /></td></tr>
-<tr class="separator:aeb595da9dba8bdbd3eb3d9c0658e2841"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0882033af62f8fa112ebfde8a2e7dfe"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ac0882033af62f8fa112ebfde8a2e7dfe">trim_left</a> (const std::string_view str) noexcept</td></tr>
-<tr class="memdesc:ac0882033af62f8fa112ebfde8a2e7dfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leding whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#ac0882033af62f8fa112ebfde8a2e7dfe">More...</a><br /></td></tr>
-<tr class="separator:ac0882033af62f8fa112ebfde8a2e7dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad0d9cd127ee910d3fb75ec2842cba84"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#aad0d9cd127ee910d3fb75ec2842cba84">replace_all</a> (std::string &amp;str, const std::string_view what, const std::string_view with)</td></tr>
-<tr class="memdesc:aad0d9cd127ee910d3fb75ec2842cba84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces all occurrences of <code>what</code> with <code>with</code> in the string <code>str</code>.  <a href="namespaceplssvm_1_1detail.html#aad0d9cd127ee910d3fb75ec2842cba84">More...</a><br /></td></tr>
-<tr class="separator:aad0d9cd127ee910d3fb75ec2842cba84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0193c3037a7a004e13394d680f4048d0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">starts_with</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
+<tr class="memdesc:a0193c3037a7a004e13394d680f4048d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the prefix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">More...</a><br /></td></tr>
+<tr class="separator:a0193c3037a7a004e13394d680f4048d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2b482fd3bcf02cac7308cfddd74e338"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338">starts_with</a> (std::string_view str, char c) noexcept</td></tr>
+<tr class="memdesc:ae2b482fd3bcf02cac7308cfddd74e338"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338">More...</a><br /></td></tr>
+<tr class="separator:ae2b482fd3bcf02cac7308cfddd74e338"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45cda6e5d8c0f48f77aa5867d46bfd7c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a45cda6e5d8c0f48f77aa5867d46bfd7c">ends_with</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
+<tr class="memdesc:a45cda6e5d8c0f48f77aa5867d46bfd7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the suffix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a45cda6e5d8c0f48f77aa5867d46bfd7c">More...</a><br /></td></tr>
+<tr class="separator:a45cda6e5d8c0f48f77aa5867d46bfd7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b68ee32965558f5c00b78909832d629"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a9b68ee32965558f5c00b78909832d629">ends_with</a> (std::string_view str, char c) noexcept</td></tr>
+<tr class="memdesc:a9b68ee32965558f5c00b78909832d629"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a9b68ee32965558f5c00b78909832d629">More...</a><br /></td></tr>
+<tr class="separator:a9b68ee32965558f5c00b78909832d629"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b5b57e64196047d4469d52cd9e49fba"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a7b5b57e64196047d4469d52cd9e49fba">contains</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
+<tr class="memdesc:a7b5b57e64196047d4469d52cd9e49fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the string <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a7b5b57e64196047d4469d52cd9e49fba">More...</a><br /></td></tr>
+<tr class="separator:a7b5b57e64196047d4469d52cd9e49fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e1c0e4b256ef3195ea650554f5ec295"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a7e1c0e4b256ef3195ea650554f5ec295">contains</a> (std::string_view str, char c) noexcept</td></tr>
+<tr class="memdesc:a7e1c0e4b256ef3195ea650554f5ec295"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a7e1c0e4b256ef3195ea650554f5ec295">More...</a><br /></td></tr>
+<tr class="separator:a7e1c0e4b256ef3195ea650554f5ec295"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ff1b1c2f5795319cdde5d7caa5259a6"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6">trim_left</a> (std::string_view str) noexcept</td></tr>
+<tr class="memdesc:a3ff1b1c2f5795319cdde5d7caa5259a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leading whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6">More...</a><br /></td></tr>
+<tr class="separator:a3ff1b1c2f5795319cdde5d7caa5259a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60211d1df70301d8c5167fa105e15bc7"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a60211d1df70301d8c5167fa105e15bc7">trim_right</a> (std::string_view str) noexcept</td></tr>
+<tr class="memdesc:a60211d1df70301d8c5167fa105e15bc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all trailing whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#a60211d1df70301d8c5167fa105e15bc7">More...</a><br /></td></tr>
+<tr class="separator:a60211d1df70301d8c5167fa105e15bc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3696c2d5ab58d839cf1a93ca0e3a1e52"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a3696c2d5ab58d839cf1a93ca0e3a1e52">trim</a> (std::string_view str) noexcept</td></tr>
+<tr class="memdesc:a3696c2d5ab58d839cf1a93ca0e3a1e52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leading and trailing whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#a3696c2d5ab58d839cf1a93ca0e3a1e52">More...</a><br /></td></tr>
+<tr class="separator:a3696c2d5ab58d839cf1a93ca0e3a1e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58f34fc0d4116742fa8fa20a4623429e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a58f34fc0d4116742fa8fa20a4623429e">replace_all</a> (std::string &amp;str, std::string_view what, std::string_view with)</td></tr>
+<tr class="memdesc:a58f34fc0d4116742fa8fa20a4623429e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces all occurrences of <code>what</code> with <code>with</code> in the string <code>str</code>.  <a href="namespaceplssvm_1_1detail.html#a58f34fc0d4116742fa8fa20a4623429e">More...</a><br /></td></tr>
+<tr class="separator:a58f34fc0d4116742fa8fa20a4623429e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac774182d615638c411353e715ad4fe78"><td class="memItemLeft" align="right" valign="top">std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78">to_lower_case</a> (std::string &amp;str)</td></tr>
 <tr class="memdesc:ac774182d615638c411353e715ad4fe78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the string <code>str</code> to its all lower case representation.  <a href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78">More...</a><br /></td></tr>
 <tr class="separator:ac774182d615638c411353e715ad4fe78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39b7f6af847bd65e4b783ca97b219caa"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a39b7f6af847bd65e4b783ca97b219caa">as_lower_case</a> (const std::string_view str)</td></tr>
-<tr class="memdesc:a39b7f6af847bd65e4b783ca97b219caa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all lower case.  <a href="namespaceplssvm_1_1detail.html#a39b7f6af847bd65e4b783ca97b219caa">More...</a><br /></td></tr>
-<tr class="separator:a39b7f6af847bd65e4b783ca97b219caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9fd1aa67fdd8cf51b3aa80783ca058e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#aa9fd1aa67fdd8cf51b3aa80783ca058e">as_lower_case</a> (std::string_view str)</td></tr>
+<tr class="memdesc:aa9fd1aa67fdd8cf51b3aa80783ca058e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all lower case.  <a href="namespaceplssvm_1_1detail.html#aa9fd1aa67fdd8cf51b3aa80783ca058e">More...</a><br /></td></tr>
+<tr class="separator:aa9fd1aa67fdd8cf51b3aa80783ca058e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b015378c06b616493f7036b28af4178"><td class="memItemLeft" align="right" valign="top">std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178">to_upper_case</a> (std::string &amp;str)</td></tr>
+<tr class="memdesc:a0b015378c06b616493f7036b28af4178"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the string <code>str</code> to its all upper case representation.  <a href="namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178">More...</a><br /></td></tr>
+<tr class="separator:a0b015378c06b616493f7036b28af4178"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a019b9816a36f2781e4146f8e1a66f218"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">as_upper_case</a> (std::string_view str)</td></tr>
+<tr class="memdesc:a019b9816a36f2781e4146f8e1a66f218"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all upper case.  <a href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">More...</a><br /></td></tr>
+<tr class="separator:a019b9816a36f2781e4146f8e1a66f218"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acaca663ce73f98d64a61778a78636b76"><td class="memTemplParams" colspan="2">template&lt;std::size_t I, typename... Types&gt; </td></tr>
 <tr class="memitem:acaca663ce73f98d64a61778a78636b76"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#acaca663ce73f98d64a61778a78636b76">get</a> (Types &amp;&amp;...args) noexcept</td></tr>
-<tr class="memdesc:acaca663ce73f98d64a61778a78636b76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <code>I-th</code> element of the parameter pack <code>ts</code>.  <a href="namespaceplssvm_1_1detail.html#acaca663ce73f98d64a61778a78636b76">More...</a><br /></td></tr>
+<tr class="memdesc:acaca663ce73f98d64a61778a78636b76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <code>I-th</code> element of the parameter pack <code>args</code>.  <a href="namespaceplssvm_1_1detail.html#acaca663ce73f98d64a61778a78636b76">More...</a><br /></td></tr>
 <tr class="separator:acaca663ce73f98d64a61778a78636b76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af016317e5d75fd36d039076dd2356e31"><td class="memTemplParams" colspan="2">template&lt;typename Enum &gt; </td></tr>
 <tr class="memitem:af016317e5d75fd36d039076dd2356e31"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::underlying_type_t&lt; Enum &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#af016317e5d75fd36d039076dd2356e31">to_underlying</a> (const Enum e) noexcept</td></tr>
@@ -174,14 +195,14 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Tries to convert the given type to its name as string representation. </p>
-<p>The definition is marked as <b>deleted</b> if <code>T</code> isn't an arithmetic type (without cvref-qualification). </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p>Tries to convert the given type to its name as string representation including possible const and/or volatile attributes. </p>
+<p>The definition is marked as <b>deleted</b> if <code>T</code> isn't an <a href="https://en.cppreference.com/w/cpp/types/is_arithmetic">arithmetic type</a>. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the type to convert to a string </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the name of <code>T</code> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the name of <code>T</code> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -239,7 +260,7 @@ template&lt;typename... Args&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Function called by the <code>PLSSVM_ASSERT</code> macro. Checks the assertion condition and prints and aborts the program if the condition evaluates to <code>false</code>. </p>
+<p>Function called by the <code>PLSSVM_ASSERT</code> macro. Checks the assertion condition. If the condition evaluates to <code>false</code>, prints the assertion condition together with additional information (e.g. <a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a> information) and aborts the program. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Args</td><td>the placeholder types </td></tr>
@@ -256,6 +277,44 @@ template&lt;typename... Args&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="abd4215e381fac0432aabeaa1eeed31ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd4215e381fac0432aabeaa1eeed31ef">&#9670;&nbsp;</a></span>operator&lt;&lt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream&amp; plssvm::detail::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1detail_1_1execution__range.html">execution_range</a> &amp;&#160;</td>
+          <td class="paramname"><em>range</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Output the execution <code>range</code> to the given output-stream <code>out</code>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the execution range to </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">range</td><td>the execution range </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the output-stream </dd></dl>
 
 </div>
 </div>
@@ -309,8 +368,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="a81a237b3c126ff659799e017e0ca8376"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a81a237b3c126ff659799e017e0ca8376">&#9670;&nbsp;</a></span>starts_with() <span class="overload">[1/2]</span></h2>
+<a id="a0193c3037a7a004e13394d680f4048d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0193c3037a7a004e13394d680f4048d0">&#9670;&nbsp;</a></span>starts_with() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -321,13 +380,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">bool plssvm::detail::starts_with </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>sv</em>&#160;</td>
         </tr>
         <tr>
@@ -338,7 +397,7 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -355,8 +414,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="a739d03620ebe94c4fa903ad0e839359d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a739d03620ebe94c4fa903ad0e839359d">&#9670;&nbsp;</a></span>starts_with() <span class="overload">[2/2]</span></h2>
+<a id="ae2b482fd3bcf02cac7308cfddd74e338"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2b482fd3bcf02cac7308cfddd74e338">&#9670;&nbsp;</a></span>starts_with() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -367,13 +426,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">bool plssvm::detail::starts_with </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const char&#160;</td>
+          <td class="paramtype">char&#160;</td>
           <td class="paramname"><em>c</em>&#160;</td>
         </tr>
         <tr>
@@ -384,7 +443,7 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -401,8 +460,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="af50476e5ab825a89858b5d4ea8108f37"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af50476e5ab825a89858b5d4ea8108f37">&#9670;&nbsp;</a></span>ends_with() <span class="overload">[1/2]</span></h2>
+<a id="a45cda6e5d8c0f48f77aa5867d46bfd7c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45cda6e5d8c0f48f77aa5867d46bfd7c">&#9670;&nbsp;</a></span>ends_with() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -413,13 +472,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">bool plssvm::detail::ends_with </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>sv</em>&#160;</td>
         </tr>
         <tr>
@@ -430,7 +489,7 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -447,8 +506,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="a040eeed3799718c9fdc73e009a3cbe84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a040eeed3799718c9fdc73e009a3cbe84">&#9670;&nbsp;</a></span>ends_with() <span class="overload">[2/2]</span></h2>
+<a id="a9b68ee32965558f5c00b78909832d629"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b68ee32965558f5c00b78909832d629">&#9670;&nbsp;</a></span>ends_with() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -459,13 +518,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">bool plssvm::detail::ends_with </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const char&#160;</td>
+          <td class="paramtype">char&#160;</td>
           <td class="paramname"><em>c</em>&#160;</td>
         </tr>
         <tr>
@@ -476,7 +535,7 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -493,8 +552,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="a1e942c2a9c9ea77ff6dd749027c1bfcb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e942c2a9c9ea77ff6dd749027c1bfcb">&#9670;&nbsp;</a></span>contains() <span class="overload">[1/2]</span></h2>
+<a id="a7b5b57e64196047d4469d52cd9e49fba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b5b57e64196047d4469d52cd9e49fba">&#9670;&nbsp;</a></span>contains() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -505,13 +564,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">bool plssvm::detail::contains </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>sv</em>&#160;</td>
         </tr>
         <tr>
@@ -522,7 +581,7 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -539,8 +598,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="aeb595da9dba8bdbd3eb3d9c0658e2841"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeb595da9dba8bdbd3eb3d9c0658e2841">&#9670;&nbsp;</a></span>contains() <span class="overload">[2/2]</span></h2>
+<a id="a7e1c0e4b256ef3195ea650554f5ec295"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e1c0e4b256ef3195ea650554f5ec295">&#9670;&nbsp;</a></span>contains() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -551,13 +610,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">bool plssvm::detail::contains </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const char&#160;</td>
+          <td class="paramtype">char&#160;</td>
           <td class="paramname"><em>c</em>&#160;</td>
         </tr>
         <tr>
@@ -568,7 +627,7 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -585,8 +644,8 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="ac0882033af62f8fa112ebfde8a2e7dfe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac0882033af62f8fa112ebfde8a2e7dfe">&#9670;&nbsp;</a></span>trim_left()</h2>
+<a id="a3ff1b1c2f5795319cdde5d7caa5259a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ff1b1c2f5795319cdde5d7caa5259a6">&#9670;&nbsp;</a></span>trim_left()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -597,19 +656,19 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="memname">std::string_view plssvm::detail::trim_left </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leding whitespaces are removed. </p>
+<p>Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leading whitespaces are removed. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to remove the leading whitespaces </td></tr>
@@ -620,14 +679,81 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="aad0d9cd127ee910d3fb75ec2842cba84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad0d9cd127ee910d3fb75ec2842cba84">&#9670;&nbsp;</a></span>replace_all()</h2>
+<a id="a60211d1df70301d8c5167fa105e15bc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60211d1df70301d8c5167fa105e15bc7">&#9670;&nbsp;</a></span>trim_right()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string_view plssvm::detail::trim_right </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all trailing whitespaces are removed. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to remove the trailing whitespaces </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the string <code>str</code> without trailing whitespace (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a3696c2d5ab58d839cf1a93ca0e3a1e52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3696c2d5ab58d839cf1a93ca0e3a1e52">&#9670;&nbsp;</a></span>trim()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string_view plssvm::detail::trim </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leading and trailing whitespaces are removed. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to remove the leading and trailing whitespaces </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the string <code>str</code> without leading and trailing whitespace (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a58f34fc0d4116742fa8fa20a4623429e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58f34fc0d4116742fa8fa20a4623429e">&#9670;&nbsp;</a></span>replace_all()</h2>
+
+<div class="memitem">
+<div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void plssvm::detail::replace_all </td>
@@ -638,13 +764,13 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>what</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>with</em>&#160;</td>
         </tr>
         <tr>
@@ -653,11 +779,6 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Replaces all occurrences of <code>what</code> with <code>with</code> in the string <code>str</code>. </p>
@@ -677,9 +798,6 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string&amp; plssvm::detail::to_lower_case </td>
@@ -689,11 +807,6 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Convert the string <code>str</code> to its all lower case representation. </p>
@@ -707,32 +820,78 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
-<a id="a39b7f6af847bd65e4b783ca97b219caa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a39b7f6af847bd65e4b783ca97b219caa">&#9670;&nbsp;</a></span>as_lower_case()</h2>
+<a id="aa9fd1aa67fdd8cf51b3aa80783ca058e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9fd1aa67fdd8cf51b3aa80783ca058e">&#9670;&nbsp;</a></span>as_lower_case()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string plssvm::detail::as_lower_case </td>
           <td>(</td>
-          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>str</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Return a new string with the same content as <code>str</code> but all lower case. </p>
-<p>In contrast to <code>std::string&amp; <a class="el" href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78" title="Convert the string str to its all lower case representation.">to_lower_case(std::string&amp;)</a></code> this function does not change the input string <code>str</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>In contrast to <a class="el" href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78" title="Convert the string str to its all lower case representation.">to_lower_case(std::string&amp;)</a> this function does not change the input string <code>str</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to use in the transformation </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the transformed string (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a0b015378c06b616493f7036b28af4178"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b015378c06b616493f7036b28af4178">&#9670;&nbsp;</a></span>to_upper_case()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string&amp; plssvm::detail::to_upper_case </td>
+          <td>(</td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convert the string <code>str</code> to its all upper case representation. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">str</td><td>the string to transform </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the transformed string </dd></dl>
+
+</div>
+</div>
+<a id="a019b9816a36f2781e4146f8e1a66f218"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a019b9816a36f2781e4146f8e1a66f218">&#9670;&nbsp;</a></span>as_upper_case()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string plssvm::detail::as_upper_case </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return a new string with the same content as <code>str</code> but all upper case. </p>
+<p>In contrast to <a class="el" href="namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178" title="Convert the string str to its all upper case representation.">to_upper_case(std::string&amp;)</a> this function does not change the input string <code>str</code>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to use in the transformation </td></tr>
   </table>
@@ -768,7 +927,7 @@ template&lt;std::size_t I, typename... Types&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Get the <code>I-th</code> element of the parameter pack <code>ts</code>. </p>
+<p>Get the <code>I-th</code> element of the parameter pack <code>args</code>. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">I</td><td>the index of the element to get </td></tr>
@@ -782,7 +941,7 @@ template&lt;std::size_t I, typename... Types&gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the <code>I-th</code> element of <code>args</code> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the <code>I-th</code> element of <code>args</code> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -825,14 +984,14 @@ template&lt;typename Enum &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the integer value of the underlying type of <code>Enum</code>, converted from <code>e</code> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the integer value of the underlying type of <code>Enum</code>, converted from <code>e</code> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

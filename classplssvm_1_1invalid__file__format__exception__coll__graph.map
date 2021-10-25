@@ -1,5 +1,5 @@
 <map id="plssvm::invalid_file_format_exception" name="plssvm::invalid_file_format_exception">
-<area shape="rect" id="node1" title="Exception type thrown if the provided data set file has an invalid format for the selected parser (e...." alt="" coords="5,155,153,196"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="9,80,150,107"/>
+<area shape="rect" id="node1" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="5,155,153,196"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="9,80,150,107"/>
 <area shape="rect" id="node3" title=" " alt="" coords="10,5,149,32"/>
 </map>

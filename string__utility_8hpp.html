@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/detail/string_utility.hpp File Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/detail/string_utility.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -75,22 +75,18 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Implements utility functions for string manipulation and conversion.  
+<p>Implements utility functions for string manipulation and querying.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;algorithm&gt;</code><br />
-<code>#include &lt;cctype&gt;</code><br />
-<code>#include &lt;string&gt;</code><br />
+<div class="textblock"><code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for string_utility.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="string__utility_8hpp__incl.png" border="0" usemap="#include_2plssvm_2detail_2string__utility_8hpp" alt=""/></div>
 <map name="include_2plssvm_2detail_2string__utility_8hpp" id="include_2plssvm_2detail_2string__utility_8hpp">
-<area shape="rect" title="Implements utility functions for string manipulation and conversion." alt="" coords="110,5,271,47"/>
-<area shape="rect" title=" " alt="" coords="5,95,91,121"/>
-<area shape="rect" title=" " alt="" coords="115,95,181,121"/>
-<area shape="rect" title=" " alt="" coords="205,95,264,121"/>
-<area shape="rect" title=" " alt="" coords="289,95,386,121"/>
+<area shape="rect" title="Implements utility functions for string manipulation and querying." alt="" coords="5,5,167,47"/>
+<area shape="rect" title=" " alt="" coords="6,95,65,121"/>
+<area shape="rect" title=" " alt="" coords="89,95,187,121"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -98,25 +94,8 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="string__utility_8hpp__dep__incl.png" border="0" usemap="#include_2plssvm_2detail_2string__utility_8hppdep" alt=""/></div>
 <map name="include_2plssvm_2detail_2string__utility_8hppdep" id="include_2plssvm_2detail_2string__utility_8hppdep">
-<area shape="rect" title="Implements utility functions for string manipulation and conversion." alt="" coords="596,5,757,47"/>
-<area shape="rect" href="backend__types_8hpp.html" title="Defines all possible backends. Can also include backends not available on the target platform." alt="" coords="89,95,267,136"/>
-<area shape="rect" href="backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="292,95,477,136"/>
-<area shape="rect" href="file__reader_8hpp.html" title="Implements a file reader class responsible for reading the input file and parsing it into lines." alt="" coords="501,95,663,136"/>
-<area shape="rect" href="string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="687,95,856,136"/>
-<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="880,95,1044,136"/>
-<area shape="rect" href="target__platform_8hpp.html" title="Defines all possible targets. Can also include targets not available on the target platform." alt="" coords="1113,95,1275,136"/>
-<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="133,467,313,493"/>
-<area shape="rect" href="csvm__factory_8hpp.html" title="Factory functions for constructing a new C&#45;SVM based on the provided command line arguments." alt="" coords="347,377,505,419"/>
-<area shape="rect" href="parameter_8hpp.html" title="Implements the base class encapsulating all necessary parameters." alt="" coords="587,199,806,225"/>
-<area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="760,377,945,419"/>
-<area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="1281,377,1467,419"/>
-<area shape="rect" href="backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="551,377,736,419"/>
-<area shape="rect" href="backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="1072,377,1257,419"/>
-<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="869,295,1055,322"/>
-<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="349,288,541,329"/>
-<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="82,288,274,329"/>
-<area shape="rect" href="OpenCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a OpenCL device pointer and functions." alt="" coords="1555,184,1740,240"/>
-<area shape="rect" href="SYCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a SYCL device pointer and functions." alt="" coords="1333,191,1530,233"/>
+<area shape="rect" title="Implements utility functions for string manipulation and querying." alt="" coords="9,5,171,47"/>
+<area shape="rect" href="string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="5,95,175,136"/>
 </map>
 </div>
 </div>
@@ -125,7 +104,7 @@ This graph shows which files directly or indirectly include this file:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html">plssvm</a></td></tr>
-<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all API functions. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm"><td class="mdescLeft">&#160;</td><td class="mdescRight">The main namespace containing all public API functions. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html">plssvm::detail</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
@@ -133,39 +112,51 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a81a237b3c126ff659799e017e0ca8376"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a81a237b3c126ff659799e017e0ca8376">plssvm::detail::starts_with</a> (const std::string_view str, const std::string_view sv) noexcept</td></tr>
-<tr class="memdesc:a81a237b3c126ff659799e017e0ca8376"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the prefix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a81a237b3c126ff659799e017e0ca8376">More...</a><br /></td></tr>
-<tr class="separator:a81a237b3c126ff659799e017e0ca8376"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a739d03620ebe94c4fa903ad0e839359d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a739d03620ebe94c4fa903ad0e839359d">plssvm::detail::starts_with</a> (const std::string_view str, const char c) noexcept</td></tr>
-<tr class="memdesc:a739d03620ebe94c4fa903ad0e839359d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a739d03620ebe94c4fa903ad0e839359d">More...</a><br /></td></tr>
-<tr class="separator:a739d03620ebe94c4fa903ad0e839359d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af50476e5ab825a89858b5d4ea8108f37"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#af50476e5ab825a89858b5d4ea8108f37">plssvm::detail::ends_with</a> (const std::string_view str, const std::string_view sv) noexcept</td></tr>
-<tr class="memdesc:af50476e5ab825a89858b5d4ea8108f37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the suffix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#af50476e5ab825a89858b5d4ea8108f37">More...</a><br /></td></tr>
-<tr class="separator:af50476e5ab825a89858b5d4ea8108f37"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a040eeed3799718c9fdc73e009a3cbe84"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a040eeed3799718c9fdc73e009a3cbe84">plssvm::detail::ends_with</a> (const std::string_view str, const char c) noexcept</td></tr>
-<tr class="memdesc:a040eeed3799718c9fdc73e009a3cbe84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a040eeed3799718c9fdc73e009a3cbe84">More...</a><br /></td></tr>
-<tr class="separator:a040eeed3799718c9fdc73e009a3cbe84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e942c2a9c9ea77ff6dd749027c1bfcb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a1e942c2a9c9ea77ff6dd749027c1bfcb">plssvm::detail::contains</a> (const std::string_view str, const std::string_view sv) noexcept</td></tr>
-<tr class="memdesc:a1e942c2a9c9ea77ff6dd749027c1bfcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the string <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a1e942c2a9c9ea77ff6dd749027c1bfcb">More...</a><br /></td></tr>
-<tr class="separator:a1e942c2a9c9ea77ff6dd749027c1bfcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeb595da9dba8bdbd3eb3d9c0658e2841"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#aeb595da9dba8bdbd3eb3d9c0658e2841">plssvm::detail::contains</a> (const std::string_view str, const char c) noexcept</td></tr>
-<tr class="memdesc:aeb595da9dba8bdbd3eb3d9c0658e2841"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#aeb595da9dba8bdbd3eb3d9c0658e2841">More...</a><br /></td></tr>
-<tr class="separator:aeb595da9dba8bdbd3eb3d9c0658e2841"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0882033af62f8fa112ebfde8a2e7dfe"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ac0882033af62f8fa112ebfde8a2e7dfe">plssvm::detail::trim_left</a> (const std::string_view str) noexcept</td></tr>
-<tr class="memdesc:ac0882033af62f8fa112ebfde8a2e7dfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leding whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#ac0882033af62f8fa112ebfde8a2e7dfe">More...</a><br /></td></tr>
-<tr class="separator:ac0882033af62f8fa112ebfde8a2e7dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad0d9cd127ee910d3fb75ec2842cba84"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#aad0d9cd127ee910d3fb75ec2842cba84">plssvm::detail::replace_all</a> (std::string &amp;str, const std::string_view what, const std::string_view with)</td></tr>
-<tr class="memdesc:aad0d9cd127ee910d3fb75ec2842cba84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces all occurrences of <code>what</code> with <code>with</code> in the string <code>str</code>.  <a href="namespaceplssvm_1_1detail.html#aad0d9cd127ee910d3fb75ec2842cba84">More...</a><br /></td></tr>
-<tr class="separator:aad0d9cd127ee910d3fb75ec2842cba84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0193c3037a7a004e13394d680f4048d0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">plssvm::detail::starts_with</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
+<tr class="memdesc:a0193c3037a7a004e13394d680f4048d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the prefix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">More...</a><br /></td></tr>
+<tr class="separator:a0193c3037a7a004e13394d680f4048d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2b482fd3bcf02cac7308cfddd74e338"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338">plssvm::detail::starts_with</a> (std::string_view str, char c) noexcept</td></tr>
+<tr class="memdesc:ae2b482fd3bcf02cac7308cfddd74e338"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338">More...</a><br /></td></tr>
+<tr class="separator:ae2b482fd3bcf02cac7308cfddd74e338"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45cda6e5d8c0f48f77aa5867d46bfd7c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a45cda6e5d8c0f48f77aa5867d46bfd7c">plssvm::detail::ends_with</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
+<tr class="memdesc:a45cda6e5d8c0f48f77aa5867d46bfd7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the suffix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a45cda6e5d8c0f48f77aa5867d46bfd7c">More...</a><br /></td></tr>
+<tr class="separator:a45cda6e5d8c0f48f77aa5867d46bfd7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b68ee32965558f5c00b78909832d629"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a9b68ee32965558f5c00b78909832d629">plssvm::detail::ends_with</a> (std::string_view str, char c) noexcept</td></tr>
+<tr class="memdesc:a9b68ee32965558f5c00b78909832d629"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> ends with the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a9b68ee32965558f5c00b78909832d629">More...</a><br /></td></tr>
+<tr class="separator:a9b68ee32965558f5c00b78909832d629"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b5b57e64196047d4469d52cd9e49fba"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a7b5b57e64196047d4469d52cd9e49fba">plssvm::detail::contains</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
+<tr class="memdesc:a7b5b57e64196047d4469d52cd9e49fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the string <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a7b5b57e64196047d4469d52cd9e49fba">More...</a><br /></td></tr>
+<tr class="separator:a7b5b57e64196047d4469d52cd9e49fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e1c0e4b256ef3195ea650554f5ec295"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a7e1c0e4b256ef3195ea650554f5ec295">plssvm::detail::contains</a> (std::string_view str, char c) noexcept</td></tr>
+<tr class="memdesc:a7e1c0e4b256ef3195ea650554f5ec295"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> contains the character <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a7e1c0e4b256ef3195ea650554f5ec295">More...</a><br /></td></tr>
+<tr class="separator:a7e1c0e4b256ef3195ea650554f5ec295"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ff1b1c2f5795319cdde5d7caa5259a6"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6">plssvm::detail::trim_left</a> (std::string_view str) noexcept</td></tr>
+<tr class="memdesc:a3ff1b1c2f5795319cdde5d7caa5259a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leading whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6">More...</a><br /></td></tr>
+<tr class="separator:a3ff1b1c2f5795319cdde5d7caa5259a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60211d1df70301d8c5167fa105e15bc7"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a60211d1df70301d8c5167fa105e15bc7">plssvm::detail::trim_right</a> (std::string_view str) noexcept</td></tr>
+<tr class="memdesc:a60211d1df70301d8c5167fa105e15bc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all trailing whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#a60211d1df70301d8c5167fa105e15bc7">More...</a><br /></td></tr>
+<tr class="separator:a60211d1df70301d8c5167fa105e15bc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3696c2d5ab58d839cf1a93ca0e3a1e52"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a3696c2d5ab58d839cf1a93ca0e3a1e52">plssvm::detail::trim</a> (std::string_view str) noexcept</td></tr>
+<tr class="memdesc:a3696c2d5ab58d839cf1a93ca0e3a1e52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new <a href="https://en.cppreference.com/w/cpp/string/basic_string_view"><code>std::string_view</code></a> equal to <code>str</code> where all leading and trailing whitespaces are removed.  <a href="namespaceplssvm_1_1detail.html#a3696c2d5ab58d839cf1a93ca0e3a1e52">More...</a><br /></td></tr>
+<tr class="separator:a3696c2d5ab58d839cf1a93ca0e3a1e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58f34fc0d4116742fa8fa20a4623429e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a58f34fc0d4116742fa8fa20a4623429e">plssvm::detail::replace_all</a> (std::string &amp;str, std::string_view what, std::string_view with)</td></tr>
+<tr class="memdesc:a58f34fc0d4116742fa8fa20a4623429e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces all occurrences of <code>what</code> with <code>with</code> in the string <code>str</code>.  <a href="namespaceplssvm_1_1detail.html#a58f34fc0d4116742fa8fa20a4623429e">More...</a><br /></td></tr>
+<tr class="separator:a58f34fc0d4116742fa8fa20a4623429e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac774182d615638c411353e715ad4fe78"><td class="memItemLeft" align="right" valign="top">std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78">plssvm::detail::to_lower_case</a> (std::string &amp;str)</td></tr>
 <tr class="memdesc:ac774182d615638c411353e715ad4fe78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the string <code>str</code> to its all lower case representation.  <a href="namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78">More...</a><br /></td></tr>
 <tr class="separator:ac774182d615638c411353e715ad4fe78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39b7f6af847bd65e4b783ca97b219caa"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a39b7f6af847bd65e4b783ca97b219caa">plssvm::detail::as_lower_case</a> (const std::string_view str)</td></tr>
-<tr class="memdesc:a39b7f6af847bd65e4b783ca97b219caa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all lower case.  <a href="namespaceplssvm_1_1detail.html#a39b7f6af847bd65e4b783ca97b219caa">More...</a><br /></td></tr>
-<tr class="separator:a39b7f6af847bd65e4b783ca97b219caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9fd1aa67fdd8cf51b3aa80783ca058e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#aa9fd1aa67fdd8cf51b3aa80783ca058e">plssvm::detail::as_lower_case</a> (std::string_view str)</td></tr>
+<tr class="memdesc:aa9fd1aa67fdd8cf51b3aa80783ca058e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all lower case.  <a href="namespaceplssvm_1_1detail.html#aa9fd1aa67fdd8cf51b3aa80783ca058e">More...</a><br /></td></tr>
+<tr class="separator:aa9fd1aa67fdd8cf51b3aa80783ca058e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b015378c06b616493f7036b28af4178"><td class="memItemLeft" align="right" valign="top">std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178">plssvm::detail::to_upper_case</a> (std::string &amp;str)</td></tr>
+<tr class="memdesc:a0b015378c06b616493f7036b28af4178"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the string <code>str</code> to its all upper case representation.  <a href="namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178">More...</a><br /></td></tr>
+<tr class="separator:a0b015378c06b616493f7036b28af4178"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a019b9816a36f2781e4146f8e1a66f218"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">plssvm::detail::as_upper_case</a> (std::string_view str)</td></tr>
+<tr class="memdesc:a019b9816a36f2781e4146f8e1a66f218"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all upper case.  <a href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">More...</a><br /></td></tr>
+<tr class="separator:a019b9816a36f2781e4146f8e1a66f218"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Implements utility functions for string manipulation and conversion. </p>
+<div class="textblock"><p>Implements utility functions for string manipulation and querying. </p>
 <dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
 <dd>
 Marcel Breyer </dd></dl>
@@ -174,7 +165,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

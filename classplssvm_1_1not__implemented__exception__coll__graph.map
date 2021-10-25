@@ -1,5 +1,0 @@
-<map id="plssvm::not_implemented_exception" name="plssvm::not_implemented_exception">
-<area shape="rect" id="node1" title="Exception type thrown if the requested operation is currently not implemented." alt="" coords="5,155,197,196"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the c..." alt="" coords="31,80,172,107"/>
-<area shape="rect" id="node3" title=" " alt="" coords="32,5,171,32"/>
-</map>

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: plssvm::operators Namespace Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::operators Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -107,10 +107,10 @@ template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a9f7f472e06e60dbf27aadfa8309af120"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">squared_euclidean_dist</a> (const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
 <tr class="memdesc:a9f7f472e06e60dbf27aadfa8309af120"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the squared Euclidean distance of both vectors: <img class="formulaInl" alt="$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2$" src="form_2.png"/>.  <a href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">More...</a><br /></td></tr>
 <tr class="separator:a9f7f472e06e60dbf27aadfa8309af120"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e89a6816fb71a518c523ef31afdc75d"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a9e89a6816fb71a518c523ef31afdc75d"><td class="memTemplItemLeft" align="right" valign="top">constexpr int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a9e89a6816fb71a518c523ef31afdc75d">sign</a> (const T x)</td></tr>
-<tr class="memdesc:a9e89a6816fb71a518c523ef31afdc75d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns +1 if x is positive and -1 if x is negative or 0.  <a href="namespaceplssvm_1_1operators.html#a9e89a6816fb71a518c523ef31afdc75d">More...</a><br /></td></tr>
-<tr class="separator:a9e89a6816fb71a518c523ef31afdc75d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a211feceac31d226f493966f14e7332d8"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a211feceac31d226f493966f14e7332d8"><td class="memTemplItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a211feceac31d226f493966f14e7332d8">sign</a> (const T x)</td></tr>
+<tr class="memdesc:a211feceac31d226f493966f14e7332d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns +1 if x is positive and -1 if x is negative or 0.  <a href="namespaceplssvm_1_1operators.html#a211feceac31d226f493966f14e7332d8">More...</a><br /></td></tr>
+<tr class="separator:a211feceac31d226f493966f14e7332d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Namespace containing operator overloads for <a href="https://en.cppreference.com/w/cpp/container/vector">std::vector</a> and other mathematical functions on vectors. </p>
@@ -165,7 +165,7 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the dot product </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the dot product (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -219,7 +219,7 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the dot product </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the dot product (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -262,7 +262,7 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the sum of all elements </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the sum of all elements (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -316,12 +316,12 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the squared euclidean distance </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the squared euclidean distance (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a9e89a6816fb71a518c523ef31afdc75d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9e89a6816fb71a518c523ef31afdc75d">&#9670;&nbsp;</a></span>sign()</h2>
+<a id="a211feceac31d226f493966f14e7332d8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a211feceac31d226f493966f14e7332d8">&#9670;&nbsp;</a></span>sign()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -332,7 +332,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr int plssvm::operators::sign </td>
+          <td class="memname">constexpr T plssvm::operators::sign </td>
           <td>(</td>
           <td class="paramtype">const T&#160;</td>
           <td class="paramname"><em>x</em></td><td>)</td>
@@ -349,18 +349,18 @@ template&lt;typename T &gt; </div>
 <p>Returns +1 if x is positive and -1 if x is negative or 0. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">x</td><td>the number parameter to evaluate </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">x</td><td>the number parameter to evaluate </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>+1 if x is positive and -1 if x is negative or 0 ([[nodiscard]]) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>+1 if x is positive and -1 if x is negative or 0 (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

@@ -1,4 +1,5 @@
 <map id="plssvm::cuda::csvm&lt; T &gt;" name="plssvm::cuda::csvm&lt; T &gt;">
-<area shape="rect" id="node1" title="The C&#45;SVM class using the CUDA backend." alt="" coords="5,80,195,107"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="25,5,175,32"/>
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="5,199,195,225"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="21,80,179,151"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="25,5,175,32"/>
 </map>

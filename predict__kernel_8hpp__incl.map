@@ -1,0 +1,7 @@
+<map id="include/plssvm/backends/SYCL/predict_kernel.hpp" name="include/plssvm/backends/SYCL/predict_kernel.hpp">
+<area shape="rect" id="node1" title="Defines the functions used for prediction for the C&#45;SVM using the SYCL backend." alt="" coords="160,5,345,47"/>
+<area shape="rect" id="node2" href="$atomics_8hpp.html" title="Defines an atomic_ref wrapper for the SYCL backend." alt="" coords="45,95,215,136"/>
+<area shape="rect" id="node4" title=" " alt="" coords="199,191,306,218"/>
+<area shape="rect" id="node5" href="$constants_8hpp.html" title="Global type definitions and compile&#45;time constants." alt="" coords="291,102,455,129"/>
+<area shape="rect" id="node3" href="$backends_2SYCL_2detail_2constants_8hpp.html" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="5,184,175,225"/>
+</map>

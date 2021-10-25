@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ParallelLeastSquaresSupportVectorMachine: include/plssvm/backends/CUDA Directory Reference</title>
+<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/CUDA Directory Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,7 +21,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">ParallelLeastSquaresSupportVectorMachine
+   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
    &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
@@ -71,15 +71,19 @@ $(function() {
 <div class="title">CUDA Directory Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p><p>Directory containing the implementation for the CUDA backend. </p>
+ 
+<a href="#details">More...</a></p>
 <div class="dynheader">
 Directory dependency graph for CUDA:</div>
 <div class="dyncontent">
 <div class="center"><img src="dir_3b1acf17ef6b0d0bb2450c7474aff8a9_dep.png" border="0" usemap="#dir__3b1acf17ef6b0d0bb2450c7474aff8a9__dep" alt="include/plssvm/backends/CUDA"/></div>
 <map name="dir__3b1acf17ef6b0d0bb2450c7474aff8a9__dep" id="dir__3b1acf17ef6b0d0bb2450c7474aff8a9__dep">
 <area shape="rect" href="dir_64d7c5070ba2e23545d42d3cdff5de07.html" title="detail" alt="" coords="37,159,109,207"/>
-<area shape="rect" href="dir_000003_000007.html" title="1" alt="" coords="77,133,86,148"/>
+<area shape="rect" href="dir_000005_000009.html" title="1" alt="" coords="77,133,86,148"/>
 <area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="141,159,235,207"/>
-<area shape="rect" href="dir_000003_000008.html" title="2" alt="" coords="147,133,156,148"/>
+<area shape="rect" href="dir_000005_000010.html" title="2" alt="" coords="147,133,156,148"/>
 <area shape="rect" href="dir_3b1acf17ef6b0d0bb2450c7474aff8a9.html" alt="" coords="27,52,120,217"/>
 <area shape="rect" href="dir_aece132851e9183324b9b3740ef79635.html" title="backends" alt="" coords="16,16,131,228"/>
 </map>
@@ -87,6 +91,9 @@ Directory dependency graph for CUDA:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="subdirs"></a>
 Directories</h2></td></tr>
+<tr class="memitem:dir_64d7c5070ba2e23545d42d3cdff5de07"><td class="memItemLeft" align="right" valign="top">directory &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_64d7c5070ba2e23545d42d3cdff5de07.html">detail</a></td></tr>
+<tr class="memdesc:dir_64d7c5070ba2e23545d42d3cdff5de07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Directory containing implementation details for the CUDA backend. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="files"></a>
 Files</h2></td></tr>
@@ -96,8 +103,8 @@ Files</h2></td></tr>
 <tr class="memitem:backends_2CUDA_2exceptions_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="backends_2CUDA_2exceptions_8hpp.html">exceptions.hpp</a> <a href="backends_2CUDA_2exceptions_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:backends_2CUDA_2exceptions_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements custom exception classes specific to the CUDA backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:predict_8cuh"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="predict_8cuh.html">predict.cuh</a></td></tr>
-<tr class="memdesc:predict_8cuh"><td class="mdescLeft">&#160;</td><td class="mdescRight">TODO: brief description. <br /></td></tr>
+<tr class="memitem:predict__kernel_8cuh"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="predict__kernel_8cuh.html">predict_kernel.cuh</a></td></tr>
+<tr class="memdesc:predict__kernel_8cuh"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the functions used for prediction for the C-SVM using the CUDA backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:q__kernel_8cuh"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="q__kernel_8cuh.html">q_kernel.cuh</a></td></tr>
 <tr class="memdesc:q__kernel_8cuh"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines CUDA functions for generating the <code>q</code> vector. <br /></td></tr>
@@ -106,10 +113,17 @@ Files</h2></td></tr>
 <tr class="memdesc:svm__kernel_8cuh"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the kernel functions for the C-SVM using the CUDA backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>Directory containing the implementation for the CUDA backend. </p>
+<dl class="section author"><dt>Author</dt><dd>Alexander Van Craen </dd>
+<dd>
+Marcel Breyer </dd></dl>
+<dl class="section copyright"><dt>Copyright</dt><dd>2018-today The PLSSVM project - All Rights Reserved </dd></dl>
+<dl class="section user"><dt>License</dt><dd>\_linebr This file is part of the PLSSVM project which is released under the MIT license. See the LICENSE.md file in the project root for full license information. </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 25 2021 15:01:34 for ParallelLeastSquaresSupportVectorMachine by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 25 2021 15:05:32 for PLSSVM - Parallel Least-Squares Support Vector Machine by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>
