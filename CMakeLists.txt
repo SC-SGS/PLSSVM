@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(ParallelLeastSquaresSupportVectorMachine
-        VERSION 0.1.0
+        VERSION 1.0.0
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
 
