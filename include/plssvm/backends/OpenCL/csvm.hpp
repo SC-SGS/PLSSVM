@@ -14,30 +14,39 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
-#include "plssvm/csvm.hpp"                                  // plssvm::csvm
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
-#include "plssvm/target_platform.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 
-#include <vector>  // std::vector
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
-namespace plssvm::opencl {
+namespace plssvm {
+
+// forward declare parameter class
+template <typename T>
+class parameter;
+
+namespace detail {
+
+// forward declare execution_range class
+class execution_range;
+
+}  // namespace detail
+
+namespace opencl {
 
 /**
- * @brief The C-SVM class using the OpenCL backend.
+ * @brief A C-SVM implementation using OpenCL as backend.
  * @tparam T the type of the data
  */
 template <typename T>
-class csvm : public ::plssvm::csvm<T> {
+class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, ::plssvm::opencl::detail::command_queue> {
   protected:
     // protected for test MOCK class
     /// The template base type of the OpenCL C-SVM class.
-    using base_type = ::plssvm::csvm<T>;
-    using base_type::alpha_ptr_;
-    using base_type::bias_;
+    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, ::plssvm::opencl::detail::command_queue>;
+
     using base_type::coef0_;
     using base_type::cost_;
-    using base_type::data_ptr_;
     using base_type::degree_;
     using base_type::gamma_;
     using base_type::kernel_;
@@ -46,81 +55,64 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::print_info_;
     using base_type::QA_cost_;
     using base_type::target_;
-    using base_type::w_;
+
+    using base_type::data_d_;
+    using base_type::data_last_d_;
+    using base_type::devices_;
+    using base_type::num_cols_;
+    using base_type::num_rows_;
 
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
-    /// Unsigned integer type.
-    using size_type = typename base_type::size_type;
+
+    /// The type of the OpenCL device pointer.
+    using device_ptr_type = ::plssvm::opencl::detail::device_ptr<real_type>;
+    /// The type of the OpenCL device queue.
+    using queue_type = ::plssvm::opencl::detail::command_queue;
 
     /**
      * @brief Construct a new C-SVM using the OpenCL backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::opencl::backend_exception if the requested plssvm::target_platform isn't available
+     * @throws plssvm::opencl::backend_exception if no possible OpenCL devices could be found
      */
     explicit csvm(const parameter<T> &params);
 
     /**
      * @brief Wait for all operations on all devices to finish.
-     * @details Terminates the program, if any exceptions are thrown.
+     * @details Terminates the program, if any exception is thrown.
      */
     ~csvm() override;
 
-    /**
-     * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @param[in] points the data points to predict
-     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
-     */
-    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
-
   protected:
-    void setup_data_on_device() override;
-    std::vector<real_type> generate_q() override;
-    std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) override;
     /**
-     * @brief updates the `w_` vector to the current data and alpha values.
+     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
      */
-    virtual void update_w() override;
+    void device_synchronize(queue_type &queue) final;
 
     /**
-     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the OpenCL @p device.
-     * @param[in] device the OpenCL device to run the kernel on
-     * @param[in] q_d subvector of the least-squares matrix equation
-     * @param[in,out] r_d the result vector
-     * @param[in] x_d the `x` vector
-     * @param[in] data_d the data
-     * @param[in] add denotes whether the values are added or subtracted from the result vector
+     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
      */
-    void run_device_kernel(size_type device, const detail::device_ptr<real_type> &q_d, detail::device_ptr<real_type> &r_d, const detail::device_ptr<real_type> &x_d, const detail::device_ptr<real_type> &data_d, real_type add);
+    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, std::size_t num_features) final;
     /**
-     * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each devices.
-     * @param[in,out] buffer_d the data to gather
-     * @param[in,out] buffer the reduces data
+     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
-    void device_reduction(std::vector<detail::device_ptr<real_type>> &buffer_d, std::vector<real_type> &buffer);
-
-    /// The available/used OpenCL devices.
-    std::vector<detail::command_queue> devices_{};
-    /// The number of data points excluding the last data point.
-    size_type dept_{};
-    /// The boundary size used to remove boundary condition checks inside the kernels.
-    size_type boundary_size_{};
-    /// The number of rows to calculate including the boundary values.
-    int num_rows_{};
-    /// The number of columns in the data matrix (= the number of features per data point).
-    int num_cols_{};
-    /// The data saved across all devices.
-    std::vector<detail::device_ptr<real_type>> data_d_{};
-    /// The last row of the data matrix.
-    std::vector<detail::device_ptr<real_type>> data_last_d_{};
-    /// The normal vector used for speeding up the prediction in case of the linear kernel function saved on the first device.
-    detail::device_ptr<real_type> w_d_{};
+    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type add, std::size_t num_features) final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
+     */
+    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_features) final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
+     */
+    void run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
 
     /// OpenCL kernel for the generate q function compiled for each device.
     std::vector<detail::kernel> q_kernel_{};
     /// OpenCL kernel for the svm kernel function compiled for each device.
     std::vector<detail::kernel> svm_kernel_{};
-
     /// OpenCL kernel for the kernel_w function compiled for each device.
     std::vector<detail::kernel> kernel_w_kernel_{};
     /// OpenCL kernel for the prediction function compiled for each device.
@@ -130,4 +122,5 @@ class csvm : public ::plssvm::csvm<T> {
 extern template class csvm<float>;
 extern template class csvm<double>;
 
-}  // namespace plssvm::opencl
+}  // namespace opencl
+}  // namespace plssvm

@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project(ParallelLeastSquaresSupportVectorMachine
+project("PLSSVM - Parallel Least-Squares Support Vector Machine"
         VERSION 1.0.0
         LANGUAGES CXX
         DESCRIPTION "A Support Vector Machine implementation using different backends.")
@@ -27,11 +27,18 @@ configure_file(
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm_IO.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
 )
 
 ## create base library: linked against all backend libraries
@@ -50,24 +57,34 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>
         )
 
-# set library cxx standard
+## set library cxx standard
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wall -Wextra)
-#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wdouble-promotion -fno-common -Wconversion -Wshadow) # TODO: make warning free
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wsuggest-override -Wextra-semi -Wunreachable-code -Wuninitialized>
+        $<$<CXX_COMPILER_ID:GNU>:-Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
+        )
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-Werror=switch -fstrict-enums>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4061>
+        )
 ## enable additional optimization flags only in RELEASE mode
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CONFIG:RELEASE>:-ffast-math -march=native>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:GNU,Clang>>:-ffast-math -march=native>
+        $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
+        )
 
 
 ########################################################################################################################
 ##                                    check for optional and necessary dependencies                                   ##
 ########################################################################################################################
 # check for OpenMP (not for the backend!)
-find_package(OpenMP QUIET)
-if(OPENMP_FOUND)
-    message(STATUS "Found OpenMP to speed up file parsing.")
+find_package(OpenMP 4.0 QUIET)
+if(OpenMP_FOUND)
+    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed up file parsing.")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 endif()
@@ -328,7 +345,7 @@ if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
     if (PLSSVM_THREAD_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_THREAD_BLOCK_SIZE GREATER 0)
         message(STATUS "Set THREAD_BLOCK_SIZE to ${PLSSVM_THREAD_BLOCK_SIZE}.")
         # add target definition
-        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
+        target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
     else()
         message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
     endif()
@@ -342,12 +359,33 @@ if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
     if (PLSSVM_INTERNAL_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_INTERNAL_BLOCK_SIZE GREATER 0)
         message(STATUS "Set INTERNAL_BLOCK_SIZE to ${PLSSVM_INTERNAL_BLOCK_SIZE}.")
         # add target definition
-        target_compile_definitions(${PLSSVM_EXECUTABLE_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
+        target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
     else()
         message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
     endif()
 endif()
 
+## set specific internal block sizes of requested
+if(DEFINED ENV{PLSSVM_OPENMP_BLOCK_SIZE})
+    set(PLSSVM_OPENMP_BLOCK_SIZE $ENV{PLSSVM_OPENMP_BLOCK_SIZE} CACHE STRING "The used block size for the OpenMP kernel." FORCE)
+endif()
+if(DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
+    if (PLSSVM_OPENMP_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_OPENMP_BLOCK_SIZE GREATER 0)
+        message(STATUS "Set PLSSVM_OPENMP_BLOCK_SIZE to ${PLSSVM_OPENMP_BLOCK_SIZE}.")
+        # add target definition
+        target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} PUBLIC PLSSVM_OPENMP_BLOCK_SIZE=${PLSSVM_OPENMP_BLOCK_SIZE})
+    else()
+        message(FATAL_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
+    endif()
+endif()
+
+## change executable floating points from double precision to single precision
+option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the svm-train and svm-predict executables with single precision instead of double precision." OFF)
+if(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    message(STATUS "Using single precision floating point numbers for svm-train and svm-predict.")
+    target_compile_definitions(${PLSSVM_EXECUTABLE_TRAIN_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    target_compile_definitions(${PLSSVM_EXECUTABLE_PREDICT_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+endif()
 
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
@@ -383,6 +421,20 @@ option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+
+
+########################################################################################################################
+##                                        enable timing generation via a script                                       ##
+########################################################################################################################
+option(PLSSVM_GENERATE_TIMING_SCRIPT "Generate a timing script used for performance measurement." OFF)
+if(PLSSVM_GENERATE_TIMING_SCRIPT)
+    configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
+            ${CMAKE_BINARY_DIR}/time.sh
+            @ONLY
+    )
 endif()
 
 
@@ -453,19 +505,3 @@ install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
         )
-
-
-
-
-
-# TODO: separate repo?
-## generate scripts
-option(PLSSVM_GENERATE_TIMINGSCRIPT "Generate script for timings." ON)
-if(PLSSVM_GENERATE_TIMINGSCRIPT)
-    configure_file(
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-            ${CMAKE_BINARY_DIR}/time.sh
-            @ONLY
-    )
-endif()
-

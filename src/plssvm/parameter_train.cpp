@@ -10,11 +10,12 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
-#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "cxxopts.hpp"  // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/core.h"   // fmt::print, fmt::format
+#include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
+#include <cstdio>     // stderr
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <string>     // std::string
@@ -23,11 +24,11 @@
 namespace plssvm {
 
 template <typename T>
-parameter_train<T>::parameter_train(std::string input_filename) {
-    base_type::input_filename = std::move(input_filename);
-    model_filename = base_type::model_name_from_input();
+parameter_train<T>::parameter_train(std::string p_input_filename) {
+    base_type::input_filename = std::move(p_input_filename);
+    base_type::model_filename = base_type::model_name_from_input();
 
-    base_type::parse_train_file(base_type::input_filename);
+    base_type::parse_train_file(input_filename);
 }
 
 template <typename T>

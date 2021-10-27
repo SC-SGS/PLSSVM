@@ -11,71 +11,69 @@
 
 #pragma once
 
-#include "../mock_csvm.hpp"           // mock_csvm
 #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 #include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
 
-#include <utility>  // std::forward
-#include <vector>   // std::vector
+#include <vector>  // std::vector
 
 namespace compare {
 namespace detail {
 
 /**
- * @brief Compute the value of te two vectors @p x1 and @p x2 using the linear kernel function: \f$\vec{u}^T \cdot \vec{v}\f$.
+ * @brief Compute the value of te two vectors @p x and @p y using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
  * @tparam real_type the type of the data
- * @param[in] x1 the first vector
- * @param[in] x2 the second vector
- * @return the result after applying the kernel function
+ * @param[in] x the first vector
+ * @param[in] y the second vector
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-real_type linear_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2);
+[[nodiscard]] real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y);
 /**
- * @brief Compute the value of te two vectors @p x1 and @p x2 using the polynomial kernel function: \f$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\f$.
+ * @brief Compute the value of te two vectors @p x and @p y using the polynomial kernel function: \f$(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)^{degree}\f$.
  * @tparam real_type the type of the data
- * @param[in] x1 the first vector
- * @param[in] x2 the second vector
- * @param[in] degree parameter in the kernel function
- * @param[in] gamma parameter in the kernel function
- * @param[in] coef0 parameter in the kernel function
- * @return the result after applying the kernel function
+ * @param[in] x the first vector
+ * @param[in] y the second vector
+ * @param[in] degree parameter in the polynomial kernel function
+ * @param[in] gamma parameter in the polynomial kernel function
+ * @param[in] coef0 parameter in the polynomial kernel function
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-real_type poly_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, int degree, real_type gamma, real_type coef0);
+[[nodiscard]] real_type poly_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, int degree, real_type gamma, real_type coef0);
 /**
- * @brief Compute the value of te two vectors @p x1 and @p x2 using the polynomial kernel function: \f$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\f$.
+ * @brief Compute the value of te two vectors @p x and @p y using the radial basis function kernel function: \f$e^{(-gamma \cdot |\vec{x} - \vec{y}|^2)}\f$.
  * @tparam real_type the type of the data
- * @param[in] x1 the first vector
- * @param[in] x2 the second vector
+ * @param[in] x the first vector
+ * @param[in] y the second vector
  * @param[in] gamma parameter in the kernel function
- * @return the result after applying the kernel function
+ * @return the result after applying the rbf kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-real_type radial_kernel(const std::vector<real_type> &x1, const std::vector<real_type> &x2, real_type gamma);
+[[nodiscard]] real_type radial_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma);
 
 }  // namespace detail
 
 /**
- * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function determined at compile-time.
+ * @brief Computes the value of the two vectors @p x and @p y using the kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
  * @tparam real_type the type of the data
  * @tparam SVM the used SVM implementation
- * @param[in] x1 the first vector
- * @param[in] x2 the second vector
+ * @param[in] x the first vector
+ * @param[in] y the second vector
  * @param[in] csvm the SVM encapsulating all necessary parameters
- * @return the result after applying the kernel function
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
-real_type kernel_function(const std::vector<real_type> &x1, const std::vector<real_type> &x2, [[maybe_unused]] const SVM &csvm) {
-    PLSSVM_ASSERT(x1.size() == x2.size(), "Sizes mismatch!: {} != {}", x1.size(), x2.size());
+[[nodiscard]] real_type kernel_function(const std::vector<real_type> &x, const std::vector<real_type> &y, [[maybe_unused]] const SVM &csvm) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
     if constexpr (kernel == plssvm::kernel_type::linear) {
-        return detail::linear_kernel(x1, x2);
+        return detail::linear_kernel(x, y);
     } else if constexpr (kernel == plssvm::kernel_type::polynomial) {
-        return detail::poly_kernel(x1, x2, csvm.get_degree(), csvm.get_gamma(), csvm.get_coef0());
+        return detail::poly_kernel(x, y, csvm.get_degree(), csvm.get_gamma(), csvm.get_coef0());
     } else if constexpr (kernel == plssvm::kernel_type::rbf) {
-        return detail::radial_kernel(x1, x2, csvm.get_gamma());
+        return detail::radial_kernel(x, y, csvm.get_gamma());
     } else {
         static_assert(plssvm::detail::always_false_v<real_type>, "Unknown kernel type!");
     }
@@ -88,17 +86,15 @@ real_type kernel_function(const std::vector<real_type> &x1, const std::vector<re
  * @tparam SVM the used SVM implementation
  * @param[in] data the data points
  * @param[in] csvm the SVM encapsulating all necessary parameters
- * @return the generated `q` vector
+ * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
-std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const SVM &csvm) {
-    using size_type = typename std::vector<std::vector<real_type>>::size_type;
-
+[[nodiscard]] std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, const SVM &csvm) {
     std::vector<real_type> result;
     result.reserve(data.size() - 1);
 
-    for (size_type i = 0; i < data.size() - 1; ++i) {
-        result.template emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
+        result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
     }
     return result;
 }
@@ -115,10 +111,10 @@ std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &dat
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] add denotes whether the values are added or subtracted from the result vector
  * @param[in] csvm the SVM encapsulating all necessary parameters
- * @return the result vector
+ * @return the result vector (`[[nodiscard]]`)
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
-std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const real_type add, [[maybe_unused]] const SVM &csvm) {
+[[nodiscard]] std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const real_type add, const SVM &csvm) {
     PLSSVM_ASSERT(x.size() == q.size(), "Sizes mismatch!: {} != {}", x.size(), q.size());
     PLSSVM_ASSERT(x.size() == data.size() - 1, "Sizes mismatch!: {} != {}", x.size(), data.size() - 1);
 

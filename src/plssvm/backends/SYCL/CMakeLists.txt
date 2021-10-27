@@ -42,7 +42,10 @@ endif()
 # explicitly set sources
 set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
 )
 
 # set target properties
@@ -54,12 +57,13 @@ if("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "hipSYCL")
     add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
     # set backend compiler to hipSYCL (= 1)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
+    # silence unknown options warnings
+    target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option)
 elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
     # enable DPC++ SYCL support
     target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
     target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
 
-    # TODO: test (somehow?)
     # nvidia targets
     if(DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=nvptx64-nvidia-cuda)
@@ -67,11 +71,11 @@ elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
     endif()
     # amd targets
     if(DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa-sycldevice)
-        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa-sycldevice)
+        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa)
+        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=amdgcn-amd-amdhsa)
         foreach(PLSSVM_AMD_TARGET_ARCH_NAME ${PLSSVM_AMD_TARGET_ARCHS})
-            target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -mcpu=${PLSSVM_AMD_TARGET_ARCH_NAME})
-            target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -mcpu=${PLSSVM_AMD_TARGET_ARCH_NAME})
+            target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCH_NAME})
+            target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCH_NAME})
         endforeach()
     endif()
 

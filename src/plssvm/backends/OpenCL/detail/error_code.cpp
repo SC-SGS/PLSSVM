@@ -8,23 +8,23 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"
 
-#include "CL/cl.h"  // cl_int
+#include "CL/cl.h"  // cl_int, CL_SUCCESS
 
 #include <ostream>      // std::ostream
 #include <string_view>  // std::string_view
 
 namespace plssvm::opencl::detail {
 
-error_code::error_code(const cl_int err) noexcept :
-    err_{ err } {}
+error_code::error_code(const cl_int error) noexcept :
+    err_{ error } {}
 
-error_code &error_code::operator=(const cl_int err) noexcept {
-    err_ = err;
+error_code &error_code::operator=(const cl_int error) noexcept {
+    err_ = error;
     return *this;
 }
 
-void error_code::assign(cl_int err) noexcept {
-    err_ = err;
+void error_code::assign(cl_int error) noexcept {
+    err_ = error;
 }
 
 void error_code::clear() noexcept {

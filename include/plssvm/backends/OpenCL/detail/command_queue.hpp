@@ -31,17 +31,32 @@ class command_queue {
      * @param[in] queue the OpenCL cl_command_queue to wrap
      * @param[in] device the associated OpenCL cl_device_id
      */
-    command_queue(cl_context context, cl_command_queue queue, cl_device_id device) :
-        context{ context }, queue{ queue }, device{ device } {}
+    command_queue(cl_context context, cl_command_queue queue, cl_device_id device);
+
+    /**
+     * @brief Delete copy-constructor to make command_queue a move only type.
+     */
+    command_queue(const command_queue &) = delete;
+    /**
+     * @brief Move-constructor as command_queue is a move-only type.
+     * @param[in,out] other the command_queue to move the resources from
+     */
+    command_queue(command_queue &&other) noexcept;
+    /**
+     * @brief Delete copy-assignment-operator to make command_queue a move only type.
+     */
+    command_queue &operator=(const command_queue &) = delete;
+    /**
+     * @brief Move-assignment-operator as command_queue is a move-only type.
+     * @param[in,out] other the command_queue to move the resources from
+     * @return `*this`
+     */
+    command_queue &operator=(command_queue &&other);
 
     /**
      * @brief Release the cl_command_queue resources on destruction.
      */
-    ~command_queue() {
-        if (queue) {
-            clReleaseCommandQueue(queue);
-        }
-    }
+    ~command_queue();
 
     /// The OpenCL context associated with the wrapped cl_command_queue.
     cl_context context{};

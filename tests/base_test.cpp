@@ -8,16 +8,23 @@
  * @brief Tests for the base functionality.
  */
 
-#include "plssvm/backend_types.hpp"    // plssvm::backend_type
-#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                // plssvm::backend_type
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
+#include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
 #include "backends/compare.hpp"  // compare::detail::linear_kernel, compare::detail::poly_kernel, compare::detail::radial_kernel
-#include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion
+#include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion, util::gtest_expect_string_to_enum_conversion, util::gtest_assert_floating_point_near
 
-#include "gtest/gtest.h"  // TEST
+#include "gtest/gtest.h"  // :testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, TEST
 
-#include <random>  // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <algorithm>  // std::generate
+#include <cstddef>    // std::size_t
+#include <random>     // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <vector>     // std::vector
+
+#include <regex>
 
 // check whether the std::string <-> plssvm::backend_type conversions are correct
 TEST(Base, backend_type) {
@@ -84,6 +91,41 @@ TEST(Base, target_platform) {
     util::gtest_expect_string_to_enum_conversion("GPU_INTEL", plssvm::target_platform::gpu_intel);
     util::gtest_expect_string_to_enum_conversion<plssvm::target_platform>("baz");
 }
+
+// check whether the arithmetic_type_name correctly converts arithmetic values to a std::string
+TEST(Base, arithmetic_type_name) {
+    // integral types
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<bool>(), "bool");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<char>(), "char");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<signed char>(), "signed char");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<unsigned char>(), "unsigned char");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<char16_t>(), "char16_t");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<char32_t>(), "char32_t");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<wchar_t>(), "wchar_t");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<short>(), "short");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<unsigned short>(), "unsigned short");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<int>(), "int");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<unsigned int>(), "unsigned int");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<long>(), "long");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<unsigned long>(), "unsigned long");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<long long>(), "long long");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<unsigned long long>(), "unsigned long long");
+
+    // floating point types
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<float>(), "float");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<double>(), "double");
+    EXPECT_EQ(plssvm::detail::arithmetic_type_name<long double>(), "long double");
+}
+
+#if defined(PLSSVM_ENABLE_ASSERTS)
+// check whether the PLSSVM_ASSERT works correctly
+TEST(BaseDeathTest, plssvm_assert) {
+    PLSSVM_ASSERT(true, "TRUE");
+
+    // can't use a matcher due to the used emphasis and color specification in assertion message
+    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "");
+}
+#endif
 
 // the floating point types to test
 using floating_point_types = ::testing::Types<float, double>;

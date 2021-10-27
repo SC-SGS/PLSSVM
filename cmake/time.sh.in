@@ -6,29 +6,31 @@
 #          See the LICENSE.md file in the project root for full license information.
 
 
-DATAGENERATOR="@PROJECT_SOURCE_DIR@/data/generate_data.py"
-PLSSSVM_TRAIN="@CMAKE_BINARY_DIR@/svm-train"
-COLLECT_RUNTIME="@PROJECT_SOURCE_DIR@/utility/collect_runtimes.py"
-MANIPULATE_CSV="python3 @PROJECT_SOURCE_DIR@/utility/manipulate_csv.py"
+# set paths to executables and scripts
+PLSSVM_TRAIN="@CMAKE_BINARY_DIR@/svm-train"
+PLSSVM_PREDICT="@CMAKE_BINARY_DIR@/svm-predict"
+DATA_GENERATOR="@PROJECT_SOURCE_DIR@/data/generate_data.py"
+COLLECT_RUNTIME="@PROJECT_SOURCE_DIR@/utility_scripts/collect_runtimes.py"
+MANIPULATE_CSV="python3 @PROJECT_SOURCE_DIR@/utility_scripts/manipulate_csv.py"
 
 GIT_HASH=$(git log -n1 --format=format:%H)
 
+# TODO: remove hardcoded paths
 THUNDER_SVM_TRAIN="/import/sgs.scratch/vancraar/thundersvm/build_pcsgs05/bin/thundersvm-train"
 THUNDER_SVM_PREDICT="/import/sgs.scratch/vancraar/thundersvm/build_pcsgs05/bin/thundersvm-predict"
 LIBSVM_TRAIN="/import/sgs.scratch/vancraar/libsvm/svm-train"
 LIBSVM_PREDICT="/import/sgs.scratch/vancraar/libsvm/svm-predict"
 
 
-
-
 run_backend (){
     echo "start PLSSVM with backend ${1} with ${num_points} points and ${num_features} features with e=${e} ..."
     rm -f runtime_backend.csv
     T="$(date +%s%N)"
-    ${PLSSSVM_TRAIN} --backend $1 -e ${e} ${num_points}x${num_features}.libsvm ${num_points}x${num_features}.libsvm.${1}.model | python3 ${COLLECT_RUNTIME} --output runtime_backend.csv
+    ${PLSSVM_TRAIN} --backend $1 -e ${e} ${num_points}x${num_features}.libsvm ${num_points}x${num_features}.libsvm.${1}.model | python3 ${COLLECT_RUNTIME} --output runtime_backend.csv
     T="$(($(date +%s%N)-T))"
     T="$((T/1000000))"
 
+    # TODO: use own predict
     if [ -f "$THUNDER_SVM_PREDICT" ]
     then
         ACCURACY=$($THUNDER_SVM_PREDICT ${num_points}x${num_features}.libsvm ${num_points}x${num_features}.libsvm.${1}.model predict | grep "Accuracy" | grep -oP "=.*" | cut -c 3-)
@@ -43,7 +45,7 @@ run_backend (){
 
     rm ${num_points}x${num_features}.libsvm.$1.model
     ${MANIPULATE_CSV} --file runtime_backend.csv --col "git_tag" --row 0 --val "${GIT_HASH}"
-    ${MANIPULATE_CSV} --file runtime_backend.csv --col "datagenerator_parameter" --row 0 --val "${DATENGENERATOR_PARAMETER}"
+    ${MANIPULATE_CSV} --file runtime_backend.csv --col "datagenerator_parameter" --row 0 --val "${DATA_GENERATOR_PARAMETER}"
     ${MANIPULATE_CSV} --file runtime_backend.csv --col "e" --row 0 --val "${e}"
     ${MANIPULATE_CSV} --file runtime_backend.csv --col "build_type" --row 0 --val "@CMAKE_BUILD_TYPE@"
     ${MANIPULATE_CSV} --file runtime_backend.csv --col "training_file_hash" --row 0 --val "${md5}"
@@ -54,6 +56,8 @@ run_backend (){
     then
         ${MANIPULATE_CSV} --file runtime_backend.csv --col "accuracy" --row 0 --val "${ACCURACY}"
     fi
+
+    # TODO: remove upload
     curl -f -s -X GET https://ipvs.informatik.uni-stuttgart.de/cloud/s/pYcggBo9bAJjb9B/download -o runtime.csv
     python3 -c "import pandas as pd; data = pd.read_csv('runtime.csv'); data = pd.concat([pd.read_csv('runtime_backend.csv'),data]); data.to_csv('runtime.csv', index=False)"
     curl -f -s -u 'ds2WBHSkws43yLy:jN9fYeRPyt' -T runtime.csv -H 'X-Requested-With: XMLHttpRequest' -X PUT 'https://ipvs.informatik.uni-stuttgart.de/cloud/public.php/webdav/'
@@ -61,7 +65,7 @@ run_backend (){
 }
 
 
-# run datengenerator
+# run data generator
 for problem in "planes" "blobs"
 do
     for num_points in  100 1000 10000 100000
@@ -70,8 +74,8 @@ do
         do
             if (( $num_points >= $num_features))
             then
-                DATENGENERATOR_PARAMETER="--output ${num_points}x${num_features} --format libsvm --problem planes --samples ${num_points} --features ${num_features}"
-                python3 ${DATAGENERATOR} ${DATENGENERATOR_PARAMETER}
+                DATA_GENERATOR_PARAMETER="--output ${num_points}x${num_features} --format libsvm --problem planes --samples ${num_points} --features ${num_features}"
+                python3 ${DATA_GENERATOR} ${DATA_GENERATOR_PARAMETER}
                 md5=`md5sum ${num_points}x${num_features}.libsvm | awk '{ print $1 }'`
 
                 for e in "0.001" "0.0001" "0.00001" "0.000001" "0.0000001" "0.00000001" "0.000000001" "0.0000000001" "0.00000000001" "0.000000000001"
@@ -102,7 +106,7 @@ do
                         T="$((T/1000000))"
 
                         rm -f runtime_backend.csv
-                        ${MANIPULATE_CSV} --file runtime_backend.csv --col "datagenerator_parameter" --row 0 --val "${DATENGENERATOR_PARAMETER}"
+                        ${MANIPULATE_CSV} --file runtime_backend.csv --col "datagenerator_parameter" --row 0 --val "${DATA_GENERATOR_PARAMETER}"
                         ${MANIPULATE_CSV} --file runtime_backend.csv --col "e" --row 0 --val "${e}"
                         ${MANIPULATE_CSV} --file runtime_backend.csv --col "training_file_hash" --row 0 --val "${md5}"
                         ${MANIPULATE_CSV} --file runtime_backend.csv --col "svm" --row 0 --val "thundersvm"
@@ -123,6 +127,7 @@ do
                         fi
                         rm ${num_points}x${num_features}.libsvm.thundersvm.model
 
+                        # TODO: remove upload
                         curl -f -s -X GET https://ipvs.informatik.uni-stuttgart.de/cloud/s/pYcggBo9bAJjb9B/download -o runtime.csv
                         python3 -c "import pandas as pd; data = pd.read_csv('runtime.csv'); data = pd.concat([pd.read_csv('runtime_backend.csv'),data]); data.to_csv('runtime.csv', index=False)"
                         curl -f -s -u 'ds2WBHSkws43yLy:jN9fYeRPyt' -T runtime.csv -H 'X-Requested-With: XMLHttpRequest' -X PUT 'https://ipvs.informatik.uni-stuttgart.de/cloud/public.php/webdav/'
@@ -140,7 +145,7 @@ do
                         T="$((T/1000000))"
                         echo " done in $((T/1000))s"
                         rm -f runtime_backend.csv
-                        ${MANIPULATE_CSV} --file runtime_backend.csv --col "datagenerator_parameter" --row 0 --val "${DATENGENERATOR_PARAMETER}"
+                        ${MANIPULATE_CSV} --file runtime_backend.csv --col "datagenerator_parameter" --row 0 --val "${DATA_GENERATOR_PARAMETER}"
                         ${MANIPULATE_CSV} --file runtime_backend.csv --col "e" --row 0 --val "${e}"
                         ${MANIPULATE_CSV} --file runtime_backend.csv --col "training_file_hash" --row 0 --val "${md5}"
                         ${MANIPULATE_CSV} --file runtime_backend.csv --col "svm" --row 0 --val "libsvm"
@@ -161,6 +166,7 @@ do
 
                         rm ${num_points}x${num_features}.libsvm.libsvm.model
 
+                        # TODO: remove upload
                         curl -f -s -X GET https://ipvs.informatik.uni-stuttgart.de/cloud/s/pYcggBo9bAJjb9B/download -o runtime.csv
                         python3 -c "import pandas as pd; data = pd.read_csv('runtime.csv'); data = pd.concat([pd.read_csv('runtime_backend.csv'),data]); data.to_csv('runtime.csv', index=False)"
                         curl -f -s -u 'ds2WBHSkws43yLy:jN9fYeRPyt' -T runtime.csv -H 'X-Requested-With: XMLHttpRequest' -X PUT 'https://ipvs.informatik.uni-stuttgart.de/cloud/public.php/webdav/'

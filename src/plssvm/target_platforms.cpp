@@ -1,19 +1,14 @@
 /**
- * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
- *
- * @brief Defines all possible targets. Can also include targets not available on the target platform.
  */
 
-#pragma once
+#include "plssvm/target_platforms.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
-
-#include "fmt/ostream.h"  // use operator<< to enable fmt::format with custom type
 
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
@@ -22,29 +17,7 @@
 
 namespace plssvm {
 
-/**
- * @brief Enum class for the different targets.
- */
-enum class target_platform {
-    /** The default target with respect to the used backend type. Checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs */
-    automatic,
-    /** Target CPUs. */
-    cpu,
-    /** Target GPUs from NVIDIA */
-    gpu_nvidia,
-    /** Target GPUs from AMD */
-    gpu_amd,
-    /** Target GPUs from Intel */
-    gpu_intel
-};
-
-/**
- * @brief Stream-insertion-operator overload for convenient printing of the target platform @p target.
- * @param[in,out] out the output-stream to write the target platform to
- * @param[in] target the target platform
- * @return the output-stream
- */
-inline std::ostream &operator<<(std::ostream &out, const target_platform target) {
+std::ostream &operator<<(std::ostream &out, const target_platform target) {
     switch (target) {
         case target_platform::automatic:
             return out << "automatic";
@@ -60,13 +33,7 @@ inline std::ostream &operator<<(std::ostream &out, const target_platform target)
     return out << "unknown";
 }
 
-/**
- * @brief Stream-extraction-operator overload for convenient converting a string to a target platform.
- * @param[in,out] in input-stream to extract the target platform from
- * @param[in] target the target platform
- * @return the input-stream
- */
-inline std::istream &operator>>(std::istream &in, target_platform &target) {
+std::istream &operator>>(std::istream &in, target_platform &target) {
     std::string str;
     in >> str;
     detail::to_lower_case(str);

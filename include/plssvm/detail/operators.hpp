@@ -13,8 +13,9 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::fma, std::copysign
-#include <vector>  // std::vector
+#include <cmath>        // std::fma, std::copysign
+#include <type_traits>  // std::is_arithmetic_v
+#include <vector>       // std::vector
 
 /**
  * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION
@@ -35,7 +36,7 @@
  * vec1 + scalar;  // operator+(vector, scalar)
  * scalar + vec1;  // operator+(scalar, vector)
  * @endcode
- * Also checks that both vectors have the same size.
+ * Also checks that both vectors have the same size using the PLSSVM_ASSERT macro.
  * @param[in] Op the operator to generate
  */
 // clang-format off
@@ -107,7 +108,7 @@ transposed(const std::vector<T> &) -> transposed<T>;
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
- * @return the dot product
+ * @return the dot product (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T operator*(const transposed<T> &lhs, const std::vector<T> &rhs) {
@@ -133,13 +134,12 @@ template <typename T>
  * @details Uses OpenMP SIMD reduction to speedup the calculation.
  * @tparam T the value type
  * @param[in] vec the elements to accumulate
- * @return the sum of all elements
+ * @return the sum of all elements (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+ \
-                           : val)
+    #pragma omp simd reduction(+:val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -152,29 +152,29 @@ template <typename T>
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
- * @return the squared euclidean distance
+ * @return the squared euclidean distance (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T squared_euclidean_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
-    // #pragma omp simd reduction(+:val) //TODO: debug gcc ASSERT BUG
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
-        T tmp = lhs[i] - rhs[i];
-        val = std::fma(tmp, tmp, val);
+        const T diff = lhs[i] - rhs[i];
+        val = std::fma(diff, diff, val);
     }
     return val;
 }
 
 /**
  * @brief Returns +1 if x is positive and -1 if x is negative or 0.
- * @param x the number parameter to evaluate
- * @return +1 if x is positive and -1 if x is negative or 0 ([[nodiscard]])
+ * @param[in] x the number parameter to evaluate
+ * @return +1 if x is positive and -1 if x is negative or 0 (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] inline constexpr int sign(const T x) {
-    return x == 0 ? -1 : static_cast<int>(std::copysign(1, x));
+[[nodiscard]] inline constexpr T sign(const T x) {
+    static_assert(std::is_arithmetic_v<T>, "The type T must be an arithmetic type!");
+    return x == T{ 0 } ? T{ -1 } : static_cast<T>(std::copysign(T{ 1 }, x));
 }
 
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION

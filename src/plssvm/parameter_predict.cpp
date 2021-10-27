@@ -9,12 +9,13 @@
 #include "plssvm/parameter_predict.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "cxxopts.hpp"  // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/core.h"   // fmt::print, fmt::format
+#include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
+#include <cstdio>     // stderr
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <string>     // std::string
@@ -23,9 +24,9 @@
 namespace plssvm {
 
 template <typename T>
-parameter_predict<T>::parameter_predict(std::string input_filename, std::string model_filename) {
-    base_type::input_filename = std::move(input_filename);
-    base_type::model_filename = std::move(model_filename);
+parameter_predict<T>::parameter_predict(std::string p_input_filename, std::string p_model_filename) {
+    base_type::input_filename = std::move(p_input_filename);
+    base_type::model_filename = std::move(p_model_filename);
     base_type::predict_filename = base_type::predict_name_from_input();
 
     base_type::parse_model_file(base_type::model_filename);

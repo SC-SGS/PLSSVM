@@ -8,28 +8,22 @@
  * @brief Tests for the functionality related to the OpenMP backend.
  */
 
-#include "mock_openmp_csvm.hpp"
+#include "backends/OpenMP/mock_openmp_csvm.hpp"
 
-#include "../../mock_csvm.hpp"  // mock_csvm
-#include "../../utility.hpp"    // util::create_temp_file, util::gtest_expect_correct_csvm_factory
-#include "../compare.hpp"       // compare::generate_q, compare::kernel_function, compare::device_kernel_function
+#include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::predict_test, generic::accuracy_test
+#include "mock_csvm.hpp"               // mock_csvm
+#include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
 
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/detail/string_conversion.hpp"    // plssvm::detail::convert_to
-#include "plssvm/detail/string_utility.hpp"       // plssvm::detail::replace_all
 #include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT
+#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ
 
-#include <cstddef>     // std::size_t
-#include <filesystem>  // std::filesystem::remove
-#include <fstream>     // std::ifstream
-#include <iterator>    // std::istreambuf_iterator
-#include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <string>      // std::string
-#include <vector>      // std::vector
+#include <random>  // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <vector>  // std::vector
 
 // enumerate all floating point type and kernel combinations to test
 using parameter_types = ::testing::Types<
@@ -46,14 +40,7 @@ TYPED_TEST_SUITE(OpenMP_CSVM, parameter_types, util::google_test::parameter_defi
 
 // check whether the csvm factory function correctly creates an openmp::csvm
 TYPED_TEST(OpenMP_CSVM, csvm_factory) {
-    // create parameter object
-    plssvm::parameter<typename TypeParam::real_type> params;
-    params.print_info = false;
-    params.backend = plssvm::backend_type::openmp;
-
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-
-    util::gtest_expect_correct_csvm_factory<plssvm::openmp::csvm>(params);
+    generic::csvm_factory_test<plssvm::openmp::csvm, typename TypeParam::real_type, plssvm::backend_type::openmp>();
 }
 
 // check whether the constructor correctly fails when using an incompatible target platform
@@ -63,7 +50,7 @@ TYPED_TEST(OpenMP_CSVM, constructor_invalid_target_platform) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // only automatic or cpu are allowed as target platform for the OpenMP backend
     params.target = plssvm::target_platform::automatic;
@@ -78,38 +65,14 @@ TYPED_TEST(OpenMP_CSVM, constructor_invalid_target_platform) {
     EXPECT_THROW_WHAT(mock_openmp_csvm{ params }, plssvm::openmp::backend_exception, "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
 
+// check whether writing the resulting model file is correct
+TYPED_TEST(OpenMP_CSVM, write_model) {
+    generic::write_model_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
+}
+
 // check whether the q vector is generated correctly
 TYPED_TEST(OpenMP_CSVM, generate_q) {
-    // create parameter object
-    plssvm::parameter<typename TypeParam::real_type> params;
-    params.print_info = false;
-    params.kernel = TypeParam::kernel;
-
-    params.parse_train_file(TEST_FILE);
-
-    // create base C-SVM
-    mock_csvm csvm{ params };
-    using real_type_csvm = typename decltype(csvm)::real_type;
-
-    // calculate q vector
-    const std::vector<real_type_csvm> correct = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
-
-    // create C-SVM using the OpenMP backend
-    mock_openmp_csvm csvm_openmp{ params };
-    using real_type_csvm_openmp = typename decltype(csvm_openmp)::real_type;
-
-    // check real_types
-    ::testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_openmp>();
-
-    // calculate q vector
-    csvm_openmp.setup_data_on_device();
-    const std::vector<real_type_csvm_openmp> calculated = csvm_openmp.generate_q();
-
-    // check size and values for correctness
-    ASSERT_EQ(correct.size(), calculated.size());
-    for (std::size_t index = 0; index < correct.size(); ++index) {
-        util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}", index));
-    }
+    generic::generate_q_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
 }
 
 // check whether the device kernels are correct
@@ -119,14 +82,13 @@ TYPED_TEST(OpenMP_CSVM, device_kernel) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_FILE);
+    params.parse_train_file(PLSSVM_TEST_FILE);
 
     // create base C-SVM
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
-    using size_type = typename decltype(csvm)::size_type;
 
-    const size_type dept = csvm.get_num_data_points() - 1;
+    const std::size_t dept = csvm.get_num_data_points() - 1;
 
     // create x vector and fill it with random values
     std::vector<real_type> x(dept);
@@ -155,7 +117,7 @@ TYPED_TEST(OpenMP_CSVM, device_kernel) {
         csvm_openmp.run_device_kernel(q_vec, calculated, x, csvm_openmp.get_device_data(), add);
 
         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
-        for (std::size_t index = 0; index < correct.size(); ++index) {
+        for (typename std::vector<real_type>::size_type index = 0; index < correct.size(); ++index) {
             util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
         }
     }
@@ -163,66 +125,10 @@ TYPED_TEST(OpenMP_CSVM, device_kernel) {
 
 // check whether the correct labels are predicted
 TYPED_TEST(OpenMP_CSVM, predict) {
-    plssvm::parameter<typename TypeParam::real_type> params;
-    params.print_info = false;
-
-    params.parse_model_file(TEST_PATH "/data/models/500x200.libsvm." + fmt::format("{}", TypeParam::kernel) + ".model");
-    params.parse_test_file(TEST_PATH "/data/libsvm/500x200.libsvm.test");
-
-    // create C-SVM using the OpenMP backend
-    mock_openmp_csvm csvm_openmp{ params };
-    using real_type = typename decltype(csvm_openmp)::real_type;
-    using size_type = typename decltype(csvm_openmp)::size_type;
-
-    // predict
-    std::vector<real_type> predicted_values = csvm_openmp.predict_label(*params.test_data_ptr);
-    std::vector<real_type> predicted_values_real = csvm_openmp.predict(*params.test_data_ptr);
-
-    // read correct prediction
-    std::ifstream ifs(TEST_PATH "/data/predict/500x200.libsvm.predict");
-    std::string line;
-    std::vector<real_type> correct_values;
-    correct_values.reserve(500);
-    while (std::getline(ifs, line, '\n')) {
-        correct_values.push_back(plssvm::detail::convert_to<real_type>(line));
-    }
-
-    ASSERT_EQ(correct_values.size(), predicted_values.size());
-    for (size_type i = 0; i < correct_values.size(); ++i) {
-        EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_real[i];
-        EXPECT_GT(correct_values[i] * predicted_values_real[i], real_type{ 0 });
-    }
+    generic::predict_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
 }
 
 // check whether the accuracy calculation is correct
 TYPED_TEST(OpenMP_CSVM, accuracy) {
-    // create parameter object
-    plssvm::parameter<typename TypeParam::real_type> params;
-    params.print_info = false;
-    params.kernel = TypeParam::kernel;
-
-    params.parse_train_file(TEST_FILE);
-
-    // create C-SVM using the OpenMP backend
-    mock_openmp_csvm csvm_openmp{ params };
-    using real_type = typename decltype(csvm_openmp)::real_type;
-    using size_type = typename decltype(csvm_openmp)::size_type;
-
-    // learn
-    csvm_openmp.learn();
-
-    // predict label and calculate correct accuracy
-    std::vector<real_type> label_predicted = csvm_openmp.predict_label(*params.data_ptr);
-    ASSERT_EQ(label_predicted.size(), params.value_ptr->size());
-    size_type count = 0;
-    for (size_type i = 0; i < label_predicted.size(); ++i) {
-        if (label_predicted[i] == (*params.value_ptr)[i]) {
-            ++count;
-        }
-    }
-    real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
-
-    // calculate accuracy
-    real_type accuracy_calculated = csvm_openmp.accuracy();
-    util::gtest_assert_floating_point_eq(accuracy_calculated, accuracy_correct);
+    generic::accuracy_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
 }

@@ -11,9 +11,8 @@
 
 #pragma once
 
-#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"        // plssvm::parameter
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/kernel_types.hpp"      // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
 #include <memory>       // std::shared_ptr
@@ -22,6 +21,10 @@
 #include <vector>       // std::vector
 
 namespace plssvm {
+
+// forward declare class
+template <typename T>
+class parameter;
 
 /**
  * @brief Base class for all C-SVM backends.
@@ -35,8 +38,6 @@ class csvm {
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
-    /// Unsigned integer type.
-    using size_type = std::size_t;
 
     //*************************************************************************************************************************************//
     //                                                      special member functions                                                       //
@@ -44,6 +45,11 @@ class csvm {
     /**
      * @brief Construct a new C-SVM with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception if the given data pointer is the `nullptr`
+     * @throws plssvm::exception if the data matrix is empty
+     * @throws plssvm::exception if not all points in the data matrix have the same number of features
+     * @throws plssvm::exception if no features are provided for the data points
+     * @throws plssvm::exception if weights are given, but the number of weights doesn't match the number of data points
      */
     explicit csvm(const parameter<T> &params);
 
@@ -53,23 +59,30 @@ class csvm {
     virtual ~csvm() = default;
 
     /**
-     * @brief Disable copy-constructor.
+     * @brief Delete expensive copy-constructor to make csvm a move only type.
      */
     csvm(const csvm &) = delete;
-    // clang-format off
     /**
-     * @brief Explicitly allow move-construction.
+     * @brief Move-constructor as csvm is a move-only type.
      */
     csvm(csvm &&) noexcept = default;
-    // clang-format on
+    /**
+     * @brief Delete expensive copy-assignment-operator to make csvm a move only type.
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @brief Move-assignment-operator as csvm is a move-only type.
+     * @return `*this`
+     */
+    csvm &operator=(csvm &&) noexcept = default;
 
     //*************************************************************************************************************************************//
     //                                                             IO functions                                                            //
     //*************************************************************************************************************************************//
 
     /**
-     * @brief Write the calculated model to the given file.
-     * @details Writes the model using the libsvm format:
+     * @brief Write the calculated model to the file denoted by @þ filename.
+     * @details Writes the model using the LIBSVM format:
      * @code
      * svm_type c_svc
      * kernel_type linear
@@ -85,8 +98,10 @@ class csvm {
      * -0.23146635 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01
      * 0.0034576654 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00
      * @endcode
-     * @throws unsupported_kernel_type_exception if the kernel_type cannot be recognized
      * @param[in] filename name of the file to write the model information to
+     * @throws plssvm::exception if a call to learn() is missing
+     * @throws plssvm::exception if no labels are given
+     * @throws plssvm::exception if the number of labels and number of data points mismatch
      */
     void write_model(const std::string &filename);
 
@@ -94,13 +109,15 @@ class csvm {
     //                                                             learn model                                                             //
     //*************************************************************************************************************************************//
     /**
-     * @brief Learns the Support Vectors given the data in the provided parameter class.
+     * @brief Learns the support vectors given the data in the provided parameter class.
      * @details Performs 2 steps:
      * 1. Load the data onto the used device (e.g. one or more GPUs)
      * 2. Learn the model by solving a minimization problem using the Conjugated Gradients algorithm
+     *
+     * @throws plssvm::exception if no labels are given for training
+     * @throws plssvm::exception if the number of labels and number of data points mismatch
      */
     void learn();
-    // TODO: absolute vs relative residual
 
     //*************************************************************************************************************************************//
     //                                                               predict                                                               //
@@ -108,27 +125,56 @@ class csvm {
 
     /**
      * @brief Evaluates the model on the data used for training.
-     * @return The fraction of correct labeled training data in percent. ([[nodiscard]])
+     * @throws plssvm::exception if no labels are given for the accuracy calculation
+     * @throws plssvm::exception if no weights are provided for calculating the accuracy (possibly a call to learn() is missing)
+     * @return the fraction of correctly labeled training data in percent (`[[nodiscard]]`)
      */
     [[nodiscard]] real_type accuracy();
+    /**
+     * @brief Evaluate the model on the given data @p point with @p correct_label being the correct label.
+     * @param[in] point the data point to predict
+     * @param[in] correct_label the correct label
+     * @throws plssvm::exception if the number of features in @p point doesn't match the number of features in the data matrix
+     * @throws plssvm::exception if no weights are provided for calculating the accuracy (possibly a call to learn() is missing)
+     * @return `1.0` if @p point is predicted correctly, `0.0` otherwise. (`[[nodiscard]]`)
+     */
+    [[nodiscard]] real_type accuracy(const std::vector<real_type> &point, real_type correct_label);
+    /**
+     * @brief Evaluate the model on the given data @p points with @p correct_labels being the correct labels.
+     * @param[in] points the data points to predict
+     * @param[in] correct_labels the correct labels
+     * @throws plssvm::exception if the number of points to predict mismatch the number of provided, correct label
+     * @throws plssvm::exception if not all @p points to predict have the same number of features
+     * @throws plssvm::exception if the number of features per point to predict and per point in data matrix mismatch
+     * @throws plssvm::exception if no weights are provided for calculating the accuracy (possibly a call to learn() is missing)
+     * @return the fraction of correctly labeled data points. (`[[nodiscard]]`)
+     */
+    [[nodiscard]] real_type accuracy(const std::vector<std::vector<real_type>> &points, const std::vector<real_type> &correct_labels);
+
+    /**
+     * @brief Uses the already learned model to predict a (new) data point.
+     * @param[in] point the data point to predict
+     * @throws plssvm::exception if the number of features in @p point doesn't match the number of features in the data matrix
+     * @throws plssvm::exception if no weights are provided for calculating the accuracy (possibly a call to learn() is missing)
+     * @return a negative #real_type value if the prediction for data point point is the negative class and a positive #real_type value otherwise (`[[nodiscard]]`)
+     */
+    [[nodiscard]] real_type predict(const std::vector<real_type> &point);
 
     /**
      * @brief Uses the already learned model to predict the class of a (new) data point.
      * @param[in] point the data point to predict
-     * @return a negative `real_type` value if the prediction for data point point is the negative class and a positive `real_type` value otherwise ([[nodiscard]])
-     */
-    [[nodiscard]] real_type predict(const std::vector<real_type> &point);  // TODO: implement on devices for performance improvement
-
-    /**
-     * @brief Uses the already learned model to predict the class of an (new) point
-     * @param[in] point the data point to predict
-     * @return -1.0 if the prediction for point is the negative class and +1 otherwise ([[nodiscard]])
+     * @throws plssvm::exception if the number of features in @p point doesn't match the number of features in the data matrix
+     * @throws plssvm::exception if no weights are provided for calculating the accuracy (possibly a call to learn() is missing)
+     * @return -1.0 if the prediction for @p point is the negative class and +1 otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] real_type predict_label(const std::vector<real_type> &point);
     /**
-     * @brief Uses the already learned model to predict the class of multiple (new) points
-     * @param[in] points the points to predict
-     * @return a `std::vector<real_type>` filled with -1 for each prediction for a data point the negative class and +1 otherwise ([[nodiscard]])
+     * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @param[in] points the data points to predict
+     * @throws plssvm::exception if not all @p points to predict have the same number of features
+     * @throws plssvm::exception if the number of features per point to predict and per point in data matrix mismatch
+     * @throws plssvm::exception if no weights are provided for calculating the accuracy (possibly a call to learn() is missing)
+     * @return a [`std::vector<real_type>`](https://en.cppreference.com/w/cpp/container/vector) filled with -1 for each prediction for a data point with the negative class and +1 otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<real_type> predict_label(const std::vector<std::vector<real_type>> &points);
 
@@ -142,7 +188,7 @@ class csvm {
     virtual void setup_data_on_device() = 0;
     /**
      * @brief Generate the vector `q`, a subvector of the least-squares matrix equation.
-     * @return the generated `q` vector
+     * @return the generated `q` vector (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<real_type> generate_q() = 0;
     /**
@@ -155,15 +201,15 @@ class csvm {
      * @param[in] q subvector of the least-squares matrix equation
      * @return the alpha values
      */
-    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, size_type imax, real_type eps, const std::vector<real_type> &q) = 0;
+    virtual std::vector<real_type> solver_CG(const std::vector<real_type> &b, std::size_t imax, real_type eps, const std::vector<real_type> &q) = 0;
     /**
-     * @brief updates the `w_` vector to the current data and alpha values.
+     * @brief Updates the normal vector #w_, used to speed-up the prediction in case of the linear kernel function, to the current data and alpha values.
      */
     virtual void update_w() = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @param[in] points the data points to predict
-     * @return a `std::vector<real_type>` filled with negative values for each prediction for a data point with the negative class and positive values otherwise ([[nodiscard]])
+     * @return a [`std::vector<real_type>`](https://en.cppreference.com/w/cpp/container/vector) filled with negative values for each prediction for a data point with the negative class and positive values otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) = 0;
 
@@ -174,25 +220,27 @@ class csvm {
      * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function specified during construction.
      * @param[in] xi the first vector
      * @param[in] xj the second vector
-     * @throws unsupported_kernel_type_exception if the kernel_type cannot be recognized
-     * @return the value computed by the kernel function
+     * @throws plssvm::unsupported_kernel_type_exception if the kernel type cannot be recognized
+     * @return the value computed by the kernel function (`[[nodiscard]]`)
      */
-    real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj);
+    [[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj);
 
     /**
-     * @brief Transforms the 2D data from AoS to a 1D SoA layout, ignoring the last data point and adding boundary points.
-     * @param[in] boundary the number of boundary cells
-     * @attention boundary values can contain random numbers
-     * @return an 1D vector in a SoA layout
+     * @brief Transforms @p num_points entries of the 2D data from AoS to a 1D SoA layout and adding @p boundary points.
+     * @param[in] matrix the 2D vector to be transformed into a 1D representation
+     * @param[in] boundary the number of boundary points
+     * @param[in] num_points the number of data points of the 2D vector to transform
+     * @attention Boundary values can contain random numbers!
+     * @return an 1D vector in a SoA layout (`[[nodiscard]]`)
      */
-    std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, const size_type boundary, const size_type num_points);
+    [[nodiscard]] std::vector<real_type> transform_data(const std::vector<std::vector<real_type>> &matrix, std::size_t boundary, std::size_t num_points);
 
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //
     //*************************************************************************************************************************************//
     /// The target platform.
     const target_platform target_;
-    /// The used kernel function: linear, polynomial or radial basis functions (rbf).
+    /// The used kernel function.
     const kernel_type kernel_;
     /// The degree parameter used in the polynomial kernel function.
     const int degree_;
@@ -211,16 +259,16 @@ class csvm {
     const std::shared_ptr<const std::vector<std::vector<real_type>>> data_ptr_{};
     /// The labels associated to each data point.
     std::shared_ptr<const std::vector<real_type>> value_ptr_{};
-    /// The result of the CG calculation.
+    /// The result of the CG calculation: the weights of the support vectors.
     std::shared_ptr<const std::vector<real_type>> alpha_ptr_{};
 
     //*************************************************************************************************************************************//
     //                                                         internal variables                                                          //
     //*************************************************************************************************************************************//
     /// The number of data points in the data set.
-    size_type num_data_points_{};
+    std::size_t num_data_points_{};
     /// The number of features per data point.
-    size_type num_features_{};
+    std::size_t num_features_{};
     /// The bias after learning.
     real_type bias_{};
     /// The bottom right matrix entry multiplied by cost.

@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-@author Alexander Van Craen
-@author Marcel Breyer
-@copyright 2018-today The PLSSVM project - All Rights Reserved
-@license This file is part of the PLSSVM project which is released under the MIT license.
-         See the LICENSE.md file in the project root for full license information.
-"""
 
-# TODO: necessary shebang?
+########################################################################################################################
+# Authors: Alexander Van Craen, Marcel Breyer                                                                          #
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved                                                   #
+# License: This file is part of the PLSSVM project which is released under the MIT license.                            #
+#          See the LICENSE.md file in the project root for full license information.                                   #
+########################################################################################################################
 
 import re
 import pandas as pd
@@ -90,7 +88,8 @@ def parse_stream(file_stream):
                     # check if value already read
                     if key in data:
                         if data[key] != match.group(val):
-                            raise Exception(file_stream, 'ill-formed in line:', line)
+                            raise Exception(
+                                file_stream, 'ill-formed in line:', line)
                     else:
                         # add new value to dictionary
                         data[key] = match.group(val)
@@ -108,7 +107,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="the input file", required=not stdin)
-    parser.add_argument("--output", help="the output file to write the parsed values to", required=True)
+    parser.add_argument(
+        "--output", help="the output file to write the parsed values to", required=True)
 
     args = parser.parse_args()
 

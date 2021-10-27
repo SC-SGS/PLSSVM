@@ -14,9 +14,9 @@
 #include "plssvm/csvm.hpp"             // plssvm::csvm
 #include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
 #include "plssvm/parameter.hpp"        // plssvm::parameter
-#include "plssvm/target_platform.hpp"  // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "gmock/gmock.h"  // MOCK_METHODn
+#include "gmock/gmock.h"  // MOCK_METHOD
 
 #include <memory>  // std::shared_ptr
 #include <vector>  // std::vector
@@ -31,20 +31,20 @@ class mock_csvm : public plssvm::csvm<T> {
 
   public:
     using real_type = typename base_type::real_type;
-    using size_type = typename base_type::size_type;
 
     explicit mock_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
 
     // mock pure virtual functions
-    MOCK_METHOD0(setup_data_on_device, void());
-    MOCK_METHOD0(generate_q, std::vector<real_type>());
-    MOCK_METHOD4(solver_CG, std::vector<real_type>(const std::vector<real_type> &, const size_type, const real_type, const std::vector<real_type> &));
-    MOCK_METHOD0(update_w, void());
-    MOCK_METHOD1(predict, std::vector<real_type>(const std::vector<std::vector<real_type>> &));
+    MOCK_METHOD(void, setup_data_on_device, (), (override));
+    MOCK_METHOD(std::vector<real_type>, generate_q, (), (override));
+    MOCK_METHOD(std::vector<real_type>, solver_CG, (const std::vector<real_type> &, const std::size_t, const real_type, const std::vector<real_type> &), (override));
+    MOCK_METHOD(void, update_w, (), (override));
+    MOCK_METHOD(std::vector<real_type>, predict, (const std::vector<std::vector<real_type>> &), (override));
 
     // make non-virtual functions publicly visible
     using base_type::kernel_function;
+    using base_type::predict;  // no idea way necessary (since the used 'real_type predict(const std::vector<real_type>&)' is a public member function) but it works
     using base_type::transform_data;
 
     // getter for all parameter
@@ -62,8 +62,8 @@ class mock_csvm : public plssvm::csvm<T> {
     std::shared_ptr<const std::vector<real_type>> &get_value_ptr() { return base_type::value_ptr_; }
     std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
 
-    size_type get_num_data_points() const { return base_type::num_data_points_; }
-    size_type get_num_features() const { return base_type::num_features_; }
+    std::size_t get_num_data_points() const { return base_type::num_data_points_; }
+    std::size_t get_num_features() const { return base_type::num_features_; }
     real_type get_bias() const { return base_type::bias_; }
     real_type get_QA_cost() const { return base_type::QA_cost_; }
 };

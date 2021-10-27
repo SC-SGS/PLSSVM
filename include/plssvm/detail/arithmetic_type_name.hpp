@@ -18,17 +18,23 @@
  * @brief Defines a macro to create all possible conversion functions from arithmetic types to their name as string representation.
  * @param[in] type the data type to convert to a string
  */
-#define PLSSVM_CREATE_ARITHMETIC_TYPE_NAME(type) \
-    template <>                                  \
-    [[nodiscard]] constexpr inline std::string_view arithmetic_type_name<type>() { return #type; }
+#define PLSSVM_CREATE_ARITHMETIC_TYPE_NAME(type)                                                                        \
+    template <>                                                                                                         \
+    [[nodiscard]] constexpr inline std::string_view arithmetic_type_name<type>() { return #type; }                      \
+    template <>                                                                                                         \
+    [[nodiscard]] constexpr inline std::string_view arithmetic_type_name<const type>() { return "const " #type; }       \
+    template <>                                                                                                         \
+    [[nodiscard]] constexpr inline std::string_view arithmetic_type_name<volatile type>() { return "volatile " #type; } \
+    template <>                                                                                                         \
+    [[nodiscard]] constexpr inline std::string_view arithmetic_type_name<const volatile type>() { return "const volatile " #type; }
 
 namespace plssvm::detail {
 
 /**
- * @brief Tries to convert the given type to its name as string representation.
- * @details The definition is marked as **deleted** if `T` isn't an arithmetic type (without cvref-qualification).
+ * @brief Tries to convert the given type to its name as string representation including possible const and/or volatile attributes.
+ * @details The definition is marked as **deleted** if `T` isn't an [arithmetic type](https://en.cppreference.com/w/cpp/types/is_arithmetic).
  * @tparam T the type to convert to a string
- * @return the name of `T`
+ * @return the name of `T` (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] constexpr inline std::string_view arithmetic_type_name() = delete;

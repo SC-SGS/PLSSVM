@@ -27,12 +27,14 @@ class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
 
   public:
     using real_type = typename base_type::real_type;
-    using size_type = typename base_type::size_type;
+    using device_ptr_type = typename base_type::device_ptr_type;
+    using queue_type = typename base_type::queue_type;
 
     explicit mock_cuda_csvm(const plssvm::parameter<T> &params) :
         base_type{ params } {}
 
     // make non-virtual functions publicly visible
+    using base_type::device_reduction;
     using base_type::generate_q;
     using base_type::run_device_kernel;
     using base_type::setup_data_on_device;
@@ -42,5 +44,8 @@ class mock_cuda_csvm : public plssvm::cuda::csvm<T> {
     void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
 
     // getter for internal variables
-    const std::vector<plssvm::cuda::detail::device_ptr<real_type>> &get_device_data() const { return base_type::data_d_; }
+    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
+    const std::vector<device_ptr_type> &get_device_data() const { return base_type::data_d_; }
+    std::vector<queue_type> &get_devices() { return base_type::devices_; }
+    typename std::vector<queue_type>::size_type get_num_devices() const { return base_type::devices_.size(); }
 };

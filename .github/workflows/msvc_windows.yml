@@ -1,0 +1,29 @@
+name: Windows CPU
+on: push
+jobs:
+  MSVC-Test:
+    runs-on: windows-latest
+    steps:
+      - name: "Install MSVC 14.29"
+        uses: ilammy/msvc-dev-cmd@v1.9.0
+        with:
+          toolset: 14.29
+      - name: "Install cmake 3.20.1"
+        uses: lukka/get-cmake@v3.20.1
+      - name: "Clone Step"
+        uses: actions/checkout@v2
+        with:
+          path: PLSSVM
+      - name: "CMake Step"
+        run: |
+          mkdir PLSSVM/build
+          cd PLSSVM/build
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_ASSERTS=ON..
+      - name: "Build Step"
+        run: |
+          cd PLSSVM/build
+          cmake --build .
+      - name: "Test Step"
+        run: |
+          cd PLSSVM/build
+          ctest -C Debug -V

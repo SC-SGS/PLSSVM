@@ -15,10 +15,11 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "backends/compare.hpp"  // compare::kernel_function
-#include "utility.hpp"           // util::create_temp_file, util::gtest_expect_floating_point_eq
+#include "utility.hpp"           // util::gtest_expect_floating_point_eq, util::google_test::parameter_definition, util::google_test::parameter_definition_to_name,
+                                 // util::create_temp_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_THAT, EXPECT_THROW_WHAT, EXPECT_CALL
+#include "gtest/gtest.h"  // ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_THAT, EXPECT_CALL
 
 #include <algorithm>   // std::generate
 #include <cstddef>     // std::size_t
@@ -42,12 +43,11 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
     // create parameter object
     plssvm::parameter<TypeParam> params;
     params.print_info = false;
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
     using real_type = typename decltype(csvm)::real_type;
-    using size_type = typename decltype(csvm)::size_type;
 
     // transform data without and with boundary
     std::vector<real_type> result_no_boundary = csvm.transform_data(csvm.get_data(), 0, csvm.get_num_data_points() - 1);
@@ -58,8 +58,8 @@ TYPED_TEST(BaseCSVMTransform, transform_data) {
     ASSERT_EQ(result_boundary.size(), (csvm.get_num_data_points() + 10) * csvm.get_num_features());
 
     // check transformed content for correctness
-    for (size_type datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
-        for (size_type feature = 0; feature < csvm.get_num_features(); ++feature) {
+    for (std::size_t datapoint = 0; datapoint < csvm.get_num_data_points() - 1; ++datapoint) {
+        for (std::size_t feature = 0; feature < csvm.get_num_features(); ++feature) {
             util::gtest_expect_floating_point_eq(
                 csvm.get_data()[datapoint][feature],
                 result_no_boundary[datapoint + feature * (csvm.get_num_data_points() - 1)],
@@ -92,7 +92,7 @@ TYPED_TEST(BaseCSVM, constructor) {
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -110,7 +110,7 @@ TYPED_TEST(BaseCSVM, constructor) {
 
     EXPECT_EQ(params.data_ptr, csvm.get_data_ptr());
     EXPECT_EQ(params.value_ptr, csvm.get_value_ptr());
-    EXPECT_EQ(params.alphas_ptr, csvm.get_alpha_ptr());
+    EXPECT_EQ(params.alpha_ptr, csvm.get_alpha_ptr());
 
     EXPECT_EQ(params.data_ptr->size(), csvm.get_num_data_points());
     EXPECT_EQ(params.data_ptr->front().size(), csvm.get_num_features());
@@ -118,62 +118,46 @@ TYPED_TEST(BaseCSVM, constructor) {
     EXPECT_EQ(real_type{ 0 }, csvm.get_QA_cost());
 }
 
-// check whether calling the plssvm::csvm<T>::csvm(plssvm::parameter<T>) constructor without data correctly fails
-TYPED_TEST(BaseCSVM, constructor_missing_data) {
+// check whether calling the plssvm::csvm<T>::csvm(plssvm::parameter<T>) constructor with illegal parameter values correctly fails
+TYPED_TEST(BaseCSVM, constructor_exceptions) {
     // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
 
-    // create C-SVM
-    EXPECT_THROW_WHAT(mock_csvm csvm{ params }, plssvm::exception, "No data points provided!");
+    using real_type = typename decltype(params)::real_type;
+
+    // create C-SVM with data_ptr == nullptr
+    EXPECT_THROW_WHAT(mock_csvm{ params }, plssvm::exception, "No data points provided!");
+
+    // create C-SVM with empty data_ptr
+    params.data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>();
+    EXPECT_THROW_WHAT(mock_csvm{ params }, plssvm::exception, "Data set is empty!");
+
+    // create C-SVM with a data set with features of different sizes
+    std::vector<std::vector<real_type>> data = { { real_type{ 1 } }, { real_type{ 2 }, real_type{ 3 } } };
+    params.data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
+    EXPECT_THROW_WHAT(mock_csvm{ params }, plssvm::exception, "All points in the data vector must have the same number of features!");
+
+    // create C-SVM with zero sized features
+    data = { {}, {} };
+    params.data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
+    EXPECT_THROW_WHAT(mock_csvm{ params }, plssvm::exception, "No features provided for the data points!");
+
+    // if alpha_ptr is set, it must have the same size as data_ptr
+    data = { { real_type{ 1 } }, { real_type{ 2 } }, { real_type{ 3 } } };
+    params.data_ptr = std::make_shared<const std::vector<std::vector<real_type>>>(std::move(data));
+    std::vector<real_type> alpha = { real_type{ 1 }, real_type{ 2 }, real_type{ 3 } };
+    params.alpha_ptr = std::make_shared<const std::vector<real_type>>(std::move(alpha));
 }
 
-// check whether writing the resulting model file is correct
-TYPED_TEST(BaseCSVM, write_model) {
+// check whether attempting to write the model file wrong data correctly fails
+TYPED_TEST(BaseCSVM, write_model_exceptions) {
     // create parameter object
     plssvm::parameter<typename TypeParam::real_type> params;
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
-
-    // create C-SVM
-    mock_csvm csvm{ params };
-
-    // create temporary model file and write model
-    std::string model_file = util::create_temp_file();
-    // learn model
-    csvm.learn();
-    // write learned model to file
-    csvm.write_model(model_file);
-
-    // read content of model file and delete it
-    std::ifstream model_ifs(model_file);
-    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
-    std::filesystem::remove(model_file);
-
-    // check model file content for correctness
-    switch (params.kernel) {
-        case plssvm::kernel_type::linear:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
-            break;
-        case plssvm::kernel_type::polynomial:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
-            break;
-        case plssvm::kernel_type::rbf:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
-            break;
-    }
-}
-
-// check whether attempting to write the model file with missing data correctly fails
-TYPED_TEST(BaseCSVM, write_model_missing_data) {
-    // create parameter object
-    plssvm::parameter<typename TypeParam::real_type> params;
-    params.print_info = false;
-    params.kernel = TypeParam::kernel;
-
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -181,10 +165,14 @@ TYPED_TEST(BaseCSVM, write_model_missing_data) {
     // attempting to write a model before a call to learn() should result in an exception
     EXPECT_THROW_WHAT(csvm.write_model("foo"), plssvm::exception, "No alphas given! Maybe a call to 'learn()' is missing?");
 
-    // attempting to write a model with da data set without labels should result in an exception
+    // attempting to write a model with a data set without labels should result in an exception
     csvm.get_alpha_ptr() = std::make_shared<const std::vector<typename TypeParam::real_type>>();
     csvm.get_value_ptr() = nullptr;
     EXPECT_THROW_WHAT(csvm.write_model("foo"), plssvm::exception, "No labels given! Maybe the data is only usable for prediction?");
+
+    // attempting to write a model with different number of labels than data points should result in an exception
+    csvm.get_value_ptr() = std::make_shared<const std::vector<typename TypeParam::real_type>>();
+    EXPECT_THROW_WHAT(csvm.write_model("foo"), plssvm::exception, "Number of labels (0) must match the number of data points (5)!");
 }
 
 // check whether the correct kernel function is executed
@@ -195,7 +183,8 @@ TYPED_TEST(BaseCSVM, kernel_function) {
     params.kernel = TypeParam::kernel;
 
     // set dummy data
-    params.data_ptr = std::make_shared<const std::vector<std::vector<typename decltype(params)::real_type>>>(1);
+    std::vector<std::vector<typename decltype(params)::real_type>> vec(1, std::vector<typename decltype(params)::real_type>(1));
+    params.data_ptr = std::make_shared<const std::vector<std::vector<typename decltype(params)::real_type>>>(std::move(vec));
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -207,7 +196,6 @@ TYPED_TEST(BaseCSVM, kernel_function) {
     std::vector<real_type> x2(size);
 
     // fill vectors with random values
-    std::random_device rnd_device;
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<real_type> dist(1.0, 2.0);
@@ -230,7 +218,7 @@ TYPED_TEST(BaseCSVM, learn) {
     params.print_info = false;
     params.kernel = TypeParam::kernel;
 
-    params.parse_train_file(TEST_PATH "/data/libsvm/5x4.libsvm");
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
     // create C-SVM
     mock_csvm csvm{ params };
@@ -240,4 +228,165 @@ TYPED_TEST(BaseCSVM, learn) {
     EXPECT_CALL(csvm, solver_CG).Times(1);
 
     csvm.learn();
+}
+
+// check whether plssvm::csvm<T>::learn() with wrong data correctly fails
+TYPED_TEST(BaseCSVM, learn_exceptions) {
+    // create parameter object
+    plssvm::parameter<typename TypeParam::real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // functions shouldn't be called, since the exceptions must trigger beforehand
+    EXPECT_CALL(csvm, setup_data_on_device).Times(0);
+    EXPECT_CALL(csvm, generate_q).Times(0);
+    EXPECT_CALL(csvm, solver_CG).Times(0);
+
+    // attempting to call learn() without any labels specified should result in an exception
+    csvm.get_value_ptr() = nullptr;
+    EXPECT_THROW_WHAT(csvm.learn(), plssvm::exception, "No labels given for training! Maybe the data is only usable for prediction?");
+
+    // attempting to call learn() with different number of labels than data points should result in an exception
+    csvm.get_value_ptr() = std::make_shared<const std::vector<typename TypeParam::real_type>>();
+    EXPECT_THROW_WHAT(csvm.learn(), plssvm::exception, "Number of labels (0) must match the number of data points (5)!");
+}
+
+// check whether plssvm::csvm<T>::accuracy() with an empty points vector returns an accuracy of 0
+TYPED_TEST(BaseCSVM, accuracy_empty_points) {
+    using real_type = typename TypeParam::real_type;
+    // create parameter object
+    plssvm::parameter<real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // predict should never be called, since the exceptions must trigger beforehand
+    EXPECT_CALL(csvm, predict).Times(0);
+
+    // the number of provided points and provided correct labels must match
+    const std::vector<std::vector<real_type>> points{};
+    const std::vector<real_type> correct_labels{};
+    util::gtest_expect_floating_point_eq(real_type{ 0 }, csvm.accuracy(points, correct_labels));
+}
+
+// check whether plssvm::csvm<T>::accuracy() without labels or wrong number if features specified correctly fails
+TYPED_TEST(BaseCSVM, accuracy_exceptions) {
+    using real_type = typename TypeParam::real_type;
+    // create parameter object
+    plssvm::parameter<real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // predict should never be called, since the exceptions must trigger beforehand
+    EXPECT_CALL(csvm, predict).Times(0);
+
+    [[maybe_unused]] real_type acc;
+    // attempting to call accuracy() with the wrong number of features should result in an exception
+    EXPECT_THROW_WHAT(acc = csvm.accuracy({}, -1), plssvm::exception, "Number of features per data point (4) must match the number of features of the predict point (0)!");
+
+    // the number of provided points and provided correct labels must match
+    std::vector<std::vector<real_type>> points = { { real_type{ 1 } }, { real_type{ 2 } } };
+    std::vector<real_type> correct_labels = { real_type{ -1 } };
+    EXPECT_THROW_WHAT(acc = csvm.accuracy(points, correct_labels), plssvm::exception, "Number of data points (2) must match number of correct labels (1)!");
+
+    // the number of features of the prediction points must all be the same
+    points = { { real_type{ 1 }, real_type{ 2 } }, { real_type{ 3 } } };
+    correct_labels = { real_type{ -1 }, real_type{ 1 } };
+    EXPECT_THROW_WHAT(acc = csvm.accuracy(points, correct_labels), plssvm::exception, "All points in the prediction point vector must have the same number of features!");
+
+    // the number of features of the prediction points must match the number of features of the data points
+    points = { { real_type{ 1 }, real_type{ 2 } }, { real_type{ 3 }, real_type{ 4 } } };
+    EXPECT_THROW_WHAT(acc = csvm.accuracy(points, correct_labels), plssvm::exception, "Number of features per data point (4) must match the number of features per predict point (2)!");
+
+    // attempting to call accuracy() without any labels specified should result in an exception
+    csvm.get_value_ptr() = nullptr;
+    EXPECT_THROW_WHAT(acc = csvm.accuracy(), plssvm::exception, "No labels given! Maybe the data is only usable for prediction?");
+}
+
+// check whether plssvm::csvm<T>::predict_label() with an empty points vector returns an empty vector
+TYPED_TEST(BaseCSVM, predict_label_empty_points) {
+    using real_type = typename TypeParam::real_type;
+    // create parameter object
+    plssvm::parameter<real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // predict should never be called, since the exceptions must trigger beforehand
+    EXPECT_CALL(csvm, predict).Times(0);
+
+    // the number of provided points and provided correct labels must match
+    const std::vector<std::vector<real_type>> points{};
+    ASSERT_EQ(std::vector<real_type>{}, csvm.predict_label(points));
+}
+
+// check whether plssvm::csvm<T>::predict_label() without labels or wrong number if features specified correctly fails
+TYPED_TEST(BaseCSVM, predict_label_exceptions) {
+    using real_type = typename TypeParam::real_type;
+    // create parameter object
+    plssvm::parameter<real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // predict should never be called, since the exceptions must trigger beforehand
+    EXPECT_CALL(csvm, predict).Times(0);
+
+    [[maybe_unused]] real_type acc;
+    // attempting to call predict_label() with the wrong number of features should result in an exception
+    std::vector<real_type> point{};
+    EXPECT_THROW_WHAT(acc = csvm.predict_label(point), plssvm::exception, "Number of features per data point (4) must match the number of features of the predict point (0)!");
+
+    [[maybe_unused]] std::vector<real_type> acc_vec;
+    // the number of features of the prediction points must all be the same
+    std::vector<std::vector<real_type>> points = { { real_type{ 1 }, real_type{ 2 } }, { real_type{ 3 } } };
+    EXPECT_THROW_WHAT(acc_vec = csvm.predict_label(points), plssvm::exception, "All points in the prediction point vector must have the same number of features!");
+
+    // the number of features of the prediction points must match the number of features of the data points
+    points = { { real_type{ 1 }, real_type{ 2 } }, { real_type{ 3 }, real_type{ 4 } } };
+    EXPECT_THROW_WHAT(acc_vec = csvm.predict_label(points), plssvm::exception, "Number of features per data point (4) must match the number of features per predict point (2)!");
+}
+
+// check whether plssvm::csvm<T>::predict_label() without labels or wrong number if features specified correctly fails
+TYPED_TEST(BaseCSVM, predict_exceptions) {
+    using real_type = typename TypeParam::real_type;
+    // create parameter object
+    plssvm::parameter<real_type> params;
+    params.print_info = false;
+    params.kernel = TypeParam::kernel;
+
+    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
+
+    // create C-SVM
+    mock_csvm csvm{ params };
+
+    // predict should never be called, since the exceptions must trigger beforehand
+    EXPECT_CALL(csvm, predict).Times(0);
+
+    [[maybe_unused]] real_type label;
+    // attempting to call predict_label() with the wrong number of features should result in an exception
+    const std::vector<real_type> point;
+    EXPECT_THROW_WHAT(label = csvm.predict(point), plssvm::exception, "Number of features per data point (4) must match the number of features of the predict point (0)!");
 }
