@@ -65,12 +65,6 @@ docs/*
 # auto-generated version header
 include/plssvm/version/version.hpp
 
-# data folder
-!data/
-data/*
-!data/generate_data.py
-!data/collect_runtimes.py
-
 # data in test folder
 !tests/data/
 tests/data/*

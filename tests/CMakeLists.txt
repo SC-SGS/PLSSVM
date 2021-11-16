@@ -60,7 +60,7 @@ if(PLSSVM_GENERATE_TEST_FILE)
 
         message(STATUS "Generating test file: ${PLSSVM_TEST_FILE}.")
         execute_process(
-            COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/data/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}"
+            COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}"
             OUTPUT_QUIET)
     endif()
 else()
