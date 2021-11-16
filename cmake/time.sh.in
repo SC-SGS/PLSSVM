@@ -9,7 +9,7 @@
 # set paths to executables and scripts
 PLSSVM_TRAIN="@CMAKE_BINARY_DIR@/svm-train"
 PLSSVM_PREDICT="@CMAKE_BINARY_DIR@/svm-predict"
-DATA_GENERATOR="@PROJECT_SOURCE_DIR@/data/generate_data.py"
+DATA_GENERATOR="@PROJECT_SOURCE_DIR@/utility_scripts/generate_data.py"
 COLLECT_RUNTIME="@PROJECT_SOURCE_DIR@/utility_scripts/collect_runtimes.py"
 MANIPULATE_CSV="python3 @PROJECT_SOURCE_DIR@/utility_scripts/manipulate_csv.py"
 

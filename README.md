@@ -1,6 +1,6 @@
 # Least-Squares Support-Vector Machine
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml) 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
 
 Implementation of a parallel [least-squares support-vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
 The currently available backends are:
@@ -13,7 +13,7 @@ The currently available backends are:
 
 ### Dependencies
 
-General dependencies: 
+General dependencies:
   - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
   - [CMake](https://cmake.org/) 3.18 or newer
   - [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
@@ -172,7 +172,7 @@ The library supports the `install` target:
 
 ### Generating data
 
-The repository comes with a Python3 script (in the `data/` directory) to simply generate arbitrarily large data sets.
+The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
 
 In order to use all functionality, the following Python3 modules must be installed:
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`numpy`](https://pypi.org/project/numpy/),
@@ -181,7 +181,7 @@ In order to use all functionality, the following Python3 modules must be install
 [`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
 ```bash
-> python3 generate_data.py --help
+> python3 utility_scripts/generate_data**.py --help
 usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]
 
 optional arguments:
