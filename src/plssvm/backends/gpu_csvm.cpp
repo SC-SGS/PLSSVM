@@ -22,7 +22,7 @@
     #include "sycl/sycl.hpp"
 #endif
 
-#include <algorithm>  // std::all_of, std::min
+#include <algorithm>  // std::all_of, std::min, std::max
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <vector>     // std::vector
@@ -270,7 +270,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         }
     }
     if (print_info_) {
-        fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
+        fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", std::max(run, imax), delta, eps * eps * delta0);
     }
 
     return std::vector<real_type>(x.begin(), x.begin() + dept_);
