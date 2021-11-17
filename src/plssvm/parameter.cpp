@@ -385,7 +385,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
     std::size_t header = 0;
     {
         for (; header < f.num_lines(); ++header) {
-            std::string line{ f.line(header) };
+            std::string line{ detail::trim(f.line(header)) };
             detail::to_lower_case(line);
 
             // separate value from model header entry
