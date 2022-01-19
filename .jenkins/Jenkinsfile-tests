@@ -85,7 +85,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda
+                        module load cuda/11.2.2
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
@@ -100,7 +100,7 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            module load cuda
+                            module load cuda/11.2.2
                             cd build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -112,9 +112,9 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda
+                        module load cuda/11.2.2
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/hipsycl
+                        module load pcsgs05/hipsycl_20_11_16
                         mkdir -p build/Release_hip
                         cd build/Release_hip
                         rm -rf *
@@ -129,9 +129,9 @@ pipeline {
                 dir('plssvm') {
                     warnError('hipSYCL Release tests failed!') {
                         sh '''
-                            module load cuda
+                            module load cuda/11.2.2
                             module use /home/breyerml/.modulefiles/
-                            module load pcsgs05/hipsycl
+                            module load pcsgs05/hipsycl_20_11_16
                             cd build/Release_hip
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -143,9 +143,9 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda
+                        module load cuda/11.2.2
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/dpcpp_rt
+                        module load pcsgs05/dpcpp_2022_01_18
                         mkdir -p build/Release_dpcpp
                         cd build/Release_dpcpp
                         rm -rf *
@@ -160,9 +160,9 @@ pipeline {
                 dir('plssvm') {
                     warnError('DPC++ Release tests failed!') {
                         sh '''
-                            module load cuda
+                            module load cuda/11.2.2
                             module use /home/breyerml/.modulefiles/
-                            module load pcsgs05/dpcpp_rt
+                            module load pcsgs05/dpcpp_2022_01_18
                             cd build/Release_dpcpp
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -174,7 +174,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda
+                        module load cuda/11.2.2
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
                         rm -rf *
@@ -191,9 +191,9 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda
+                        module load cuda/11.2.2
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/hipsycl
+                        module load pcsgs05/hipsycl_20_11_16
                         mkdir -p build/Debug_hip
                         cd build/Debug_hip
                         rm -rf *
@@ -207,9 +207,9 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda
+                        module load cuda/11.2.2
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/dpcpp_rt
+                        module load pcsgs05/dpcpp_2022_01_18
                         mkdir -p build/Debug_dpcpp
                         cd build/Debug_dpcpp
                         rm -rf *

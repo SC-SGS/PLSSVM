@@ -9,6 +9,7 @@
 ########################################################################################################################
 
 import argparse
+import re
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -32,7 +33,7 @@ if args.name is None:
         # error if no GPUs where found
         raise RuntimeError("Couldn't find any NVIDIA or AMD GPU(s)!")
     else:
-        print("Found {} GPU(s):\n{}".format(len(gpu_names), gpu_names))
+        print("Found {} GPU(s):".format(len(gpu_names)))
 else:
     # use provided GPU name
     gpu_names = [args.name]
@@ -119,6 +120,7 @@ nvidia_compute_capability_mapping = {
 # mapping of AMD architectures given the GPU name
 # https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst#id145
 amd_arch_mapping = {
+    "Radeon Pro VII": "gfx906",
     "Radeon VII": "gfx906",
     "Radeon Instinct MI50": "gfx906",
     "Radeon Instinct MI6": "gfx906",
@@ -141,10 +143,20 @@ amd_arch_mapping = {
 
 # output mapped name
 for name in gpu_names:
-    if name in nvidia_compute_capability_mapping:
-        print(nvidia_compute_capability_mapping[name])
-    elif name in amd_arch_mapping:
-        name = name.replace("AMD", "").strip()
-        print(amd_arch_mapping[name])
-    else:
-        raise RuntimeError("Unrecognized GPU name {}".format(name))
+    found_name = False
+    for key in nvidia_compute_capability_mapping:
+        if re.search(key, name, re.IGNORECASE):
+            print("  {}: {}".format(name, nvidia_compute_capability_mapping[key]))
+            found_name = True
+            break
+
+    for key in amd_arch_mapping:
+        name_cleaned = name.replace("AMD", "").strip()
+        name_cleaned = name_cleaned.replace("(TM) ", "").strip()
+        if re.search(key, name_cleaned, re.IGNORECASE):
+            print("  {}: {}".format(name_cleaned, amd_arch_mapping[key]))
+            found_name = True
+            break
+
+    if not found_name:
+        raise RuntimeError("Unrecognized GPU name '{}'".format(name))

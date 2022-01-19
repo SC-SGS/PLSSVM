@@ -19,17 +19,17 @@
  */
 inline void __attribute__((overloadable)) atomicAdd(__global const double *addr, const double val) {
     union {
-        ulong u32;
-        double f32;
+        ulong u64;
+        double f64;
     } next, expected, current;
-    current.f32 = *addr;
+    current.f64 = *addr;
     do {
-        expected.f32 = current.f32;
-        next.f32 = expected.f32 + val;
-        current.u32 = atomic_cmpxchg((volatile __global ulong *) addr,
-                                     expected.u32,
-                                     next.u32);
-    } while (current.u32 != expected.u32);
+        expected.f64 = current.f64;
+        next.f64 = expected.f64 + val;
+        current.u64 = atom_cmpxchg((volatile __global ulong *) addr,
+                                   expected.u64,
+                                   next.u64);
+    } while (current.u64 != expected.u64);
 }
 
 /**

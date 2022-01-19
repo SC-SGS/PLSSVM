@@ -167,10 +167,11 @@ void parameter<T>::parse_libsvm_file(const std::string &filename, std::shared_pt
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {
-        fmt::print("Read {} data points with {} features in {} using the libsvm parser.\n",
+        fmt::print("Read {} data points with {} features in {} using the libsvm parser from file '{}'.\n",
                    data_ptr_ref->size(),
                    (*data_ptr_ref)[0].size(),
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                   filename);
     }
 }
 
@@ -353,10 +354,11 @@ void parameter<T>::parse_arff_file(const std::string &filename, std::shared_ptr<
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {
-        fmt::print("Read {} data points with {} features in {} using the arff parser.\n",
+        fmt::print("Read {} data points with {} features in {} using the arff parser from file '{}'.\n",
                    data_ptr_ref->size(),
                    num_features,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                   filename);
     }
 }
 
@@ -509,10 +511,11 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info) {
-        fmt::print("Read {} support vectors with {} features in {} using the libsvm model parser.\n",
+        fmt::print("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n",
                    data_ptr->size(),
                    (*data_ptr)[0].size(),
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                   filename);
     }
 }
 

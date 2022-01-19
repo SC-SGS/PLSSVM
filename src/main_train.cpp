@@ -10,6 +10,8 @@
 
 #include "plssvm/core.hpp"
 
+#include "fmt/ostream.h"  // use operator<< to output enum class
+
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::endl
 
@@ -24,6 +26,33 @@ int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
         plssvm::parameter_train<real_type> params{ argc, argv };
+
+        // output used parameter
+        if (params.print_info) {
+            fmt::print("\n");
+            fmt::print("task: training\n");
+            fmt::print("kernel type: {} -> ", params.kernel);
+            switch (params.kernel) {
+                case plssvm::kernel_type::linear:
+                    fmt::print("u'*v\n");
+                    break;
+                case plssvm::kernel_type::polynomial:
+                    fmt::print("(gamma*u'*v + coef0)^degree\n");
+                    fmt::print("gamma: {}\n", params.gamma);
+                    fmt::print("coef0: {}\n", params.coef0);
+                    fmt::print("degree: {}\n", params.degree);
+                    break;
+                case plssvm::kernel_type::rbf:
+                    fmt::print("exp(-gamma*|u-v|^2)\n");
+                    fmt::print("gamma: {}\n", params.gamma);
+                    break;
+            }
+            fmt::print("cost: {}\n", params.cost);
+            fmt::print("epsilon: {}\n", params.epsilon);
+            fmt::print("input file (data set): '{}'\n", params.input_filename);
+            fmt::print("output file (model): '{}'\n", params.model_filename);
+            fmt::print("\n");
+        }
 
         // create SVM
         auto svm = plssvm::make_csvm(params);
