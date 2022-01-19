@@ -10,8 +10,10 @@
 
 #include "plssvm/core.hpp"
 
+#include "fmt/chrono.h"  // directly print std::chrono literals with fmt
 #include "fmt/format.h"  // fmt::format, fmt::print
 
+#include <chrono>     // std::chrono
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
 #include <iostream>   // std::cerr, std::endl
@@ -37,8 +39,16 @@ int main(int argc, char *argv[]) {
 
         // write prediction file
         {
+            auto start_time = std::chrono::steady_clock::now();
             std::ofstream out{ params.predict_filename };
             out << fmt::format("{}", fmt::join(labels, "\n"));
+            auto end_time = std::chrono::steady_clock::now();
+            if (params.print_info) {
+                fmt::print("Wrote prediction file ('{}') with {} labels in {}.\n",
+                           params.predict_filename,
+                           labels.size(),
+                           std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+            }
         }
 
         // print achieved accuracy if possible
