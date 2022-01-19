@@ -100,7 +100,7 @@ Dependencies</h2>
 <li>the code must be compiled with a SYCL capable compiler; currently tested with <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a></li>
 </ul>
 <p>Additional dependencies if <code>PLSSVM_ENABLE_TESTING</code> and <code>PLSSVM_GENERATE_TEST_FILE</code> are both set to <code>ON</code>:</p><ul>
-<li><a href="https://www.python.org/">Python3</a> with the <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a> and <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a> modules</li>
+<li><a href="https://www.python.org/">Python3</a> with the <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a>, <a href="https://docs.python.org/3/library/timeit.html"><code>timeit</code></a> and <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a> modules</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md3"></a>
 Building</h2>
@@ -208,7 +208,7 @@ Usage</h1>
 <h2><a class="anchor" id="autotoc_md11"></a>
 Generating data</h2>
 <p>The repository comes with a Python3 script (in the <code>utility_scripts/</code> directory) to simply generate arbitrarily large data sets.</p>
-<p>In order to use all functionality, the following Python3 modules must be installed: <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a>, <a href="https://pypi.org/project/numpy/"><code>numpy</code></a>, <a href="https://pypi.org/project/pandas/"><code>pandas</code></a>, <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a>, <a href="https://pypi.org/project/arff/"><code>arff</code></a>, <a href="https://pypi.org/project/matplotlib/"><code>matplotlib</code></a> and <a href="https://pypi.org/project/matplotlib/"><code>mpl_toolkits</code></a></p>
+<p>In order to use all functionality, the following Python3 modules must be installed: <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a>, <a href="https://docs.python.org/3/library/timeit.html"><code>timeit</code></a>, <a href="https://pypi.org/project/numpy/"><code>numpy</code></a>, <a href="https://pypi.org/project/pandas/"><code>pandas</code></a>, <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a>, <a href="https://pypi.org/project/arff/"><code>arff</code></a>, <a href="https://pypi.org/project/matplotlib/"><code>matplotlib</code></a> and <a href="https://pypi.org/project/matplotlib/"><code>mpl_toolkits</code></a></p>
 <div class="fragment"><div class="line">&gt; python3 utility_scripts/generate_data**.py --help</div>
 <div class="line">usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]</div>
 <div class="line"> </div>
@@ -344,7 +344,7 @@ License</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 16 2021 09:58:37 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jan 19 2022 16:43:40 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

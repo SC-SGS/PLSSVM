@@ -134,7 +134,7 @@ $(function() {
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160; </div>
 <div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;            temp = alpha_d_[data_point_index] * ::sycl::pow(gamma_ * temp + coef0_, <span class="keyword">static_cast&lt;</span><a class="code" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a><span class="keyword">&gt;</span>(degree_));</div>
 <div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160; </div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;            <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ out_d_[predict_point_index] } += temp;</div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;            <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ out_d_[predict_point_index] } += temp;</div>
 <div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;        }</div>
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    }</div>
 <div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160; </div>
@@ -176,7 +176,7 @@ $(function() {
 <div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160; </div>
 <div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;            temp = alpha_d_[data_point_index] * ::sycl::exp(-gamma_ * temp);</div>
 <div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160; </div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;            <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ out_d_[predict_point_index] } += temp;</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;            <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ out_d_[predict_point_index] } += temp;</div>
 <div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;        }</div>
 <div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;    }</div>
 <div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160; </div>
@@ -208,14 +208,14 @@ $(function() {
 <div class="ttc" id="aclassplssvm_1_1sycl_1_1device__kernel__w__linear_html_ab06673a2178c485a95850411202e5043"><div class="ttname"><a href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html#ab06673a2178c485a95850411202e5043">plssvm::sycl::device_kernel_w_linear::device_kernel_w_linear</a></div><div class="ttdeci">device_kernel_w_linear(real_type *w_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const kernel_index_type num_features)</div><div class="ttdoc">Construct a new device kernel generating the w vector used to speedup the prediction when using the l...</div><div class="ttdef"><b>Definition:</b> predict_kernel.hpp:42</div></div>
 <div class="ttc" id="aconstants_8hpp_html"><div class="ttname"><a href="constants_8hpp.html">constants.hpp</a></div><div class="ttdoc">Global type definitions and compile-time constants.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1sycl_html"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a></div><div class="ttdoc">Namespace containing the C-SVM using the SYCL backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:32</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1sycl_html_ae710df47ac7d24e571ab9bc2b2816c16"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl::atomic_op</a></div><div class="ttdeci">detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt; atomic_op</div><div class="ttdoc">Shortcut alias for a sycl::atomic_ref targeting global memory.</div><div class="ttdef"><b>Definition:</b> atomics.hpp:35</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1sycl_html_ad55ad7c8bfa5b790ee7d3f841f8ea03f"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">plssvm::sycl::atomic_op</a></div><div class="ttdeci">::sycl::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt; atomic_op</div><div class="ttdoc">Shortcut alias for a sycl::atomic_ref targeting global memory.</div><div class="ttdef"><b>Definition:</b> atomics.hpp:23</div></div>
 <div class="ttc" id="anamespaceplssvm_html_a76052beb2b262c165f1811c5064ca1b5"><div class="ttname"><a href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">plssvm::THREAD_BLOCK_SIZE</a></div><div class="ttdeci">constexpr kernel_index_type THREAD_BLOCK_SIZE</div><div class="ttdoc">Global compile-time constant used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:23</div></div>
 <div class="ttc" id="anamespaceplssvm_html_aab3a343173d93c72cd62edcde3934f1a"><div class="ttname"><a href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">plssvm::kernel_index_type</a></div><div class="ttdeci">int kernel_index_type</div><div class="ttdoc">Integer type used inside kernels.</div><div class="ttdef"><b>Definition:</b> constants.hpp:17</div></div>
 <div class="ttc" id="anamespaceplssvm_html_ac7c75fadcf6b7f3ea0d1bb831a70933d"><div class="ttname"><a href="namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d">plssvm::INTERNAL_BLOCK_SIZE</a></div><div class="ttdeci">constexpr kernel_index_type INTERNAL_BLOCK_SIZE</div><div class="ttdoc">Global compile-time constant used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:30</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 16 2021 09:58:37 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jan 19 2022 16:43:40 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

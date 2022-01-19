@@ -77,16 +77,14 @@ $(function() {
 
 <p>Defines an atomic_ref wrapper for the SYCL backend.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="backends_2SYCL_2detail_2constants_8hpp_source.html">plssvm/backends/SYCL/detail/constants.hpp</a>&quot;</code><br />
-<code>#include &quot;sycl/sycl.hpp&quot;</code><br />
+<div class="textblock"><code>#include &quot;sycl/sycl.hpp&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for atomics.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="atomics_8hpp__incl.png" border="0" usemap="#ainclude_2plssvm_2backends_2SYCL_2detail_2atomics_8hpp" alt=""/></div>
 <map name="ainclude_2plssvm_2backends_2SYCL_2detail_2atomics_8hpp" id="ainclude_2plssvm_2backends_2SYCL_2detail_2atomics_8hpp">
-<area shape="rect" title="Defines an atomic_ref wrapper for the SYCL backend." alt="" coords="79,5,264,47"/>
-<area shape="rect" href="backends_2SYCL_2detail_2constants_8hpp.html" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="5,95,175,136"/>
-<area shape="rect" title=" " alt="" coords="199,102,306,129"/>
+<area shape="rect" title="Defines an atomic_ref wrapper for the SYCL backend." alt="" coords="5,5,191,47"/>
+<area shape="rect" title=" " alt="" coords="45,95,151,121"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -109,16 +107,13 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm_1_1sycl"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1sycl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespaceplssvm_1_1sycl_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html">plssvm::sycl::detail</a></td></tr>
-<tr class="memdesc:namespaceplssvm_1_1sycl_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing SYCL backend specific implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl::atomic_op</a> = detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
-<tr class="memdesc:ae710df47ac7d24e571ab9bc2b2816c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory.  <a href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">More...</a><br /></td></tr>
-<tr class="separator:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">plssvm::sycl::atomic_op</a> = ::sycl::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
+<tr class="memdesc:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory.  <a href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">More...</a><br /></td></tr>
+<tr class="separator:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Defines an atomic_ref wrapper for the SYCL backend. </p>
@@ -130,7 +125,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 16 2021 09:58:37 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jan 19 2022 16:43:40 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

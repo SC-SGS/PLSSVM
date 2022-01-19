@@ -123,10 +123,10 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op</a> = detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
-<tr class="memdesc:ae710df47ac7d24e571ab9bc2b2816c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory.  <a href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">More...</a><br /></td></tr>
-<tr class="separator:ae710df47ac7d24e571ab9bc2b2816c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op</a> = ::sycl::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
+<tr class="memdesc:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory.  <a href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">More...</a><br /></td></tr>
+<tr class="separator:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">local_accessor</a> = ::sycl::accessor&lt; T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local &gt;</td></tr>
 <tr class="memdesc:a2565372115455bf9e79f1aa67067175a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a SYCL local accessor.  <a href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">More...</a><br /></td></tr>
@@ -135,8 +135,8 @@ Typedefs</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Namespace containing the C-SVM using the SYCL backend. </p>
 </div><h2 class="groupheader">Typedef Documentation</h2>
-<a id="ae710df47ac7d24e571ab9bc2b2816c16"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae710df47ac7d24e571ab9bc2b2816c16">&#9670;&nbsp;</a></span>atomic_op</h2>
+<a id="ad55ad7c8bfa5b790ee7d3f841f8ea03f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad55ad7c8bfa5b790ee7d3f841f8ea03f">&#9670;&nbsp;</a></span>atomic_op</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -144,7 +144,7 @@ Typedefs</h2></td></tr>
 template&lt;typename T &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl::atomic_op</a> = typedef detail::atomic_ref&lt;T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;</td>
+          <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">plssvm::sycl::atomic_op</a> = typedef ::sycl::atomic_ref&lt;T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -186,7 +186,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 16 2021 09:58:37 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jan 19 2022 16:43:40 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

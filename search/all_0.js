@@ -10,7 +10,7 @@ var searchData=
   ['as_5fupper_5fcase_7',['as_upper_case',['../namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218',1,'plssvm::detail']]],
   ['assert_2ehpp_8',['assert.hpp',['../assert_8hpp.html',1,'']]],
   ['assign_9',['assign',['../classplssvm_1_1opencl_1_1detail_1_1error__code.html#a48736ac7defa5d03e1e9d6ca36d5abc4',1,'plssvm::opencl::detail::error_code']]],
-  ['atomic_5fop_10',['atomic_op',['../namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16',1,'plssvm::sycl']]],
+  ['atomic_5fop_10',['atomic_op',['../namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f',1,'plssvm::sycl']]],
   ['atomicadd_11',['atomicAdd',['../namespaceplssvm_1_1cuda_1_1detail.html#ae8b5a21e9df7f0ea01328f068dbde1ea',1,'plssvm::cuda::detail::atomicAdd()'],['../atomics_8cl.html#a657182979b3370b97db8ce5dc9d02247',1,'atomicAdd(__global const double *addr, const double val):&#160;atomics.cl'],['../atomics_8cl.html#a6dcad4ff5a4c8a211c2b3bc906e1b1a6',1,'atomicAdd(__global const float *addr, const float val):&#160;atomics.cl']]],
   ['atomics_2ecl_12',['atomics.cl',['../atomics_8cl.html',1,'']]],
   ['atomics_2ecuh_13',['atomics.cuh',['../atomics_8cuh.html',1,'']]],

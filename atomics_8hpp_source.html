@@ -74,33 +74,20 @@ $(function() {
 <a href="atomics_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160; </div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#pragma once</span></div>
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="backends_2SYCL_2detail_2constants_8hpp.html">plssvm/backends/SYCL/detail/constants.hpp</a>&quot;</span>  <span class="comment">// PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, PLSSVM_SYCL_BACKEND_COMPILER_DPCPP</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#include &quot;sycl/sycl.hpp&quot;</span>  <span class="comment">// sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space</span></div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160; </div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor">#include &quot;sycl/sycl.hpp&quot;</span>  <span class="comment">// sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a> {</div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160; </div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a> {</div>
-<div class="line"><a name="l00019"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1sycl_1_1detail.html">   19</a></span>&#160;<span class="keyword">namespace </span>detail {</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160; </div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">// TODO: remove #if after Intel has a SYCL2020 conformant sycl::atomic_ref implementation</span></div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;using ::sycl::ext::oneapi::atomic_ref;</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;using ::sycl::atomic_ref;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160; </div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;}  <span class="comment">// namespace detail</span></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00035"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">   35</a></span>&#160;<span class="keyword">using</span> <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op</a> = detail::atomic_ref&lt;T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;;</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160; </div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;}  <span class="comment">// namespace plssvm::sycl</span></div>
-<div class="ttc" id="abackends_2SYCL_2detail_2constants_8hpp_html"><div class="ttname"><a href="backends_2SYCL_2detail_2constants_8hpp.html">constants.hpp</a></div><div class="ttdoc">Global compile-time constants specific to the SYCL backend.</div></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00023"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">   23</a></span>&#160;<span class="keyword">using</span> <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op</a> = ::sycl::atomic_ref&lt;T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;;</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160; </div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;}  <span class="comment">// namespace plssvm::sycl</span></div>
 <div class="ttc" id="anamespaceplssvm_1_1sycl_html"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a></div><div class="ttdoc">Namespace containing the C-SVM using the SYCL backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:32</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1sycl_html_ae710df47ac7d24e571ab9bc2b2816c16"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl::atomic_op</a></div><div class="ttdeci">detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt; atomic_op</div><div class="ttdoc">Shortcut alias for a sycl::atomic_ref targeting global memory.</div><div class="ttdef"><b>Definition:</b> atomics.hpp:35</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1sycl_html_ad55ad7c8bfa5b790ee7d3f841f8ea03f"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">plssvm::sycl::atomic_op</a></div><div class="ttdeci">::sycl::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt; atomic_op</div><div class="ttdoc">Shortcut alias for a sycl::atomic_ref targeting global memory.</div><div class="ttdef"><b>Definition:</b> atomics.hpp:23</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 16 2021 09:58:37 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jan 19 2022 16:43:40 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

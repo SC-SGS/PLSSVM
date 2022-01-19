@@ -151,7 +151,7 @@ $(function() {
 <div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;                    }</div>
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;                    <span class="keywordflow">if</span> (i + x &gt; j + y) {</div>
 <div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;                        <span class="comment">// upper triangular matrix</span></div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;                        <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ ret_[i + y] } += temp * d_[j + x];</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;                        <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ ret_[i + y] } += temp * d_[j + x];</div>
 <div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;                        ret_jx += temp * d_[i + y];</div>
 <div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;                    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i + x == j + y) {</div>
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;                        <span class="comment">// diagonal</span></div>
@@ -162,7 +162,7 @@ $(function() {
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;                        }</div>
 <div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;                    }</div>
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;                }</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;                <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ ret_[j + x] } += ret_jx;</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;                <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ ret_[j + x] } += ret_jx;</div>
 <div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;            }</div>
 <div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;        }</div>
 <div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;    }</div>
@@ -241,14 +241,14 @@ $(function() {
 <div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;                    <span class="keyword">const</span> <a class="code" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> temp = (::sycl::pow(gamma_ * matr[x][y] + coef0_, <span class="keyword">static_cast&lt;</span><a class="code" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a><span class="keyword">&gt;</span>(degree_)) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;</div>
 <div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;                    <span class="keywordflow">if</span> (i + x &gt; j + y) {</div>
 <div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;                        <span class="comment">// upper triangular matrix</span></div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;                        <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ ret_[i + y] } += temp * d_[j + x];</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;                        <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ ret_[i + y] } += temp * d_[j + x];</div>
 <div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                        ret_jx += temp * d_[i + y];</div>
 <div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;                    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i + x == j + y) {</div>
 <div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;                        <span class="comment">// diagonal</span></div>
 <div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                        ret_jx += (temp + cost_ * add_) * d_[i + y];</div>
 <div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;                    }</div>
 <div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;                }</div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ ret_[j + x] } += ret_jx;</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ ret_[j + x] } += ret_jx;</div>
 <div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;            }</div>
 <div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;        }</div>
 <div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;    }</div>
@@ -329,14 +329,14 @@ $(function() {
 <div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160;                    <span class="keyword">const</span> <a class="code" href="classplssvm_1_1sycl_1_1device__kernel__radial.html#a6646092f76660cfed2f46f0b825d2605">real_type</a> temp = (::sycl::exp(-gamma_ * matr[x][y]) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;</div>
 <div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;                    <span class="keywordflow">if</span> (i + x &gt; j + y) {</div>
 <div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;                        <span class="comment">// upper triangular matrix</span></div>
-<div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;                        <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ ret_[i + y] } += temp * d_[j + x];</div>
+<div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;                        <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ ret_[i + y] } += temp * d_[j + x];</div>
 <div class="line"><a name="l00351"></a><span class="lineno">  351</span>&#160;                        ret_jx += temp * d_[i + y];</div>
 <div class="line"><a name="l00352"></a><span class="lineno">  352</span>&#160;                    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i + x == j + y) {</div>
 <div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160;                        <span class="comment">// diagonal</span></div>
 <div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;                        ret_jx += (temp + cost_ * add_) * d_[i + y];</div>
 <div class="line"><a name="l00355"></a><span class="lineno">  355</span>&#160;                    }</div>
 <div class="line"><a name="l00356"></a><span class="lineno">  356</span>&#160;                }</div>
-<div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;                <a class="code" href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">atomic_op&lt;real_type&gt;</a>{ ret_[j + x] } += ret_jx;</div>
+<div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;                <a class="code" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op&lt;real_type&gt;</a>{ ret_[j + x] } += ret_jx;</div>
 <div class="line"><a name="l00358"></a><span class="lineno">  358</span>&#160;            }</div>
 <div class="line"><a name="l00359"></a><span class="lineno">  359</span>&#160;        }</div>
 <div class="line"><a name="l00360"></a><span class="lineno">  360</span>&#160;    }</div>
@@ -374,7 +374,7 @@ $(function() {
 <div class="ttc" id="aconstants_8hpp_html"><div class="ttname"><a href="constants_8hpp.html">constants.hpp</a></div><div class="ttdoc">Global type definitions and compile-time constants.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1sycl_html"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a></div><div class="ttdoc">Namespace containing the C-SVM using the SYCL backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:32</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1sycl_html_a2565372115455bf9e79f1aa67067175a"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">plssvm::sycl::local_accessor</a></div><div class="ttdeci">::sycl::accessor&lt; T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local &gt; local_accessor</div><div class="ttdoc">Shortcut alias for a SYCL local accessor.</div><div class="ttdef"><b>Definition:</b> svm_kernel.hpp:30</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1sycl_html_ae710df47ac7d24e571ab9bc2b2816c16"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#ae710df47ac7d24e571ab9bc2b2816c16">plssvm::sycl::atomic_op</a></div><div class="ttdeci">detail::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt; atomic_op</div><div class="ttdoc">Shortcut alias for a sycl::atomic_ref targeting global memory.</div><div class="ttdef"><b>Definition:</b> atomics.hpp:35</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1sycl_html_ad55ad7c8bfa5b790ee7d3f841f8ea03f"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">plssvm::sycl::atomic_op</a></div><div class="ttdeci">::sycl::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt; atomic_op</div><div class="ttdoc">Shortcut alias for a sycl::atomic_ref targeting global memory.</div><div class="ttdef"><b>Definition:</b> atomics.hpp:23</div></div>
 <div class="ttc" id="anamespaceplssvm_html_a76052beb2b262c165f1811c5064ca1b5"><div class="ttname"><a href="namespaceplssvm.html#a76052beb2b262c165f1811c5064ca1b5">plssvm::THREAD_BLOCK_SIZE</a></div><div class="ttdeci">constexpr kernel_index_type THREAD_BLOCK_SIZE</div><div class="ttdoc">Global compile-time constant used for internal caching.</div><div class="ttdef"><b>Definition:</b> constants.hpp:23</div></div>
 <div class="ttc" id="anamespaceplssvm_html_aab3a343173d93c72cd62edcde3934f1a"><div class="ttname"><a href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">plssvm::kernel_index_type</a></div><div class="ttdeci">int kernel_index_type</div><div class="ttdoc">Integer type used inside kernels.</div><div class="ttdef"><b>Definition:</b> constants.hpp:17</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">plssvm::backend_type::sycl</a></div><div class="ttdeci">@ sycl</div></div>
@@ -382,7 +382,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 16 2021 09:58:37 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jan 19 2022 16:43:40 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
