@@ -215,7 +215,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         if (print_info_) {
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, imax, delta, eps * eps * delta0);
         }
-        std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
+        auto iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * r (q = A * d)
         #pragma omp parallel for
@@ -262,7 +262,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
             if (print_info_) {
-                std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
+                auto iteration_end_time = std::chrono::steady_clock::now();
                 fmt::print("Done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time));
             }
             break;
@@ -280,7 +280,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         }
 
         if (print_info_) {
-            std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
+            auto iteration_end_time = std::chrono::steady_clock::now();
             fmt::print("Done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time));
         }
     }
