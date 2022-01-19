@@ -9,6 +9,7 @@
 ########################################################################################################################
 
 import argparse
+from timeit import default_timer as timer
 
 # data set creation
 from sklearn.datasets import make_classification
@@ -47,6 +48,8 @@ if args.plot and (args.samples > 2000 and (args.features != 2 or args.features !
 # set total number of samples
 num_samples = args.samples + args.test_samples
 
+print("Start creating data set samples... ", end="", flush=True)
+start_time = timer()
 # create labeled data set
 if args.problem == "blobs":
     samples, labels = make_blobs(
@@ -71,6 +74,11 @@ labels = labels * 2 - 1
 
 minmax_scale(samples, feature_range=[-1, 1], copy=False)
 
+end_time = timer()
+print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
+
+print("Saving samples... ", end="", flush=True)
+start_time = timer()
 # set file names
 rawfile = args.output if args.output is not None else "{}x{}".format(
     args.samples, args.features)
@@ -119,6 +127,8 @@ elif args.format == "arff":
 else:
     raise RuntimeError("Only arff and libsvm supported as file format!")
 
+end_time = timer()
+print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
 # output info
 print("Created training data set '{}' with {} data points and {} features.".format(

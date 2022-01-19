@@ -35,7 +35,7 @@ Additional dependencies for the SYCL backend:
   - the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
-  - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
+  - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
 
 ### Building
@@ -175,9 +175,10 @@ The library supports the `install` target:
 The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
 
 In order to use all functionality, the following Python3 modules must be installed:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`numpy`](https://pypi.org/project/numpy/),
-[`pandas`](https://pypi.org/project/pandas/), [`sklearn`](https://scikit-learn.org/stable/),
-[`arff`](https://pypi.org/project/arff/), [`matplotlib`](https://pypi.org/project/matplotlib/) and
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html),
+[`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/), 
+[`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/), 
+[`matplotlib`](https://pypi.org/project/matplotlib/) and
 [`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
 ```bash
