@@ -10,8 +10,9 @@
 
 #include "plssvm/core.hpp"
 
-#include "fmt/chrono.h"  // directly print std::chrono literals with fmt
-#include "fmt/format.h"  // fmt::format, fmt::print
+#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
+#include "fmt/format.h"   // fmt::format, fmt::print
+#include "fmt/ostream.h"  // use operator<< to output enum class
 
 #include <chrono>     // std::chrono
 #include <exception>  // std::exception
@@ -30,6 +31,33 @@ int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
         plssvm::parameter_predict<real_type> params{ argc, argv };
+
+        // output used parameter
+        if (params.print_info) {
+            fmt::print("\n");
+            fmt::print("task: prediction\n");
+            fmt::print("kernel type: {} -> ", params.kernel);
+            switch (params.kernel) {
+                case plssvm::kernel_type::linear:
+                    fmt::print("u'*v\n");
+                    break;
+                case plssvm::kernel_type::polynomial:
+                    fmt::print("(gamma*u'*v + coef0)^degree\n");
+                    fmt::print("gamma: {}\n", params.gamma);
+                    fmt::print("coef0: {}\n", params.coef0);
+                    fmt::print("degree: {}\n", params.degree);
+                    break;
+                case plssvm::kernel_type::rbf:
+                    fmt::print("exp(-gamma*|u-v|^2)\n");
+                    fmt::print("gamma: {}\n", params.gamma);
+                    break;
+            }
+            fmt::print("rho: {}\n", params.rho);
+            fmt::print("input file (data set): '{}'\n", params.input_filename);
+            fmt::print("input file (model): '{}'\n", params.model_filename);
+            fmt::print("output file (prediction): '{}'\n", params.predict_filename);
+            fmt::print("\n");
+        }
 
         // create SVM
         auto svm = plssvm::make_csvm(params);
