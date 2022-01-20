@@ -19,10 +19,12 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
+#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <algorithm>  // std::fill, std::all_of
+#include <chrono>     // std::chrono
 #include <vector>     // std::vector
 
 namespace plssvm::openmp {
@@ -98,11 +100,23 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
 
     std::vector<real_type> d(r);
 
+    // timing for each CG iteration
+    std::chrono::milliseconds average_iteration_time{};
+    std::chrono::steady_clock::time_point iteration_start_time{};
+    const auto output_iteration_duration = [&]() {
+        auto iteration_end_time = std::chrono::steady_clock::now();
+        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
+        fmt::print("Done in {}.\n", iteration_duration);
+        average_iteration_time += iteration_duration;
+    };
+
     std::size_t run = 0;
     for (; run < imax; ++run) {
         if (print_info_) {
-            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
+            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, imax, delta, eps * eps * delta0);
         }
+        iteration_start_time = std::chrono::steady_clock::now();
+
         // Ad = A * d
         std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
         run_device_kernel(q, Ad, d, *data_ptr_, 1);
@@ -124,6 +138,9 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
         delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
+            if (print_info_) {
+                output_iteration_duration();
+            }
             break;
         }
 
@@ -131,9 +148,17 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
         real_type beta = delta / delta_old;
         // d = beta * d + r
         d = beta * d + r;
+
+        if (print_info_) {
+            output_iteration_duration();
+        }
     }
     if (print_info_) {
-        fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
+        fmt::print("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
+                   std::min(run + 1, imax),
+                   delta,
+                   eps * eps * delta0,
+                   average_iteration_time / std::min(run + 1, imax));
     }
 
     return alpha;

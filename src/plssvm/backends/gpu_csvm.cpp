@@ -22,7 +22,11 @@
     #include "sycl/sycl.hpp"
 #endif
 
-#include <algorithm>  // std::all_of, std::min
+#include "fmt/chrono.h"  // directly print std::chrono literals with fmt
+#include "fmt/core.h"    // fmt::print
+
+#include <algorithm>  // std::all_of, std::min, std::max
+#include <chrono>     // std::chrono
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <vector>     // std::vector
@@ -74,12 +78,12 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
         }
     } else {
         // create result vector on the device
-        device_ptr_type out_d{ points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, devices_[0] };
+        device_ptr_type out_d{ points.size() + boundary_size_, devices_[0] };
         out_d.memset(0);
 
         // transform prediction data
-        const std::vector<real_type> transformed_data = base_type::transform_data(points, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, points.size());
-        device_ptr_type point_d{ points[0].size() * (points.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE), devices_[0] };
+        const std::vector<real_type> transformed_data = base_type::transform_data(points, boundary_size_, points.size());
+        device_ptr_type point_d{ points[0].size() * (points.size() + boundary_size_), devices_[0] };
         point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
 
         // create the weight vector on the device and copy data
@@ -206,11 +210,23 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
 
     std::vector<real_type> d(r);
 
+    // timing for each CG iteration
+    std::chrono::milliseconds average_iteration_time{};
+    std::chrono::steady_clock::time_point iteration_start_time{};
+    const auto output_iteration_duration = [&]() {
+        auto iteration_end_time = std::chrono::steady_clock::now();
+        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
+        fmt::print("Done in {}.\n", iteration_duration);
+        average_iteration_time += iteration_duration;
+    };
+
     std::size_t run = 0;
     for (; run < imax; ++run) {
         if (print_info_) {
-            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}).\n", run + 1, imax, delta, eps * eps * delta0);
+            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, imax, delta, eps * eps * delta0);
         }
+        iteration_start_time = std::chrono::steady_clock::now();
+
         // Ad = A * r (q = A * d)
         #pragma omp parallel for
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
@@ -255,6 +271,9 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
+            if (print_info_) {
+                output_iteration_duration();
+            }
             break;
         }
 
@@ -268,9 +287,17 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             r_d[device].memcpy_to_device(d, 0, dept_);
         }
+
+        if (print_info_) {
+            output_iteration_duration();
+        }
     }
     if (print_info_) {
-        fmt::print("Finished after {} iterations with a residuum of {} (target: {}).\n", run + 1, delta, eps * eps * delta0);
+        fmt::print("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
+                   std::min(run + 1, imax),
+                   delta,
+                   eps * eps * delta0,
+                   average_iteration_time / std::min(run + 1, imax));
     }
 
     return std::vector<real_type>(x.begin(), x.begin() + dept_);

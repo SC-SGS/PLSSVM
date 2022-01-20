@@ -186,7 +186,8 @@ void csvm<T>::write_model(const std::string &model_name) {
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info_) {
-        fmt::print("Wrote model file with {} support vectors in {}.\n",
+        fmt::print("Wrote model file ('{}') with {} support vectors in {}.\n",
+                   model_name,
                    count_pos + count_neg,
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
