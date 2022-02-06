@@ -186,7 +186,8 @@ void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::exe
 
 template <typename T>
 void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t p_num_predict_points) {
-    const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
+    [[maybe_unused]] const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
+    
     switch (kernel_) {
         case kernel_type::linear:
             break;
