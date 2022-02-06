@@ -108,7 +108,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
 
     auto end_time = std::chrono::steady_clock::now();
     if (print_info_) {
-        fmt::print("Predicted data points in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+        fmt::print("Predicted {} data points in {}.\n", points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 
     return out;

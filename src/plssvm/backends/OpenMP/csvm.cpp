@@ -184,6 +184,9 @@ void csvm<T>::update_w() {
 
 template <typename T>
 auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+    // time prediction
+    auto start_time = std::chrono::steady_clock::now();
+
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
@@ -226,6 +229,11 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
             }
             out[point_index] += temp;
         }
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Predicted {} data points in {}.\n", points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 
     return out;
