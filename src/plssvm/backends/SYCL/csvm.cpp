@@ -164,10 +164,13 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
             });
             break;
         case kernel_type::polynomial:
+          {
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            devices_[device].submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, device_kernel_poly(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_));
-            });
+            device_kernel_poly(devices_[device], range, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_)();
+            //devices_[device].submit([&](::sycl::handler &cgh) {
+            //    cgh.parallel_for(execution_range, device_kernel_poly(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_));
+            //});
+          }
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
