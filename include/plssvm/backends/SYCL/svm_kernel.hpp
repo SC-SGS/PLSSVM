@@ -206,9 +206,6 @@ class device_kernel_poly {
         real_type data_intern_i[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
         real_type data_intern_j[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
         
-        //const std::size_t gi = group.get_group_id(0);
-        //const std::size_t gj = group.get_group_id(1);
-
         ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> private_matr{ group };
         ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE], 2> private_data_j{ group };
 
@@ -224,8 +221,8 @@ class device_kernel_poly {
         for (kernel_index_type vec_index = 0; vec_index < num_cols * num_rows; vec_index += num_rows) {
 
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            kernel_index_type i = group.get_group_id(0) * idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
-            kernel_index_type j = group.get_group_id(1) * idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
+            kernel_index_type i = group[0] * idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
+            kernel_index_type j = group[1] * idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
             if (i >= j) {
                 i += idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
@@ -246,8 +243,8 @@ class device_kernel_poly {
         });
 
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            kernel_index_type i = group.get_group_id(0) * idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
-            kernel_index_type j = group.get_group_id(1) * idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
+            kernel_index_type i = group[0] * idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
+            kernel_index_type j = group[1] * idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
             if (i >= j) {
                 i += idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
@@ -272,8 +269,8 @@ class device_kernel_poly {
         }
 
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            kernel_index_type i = group.get_group_id(0) * INTERNAL_BLOCK_SIZE;
-            kernel_index_type j = group.get_group_id(1) * INTERNAL_BLOCK_SIZE;
+            kernel_index_type i = group[0] * idx.get_local_range(0) * INTERNAL_BLOCK_SIZE;
+            kernel_index_type j = group[1] * idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
             if (i >= j) {
                 i += idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
