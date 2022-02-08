@@ -178,64 +178,18 @@ void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::exe
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t p_num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
     [[maybe_unused]] const ::sycl::nd_range execution_range = execution_range_to_native<2>(range);
 
     switch (kernel_) {
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-        {
-            ::sycl::range<2> global_range{ range.grid[0], range.grid[1] };
-            ::sycl::range<2> local_range{ range.block[0], range.block[1] };
-            devices_[0].submit([&](::sycl::handler &cgh) {
-                real_type *out_d_ptr = out_d.get();
-                const real_type *data_d_ptr = data_d_[0].get();
-                const real_type *data_last_d_ptr = data_last_d_[0].get();
-                const real_type *alpha_d_ptr = alpha_d.get();
-                const std::size_t num_data_points = num_data_points_;
-                const real_type *point_d_ptr = point_d.get();
-                const std::size_t num_predict_points = p_num_predict_points;
-                const std::size_t num_features = num_features_;
-                const int degree = degree_;
-                const real_type gamma = gamma_;
-                const real_type coef0 = coef0_;
-
-                cgh.parallel_for_work_group(global_range, local_range, [=](::sycl::group<2> group) {
-                    group.parallel_for_work_item(device_kernel_predict_poly<real_type, ::sycl::h_item<2>>(out_d_ptr, data_d_ptr, data_last_d_ptr, alpha_d_ptr, num_data_points, point_d_ptr, num_predict_points, num_features, degree, gamma, coef0));
-                });
-            });
-        }
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-            devices_[0].parallel_for(execution_range, device_kernel_predict_poly<real_type, ::sycl::nd_item<2>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), p_num_predict_points, num_features_, degree_, gamma_, coef0_));
-#endif
-        break;
+            devices_[0].parallel_for(::sycl::range<2>{ num_data_points_, num_predict_points }, device_kernel_predict_poly(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, degree_, gamma_, coef0_));
+            break;
         case kernel_type::rbf:
-#if PLSSVM_SYCL_BACKEND_COPMILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-        {
-            ::sycl::range<2> global_range{ range.grid[0], range.grid[1] };
-            ::sycl::range<2> local_range{ range.block[0], range.block[1] };
-            devices_[0].submit([&](::sycl::handler &cgh) {
-                real_type *out_d_ptr = out_d.get();
-                const real_type *data_d_ptr = data_t_[0].get();
-                const real_type *data_last_d_ptr = data_last_d_[0].get();
-                const real_type *alpha_d_ptr = alpha_d.get();
-                const std::size_t num_data_points = num_data_points_;
-                const real_type *point_d_ptr = point_d.get();
-                const std::size_t num_predict_points = p_num_predict_points;
-                const std::size_t num_features = num_features_;
-                const real_type gamma = gamma_;
-
-                cgh.parallel_for_work_group(global_range, local_range, [=](::sycl::group<2> group) {
-                    group.parallel_for_work_item(device_kernel_predict_radial<real_type, ::sycl::h_item<2>>(out_d_ptr, data_d_ptr, data_last_d_ptr, alpha_d_ptr, num_data_points, point_d_ptr, num_predict_points, num_features, gamma));
-                });
-            });
-        }
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-            devices_[0].parallel_for(execution_range, device_kernel_predict_radial<real_type, ::sycl::nd_item<2>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), p_num_predict_points, num_features_, gamma_));
-#endif
-        break;
+            devices_[0].parallel_for(::sycl::range<2>{ num_data_points_, num_predict_points }, device_kernel_predict_radial(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, gamma_));
+            break;
     }
 }
 

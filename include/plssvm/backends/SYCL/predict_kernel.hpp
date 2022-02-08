@@ -72,15 +72,12 @@ class device_kernel_w_linear {
  * @brief Predicts the labels for data points using the polynomial kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam T the type of the data points
- * @tparam U the type of the `sycl::item`
  */
-template <typename T, typename U>
+template <typename T>
 class device_kernel_predict_poly {
   public:
     /// The type of the data.
     using real_type = T;
-    /// The `sycl::item` type.
-    using sycl_item_type = U;
 
     /**
      * @brief Construct a new device kernel to predict the labels for data points using the polynomial kernel function.
@@ -102,11 +99,11 @@ class device_kernel_predict_poly {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx the [`sycl::h_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#hitem-class) (hipSYCL) or the [`sycl::nd_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class) (DPC++) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] idx the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(sycl_item_type idx) const {
-        const kernel_index_type data_point_index = idx.get_global_id(0);
-        const kernel_index_type predict_point_index = idx.get_global_id(1);
+    void operator()(::sycl::id<2> idx) const {
+        const kernel_index_type data_point_index = idx[0];
+        const kernel_index_type predict_point_index = idx[1];
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
@@ -142,15 +139,12 @@ class device_kernel_predict_poly {
  * @brief Predicts the labels for data points using the radial basis functions kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam T the type of the data points
- * @tparam U the type of the `sycl::item`
  */
-template <typename T, typename U>
+template <typename T>
 class device_kernel_predict_radial {
   public:
     /// The type of the data.
     using real_type = T;
-    /// The `sycl::item` type
-    using sycl_item_type = U;
 
     /**
      * @brief Construct a new device kernel to predict the labels for data points using the radial basis function kernel function.
@@ -170,11 +164,11 @@ class device_kernel_predict_radial {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx the [`sycl::h_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#hitem-class) (hipSYCL) or [`sycl::nd_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class) (DPC++) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] idx the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(sycl_item_type idx) const {
-        const kernel_index_type data_point_index = idx.get_global_id(0);
-        const kernel_index_type predict_point_index = idx.get_global_id(1);
+    void operator()(::sycl::id<2> idx) const {
+        const kernel_index_type data_point_index = idx[0];
+        const kernel_index_type predict_point_index = idx[1];
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
