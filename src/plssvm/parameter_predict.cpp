@@ -44,7 +44,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
         .add_options()
-            ("b,backend", "choose the backend: openmp|cuda|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
+            ("b,backend", "choose the backend: openmp|cuda|hip|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
             ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<decltype(target)>()->default_value(detail::as_lower_case(fmt::format("{}", target))))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
