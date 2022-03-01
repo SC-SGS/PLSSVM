@@ -23,6 +23,8 @@ std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "openmp";
         case backend_type::cuda:
             return out << "cuda";
+        case backend_type::hip:
+            return out << "hip";
         case backend_type::opencl:
             return out << "opencl";
         case backend_type::sycl:
@@ -40,6 +42,8 @@ std::istream &operator>>(std::istream &in, backend_type &backend) {
         backend = backend_type::openmp;
     } else if (str == "cuda") {
         backend = backend_type::cuda;
+    } else if (str == "hip") {
+        backend = backend_type::hip;
     } else if (str == "opencl") {
         backend = backend_type::opencl;
     } else if (str == "sycl") {

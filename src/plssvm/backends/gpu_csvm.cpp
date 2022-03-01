@@ -11,6 +11,10 @@
     // used for explicitly instantiating the CUDA backend
     #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 #endif
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+    // used for explicitly instantiating the HIP backend
+    #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"
+#endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     // used for explicitly instantiating the OpenCL backend
     #include "plssvm/backends/OpenCL/detail/command_queue.hpp"
@@ -378,6 +382,10 @@ void gpu_csvm<T, device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
 template class gpu_csvm<float, ::plssvm::cuda::detail::device_ptr<float>, int>;
 template class gpu_csvm<double, ::plssvm::cuda::detail::device_ptr<double>, int>;
+#endif
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+template class gpu_csvm<float, ::plssvm::hip::detail::device_ptr<float>, int>;
+template class gpu_csvm<double, ::plssvm::hip::detail::device_ptr<double>, int>;
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
 template class gpu_csvm<float, ::plssvm::opencl::detail::device_ptr<float>, ::plssvm::opencl::detail::command_queue>;
