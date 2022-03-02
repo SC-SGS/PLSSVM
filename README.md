@@ -7,7 +7,7 @@ The currently available backends are:
   - [OpenMP](https://www.openmp.org/)
   - [CUDA](https://developer.nvidia.com/cuda-zone)
   - [OpenCL](https://www.khronos.org/opencl/)
-  - [SYCL](https://www.khronos.org/sycl/)
+  - [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
 
 ## Getting Started
 
@@ -20,6 +20,7 @@ General dependencies:
   - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
   - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
   - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
+  - multiple Python3 modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
   - compiler with OpenMP support
@@ -300,7 +301,7 @@ A simple C++ program (`main.cpp`) using this library could look like:
 #include <iostream>
 #include <vector>
 
-int main(i) {
+int main() {
     try {
         // parse SVM parameter from command line
         plssvm::parameter<double> params;
