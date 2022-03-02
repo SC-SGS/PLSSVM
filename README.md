@@ -44,11 +44,11 @@ Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FIL
 Building the library can be done using the normal CMake approach:
 
 ```bash
-> git clone git@gitlab-sim.informatik.uni-stuttgart.de:vancraar/Bachelor-Code.git SVM
-> cd SVM/SVM
-> mkdir build && cd build
-> cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] ..
-> cmake --build .
+git clone git@github.com:SC-SGS/PLSSVM.git
+cd PLSSVM 
+mkdir build && cd build 
+cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] .. 
+cmake --build .
 ```
 
 #### Target Platform Selection
@@ -71,7 +71,7 @@ To retrieve the architectural specifications of the current system, a simple Pyt
 [`pylspci`](https://pypi.org/project/pylspci/))
 
 ```bash
-> python3 utility/plssvm_target_platforms.py --help
+python3 utility/plssvm_target_platforms.py --help
 usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
@@ -82,7 +82,7 @@ optional arguments:
 Example invocations:
 
 ```bash
-> python3 utility_scripts/plssvm_target_platforms.py
+python3 utility_scripts/plssvm_target_platforms.py
 Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
 Found 1 NVIDIA GPU(s):
@@ -91,7 +91,7 @@ Found 1 NVIDIA GPU(s):
 Possible -DPLSSVM_TARGET_PLATFORMS entries:
 cpu:avx512;nvidia:sm_86
 
-> python3 utility_scripts/plssvm_target_platforms.py --quiet
+python3 utility_scripts/plssvm_target_platforms.py --quiet
 cpu:avx512;intel:dg1
 ```
 
@@ -146,7 +146,7 @@ To use DPC++ as compiler simply set the `CMAKE_CXX_COMPILER` to the respective D
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
 
 ```bash
-> ctest
+ctest
 ```
 
 ### Generating test coverage results
@@ -155,10 +155,10 @@ To enable the generation of test coverage reports using `locv` the library must 
 Additionally, it's advisable to use smaller test files to shorten the `ctest` step.
 
 ```bash
-> cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS="..." \
-        -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \
-        -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..
-> cmake --build . -- coverage
+cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS="..." \
+      -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \
+      -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..
+cmake --build . -- coverage
 ```
 
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
@@ -167,7 +167,7 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
 ```bash
-> make doc
+make doc
 ```
 The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
 
@@ -176,7 +176,7 @@ The documentation of the current state of the main branch can be found [here](ht
 The library supports the `install` target:
 
 ```bash
-> cmake --build . -- install
+cmake --build . -- install
 ```
 
 ## Usage
@@ -193,7 +193,7 @@ In order to use all functionality, the following Python3 modules must be install
 [`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
 ```bash
-> python3 utility_scripts/generate_data**.py --help
+python3 utility_scripts/generate_data**.py --help
 usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]
 
 optional arguments:
@@ -211,13 +211,13 @@ optional arguments:
 An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each could look like:
 
 ```bash
-> python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200
+python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200
 ```
 
 ### Training
 
 ```bash
-> ./svm-train --help
+./svm-train --help
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-train [OPTION...] training_set_file [model_file]
@@ -243,13 +243,13 @@ Usage:
 An example invocation using the CUDA backend could look like:
 
 ```bash
-> ./svm-train --backend cuda --input /path/to/data_file
+./svm-train --backend cuda --input /path/to/data_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-> ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
+./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
 The `--target_platform=automatic` flags works for the different backends as follows:
@@ -262,7 +262,7 @@ The `--target_platform=automatic` flags works for the different backends as foll
 ### Predicting
 
 ```bash
-> ./svm-predict --help
+./svm-predict --help
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-predict [OPTION...] test_file model_file [output_file]
@@ -279,13 +279,13 @@ Usage:
 An example invocation could look like:
 
 ```bash
-> ./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
+./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-> ./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
 The `--target_platform=automatic` flags works like in the training (`./svm-train`) case.
