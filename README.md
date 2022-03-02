@@ -54,40 +54,50 @@ Building the library can be done using the normal CMake approach:
 
 The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
-  - `cpu`: compile for the CPU; **no** architectural specifications  is allowed
-  - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g. `nvidia:sm_86,sm_70`
-  - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g. `amd:gfx906`
-  - `intel`: compile for Intel GPUs; **no** architectural specification is allowed
+  - `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
+  - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g., `nvidia:sm_86,sm_70`
+  - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
+  - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
 At least one of the above targets must be present.
 
-To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple Python3 script `utility/gpu_name_to_arch.py` is provided
-(requiring Python3 [`argparse`](https://docs.python.org/3/library/argparse.html) as dependency):
+Note that when using DPC++ only a single architectural specification for `cpu` or `amd` is allowed.
+
+To retrieve the architectural specifications of the current system, a simple Python3 script `utility/plssvm_target_platforms.py` is provided
+(required Python3 dependencies: 
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
+[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
+[`pylspci`](https://pypi.org/project/pylspci/))
 
 ```bash
-> python3 utility/gpu_name_to_arch.py --help
-usage: gpu_name_to_arch.py [-h] [--name NAME]
+> python3 utility/plssvm_target_platforms.py --help
+usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
-  -h, --help   show this help message and exit
-  --name NAME  the full name of the GPU (e.g. GeForce RTX 3080)
+  -h, --help  show this help message and exit
+  --quiet     only output the final PLSSVM_TARGET_PLATFORMS string
 ```
 
 Example invocations:
 
 ```bash
-> python3 utility_scripts/gpu_name_to_arch.py --name "GeForce RTX 3080"
-sm_86
-> python3 utility_scripts/gpu_name_to_arch.py --name "Radeon VII"
-gfx906
-```
+> python3 utility_scripts/plssvm_target_platforms.py
+Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
-If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU
-(requires the Python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
+Found 1 NVIDIA GPU(s):
+  1x NVIDIA GeForce RTX 3080: sm_86
+
+Possible -DPLSSVM_TARGET_PLATFORMS entries:
+cpu:avx512;nvidia:sm_86
+
+> python3 utility_scripts/plssvm_target_platforms.py --quiet
+cpu:avx512;intel:dg1
+```
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
   - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-  - for AMD GPUs: [ROCm Documentation](https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst)
+  - for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
+  - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
 
 #### Optional CMake Options
