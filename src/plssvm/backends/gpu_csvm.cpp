@@ -39,9 +39,6 @@ gpu_csvm<T, device_ptr_t, queue_t>::gpu_csvm(const parameter<T> &params) :
 
 template <typename T, typename device_ptr_t, typename queue_t>
 auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
-    // time prediction
-    auto start_time = std::chrono::steady_clock::now();
-
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
@@ -67,6 +64,8 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
     if (data_d_[0].empty()) {
         setup_data_on_device();
     }
+
+    auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> out(points.size());
 
