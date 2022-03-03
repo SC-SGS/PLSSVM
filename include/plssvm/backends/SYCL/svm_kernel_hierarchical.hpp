@@ -28,7 +28,7 @@ namespace plssvm::sycl {
  * @tparam T the type of the data
  */
 template <typename T>
-class device_kernel_linear {
+class hierarchical_device_kernel_linear {
   public:
     /// The type of the data.
     using real_type = T;
@@ -48,7 +48,7 @@ class device_kernel_linear {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      * @param[in] id the id of the device
      */
-    device_kernel_linear(::sycl::queue &queue, const ::plssvm::detail::execution_range &range, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type feature_range, const real_type add, const kernel_index_type id) :
+    hierarchical_device_kernel_linear(::sycl::queue &queue, const ::plssvm::detail::execution_range &range, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type feature_range, const real_type add, const kernel_index_type id) :
         queue_{ queue }, global_range_{ range.grid[0], range.grid[1] }, local_range_{ range.block[0], range.block[1] }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, feature_range_{ feature_range }, add_{ add }, device_{ id } {}
 
     /**
@@ -202,7 +202,7 @@ class device_kernel_linear {
  * @tparam T the type of the data
  */
 template <typename T>
-class device_kernel_poly {
+class hierarchical_device_kernel_poly {
   public:
     /// The type of the data.
     using real_type = T;
@@ -224,7 +224,7 @@ class device_kernel_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_poly(::sycl::queue &queue, const ::plssvm::detail::execution_range &range, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) :
+    hierarchical_device_kernel_poly(::sycl::queue &queue, const ::plssvm::detail::execution_range &range, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) :
         queue_{ queue }, global_range_{ range.grid[0], range.grid[1] }, local_range_{ range.block[0], range.block[1] }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -373,7 +373,7 @@ class device_kernel_poly {
  * @tparam T the type of the data
  */
 template <typename T>
-class device_kernel_radial {
+class hierarchical_device_kernel_radial {
   public:
     /// The type of the data.
     using real_type = T;
@@ -393,7 +393,7 @@ class device_kernel_radial {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
-    device_kernel_radial(::sycl::queue &queue, const ::plssvm::detail::execution_range &range, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
+    hierarchical_device_kernel_radial(::sycl::queue &queue, const ::plssvm::detail::execution_range &range, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
         queue_{ queue }, global_range_{ range.grid[0], range.grid[1] }, local_range_{ range.block[0], range.block[1] }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, gamma_{ gamma } {}
 
     /**

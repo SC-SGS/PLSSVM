@@ -11,8 +11,9 @@
 
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
-#include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"       // plssvm::sycl::detail::device_ptr
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
@@ -105,6 +106,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
     void run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
+
+  private:
+    /// The SYCL kernel invocation type for the svm kernel. Either nd_range or hierarchical.
+    kernel_invocation_type invocation_type_;
 };
 
 extern template class csvm<float>;

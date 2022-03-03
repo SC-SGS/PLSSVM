@@ -45,6 +45,7 @@ set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
 )
 

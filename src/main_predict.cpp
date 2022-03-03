@@ -17,7 +17,7 @@
 #include <chrono>     // std::chrono
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
-#include <iostream>   // std::cerr, std::endl
+#include <iostream>   // std::cerr, std::clog, std::endl
 #include <vector>     // std::vector
 
 // perform calculations in single precision if requested
@@ -31,6 +31,14 @@ int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
         plssvm::parameter_predict<real_type> params{ argc, argv };
+
+        // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
+        if (params.backend != plssvm::backend_type::sycl && params.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
+            std::clog << fmt::format(
+                "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
+                params.sycl_kernel_invocation_type)
+                      << std::endl;
+        }
 
         // output used parameter
         if (params.print_info) {
