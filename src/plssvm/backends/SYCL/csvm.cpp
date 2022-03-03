@@ -168,19 +168,18 @@ template <std::size_t I>
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, const std::size_t num_features) {
-    const ::sycl::nd_range execution_range = execution_range_to_native<1>(range, kernel_invocation_type::nd_range);
+void csvm<T>::run_q_kernel(const std::size_t device, [[maybe_unused]] const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, const std::size_t num_features) {
     switch (kernel_) {
         case kernel_type::linear:
-            devices_[device].parallel_for(execution_range, device_kernel_q_linear(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_features));
+            devices_[device].parallel_for(::sycl::range<1>{ num_data_points_ }, device_kernel_q_linear(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_features));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            devices_[device].parallel_for(execution_range, device_kernel_q_poly(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_));
+            devices_[device].parallel_for(::sycl::range<1>{ num_data_points_ }, device_kernel_q_poly(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_));
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            devices_[device].parallel_for(execution_range, device_kernel_q_radial(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_));
+            devices_[device].parallel_for(::sycl::range<1>{ num_data_points_ }, device_kernel_q_radial(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_));
             break;
     }
 }

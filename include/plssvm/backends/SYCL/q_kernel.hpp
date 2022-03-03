@@ -41,11 +41,10 @@ class device_kernel_q_linear {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
-     *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] index the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class)
+     *                  identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::nd_item<1> item) const {
-        const kernel_index_type index = item.get_global_linear_id();
+    void operator()(::sycl::id<1> index) const {
         real_type temp{ 0.0 };
         for (kernel_index_type i = 0; i < feature_range_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
@@ -88,11 +87,10 @@ class device_kernel_q_poly {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
-     *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] index the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class)
+     *                  identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::nd_item<1> item) const {
-        const kernel_index_type index = item.get_global_linear_id();
+    void operator()(::sycl::id<1> index) const {
         real_type temp{ 0.0 };
         for (kernel_index_type i = 0; i < num_cols_; ++i) {
             temp += data_d_[i * num_rows_ + index] * data_last_[i];
@@ -136,11 +134,10 @@ class device_kernel_q_radial {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] item the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
-     *                 identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] index the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class)
+     *                  identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::nd_item<1> item) const {
-        const kernel_index_type index = item.get_global_linear_id();
+    void operator()(::sycl::id<1> index) const {
         real_type temp{ 0.0 };
         for (kernel_index_type i = 0; i < num_cols_; ++i) {
             temp += (data_d_[i * num_rows_ + index] - data_last_[i]) * (data_d_[i * num_rows_ + index] - data_last_[i]);
