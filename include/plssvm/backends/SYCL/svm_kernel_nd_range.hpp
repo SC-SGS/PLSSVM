@@ -6,11 +6,12 @@
 * @license This file is part of the PLSSVM project which is released under the MIT license.
 *          See the LICENSE.md file in the project root for full license information.
 *
-* @brief Defines the kernel functions for the C-SVM using the SYCL backend.
+* @brief Defines the kernel functions for the C-SVM in the nd_range formulation using the SYCL backend.
 */
 
 #pragma once
 
+#include "plssvm/backends/SYCL/detail/atomics.hpp"    // plssvm::sycl::atomic_op
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/constants.hpp"                       // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
@@ -30,7 +31,7 @@ template <typename T>
 using local_accessor = ::sycl::accessor<T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local>;
 
 /**
-* @brief Calculates the C-SVM kernel using the linear kernel function.
+* @brief Calculates the C-SVM kernel using the nd_range formulation and the linear kernel function.
 * @details Supports multi-GPU execution.
 * @tparam T the type of the data
 */
@@ -41,7 +42,7 @@ class nd_range_device_kernel_linear {
     using real_type = T;
 
     /**
-    * @brief Construct a new device kernel calculating the `q` vector using the linear C-SVM kernel.
+    * @brief Construct a new device kernel calculating the C-SVM kernel using the linear C-SVM kernel.
     * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
     * @param[in] q the `q` vector
     * @param[out] ret the result vector
@@ -150,7 +151,7 @@ class nd_range_device_kernel_linear {
 };
 
 /**
-* @brief Calculates the C-SVM kernel using the polynomial kernel function.
+* @brief Calculates the C-SVM kernel using the nd_range formulation and the polynomial kernel function.
 * @details Currently only single GPU execution is supported.
 * @tparam T the type of the data
 */
@@ -161,7 +162,7 @@ class nd_range_device_kernel_poly {
     using real_type = T;
 
     /**
-    * @brief Construct a new device kernel calculating the `q` vector using the polynomial C-SVM kernel.
+    * @brief Construct a new device kernel calculating the C-SVM kernel using the polynomial C-SVM kernel.
     * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
     * @param[in] q the `q` vector
     * @param[out] ret the result vector
@@ -265,7 +266,7 @@ class nd_range_device_kernel_poly {
 };
 
 /**
-* @brief Calculates the C-SVM kernel using the radial basis functions kernel function.
+* @brief Calculates the C-SVM kernel using the nd_range formulation and the radial basis functions kernel function.
 * @details Currently only single GPU execution is supported.
 * @tparam T the type of the data
 */
@@ -276,7 +277,7 @@ class nd_range_device_kernel_radial {
     using real_type = T;
 
     /**
-    * @brief Construct a new device kernel calculating the `q` vector using the radial basis functions C-SVM kernel.
+    * @brief Construct a new device kernel calculating the C-SVM kernel using the radial basis functions C-SVM kernel.
     * @param[in] cgh [`sycl::handler`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass) used to allocate the local memory
     * @param[in] q the `q` vector
     * @param[out] ret the result vector
