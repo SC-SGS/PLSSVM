@@ -30,6 +30,7 @@
 
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
+#include <tuple>      // std::tie
 #include <vector>     // std::vector
 
 namespace plssvm::sycl {
@@ -63,11 +64,15 @@ csvm<T>::csvm(const parameter<T> &params) :
             break;
     }
 
+    // get all available devices wrt the requested target platform
+    target_platform used_target;
+    std::tie(devices_, used_target) = detail::get_device_list(target_);
+    devices_.resize(std::min(devices_.size(), num_features_));
+
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == kernel_invocation_type::automatic) {
         // always use nd_range except for hipSYCL on the CPU
-        // TODO: automatic target_platform
-        if (target_ == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) {
+        if (used_target == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) {
             invocation_type_ = kernel_invocation_type::hierarchical;
         } else {
             invocation_type_ = kernel_invocation_type::nd_range;
@@ -82,11 +87,10 @@ csvm<T>::csvm(const parameter<T> &params) :
         constexpr std::string_view sycl_implementation_name = "DPC++";
 #endif
         fmt::print("Using SYCL ({}) as backend with the kernel invocation type \"{}\".\n", sycl_implementation_name, invocation_type_);
+        if (target_ == target_platform::automatic) {
+            fmt::print("Using {} as automatic target platform.\n", used_target);
+        }
     }
-
-    // get all available devices wrt the requested target platform
-    devices_ = detail::get_device_list(target_);
-    devices_.resize(std::min(devices_.size(), num_features_));
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
