@@ -190,33 +190,33 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range, invocation_type_);
     switch (kernel_) {
         case kernel_type::linear:
-            if (invocation_type_ == kernel_invocation_type::nd_range) {
-                devices_[device].submit([&](::sycl::handler &cgh) {
+            devices_[device].submit([&](::sycl::handler &cgh) {
+                if (invocation_type_ == kernel_invocation_type::nd_range) {
                     cgh.parallel_for(execution_range, nd_range_device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_features, add, device));
-                });
-            } else {
-                hierarchical_device_kernel_linear(devices_[device], range, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_features, add, device)();
-            }
+                } else if (invocation_type_ == kernel_invocation_type::hierarchical) {
+                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), hierarchical_device_kernel_linear(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_features, add, device));
+                }
+            });
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            if (invocation_type_ == kernel_invocation_type::nd_range) {
-                devices_[device].submit([&](::sycl::handler &cgh) {
+            devices_[device].submit([&](::sycl::handler &cgh) {
+                if (invocation_type_ == kernel_invocation_type::nd_range) {
                     cgh.parallel_for(execution_range, nd_range_device_kernel_poly(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_));
-                });
-            } else {
-                hierarchical_device_kernel_poly(devices_[device], range, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_)();
-            }
+                } else if (invocation_type_ == kernel_invocation_type::hierarchical) {
+                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), hierarchical_device_kernel_poly(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_));
+                }
+            });
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            if (invocation_type_ == kernel_invocation_type::nd_range) {
-                devices_[device].submit([&](::sycl::handler &cgh) {
+            devices_[device].submit([&](::sycl::handler &cgh) {
+                if (invocation_type_ == kernel_invocation_type::nd_range) {
                     cgh.parallel_for(execution_range, nd_range_device_kernel_radial(cgh, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_));
-                });
-            } else {
-                hierarchical_device_kernel_radial(devices_[device], range, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_)();
-            }
+                } else if (invocation_type_ == kernel_invocation_type::hierarchical) {
+                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), hierarchical_device_kernel_radial(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_));
+                }
+            });
             break;
     }
 }
