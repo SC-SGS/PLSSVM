@@ -23,7 +23,7 @@
 namespace plssvm::sycl {
 
 /**
- * @brief Calculates the C-SVM kernel using the linear kernel function.
+ * @brief Calculates the C-SVM kernel using the hierarchical formulation and the linear kernel function.
  * @details Supports multi-GPU execution.
  * @tparam T the type of the data
  */
@@ -197,7 +197,7 @@ class hierarchical_device_kernel_linear {
 };
 
 /**
- * @brief Calculates the C-SVM kernel using the polynomial kernel function.
+ * @brief Calculates the C-SVM kernel using the hierarchical formulation and the polynomial kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam T the type of the data
  */
@@ -368,7 +368,7 @@ class hierarchical_device_kernel_poly {
 };
 
 /**
- * @brief Calculates the C-SVM kernel using the radial basis functions kernel function.
+ * @brief Calculates the C-SVM kernel using the hierarchical formulation and the radial basis functions kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam T the type of the data
  */
