@@ -46,6 +46,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     using base_type::coef0_;
     using base_type::cost_;
     using base_type::degree_;
+    using base_type::dept_;
     using base_type::gamma_;
     using base_type::kernel_;
     using base_type::num_data_points_;
