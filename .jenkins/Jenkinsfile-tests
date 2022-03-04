@@ -114,7 +114,7 @@ pipeline {
                     sh '''
                         module load cuda/11.2.2
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/hipsycl_20_11_16
+                        module load pcsgs05/hipsycl_2022_02_04
                         mkdir -p build/Release_hip
                         cd build/Release_hip
                         rm -rf *
@@ -131,7 +131,7 @@ pipeline {
                         sh '''
                             module load cuda/11.2.2
                             module use /home/breyerml/.modulefiles/
-                            module load pcsgs05/hipsycl_20_11_16
+                            module load pcsgs05/hipsycl_2022_02_04
                             cd build/Release_hip
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -193,7 +193,7 @@ pipeline {
                     sh '''
                         module load cuda/11.2.2
                         module use /home/breyerml/.modulefiles/
-                        module load pcsgs05/hipsycl_20_11_16
+                        module load pcsgs05/hipsycl_2022_02_04
                         mkdir -p build/Debug_hip
                         cd build/Debug_hip
                         rm -rf *
