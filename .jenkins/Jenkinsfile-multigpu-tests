@@ -189,7 +189,7 @@ pipeline {
                                         source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.20.2 &&\
                                         module load cuda/11.2.2 &&\
                                         module use /home/breyerml/.modulefiles/ &&\
-                                        module load pcsgs05/dpcpp_2022_01_18 &&\
+                                        module load plssvm/argon-gtx/dpcpp &&\
                                         mkdir -p build/Release_dpcpp &&\
                                         cd build/Release_dpcpp &&\
                                         rm -rf * &&\
@@ -207,7 +207,7 @@ pipeline {
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
                                             module load cuda/11.2.2 &&\
                                             module use /home/breyerml/.modulefiles/ &&\
-                                            module load pcsgs05/dpcpp_2022_01_18 &&\
+                                            module load plssvm/argon-gtx/dpcpp &&\
                                             cd build/Release_dpcpp &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
