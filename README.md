@@ -1,13 +1,37 @@
-# Least Squares Support Vector Machine
+# PLSSVM - Parallel Least Squares Support Vector Machine
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
 
-Implementation of a parallel [least squares support vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
-The currently available backends are:
+A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
+In its basic form SVMs are used for binary classification tasks. 
+Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data.
+This is also the reason, why SVMs are also called "large margin classifiers".
+To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies.
+This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
+
+However, normal SVMs suffer in their potential parallelizability.
+Determining the hyperplane boils down to solving a konvex quadratic problem.
+For this, most SVM implementations use Sequential Minimal Optimization (SMO), an inherently sequential algorithm.
+The basic idea of this algorithm is that it takes a pair of data points and calculates the hyperplane between them.
+Afterward, two new data points are selected and the existing hyperplane is adjusted accordingly.
+This procedure is repeat until a new adjustment would be smaller than some epsilon greater than zero.
+
+Some SVM implementations try to harness some parallelization potential by not drawing point pairs but group of points.
+In this case, the hyperplane calculation inside this group is parallelized.
+However, even then modern highly parallel hardware can not be utilized efficiently.
+
+Therefore, we implemented a version of the original proposed SVM called [Least Squares Support Vector Machine (LS-SVM)](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine).
+The LS-SVMs reformulated the original problem such that it boils down to solving a system of linear equations.
+For this kind of problem many highly parallel algorithms and implementations are known.
+We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Conjugate_gradient_method) to solve the system of linear equations.
+
+Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm.
+To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms.
+The currently available frameworks (also called backends in our PLSSVM implementation) are:
   - [OpenMP](https://www.openmp.org/)
   - [CUDA](https://developer.nvidia.com/cuda-zone)
   - [OpenCL](https://www.khronos.org/opencl/)
-  - [SYCL](https://www.khronos.org/sycl/)
+  - [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
 
 ## Getting Started
 
@@ -20,6 +44,7 @@ General dependencies:
   - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
   - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
   - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
+  - multiple Python modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
   - compiler with OpenMP support
@@ -43,51 +68,61 @@ Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FIL
 Building the library can be done using the normal CMake approach:
 
 ```bash
-> git clone git@gitlab-sim.informatik.uni-stuttgart.de:vancraar/Bachelor-Code.git SVM
-> cd SVM/SVM
-> mkdir build && cd build
-> cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] ..
-> cmake --build .
+git clone git@github.com:SC-SGS/PLSSVM.git
+cd PLSSVM 
+mkdir build && cd build 
+cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] .. 
+cmake --build .
 ```
 
 #### Target Platform Selection
 
 The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
-  - `cpu`: compile for the CPU; **no** architectural specifications  is allowed
-  - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g. `nvidia:sm_86,sm_70`
-  - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g. `amd:gfx906`
-  - `intel`: compile for Intel GPUs; **no** architectural specification is allowed
+  - `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
+  - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g., `nvidia:sm_86,sm_70`
+  - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
+  - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
 At least one of the above targets must be present.
 
-To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple Python3 script `utility/gpu_name_to_arch.py` is provided
-(requiring Python3 [`argparse`](https://docs.python.org/3/library/argparse.html) as dependency):
+Note that when using DPC++ only a single architectural specification for `cpu` or `amd` is allowed.
+
+To retrieve the architectural specifications of the current system, a simple Python3 script `utility/plssvm_target_platforms.py` is provided
+(required Python3 dependencies: 
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
+[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
+[`pylspci`](https://pypi.org/project/pylspci/))
 
 ```bash
-> python3 utility/gpu_name_to_arch.py --help
-usage: gpu_name_to_arch.py [-h] [--name NAME]
+python3 utility/plssvm_target_platforms.py --help
+usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
-  -h, --help   show this help message and exit
-  --name NAME  the full name of the GPU (e.g. GeForce RTX 3080)
+  -h, --help  show this help message and exit
+  --quiet     only output the final PLSSVM_TARGET_PLATFORMS string
 ```
 
 Example invocations:
 
 ```bash
-> python3 utility_scripts/gpu_name_to_arch.py --name "GeForce RTX 3080"
-sm_86
-> python3 utility_scripts/gpu_name_to_arch.py --name "Radeon VII"
-gfx906
-```
+python3 utility_scripts/plssvm_target_platforms.py
+Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
-If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU
-(requires the Python3 dependencies [`GPUtil`](https://pypi.org/project/GPUtil/) and [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/)).
+Found 1 NVIDIA GPU(s):
+  1x NVIDIA GeForce RTX 3080: sm_86
+
+Possible -DPLSSVM_TARGET_PLATFORMS entries:
+cpu:avx512;nvidia:sm_86
+
+python3 utility_scripts/plssvm_target_platforms.py --quiet
+cpu:avx512;intel:dg1
+```
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
   - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-  - for AMD GPUs: [ROCm Documentation](https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst)
+  - for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
+  - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
 
 #### Optional CMake Options
@@ -135,7 +170,7 @@ To use DPC++ as compiler simply set the `CMAKE_CXX_COMPILER` to the respective D
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
 
 ```bash
-> ctest
+ctest
 ```
 
 ### Generating test coverage results
@@ -144,10 +179,10 @@ To enable the generation of test coverage reports using `locv` the library must 
 Additionally, it's advisable to use smaller test files to shorten the `ctest` step.
 
 ```bash
-> cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS="..." \
-        -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \
-        -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..
-> cmake --build . -- coverage
+cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS="..." \
+      -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \
+      -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..
+cmake --build . -- coverage
 ```
 
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
@@ -156,7 +191,7 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
 ```bash
-> make doc
+make doc
 ```
 The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
 
@@ -165,7 +200,7 @@ The documentation of the current state of the main branch can be found [here](ht
 The library supports the `install` target:
 
 ```bash
-> cmake --build . -- install
+cmake --build . -- install
 ```
 
 ## Usage
@@ -182,7 +217,7 @@ In order to use all functionality, the following Python3 modules must be install
 [`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
 ```bash
-> python3 utility_scripts/generate_data**.py --help
+python3 utility_scripts/generate_data**.py --help
 usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]
 
 optional arguments:
@@ -200,13 +235,13 @@ optional arguments:
 An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each could look like:
 
 ```bash
-> python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200
+python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200
 ```
 
 ### Training
 
 ```bash
-> ./svm-train --help
+./svm-train --help
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-train [OPTION...] training_set_file [model_file]
@@ -232,13 +267,13 @@ Usage:
 An example invocation using the CUDA backend could look like:
 
 ```bash
-> ./svm-train --backend cuda --input /path/to/data_file
+./svm-train --backend cuda --input /path/to/data_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-> ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
+./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
 The `--target_platform=automatic` flags works for the different backends as follows:
@@ -251,7 +286,7 @@ The `--target_platform=automatic` flags works for the different backends as foll
 ### Predicting
 
 ```bash
-> ./svm-predict --help
+./svm-predict --help
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-predict [OPTION...] test_file model_file [output_file]
@@ -268,13 +303,13 @@ Usage:
 An example invocation could look like:
 
 ```bash
-> ./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
+./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-> ./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
 The `--target_platform=automatic` flags works like in the training (`./svm-train`) case.
@@ -290,7 +325,7 @@ A simple C++ program (`main.cpp`) using this library could look like:
 #include <iostream>
 #include <vector>
 
-int main(i) {
+int main() {
     try {
         // parse SVM parameter from command line
         plssvm::parameter<double> params;
