@@ -130,7 +130,7 @@ elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
     # be able to choose between the Level-Zero and OpenCL DPC++ backend
     option(PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO "Enable Level-Zero backend in favor of OpenCL when using DPC++." OFF)
     if(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO)
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level-zero")
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level_zero")
     else()
         target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
     endif()
