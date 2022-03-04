@@ -1,9 +1,33 @@
-# Least Squares Support Vector Machine
+# PLSSVM - Parallel Least Squares Support Vector Machine
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
 
-Implementation of a parallel [least squares support vector machine](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine) using multiple different backends.
-The currently available backends are:
+A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
+In its basic form SVMs are used for binary classification tasks. 
+Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data.
+This is also the reason, why SVMs are also called "large margin classifiers".
+To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies.
+This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
+
+However, normal SVMs suffer in their potential parallelizability.
+Determining the hyperplane boils down to solving a konvex quadratic problem.
+For this, most SVM implementations use Sequential Minimal Optimization (SMO), an inherently sequential algorithm.
+The basic idea of this algorithm is that it takes a pair of data points and calculates the hyperplane between them.
+Afterward, two new data points are selected and the existing hyperplane is adjusted accordingly.
+This procedure is repeat until a new adjustment would be smaller than some epsilon greater than zero.
+
+Some SVM implementations try to harness some parallelization potential by not drawing point pairs but group of points.
+In this case, the hyperplane calculation inside this group is parallelized.
+However, even then modern highly parallel hardware can not be utilized efficiently.
+
+Therefore, we implemented a version of the original proposed SVM called [Least Squares Support Vector Machine (LS-SVM)](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine).
+The LS-SVMs reformulated the original problem such that it boils down to solving a system of linear equations.
+For this kind of problem many highly parallel algorithms and implementations are known.
+We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Conjugate_gradient_method) to solve the system of linear equations.
+
+Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm.
+To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms.
+The currently available frameworks (also called backends in our PLSSVM implementation) are:
   - [OpenMP](https://www.openmp.org/)
   - [CUDA](https://developer.nvidia.com/cuda-zone)
   - [OpenCL](https://www.khronos.org/opencl/)
@@ -20,7 +44,7 @@ General dependencies:
   - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
   - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
   - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
-  - multiple Python3 modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
+  - multiple Python modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
   - compiler with OpenMP support
