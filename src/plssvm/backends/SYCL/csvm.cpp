@@ -63,12 +63,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     if (print_info_) {
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-        fmt::print("Using SYCL (hipSYCL) as backend.\n");
-#endif
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-        fmt::print("Using SYCL (DPC++) as backend.\n");
-#endif
+        fmt::print("Using SYCL ({}) as backend.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME);
     }
 
     // get all available devices wrt the requested target platform

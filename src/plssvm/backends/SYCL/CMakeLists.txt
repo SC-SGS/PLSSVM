@@ -142,6 +142,7 @@ target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_L
 
 # set compile definition that the SYCL backend is available
 target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
+target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_COMPILER_NAME="${PLSSVM_SYCL_BACKEND_COMPILER}")
 
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
