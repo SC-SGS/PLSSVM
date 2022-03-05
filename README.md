@@ -28,40 +28,46 @@ We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Co
 Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm.
 To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms.
 The currently available frameworks (also called backends in our PLSSVM implementation) are:
-  - [OpenMP](https://www.openmp.org/)
-  - [CUDA](https://developer.nvidia.com/cuda-zone)
-  - [OpenCL](https://www.khronos.org/opencl/)
-  - [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
+
+- [OpenMP](https://www.openmp.org/)
+- [CUDA](https://developer.nvidia.com/cuda-zone)
+- [OpenCL](https://www.khronos.org/opencl/)
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
 
 ## Getting Started
 
 ### Dependencies
 
 General dependencies:
-  - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
-  - [CMake](https://cmake.org/) 3.18 or newer
-  - [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-  - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
-  - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-  - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
-  - multiple Python modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
+
+- a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
+- [CMake](https://cmake.org/) 3.18 or newer
+- [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
+- [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
+- [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
+- multiple Python modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
-  - compiler with OpenMP support
+
+- compiler with OpenMP support
 
 Additional dependencies for the CUDA backend:
-  - CUDA SDK
-  - either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
+
+- CUDA SDK
+- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
 
 Additional dependencies for the OpenCL backend:
-  - OpenCL runtime and header files
+
+- OpenCL runtime and header files
 
 Additional dependencies for the SYCL backend:
-  - the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
+
+- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
-  - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
+- [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
 
 ### Building
 
@@ -79,10 +85,11 @@ cmake --build .
 
 The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
-  - `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
-  - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g., `nvidia:sm_86,sm_70`
-  - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
-  - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
+
+- `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
+- `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g., `nvidia:sm_86,sm_70`
+- `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
+- `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
 At least one of the above targets must be present.
 
@@ -120,46 +127,50 @@ cpu:avx512;intel:dg1
 ```
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
-  - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-  - for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
-  - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
+- for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
+- for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
+- for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
 #### Optional CMake Options
 
 The `[optional_options]` can be one or multiple of:
 
-  - `PLSSVM_ENABLE_OPENMP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-    - `ON`: check for the OpenMP backend and fail if not available
-    - `AUTO`: check for the OpenMP backend but **do not** fail if not available
-    - `OFF`: do not check for the OpenMP backend
-  - `PLSSVM_ENABLE_CUDA_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-    - `ON`: check for the CUDA backend and fail if not available
-    - `AUTO`: check for the CUDA backend but **do not** fail if not available
-    - `OFF`: do not check for the CUDA backend
-  - `PLSSVM_ENABLE_OPENCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-    - `ON`: check for the OpenCL backend and fail if not available
-    - `AUTO`: check for the OpenCL backend but **do not** fail if not available
-    - `OFF`: do not check for the OpenCL backend
-  - `PLSSVM_ENABLE_SYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-    - `ON`: check for the SYCL backend and fail if not available
-    - `AUTO`: check for the SYCL backend but **do not** fail if not available
-    - `OFF`: do not check for the SYCL backend
+- `PLSSVM_ENABLE_OPENMP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for the OpenMP backend and fail if not available
+  - `AUTO`: check for the OpenMP backend but **do not** fail if not available
+  - `OFF`: do not check for the OpenMP backend
+
+- `PLSSVM_ENABLE_CUDA_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for the CUDA backend and fail if not available
+  - `AUTO`: check for the CUDA backend but **do not** fail if not available
+  - `OFF`: do not check for the CUDA backend
+
+- `PLSSVM_ENABLE_OPENCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for the OpenCL backend and fail if not available
+  - `AUTO`: check for the OpenCL backend but **do not** fail if not available
+  - `OFF`: do not check for the OpenCL backend
+
+- `PLSSVM_ENABLE_SYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for the SYCL backend and fail if not available
+  - `AUTO`: check for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for the SYCL backend
 
 **Attention:** at least one backend must be enabled and available!
 
-  - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
-  - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-  - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-  - `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `svm-train` and `svm-predict` executables
-  - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
-  - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
-  - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
-  - `PLSSVM_GENERATE_TIMING_SCRIPT=ON|OFF` (default: `OFF`): configure a timing script usable for performance measurement
+- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
+- `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `svm-train` and `svm-predict` executables
+- `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
+- `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
+- `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
+- `PLSSVM_GENERATE_TIMING_SCRIPT=ON|OFF` (default: `OFF`): configure a timing script usable for performance measurement
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
-  - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
-    - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
+
+- `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
+  - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
 
 If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.
@@ -190,9 +201,11 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 ### Creating the documentation
 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
+
 ```bash
 make doc
 ```
+
 The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
 
 ## Installing
@@ -211,8 +224,8 @@ The repository comes with a Python3 script (in the `utility_scripts/` directory)
 
 In order to use all functionality, the following Python3 modules must be installed:
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html),
-[`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/), 
-[`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/), 
+[`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/),
+[`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/),
 [`matplotlib`](https://pypi.org/project/matplotlib/) and
 [`mpl_toolkits`](https://pypi.org/project/matplotlib/)
 
@@ -373,7 +386,6 @@ add_executable(prog main.cpp)
 target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::svm-all)
 ```
-
 
 ## License
 
