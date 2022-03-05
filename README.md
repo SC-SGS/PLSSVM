@@ -3,7 +3,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU + GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&subject=Linux+CPU/GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
 
 A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
-In its basic form SVMs are used for binary classification tasks. 
+In its basic form SVMs are used for binary classification tasks.
 Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data.
 This is also the reason, why SVMs are also called "large margin classifiers".
 To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies.
@@ -46,7 +46,7 @@ General dependencies:
 - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
-- multiple Python modules used in the utility scripts; <br>to install all modules use `pip install --user -r install/python_requirements.txt`
+- multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
 
@@ -96,7 +96,7 @@ At least one of the above targets must be present.
 Note that when using DPC++ only a single architectural specification for `cpu` or `amd` is allowed.
 
 To retrieve the architectural specifications of the current system, a simple Python3 script `utility/plssvm_target_platforms.py` is provided
-(required Python3 dependencies: 
+(required Python3 dependencies:
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
 [`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
 [`pylspci`](https://pypi.org/project/pylspci/))
