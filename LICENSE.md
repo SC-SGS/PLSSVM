@@ -1,4 +1,4 @@
-MIT License
+## MIT License
 
 Copyright (c) 2021 Alexander Van Craen and Marcel Breyer @ University of Stuttgart
 
