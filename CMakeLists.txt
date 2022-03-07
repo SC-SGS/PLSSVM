@@ -6,10 +6,10 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project("PLSSVM - Parallel Least-Squares Support Vector Machine"
-        VERSION 1.0.1
+project("PLSSVM - Parallel Least Squares Support Vector Machine"
+        VERSION 1.1.0
         LANGUAGES CXX
-        DESCRIPTION "A Support Vector Machine implementation using different backends.")
+        DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
