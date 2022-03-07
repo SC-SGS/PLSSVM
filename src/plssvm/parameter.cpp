@@ -425,7 +425,7 @@ void parameter<T>::parse_model_file(const std::string &filename) {
             } else if (detail::starts_with(line, "total_sv")) {
                 // the total number of support vectors must be greater than 0
                 num_sv = detail::convert_to<decltype(num_sv)>(value);
-                if (num_sv <= 0) {
+                if (num_sv == 0) {
                     throw invalid_file_format_exception{ fmt::format("The number of support vectors must be greater than 0, but is {}!", num_sv) };
                 }
             } else if (detail::starts_with(line, "rho")) {
