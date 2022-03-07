@@ -221,16 +221,16 @@ void csvm<T>::run_w_kernel(const std::size_t device, [[maybe_unused]] const ::pl
 
 template <typename T>
 void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
-    [[maybe_unused]] const ::sycl::nd_range execution_range = execution_range_to_native<2>(range, kernel_invocation_type::nd_range);
-
+    const ::sycl::nd_range execution_range = execution_range_to_native<2>(range, kernel_invocation_type::nd_range);
     switch (kernel_) {
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-            devices_[0].parallel_for(::sycl::range<2>{ num_data_points_, num_predict_points }, device_kernel_predict_poly(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, degree_, gamma_, coef0_));
+            devices_[0].parallel_for(execution_range, device_kernel_predict_poly(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, degree_, gamma_, coef0_));
+
             break;
         case kernel_type::rbf:
-            devices_[0].parallel_for(::sycl::range<2>{ num_data_points_, num_predict_points }, device_kernel_predict_radial(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, gamma_));
+            devices_[0].parallel_for(execution_range, device_kernel_predict_radial(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, gamma_));
             break;
     }
 }

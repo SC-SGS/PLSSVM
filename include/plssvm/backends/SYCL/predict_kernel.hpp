@@ -98,11 +98,11 @@ class device_kernel_predict_poly {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] idx the [`sycl::nd_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::id<2> idx) const {
-        const kernel_index_type data_point_index = idx[0];
-        const kernel_index_type predict_point_index = idx[1];
+    void operator()(::sycl::nd_item<2> idx) const {
+        const kernel_index_type data_point_index = idx.get_global_id(0);
+        const kernel_index_type predict_point_index = idx.get_global_id(1);
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
@@ -163,11 +163,11 @@ class device_kernel_predict_radial {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] idx the [`sycl::nd_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::id<2> idx) const {
-        const kernel_index_type data_point_index = idx[0];
-        const kernel_index_type predict_point_index = idx[1];
+    void operator()(::sycl::nd_item<2> idx) const {
+        const kernel_index_type data_point_index = idx.get_global_id(0);
+        const kernel_index_type predict_point_index = idx.get_global_id(1);
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
