@@ -259,9 +259,9 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-train [OPTION...] training_set_file [model_file]
 
-  -t, --kernel_type arg         set type of kernel function.
+  -t, --kernel_type arg         set type of kernel function. 
                                          0 -- linear: u'*v
-                                         1 -- polynomial: (gamma*u'*v + coef0)^degree
+                                         1 -- polynomial: (gamma*u'*v + coef0)^degree 
                                          2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
   -d, --degree arg              set degree in kernel function (default: 3)
   -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)
@@ -270,11 +270,13 @@ Usage:
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
   -b, --backend arg             choose the backend: openmp|cuda|opencl|sycl (default: openmp)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+      --sycl_kernel_invocation_type arg
+                                choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
       --input training_set_file
-
-      --model model_file
+                                
+      --model model_file  
 ```
 
 An example invocation using the CUDA backend could look like:
@@ -289,12 +291,16 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
-The `--target_platform=automatic` flags works for the different backends as follows:
+The `--target_platform=automatic` flag works for the different backends as follows:
 
 - `OpenMP`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
+
+The `--sycl_kernel_invocation_type` flag is only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
+If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, 
+except for hipSYCL on CPUs where the hierarchical formulation is used instead.
 
 ### Predicting
 
