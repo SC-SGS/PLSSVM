@@ -80,7 +80,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     if (print_info_) {
-        fmt::print("Using SYCL ({}) as backend with the kernel invocation type \"{}\".\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, invocation_type_);
+        fmt::print("Using SYCL ({}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, invocation_type_);
         if (target_ == target_platform::automatic) {
             fmt::print("Using {} as automatic target platform.\n", used_target);
         }
