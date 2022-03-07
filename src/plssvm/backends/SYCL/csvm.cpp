@@ -80,13 +80,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     if (print_info_) {
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-        constexpr std::string_view sycl_implementation_name = "hipSYCL";
-#endif
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-        constexpr std::string_view sycl_implementation_name = "DPC++";
-#endif
-        fmt::print("Using SYCL ({}) as backend with the kernel invocation type \"{}\".\n", sycl_implementation_name, invocation_type_);
+        fmt::print("Using SYCL ({}) as backend with the kernel invocation type \"{}\".\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, invocation_type_);
         if (target_ == target_platform::automatic) {
             fmt::print("Using {} as automatic target platform.\n", used_target);
         }

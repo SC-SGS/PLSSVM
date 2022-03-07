@@ -26,12 +26,13 @@
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 #include "gmock/gmock.h"  // EXPECT_THAT
-#include "gtest/gtest.h"  // GTEST_USES_POSIX_RE, ASSERT_EQ, EXPECT_EQ, EXPECT_GT, testing::ContainsRegex, testing::StaticAssertTypeEq
+#include "gtest/gtest.h"  // ASSERT_GT, ASSERT_TRUE, ASSERT_EQ, EXPECT_EQ, EXPECT_GT, testing::ContainsRegex, testing::StaticAssertTypeEq
 
 #include <algorithm>   // std::generate
 #include <filesystem>  // std::filesystem::remove
 #include <fstream>     // std::ifstream
 #include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <regex>       // std::regex, std::regex_match
 #include <string>      // std::string, std::getline
 #include <vector>      // std::vector
 
@@ -70,26 +71,48 @@ inline void write_model_test() {
     // write learned model to file
     csvm.write_model(model_file);
 
-    // read content of model file and delete it
-    std::ifstream model_ifs(model_file);
-    std::string file_content((std::istreambuf_iterator<char>(model_ifs)), std::istreambuf_iterator<char>());
-    model_ifs.close();
+    // read content of model file line by line and delete it
+    std::vector<std::string> lines;
+    {
+        std::ifstream model_ifs(model_file);
+        std::string line;
+        while (std::getline(model_ifs, line)) {
+            lines.push_back(std::move(line));
+        }
+    }
     std::filesystem::remove(model_file);
 
-    // check model file content for correctness
-#ifdef GTEST_USES_POSIX_RE
+    // create vector containing correct regex
+    std::vector<std::string> regex_patterns;
+    regex_patterns.emplace_back("svm_type c_svc");
+    regex_patterns.emplace_back(fmt::format("kernel_type {}", params.kernel));
     switch (params.kernel) {
         case plssvm::kernel_type::linear:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type linear\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
             break;
         case plssvm::kernel_type::polynomial:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type polynomial\ndegree [0-9]+\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\ncoef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            regex_patterns.emplace_back("degree [0-9]+");
+            regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+            regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
             break;
         case plssvm::kernel_type::rbf:
-            EXPECT_THAT(file_content, testing::ContainsRegex("^svm_type c_svc\nkernel_type rbf\ngamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nnr_class 2\ntotal_sv [0-9]+\nrho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?\nlabel 1 -1\nnr_sv [0-9]+ [0-9]+\nSV"));
+            regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
             break;
     }
-#endif
+    regex_patterns.emplace_back("nr_class 2");
+    regex_patterns.emplace_back("total_sv [0-9]+");
+    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+    regex_patterns.emplace_back("label 1 -1");
+    regex_patterns.emplace_back("nr_sv [0-9]+ [0-9]+");
+    regex_patterns.emplace_back("SV");
+
+    // at least number of header entries lines must be present
+    ASSERT_GT(lines.size(), regex_patterns.size());
+
+    // check if the model header is valid
+    for (std::vector<std::string>::size_type i = 0; i < regex_patterns.size(); ++i) {
+        std::regex reg(regex_patterns[i], std::regex::extended);
+        ASSERT_TRUE(std::regex_match(lines[i], reg)) << "line: " << i << " doesn't match regex pattern: " << regex_patterns[i];
+    }
 }
 
 template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
