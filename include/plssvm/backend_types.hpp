@@ -23,7 +23,7 @@ enum class backend_type {
     openmp,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
     cuda,
-    /** [HIP](https://github.com/ROCm-Developer-Tools/HIP) to target AMD GPUs only. */
+    /** [HIP](https://github.com/ROCm-Developer-Tools/HIP) to target AMD and NVIDIA GPUs. */
     hip,
     /** [OpenCL](https://www.khronos.org/opencl/) to target GPUs from different vendors and CPUs. */
     opencl,

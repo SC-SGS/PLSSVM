@@ -15,7 +15,7 @@
 
 /**
  * @def PLSSVM_HIP_ERROR_CHECK
- * @brief Macro used for error checking CUDA runtime functions.
+ * @brief Macro used for error checking HIP runtime functions.
  */
 #define PLSSVM_HIP_ERROR_CHECK(err) plssvm::hip::detail::gpu_assert((err))
 

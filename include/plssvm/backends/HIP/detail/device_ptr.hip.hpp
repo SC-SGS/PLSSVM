@@ -91,7 +91,7 @@ class device_ptr {
     /**
      * @brief Checks whether `*this` currently wraps a HIP device pointer.
      * @details Same as `device_ptr::get() != nullptr`.
-     * @return `true` if `*this` wraps a CUDA device pointer, `false` otherwise (`[[nodiscard]]`)
+     * @return `true` if `*this` wraps a HIP device pointer, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] explicit operator bool() const noexcept {
         return data_ != nullptr;
