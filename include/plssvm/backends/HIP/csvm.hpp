@@ -39,7 +39,7 @@ template <typename T>
 class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::hip::detail::device_ptr<T>, int> {
   protected:
     // protected for the test mock class
-    /// The template base type of the CUDA C-SVM class.
+    /// The template base type of the HIP C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::hip::detail::device_ptr<T>, int>;
 
     using base_type::coef0_;

@@ -31,4 +31,4 @@ class backend_exception : public exception {
     explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
-}  // namespace plssvm::cuda
+}  // namespace plssvm::hip

@@ -45,4 +45,4 @@ void device_synchronize(const int device) {
     PLSSVM_HIP_ERROR_CHECK(hipDeviceSynchronize());
 }
 
-}  // namespace plssvm::cuda::detail
+}  // namespace plssvm::hip::detail
