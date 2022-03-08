@@ -75,6 +75,11 @@ if("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "hipSYCL")
         message(STATUS "Ignoring specified Intel architectures \"${PLSSVM_INTEL_TARGET_ARCHS}\" in favor of SPIR-V when using hipSYCL!")
     endif()
 elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
+    # TODO: remove if DPC++ bug is fixed
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(FATAL_ERROR "The SYCL backend when using DPC++ currently does not support the Debug build type. For more information see: https://github.com/intel/llvm/issues/5754")
+    endif()
+
     # enable DPC++ SYCL support
     target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
     target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
