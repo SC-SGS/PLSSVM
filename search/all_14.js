@@ -1,6 +1,9 @@
 var searchData=
 [
-  ['w_5f_260',['w_',['../classplssvm_1_1csvm.html#a0af207da77ac4abb56e571d0bc1927b5',1,'plssvm::csvm::w_()'],['../classplssvm_1_1detail_1_1gpu__csvm.html#a0af207da77ac4abb56e571d0bc1927b5',1,'plssvm::detail::gpu_csvm::w_()'],['../classplssvm_1_1openmp_1_1csvm.html#a0af207da77ac4abb56e571d0bc1927b5',1,'plssvm::openmp::csvm::w_()']]],
-  ['what_5fwith_5floc_261',['what_with_loc',['../classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58',1,'plssvm::exception']]],
-  ['write_5fmodel_262',['write_model',['../classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e',1,'plssvm::csvm']]]
+  ['value_267',['value',['../classplssvm_1_1opencl_1_1detail_1_1error__code.html#acd2283a35a3277c8bc7fe4f3ad659063',1,'plssvm::opencl::detail::error_code']]],
+  ['value_5fptr_268',['value_ptr',['../classplssvm_1_1parameter.html#a99fcfe94bea2e0998b4edc9e10d63579',1,'plssvm::parameter::value_ptr()'],['../classplssvm_1_1parameter__predict.html#a99fcfe94bea2e0998b4edc9e10d63579',1,'plssvm::parameter_predict::value_ptr()'],['../classplssvm_1_1parameter__train.html#a99fcfe94bea2e0998b4edc9e10d63579',1,'plssvm::parameter_train::value_ptr()']]],
+  ['value_5fptr_5f_269',['value_ptr_',['../classplssvm_1_1csvm.html#ac1bfd504381a3736ab238e878a931345',1,'plssvm::csvm::value_ptr_()'],['../classplssvm_1_1detail_1_1gpu__csvm.html#ac1bfd504381a3736ab238e878a931345',1,'plssvm::detail::gpu_csvm::value_ptr_()']]],
+  ['value_5ftype_270',['value_type',['../classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#af699c7bb4e00b39f6de147877d7a3bcc',1,'plssvm::cuda::detail::device_ptr::value_type()'],['../classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aee0e33102032e18607bdb49ffc4d7b8b',1,'plssvm::opencl::detail::device_ptr::value_type()'],['../classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53',1,'plssvm::sycl::detail::device_ptr::value_type()']]],
+  ['vec_271',['vec',['../structplssvm_1_1operators_1_1transposed.html#a72e4495d905ba3afb90ae7a6e55597b6',1,'plssvm::operators::transposed']]],
+  ['version_2ehpp_272',['version.hpp',['../version_8hpp.html',1,'']]]
 ];

@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['learn_400',['learn',['../classplssvm_1_1csvm.html#af54a2f0f53af7c0fa6b1be469462d3ca',1,'plssvm::csvm']]],
-  ['line_401',['line',['../classplssvm_1_1detail_1_1file__reader.html#ab8a3cf538ae798db7feaa80339dd505d',1,'plssvm::detail::file_reader::line()'],['../classplssvm_1_1source__location.html#a28c3a2b57d878cee5619037483b24031',1,'plssvm::source_location::line()']]],
-  ['lines_402',['lines',['../classplssvm_1_1detail_1_1file__reader.html#a258d5cb35ba27e6cdc372f49d7a6a1ca',1,'plssvm::detail::file_reader']]],
-  ['loc_403',['loc',['../classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54',1,'plssvm::exception']]]
+  ['kernel_419',['kernel',['../classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1',1,'plssvm::opencl::detail::kernel::kernel(cl_kernel compute_kernel) noexcept'],['../classplssvm_1_1opencl_1_1detail_1_1kernel.html#a233822ddf8c26a9407c7993f95c717ac',1,'plssvm::opencl::detail::kernel::kernel(const kernel &amp;)=delete'],['../classplssvm_1_1opencl_1_1detail_1_1kernel.html#a1b6d9e625877db047d5218f5380e6849',1,'plssvm::opencl::detail::kernel::kernel(kernel &amp;&amp;other) noexcept']]],
+  ['kernel_5ffunction_420',['kernel_function',['../classplssvm_1_1csvm.html#aa76f726a5833539fc23d76d5b709ecd1',1,'plssvm::csvm::kernel_function()'],['../namespaceplssvm.html#ae76872fe47a5337ea0c783648835554d',1,'plssvm::kernel_function()']]],
+  ['kernel_5ftype_5fto_5ffunction_5fname_421',['kernel_type_to_function_name',['../namespaceplssvm_1_1opencl_1_1detail.html#ad8293538e911985d718aff72ff9a392c',1,'plssvm::opencl::detail']]]
 ];

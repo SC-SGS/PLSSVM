@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: Least Squares Support Vector Machine</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: PLSSVM - Parallel Least Squares Support Vector Machine</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -64,77 +64,99 @@ $(function() {
 
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">Least Squares Support Vector Machine </div>  </div>
+<div class="title">PLSSVM - Parallel Least Squares Support Vector Machine </div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_README"></a> <a href="https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af" alt="Codacy Badge" class="inline"/></a> &ensp; <a href="https://sc-sgs.github.io/PLSSVM/"><img src="https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg" alt="Generate documentation" style="pointer-events: none;" class="inline"/></a> &ensp; <a href="https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Multibranch-Github/job/main/"><img src="https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FMultibranch-Github%2Fmain&amp;subject=Linux+CPU/GPU" alt="Build Status Linux CPU + GPU" class="inline"/></a> &ensp; <a href="https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml"><img src="https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg" alt="Windows CPU" style="pointer-events: none;" class="inline"/></a></p>
-<p>Implementation of a parallel <a href="https://en.wikipedia.org/wiki/Least-squares_support-vector_machine">least squares support vector machine</a> using multiple different backends. The currently available backends are:</p><ul>
+<p>A <a href="https://en.wikipedia.org/wiki/Support-vector_machine">Support Vector Machine (SVM)</a> is a supervised machine learning model. In its basic form SVMs are used for binary classification tasks. Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data. This is also the reason, why SVMs are also called "large margin classifiers". To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies. This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.</p>
+<p>However, normal SVMs suffer in their potential parallelizability. Determining the hyperplane boils down to solving a konvex quadratic problem. For this, most SVM implementations use Sequential Minimal Optimization (SMO), an inherently sequential algorithm. The basic idea of this algorithm is that it takes a pair of data points and calculates the hyperplane between them. Afterward, two new data points are selected and the existing hyperplane is adjusted accordingly. This procedure is repeat until a new adjustment would be smaller than some epsilon greater than zero.</p>
+<p>Some SVM implementations try to harness some parallelization potential by not drawing point pairs but group of points. In this case, the hyperplane calculation inside this group is parallelized. However, even then modern highly parallel hardware can not be utilized efficiently.</p>
+<p>Therefore, we implemented a version of the original proposed SVM called <a href="https://en.wikipedia.org/wiki/Least-squares_support-vector_machine">Least Squares Support Vector Machine (LS-SVM)</a>. The LS-SVMs reformulated the original problem such that it boils down to solving a system of linear equations. For this kind of problem many highly parallel algorithms and implementations are known. We decided to use the <a href="https://en.wikipedia.org/wiki/Conjugate_gradient_method">Conjugate Gradient (CG)</a> to solve the system of linear equations.</p>
+<p>Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm. To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms. The currently available frameworks (also called backends in our PLSSVM implementation) are:</p>
+<ul>
 <li><a href="https://www.openmp.org/">OpenMP</a></li>
 <li><a href="https://developer.nvidia.com/cuda-zone">CUDA</a></li>
 <li><a href="https://www.khronos.org/opencl/">OpenCL</a></li>
-<li><a href="https://www.khronos.org/sycl/">SYCL</a></li>
+<li><a href="https://www.khronos.org/sycl/">SYCL</a> (tested implementations are <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a>)</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Getting Started</h1>
 <h2><a class="anchor" id="autotoc_md2"></a>
 Dependencies</h2>
-<p>General dependencies:</p><ul>
+<p>General dependencies:</p>
+<ul>
 <li>a C++17 capable compiler (e.g. <a href="https://gcc.gnu.org/"><code>gcc</code></a> or <a href="https://clang.llvm.org/"><code>clang</code></a>)</li>
 <li><a href="https://cmake.org/">CMake</a> 3.18 or newer</li>
 <li><a href="https://github.com/jarro2783/cxxopts">cxxopts</a>, <a href="https://github.com/fastfloat/fast_float">fast_float</a> and <a href="https://github.com/fmtlib/fmt">{fmt}</a> (all three are automatically build during the CMake configuration if they couldn't be found using the respective <code>find_package</code> call)</li>
 <li><a href="https://github.com/google/googletest">GoogleTest</a> if testing is enabled (automatically build during the CMake configuration if <code>find_package(GTest)</code> wasn't successful)</li>
 <li><a href="https://www.doxygen.nl/index.html">doxygen</a> if documentation generation is enabled</li>
 <li><a href="https://www.openmp.org/">OpenMP</a> 4.0 or newer (optional) to speed-up file parsing</li>
+<li>multiple Python modules used in the utility scripts, to install all modules use <code>pip install --user -r install/python_requirements.txt</code></li>
 </ul>
-<p>Additional dependencies for the OpenMP backend:</p><ul>
+<p>Additional dependencies for the OpenMP backend:</p>
+<ul>
 <li>compiler with OpenMP support</li>
 </ul>
-<p>Additional dependencies for the CUDA backend:</p><ul>
+<p>Additional dependencies for the CUDA backend:</p>
+<ul>
 <li>CUDA SDK</li>
 <li>either NVIDIA <a href="https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html"><code>nvcc</code></a> or <a href="https://llvm.org/docs/CompileCudaWithLLVM.html"><code>clang</code> with CUDA support enabled</a></li>
 </ul>
-<p>Additional dependencies for the OpenCL backend:</p><ul>
+<p>Additional dependencies for the OpenCL backend:</p>
+<ul>
 <li>OpenCL runtime and header files</li>
 </ul>
-<p>Additional dependencies for the SYCL backend:</p><ul>
+<p>Additional dependencies for the SYCL backend:</p>
+<ul>
 <li>the code must be compiled with a SYCL capable compiler; currently tested with <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a></li>
 </ul>
-<p>Additional dependencies if <code>PLSSVM_ENABLE_TESTING</code> and <code>PLSSVM_GENERATE_TEST_FILE</code> are both set to <code>ON</code>:</p><ul>
+<p>Additional dependencies if <code>PLSSVM_ENABLE_TESTING</code> and <code>PLSSVM_GENERATE_TEST_FILE</code> are both set to <code>ON</code>:</p>
+<ul>
 <li><a href="https://www.python.org/">Python3</a> with the <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a>, <a href="https://docs.python.org/3/library/timeit.html"><code>timeit</code></a> and <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a> modules</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md3"></a>
 Building</h2>
 <p>Building the library can be done using the normal CMake approach:</p>
-<div class="fragment"><div class="line">&gt; git clone git@gitlab-sim.informatik.uni-stuttgart.de:vancraar/Bachelor-Code.git SVM</div>
-<div class="line">&gt; cd SVM/SVM</div>
-<div class="line">&gt; mkdir build &amp;&amp; cd build</div>
-<div class="line">&gt; cmake -DPLSSVM_TARGET_PLATFORMS=&quot;...&quot; [optional_options] ..</div>
-<div class="line">&gt; cmake --build .</div>
+<div class="fragment"><div class="line">git clone git@github.com:SC-SGS/PLSSVM.git</div>
+<div class="line">cd PLSSVM </div>
+<div class="line">mkdir build &amp;&amp; cd build </div>
+<div class="line">cmake -DPLSSVM_TARGET_PLATFORMS=&quot;...&quot; [optional_options] .. </div>
+<div class="line">cmake --build .</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md4"></a>
 Target Platform Selection</h3>
-<p>The <b>required</b> CMake option <code>PLSSVM_TARGET_PLATFORMS</code> is used to determine for which targets the backends should be compiled. Valid targets are:</p><ul>
-<li><code>cpu</code>: compile for the CPU; <b>no</b> architectural specifications is allowed</li>
-<li><code>nvidia</code>: compile for NVIDIA GPUs; <b>at least one</b> architectural specification is necessary, e.g. <code>nvidia:sm_86,sm_70</code></li>
-<li><code>amd</code>: compile for AMD GPUs; <b>at least one</b> architectural specification is necessary, e.g. <code>amd:gfx906</code></li>
-<li><code>intel</code>: compile for Intel GPUs; <b>no</b> architectural specification is allowed</li>
+<p>The <b>required</b> CMake option <code>PLSSVM_TARGET_PLATFORMS</code> is used to determine for which targets the backends should be compiled. Valid targets are:</p>
+<ul>
+<li><code>cpu</code>: compile for the CPU; an <b>optional</b> architectural specifications is allowed but only used when compiling with DPC++, e.g., <code>cpu:avx2</code></li>
+<li><code>nvidia</code>: compile for NVIDIA GPUs; <b>at least one</b> architectural specification is necessary, e.g., <code>nvidia:sm_86,sm_70</code></li>
+<li><code>amd</code>: compile for AMD GPUs; <b>at least one</b> architectural specification is necessary, e.g., <code>amd:gfx906</code></li>
+<li><code>intel</code>: compile for Intel GPUs; <b>at least one</b> architectural specification is necessary, e.g., <code>intel:skl</code></li>
 </ul>
 <p>At least one of the above targets must be present.</p>
-<p>To retrieve the architectural specification, given an NVIDIA or AMD GPU name, a simple Python3 script <code>utility/gpu_name_to_arch.py</code> is provided (requiring Python3 <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a> as dependency):</p>
-<div class="fragment"><div class="line">&gt; python3 utility/gpu_name_to_arch.py --help</div>
-<div class="line">usage: gpu_name_to_arch.py [-h] [--name NAME]</div>
+<p>Note that when using DPC++ only a single architectural specification for <code>cpu</code> or <code>amd</code> is allowed.</p>
+<p>To retrieve the architectural specifications of the current system, a simple Python3 script <code>utility/plssvm_target_platforms.py</code> is provided (required Python3 dependencies: <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a>, <a href="https://pypi.org/project/py-cpuinfo/"><code>py-cpuinfo</code></a>, <a href="https://pypi.org/project/GPUtil/"><code>GPUtil</code></a>, <a href="https://pypi.org/project/pyamdgpuinfo/"><code>pyamdgpuinfo</code></a>, and <a href="https://pypi.org/project/pylspci/"><code>pylspci</code></a>)</p>
+<div class="fragment"><div class="line">python3 utility/plssvm_target_platforms.py --help</div>
+<div class="line">usage: plssvm_target_platforms.py [-h] [--quiet]</div>
 <div class="line"> </div>
 <div class="line">optional arguments:</div>
-<div class="line">  -h, --help   show this help message and exit</div>
-<div class="line">  --name NAME  the full name of the GPU (e.g. GeForce RTX 3080)</div>
+<div class="line">  -h, --help  show this help message and exit</div>
+<div class="line">  --quiet     only output the final PLSSVM_TARGET_PLATFORMS string</div>
 </div><!-- fragment --><p>Example invocations:</p>
-<div class="fragment"><div class="line">&gt; python3 utility_scripts/gpu_name_to_arch.py --name &quot;GeForce RTX 3080&quot;</div>
-<div class="line">sm_86</div>
-<div class="line">&gt; python3 utility_scripts/gpu_name_to_arch.py --name &quot;Radeon VII&quot;</div>
-<div class="line">gfx906</div>
-</div><!-- fragment --><p>If no GPU name is provided, the script tries to automatically detect any NVIDIA or AMD GPU (requires the Python3 dependencies <a href="https://pypi.org/project/GPUtil/"><code>GPUtil</code></a> and <a href="https://pypi.org/project/pyamdgpuinfo/"><code>pyamdgpuinfo</code></a>).</p>
-<p>If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:</p><ul>
+<div class="fragment"><div class="line">python3 utility_scripts/plssvm_target_platforms.py</div>
+<div class="line">Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {&#39;avx512&#39;: True, &#39;avx2&#39;: True, &#39;avx&#39;: True, &#39;sse4_2&#39;: True}</div>
+<div class="line"> </div>
+<div class="line">Found 1 NVIDIA GPU(s):</div>
+<div class="line">  1x NVIDIA GeForce RTX 3080: sm_86</div>
+<div class="line"> </div>
+<div class="line">Possible -DPLSSVM_TARGET_PLATFORMS entries:</div>
+<div class="line">cpu:avx512;nvidia:sm_86</div>
+<div class="line"> </div>
+<div class="line">python3 utility_scripts/plssvm_target_platforms.py --quiet</div>
+<div class="line">cpu:avx512;intel:dg1</div>
+</div><!-- fragment --><p>If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:</p>
+<ul>
 <li>for NVIDIA GPUs: <a href="https://developer.nvidia.com/cuda-gpus">Your GPU Compute Capability</a></li>
-<li>for AMD GPUs: <a href="https://github.com/RadeonOpenCompute/ROCm_Documentation/blob/master/ROCm_Compiler_SDK/ROCm-Native-ISA.rst">ROCm Documentation</a></li>
+<li>for AMD GPUs: <a href="https://llvm.org/docs/AMDGPUUsage.html">clang AMDGPU backend usage</a></li>
+<li>for Intel GPUs and CPUs: <a href="https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html">Ahead of Time Compilation</a> and <a href="https://dgpu-docs.intel.com/devices/hardware-table.html">Intel graphics processor table</a></li>
 </ul>
 <h3><a class="anchor" id="autotoc_md5"></a>
 Optional CMake Options</h3>
@@ -176,7 +198,8 @@ Optional CMake Options</h3>
 <li><code>PLSSVM_ENABLE_TESTING=ON|OFF</code> (default: <code>ON</code>): enable testing using GoogleTest and ctest</li>
 <li><code>PLSSVM_GENERATE_TIMING_SCRIPT=ON|OFF</code> (default: <code>OFF</code>): configure a timing script usable for performance measurement</li>
 </ul>
-<p>If <code>PLSSVM_ENABLE_TESTING</code> is set to <code>ON</code>, the following options can also be set:</p><ul>
+<p>If <code>PLSSVM_ENABLE_TESTING</code> is set to <code>ON</code>, the following options can also be set:</p>
+<ul>
 <li><code>PLSSVM_GENERATE_TEST_FILE=ON|OFF</code> (default: <code>ON</code>): automatically generate test files<ul>
 <li><code>PLSSVM_TEST_FILE_NUM_DATA_POINTS</code> (default: <code>5000</code>): the number of data points in the test file</li>
 </ul>
@@ -186,30 +209,31 @@ Optional CMake Options</h3>
 <h2><a class="anchor" id="autotoc_md6"></a>
 Running the tests</h2>
 <p>To run the tests after building the library (with <code>PLSSVM_ENABLE_TESTING</code> set to <code>ON</code>) use:</p>
-<div class="fragment"><div class="line">&gt; ctest</div>
+<div class="fragment"><div class="line">ctest</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md7"></a>
 Generating test coverage results</h2>
 <p>To enable the generation of test coverage reports using <code>locv</code> the library must be compiled using the custom <code>Coverage</code> <code>CMAKE_BUILD_TYPE</code>. Additionally, it's advisable to use smaller test files to shorten the <code>ctest</code> step.</p>
-<div class="fragment"><div class="line">&gt; cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS=&quot;...&quot; \</div>
-<div class="line">        -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \</div>
-<div class="line">        -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..</div>
-<div class="line">&gt; cmake --build . -- coverage</div>
+<div class="fragment"><div class="line">cmake -DCMAKE_BUILD_TYPE=Coverage -DPLSSVM_TARGET_PLATFORMS=&quot;...&quot; \</div>
+<div class="line">      -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 \</div>
+<div class="line">      -DPLSSVM_TEST_FILE_NUM_FEATURES=50 ..</div>
+<div class="line">cmake --build . -- coverage</div>
 </div><!-- fragment --><p>The resulting <code>html</code> coverage report is located in the <code>coverage</code> folder in the build directory.</p>
 <h2><a class="anchor" id="autotoc_md8"></a>
 Creating the documentation</h2>
-<p>If doxygen is installed and <code>PLSSVM_ENABLE_DOCUMENTATION</code> is set to <code>ON</code> the documentation can be build using </p><div class="fragment"><div class="line">&gt; make doc</div>
-</div><!-- fragment --><p> The documentation of the current state of the main branch can be found <a href="https://sc-sgs.github.io/PLSSVM/">here</a>.</p>
+<p>If doxygen is installed and <code>PLSSVM_ENABLE_DOCUMENTATION</code> is set to <code>ON</code> the documentation can be build using</p>
+<div class="fragment"><div class="line">make doc</div>
+</div><!-- fragment --><p>The documentation of the current state of the main branch can be found <a href="https://sc-sgs.github.io/PLSSVM/">here</a>.</p>
 <h1><a class="anchor" id="autotoc_md9"></a>
 Installing</h1>
 <p>The library supports the <code>install</code> target:</p>
-<div class="fragment"><div class="line">&gt; cmake --build . -- install</div>
+<div class="fragment"><div class="line">cmake --build . -- install</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
 Usage</h1>
 <h2><a class="anchor" id="autotoc_md11"></a>
 Generating data</h2>
 <p>The repository comes with a Python3 script (in the <code>utility_scripts/</code> directory) to simply generate arbitrarily large data sets.</p>
 <p>In order to use all functionality, the following Python3 modules must be installed: <a href="https://docs.python.org/3/library/argparse.html"><code>argparse</code></a>, <a href="https://docs.python.org/3/library/timeit.html"><code>timeit</code></a>, <a href="https://pypi.org/project/numpy/"><code>numpy</code></a>, <a href="https://pypi.org/project/pandas/"><code>pandas</code></a>, <a href="https://scikit-learn.org/stable/"><code>sklearn</code></a>, <a href="https://pypi.org/project/arff/"><code>arff</code></a>, <a href="https://pypi.org/project/matplotlib/"><code>matplotlib</code></a> and <a href="https://pypi.org/project/matplotlib/"><code>mpl_toolkits</code></a></p>
-<div class="fragment"><div class="line">&gt; python3 utility_scripts/generate_data**.py --help</div>
+<div class="fragment"><div class="line">python3 utility_scripts/generate_data**.py --help</div>
 <div class="line">usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]</div>
 <div class="line"> </div>
 <div class="line">optional arguments:</div>
@@ -223,17 +247,17 @@ Generating data</h2>
 <div class="line">  --features FEATURES   the number of features per data point</div>
 <div class="line">  --plot                plot training samples; only possible if 0 &lt; samples &lt;= 2000 and 1 &lt; features &lt;= 3</div>
 </div><!-- fragment --><p>An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each could look like:</p>
-<div class="fragment"><div class="line">&gt; python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200</div>
+<div class="fragment"><div class="line">python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md12"></a>
 Training</h2>
-<div class="fragment"><div class="line">&gt; ./svm-train --help</div>
+<div class="fragment"><div class="line">./svm-train --help</div>
 <div class="line">LS-SVM with multiple (GPU-)backends</div>
 <div class="line">Usage:</div>
 <div class="line">  ./svm-train [OPTION...] training_set_file [model_file]</div>
 <div class="line"> </div>
-<div class="line">  -t, --kernel_type arg         set type of kernel function.</div>
+<div class="line">  -t, --kernel_type arg         set type of kernel function. </div>
 <div class="line">                                         0 -- linear: u&#39;*v</div>
-<div class="line">                                         1 -- polynomial: (gamma*u&#39;*v + coef0)^degree</div>
+<div class="line">                                         1 -- polynomial: (gamma*u&#39;*v + coef0)^degree </div>
 <div class="line">                                         2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)</div>
 <div class="line">  -d, --degree arg              set degree in kernel function (default: 3)</div>
 <div class="line">  -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)</div>
@@ -242,25 +266,28 @@ Training</h2>
 <div class="line">  -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)</div>
 <div class="line">  -b, --backend arg             choose the backend: openmp|cuda|opencl|sycl (default: openmp)</div>
 <div class="line">  -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)</div>
+<div class="line">      --sycl_kernel_invocation_type arg</div>
+<div class="line">                                choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)</div>
 <div class="line">  -q, --quiet                   quiet mode (no outputs)</div>
 <div class="line">  -h, --help                    print this helper message</div>
 <div class="line">      --input training_set_file</div>
-<div class="line"> </div>
-<div class="line">      --model model_file</div>
+<div class="line">                                </div>
+<div class="line">      --model model_file  </div>
 </div><!-- fragment --><p>An example invocation using the CUDA backend could look like:</p>
-<div class="fragment"><div class="line">&gt; ./svm-train --backend cuda --input /path/to/data_file</div>
+<div class="fragment"><div class="line">./svm-train --backend cuda --input /path/to/data_file</div>
 </div><!-- fragment --><p>Another example targeting NVIDIA GPUs using the SYCL backend looks like:</p>
-<div class="fragment"><div class="line">&gt; ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file</div>
-</div><!-- fragment --><p>The <code>--target_platform=automatic</code> flags works for the different backends as follows:</p>
+<div class="fragment"><div class="line">./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file</div>
+</div><!-- fragment --><p>The <code>--target_platform=automatic</code> flag works for the different backends as follows:</p>
 <ul>
 <li><code>OpenMP</code>: always selects a CPU</li>
 <li><code>CUDA</code>: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)</li>
 <li><code>OpenCL</code>: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU</li>
 <li><code>SYCL</code>: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU</li>
 </ul>
+<p>The <code>--sycl_kernel_invocation_type</code> flag is only used if the <code>--backend</code> is <code>sycl</code>, otherwise a warning is emitted on <code>stderr</code>. If the <code>--sycl_kernel_invocation_type</code> is <code>automatic</code>, the <code>nd_range</code> invocation type is always used, except for hipSYCL on CPUs where the hierarchical formulation is used instead.</p>
 <h2><a class="anchor" id="autotoc_md13"></a>
 Predicting</h2>
-<div class="fragment"><div class="line">&gt; ./svm-predict --help</div>
+<div class="fragment"><div class="line">./svm-predict --help</div>
 <div class="line">LS-SVM with multiple (GPU-)backends</div>
 <div class="line">Usage:</div>
 <div class="line">  ./svm-predict [OPTION...] test_file model_file [output_file]</div>
@@ -273,9 +300,9 @@ Predicting</h2>
 <div class="line">      --model model_file</div>
 <div class="line">      --output output_file</div>
 </div><!-- fragment --><p>An example invocation could look like:</p>
-<div class="fragment"><div class="line">&gt; ./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file</div>
+<div class="fragment"><div class="line">./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file</div>
 </div><!-- fragment --><p>Another example targeting NVIDIA GPUs using the SYCL backend looks like:</p>
-<div class="fragment"><div class="line">&gt; ./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file</div>
+<div class="fragment"><div class="line">./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file</div>
 </div><!-- fragment --><p>The <code>--target_platform=automatic</code> flags works like in the training (<code>./svm-train</code>) case.</p>
 <h1><a class="anchor" id="autotoc_md14"></a>
 Example code for usage as library</h1>
@@ -286,7 +313,7 @@ Example code for usage as library</h1>
 <div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keywordtype">int</span> main(i) {</div>
+<div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">    <span class="keywordflow">try</span> {</div>
 <div class="line">        <span class="comment">// parse SVM parameter from command line</span></div>
 <div class="line">        <a class="code" href="classplssvm_1_1parameter.html">plssvm::parameter&lt;double&gt;</a> params;</div>
@@ -319,8 +346,8 @@ Example code for usage as library</h1>
 <div class="line">}</div>
 <div class="ttc" id="aclassplssvm_1_1exception_html"><div class="ttname"><a href="classplssvm_1_1exception.html">plssvm::exception</a></div><div class="ttdoc">Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...</div><div class="ttdef"><b>Definition:</b> exceptions.hpp:26</div></div>
 <div class="ttc" id="aclassplssvm_1_1exception_html_ae801b36bcd872f2557e813b5f20aae58"><div class="ttname"><a href="classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58">plssvm::exception::what_with_loc</a></div><div class="ttdeci">std::string what_with_loc() const</div><div class="ttdoc">Returns a sting containing the exception's what() message, the name of the thrown exception class and...</div></div>
-<div class="ttc" id="aclassplssvm_1_1parameter_html"><div class="ttname"><a href="classplssvm_1_1parameter.html">plssvm::parameter</a></div><div class="ttdoc">Base class for encapsulating all necessary parameters possibly provided through command line argument...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:31</div></div>
-<div class="ttc" id="aclassplssvm_1_1parameter_html_a002f0530bdb2a5e62cf4bf2111db5494"><div class="ttname"><a href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">plssvm::parameter::backend</a></div><div class="ttdeci">backend_type backend</div><div class="ttdoc">The used backend: OpenMP, OpenCL, CUDA, or SYCL.</div><div class="ttdef"><b>Definition:</b> parameter.hpp:190</div></div>
+<div class="ttc" id="aclassplssvm_1_1parameter_html"><div class="ttname"><a href="classplssvm_1_1parameter.html">plssvm::parameter</a></div><div class="ttdoc">Base class for encapsulating all necessary parameters possibly provided through command line argument...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:32</div></div>
+<div class="ttc" id="aclassplssvm_1_1parameter_html_a002f0530bdb2a5e62cf4bf2111db5494"><div class="ttname"><a href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">plssvm::parameter::backend</a></div><div class="ttdeci">backend_type backend</div><div class="ttdoc">The used backend: OpenMP, OpenCL, CUDA, or SYCL.</div><div class="ttdef"><b>Definition:</b> parameter.hpp:191</div></div>
 <div class="ttc" id="aclassplssvm_1_1parameter_html_aa1bc08848934c1f38c2fd3d982b97ea3"><div class="ttname"><a href="classplssvm_1_1parameter.html#aa1bc08848934c1f38c2fd3d982b97ea3">plssvm::parameter::parse_train_file</a></div><div class="ttdeci">void parse_train_file(const std::string &amp;filename)</div><div class="ttdoc">Parse the given file as training data. If the file is in the arff format (has the ....</div></div>
 <div class="ttc" id="acore_8hpp_html"><div class="ttname"><a href="core_8hpp.html">core.hpp</a></div><div class="ttdoc">Core header including all other necessary headers.</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">plssvm::backend_type::cuda</a></div><div class="ttdeci">@ cuda</div></div>
@@ -344,7 +371,7 @@ License</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:31 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

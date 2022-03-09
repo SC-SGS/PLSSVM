@@ -1,0 +1,8 @@
+<map id="include/plssvm/backends/SYCL/svm_kernel_nd_range.hpp" name="include/plssvm/backends/SYCL/svm_kernel_nd_range.hpp">
+<area shape="rect" id="node1" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="220,5,451,47"/>
+<area shape="rect" id="node2" href="$atomics_8hpp.html" title="Defines an atomic_ref wrapper for the SYCL backend." alt="" coords="5,95,175,136"/>
+<area shape="rect" id="node3" title=" " alt="" coords="98,184,205,211"/>
+<area shape="rect" id="node4" href="$backends_2SYCL_2detail_2constants_8hpp.html" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="251,95,420,136"/>
+<area shape="rect" id="node5" href="$constants_8hpp.html" title="Global type definitions and compile&#45;time constants." alt="" coords="444,102,608,129"/>
+<area shape="rect" id="node6" title=" " alt="" coords="632,102,703,129"/>
+</map>

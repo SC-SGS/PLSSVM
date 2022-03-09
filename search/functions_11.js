@@ -1,11 +1,13 @@
 var searchData=
 [
-  ['to_5flower_5fcase_452',['to_lower_case',['../namespaceplssvm_1_1detail.html#ac774182d615638c411353e715ad4fe78',1,'plssvm::detail']]],
-  ['to_5funderlying_453',['to_underlying',['../namespaceplssvm_1_1detail.html#af016317e5d75fd36d039076dd2356e31',1,'plssvm::detail']]],
-  ['to_5fupper_5fcase_454',['to_upper_case',['../namespaceplssvm_1_1detail.html#a0b015378c06b616493f7036b28af4178',1,'plssvm::detail']]],
-  ['transform_5fdata_455',['transform_data',['../classplssvm_1_1csvm.html#a2ccb4ade1cb4037b9bb32be97a188f7f',1,'plssvm::csvm']]],
-  ['transposed_456',['transposed',['../namespaceplssvm_1_1operators.html#ae017cdbf38a31b897a890bc17c756f54',1,'plssvm::operators']]],
-  ['trim_457',['trim',['../namespaceplssvm_1_1detail.html#a3696c2d5ab58d839cf1a93ca0e3a1e52',1,'plssvm::detail']]],
-  ['trim_5fleft_458',['trim_left',['../namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6',1,'plssvm::detail']]],
-  ['trim_5fright_459',['trim_right',['../namespaceplssvm_1_1detail.html#a60211d1df70301d8c5167fa105e15bc7',1,'plssvm::detail']]]
+  ['set_5fdevice_467',['set_device',['../namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3',1,'plssvm::cuda::detail']]],
+  ['set_5fkernel_5fargs_468',['set_kernel_args',['../namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8',1,'plssvm::opencl::detail']]],
+  ['setup_5fdata_5fon_5fdevice_469',['setup_data_on_device',['../classplssvm_1_1openmp_1_1csvm.html#a9b43d6fec66633275f311189ef6c1903',1,'plssvm::openmp::csvm::setup_data_on_device()'],['../classplssvm_1_1csvm.html#a13b722b41440a22ec00bf00ac1461e3b',1,'plssvm::csvm::setup_data_on_device()'],['../classplssvm_1_1detail_1_1gpu__csvm.html#a12d1da26312c544c5983df069c84ffce',1,'plssvm::detail::gpu_csvm::setup_data_on_device()']]],
+  ['sign_470',['sign',['../namespaceplssvm_1_1operators.html#a211feceac31d226f493966f14e7332d8',1,'plssvm::operators']]],
+  ['size_471',['size',['../classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a6f4ab2ea2d7249ef0692b1cf6acd2586',1,'plssvm::cuda::detail::device_ptr::size()'],['../classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0',1,'plssvm::opencl::detail::device_ptr::size()'],['../classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957',1,'plssvm::sycl::detail::device_ptr::size()']]],
+  ['solver_5fcg_472',['solver_CG',['../classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0',1,'plssvm::detail::gpu_csvm::solver_CG()'],['../classplssvm_1_1openmp_1_1csvm.html#a1180045e6a4c5bf65259984ce541c216',1,'plssvm::openmp::csvm::solver_CG()'],['../classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a',1,'plssvm::csvm::solver_CG()']]],
+  ['squared_5feuclidean_5fdist_473',['squared_euclidean_dist',['../namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120',1,'plssvm::operators']]],
+  ['starts_5fwith_474',['starts_with',['../namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338',1,'plssvm::detail::starts_with(std::string_view str, char c) noexcept'],['../namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0',1,'plssvm::detail::starts_with(std::string_view str, std::string_view sv) noexcept']]],
+  ['sum_475',['sum',['../namespaceplssvm_1_1operators.html#a6344cb6d38f1fe59cfd7ba0f8b3382a3',1,'plssvm::operators']]],
+  ['swap_476',['swap',['../classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aec55d480722a02eb46dedcf380ce42b0',1,'plssvm::sycl::detail::device_ptr::swap()'],['../classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a818665f0d7e607f36df77c1fb586fe76',1,'plssvm::opencl::detail::device_ptr::swap()'],['../classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a68da36c858fb125e80dcc06d697a6143',1,'plssvm::cuda::detail::device_ptr::swap()']]]
 ];

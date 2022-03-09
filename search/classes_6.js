@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['invalid_5ffile_5fformat_5fexception_292',['invalid_file_format_exception',['../classplssvm_1_1invalid__file__format__exception.html',1,'plssvm']]]
+  ['hierarchical_5fdevice_5fkernel_5flinear_302',['hierarchical_device_kernel_linear',['../classplssvm_1_1sycl_1_1hierarchical__device__kernel__linear.html',1,'plssvm::sycl']]],
+  ['hierarchical_5fdevice_5fkernel_5fpoly_303',['hierarchical_device_kernel_poly',['../classplssvm_1_1sycl_1_1hierarchical__device__kernel__poly.html',1,'plssvm::sycl']]],
+  ['hierarchical_5fdevice_5fkernel_5fradial_304',['hierarchical_device_kernel_radial',['../classplssvm_1_1sycl_1_1hierarchical__device__kernel__radial.html',1,'plssvm::sycl']]]
 ];

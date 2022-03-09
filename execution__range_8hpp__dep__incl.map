@@ -1,0 +1,4 @@
+<map id="include/plssvm/detail/execution_range.hpp" name="include/plssvm/detail/execution_range.hpp">
+<area shape="rect" id="node1" title="Implement a backend independent class used to specify the execution range for all kernel invocations." alt="" coords="48,5,209,47"/>
+<area shape="rect" id="node2" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="5,95,252,136"/>
+</map>

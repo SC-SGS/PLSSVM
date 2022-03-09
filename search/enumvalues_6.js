@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['rbf_558',['rbf',['../namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a1c2fc056f2b0d4685d95adb8764a3912',1,'plssvm']]]
+  ['opencl_584',['opencl',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887',1,'plssvm']]],
+  ['openmp_585',['openmp',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f',1,'plssvm']]]
 ];

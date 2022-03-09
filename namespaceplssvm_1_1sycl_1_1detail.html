@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::sycl::detail Namespace Reference</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: plssvm::sycl::detail Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -86,9 +86,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a9424e7b31bae1cf3e1081554ea65d1e8"><td class="memItemLeft" align="right" valign="top">std::vector&lt;::sycl::queue &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#a9424e7b31bae1cf3e1081554ea65d1e8">get_device_list</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
-<tr class="memdesc:a9424e7b31bae1cf3e1081554ea65d1e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code>.  <a href="namespaceplssvm_1_1sycl_1_1detail.html#a9424e7b31bae1cf3e1081554ea65d1e8">More...</a><br /></td></tr>
-<tr class="separator:a9424e7b31bae1cf3e1081554ea65d1e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8112019c7f251e54693a506a7801121"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt;::sycl::queue &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#ac8112019c7f251e54693a506a7801121">get_device_list</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
+<tr class="memdesc:ac8112019c7f251e54693a506a7801121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1sycl_1_1detail.html#ac8112019c7f251e54693a506a7801121">More...</a><br /></td></tr>
+<tr class="separator:ac8112019c7f251e54693a506a7801121"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa53a36812a1135f025dcc706d3374654"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">device_synchronize</a> (::sycl::queue &amp;queue)</td></tr>
 <tr class="memdesc:aa53a36812a1135f025dcc706d3374654"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">More...</a><br /></td></tr>
 <tr class="separator:aa53a36812a1135f025dcc706d3374654"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -96,14 +96,14 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Namespace containing SYCL backend specific implementation details. <b>Should not</b> directly be used by users. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a9424e7b31bae1cf3e1081554ea65d1e8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9424e7b31bae1cf3e1081554ea65d1e8">&#9670;&nbsp;</a></span>get_device_list()</h2>
+<a id="ac8112019c7f251e54693a506a7801121"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8112019c7f251e54693a506a7801121">&#9670;&nbsp;</a></span>get_device_list()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;::sycl::queue&gt; plssvm::sycl::detail::get_device_list </td>
+          <td class="memname">std::pair&lt;std::vector&lt;::sycl::queue&gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::sycl::detail::get_device_list </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
           <td class="paramname"><em>target</em></td><td>)</td>
@@ -112,7 +112,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns the list devices matching the target platform <code>target</code>. </p>
+<p>Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic). </p>
 <p>If the selected target platform is <code><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8">plssvm::target_platform::automatic</a></code> the selector tries to find devices in the following order:</p><ol type="1">
 <li>NVIDIA GPUs</li>
 <li>AMD GPUs</li>
@@ -125,7 +125,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the devices (<code>[[nodiscard]]</code>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the devices and used target platform (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -158,7 +158,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:31 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

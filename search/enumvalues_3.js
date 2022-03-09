@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['linear_554',['linear',['../namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa',1,'plssvm']]]
+  ['hierarchical_581',['hierarchical',['../namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baa2c95b1531c95e0730d65f40da3b31778',1,'plssvm::sycl']]]
 ];

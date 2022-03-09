@@ -15,5 +15,5 @@ var searchData=
   ['atomics_2ecl_12',['atomics.cl',['../atomics_8cl.html',1,'']]],
   ['atomics_2ecuh_13',['atomics.cuh',['../atomics_8cuh.html',1,'']]],
   ['atomics_2ehpp_14',['atomics.hpp',['../atomics_8hpp.html',1,'']]],
-  ['automatic_15',['automatic',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8',1,'plssvm']]]
+  ['automatic_15',['automatic',['../namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baa2bd9c0ed00116be1258e0cc66617d7c8',1,'plssvm::sycl::automatic()'],['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8',1,'plssvm::automatic()']]]
 ];

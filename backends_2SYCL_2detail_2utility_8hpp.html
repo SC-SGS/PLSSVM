@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/SYCL/detail/utility.hpp File Reference</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: include/plssvm/backends/SYCL/detail/utility.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -79,16 +79,18 @@ $(function() {
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="target__platforms_8hpp_source.html">plssvm/target_platforms.hpp</a>&quot;</code><br />
 <code>#include &quot;sycl/sycl.hpp&quot;</code><br />
+<code>#include &lt;utility&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for utility.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="backends_2SYCL_2detail_2utility_8hpp__incl.png" border="0" usemap="#ainclude_2plssvm_2backends_2SYCL_2detail_2utility_8hpp" alt=""/></div>
 <map name="ainclude_2plssvm_2backends_2SYCL_2detail_2utility_8hpp" id="ainclude_2plssvm_2backends_2SYCL_2detail_2utility_8hpp">
-<area shape="rect" title="Utility functions specific to the SYCL backend." alt="" coords="201,5,386,47"/>
+<area shape="rect" title="Utility functions specific to the SYCL backend." alt="" coords="254,5,439,47"/>
 <area shape="rect" href="target__platforms_8hpp.html" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="5,95,216,121"/>
 <area shape="rect" title=" " alt="" coords="240,95,347,121"/>
-<area shape="rect" title=" " alt="" coords="371,95,434,121"/>
+<area shape="rect" title=" " alt="" coords="371,95,431,121"/>
+<area shape="rect" title=" " alt="" coords="455,95,518,121"/>
 <area shape="rect" title=" " alt="" coords="79,169,143,196"/>
 </map>
 </div>
@@ -109,9 +111,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a9424e7b31bae1cf3e1081554ea65d1e8"><td class="memItemLeft" align="right" valign="top">std::vector&lt;::sycl::queue &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#a9424e7b31bae1cf3e1081554ea65d1e8">plssvm::sycl::detail::get_device_list</a> (target_platform target)</td></tr>
-<tr class="memdesc:a9424e7b31bae1cf3e1081554ea65d1e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code>.  <a href="namespaceplssvm_1_1sycl_1_1detail.html#a9424e7b31bae1cf3e1081554ea65d1e8">More...</a><br /></td></tr>
-<tr class="separator:a9424e7b31bae1cf3e1081554ea65d1e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8112019c7f251e54693a506a7801121"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt;::sycl::queue &gt;, target_platform &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#ac8112019c7f251e54693a506a7801121">plssvm::sycl::detail::get_device_list</a> (target_platform target)</td></tr>
+<tr class="memdesc:ac8112019c7f251e54693a506a7801121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1sycl_1_1detail.html#ac8112019c7f251e54693a506a7801121">More...</a><br /></td></tr>
+<tr class="separator:ac8112019c7f251e54693a506a7801121"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa53a36812a1135f025dcc706d3374654"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">plssvm::sycl::detail::device_synchronize</a> (::sycl::queue &amp;queue)</td></tr>
 <tr class="memdesc:aa53a36812a1135f025dcc706d3374654"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">More...</a><br /></td></tr>
 <tr class="separator:aa53a36812a1135f025dcc706d3374654"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -126,7 +128,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:30 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

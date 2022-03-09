@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/core.hpp Source File</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: include/plssvm/core.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -88,31 +88,34 @@ $(function() {
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="exceptions_2exceptions_8hpp.html">plssvm/exceptions/exceptions.hpp</a>&quot;</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="version_8hpp.html">plssvm/version/version.hpp</a>&quot;</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160; </div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {}</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160; </div>
-<div class="line"><a name="l00032"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1version.html">   32</a></span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1version.html">plssvm::version</a> {}</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1detail.html">plssvm::detail</a> {}</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160; </div>
-<div class="line"><a name="l00038"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1operators.html">   38</a></span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1operators.html">plssvm::operators</a> {}</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1openmp.html">plssvm::openmp</a> {}</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160; </div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1cuda.html">plssvm::cuda</a> {}</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1cuda_1_1detail.html">plssvm::cuda::detail</a> {}</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160; </div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1opencl.html">plssvm::opencl</a> {}</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160; </div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1opencl_1_1detail.html">plssvm::opencl::detail</a> {}</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160; </div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a> {}</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160; </div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1sycl_1_1detail.html">plssvm::sycl::detail</a> {}</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="kernel__invocation__type_8hpp.html">plssvm/backends/SYCL/kernel_invocation_type.hpp</a>&quot;</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {}</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
+<div class="line"><a name="l00034"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1version.html">   34</a></span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1version.html">plssvm::version</a> {}</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160; </div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1detail.html">plssvm::detail</a> {}</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160; </div>
+<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1operators.html">   40</a></span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1operators.html">plssvm::operators</a> {}</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160; </div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1openmp.html">plssvm::openmp</a> {}</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160; </div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1cuda.html">plssvm::cuda</a> {}</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160; </div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1cuda_1_1detail.html">plssvm::cuda::detail</a> {}</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160; </div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1opencl.html">plssvm::opencl</a> {}</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160; </div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1opencl_1_1detail.html">plssvm::opencl::detail</a> {}</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160; </div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a> {}</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160; </div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm_1_1sycl_1_1detail.html">plssvm::sycl::detail</a> {}</div>
 <div class="ttc" id="abackend__types_8hpp_html"><div class="ttname"><a href="backend__types_8hpp.html">backend_types.hpp</a></div><div class="ttdoc">Defines all possible backends. Can also include backends not available on the current target platform...</div></div>
 <div class="ttc" id="acsvm_8hpp_html"><div class="ttname"><a href="csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines the base class for all C-SVM backends and implements the functionality shared by all of them.</div></div>
 <div class="ttc" id="acsvm__factory_8hpp_html"><div class="ttname"><a href="csvm__factory_8hpp.html">csvm_factory.hpp</a></div><div class="ttdoc">Factory function for constructing a new C-SVM using one of the available backends based on the provid...</div></div>
 <div class="ttc" id="aexceptions_2exceptions_8hpp_html"><div class="ttname"><a href="exceptions_2exceptions_8hpp.html">exceptions.hpp</a></div><div class="ttdoc">Implements custom exception classes derived from std::runtime_error including source location informa...</div></div>
+<div class="ttc" id="akernel__invocation__type_8hpp_html"><div class="ttname"><a href="kernel__invocation__type_8hpp.html">kernel_invocation_type.hpp</a></div><div class="ttdoc">Defines all available kernel invoke types when using SYCL.</div></div>
 <div class="ttc" id="akernel__types_8hpp_html"><div class="ttname"><a href="kernel__types_8hpp.html">kernel_types.hpp</a></div><div class="ttdoc">Defines all available kernel types.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1cuda_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1cuda_1_1detail.html">plssvm::cuda::detail</a></div><div class="ttdoc">Namespace containing CUDA backend specific implementation details. Should not directly be used by use...</div><div class="ttdef"><b>Definition:</b> atomics.cuh:14</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1cuda_html"><div class="ttname"><a href="namespaceplssvm_1_1cuda.html">plssvm::cuda</a></div><div class="ttdoc">Namespace containing the C-SVM using the CUDA backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:32</div></div>
@@ -120,10 +123,10 @@ $(function() {
 <div class="ttc" id="anamespaceplssvm_1_1opencl_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1opencl_1_1detail.html">plssvm::opencl::detail</a></div><div class="ttdoc">Namespace containing OpenCL backend specific implementation details. Should not directly be used by u...</div><div class="ttdef"><b>Definition:</b> command_queue.hpp:16</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1opencl_html"><div class="ttname"><a href="namespaceplssvm_1_1opencl.html">plssvm::opencl</a></div><div class="ttdoc">Namespace containing the C-SVM using the OpenCL backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:35</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1openmp_html"><div class="ttname"><a href="namespaceplssvm_1_1openmp.html">plssvm::openmp</a></div><div class="ttdoc">Namespace containing the C-SVM using the OpenMP backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:24</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1operators_html"><div class="ttname"><a href="namespaceplssvm_1_1operators.html">plssvm::operators</a></div><div class="ttdoc">Namespace containing operator overloads for std::vector and other mathematical functions on vectors.</div><div class="ttdef"><b>Definition:</b> core.hpp:38</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1operators_html"><div class="ttname"><a href="namespaceplssvm_1_1operators.html">plssvm::operators</a></div><div class="ttdoc">Namespace containing operator overloads for std::vector and other mathematical functions on vectors.</div><div class="ttdef"><b>Definition:</b> core.hpp:40</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1sycl_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1sycl_1_1detail.html">plssvm::sycl::detail</a></div><div class="ttdoc">Namespace containing SYCL backend specific implementation details. Should not directly be used by use...</div><div class="ttdef"><b>Definition:</b> device_ptr.hpp:20</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1sycl_html"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a></div><div class="ttdoc">Namespace containing the C-SVM using the SYCL backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:32</div></div>
-<div class="ttc" id="anamespaceplssvm_1_1version_html"><div class="ttname"><a href="namespaceplssvm_1_1version.html">plssvm::version</a></div><div class="ttdoc">Namespace containing versioning information.</div><div class="ttdef"><b>Definition:</b> core.hpp:32</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1sycl_html"><div class="ttname"><a href="namespaceplssvm_1_1sycl.html">plssvm::sycl</a></div><div class="ttdoc">Namespace containing the C-SVM using the SYCL backend.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:33</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1version_html"><div class="ttname"><a href="namespaceplssvm_1_1version.html">plssvm::version</a></div><div class="ttdoc">Namespace containing versioning information.</div><div class="ttdef"><b>Definition:</b> core.hpp:34</div></div>
 <div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all public API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:16</div></div>
 <div class="ttc" id="aparameter_8hpp_html"><div class="ttname"><a href="parameter_8hpp.html">parameter.hpp</a></div><div class="ttdoc">Implements the parameter base class encapsulating all necessary parameters.</div></div>
 <div class="ttc" id="aparameter__predict_8hpp_html"><div class="ttname"><a href="parameter__predict_8hpp.html">parameter_predict.hpp</a></div><div class="ttdoc">Implements a class encapsulating all necessary parameters for predicting using the C-SVM possibly pro...</div></div>
@@ -133,7 +136,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:30 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

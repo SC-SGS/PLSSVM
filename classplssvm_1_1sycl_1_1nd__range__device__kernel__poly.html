@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::sycl::device_kernel_poly&lt; T &gt; Class Template Reference</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: plssvm::sycl::nd_range_device_kernel_poly&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -63,45 +63,45 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespaceplssvm.html">plssvm</a></li><li class="navelem"><a class="el" href="namespaceplssvm_1_1sycl.html">sycl</a></li><li class="navelem"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html">device_kernel_poly</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespaceplssvm.html">plssvm</a></li><li class="navelem"><a class="el" href="namespaceplssvm_1_1sycl.html">sycl</a></li><li class="navelem"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html">nd_range_device_kernel_poly</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="classplssvm_1_1sycl_1_1device__kernel__poly-members.html">List of all members</a>  </div>
+<a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">plssvm::sycl::device_kernel_poly&lt; T &gt; Class Template Reference</div>  </div>
+<div class="title">plssvm::sycl::nd_range_device_kernel_poly&lt; T &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Calculates the C-SVM kernel using the polynomial kernel function.  
- <a href="classplssvm_1_1sycl_1_1device__kernel__poly.html#details">More...</a></p>
+<p>Calculates the C-SVM kernel using the nd_range formulation and the polynomial kernel function.  
+ <a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="SYCL_2svm__kernel_8hpp_source.html">svm_kernel.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="svm__kernel__nd__range_8hpp_source.html">svm_kernel_nd_range.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a68945e052cec38a2515cf124c6ee59ce"><td class="memItemLeft" align="right" valign="top"><a id="a68945e052cec38a2515cf124c6ee59ce"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> = T</td></tr>
-<tr class="memdesc:a68945e052cec38a2515cf124c6ee59ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the data. <br /></td></tr>
-<tr class="separator:a68945e052cec38a2515cf124c6ee59ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5e9bbccce45be318c376423b0e2446d"><td class="memItemLeft" align="right" valign="top"><a id="af5e9bbccce45be318c376423b0e2446d"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> = T</td></tr>
+<tr class="memdesc:af5e9bbccce45be318c376423b0e2446d"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the data. <br /></td></tr>
+<tr class="separator:af5e9bbccce45be318c376423b0e2446d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aca65920bc52acaec14e9a1d419a79b56"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#aca65920bc52acaec14e9a1d419a79b56">device_kernel_poly</a> (::sycl::handler &amp;cgh, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *q, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *ret, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *d, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *data_d, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> QA_cost, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> cost, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_rows, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_cols, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> add, const int degree, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> gamma, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> coef0)</td></tr>
-<tr class="memdesc:aca65920bc52acaec14e9a1d419a79b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new device kernel calculating the <code>q</code> vector using the polynomial C-SVM kernel.  <a href="classplssvm_1_1sycl_1_1device__kernel__poly.html#aca65920bc52acaec14e9a1d419a79b56">More...</a><br /></td></tr>
-<tr class="separator:aca65920bc52acaec14e9a1d419a79b56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac67d944646736ee11f4f779d239c8966"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#ac67d944646736ee11f4f779d239c8966">operator()</a> (::sycl::nd_item&lt; 2 &gt; nd_idx) const</td></tr>
-<tr class="memdesc:ac67d944646736ee11f4f779d239c8966"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function call operator overload performing the actual calculation.  <a href="classplssvm_1_1sycl_1_1device__kernel__poly.html#ac67d944646736ee11f4f779d239c8966">More...</a><br /></td></tr>
-<tr class="separator:ac67d944646736ee11f4f779d239c8966"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37ad44825db32dca42fe1d0dfadba1d3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#a37ad44825db32dca42fe1d0dfadba1d3">nd_range_device_kernel_poly</a> (::sycl::handler &amp;cgh, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *q, <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *ret, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *d, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *data_d, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> QA_cost, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> cost, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_rows, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_cols, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> add, const int degree, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> gamma, const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> coef0)</td></tr>
+<tr class="memdesc:a37ad44825db32dca42fe1d0dfadba1d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new device kernel calculating the C-SVM kernel using the polynomial C-SVM kernel.  <a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#a37ad44825db32dca42fe1d0dfadba1d3">More...</a><br /></td></tr>
+<tr class="separator:a37ad44825db32dca42fe1d0dfadba1d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf0bfc80a2561cc0dbbbb106ac84a5ff"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#abf0bfc80a2561cc0dbbbb106ac84a5ff">operator()</a> (::sycl::nd_item&lt; 2 &gt; nd_idx) const</td></tr>
+<tr class="memdesc:abf0bfc80a2561cc0dbbbb106ac84a5ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function call operator overload performing the actual calculation.  <a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#abf0bfc80a2561cc0dbbbb106ac84a5ff">More...</a><br /></td></tr>
+<tr class="separator:abf0bfc80a2561cc0dbbbb106ac84a5ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename T&gt;<br />
-class plssvm::sycl::device_kernel_poly&lt; T &gt;</h3>
+class plssvm::sycl::nd_range_device_kernel_poly&lt; T &gt;</h3>
 
-<p>Calculates the C-SVM kernel using the polynomial kernel function. </p>
+<p>Calculates the C-SVM kernel using the nd_range formulation and the polynomial kernel function. </p>
 <p>Currently only single GPU execution is supported. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the type of the data </td></tr>
@@ -109,8 +109,8 @@ class plssvm::sycl::device_kernel_poly&lt; T &gt;</h3>
   </dd>
 </dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="aca65920bc52acaec14e9a1d419a79b56"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aca65920bc52acaec14e9a1d419a79b56">&#9670;&nbsp;</a></span>device_kernel_poly()</h2>
+<a id="a37ad44825db32dca42fe1d0dfadba1d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37ad44825db32dca42fe1d0dfadba1d3">&#9670;&nbsp;</a></span>nd_range_device_kernel_poly()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -121,7 +121,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html">plssvm::sycl::device_kernel_poly</a>&lt; T &gt;::<a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html">device_kernel_poly</a> </td>
+          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html">plssvm::sycl::nd_range_device_kernel_poly</a>&lt; T &gt;::<a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html">nd_range_device_kernel_poly</a> </td>
           <td>(</td>
           <td class="paramtype">::sycl::handler &amp;&#160;</td>
           <td class="paramname"><em>cgh</em>, </td>
@@ -129,37 +129,37 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *&#160;</td>
           <td class="paramname"><em>q</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *&#160;</td>
           <td class="paramname"><em>ret</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *&#160;</td>
           <td class="paramname"><em>d</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a> *&#160;</td>
           <td class="paramname"><em>data_d</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a>&#160;</td>
           <td class="paramname"><em>QA_cost</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a>&#160;</td>
           <td class="paramname"><em>cost</em>, </td>
         </tr>
         <tr>
@@ -177,7 +177,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a>&#160;</td>
           <td class="paramname"><em>add</em>, </td>
         </tr>
         <tr>
@@ -189,13 +189,13 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a>&#160;</td>
           <td class="paramname"><em>gamma</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html#a68945e052cec38a2515cf124c6ee59ce">real_type</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">real_type</a>&#160;</td>
           <td class="paramname"><em>coef0</em>&#160;</td>
         </tr>
         <tr>
@@ -211,7 +211,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a new device kernel calculating the <code>q</code> vector using the polynomial C-SVM kernel. </p>
+<p>Construct a new device kernel calculating the C-SVM kernel using the polynomial C-SVM kernel. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cgh</td><td><a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:handlerClass"><code>sycl::handler</code></a> used to allocate the local memory </td></tr>
@@ -234,8 +234,8 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ac67d944646736ee11f4f779d239c8966"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac67d944646736ee11f4f779d239c8966">&#9670;&nbsp;</a></span>operator()()</h2>
+<a id="abf0bfc80a2561cc0dbbbb106ac84a5ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf0bfc80a2561cc0dbbbb106ac84a5ff">&#9670;&nbsp;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -246,7 +246,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__poly.html">plssvm::sycl::device_kernel_poly</a>&lt; T &gt;::operator() </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html">plssvm::sycl::nd_range_device_kernel_poly</a>&lt; T &gt;::operator() </td>
           <td>(</td>
           <td class="paramtype">::sycl::nd_item&lt; 2 &gt;&#160;</td>
           <td class="paramname"><em>nd_idx</em></td><td>)</td>
@@ -271,12 +271,12 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/plssvm/backends/SYCL/<a class="el" href="SYCL_2svm__kernel_8hpp_source.html">svm_kernel.hpp</a></li>
+<li>include/plssvm/backends/SYCL/<a class="el" href="svm__kernel__nd__range_8hpp_source.html">svm_kernel_nd_range.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:31 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

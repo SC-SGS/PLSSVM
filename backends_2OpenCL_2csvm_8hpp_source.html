@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/OpenCL/csvm.hpp Source File</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: include/plssvm/backends/OpenCL/csvm.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -183,7 +183,7 @@ $(function() {
 <div class="ttc" id="aclassplssvm_1_1opencl_1_1csvm_html_af65154f940e47ad84abf811a0529f6f1"><div class="ttname"><a href="classplssvm_1_1opencl_1_1csvm.html#af65154f940e47ad84abf811a0529f6f1">plssvm::opencl::csvm::run_w_kernel</a></div><div class="ttdeci">void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &amp;range, device_ptr_type &amp;w_d, const device_ptr_type &amp;alpha_d, std::size_t num_features) final</div><div class="ttdoc">Run the GPU kernel (only on the first GPU) the calculate the w vector used to speed up the prediction...</div></div>
 <div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1command__queue_html"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></div><div class="ttdoc">RAII wrapper class around a cl_command_queue.</div><div class="ttdef"><b>Definition:</b> command_queue.hpp:22</div></div>
 <div class="ttc" id="aclassplssvm_1_1opencl_1_1detail_1_1device__ptr_html"><div class="ttname"><a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">plssvm::opencl::detail::device_ptr</a></div><div class="ttdoc">Small wrapper class around an OpenCL device pointer together with commonly used device functions.</div><div class="ttdef"><b>Definition:</b> device_ptr.hpp:29</div></div>
-<div class="ttc" id="aclassplssvm_1_1parameter_html"><div class="ttname"><a href="classplssvm_1_1parameter.html">plssvm::parameter</a></div><div class="ttdoc">Base class for encapsulating all necessary parameters possibly provided through command line argument...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:31</div></div>
+<div class="ttc" id="aclassplssvm_1_1parameter_html"><div class="ttname"><a href="classplssvm_1_1parameter.html">plssvm::parameter</a></div><div class="ttdoc">Base class for encapsulating all necessary parameters possibly provided through command line argument...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:32</div></div>
 <div class="ttc" id="acommand__queue_8hpp_html"><div class="ttname"><a href="command__queue_8hpp.html">command_queue.hpp</a></div><div class="ttdoc">Defines a very small RAII wrapper around a cl_command_queue including information about its associate...</div></div>
 <div class="ttc" id="agpu__csvm_8hpp_html"><div class="ttname"><a href="gpu__csvm_8hpp.html">gpu_csvm.hpp</a></div><div class="ttdoc">Defines the base class for all C-SVM backends using a GPU. Used for code duplication reduction.</div></div>
 <div class="ttc" id="akernel_8hpp_html"><div class="ttname"><a href="kernel_8hpp.html">kernel.hpp</a></div><div class="ttdoc">Defines a very small RAII wrapper around a cl_kernel.</div></div>
@@ -192,7 +192,7 @@ $(function() {
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:30 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['what_5fwith_5floc_464',['what_with_loc',['../classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58',1,'plssvm::exception']]],
-  ['write_5fmodel_465',['write_model',['../classplssvm_1_1csvm.html#a07baf4f680a01057bf9a141618499d3e',1,'plssvm::csvm']]]
+  ['value_488',['value',['../classplssvm_1_1opencl_1_1detail_1_1error__code.html#acd2283a35a3277c8bc7fe4f3ad659063',1,'plssvm::opencl::detail::error_code']]]
 ];

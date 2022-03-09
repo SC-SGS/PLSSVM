@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::opencl::detail Namespace Reference</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: plssvm::opencl::detail Namespace Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -107,9 +107,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ac80991deea09f813c1c0e6799281223f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">device_assert</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1error__code.html">error_code</a> code, std::string_view msg=&quot;&quot;)</td></tr>
 <tr class="memdesc:ac80991deea09f813c1c0e6799281223f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the OpenCL error <code>code</code>. If <code>code</code> signals an error, throw a <code><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">More...</a><br /></td></tr>
 <tr class="separator:ac80991deea09f813c1c0e6799281223f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbd15ddd63f50c2404f86c2fdf64982b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#afbd15ddd63f50c2404f86c2fdf64982b">get_command_queues</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
-<tr class="memdesc:afbd15ddd63f50c2404f86c2fdf64982b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#afbd15ddd63f50c2404f86c2fdf64982b">More...</a><br /></td></tr>
-<tr class="separator:afbd15ddd63f50c2404f86c2fdf64982b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c423f48db815f6ee8bf0acff3e99c10"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a9c423f48db815f6ee8bf0acff3e99c10">get_command_queues</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
+<tr class="memdesc:a9c423f48db815f6ee8bf0acff3e99c10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a9c423f48db815f6ee8bf0acff3e99c10">More...</a><br /></td></tr>
+<tr class="separator:a9c423f48db815f6ee8bf0acff3e99c10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8795d201b3800826ec311f66c58f66e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">device_synchronize</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &amp;queue)</td></tr>
 <tr class="memdesc:ad8795d201b3800826ec311f66c58f66e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">More...</a><br /></td></tr>
 <tr class="separator:ad8795d201b3800826ec311f66c58f66e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -313,14 +313,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="afbd15ddd63f50c2404f86c2fdf64982b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afbd15ddd63f50c2404f86c2fdf64982b">&#9670;&nbsp;</a></span>get_command_queues()</h2>
+<a id="a9c423f48db815f6ee8bf0acff3e99c10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c423f48db815f6ee8bf0acff3e99c10">&#9670;&nbsp;</a></span>get_command_queues()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a>&gt; plssvm::opencl::detail::get_command_queues </td>
+          <td class="memname">std::pair&lt;std::vector&lt;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a>&gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::opencl::detail::get_command_queues </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
           <td class="paramname"><em>target</em></td><td>)</td>
@@ -329,7 +329,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns the list devices matching the target platform <code>target</code>. </p>
+<p>Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic). </p>
 <p>If the selected target platform is <code><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8">plssvm::target_platform::automatic</a></code> the selector tries to find devices in the following order:</p><ol type="1">
 <li>NVIDIA GPUs</li>
 <li>AMD GPUs</li>
@@ -342,7 +342,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the command queues (<code>[[nodiscard]]</code>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the command queues and used target platform (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -689,7 +689,7 @@ template&lt;typename... Args&gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:30 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

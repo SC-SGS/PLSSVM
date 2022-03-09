@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: Class Hierarchy</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: Class Hierarchy</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -154,56 +154,71 @@ $(function() {
 <area shape="rect" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="5,5,153,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_13.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__linear_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the linear kernel function." alt="" coords="5,5,160,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_14.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__poly_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the polynomial kernel function." alt="" coords="5,5,160,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_15.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_13.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html" title="Predicts the labels for data points using the polynomial kernel function." alt="" coords="5,5,200,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_16.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_14.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html" title="Predicts the labels for data points using the radial basis functions kernel function." alt="" coords="5,5,208,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_17.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_15.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html" title="Functor to calculate the q vector using the linear C&#45;SVM kernel." alt="" coords="5,5,172,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_18.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_16.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__q__poly.html" title="Functor to calculate the q vector using the polynomial C&#45;SVM kernel." alt="" coords="5,5,163,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_19.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_17.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__q__radial.html" title="Functor to calculate the q vector using the radial basis functions C&#45;SVM kernel." alt="" coords="5,5,172,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_20.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__radial_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__radial_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the radial basis functions kernel function." alt="" coords="5,5,160,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_21.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_18.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html" title="Calculate the w vector to speed up the prediction of the labels for data points using the linear kern..." alt="" coords="5,5,175,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_19.png" border="0" usemap="#aplssvm_1_1sycl_1_1hierarchical__device__kernel__linear_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl_1_1hierarchical__device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1hierarchical__device__kernel__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the linear kernel function." alt="" coords="5,5,207,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_20.png" border="0" usemap="#aplssvm_1_1sycl_1_1hierarchical__device__kernel__poly_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl_1_1hierarchical__device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1hierarchical__device__kernel__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the polynomial kernel function." alt="" coords="5,5,197,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_21.png" border="0" usemap="#aplssvm_1_1sycl_1_1hierarchical__device__kernel__radial_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl_1_1hierarchical__device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1hierarchical__device__kernel__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the radial basis functions kernel ..." alt="" coords="5,5,207,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_22.png" border="0" usemap="#aplssvm_1_1sycl_1_1nd__range__device__kernel__linear_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl_1_1nd__range__device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1nd__range__device__kernel__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the linear kernel function." alt="" coords="5,5,207,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_23.png" border="0" usemap="#aplssvm_1_1sycl_1_1nd__range__device__kernel__poly_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl_1_1nd__range__device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1nd__range__device__kernel__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the polynomial kernel function." alt="" coords="5,5,197,47"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_24.png" border="0" usemap="#aplssvm_1_1sycl_1_1nd__range__device__kernel__radial_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl_1_1nd__range__device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1nd__range__device__kernel__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the radial basis functions kernel func..." alt="" coords="5,5,207,47"/>
 </map>
 </td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:31 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

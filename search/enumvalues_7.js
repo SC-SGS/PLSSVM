@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sycl_559',['sycl',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6',1,'plssvm']]]
+  ['polynomial_586',['polynomial',['../namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea',1,'plssvm']]]
 ];

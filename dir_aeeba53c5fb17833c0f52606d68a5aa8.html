@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: include/plssvm/backends/SYCL Directory Reference</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: include/plssvm/backends/SYCL Directory Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -81,9 +81,12 @@ Directory dependency graph for SYCL:</div>
 <div class="center"><img src="dir_aeeba53c5fb17833c0f52606d68a5aa8_dep.png" border="0" usemap="#adir__aeeba53c5fb17833c0f52606d68a5aa8__dep" alt="include/plssvm/backends/SYCL"/></div>
 <map name="adir__aeeba53c5fb17833c0f52606d68a5aa8__dep" id="adir__aeeba53c5fb17833c0f52606d68a5aa8__dep">
 <area shape="rect" href="dir_a961c9b5cb5cee6ff9544a511347539d.html" title="detail" alt="" coords="37,159,109,207"/>
-<area shape="rect" href="dir_000008_000012.html" title="3" alt="" coords="77,133,86,148"/>
-<area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="141,159,235,207"/>
-<area shape="rect" href="dir_000008_000010.html" title="2" alt="" coords="147,133,156,148"/>
+<area shape="rect" href="dir_000008_000012.html" title="6" alt="" coords="77,133,86,148"/>
+<area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="136,255,229,303"/>
+<area shape="rect" href="dir_000008_000010.html" title="2" alt="" coords="167,227,176,242"/>
+<area shape="rect" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="184,159,256,207"/>
+<area shape="rect" href="dir_000008_000013.html" title="1" alt="" coords="169,134,178,149"/>
+<area shape="rect" href="dir_000013_000010.html" title="1" alt="" coords="202,234,211,248"/>
 <area shape="rect" href="dir_aeeba53c5fb17833c0f52606d68a5aa8.html" alt="" coords="27,52,120,217"/>
 <area shape="rect" href="dir_aece132851e9183324b9b3740ef79635.html" title="backends" alt="" coords="16,16,131,228"/>
 </map>
@@ -103,14 +106,20 @@ Files</h2></td></tr>
 <tr class="memitem:backends_2SYCL_2exceptions_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="backends_2SYCL_2exceptions_8hpp.html">exceptions.hpp</a> <a href="backends_2SYCL_2exceptions_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:backends_2SYCL_2exceptions_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implements custom exception classes specific to the SYCL backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:kernel__invocation__type_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kernel__invocation__type_8hpp.html">kernel_invocation_type.hpp</a> <a href="kernel__invocation__type_8hpp_source.html">[code]</a></td></tr>
+<tr class="memdesc:kernel__invocation__type_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines all available kernel invoke types when using SYCL. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:predict__kernel_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="predict__kernel_8hpp.html">predict_kernel.hpp</a> <a href="predict__kernel_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:predict__kernel_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the functions used for prediction for the C-SVM using the SYCL backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:SYCL_2q__kernel_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="SYCL_2q__kernel_8hpp.html">q_kernel.hpp</a> <a href="SYCL_2q__kernel_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:SYCL_2q__kernel_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines SYCL functions for generating the <code>q</code> vector. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:SYCL_2svm__kernel_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="SYCL_2svm__kernel_8hpp.html">svm_kernel.hpp</a> <a href="SYCL_2svm__kernel_8hpp_source.html">[code]</a></td></tr>
-<tr class="memdesc:SYCL_2svm__kernel_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the kernel functions for the C-SVM using the SYCL backend. <br /></td></tr>
+<tr class="memitem:svm__kernel__hierarchical_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="svm__kernel__hierarchical_8hpp.html">svm_kernel_hierarchical.hpp</a> <a href="svm__kernel__hierarchical_8hpp_source.html">[code]</a></td></tr>
+<tr class="memdesc:svm__kernel__hierarchical_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the kernel functions for the C-SVM using the SYCL backend. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:svm__kernel__nd__range_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="svm__kernel__nd__range_8hpp.html">svm_kernel_nd_range.hpp</a> <a href="svm__kernel__nd__range_8hpp_source.html">[code]</a></td></tr>
+<tr class="memdesc:svm__kernel__nd__range_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the kernel functions for the C-SVM in the nd_range formulation using the SYCL backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -123,7 +132,7 @@ Marcel Breyer </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:31 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

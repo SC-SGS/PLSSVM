@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PLSSVM - Parallel Least-Squares Support Vector Machine: plssvm::sycl::device_kernel_predict_poly&lt; T &gt; Class Template Reference</title>
+<title>PLSSVM - Parallel Least Squares Support Vector Machine: plssvm::sycl::device_kernel_predict_poly&lt; T &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -21,10 +21,10 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PLSSVM - Parallel Least-Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.0.1</span>
+   <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
-   <div id="projectbrief">A Support Vector Machine implementation using different backends.</div>
+   <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
  </tr>
  </tbody>
@@ -93,9 +93,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3d0a0e2e95037149c0fc12e0ffe50768"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#a3d0a0e2e95037149c0fc12e0ffe50768">device_kernel_predict_poly</a> (<a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> *out_d, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> *data_d, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> *data_last_d, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> *alpha_d, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_data_points, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> *points, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_predict_points, const <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a">kernel_index_type</a> num_features, const int degree, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> gamma, const <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">real_type</a> coef0)</td></tr>
 <tr class="memdesc:a3d0a0e2e95037149c0fc12e0ffe50768"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new device kernel to predict the labels for data points using the polynomial kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#a3d0a0e2e95037149c0fc12e0ffe50768">More...</a><br /></td></tr>
 <tr class="separator:a3d0a0e2e95037149c0fc12e0ffe50768"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a509750526765fd5153cc278009cb980b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#a509750526765fd5153cc278009cb980b">operator()</a> (::sycl::nd_item&lt; 2 &gt; nd_idx) const</td></tr>
-<tr class="memdesc:a509750526765fd5153cc278009cb980b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function call operator overload performing the actual calculation.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#a509750526765fd5153cc278009cb980b">More...</a><br /></td></tr>
-<tr class="separator:a509750526765fd5153cc278009cb980b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2830d51151341025830157dfd5d6aae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#ab2830d51151341025830157dfd5d6aae">operator()</a> (::sycl::nd_item&lt; 2 &gt; idx) const</td></tr>
+<tr class="memdesc:ab2830d51151341025830157dfd5d6aae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function call operator overload performing the actual calculation.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#ab2830d51151341025830157dfd5d6aae">More...</a><br /></td></tr>
+<tr class="separator:ab2830d51151341025830157dfd5d6aae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename T&gt;<br />
@@ -220,8 +220,8 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a509750526765fd5153cc278009cb980b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a509750526765fd5153cc278009cb980b">&#9670;&nbsp;</a></span>operator()()</h2>
+<a id="ab2830d51151341025830157dfd5d6aae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2830d51151341025830157dfd5d6aae">&#9670;&nbsp;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -235,7 +235,7 @@ template&lt;typename T &gt; </div>
           <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html">plssvm::sycl::device_kernel_predict_poly</a>&lt; T &gt;::operator() </td>
           <td>(</td>
           <td class="paramtype">::sycl::nd_item&lt; 2 &gt;&#160;</td>
-          <td class="paramname"><em>nd_idx</em></td><td>)</td>
+          <td class="paramname"><em>idx</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -249,7 +249,7 @@ template&lt;typename T &gt; </div>
 <p>Function call operator overload performing the actual calculation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">nd_idx</td><td>the <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class"><code>sycl::item</code></a> identifying an instance of the functor executing at each point in a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class"><code>sycl::range</code></a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">idx</td><td>the <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class"><code>sycl::nd_item</code></a> identifying an instance of the functor executing at each point in a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class"><code>sycl::range</code></a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -262,7 +262,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jan 20 2022 14:35:31 for PLSSVM - Parallel Least-Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Mar 9 2022 09:43:26 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
