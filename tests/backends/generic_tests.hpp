@@ -196,7 +196,8 @@ inline void device_kernel_test() {
 
     for (queue_type &queue : csvm_backend.get_devices()) {
         q_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(q_vec, 0, dept);
-        x_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(x, 0, dept);
+        x_d.emplace_back(dept + boundary_size, queue).memset(0);
+        x_d.back().memcpy_to_device(x, 0, dept);
         r_d.emplace_back(dept + boundary_size, queue).memset(0);
     }
 
