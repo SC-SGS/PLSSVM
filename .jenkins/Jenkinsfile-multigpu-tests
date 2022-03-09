@@ -136,6 +136,7 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
+                                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                         module load cuda/11.2.2 &&\
                                         module use /home/breyerml/.modulefiles/ &&\
                                         module load plssvm/argon-gtx/hipsycl &&\
@@ -154,6 +155,7 @@ pipeline {
                                     warnError('hipSYCL Release tests failed!') {
                                         sh '''
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
+                                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                             module load cuda/11.2.2 &&\
                                             module use /home/breyerml/.modulefiles/ &&\
                                             module load plssvm/argon-gtx/hipsycl &&\
@@ -176,6 +178,7 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
+                                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                         module load cuda/11.2.2 &&\
                                         module use /home/breyerml/.modulefiles/ &&\
                                         module load plssvm/argon-gtx/dpcpp &&\
@@ -194,6 +197,7 @@ pipeline {
                                     warnError('DPC++ Release tests failed!') {
                                         sh '''
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
+                                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                             module load cuda/11.2.2 &&\
                                             module use /home/breyerml/.modulefiles/ &&\
                                             module load plssvm/argon-gtx/dpcpp &&\
