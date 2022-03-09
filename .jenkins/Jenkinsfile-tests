@@ -86,6 +86,7 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         module load cuda/11.2.2
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
                         mkdir -p build/Release
                         cd build/Release
@@ -172,6 +173,7 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         module load cuda/11.2.2
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
