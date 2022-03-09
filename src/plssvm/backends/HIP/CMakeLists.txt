@@ -45,9 +45,6 @@ set(PLSSVM_HIP_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-#    ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.hip.cpp
-#    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.hip.cpp
-#    ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.hip.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
 )
 
