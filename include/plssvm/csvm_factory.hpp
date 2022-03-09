@@ -65,7 +65,7 @@ template <typename T>
 #if defined(PLSSVM_HAS_HIP_BACKEND)
             return std::make_unique<hip::csvm<T>>(params);
 #else
-            throw unsupported_backend_excpetion{ "No HIP backend available!" };
+            throw unsupported_backend_exception{ "No HIP backend available!" };
 #endif
 
         case backend_type::opencl:
