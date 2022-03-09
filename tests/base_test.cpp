@@ -31,15 +31,18 @@ TEST(Base, backend_type) {
     // check conversions to std::string
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::openmp, "openmp");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::cuda, "cuda");
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::hip, "hip");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::opencl, "opencl");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::sycl, "sycl");
-    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::backend_type>(4), "unknown");
+    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::backend_type>(5), "unknown");
 
     // check conversion from std::string
     util::gtest_expect_string_to_enum_conversion("openmp", plssvm::backend_type::openmp);
     util::gtest_expect_string_to_enum_conversion("OpenMP", plssvm::backend_type::openmp);
     util::gtest_expect_string_to_enum_conversion("cuda", plssvm::backend_type::cuda);
     util::gtest_expect_string_to_enum_conversion("CUDA", plssvm::backend_type::cuda);
+    util::gtest_expect_string_to_enum_conversion("hip", plssvm::backend_type::hip);
+    util::gtest_expect_string_to_enum_conversion("HIP", plssvm::backend_type::hip);
     util::gtest_expect_string_to_enum_conversion("opencl", plssvm::backend_type::opencl);
     util::gtest_expect_string_to_enum_conversion("OpenCL", plssvm::backend_type::opencl);
     util::gtest_expect_string_to_enum_conversion("sycl", plssvm::backend_type::sycl);
