@@ -21,11 +21,14 @@
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
+#include "fmt/chrono.h"   // can directly print std::chrono literals
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
+#include <chrono>     // std::chrono
 #include <exception>  // std::terminate
 #include <string>     // std::string
+#include <tuple>      // std::tie
 #include <utility>    // std::pair, std::make_pair, std::move
 #include <vector>     // std::vector
 
@@ -60,13 +63,17 @@ csvm<T>::csvm(const parameter<T> &params) :
             break;
     }
 
+    // get all available devices wrt the requested target platform
+    target_platform used_target;
+    std::tie(devices_, used_target) = detail::get_command_queues(target_);
+    devices_.resize(std::min(devices_.size(), num_features_));
+
     if (print_info_) {
         fmt::print("Using OpenCL as backend.\n");
+        if (target_ == target_platform::automatic) {
+            fmt::print("Using {} as automatic target platform.\n", used_target);
+        }
     }
-
-    // get all available devices wrt the requested target platform
-    devices_ = detail::get_command_queues(target_);
-    devices_.resize(std::min(devices_.size(), num_features_));
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
@@ -91,6 +98,8 @@ csvm<T>::csvm(const parameter<T> &params) :
         fmt::print("\n");
     }
 
+    auto jit_start_time = std::chrono::steady_clock::now();
+
     // get kernel names
     std::pair<std::string, std::string> kernel_names = detail::kernel_type_to_function_name(kernel_);
     // build necessary kernel
@@ -108,6 +117,11 @@ csvm<T>::csvm(const parameter<T> &params) :
         case kernel_type::rbf:
             predict_kernel_ = detail::create_kernel<real_type>(devices_, PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY "predict_kernel.cl", "device_kernel_predict_radial");
             break;
+    }
+
+    auto jit_end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("OpenCL kernel JIT compilation done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time));
     }
 
     // sanity checks for the number of OpenCL kernels

@@ -1,0 +1,11 @@
+### optional and required python packages
+argparse
+sklearn
+py-cpuinfo
+GPUtil
+pyamdgpuinfo
+pylspci
+numpy
+pandas
+arff
+matplotlib

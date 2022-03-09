@@ -10,10 +10,11 @@
 
 #include "plssvm/core.hpp"
 
+#include "fmt/core.h"     // std::format
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
 #include <exception>  // std::exception
-#include <iostream>   // std::cerr, std::endl
+#include <iostream>   // std::cerr, std::clog, std::endl
 
 // perform calculations in single precision if requested
 #ifdef PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION
@@ -26,6 +27,14 @@ int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
         plssvm::parameter_train<real_type> params{ argc, argv };
+
+        // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
+        if (params.backend != plssvm::backend_type::sycl && params.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
+            std::clog << fmt::format(
+                "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
+                params.sycl_kernel_invocation_type)
+                      << std::endl;
+        }
 
         // output used parameter
         if (params.print_info) {

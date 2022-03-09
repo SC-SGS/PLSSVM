@@ -205,6 +205,8 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
 
     PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
 
+    auto start_time = std::chrono::steady_clock::now();
+
     std::vector<real_type> out(points.size(), bias_);
     if (kernel_ == kernel_type::linear) {
         // use faster methode in case of the linear kernel function
@@ -226,6 +228,11 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
             }
             out[point_index] += temp;
         }
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Predicted {} data points in {}.\n", points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 
     return out;

@@ -14,8 +14,9 @@
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::platform, sycl::device, sycl::property::queue, sycl::info, sycl::gpu_selector
 
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <string>   // std::string
+#include <utility>  // std::pair, std::make_pair
+#include <vector>   // std::vector
 
 namespace plssvm::sycl::detail {
 
@@ -70,21 +71,25 @@ namespace plssvm::sycl::detail {
     return target_devices;
 }
 
-[[nodiscard]] std::vector<::sycl::queue> get_device_list(const target_platform target) {
+std::pair<std::vector<::sycl::queue>, ::plssvm::target_platform> get_device_list(const target_platform target) {
     if (target != target_platform::automatic) {
-        return get_device_list_impl(target);
+        return std::make_pair(get_device_list_impl(target), target);
     } else {
-        std::vector<::sycl::queue> target_devices = get_device_list_impl(target_platform::gpu_nvidia);
+        target_platform used_target = target_platform::gpu_nvidia;
+        std::vector<::sycl::queue> target_devices = get_device_list_impl(used_target);
         if (target_devices.empty()) {
-            target_devices = get_device_list_impl(target_platform::gpu_amd);
+            used_target = target_platform::gpu_amd;
+            target_devices = get_device_list_impl(used_target);
             if (target_devices.empty()) {
-                target_devices = get_device_list_impl(target_platform::gpu_intel);
+                used_target = target_platform::gpu_intel;
+                target_devices = get_device_list_impl(used_target);
                 if (target_devices.empty()) {
-                    target_devices = get_device_list_impl(target_platform::cpu);
+                    used_target = target_platform::cpu;
+                    target_devices = get_device_list_impl(used_target);
                 }
             }
         }
-        return target_devices;
+        return std::make_pair(std::move(target_devices), used_target);
     }
 }
 

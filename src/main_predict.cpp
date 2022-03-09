@@ -17,7 +17,7 @@
 #include <chrono>     // std::chrono
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
-#include <iostream>   // std::cerr, std::endl
+#include <iostream>   // std::cerr, std::clog, std::endl
 #include <vector>     // std::vector
 
 // perform calculations in single precision if requested

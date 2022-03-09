@@ -36,6 +36,7 @@ class parameter_train : public parameter<T> {
     using base_type::kernel;
     using base_type::print_info;
     using base_type::target;
+    using base_type::sycl_kernel_invocation_type;
 
     using base_type::input_filename;
     using base_type::model_filename;

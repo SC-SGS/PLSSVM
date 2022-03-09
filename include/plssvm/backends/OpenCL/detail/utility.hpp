@@ -46,7 +46,8 @@ namespace plssvm::opencl::detail {
 void device_assert(error_code code, std::string_view msg = "");
 
 /**
- * @brief Returns the list devices matching the target platform @p target.
+ * @brief Returns the list devices matching the target platform @p target and the actually used target platform
+ *        (only interesting if the provided @p target was automatic).
  * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
  *          1. NVIDIA GPUs
  *          2. AMD GPUs
@@ -54,9 +55,9 @@ void device_assert(error_code code, std::string_view msg = "");
  *          4. CPUs
  *
  * @param[in] target the target platform for which the devices must match
- * @return the command queues (`[[nodiscard]]`)
+ * @return the command queues and used target platform (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<command_queue> get_command_queues(target_platform target);
+[[nodiscard]] std::pair<std::vector<command_queue>, target_platform> get_command_queues(target_platform target);
 
 /**
  * @brief Wait for the compute device associated with @p queue to finish.

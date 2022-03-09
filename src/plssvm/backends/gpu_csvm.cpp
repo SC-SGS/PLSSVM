@@ -65,6 +65,8 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
         setup_data_on_device();
     }
 
+    auto start_time = std::chrono::steady_clock::now();
+
     std::vector<real_type> out(points.size());
 
     if (kernel_ == kernel_type::linear) {
@@ -101,6 +103,11 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
 
         // add bias_ to all predictions
         out += bias_;
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("Predicted {} data points in {}.\n", points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 
     return out;

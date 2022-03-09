@@ -6,10 +6,10 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project("PLSSVM - Parallel Least-Squares Support Vector Machine"
-        VERSION 1.0.1
+project("PLSSVM - Parallel Least Squares Support Vector Machine"
+        VERSION 1.1.0
         LANGUAGES CXX
-        DESCRIPTION "A Support Vector Machine implementation using different backends.")
+        DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
@@ -39,6 +39,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
 )
 
 ## create base library: linked against all backend libraries
@@ -255,28 +256,29 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
     if(PLSSVM_PLATFORM MATCHES "^cpu")
         # parse provided CPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
-        if(NOT PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"cpu\" must not have any architecture specifications!")
+        if(PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 1)
+            message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
     elseif(PLSSVM_PLATFORM MATCHES "^nvidia")
         # parse provided NVIDIA GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
         if(PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specifications!")
+            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
     elseif(PLSSVM_PLATFORM MATCHES "^amd")
         # parse provided AMD GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
         if(PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specifications!")
+            message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
     elseif(PLSSVM_PLATFORM MATCHES "^intel")
+        # parse provided Intel GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
-        if(NOT PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"intel\" must not have any architecture specifications!")
+        if(PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
     else()

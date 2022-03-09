@@ -639,20 +639,21 @@ TYPED_TEST(Parameter, output_operator) {
 
     // correct output string
     std::string correct_output =
-        fmt::format("kernel_type       linear\n"
-                    "degree            3\n"
-                    "gamma             0\n"
-                    "coef0             0\n"
-                    "cost              1\n"
-                    "epsilon           0.001\n"
-                    "print_info        true\n"
-                    "backend           openmp\n"
-                    "target platform   automatic\n"
-                    "input_filename    ''\n"
-                    "model_filename    ''\n"
-                    "predict_filename  ''\n"
-                    "rho               0\n"
-                    "real_type         {}\n",
+        fmt::format("kernel_type                 linear\n"
+                    "degree                      3\n"
+                    "gamma                       0\n"
+                    "coef0                       0\n"
+                    "cost                        1\n"
+                    "epsilon                     0.001\n"
+                    "print_info                  true\n"
+                    "backend                     openmp\n"
+                    "target platform             automatic\n"
+                    "SYCL kernel invocation type automatic\n"
+                    "input_filename              ''\n"
+                    "model_filename              ''\n"
+                    "predict_filename            ''\n"
+                    "rho                         0\n"
+                    "real_type                   {}\n",
                     plssvm::detail::arithmetic_type_name<TypeParam>());
 
     // check for equality
