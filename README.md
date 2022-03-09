@@ -31,6 +31,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 
 - [OpenMP](https://www.openmp.org/)
 - [CUDA](https://developer.nvidia.com/cuda-zone)
+- [HIP](https://github.com/ROCm-Developer-Tools/HIP)
 - [OpenCL](https://www.khronos.org/opencl/)
 - [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
 
@@ -41,7 +42,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
-- [CMake](https://cmake.org/) 3.18 or newer
+- [CMake](https://cmake.org/) 3.21 or newer
 - [cxxopts](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt}](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
@@ -56,6 +57,11 @@ Additional dependencies for the CUDA backend:
 
 - CUDA SDK
 - either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
+
+Additional dependencies for the HIP backend:
+
+- working ROCm and HIP installation
+- [clang with HIP support](https://rocmdocs.amd.com/en/latest/Programming_Guides/HIP-FAQ.html)
 
 Additional dependencies for the OpenCL backend:
 
@@ -145,6 +151,11 @@ The `[optional_options]` can be one or multiple of:
   - `ON`: check for the CUDA backend and fail if not available
   - `AUTO`: check for the CUDA backend but **do not** fail if not available
   - `OFF`: do not check for the CUDA backend
+
+- `PLSSVM_ENABLE_HIP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for the HIP backend and fail if not available
+  - `AUTO`: check for the HIP backend but **do not** fail if not available
+  - `OFF`: do not check for the HIP backend
 
 - `PLSSVM_ENABLE_OPENCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for the OpenCL backend and fail if not available
@@ -269,7 +280,7 @@ Usage:
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
-  -b, --backend arg             choose the backend: openmp|cuda|opencl|sycl (default: openmp)
+  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
@@ -311,7 +322,7 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-predict [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg          choose the backend: openmp|cuda|opencl|sycl (default: openmp)
+  -b, --backend arg          choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
   -p, --target_platform arg  choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
   -q, --quiet                quiet mode (no outputs)
   -h, --help                 print this helper message
