@@ -184,9 +184,6 @@ void csvm<T>::update_w() {
 
 template <typename T>
 auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
-    // time prediction
-    auto start_time = std::chrono::steady_clock::now();
-
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
@@ -207,6 +204,8 @@ auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std:
     }
 
     PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
+
+    auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> out(points.size(), bias_);
     if (kernel_ == kernel_type::linear) {

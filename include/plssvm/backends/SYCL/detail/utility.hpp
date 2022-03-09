@@ -15,12 +15,14 @@
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
-#include <vector>  // std::vector
+#include <utility>  // std::pair
+#include <vector>   // std::vector
 
 namespace plssvm::sycl::detail {
 
 /**
- * @brief Returns the list devices matching the target platform @p target.
+ * @brief Returns the list devices matching the target platform @p target and the actually used target platform
+ *        (only interesting if the provided @p target was automatic).
  * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
  *          1. NVIDIA GPUs
  *          2. AMD GPUs
@@ -28,9 +30,9 @@ namespace plssvm::sycl::detail {
  *          4. CPUs
  *
  * @param[in] target the target platform for which the devices must match
- * @return the devices (`[[nodiscard]]`)
+ * @return the devices and used target platform (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<::sycl::queue> get_device_list(target_platform target);
+[[nodiscard]] std::pair<std::vector<::sycl::queue>, target_platform> get_device_list(target_platform target);
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the SYCL queue to synchronize

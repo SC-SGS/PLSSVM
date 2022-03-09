@@ -44,12 +44,11 @@ class device_kernel_w_linear {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] nd_idx the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
-     *                   identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] index the [`sycl::id`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#id-class)
+     *                  identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::nd_item<1> nd_idx) const {
-        const kernel_index_type index = nd_idx.get_global_linear_id();
-        real_type temp = 0;
+    void operator()(::sycl::id<1> index) const {
+        real_type temp{ 0.0 };
         if (index < num_features_) {
             for (kernel_index_type dat = 0; dat < num_data_points_ - 1; ++dat) {
                 temp += alpha_d_[dat] * data_d_[dat + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * index];
@@ -99,12 +98,11 @@ class device_kernel_predict_poly {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] nd_idx the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
-     *                   identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] idx the [`sycl::nd_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::nd_item<2> nd_idx) const {
-        const kernel_index_type data_point_index = nd_idx.get_global_id(0);
-        const kernel_index_type predict_point_index = nd_idx.get_global_id(1);
+    void operator()(::sycl::nd_item<2> idx) const {
+        const kernel_index_type data_point_index = idx.get_global_id(0);
+        const kernel_index_type predict_point_index = idx.get_global_id(1);
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
@@ -165,12 +163,11 @@ class device_kernel_predict_radial {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] nd_idx the [`sycl::item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#subsec:item.class)
-     *                   identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
+     * @param[in] idx the [`sycl::nd_item`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#nditem-class) identifying an instance of the functor executing at each point in a [`sycl::range`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#range-class)
      */
-    void operator()(::sycl::nd_item<2> nd_idx) const {
-        const kernel_index_type data_point_index = nd_idx.get_global_id(0);
-        const kernel_index_type predict_point_index = nd_idx.get_global_id(1);
+    void operator()(::sycl::nd_item<2> idx) const {
+        const kernel_index_type data_point_index = idx.get_global_id(0);
+        const kernel_index_type predict_point_index = idx.get_global_id(1);
 
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {

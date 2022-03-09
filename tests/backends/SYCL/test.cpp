@@ -13,9 +13,10 @@
 #include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
 #include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
-#include "plssvm/backends/SYCL/csvm.hpp"  // plssvm::sycl::csvm
-#include "plssvm/kernel_types.hpp"        // plssvm::kernel_type
-#include "plssvm/parameter.hpp"           // plssvm::parameter
+#include "plssvm/backends/SYCL/csvm.hpp"                    // plssvm::sycl::csvm
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST
 
@@ -47,9 +48,13 @@ TYPED_TEST(SYCL_CSVM, generate_q) {
     generic::generate_q_test<mock_sycl_csvm, typename TypeParam::real_type, TypeParam::kernel>();
 }
 
-// check whether the device kernels are correct
-TYPED_TEST(SYCL_CSVM, device_kernel) {
-    generic::device_kernel_test<mock_sycl_csvm, typename TypeParam::real_type, TypeParam::kernel>();
+// check whether the nd_range device kernels are correct
+TYPED_TEST(SYCL_CSVM, device_kernel_nd_range) {
+    generic::device_kernel_test<mock_sycl_csvm, typename TypeParam::real_type, TypeParam::kernel, plssvm::sycl::kernel_invocation_type::nd_range>();
+}
+// check whether the hierarchical device kernels are correct
+TYPED_TEST(SYCL_CSVM, device_kernel_hierarchical) {
+    generic::device_kernel_test<mock_sycl_csvm, typename TypeParam::real_type, TypeParam::kernel, plssvm::sycl::kernel_invocation_type::hierarchical>();
 }
 
 // check whether the correct labels are predicted

@@ -198,6 +198,7 @@ pipeline {
                 }
             }
         }
+/*
         stage('build plssvm DPC++ Debug') {
             steps {
                 dir('plssvm') {
@@ -213,6 +214,7 @@ pipeline {
                 }
             }
         }
+*/
     }
     post {
         always {

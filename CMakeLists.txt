@@ -6,10 +6,10 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project("PLSSVM - Parallel Least-Squares Support Vector Machine"
-        VERSION 1.0.1
+project("PLSSVM - Parallel Least Squares Support Vector Machine"
+        VERSION 1.1.0
         LANGUAGES CXX
-        DESCRIPTION "A Support Vector Machine implementation using different backends.")
+        DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
@@ -39,6 +39,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
 )
 
 ## create base library: linked against all backend libraries

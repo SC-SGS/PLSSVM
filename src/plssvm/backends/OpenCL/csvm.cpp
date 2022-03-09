@@ -28,6 +28,7 @@
 #include <chrono>     // std::chrono
 #include <exception>  // std::terminate
 #include <string>     // std::string
+#include <tuple>      // std::tie
 #include <utility>    // std::pair, std::make_pair, std::move
 #include <vector>     // std::vector
 
@@ -62,13 +63,17 @@ csvm<T>::csvm(const parameter<T> &params) :
             break;
     }
 
+    // get all available devices wrt the requested target platform
+    target_platform used_target;
+    std::tie(devices_, used_target) = detail::get_command_queues(target_);
+    devices_.resize(std::min(devices_.size(), num_features_));
+
     if (print_info_) {
         fmt::print("Using OpenCL as backend.\n");
+        if (target_ == target_platform::automatic) {
+            fmt::print("Using {} as automatic target platform.\n", used_target);
+        }
     }
-
-    // get all available devices wrt the requested target platform
-    devices_ = detail::get_command_queues(target_);
-    devices_.resize(std::min(devices_.size(), num_features_));
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {

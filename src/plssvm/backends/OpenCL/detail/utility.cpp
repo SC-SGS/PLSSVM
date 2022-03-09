@@ -45,7 +45,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     }
 }
 
-std::vector<command_queue> get_command_queues_impl(const target_platform target) {
+[[nodiscard]] std::vector<command_queue> get_command_queues_impl(const target_platform target) {
     std::map<cl_platform_id, std::vector<cl_device_id>> platform_devices;
 
     // get number of platforms
@@ -124,21 +124,25 @@ std::vector<command_queue> get_command_queues_impl(const target_platform target)
     return command_queues;
 }
 
-std::vector<command_queue> get_command_queues(const target_platform target) {
+std::pair<std::vector<command_queue>, target_platform> get_command_queues(const target_platform target) {
     if (target != target_platform::automatic) {
-        return get_command_queues_impl(target);
+        return std::make_pair(get_command_queues_impl(target), target);
     } else {
-        std::vector<command_queue> target_devices = get_command_queues_impl(target_platform::gpu_nvidia);
+        target_platform used_target = target_platform::gpu_nvidia;
+        std::vector<command_queue> target_devices = get_command_queues_impl(used_target);
         if (target_devices.empty()) {
-            target_devices = get_command_queues_impl(target_platform::gpu_amd);
+            used_target = target_platform::gpu_amd;
+            target_devices = get_command_queues_impl(used_target);
             if (target_devices.empty()) {
-                target_devices = get_command_queues_impl(target_platform::gpu_intel);
+                used_target = target_platform::gpu_intel;
+                target_devices = get_command_queues_impl(used_target);
                 if (target_devices.empty()) {
-                    target_devices = get_command_queues_impl(target_platform::cpu);
+                    used_target = target_platform::cpu;
+                    target_devices = get_command_queues_impl(used_target);
                 }
             }
         }
-        return target_devices;
+        return std::make_pair(std::move(target_devices), used_target);
     }
 }
 
