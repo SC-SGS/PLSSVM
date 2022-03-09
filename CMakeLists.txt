@@ -4,7 +4,7 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.21)
 
 project("PLSSVM - Parallel Least-Squares Support Vector Machine"
         VERSION 1.0.1
