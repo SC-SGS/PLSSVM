@@ -125,6 +125,7 @@ The `[optional_options]` can be one or multiple of:
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
   - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
     - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
+    - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
 
 If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.
