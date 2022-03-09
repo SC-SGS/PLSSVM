@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
+#include "hip/hip_runtime_api.h"
 
 #include "plssvm/constants.hpp"  // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
@@ -25,7 +25,7 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
 
     __shared__ real_type data_intern_i[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
     __shared__ real_type data_intern_j[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
-    real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
     real_type data_j[INTERNAL_BLOCK_SIZE];
 
     if (i >= j) {
@@ -92,7 +92,6 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
     }
 }
 
-
 template <typename real_type>
 __global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
     kernel_index_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
@@ -100,7 +99,7 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
 
     __shared__ real_type data_intern_i[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
     __shared__ real_type data_intern_j[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
-    real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
     real_type data_j[INTERNAL_BLOCK_SIZE];
 
     if (i >= j) {
@@ -157,7 +156,6 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
     }
 }
 
-
 template <typename real_type>
 __global__ void device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) {
     kernel_index_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
@@ -165,7 +163,7 @@ __global__ void device_kernel_radial(const real_type *q, real_type *ret, const r
 
     __shared__ real_type data_intern_i[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
     __shared__ real_type data_intern_j[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
-    real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
     real_type data_j[INTERNAL_BLOCK_SIZE];
 
     if (i >= j) {
@@ -223,4 +221,3 @@ __global__ void device_kernel_radial(const real_type *q, real_type *ret, const r
 }
 
 }  // namespace plssvm::hip
-

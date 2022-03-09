@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
+#include "hip/hip_runtime_api.h"
 
 #include "plssvm/constants.hpp"  // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
@@ -49,4 +49,3 @@ __global__ void device_kernel_q_radial(real_type *q, const real_type *data_d, co
 }
 
 }  // namespace plssvm::hip
-
