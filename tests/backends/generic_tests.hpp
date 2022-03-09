@@ -111,7 +111,7 @@ inline void write_model_test() {
     // check if the model header is valid
     for (std::vector<std::string>::size_type i = 0; i < regex_patterns.size(); ++i) {
         std::regex reg(regex_patterns[i], std::regex::extended);
-        ASSERT_TRUE(std::regex_match(lines[i], reg)) << "line: " << i << " doesn't match regex pattern: " << regex_patterns[i];
+        ASSERT_TRUE(std::regex_match(lines[i], reg)) << fmt::format("line {}: \"{}\" doesn't match regex pattern: \"{}\"", i, lines[i], regex_patterns[i]);
     }
 }
 
