@@ -70,8 +70,8 @@ pipeline {
                     if [[ ! -d spack ]]; then git clone --depth 1 https://github.com/spack/spack.git;fi; \
                     source spack/share/spack/setup-env.sh && \
                     spack compiler find && \
-                    spack install cmake@3.20.2 && \
-                    spack load cmake@3.20.2 && echo 'Successfully installed/loaded spack cmake'"
+                    spack install cmake@3.22.2 && \
+                    spack load cmake@3.22.2 && echo 'Successfully installed/loaded spack cmake'"
                 '''
                 sh '''
                     srun -w argon-gtx -N 1 -n 1 -t 0:05:00 -D /scratch bash -c "\
@@ -108,7 +108,7 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.20.2 &&\
+                                        source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.22.2 &&\
                                         module load cuda/11.2.2 &&\
                                         mkdir -p build/Release &&\
                                         cd build/Release &&\
@@ -145,7 +145,7 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.20.2 &&\
+                                        source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.22.2 &&\
                                         module load cuda/11.2.2 &&\
                                         module use /home/breyerml/.modulefiles/ &&\
                                         module load plssvm/argon-gtx/hipsycl &&\
@@ -186,7 +186,7 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.20.2 &&\
+                                        source /scratch/jenkins/spack/share/spack/setup-env.sh && spack load cmake@3.22.2 &&\
                                         module load cuda/11.2.2 &&\
                                         module use /home/breyerml/.modulefiles/ &&\
                                         module load plssvm/argon-gtx/dpcpp &&\
