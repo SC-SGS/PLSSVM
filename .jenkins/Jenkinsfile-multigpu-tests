@@ -68,6 +68,7 @@ pipeline {
                     cd /scratch && \
                     mkdir -p jenkins && cd jenkins; \
                     if [[ ! -d spack ]]; then git clone --depth 1 https://github.com/spack/spack.git;fi; \
+                    cd spack && git pull --depth 1 && cd .. && \
                     source spack/share/spack/setup-env.sh && \
                     spack compiler find && \
                     spack install cmake@3.22.2 && \
