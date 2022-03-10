@@ -33,6 +33,24 @@ template <typename T>
 class SYCL_CSVM : public ::testing::Test {};
 TYPED_TEST_SUITE(SYCL_CSVM, parameter_types, util::google_test::parameter_definition_to_name);
 
+// check whether the std::string <-> plssvm::sycl::kernel_invocation_type conversions are correct
+TEST(SYCL_CSVM, kernel_invocation_type) {
+    // check conversions to std::string
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl::kernel_invocation_type::automatic, "automatic");
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl::kernel_invocation_type::nd_range, "nd_range");
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl::kernel_invocation_type::hierarchical, "hierarchical");
+    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::sycl::kernel_invocation_type>(3), "unknown");
+
+    // check conversion from std::string
+    util::gtest_expect_string_to_enum_conversion("automatic", plssvm::sycl::kernel_invocation_type::automatic);
+    util::gtest_expect_string_to_enum_conversion("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic);
+    util::gtest_expect_string_to_enum_conversion("nd_range", plssvm::sycl::kernel_invocation_type::nd_range);
+    util::gtest_expect_string_to_enum_conversion("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range);
+    util::gtest_expect_string_to_enum_conversion("hierarchical", plssvm::sycl::kernel_invocation_type::hierarchical);
+    util::gtest_expect_string_to_enum_conversion("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical);
+    util::gtest_expect_string_to_enum_conversion<plssvm::sycl::kernel_invocation_type>("foo");
+}
+
 // check whether the csvm factory function correctly creates a sycl::csvm
 TYPED_TEST(SYCL_CSVM, csvm_factory) {
     generic::csvm_factory_test<plssvm::sycl::csvm, typename TypeParam::real_type, plssvm::backend_type::sycl>();
