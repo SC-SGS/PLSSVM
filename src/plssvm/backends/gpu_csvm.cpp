@@ -348,7 +348,7 @@ void gpu_csvm<T, device_ptr_t, queue_t>::run_device_kernel(const std::size_t dev
     PLSSVM_ASSERT(num_cols_ != 0, "num_cols_ not initialized! Maybe a call to setup_data_on_device() is missing?");
 
     const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept_) / static_cast<real_type>(boundary_size_)));
-    const auto block = std::min<std::size_t>(THREAD_BLOCK_SIZE, dept_);
+    const auto block = std::max<std::size_t>(std::min<std::size_t>(THREAD_BLOCK_SIZE, dept_), INTERNAL_BLOCK_SIZE);
     const detail::execution_range range({ grid, grid }, { block, block });
 
     run_svm_kernel(device, range, q_d, r_d, x_d, add, feature_ranges_[device + 1] - feature_ranges_[device]);
