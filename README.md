@@ -33,7 +33,9 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the commits [faaba28](https://github.com/intel/llvm/tree/faaba28541138d7ad39a7fa85fa85b863560b45f) and [6962942](https://github.com/illuhad/hipSYCL/tree/6962942c430a7b221eb167b4272c29cf397cda06) respectivelly)
+
+// tested with commit!
 
 ## Getting Started
 
