@@ -4,7 +4,7 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-# TODO: How to enable NVIDIA GPU support?
+# TODO: only tested on AMD GPUs -> test on NVIDIA GPUs
 
 # check if HIP can be enabled
 message(CHECK_START "Checking for HIP backend")
@@ -49,6 +49,7 @@ set(PLSSVM_HIP_SOURCES
 # set target properties
 set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME svm-HIP)
 add_library(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HIP_SOURCES})
+
 # https://gitlab.kitware.com/cmake/cmake/-/issues/23210
 #set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES HIP_SEPARABLE_COMPILATION ON)
 
