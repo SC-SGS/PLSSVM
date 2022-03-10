@@ -25,8 +25,10 @@ namespace plssvm::sycl::detail {
     for (const ::sycl::platform &platform : ::sycl::platform::get_platforms()) {
         for (const ::sycl::device &device : platform.get_devices()) {
             if (target == target_platform::cpu && device.is_cpu()) {
+#if defined(PLSSVM_HAS_CPU_TARGET)
                 // select CPU device
                 target_devices.emplace_back(device, ::sycl::property::queue::in_order());
+#endif
             } else {
                 // must be a GPU device
                 if (device.is_gpu()) {
@@ -38,29 +40,34 @@ namespace plssvm::sycl::detail {
                     std::string platform_string = platform.get_info<::sycl::info::platform::name>();
                     // convert platform name to lower case
                     ::plssvm::detail::to_lower_case(platform_string);
-
                     switch (target) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
                         case target_platform::gpu_nvidia:
                             if (::plssvm::detail::contains(vendor_string, "nvidia")) {
                                 target_devices.emplace_back(device, ::sycl::property::queue::in_order());
                             }
                             break;
+#endif
+#if defined(PLSSVM_HAS_AMD_TARGET)
                         case target_platform::gpu_amd:
                             if (::plssvm::detail::contains(vendor_string, "amd")) {
                                 target_devices.emplace_back(device, ::sycl::property::queue::in_order());
                             }
                             break;
+#endif
+#if defined(PLSSVM_HAS_INTEL_TARGET)
                         case target_platform::gpu_intel:
                             if (::plssvm::detail::contains(vendor_string, "intel")) {
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
+    #if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
                                 if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
                                     target_devices.emplace_back(device, ::sycl::property::queue::in_order());
                                 }
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+    #elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
                                 target_devices.emplace_back(device, ::sycl::property::queue::in_order());
-#endif
+    #endif
                             }
                             break;
+#endif
                         default:
                             break;
                     }

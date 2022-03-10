@@ -68,7 +68,9 @@ void device_assert(const error_code ec, const std::string_view msg) {
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type");
             if (target == target_platform::cpu && device_type == CL_DEVICE_TYPE_CPU) {
                 // select CPU device
+#if defined(PLSSVM_HAS_CPU_TARGET)
                 platform_devices[platform].push_back(device);
+#endif
             } else {
                 // must be a GPU device
                 if (device_type == CL_DEVICE_TYPE_GPU) {
@@ -80,21 +82,27 @@ void device_assert(const error_code ec, const std::string_view msg) {
                     ::plssvm::detail::to_lower_case(vendor_string);
 
                     switch (target) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
                         case target_platform::gpu_nvidia:
                             if (::plssvm::detail::contains(vendor_string, "nvidia")) {
                                 platform_devices[platform].push_back(device);
                             }
                             break;
+#endif
+#if defined(PLSSVM_HAS_AMD_TARGET)
                         case target_platform::gpu_amd:
                             if (::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) {
                                 platform_devices[platform].push_back(device);
                             }
                             break;
+#endif
+#if defined(PLSSVM_HAS_INTEL_TARGET)
                         case target_platform::gpu_intel:
                             if (::plssvm::detail::contains(vendor_string, "intel")) {
                                 platform_devices[platform].push_back(device);
                             }
                             break;
+#endif
                         default:
                             break;
                     }
