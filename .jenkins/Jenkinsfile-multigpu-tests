@@ -66,6 +66,7 @@ pipeline {
                 sh '''
                     srun -w argon-gtx -N 1 -n 1 -t 0:05:00 -D /scratch bash -c "\
                     cd /scratch && \
+                    /usr/bin/rm -rf jenkins/spack && \
                     mkdir -p jenkins && cd jenkins; \
                     mkdir -p plssvm/${BUILD_TAG} && cd plssvm/${BUILD_TAG} && \
                     rm -rf PLSSVM && \
