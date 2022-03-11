@@ -9,6 +9,8 @@
  * @brief Defines CUDA functions for generating the `q` vector.
  */
 
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
 /**
  * @brief Calculates the `q` vector using the linear C-SVM kernel.
  * @details Supports multi-GPU execution.
