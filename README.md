@@ -32,7 +32,9 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [OpenMP](https://www.openmp.org/)
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL))
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the commits [faaba28](https://github.com/intel/llvm/tree/faaba28541138d7ad39a7fa85fa85b863560b45f) and [6962942](https://github.com/illuhad/hipSYCL/tree/6962942c430a7b221eb167b4272c29cf397cda06) respectivelly)
+
+// tested with commit!
 
 ## Getting Started
 
@@ -171,6 +173,7 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
 
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
+  - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
 
 If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
 DPC++ backend instead of OpenCL.

@@ -111,7 +111,7 @@ inline void write_model_test() {
     // check if the model header is valid
     for (std::vector<std::string>::size_type i = 0; i < regex_patterns.size(); ++i) {
         std::regex reg(regex_patterns[i], std::regex::extended);
-        ASSERT_TRUE(std::regex_match(lines[i], reg)) << "line: " << i << " doesn't match regex pattern: " << regex_patterns[i];
+        ASSERT_TRUE(std::regex_match(lines[i], reg)) << fmt::format("line {}: \"{}\" doesn't match regex pattern: \"{}\"", i, lines[i], regex_patterns[i]);
     }
 }
 
@@ -196,7 +196,8 @@ inline void device_kernel_test() {
 
     for (queue_type &queue : csvm_backend.get_devices()) {
         q_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(q_vec, 0, dept);
-        x_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(x, 0, dept);
+        x_d.emplace_back(dept + boundary_size, queue).memset(0);
+        x_d.back().memcpy_to_device(x, 0, dept);
         r_d.emplace_back(dept + boundary_size, queue).memset(0);
     }
 

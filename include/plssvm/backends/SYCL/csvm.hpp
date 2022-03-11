@@ -94,7 +94,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
      */
-    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, std::size_t num_features) final;
+    void run_q_kernel(std::size_t device, [[maybe_unused]] const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
@@ -102,7 +102,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_features) final;
+    void run_w_kernel(std::size_t device, [[maybe_unused]] const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
