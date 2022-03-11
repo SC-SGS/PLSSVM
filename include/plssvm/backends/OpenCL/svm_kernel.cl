@@ -163,7 +163,7 @@ __kernel void device_kernel_poly(__global const real_type *q, __global real_type
             real_type ret_jx = 0.0;
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
-                const real_type temp = (pow(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + y] - q[j + x]) * add;
+                const real_type temp = (pown(gamma * matr[x][y] + coef0, degree) + QA_cost - q[i + y] - q[j + x]) * add;
                 if (i + x > j + y) {
                     // upper triangular matrix
                     atomicAdd(&ret[i + y], temp * d[j + x]);

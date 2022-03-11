@@ -47,7 +47,7 @@ __kernel void device_kernel_q_poly(__global real_type *q, __global real_type *da
     for (int i = 0; i < num_cols; ++i) {
         temp += data_d[i * num_rows + index] * data_last[i];
     }
-    q[index] = pow(gamma * temp + coef0, degree);
+    q[index] = pown(gamma * temp + coef0, degree);
 }
 
 /**
