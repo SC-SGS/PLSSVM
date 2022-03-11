@@ -86,10 +86,12 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict(const std::vector<std::vector<r
         // transform prediction data
         const std::vector<real_type> transformed_data = base_type::transform_data(points, boundary_size_, points.size());
         device_ptr_type point_d{ points[0].size() * (points.size() + boundary_size_), devices_[0] };
+        point_d.memset(0);
         point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
 
         // create the weight vector on the device and copy data
         device_ptr_type alpha_d{ num_data_points_ + THREAD_BLOCK_SIZE, devices_[0] };
+        alpha_d.memset(0);
         alpha_d.memcpy_to_device(*alpha_ptr_.get(), 0, num_data_points_);
 
         const detail::execution_range range({ static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_data_points_) / static_cast<real_type>(THREAD_BLOCK_SIZE))),
