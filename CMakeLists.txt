@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project("PLSSVM - Parallel Least Squares Support Vector Machine"
-        VERSION 1.1.0
+        VERSION 1.1.1
         LANGUAGES CXX
         DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
