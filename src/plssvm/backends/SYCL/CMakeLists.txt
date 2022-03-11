@@ -69,6 +69,10 @@ if("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "hipSYCL")
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
     # silence unknown options warnings
     target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option)
+    target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE
+            $<$<CXX_COMPILER_ID:Clang>:-Wno-unknown-warning-option>
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
+            )
 
     # print note that Intel GPU architecture specifications are ignored when using hipSYCL
     if(DEFINED PLSSVM_INTEL_TARGET_ARCHS)
