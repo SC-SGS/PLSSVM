@@ -1,5 +1,5 @@
 <map id="include/plssvm/backends/SYCL/detail/constants.hpp" name="include/plssvm/backends/SYCL/detail/constants.hpp">
-<area shape="rect" id="node1" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="155,5,348,47"/>
-<area shape="rect" id="node2" href="$svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="5,95,236,136"/>
-<area shape="rect" id="node3" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="260,95,507,136"/>
+<area shape="rect" id="node1" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="163,5,356,47"/>
+<area shape="rect" id="node2" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="5,95,252,136"/>
+<area shape="rect" id="node3" href="$svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="276,95,507,136"/>
 </map>

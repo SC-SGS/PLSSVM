@@ -22,7 +22,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.0</span>
+   &#160;<span id="projectnumber">1.1.1</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -77,8 +77,9 @@ $(function() {
 <li><a href="https://www.openmp.org/">OpenMP</a></li>
 <li><a href="https://developer.nvidia.com/cuda-zone">CUDA</a></li>
 <li><a href="https://www.khronos.org/opencl/">OpenCL</a></li>
-<li><a href="https://www.khronos.org/sycl/">SYCL</a> (tested implementations are <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a>)</li>
+<li><a href="https://www.khronos.org/sycl/">SYCL</a> (tested implementations are <a href="https://github.com/intel/llvm">DPC++</a> and <a href="https://github.com/illuhad/hipSYCL">hipSYCL</a>; specifically the commits <a href="https://github.com/intel/llvm/tree/faaba28541138d7ad39a7fa85fa85b863560b45f">faaba28</a> and <a href="https://github.com/illuhad/hipSYCL/tree/6962942c430a7b221eb167b4272c29cf397cda06">6962942</a> respectivelly)</li>
 </ul>
+<p>// tested with commit!</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Getting Started</h1>
 <h2><a class="anchor" id="autotoc_md2"></a>
@@ -202,6 +203,7 @@ Optional CMake Options</h3>
 <ul>
 <li><code>PLSSVM_GENERATE_TEST_FILE=ON|OFF</code> (default: <code>ON</code>): automatically generate test files<ul>
 <li><code>PLSSVM_TEST_FILE_NUM_DATA_POINTS</code> (default: <code>5000</code>): the number of data points in the test file</li>
+<li><code>PLSSVM_TEST_FILE_NUM_FEATURES</code> (default: <code>2000</code>): the number of features per data point in the test file</li>
 </ul>
 </li>
 </ul>
@@ -371,7 +373,7 @@ License</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Mar 9 2022 09:50:49 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

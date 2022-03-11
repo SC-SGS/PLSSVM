@@ -22,7 +22,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.0</span>
+   &#160;<span id="projectnumber">1.1.1</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -216,15 +216,15 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a060e1e4bc9fa288a9d1cc831b9dc4131"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a060e1e4bc9fa288a9d1cc831b9dc4131">device_synchronize</a> (<a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a999c45c0154a5e978bef11e78efedff1">queue_type</a> &amp;queue) final</td></tr>
 <tr class="memdesc:a060e1e4bc9fa288a9d1cc831b9dc4131"><td class="mdescLeft">&#160;</td><td class="mdescRight">Synchronize the device denoted by <code>queue</code>.  <a href="classplssvm_1_1sycl_1_1csvm.html#a060e1e4bc9fa288a9d1cc831b9dc4131">More...</a><br /></td></tr>
 <tr class="separator:a060e1e4bc9fa288a9d1cc831b9dc4131"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a8523fe7508c8d8d686576054006aff"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a9a8523fe7508c8d8d686576054006aff">run_q_kernel</a> (std::size_t device, const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;q_d, std::size_t num_features) final</td></tr>
-<tr class="memdesc:a9a8523fe7508c8d8d686576054006aff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel filling the <code>q</code> vector.  <a href="classplssvm_1_1sycl_1_1csvm.html#a9a8523fe7508c8d8d686576054006aff">More...</a><br /></td></tr>
-<tr class="separator:a9a8523fe7508c8d8d686576054006aff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c5e36bf01abe1aa38368c8f3cd7f083"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a3c5e36bf01abe1aa38368c8f3cd7f083">run_q_kernel</a> (std::size_t device, [[maybe_unused]] const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;q_d, std::size_t num_features) final</td></tr>
+<tr class="memdesc:a3c5e36bf01abe1aa38368c8f3cd7f083"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel filling the <code>q</code> vector.  <a href="classplssvm_1_1sycl_1_1csvm.html#a3c5e36bf01abe1aa38368c8f3cd7f083">More...</a><br /></td></tr>
+<tr class="separator:a3c5e36bf01abe1aa38368c8f3cd7f083"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a275b7ab28ade325eebda41202376c535"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a275b7ab28ade325eebda41202376c535">run_svm_kernel</a> (std::size_t device, const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;q_d, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;r_d, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;x_d, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#ac24c7c31eb4a2709dab2058392025bce">real_type</a> add, std::size_t num_features) final</td></tr>
 <tr class="memdesc:a275b7ab28ade325eebda41202376c535"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the main GPU kernel used in the CG algorithm.  <a href="classplssvm_1_1sycl_1_1csvm.html#a275b7ab28ade325eebda41202376c535">More...</a><br /></td></tr>
 <tr class="separator:a275b7ab28ade325eebda41202376c535"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b01323c20224b37f9179c4d9f784ab4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a7b01323c20224b37f9179c4d9f784ab4">run_w_kernel</a> (std::size_t device, const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;w_d, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;alpha_d, std::size_t num_features) final</td></tr>
-<tr class="memdesc:a7b01323c20224b37f9179c4d9f784ab4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) the calculate the <code>w</code> vector used to speed up the prediction when using the linear kernel function.  <a href="classplssvm_1_1sycl_1_1csvm.html#a7b01323c20224b37f9179c4d9f784ab4">More...</a><br /></td></tr>
-<tr class="separator:a7b01323c20224b37f9179c4d9f784ab4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46405847b73e32f21683db058cd3d25c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a46405847b73e32f21683db058cd3d25c">run_w_kernel</a> (std::size_t device, [[maybe_unused]] const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;w_d, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;alpha_d, std::size_t num_features) final</td></tr>
+<tr class="memdesc:a46405847b73e32f21683db058cd3d25c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) the calculate the <code>w</code> vector used to speed up the prediction when using the linear kernel function.  <a href="classplssvm_1_1sycl_1_1csvm.html#a46405847b73e32f21683db058cd3d25c">More...</a><br /></td></tr>
+<tr class="separator:a46405847b73e32f21683db058cd3d25c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36ebf43112082d3517d607656703338e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a36ebf43112082d3517d607656703338e">run_predict_kernel</a> (const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;range, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;out_d, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;alpha_d, const <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">device_ptr_type</a> &amp;point_d, std::size_t num_predict_points) final</td></tr>
 <tr class="memdesc:a36ebf43112082d3517d607656703338e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the GPU kernel (only on the first GPU) to predict the new data points <code>point_d</code>.  <a href="classplssvm_1_1sycl_1_1csvm.html#a36ebf43112082d3517d607656703338e">More...</a><br /></td></tr>
 <tr class="separator:a36ebf43112082d3517d607656703338e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -559,8 +559,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a9a8523fe7508c8d8d686576054006aff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a8523fe7508c8d8d686576054006aff">&#9670;&nbsp;</a></span>run_q_kernel()</h2>
+<a id="a3c5e36bf01abe1aa38368c8f3cd7f083"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c5e36bf01abe1aa38368c8f3cd7f083">&#9670;&nbsp;</a></span>run_q_kernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -579,7 +579,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
+          <td class="paramtype">[[maybe_unused] ] const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
           <td class="paramname"><em>range</em>, </td>
         </tr>
         <tr>
@@ -702,8 +702,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a7b01323c20224b37f9179c4d9f784ab4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7b01323c20224b37f9179c4d9f784ab4">&#9670;&nbsp;</a></span>run_w_kernel()</h2>
+<a id="a46405847b73e32f21683db058cd3d25c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46405847b73e32f21683db058cd3d25c">&#9670;&nbsp;</a></span>run_w_kernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -722,7 +722,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
+          <td class="paramtype">[[maybe_unused] ] const ::<a class="el" href="classplssvm_1_1detail_1_1execution__range.html">plssvm::detail::execution_range</a> &amp;&#160;</td>
           <td class="paramname"><em>range</em>, </td>
         </tr>
         <tr>
@@ -844,7 +844,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Mar 9 2022 09:50:49 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>
