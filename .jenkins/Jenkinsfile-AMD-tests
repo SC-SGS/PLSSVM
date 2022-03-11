@@ -56,8 +56,8 @@ pipeline {
                             --header "authorization: Bearer ${gitlab_token}" \
                             --data "{
                                 \\"state\\": \\"pending\\",
-                                \\"context\\": \\"jenkins-ctest\\",
-                                \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
+                                \\"context\\": \\"jenkins-ctest-amd\\",
+                                \\"description\\": \\"Jenkins CI Job: jenkins-ctest-amd\\",
                                 \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-AMD/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                         }"
                     '''
@@ -266,8 +266,8 @@ pipeline {
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
                         \\"state\\": \\"success\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
+                        \\"context\\": \\"jenkins-ctest-amd\\",
+                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest-amd\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-AMD/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
@@ -285,8 +285,8 @@ pipeline {
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
                         \\"state\\": \\"failure\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
+                        \\"context\\": \\"jenkins-ctest-amd\\",
+                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest-amd\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-AMD/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
@@ -304,8 +304,8 @@ pipeline {
                     --header "authorization: Bearer ${gitlab_token}" \
                     --data "{
                         \\"state\\": \\"error\\",
-                        \\"context\\": \\"jenkins-ctest\\",
-                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest\\",
+                        \\"context\\": \\"jenkins-ctest-amd\\",
+                        \\"description\\": \\"Jenkins CI Job: jenkins-ctest-amd\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-AMD/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
