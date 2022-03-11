@@ -141,6 +141,8 @@ template <std::size_t I>
                 return range.grid[i];
             case kernel_invocation_type::automatic:
                 throw backend_exception{ "Can't create native execution range from kernel invocation type automatic!" };
+            default:
+                throw backend_exception{ "Illegal kernel invocation type!" };
         }
     };
 
