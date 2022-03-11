@@ -23,6 +23,8 @@ enum class backend_type {
     openmp,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
     cuda,
+    /** [HIP](https://github.com/ROCm-Developer-Tools/HIP) to target AMD and NVIDIA GPUs. */
+    hip,
     /** [OpenCL](https://www.khronos.org/opencl/) to target GPUs from different vendors and CPUs. */
     opencl,
     /** [SYCL](https://www.khronos.org/sycl/) to target GPUs from different vendors and CPUs. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL). */

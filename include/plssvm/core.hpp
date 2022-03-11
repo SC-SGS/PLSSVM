@@ -48,6 +48,12 @@ namespace plssvm::cuda {}
 /// Namespace containing CUDA backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::cuda::detail {}
 
+/// Namespace containing the C-SVM using the HIP backend.
+namespace plssvm::hip {}
+
+/// Namespace containing HIP backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::hip::detail {}
+
 /// Namespace containing the C-SVM using the OpenCL backend.
 namespace plssvm::opencl {}
 

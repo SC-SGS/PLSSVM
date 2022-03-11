@@ -25,6 +25,9 @@
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm
 #endif
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+    #include "plssvm/backends/HIP/csvm.hpp"  // plssvm::hip::csvm
+#endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
 #endif
@@ -58,12 +61,20 @@ template <typename T>
             throw unsupported_backend_exception{ "No CUDA backend available!" };
 #endif
 
+        case backend_type::hip:
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+            return std::make_unique<hip::csvm<T>>(params);
+#else
+            throw unsupported_backend_exception{ "No HIP backend available!" };
+#endif
+
         case backend_type::opencl:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
             return std::make_unique<opencl::csvm<T>>(params);
 #else
             throw unsupported_backend_exception{ "No OpenCL backend available!" };
 #endif
+
         case backend_type::sycl:
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
             return std::make_unique<sycl::csvm<T>>(params);
