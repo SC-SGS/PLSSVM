@@ -545,6 +545,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                "backend                     {}\n"
                "target platform             {}\n"
                "SYCL kernel invocation type {}\n"
+               "SYCL implementation type    {}\n"
                "input_filename              '{}'\n"
                "model_filename              '{}'\n"
                "predict_filename            '{}'\n"
@@ -560,6 +561,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                params.backend,
                params.target,
                params.sycl_kernel_invocation_type,
+               params.sycl_implementation_type,
                params.input_filename,
                params.model_filename,
                params.predict_filename,

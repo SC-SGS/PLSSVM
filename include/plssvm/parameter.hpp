@@ -12,6 +12,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -194,6 +195,8 @@ class parameter {
 
     /// The kernel invocation type when using SYCL as backend.
     sycl::kernel_invocation_type sycl_kernel_invocation_type = sycl::kernel_invocation_type::automatic;
+    /// The SYCL implementation to use with --backend=sycl.
+    sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
 
     /// The name of the data/test file to parse.
     std::string input_filename{};

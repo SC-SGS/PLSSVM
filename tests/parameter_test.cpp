@@ -649,6 +649,7 @@ TYPED_TEST(Parameter, output_operator) {
                     "backend                     openmp\n"
                     "target platform             automatic\n"
                     "SYCL kernel invocation type automatic\n"
+                    "SYCL implementation type    automatic\n"
                     "input_filename              ''\n"
                     "model_filename              ''\n"
                     "predict_filename            ''\n"

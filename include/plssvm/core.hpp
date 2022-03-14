@@ -25,6 +25,7 @@
 #include "plssvm/exceptions/exceptions.hpp"
 #include "plssvm/version/version.hpp"
 
+#include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
 /// The main namespace containing all public API functions.

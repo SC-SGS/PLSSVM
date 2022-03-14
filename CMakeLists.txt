@@ -39,7 +39,8 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
 )
 
 ## create base library: linked against all backend libraries

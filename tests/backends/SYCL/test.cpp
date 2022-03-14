@@ -14,6 +14,7 @@
 #include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
 #include "plssvm/backends/SYCL/csvm.hpp"                    // plssvm::sycl::csvm
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
@@ -49,6 +50,26 @@ TEST(SYCL_CSVM, kernel_invocation_type) {
     util::gtest_expect_string_to_enum_conversion("hierarchical", plssvm::sycl::kernel_invocation_type::hierarchical);
     util::gtest_expect_string_to_enum_conversion("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical);
     util::gtest_expect_string_to_enum_conversion<plssvm::sycl::kernel_invocation_type>("foo");
+}
+
+// check whether the std::string <-> plssvm::sycl::implementation_type conversions are correct
+TEST(SYCL_CSVM, implementation_type) {
+    // check conversions to std::string
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl::implementation_type::automatic, "automatic");
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl::implementation_type::dpcpp, "dpcpp");
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl::implementation_type::hipsycl, "hipsycl");
+    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::sycl::implementation_type>(3), "unknown");
+
+    // check conversion from std::string
+    util::gtest_expect_string_to_enum_conversion("automatic", plssvm::sycl::implementation_type::automatic);
+    util::gtest_expect_string_to_enum_conversion("AUTOMATIC", plssvm::sycl::implementation_type::automatic);
+    util::gtest_expect_string_to_enum_conversion("dpcpp", plssvm::sycl::implementation_type::dpcpp);
+    util::gtest_expect_string_to_enum_conversion("DPCPP", plssvm::sycl::implementation_type::dpcpp);
+    util::gtest_expect_string_to_enum_conversion("dpc++", plssvm::sycl::implementation_type::dpcpp);
+    util::gtest_expect_string_to_enum_conversion("DPC++", plssvm::sycl::implementation_type::dpcpp);
+    util::gtest_expect_string_to_enum_conversion("hipsycl", plssvm::sycl::implementation_type::hipsycl);
+    util::gtest_expect_string_to_enum_conversion("hipSYCL", plssvm::sycl::implementation_type::hipsycl);
+    util::gtest_expect_string_to_enum_conversion<plssvm::sycl::implementation_type>("foo");
 }
 
 // check whether the csvm factory function correctly creates a sycl::csvm

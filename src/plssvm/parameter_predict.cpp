@@ -46,6 +46,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
         .add_options()
             ("b,backend", "choose the backend: openmp|cuda|hip|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
             ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<decltype(target)>()->default_value(detail::as_lower_case(fmt::format("{}", target))))
+            ("sycl_implementation_type", "choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl", cxxopts::value<decltype(sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_implementation_type))))
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -74,6 +75,9 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
 
     // parse target_platform and cast the value to the respective enum
     target = result["target_platform"].as<decltype(target)>();
+
+    // parse SYCL implementation used in the SYCL backend
+    sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 
     // parse print info
     print_info = !print_info;

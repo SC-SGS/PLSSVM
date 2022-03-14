@@ -35,6 +35,13 @@ int main(int argc, char *argv[]) {
                 params.sycl_kernel_invocation_type)
                       << std::endl;
         }
+        // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
+        if (params.backend != plssvm::backend_type::sycl && params.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
+            std::clog << fmt::format(
+                "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                params.sycl_implementation_type)
+                      << std::endl;
+        }
 
         // output used parameter
         if (params.print_info) {
