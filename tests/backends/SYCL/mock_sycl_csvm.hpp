@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "plssvm/backends/SYCL/csvm.hpp"               // plssvm::sycl::csvm
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/csvm.hpp"               // plssvm::sycl::csvm
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 
 #include "sycl/sycl.hpp"  // sycl::queue
@@ -24,8 +24,8 @@
  * @tparam T the type of the data
  */
 template <typename T>
-class mock_sycl_csvm : public plssvm::sycl::csvm<T> {
-    using base_type = plssvm::sycl::csvm<T>;
+class mock_sycl_csvm : public plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::csvm<T> {
+    using base_type = plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::csvm<T>;
 
   public:
     using real_type = typename base_type::real_type;
