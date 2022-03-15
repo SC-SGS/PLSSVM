@@ -18,7 +18,7 @@
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
 /**
  * @brief Returns the list devices matching the target platform @p target and the actually used target platform
@@ -39,4 +39,4 @@ namespace plssvm::sycl::detail {
  */
 void device_synchronize(::sycl::queue &queue);
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail

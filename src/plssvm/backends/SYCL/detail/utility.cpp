@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/detail/utility.hpp"
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/utility.hpp"
 
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/detail/string_utility.hpp"           // sycl::detail::to_lower_case, sycl::detail::contains
@@ -18,7 +18,7 @@
 #include <utility>  // std::pair, std::make_pair
 #include <vector>   // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
 [[nodiscard]] std::vector<::sycl::queue> get_device_list_impl(const target_platform target) {
     std::vector<::sycl::queue> target_devices;
@@ -104,4 +104,4 @@ void device_synchronize(::sycl::queue &queue) {
     queue.wait_and_throw();
 }
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail

@@ -12,8 +12,8 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -24,6 +24,10 @@
 #include <vector>       // std::vector
 
 namespace plssvm {
+
+namespace sycl {
+    using namespace ::plssvm::sycl_generic;
+}
 
 /**
  * @brief Base class for encapsulating all necessary parameters possibly provided through command line arguments.

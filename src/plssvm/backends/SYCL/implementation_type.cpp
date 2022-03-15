@@ -15,7 +15,7 @@
 #include <ostream>  // std::ostream
 #include <string>   // std::string
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 std::ostream &operator<<(std::ostream &out, const implementation_type impl) {
     switch (impl) {
@@ -46,4 +46,4 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
     return in;
 }
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

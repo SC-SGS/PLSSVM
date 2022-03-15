@@ -13,7 +13,7 @@
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 /**
 * @brief Enum class for all possible SYCL kernel invocation types.
@@ -43,4 +43,4 @@ std::ostream &operator<<(std::ostream &out, implementation_type impl);
 */
 std::istream &operator>>(std::istream &in, implementation_type &impl);
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

@@ -17,7 +17,7 @@
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
 /**
  * @brief Small wrapper class around a SYCL device pointer together with commonly used device functions.
@@ -215,4 +215,4 @@ class device_ptr {
 extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail

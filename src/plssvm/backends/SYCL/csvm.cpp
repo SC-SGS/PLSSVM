@@ -6,11 +6,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/csvm.hpp"
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/csvm.hpp"
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"        // plssvm::detail::sycl::device_ptr
-#include "plssvm/backends/SYCL/detail/utility.hpp"           // plssvm::detail::sycl::get_device_list, plssvm::detail::sycl::device_synchronize
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"        // plssvm::detail::sycl::device_ptr
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/utility.hpp"           // plssvm::detail::sycl::get_device_list, plssvm::detail::sycl::device_synchronize
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/detail/constants.hpp"         // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
 #include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl::hierarchical_device_kernel_linear, plssvm::sycl::hierarchical_device_kernel_poly, plssvm::sycl::hierarchical_device_kernel_radial
@@ -33,7 +34,7 @@
 #include <tuple>      // std::tie
 #include <vector>     // std::vector
 
-namespace plssvm::sycl {
+namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
@@ -241,4 +242,4 @@ void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range,
 template class csvm<float>;
 template class csvm<double>;
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@

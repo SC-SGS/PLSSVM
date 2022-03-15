@@ -6,9 +6,9 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"
 
-#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::sycl::backend_exception
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/exceptions.hpp"  // plssvm::sycl::backend_exception
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
@@ -18,7 +18,7 @@
 #include <utility>    // std::exchange, std::move, std::swap
 #include <vector>     // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, ::sycl::queue &queue) :
@@ -143,4 +143,4 @@ void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const si
 template class device_ptr<float>;
 template class device_ptr<double>;
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail

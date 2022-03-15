@@ -11,13 +11,15 @@
 
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"       // plssvm::sycl::detail::device_ptr
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"       // plssvm::sycl::detail::device_ptr
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
 namespace plssvm {
+
+using namespace sycl_generic;
 
 // forward declare parameter class
 template <typename T>
@@ -30,18 +32,18 @@ class execution_range;
 
 }  // namespace detail
 
-namespace sycl {
+namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
 
 /**
  * @brief A C-SVM implementation using SYCL as backend.
  * @tparam T the type of the data
  */
 template <typename T>
-class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device_ptr<T>, ::sycl::queue> {
+class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail::device_ptr<T>, ::sycl::queue> {
   protected:
     // protected for the test MOCK class
     /// The template base type of the SYCL C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device_ptr<T>, ::sycl::queue>;
+    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail::device_ptr<T>, ::sycl::queue>;
 
     using base_type::coef0_;
     using base_type::cost_;
@@ -66,9 +68,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
     using real_type = typename base_type::real_type;
 
     /// The type of the SYCL device pointer.
-    using device_ptr_type = ::plssvm::sycl::detail::device_ptr<real_type>;
+    using device_ptr_type = typename base_type::device_ptr_type;
     /// The type of the SYCL device queue.
-    using queue_type = ::sycl::queue;
+    using queue_type = typename base_type::queue_type;
 
     /**
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
@@ -116,5 +118,5 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::sycl::detail::device
 extern template class csvm<float>;
 extern template class csvm<double>;
 
-}  // namespace sycl
+}  // namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
 }  // namespace plssvm
