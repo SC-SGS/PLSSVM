@@ -58,6 +58,8 @@ class gpu_csvm : public csvm<T> {
     using base_type::w_;
 
   public:
+    /// Be able to use the predict overload from the csvm base class.
+    using base_type::predict;
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
     /// The type of the device pointer (dependent on the used backend).
