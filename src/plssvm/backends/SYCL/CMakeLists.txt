@@ -4,8 +4,6 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-# TODO: include dir
-
 message(CHECK_START "Checking for SYCL backend")
 
 # explicitly set sources for configuration
