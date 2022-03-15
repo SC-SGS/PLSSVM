@@ -56,6 +56,14 @@ CTestTestfile.cmake
 
 # Project related ================================
 
+# configured SYCL implementation files
+include/plssvm/backends/DPCPP/*
+include/plssvm/backends/hipSYCL/*
+src/plssvm/backends/DPCPP/*
+src/plssvm/backends/hipSYCL/*
+tests/backends/SYCL/DPCPP/*
+tests/backends/SYCL/hipSYCL/*
+
 # generated documentation
 !docs/
 docs/*
