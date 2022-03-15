@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/csvm.hpp"               // plssvm::sycl::csvm
-#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/csvm.hpp"               // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::csvm
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"  // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::detail::device_ptr
+#include "plssvm/parameter.hpp"                                                      // plssvm::parameter
 
 #include "sycl/sycl.hpp"  // sycl::queue
 

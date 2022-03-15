@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"       // plssvm::sycl::detail::device_ptr
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp" // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::detail::device_ptr
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"                          // plssvm::sycl_generic::kernel_invocation_type
+#include "plssvm/backends/gpu_csvm.hpp"                                             // plssvm::detail::gpu_csvm
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
@@ -66,7 +66,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::@PLSSVM_SYCL_BACKEND
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;
-
     /// The type of the SYCL device pointer.
     using device_ptr_type = typename base_type::device_ptr_type;
     /// The type of the SYCL device queue.

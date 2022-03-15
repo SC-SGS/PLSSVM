@@ -8,8 +8,8 @@
 
 #include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"
 
-#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/exceptions.hpp"  // plssvm::sycl::backend_exception
-#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/exceptions.hpp"  // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
+#include "plssvm/detail/assert.hpp"                                           // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::malloc_device, sycl::free
