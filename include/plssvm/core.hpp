@@ -76,5 +76,7 @@ namespace plssvm::hipsycl {}
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
 namespace plssvm::sycl {
 using namespace plssvm::sycl_generic;
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
 using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
+#endif
 }
