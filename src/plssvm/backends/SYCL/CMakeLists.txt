@@ -38,6 +38,7 @@ function(configure_sycl include_name result_sources)
     endforeach()
 endfunction()
 
+
 # set target properties
 set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME svm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE)
@@ -96,7 +97,7 @@ if(hipSYCL_FOUND)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="hipSYCL")
 
     # hipSYCL's way to add SYCL to a target
-    add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/hipSYCL/csvm.cpp) # TODO:
+    add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/hipSYCL/csvm.cpp)
 
     # silence unknown options warnings
     target_compile_options(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option
@@ -117,23 +118,26 @@ endif()
 
 message(CHECK_START "Checking for DPC++ as SYCL implementation")
 
-if(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-    message(FATAL_ERROR "Try finding DPC++, but the environment variable \"PLSSVM_SYCL_DPCPP_INCLUDE_DIR\" isn't set!")
+# check if current compiler is Intel's clang llvm fork aka DPC++
+set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER OFF)
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+    # intel llvm fork must be clang
+    execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} --help
+            OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
+    # check if help message contains DPC++ specific values
+    if("${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*intel.*" AND "${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*-fsycl.*")
+        set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER ON)
+    endif()
 endif()
 
-# check if DPC++ is available
-try_compile(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER
-        "${CMAKE_BINARY_DIR}/temp"
-        "${PROJECT_SOURCE_DIR}/cmake/compile_tests/test_sycl_dpcpp.cpp"
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED ON
-        OUTPUT_VARIABLE TRY_COMPILE_OUTPUT
-        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=$ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR}")
 if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     message(CHECK_PASS "found")
     list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
 
-    if(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
+    if(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+        message(FATAL_ERROR "Found DPC++, but the environment variable \"PLSSVM_SYCL_DPCPP_INCLUDE_DIR\" isn't set!")
+    elseif(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
         message(FATAL_ERROR "Found DPC++, but the environment variable \"PLSSVM_SYCL_DPCPP_LINK_DIR\" isn't set!")
     endif()
 
