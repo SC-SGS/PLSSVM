@@ -81,7 +81,12 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     if (print_info_) {
-        fmt::print("Using SYCL ({}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, invocation_type_);
+#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+        const auto sycl_compiler_version = ::hipsycl::sycl::detail::version_string();
+#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
+        const auto sycl_compiler_version =  __SYCL_COMPILER_VERSION;
+#endif
+        fmt::print("Using SYCL ({}, {}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, sycl_compiler_version, invocation_type_);
         if (target_ == target_platform::automatic) {
             fmt::print("Using {} as automatic target platform.\n", used_target);
         }
