@@ -102,9 +102,12 @@ elseif("${PLSSVM_SYCL_BACKEND_COMPILER}" STREQUAL "DPC++")
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "nvptx64-nvidia-cuda")
         # add target specific flags for AOT
-        list(JOIN PLSSVM_NVIDIA_TARGET_ARCHS "," PLSSVM_NVIDIA_TARGET_ARCHS_STRING)
-        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda "-cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS_STRING}")
-        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda "-cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS_STRING}")
+        # add target specific flags for AOT
+        if(NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
+            message(FATAL_ERROR "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
+        endif()
+        target_compile_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS_STRING})
+        target_link_options(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS_STRING})
     endif()
     # amd targets
     if(DEFINED PLSSVM_AMD_TARGET_ARCHS)
