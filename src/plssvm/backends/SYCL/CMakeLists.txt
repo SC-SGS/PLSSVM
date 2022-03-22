@@ -72,12 +72,6 @@ if(hipSYCL_FOUND)
     message(STATUS "Setting HIPSYCL_TARGETS to \"${HIPSYCL_TARGETS}\".")
     list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "hipsycl")
 
-    if(NOT DEFINED ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-        message(FATAL_ERROR "Found hipSYCL, but the environment variable \"PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR\" isn't set!")
-    elseif(NOT DEFINED ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR})
-        message(FATAL_ERROR "Found hipSYCL, but the environment variable \"PLSSVM_SYCL_HIPSYCL_LINK_DIR\" isn't set!")
-    endif()
-
     # configure SYCL files
     set(PLSSVM_SYCL_BACKEND_INCLUDE_NAME "hipSYCL")
     set(PLSSVM_SYCL_BACKEND_NAMESPACE_NAME "hipsycl")
@@ -86,9 +80,17 @@ if(hipSYCL_FOUND)
     # set target properties
     set_local_and_parent(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME svm-SYCL_hipsycl)
     add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_HIPSYCL_SOURCES} ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp)
-    target_include_directories(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-    target_link_directories(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR})
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME}")
+
+    # necessary target_*_directories if more than one SYCL implementation could be found
+    if(DEFINED ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
+        message(STATUS "PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR: $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR}")
+        target_include_directories(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
+    endif()
+    if(DEFINED ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR})
+        message(STATUS "PLSSVM_SYCL_HIPSYCL_LINK_DIR: $ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR}")
+        target_link_directories(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR})
+    endif()
 
     # add target compile definitions for hipSYCL
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE PLSSVM_HAS_SYCL_BACKEND)
@@ -135,12 +137,6 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     message(CHECK_PASS "found")
     list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
 
-    if(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-        message(FATAL_ERROR "Found DPC++, but the environment variable \"PLSSVM_SYCL_DPCPP_INCLUDE_DIR\" isn't set!")
-    elseif(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
-        message(FATAL_ERROR "Found DPC++, but the environment variable \"PLSSVM_SYCL_DPCPP_LINK_DIR\" isn't set!")
-    endif()
-
     # configure SYCL files
     set(PLSSVM_SYCL_BACKEND_INCLUDE_NAME "DPCPP")
     set(PLSSVM_SYCL_BACKEND_NAMESPACE_NAME "dpcpp")
@@ -149,9 +145,17 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     # set target properties
     set_local_and_parent(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME svm-SYCL_dpcpp)
     add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_DPCPP_SOURCES} ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp)
-    target_include_directories(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-    target_link_directories(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
+
+    # necessary target_*_directories if more than one SYCL implementation could be found
+    if(DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+        message(STATUS "PLSSVM_SYCL_DPCPP_INCLUDE_DIR: $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR}")
+        target_include_directories(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+    endif()
+    if(DEFINED ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
+        message(STATUS "PLSSVM_SYCL_DPCPP_LINK_DIR: $ENV{PLSSVM_SYCL_DPCPP_LINK_DIR}")
+        target_link_directories(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
+    endif()
 
     # add target compile definitions for DPC++
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_HAS_SYCL_BACKEND)
@@ -235,6 +239,21 @@ if(NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
     endif()
     return()
 endif()
+
+## check if environment variables are correctly set if more than one SYCL implementation has been found
+list(LENGTH PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS)
+if(PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS GREATER 1)
+    if(NOT DEFINED ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
+        message(FATAL_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR\" isn't set!")
+    elseif(NOT DEFINED ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR})
+        message(FATAL_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_HIPSYCL_LINK_DIR\" isn't set!")
+    endif()
+    if(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+        message(FATAL_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_DPCPP_INCLUDE_DIR\" isn't set!")
+    elseif(NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
+        message(FATAL_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_DPCPP_LINK_DIR\" isn't set!")
+    endif()
+endif()
 message(CHECK_PASS "found")
 
 
@@ -267,7 +286,7 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND
 
 
 # the SYCL backend is available
-target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_HAS_SYCL_BACKEND)
+target_compile_definitions(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE PLSSVM_HAS_SYCL_BACKEND)
 
 
 # mark backend library as install target
