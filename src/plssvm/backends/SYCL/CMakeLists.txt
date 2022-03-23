@@ -189,9 +189,11 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "nvptx64-nvidia-cuda")
         # add target specific flags for AOT
-        list(JOIN PLSSVM_NVIDIA_TARGET_ARCHS "," PLSSVM_NVIDIA_TARGET_ARCHS_STRING)
-        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda "-cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS_STRING}")
-        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda "-cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS_STRING}")
+        if(NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
+            message(FATAL_ERROR "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
+        endif()
+        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
     endif()
     # amd targets
     if(DEFINED PLSSVM_AMD_TARGET_ARCHS)
@@ -267,7 +269,7 @@ if(DEFINED PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION)
         message(STATUS "Setting preferred SYCL implementation to \"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\".")
     else()
         # value not recognized
-        message(FATAL_ERROR "\"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\" as SYCL implementation unrecognized or not available! Possible values are: ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}.")
+        message(FATAL_ERROR "\"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\" as preferred SYCL implementation unrecognized or not available! Possible values are: ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}.")
     endif()
 else()
     # no command line value provided -> try to infer preferred SYCL implementation
