@@ -15,6 +15,7 @@ set(PLSSVM_SYCL_SOURCES
 )
 # explicitly set header for configuration
 set(PLSSVM_SYCL_INCLUDES
+    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/detail/constants.hpp
     ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/detail/device_ptr.hpp
     ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/detail/utility.hpp
     ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/csvm.hpp

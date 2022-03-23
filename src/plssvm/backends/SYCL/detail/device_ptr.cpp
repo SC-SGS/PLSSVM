@@ -8,22 +8,24 @@
 
 #include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"
 
-#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/exceptions.hpp"  // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
-#include "plssvm/detail/assert.hpp"                                           // PLSSVM_ASSERT
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/constants.hpp"  // forward declaration and namespace alias
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/exceptions.hpp"        // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
+#include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::malloc_device, sycl::free
 
 #include <algorithm>  // std::min
+#include <memory>     // std::unique_ptr
 #include <utility>    // std::exchange, std::move, std::swap
 #include <vector>     // std::vector
 
 namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, ::sycl::queue &queue) :
-    queue_{ &queue }, size_{ size } {
-    data_ = ::sycl::malloc_device<value_type>(size_, *queue_);
+device_ptr<T>::device_ptr(const size_type size, std::unique_ptr<detail::sycl::queue> &queue) :
+    queue_{ queue.get() }, size_{ size } {
+    data_ = detail::sycl::malloc_device<value_type>(size_, *queue_);
 }
 
 template <typename T>
@@ -42,7 +44,7 @@ device_ptr<T> &device_ptr<T>::operator=(device_ptr &&other) noexcept {
 template <typename T>
 device_ptr<T>::~device_ptr() {
     if (queue_ != nullptr) {
-        ::sycl::free(static_cast<void *>(data_), *queue_);
+        detail::sycl::free(static_cast<void *>(data_), *queue_);
     }
 }
 

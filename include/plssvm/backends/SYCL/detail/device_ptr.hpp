@@ -11,9 +11,10 @@
 
 #pragma once
 
-#include "sycl/sycl.hpp"  // sycl::queue
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/constants.hpp" // forward declaration and namespace alias
 
 #include <cstddef>      // std::size_t
+#include <memory>       // std::unique_ptr
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
@@ -48,7 +49,7 @@ class device_ptr {
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated SYCL queue
      */
-    device_ptr(size_type size, ::sycl::queue &queue);
+    device_ptr(size_type size, std::unique_ptr<detail::sycl::queue>& queue);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.
@@ -127,7 +128,7 @@ class device_ptr {
      * @brief Return the SYCL queue associated with the wrapped SYCL device pointer.
      * @return the queue (`[[nodiscard]]`)
      */
-    [[nodiscard]] ::sycl::queue &queue() const noexcept {
+    [[nodiscard]] detail::sycl::queue &queue() const noexcept {
         return *queue_;
     }
 
@@ -207,7 +208,7 @@ class device_ptr {
     void memcpy_to_host(pointer buffer, size_type pos, size_type count) const;
 
   private:
-    ::sycl::queue *queue_{ nullptr };
+    detail::sycl::queue *queue_{ nullptr };
     pointer data_{ nullptr };
     size_type size_{ 0 };
 };

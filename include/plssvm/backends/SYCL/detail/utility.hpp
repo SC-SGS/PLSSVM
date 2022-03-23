@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/constants.hpp" // forward declaration and namespace alias
+#include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
-#include "sycl/sycl.hpp"  // sycl::queue
-
+#include <memory>   // std::unique_ptr
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
@@ -32,11 +32,11 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
  * @param[in] target the target platform for which the devices must match
  * @return the devices and used target platform (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<::sycl::queue>, target_platform> get_device_list(target_platform target);
+[[nodiscard]] std::pair<std::vector<std::unique_ptr<detail::sycl::queue>>, target_platform> get_device_list(target_platform target);
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the SYCL queue to synchronize
  */
-void device_synchronize(::sycl::queue &queue);
+void device_synchronize(detail::sycl::queue &queue);
 
 }  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail

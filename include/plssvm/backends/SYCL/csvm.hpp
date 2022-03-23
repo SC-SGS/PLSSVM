@@ -11,11 +11,12 @@
 
 #pragma once
 
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/constants.hpp"  // forward declaration and namespace alias
 #include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp" // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::detail::device_ptr
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"                          // plssvm::sycl_generic::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                                             // plssvm::detail::gpu_csvm
 
-#include "sycl/sycl.hpp"  // sycl::queue
+#include <memory> // std::unique_ptr
 
 namespace plssvm {
 
@@ -39,11 +40,11 @@ namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
  * @tparam T the type of the data
  */
 template <typename T>
-class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail::device_ptr<T>, ::sycl::queue> {
+    class csvm : public ::plssvm::detail::gpu_csvm<T, detail::device_ptr<T>, std::unique_ptr<detail::sycl::queue>> {
   protected:
     // protected for the test MOCK class
     /// The template base type of the SYCL C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail::device_ptr<T>, ::sycl::queue>;
+    using base_type = ::plssvm::detail::gpu_csvm<T, detail::device_ptr<T>, std::unique_ptr<detail::sycl::queue>>;
 
     using base_type::coef0_;
     using base_type::cost_;
