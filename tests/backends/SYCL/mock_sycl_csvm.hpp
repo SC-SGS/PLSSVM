@@ -12,10 +12,11 @@
 #pragma once
 
 #include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/csvm.hpp"               // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::csvm
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/constants.hpp"   // forward declaration and namespace alias
 #include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/device_ptr.hpp"  // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::detail::device_ptr
 #include "plssvm/parameter.hpp"                                                      // plssvm::parameter
 
-#include "sycl/sycl.hpp"  // sycl::queue
+//#include "sycl/sycl.hpp"  // sycl::queue
 
 #include <vector>  // std::vector
 
