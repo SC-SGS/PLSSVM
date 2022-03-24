@@ -85,7 +85,7 @@ if(hipSYCL_FOUND)
 
     # necessary target_*_directories if more than one SYCL implementation could be found
     if(DEFINED ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-        message(STATUS "PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR: $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR}")
+        message(STATUS "PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR is \"$ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR}\"")
         target_include_directories(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
     endif()
 
@@ -146,7 +146,7 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
 
     # necessary target_*_directories if more than one SYCL implementation could be found
     if(DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-        message(STATUS "PLSSVM_SYCL_DPCPP_INCLUDE_DIR: $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR}")
+        message(STATUS "PLSSVM_SYCL_DPCPP_INCLUDE_DIR is \"$ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR}\"")
         target_include_directories(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
     endif()
 
