@@ -170,28 +170,17 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     if(DEFINED PLSSVM_CPU_TARGET_ARCHS)
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "spir64_x86_64")
-        # add target specific flags for AOT
-        if(PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-        endif()
     endif()
     # nvidia targets
     if(DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "nvptx64-nvidia-cuda")
-        # add target specific flags for AOT
-        if(NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
-            message(FATAL_ERROR "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
-        endif()
-        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
-        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
     endif()
     # amd targets
     if(DEFINED PLSSVM_AMD_TARGET_ARCHS)
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "amdgcn-amd-amdhsa")
-        # add target specific flags for AOT
+        # add target specific flags for AOT -> must always be specified von amd targets
         if(NOT PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 1)
             message(FATAL_ERROR "DPC++ currently only supports a single AMD architecture specification but ${PLSSVM_NUM_AMD_TARGET_ARCHS} were provided!")
         endif()
@@ -202,15 +191,43 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     if(DEFINED PLSSVM_INTEL_TARGET_ARCHS)
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "spir64_gen")
-        # add target specific flags for AOT
-        list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
-        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
     endif()
     # set -fsycl-targets
     list(JOIN PLSSVM_DPCPP_FSYCL_TARGETS "," PLSSVM_DPCPP_FSYCL_TARGETS_STRING)
     target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
     target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
+
+
+    # add option for DPC++ Ahead-of-Time (AOT) compilation
+    option(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT "Enables Ahead-of-Time compilation for DPC++." ON)
+    if(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
+        message(STATUS "Enabled Ahead-of-Time (AOT) compilation with DPC++.")
+        ## set AOT compiler flags
+        # cpu targets
+        if(DEFINED PLSSVM_CPU_TARGET_ARCHS)
+            # add target specific flags for AOT
+            if(PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+                target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+            endif()
+        endif()
+        # nvidia targets
+        if(DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+            # add target specific flags for AOT
+            if(NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
+                message(FATAL_ERROR "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
+            endif()
+            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+        endif()
+        # intel targets
+        if(DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+            # add target specific flags for AOT
+            list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
+            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
+            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
+        endif()
+    endif()
 
     # be able to choose between the Level-Zero and OpenCL DPC++ backend
     option(PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO "Enable Level-Zero backend in favor of OpenCL when using DPC++." OFF)
