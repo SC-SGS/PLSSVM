@@ -35,8 +35,6 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [OpenCL](https://www.khronos.org/opencl/)
 - [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the commits [faaba28](https://github.com/intel/llvm/tree/faaba28541138d7ad39a7fa85fa85b863560b45f) and [6962942](https://github.com/illuhad/hipSYCL/tree/6962942c430a7b221eb167b4272c29cf397cda06) respectivelly)
 
-// tested with commit!
-
 ## Getting Started
 
 ### Dependencies
@@ -101,7 +99,7 @@ Valid targets are:
 
 At least one of the above targets must be present.
 
-Note that when using DPC++ only a single architectural specification for `cpu` or `amd` is allowed.
+Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
 
 To retrieve the architectural specifications of the current system, a simple Python3 script `utility/plssvm_target_platforms.py` is provided
 (required Python3 dependencies:
@@ -186,9 +184,18 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
 
-If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
-DPC++ backend instead of OpenCL.
-To use DPC++ as compiler simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang path during CMake invocation.
+If the SYCL backend is available additional options can be set.
+To use DPC++ for SYCL simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
+
+If the SYCL implementation is DPC++ the following additional options are available:
+
+- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `OFF`): use Level-Zero as the DPC++ backend instead of OpenCL
+- `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
+
+If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
+**must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
+
+- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`hipsycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::hipsycl` namespace respectively
 
 ### Running the tests
 
@@ -286,11 +293,13 @@ Usage:
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+      --sycl_implementation_type arg
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
       --input training_set_file
                                 
-      --model model_file  
+      --model model_file 
 ```
 
 An example invocation using the CUDA backend could look like:
@@ -312,9 +321,10 @@ The `--target_platform=automatic` flag works for the different backends as follo
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
-The `--sycl_kernel_invocation_type` flag is only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
+The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
 If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, 
 except for hipSYCL on CPUs where the hierarchical formulation is used instead.
+If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
 
 ### Predicting
 
@@ -324,12 +334,14 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-predict [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg          choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
-  -p, --target_platform arg  choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
-  -q, --quiet                quiet mode (no outputs)
-  -h, --help                 print this helper message
-      --test test_file
-      --model model_file
+  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
+  -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+      --sycl_implementation_type arg
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+  -q, --quiet                   quiet mode (no outputs)
+  -h, --help                    print this helper message
+      --test test_file          
+      --model model_file        
       --output output_file
 ```
 
@@ -345,7 +357,7 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 ./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
-The `--target_platform=automatic` flags works like in the training (`./svm-train`) case.
+The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./svm-train`) case.
 
 ## Example code for usage as library
 
