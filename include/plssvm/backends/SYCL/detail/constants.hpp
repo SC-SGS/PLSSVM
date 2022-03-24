@@ -23,23 +23,23 @@
 
 
 // forward declare sycl::queue from hipsycl namespace and create global ::hipsycl namespace
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
 namespace hipsycl::sycl {
 class queue;
 }
-namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
+namespace plssvm::hipsycl::detail {
     using namespace ::hipsycl;
 }
 #endif
 
 // forward declare sycl::queue from DPC++ namespace and create global ::dpcpp namespace
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
 inline namespace cl {
 namespace sycl {
 class queue;
 }
 }
-namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
+namespace plssvm::dpcpp::detail {
     using namespace cl;
 }
 #endif

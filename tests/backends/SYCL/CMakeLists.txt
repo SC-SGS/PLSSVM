@@ -18,10 +18,8 @@ function(create_sycl_tests include_name namespace_name)
 
     if("${namespace_name}" STREQUAL "hipsycl")
         target_include_directories("${PLSSVM_SYCL_TEST_NAME}_${include_name}" PRIVATE $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-        target_link_directories("${PLSSVM_SYCL_TEST_NAME}_${include_name}" PRIVATE $ENV{PLSSVM_SYCL_HIPSYCL_LINK_DIR})
     elseif("${namespace_name}" STREQUAL "dpcpp")
         target_include_directories("${PLSSVM_SYCL_TEST_NAME}_${include_name}" PRIVATE $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-        target_link_directories("${PLSSVM_SYCL_TEST_NAME}_${include_name}" PRIVATE $ENV{PLSSVM_SYCL_DPCPP_LINK_DIR})
     endif()
 
     # link against test library
