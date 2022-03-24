@@ -68,10 +68,14 @@ namespace plssvm::sycl_generic {}
 namespace plssvm::sycl_generic::detail {}
 
 /// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation.
-namespace plssvm::dpcpp {}
+namespace plssvm::dpcpp {
+using namespace plssvm::sycl_generic;
+}
 
 /// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation.
-namespace plssvm::hipsycl {}
+namespace plssvm::hipsycl {
+using namespace plssvm::sycl_generic;
+}
 
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
 namespace plssvm::sycl {
