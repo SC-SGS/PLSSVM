@@ -61,7 +61,7 @@ namespace plssvm::opencl {}
 /// Namespace containing OpenCL backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::opencl::detail {}
 
-/// Namespace containing the C-SVM using the SYCL backend independent of the used SYCL implementation.
+/// Namespace containing the C-SVM using the SYCL backend independent of the used SYCL implementation. **May not** directly be used by users. Use `plssvm::sycl` instead.
 namespace plssvm::sycl_generic {}
 
 /// Namespace containing SYCL backend specific implementation details independent of the used SYCL implementation. **Should not** directly be used by users.
@@ -72,10 +72,16 @@ namespace plssvm::dpcpp {
 using namespace plssvm::sycl_generic;
 }
 
+/// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::dpcpp::detail {}
+
 /// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation.
 namespace plssvm::hipsycl {
 using namespace plssvm::sycl_generic;
 }
+
+/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::hipsycl::detail {}
 
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
 namespace plssvm::sycl {
@@ -84,3 +90,6 @@ using namespace plssvm::sycl_generic;
 using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 #endif
 }
+
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::sycl::detail {}

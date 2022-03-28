@@ -58,7 +58,9 @@ class gpu_csvm : public csvm<T> {
     using base_type::w_;
 
   public:
-    /// Be able to use the predict overload from the csvm base class.
+    /**
+     * @copydoc plssvm::csvm::predict(const std::vector<real_type>&)
+     */
     using base_type::predict;
     /// The type of the data. Must be either `float` or `double`.
     using real_type = typename base_type::real_type;

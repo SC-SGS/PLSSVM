@@ -37,6 +37,8 @@ namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
 
 /**
  * @brief A C-SVM implementation using SYCL as backend.
+ * @details If DPC++ is available, this class also exists in the `plssvm::dpcpp` namespace.
+ *          If hipSYCL is available, this class also exists in the `plssvm::hipsycl` namespace.
  * @tparam T the type of the data
  */
 template <typename T>
