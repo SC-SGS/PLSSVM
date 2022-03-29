@@ -24,6 +24,7 @@
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
+#include <filesystem>   // std::filesystem::exists
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
 #include <limits>       // std::numeric_limits
@@ -32,6 +33,9 @@
 #include <string_view>  // std::string_view
 #include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
+
+#include <iostream>
+#include <string.h>
 
 namespace plssvm::opencl::detail {
 
@@ -218,8 +222,147 @@ std::vector<kernel> create_kernel(const std::vector<command_queue> &queues, cons
 
     error_code err;
 
+    // TODO: https://stackoverflow.com/questions/7338718/how-to-use-clcreateprogramwithbinary-in-opencl/43292725#43292725
+    // check if binary already exists
+
     // create program
     const char *kernel_src_ptr = kernel_src_string.c_str();
+    {
+        cl_uint devices;
+        std::size_t *binary_sizes;
+        unsigned char **binaries;
+
+        if (!std::filesystem::exists(kernel_name + ".bin")) {
+            // create kernel binary
+            cl_program program = clCreateProgramWithSource(queues[0].context, 1, &kernel_src_ptr, nullptr, &err);
+            err = clBuildProgram(program, 1, &queues[0].device, "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
+            if (!err) {
+                // determine the size of the log
+                std::size_t log_size;
+                clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
+                // allocate memory for the log
+                std::string log(log_size, ' ');
+                // get the log
+                clGetProgramBuildInfo(program, queues[0].device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+                // print the log
+                PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program ({})", log));
+            }
+
+            // build kernels
+            for ([[maybe_unused]] const command_queue &q : queues) {
+                // create kernel
+                clCreateKernel(program, kernel_name.c_str(), &err);
+                PLSSVM_OPENCL_ERROR_CHECK(err, "error creating OpenCL kernel");
+
+                err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &devices, nullptr);
+                fmt::print("devices: {}\n", devices);
+
+                binary_sizes = new std::size_t[devices];
+
+                err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(std::size_t) * devices, binary_sizes, nullptr);
+                PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving kernel size");
+                for (int i = 0; i < devices; ++i) {
+                    fmt::print("binary_sizes[{}] = {}\n", i, binary_sizes[i]);
+                }
+
+                binaries = new unsigned char *[devices];
+                for (int i = 0; i < devices; ++i) {
+                    binaries[i] = new unsigned char[binary_sizes[i]];
+                }
+                std::size_t actual;
+                err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *) * devices, binaries, &actual);
+                PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving kernel");
+                for (int i = 0; i < devices; ++i) {
+                    for (std::size_t j = 0; j < binary_sizes[i]; ++j) {
+                        //                        std::cout << binaries[i][j];
+                    }
+                }
+                std::cout << std::endl;
+                std::cout << "actual size: " << actual << std::endl;
+
+                for (int i = 0; i < devices; ++i) {
+                    std::ofstream out{ kernel_name + ".bin" };
+                    for (std::size_t j = 0; j < binary_sizes[i]; ++j) {
+                        out << binaries[i][j];
+                    }
+                }
+            }
+        } else {
+            const auto common_read_file = [](const char *path, std::size_t *length_out) -> unsigned char * {
+                char *buffer;
+                FILE *f;
+                long length;
+
+                f = fopen(path, "r");
+                fseek(f, 0, SEEK_END);
+                length = ftell(f);
+                fseek(f, 0, SEEK_SET);
+                buffer = (char *) malloc(length);
+                if (fread(buffer, 1, length, f) < (size_t) length) {
+                    return NULL;
+                }
+                fclose(f);
+                if (NULL != length_out) {
+                    *length_out = length;
+                }
+                return (unsigned char *) buffer;
+            };
+            devices = 1;
+            binary_sizes = new std::size_t[devices];
+            binaries = new unsigned char *[devices];
+
+            std::string filename(kernel_name + ".bin");
+            binaries[0] = common_read_file(filename.c_str(), &binary_sizes[0]);
+            std::cout << binary_sizes[0] << std::endl;
+
+            //            std::string filename(kernel_name + ".bin");
+            //            FILE *f = fopen(filename.c_str(), "rb");
+            //            fseek(f, 0, SEEK_END);
+            //            long fsize = ftell(f);
+            //            fseek(f, 0, SEEK_SET);
+            //
+            //            devices = 1;
+            //            binaries = new unsigned char *[devices];
+            //            binary_sizes = new std::size_t[devices];
+            //            for (int i = 0; i < devices; ++i) {
+            //                binaries[i] = new unsigned char[fsize];
+            //                binary_sizes[i] = fsize;
+            //                std::cout << fsize << std::endl;
+            //            }
+            //
+            //            fread(binaries[0], fsize, 1, f);
+            //            fclose(f);
+        }
+        error_code err_bin;
+        cl_program binary_program = clCreateProgramWithBinary(queues[0].context, devices, &queues[0].device, binary_sizes, (const unsigned char **) binaries, &err_bin, &err);
+        PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries");
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program");
+        err = clBuildProgram(binary_program, 1, &queues[0].device, nullptr, nullptr, nullptr);
+        if (!err) {
+            // determine the size of the log
+            std::size_t log_size;
+            clGetProgramBuildInfo(binary_program, queues[0].device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
+            // allocate memory for the log
+            std::string log(log_size, ' ');
+            // get the log
+            clGetProgramBuildInfo(binary_program, queues[0].device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+            // print the log
+            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL binary program ({})", log));
+        }
+
+        // build kernels
+        std::vector<kernel> kernels;
+        for ([[maybe_unused]] const command_queue &q : queues) {
+            // create kernel
+            kernels.emplace_back(clCreateKernel(binary_program, kernel_name.c_str(), &err));
+            PLSSVM_OPENCL_ERROR_CHECK(err, "error creating OpenCL binary kernel");
+        }
+        return kernels;
+    }
+
+    // create program
+    //    const char *kernel_src_ptr = kernel_src_string.c_str();
+
     // TODO: not all command queue must have the same context (but this would be highly unlikely)
     cl_program program = clCreateProgramWithSource(queues[0].context, 1, &kernel_src_ptr, nullptr, &err);
     err = clBuildProgram(program, 0, nullptr, "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
