@@ -68,12 +68,13 @@ csvm<T>::csvm(const parameter<T> &params) :
     std::vector<detail::context> contexts;
     std::tie(contexts, used_target) = detail::get_command_queues(target_);
 
-    // TODO:
-    for (const detail::context &cont : contexts) {
-        for (cl_command_queue queue : cont.queues) {
-            devices_.push_back(queue);
-        }
+    // currently, only allow a single context
+    if (contexts.size() != 1) {
+        throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were given!", contexts.size()) };
     }
+
+    // TODO: test
+    devices_ = contexts[0].queues;
     devices_.resize(std::min(devices_.size(), num_features_));
 
     if (print_info_) {
@@ -110,10 +111,8 @@ csvm<T>::csvm(const parameter<T> &params) :
 
     // get kernel names
     std::vector<std::string> kernel_names = detail::kernel_type_to_function_names(kernel_);
-
     std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };
-
-    device_kernel_ = detail::create_kernel<real_type>(contexts, kernel_sources, kernel_names);
+    device_kernel_ = detail::create_kernel<real_type>(contexts, used_target, kernel_sources, kernel_names);
     // device_kernel_[0] -> q_kernel
     // device_kernel_[1] -> svm_kernel
     // device_kernel_[2] -> w_kernel/predict_kernel

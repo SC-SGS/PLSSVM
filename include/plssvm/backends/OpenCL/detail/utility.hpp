@@ -89,7 +89,7 @@ void device_synchronize(const cl_command_queue &queue);
  * @return the kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const std::vector<std::string> &kernel_source, const std::vector<std::string> &kernel_name);
+[[nodiscard]] std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_source, const std::vector<std::string> &kernel_name);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.

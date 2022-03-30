@@ -205,16 +205,13 @@ std::vector<std::string> kernel_type_to_function_names(const kernel_type kernel)
 }
 
 template <typename real_type>
-std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const std::vector<std::string> &kernel_sources, const std::vector<std::string> &kernel_names) {
-    // TODO: allow more than one context!
-    PLSSVM_ASSERT(contexts.size() == 1, fmt::format("currently only a single context is allowed but {} were provided!", contexts.size()));
-
+std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::string> &kernel_names) {
     error_code err, err_bin;
 
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
-    const std::string cache_dir_name{ "opencl_cache" };
+    const std::filesystem::path cache_dir_name = std::filesystem::path{ "opencl_cache" } / fmt::format("{}", target);
     std::size_t fileCount = 0;
 
     if (std::filesystem::exists(cache_dir_name)) {
@@ -360,7 +357,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
     return kernels;
 }
 
-template std::vector<std::vector<kernel>> create_kernel<float>(const std::vector<context> &, const std::vector<std::string> &, const std::vector<std::string> &);
-template std::vector<std::vector<kernel>> create_kernel<double>(const std::vector<context> &, const std::vector<std::string> &, const std::vector<std::string> &);
+template std::vector<std::vector<kernel>> create_kernel<float>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::string> &);
+template std::vector<std::vector<kernel>> create_kernel<double>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::string> &);
 
 }  // namespace plssvm::opencl::detail
