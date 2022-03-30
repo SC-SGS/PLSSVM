@@ -212,7 +212,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
-    const std::filesystem::path cache_dir_name = std::filesystem::path{ "opencl_cache" } / fmt::format("{}", target);
+    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}", target);
     std::size_t fileCount = 0;
 
     // check the number of files in the used cache directory
@@ -279,16 +279,17 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         std::filesystem::create_directories(cache_dir_name);
         for (std::size_t i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
-            PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file (\"{}\") for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
+            PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
+        fmt::print("Cached OpenCL kernel binaries in {}.\n", cache_dir_name);
 
         // release resource
         if (program) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources");
         }
     } else {
-        fmt::print("Using cached OpenCL kernel binaries.\n");
+        fmt::print("Using cached OpenCL kernel binaries from {}.\n", cache_dir_name);
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
             std::ifstream f{ file };
