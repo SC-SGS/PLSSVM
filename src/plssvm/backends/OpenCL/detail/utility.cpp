@@ -208,23 +208,24 @@ template <typename real_type>
 std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::string> &kernel_names) {
     error_code err, err_bin;
 
+    // data to build the final OpenCL program
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
     const std::filesystem::path cache_dir_name = std::filesystem::path{ "opencl_cache" } / fmt::format("{}", target);
     std::size_t fileCount = 0;
 
+    // check the number of files in the used cache directory
     if (std::filesystem::exists(cache_dir_name)) {
+        // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
-
-        fileCount = std::count_if(
-            begin(dirIter),
-            end(dirIter),
-            [](auto &entry) { return entry.is_regular_file(); });
+        // get files in directory
+        fileCount = std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); });
     }
 
     if (!std::filesystem::exists(cache_dir_name) && fileCount != contexts[0].devices.size()) {
         fmt::print("Building OpenCL kernels from source.\n");
+
         // read kernel source files
         std::vector<std::string> kernel_src_strings;
         kernel_src_strings.reserve(kernel_sources.size());
@@ -275,11 +276,10 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, contexts[0].devices.size() * sizeof(unsigned char *), binaries.data(), nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries");
         // write binaries to file
+        std::filesystem::create_directories(cache_dir_name);
         for (std::size_t i = 0; i < binary_sizes.size(); ++i) {
-            std::filesystem::path p{ cache_dir_name };
-            std::filesystem::create_directories(p);
-            std::ofstream out{ p / fmt::format("device_{}.bin", i) };
-            PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file (\"{}\") for device {}", p / fmt::format("device_{}.bin", i), i));
+            std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
+            PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file (\"{}\") for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
 
@@ -289,33 +289,33 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         }
     } else {
         fmt::print("Using cached OpenCL kernel binaries.\n");
-        const auto common_read_file = [](const char *path, std::size_t *length_out) -> unsigned char * {
-            char *buffer;
-            FILE *f;
-            long length;
 
-            f = fopen(path, "r");
-            fseek(f, 0, SEEK_END);
-            length = ftell(f);
-            fseek(f, 0, SEEK_SET);
-            buffer = new char[length];
-            if (fread(buffer, 1, length, f) < (size_t) length) {
-                return NULL;
-            }
-            fclose(f);
-            if (NULL != length_out) {
-                *length_out = length;
-            }
-            return (unsigned char *) buffer;
+        const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
+            std::ifstream f{ file };
+
+            // touch all characters in file
+            f.ignore(std::numeric_limits<std::streamsize>::max());
+            // get number of visited characters
+            std::streamsize num_bytes = f.gcount();
+            // since ignore will have set eof
+            f.clear();
+            // jump to file start
+            f.seekg(0, std::ios_base::beg);
+
+            // allocate the necessary buffer
+            char *file_content = new char[num_bytes];
+            // read the whole file in one go
+            f.read(file_content, num_bytes);
+            return std::make_pair(reinterpret_cast<unsigned char *>(file_content), static_cast<std::size_t>(num_bytes));
         };
 
+        // iterate over directory and read kernels into binary file
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         for (const std::filesystem::directory_entry &entry : dirIter) {
-            if (entry.path().string().empty()) {
-                continue;
+            if (entry.is_regular_file()) {
+                const int i = std::stoi(std::regex_replace(entry.path().string(), std::regex("[^0-9]+"), std::string("$1")));
+                std::tie(binaries[i], binary_sizes[i]) = common_read_file(entry.path());
             }
-            int i = std::stoi(std::regex_replace(entry.path().string(), std::regex("[^0-9]+"), std::string("$1")));
-            binaries[i] = common_read_file(entry.path().c_str(), &binary_sizes[i]);
         }
     }
 
