@@ -11,12 +11,12 @@
 
 #pragma once
 
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
-#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/context.hpp"     // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"      // plssvm::opencl::detail::kernel
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
+#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_kernel, cl_uint, cl_int
 
@@ -57,27 +57,27 @@ void device_assert(error_code code, std::string_view msg = "");
  * @param[in] target the target platform for which the devices must match
  * @return the command queues and used target platform (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<command_queue>, target_platform> get_command_queues(target_platform target);
+[[nodiscard]] std::pair<std::vector<context>, target_platform> get_command_queues(target_platform target);
 
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the command queue to synchronize
  */
-void device_synchronize(const command_queue &queue);
+void device_synchronize(const cl_command_queue &queue);
 
 /**
  * @brief Get the name of the device associated with the OpenCL command queue @p queue.
  * @param[in] queue the OpenCL command queue
  * @return the device name (`[[nodiscard]]`)
  */
-[[nodiscard]] std::string get_device_name(const command_queue &queue);
+[[nodiscard]] std::string get_device_name(const cl_command_queue &queue);
 
 /**
  * @brief Convert the kernel type @p kernel to the function names for the q and svm kernel functions.
  * @param[in] kernel the kernel type
  * @return the kernel function names (first: q_kernel name, second: svm_kernel name) (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::string, std::string> kernel_type_to_function_name(kernel_type kernel);
+[[nodiscard]] std::vector<std::string> kernel_type_to_function_names(kernel_type kernel);
 
 /**
  * @brief Create a kernel with @p kernel_name for the given command queues from the file @p file.
@@ -89,7 +89,7 @@ void device_synchronize(const command_queue &queue);
  * @return the kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name);
+[[nodiscard]] std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const std::vector<std::string> &kernel_source, const std::vector<std::string> &kernel_name);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -118,7 +118,7 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
+inline void run_kernel(const cl_command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
     PLSSVM_ASSERT(grid_size.size() == block_size.size(), "grid_size and block_size must have the same number of dimensions!: {} != {}", grid_size.size(), block_size.size());
     PLSSVM_ASSERT(grid_size.size() <= 3, "The number of dimensions must be less or equal than 3!: {} > 3", grid_size.size());
 
@@ -126,9 +126,9 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::
     set_kernel_args(kernel, std::forward<Args>(args)...);
 
     // enqueue kernel in command queue
-    PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue.queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
+    PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
     // wait until kernel computation finished
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue.queue), "error running OpenCL kernel");
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error running OpenCL kernel");
 }
 
 /**
@@ -141,7 +141,7 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-inline void run_kernel(const command_queue &queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &&...args) {
+inline void run_kernel(const cl_command_queue &queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &&...args) {
     run_kernel(queue, kernel, std::vector<std::size_t>{ grid_size }, std::vector<std::size_t>{ block_size }, std::forward<Args>(args)...);
 }
 

@@ -27,16 +27,18 @@
 namespace plssvm::opencl::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, command_queue &queue) :
-    queue_{ &queue }, size_{ size } {
+device_ptr<T>::device_ptr(const size_type size, cl_command_queue &queue) :
+    queue_{ queue }, size_{ size } {
     error_code err;
-    data_ = clCreateBuffer(queue_->context, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
+    cl_context cont;
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr));
+    data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err);
 }
 
 template <typename T>
 device_ptr<T>::device_ptr(device_ptr &&other) noexcept :
-    queue_{ std::exchange(other.queue_, nullptr) },
+    queue_{ other.queue_ },
     data_{ std::exchange(other.data_, nullptr) },
     size_{ std::exchange(other.size_, 0) } {}
 
@@ -76,9 +78,9 @@ void device_ptr<T>::memset(const value_type value, const size_type pos, const si
     }
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueFillBuffer(queue_->queue, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
+    err = clEnqueueFillBuffer(queue_, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_));
 }
 
 template <typename T>
@@ -109,9 +111,9 @@ void device_ptr<T>::memcpy_to_device(const_pointer data_to_copy, const size_type
 
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueWriteBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
+    err = clEnqueueWriteBuffer(queue_, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_));
 }
 
 template <typename T>
@@ -142,9 +144,9 @@ void device_ptr<T>::memcpy_to_host(pointer buffer, const size_type pos, const si
 
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueReadBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
+    err = clEnqueueReadBuffer(queue_, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_));
 }
 
 template class device_ptr<float>;

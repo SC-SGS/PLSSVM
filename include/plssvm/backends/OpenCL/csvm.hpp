@@ -16,6 +16,8 @@
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 
+#include "CL/cl.h"
+
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -39,11 +41,11 @@ namespace opencl {
  * @tparam T the type of the data
  */
 template <typename T>
-class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, ::plssvm::opencl::detail::command_queue> {
+class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, cl_command_queue> {
   protected:
     // protected for test MOCK class
     /// The template base type of the OpenCL C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, ::plssvm::opencl::detail::command_queue>;
+    using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, cl_command_queue>;
 
     using base_type::coef0_;
     using base_type::cost_;
@@ -69,7 +71,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     /// The type of the OpenCL device pointer.
     using device_ptr_type = ::plssvm::opencl::detail::device_ptr<real_type>;
     /// The type of the OpenCL device queue.
-    using queue_type = ::plssvm::opencl::detail::command_queue;
+    using queue_type = cl_command_queue;
 
     /**
      * @brief Construct a new C-SVM using the OpenCL backend with the parameters given through @p params.
@@ -109,14 +111,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
      */
     void run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
 
-    /// OpenCL kernel for the generate q function compiled for each device.
-    std::vector<detail::kernel> q_kernel_{};
-    /// OpenCL kernel for the svm kernel function compiled for each device.
-    std::vector<detail::kernel> svm_kernel_{};
-    /// OpenCL kernel for the kernel_w function compiled for each device.
-    std::vector<detail::kernel> kernel_w_kernel_{};
-    /// OpenCL kernel for the prediction function compiled for each device.
-    std::vector<detail::kernel> predict_kernel_{};
+    /// All OpenCL kernels compiled for each device.
+    std::vector<std::vector<detail::kernel>> device_kernel_{};
 };
 
 extern template class csvm<float>;
