@@ -13,6 +13,7 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"         // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                          // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/string_conversion.hpp"           // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
@@ -208,49 +209,97 @@ template <typename real_type>
 std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::string> &kernel_names) {
     error_code err, err_bin;
 
+    // read kernel source files and create a single source string
+    std::string kernel_src_string;
+    for (const std::string &file_name : kernel_sources) {
+        // read file
+        std::ifstream in{ fmt::format("{}{}", PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, file_name) };
+        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({}{})", PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, file_name));
+        std::string source{ (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>() };
+
+        // append source to full source string
+        kernel_src_string += source;
+    }
+
+    // replace types
+    ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
+    ::plssvm::detail::replace_all(kernel_src_string, "kernel_index_type", ::plssvm::detail::arithmetic_type_name<::plssvm::kernel_index_type>());
+    // replace constants
+    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
+
+    // TODO: change to something more robust than std::hash
+    // create source code hash
+    const std::string checksum = fmt::format("{0:x}", std::hash<std::string>{}(kernel_src_string));
+
+    // convert string to const char*
+    const char *kernel_src_ptr = kernel_src_string.c_str();
+
     // data to build the final OpenCL program
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
     const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}", target);
-    std::size_t fileCount = 0;
 
-    // check the number of files in the used cache directory
-    if (std::filesystem::exists(cache_dir_name)) {
+    // potential reasons why OpenCL caching could fail
+    enum class caching_status {
+        success,
+        error_no_cached_files,
+        error_invalid_number_of_cached_files,
+        error_checksum_missmatch
+    };
+    // message associated with the failed caching reason
+    const auto caching_status_to_string = [](const caching_status status) {
+        switch (status) {
+            case caching_status::error_no_cached_files:
+                return "no cached files exist";
+            case caching_status::error_invalid_number_of_cached_files:
+                return "invalid number of cached files";
+            case caching_status::error_checksum_missmatch:
+                return "checksum missmatch";
+            default:
+                return "";
+        }
+    };
+
+    // assume caching was successful
+    caching_status use_cached_binaries = caching_status::success;
+
+    // check if cache directory exists
+    if (!std::filesystem::exists(cache_dir_name)) {
+        use_cached_binaries = caching_status::error_no_cached_files;
+    }
+    // if the cache directory exists, check the number of files
+    if (use_cached_binaries == caching_status::success) {
         // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         // get files in directory
-        fileCount = std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); });
+        if (static_cast<std::size_t>(std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size()) {
+            use_cached_binaries = caching_status::error_invalid_number_of_cached_files;
+        }
+    }
+    // if the number of files is correct, check if the hashes match
+    if (use_cached_binaries == caching_status::success) {
+        // get directory iterator
+        auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
+        for (const std::filesystem::directory_entry &entry : dirIter) {
+            if (entry.is_regular_file()) {
+                // extract checksum
+                const std::string file_name = entry.path().filename();
+                const std::string file_checksum = file_name.substr(file_name.find_last_of('.') + 1);
+                if (file_checksum != checksum) {
+                    use_cached_binaries = caching_status::error_checksum_missmatch;
+                    break;
+                }
+            }
+        }
     }
 
-    if (!std::filesystem::exists(cache_dir_name) && fileCount != contexts[0].devices.size()) {
-        fmt::print("Building OpenCL kernels from source.\n");
-
-        // read kernel source files
-        std::vector<std::string> kernel_src_strings;
-        kernel_src_strings.reserve(kernel_sources.size());
-        for (const std::string &file_name : kernel_sources) {
-            // read file
-            std::ifstream in{ fmt::format("{}{}", PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, file_name) };
-            PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({}{})", PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, file_name));
-            std::string &source = kernel_src_strings.emplace_back((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-
-            // replace types
-            ::plssvm::detail::replace_all(source, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
-            ::plssvm::detail::replace_all(source, "kernel_index_type", ::plssvm::detail::arithmetic_type_name<::plssvm::kernel_index_type>());
-            // replace constants
-            ::plssvm::detail::replace_all(source, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
-            ::plssvm::detail::replace_all(source, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
-        }
-
-        // convert strings to const char*
-        std::vector<const char *> kernel_src_ptrs(kernel_src_strings.size());
-        for (std::size_t i = 0; i < kernel_src_ptrs.size(); ++i) {
-            kernel_src_ptrs[i] = kernel_src_strings[i].c_str();
-        }
+    if (use_cached_binaries != caching_status::success) {
+        fmt::print("Building OpenCL kernels from source (reason: {}).\n", caching_status_to_string(use_cached_binaries));
 
         // create and build program
-        cl_program program = clCreateProgramWithSource(contexts[0].device_context, static_cast<cl_uint>(kernel_src_ptrs.size()), kernel_src_ptrs.data(), nullptr, &err);
+        cl_program program = clCreateProgramWithSource(contexts[0].device_context, 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
         err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
         if (!err) {
@@ -275,10 +324,13 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         // get binaries
         err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, contexts[0].devices.size() * sizeof(unsigned char *), binaries.data(), nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries");
+
+        // remove potential previously cached binaries
+        std::filesystem::remove_all(cache_dir_name);
         // write binaries to file
         std::filesystem::create_directories(cache_dir_name);
         for (std::size_t i = 0; i < binary_sizes.size(); ++i) {
-            std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
+            std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin.{}", i, checksum) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
@@ -314,7 +366,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         for (const std::filesystem::directory_entry &entry : dirIter) {
             if (entry.is_regular_file()) {
-                const int i = std::stoi(std::regex_replace(entry.path().string(), std::regex("[^0-9]+"), std::string("$1")));
+                const auto i = ::plssvm::detail::extract_first_integer_from_string<std::size_t>(entry.path().string());
                 std::tie(binaries[i], binary_sizes[i]) = common_read_file(entry.path());
             }
         }
@@ -325,7 +377,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
     PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries");
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program");
     err = clBuildProgram(binary_program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), nullptr, nullptr, nullptr);
-    if (!err) {
+    if (!err) {  // TODO: device + repeat
         // determine the size of the log
         std::size_t log_size;
         clGetProgramBuildInfo(binary_program, contexts[0].devices[0], CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);

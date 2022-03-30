@@ -64,4 +64,14 @@ template <typename T, typename Exception = std::runtime_error>
     return val;
 }
 
+template <typename T>
+[[nodiscard]] inline T extract_first_integer_from_string(std::string_view str) {
+    const std::string_view::size_type n = str.find_first_of("0123456789");
+    if (n != std::string_view::npos) {
+        const std::string_view::size_type m = str.find_first_not_of("0123456789", n);
+        return convert_to<T>(str.substr(n, m != std::string_view::npos ? m - n : m));
+    }
+    throw std::runtime_error{ fmt::format("String {} doesn't contain any number!", str) };
+}
+
 }  // namespace plssvm::detail
