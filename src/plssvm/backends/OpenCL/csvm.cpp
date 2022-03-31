@@ -127,7 +127,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     }
 
     // sanity checks for the number of OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const detail::command_queue &queue) { return queue.kernels.size() == 3; }),
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 3; }),
                   "Every command queue must have exactly three associated kernels!");
 }
 
@@ -135,7 +135,7 @@ template <typename T>
 csvm<T>::~csvm() {
     try {
         // be sure that all operations on the OpenCL devices have finished before destruction
-        for (const detail::command_queue &queue : devices_) {
+        for (const queue_type &queue : devices_) {
             detail::device_synchronize(queue);
         }
     } catch (const plssvm::exception &e) {

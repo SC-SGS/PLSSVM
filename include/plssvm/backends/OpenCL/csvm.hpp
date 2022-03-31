@@ -66,9 +66,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     using real_type = typename base_type::real_type;
 
     /// The type of the OpenCL device pointer.
-    using device_ptr_type = ::plssvm::opencl::detail::device_ptr<real_type>;
+    using device_ptr_type = typename base_type::device_ptr_type;
     /// The type of the OpenCL device queue.
-    using queue_type = detail::command_queue;
+    using queue_type = typename base_type::queue_type;
 
     /**
      * @brief Construct a new C-SVM using the OpenCL backend with the parameters given through @p params.
