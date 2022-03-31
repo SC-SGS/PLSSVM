@@ -96,10 +96,12 @@ void device_assert(const error_code ec, const std::string_view msg) {
                 add_to_map(platform_devices, std::make_pair(platform, target_platform::cpu), device);
 #endif
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
-                // is GPU device TODO
-                std::string vendor_string(128, '\0');
-                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string.size() * sizeof(char), vendor_string.data(), nullptr), "error retrieving device information");
-                vendor_string = vendor_string.substr(0, vendor_string.find_first_of('\0'));
+                // is GPU device
+                std::size_t vendor_string_size;
+                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size");
+                std::string vendor_string(vendor_string_size, '\0');
+                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string_size, vendor_string.data(), nullptr), "error retrieving device vendor name");
+
                 // convert vendor name to lower case
                 ::plssvm::detail::to_lower_case(vendor_string);
 
@@ -188,9 +190,11 @@ std::string get_device_name(const cl_command_queue &queue) {
     cl_device_id device_id;
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
     // get device name
-    std::string device_name(128, '\0');  // TODO:
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, device_name.size() * sizeof(char), device_name.data(), nullptr), "error obtaining device name");
-    return device_name.substr(0, device_name.find_first_of('\0'));
+    std::size_t name_length;
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size");
+    std::string device_name(name_length, '\0');
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name");
+    return device_name;
 }
 
 std::vector<std::string> kernel_type_to_function_names(const kernel_type kernel) {
