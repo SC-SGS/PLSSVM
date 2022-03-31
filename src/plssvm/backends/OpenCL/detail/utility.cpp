@@ -16,6 +16,7 @@
 #include "plssvm/detail/string_conversion.hpp"           // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
+#include "plssvm/detail/utility.hpp"                     // plssvm::detail::erase_if
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
 #include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
@@ -52,13 +53,16 @@ void device_assert(const error_code ec, const std::string_view msg) {
     }
 }
 
-[[nodiscard]] std::vector<context> get_command_queues_impl(const target_platform target) {
+[[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target) {
     error_code err;
 
+    // function to add a key value pair to a map, where the value is added to a std::vector
     const auto add_to_map = [](auto &map, const auto &key, auto value) {
+        // if key currently doesn't exist, add a new std::vector
         if (map.count(key) == 0) {
             map[key] = std::vector<decltype(value)>();
         }
+        // add value to std::vector represented by key
         map[key].push_back(value);
     };
 
@@ -71,13 +75,8 @@ void device_assert(const error_code ec, const std::string_view msg) {
     std::vector<cl_platform_id> platform_ids(num_platforms);
     PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(num_platforms, platform_ids.data(), nullptr), "error retrieving platform IDs");
 
+    // enumerate all available platforms and retrieve the associated devices
     for (const cl_platform_id &platform : platform_ids) {
-        // retrieve platform name
-        //        std::size_t platform_name_size;
-        //        PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformInfo(platform, CL_PLATFORM_NAME, 0, nullptr, &platform_name_size), "error retrieving the size of the platform name");
-        //        std::string platform_name(platform_name_size, '\0');
-        //        PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformInfo(platform, CL_PLATFORM_NAME, platform_name_size, platform_name.data(), nullptr), "error retrieving the platform name");
-
         // get devices associated with current platform
         cl_uint num_devices;
         PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices), "error retrieving the number of devices");
@@ -97,6 +96,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
 #endif
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
                 // is GPU device
+                // get vendor string
                 std::size_t vendor_string_size;
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size");
                 std::string vendor_string(vendor_string_size, '\0');
@@ -105,8 +105,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
                 // convert vendor name to lower case
                 ::plssvm::detail::to_lower_case(vendor_string);
 
-                //                fmt::print("vendor string: {}\n", vendor_string);
-
+                // check vendor string and insert to correct target platform
                 if (::plssvm::detail::contains(vendor_string, "nvidia")) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
                     add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_nvidia), device);
@@ -122,63 +121,43 @@ void device_assert(const error_code ec, const std::string_view msg) {
                 }
             }
         }
-
-        // create context associated with platform and devices
-        //        cl_context context = clCreateContext(nullptr, static_cast<cl_uint>(device_list.size()), device_list.data(), nullptr, nullptr, &err);
-        //        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context");
     }
 
-    // only interested in devices on the current target platform
-    const auto erase_if = [](auto &c, const auto &pred) {
-        auto old_size = c.size();
-        for (auto i = c.begin(), last = c.end(); i != last;) {
-            if (pred(*i)) {
-                i = c.erase(i);
-            } else {
-                ++i;
-            }
+    // determine target if provided target_platform is automatic
+    if (target == target_platform::automatic) {
+        const auto has_target_platform = [](const auto &map, const target_platform tp) {
+            return std::count_if(map.begin(), map.end(), [tp](const auto &item) { return item.first.second == tp; }) > 0;
+        };
+        // check for devices in order gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
+        if (has_target_platform(platform_devices, target_platform::gpu_nvidia)) {
+            target = target_platform::gpu_nvidia;
+        } else if (has_target_platform(platform_devices, target_platform::gpu_amd)) {
+            target = target_platform::gpu_amd;
+        } else if (has_target_platform(platform_devices, target_platform::gpu_intel)) {
+            target = target_platform::gpu_intel;
+        } else {
+            target = target_platform::cpu;
         }
-        return old_size - c.size();
-    };
-    erase_if(platform_devices, [target](const auto &item) {
-        const auto &[key, value] = item;
-        return key.second != target;
+    }
+
+    // only interested in devices on the target platform
+    ::plssvm::detail::erase_if(platform_devices, [target](const auto &item) {
+        // target_platform of the current OpenCL platform must match the requested target
+        return item.first.second != target;
     });
 
+    // create one context for each leftover target platform
     std::vector<context> contexts;
     for (auto &[platform, devices] : platform_devices) {
-        // TODO: platform in context
-        cl_context cont = clCreateContext(nullptr, static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
+        // create context and associated OpenCL platform with it
+        cl_context_properties context_properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties) platform.first, 0 };
+        cl_context cont = clCreateContext(context_properties, static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context");
-        contexts.emplace_back(cont, std::move(devices));
+        // add OpenCL context to vector of context wrappers
+        contexts.emplace_back(cont, platform.first, std::move(devices));
     }
 
-    //    for (const auto &cont : contexts) {
-    //        std::cout << cont << std::endl;
-    //    }
-    return contexts;
-}
-
-std::pair<std::vector<context>, target_platform> get_command_queues(const target_platform target) {
-    if (target != target_platform::automatic) {
-        return std::make_pair(get_command_queues_impl(target), target);
-    } else {
-        target_platform used_target = target_platform::gpu_nvidia;
-        std::vector<context> target_devices = get_command_queues_impl(used_target);
-        if (target_devices.empty()) {
-            used_target = target_platform::gpu_amd;
-            target_devices = get_command_queues_impl(used_target);
-            if (target_devices.empty()) {
-                used_target = target_platform::gpu_intel;
-                target_devices = get_command_queues_impl(used_target);
-                if (target_devices.empty()) {
-                    used_target = target_platform::cpu;
-                    target_devices = get_command_queues_impl(used_target);
-                }
-            }
-        }
-        return std::make_pair(std::move(target_devices), used_target);
-    }
+    return std::make_pair(std::move(contexts), target);
 }
 
 void device_synchronize(const cl_command_queue &queue) {

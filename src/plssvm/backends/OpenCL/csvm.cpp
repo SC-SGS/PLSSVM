@@ -66,7 +66,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     // get all available devices wrt the requested target platform
     target_platform used_target;
     std::vector<detail::context> contexts;
-    std::tie(contexts, used_target) = detail::get_command_queues(target_);
+    std::tie(contexts, used_target) = detail::get_contexts(target_);
 
     // currently, only allow a single context
     if (contexts.size() != 1) {

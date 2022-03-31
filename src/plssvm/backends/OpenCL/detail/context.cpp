@@ -18,8 +18,8 @@
 
 namespace plssvm::opencl::detail {
 
-context::context(cl_context p_device_context, std::vector<cl_device_id> p_devices) :
-    device_context{ p_device_context }, devices{ std::move(p_devices) } {
+context::context(cl_context p_device_context, cl_platform_id p_platform, std::vector<cl_device_id> p_devices) :
+    device_context{ p_device_context }, platform{ p_platform }, devices{ std::move(p_devices) } {
     queues.reserve(devices.size());
     error_code err;
     for (const cl_device_id &device : devices) {
@@ -35,11 +35,12 @@ context::context(cl_context p_device_context, std::vector<cl_device_id> p_device
 }
 
 context::context(context &&other) noexcept :
-    device_context{ std::exchange(other.device_context, nullptr) }, devices{ std::move(other.devices) }, queues{ std::move(other.queues) } {}
+    device_context{ std::exchange(other.device_context, nullptr) }, platform{ other.platform }, devices{ std::move(other.devices) }, queues{ std::move(other.queues) } {}
 
 context &context::operator=(context &&other) {
     if (this != std::addressof(other)) {
         other.device_context = std::exchange(other.device_context, nullptr);
+        platform = other.platform;
         devices = std::move(other.devices);
         queues = std::move(other.queues);
     }

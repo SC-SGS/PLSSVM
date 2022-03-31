@@ -28,7 +28,7 @@ class context {
      * @brief Construct a new OpenCL context.
      * @param[in] device_context the associated OpenCL cl_context
      */
-    context(cl_context device_context, std::vector<cl_device_id> devices);
+    context(cl_context device_context, cl_platform_id platform, std::vector<cl_device_id> devices);
 
     /**
      * @brief Delete copy-constructor to make context a move only type.
@@ -57,6 +57,8 @@ class context {
 
     /// The OpenCL context associated with the platform containing the respective devices.
     cl_context device_context{};
+    /// The OpenCL platform associated with this context.
+    cl_platform_id platform;
     /// All devices associated with this context.
     std::vector<cl_device_id> devices{};
     /// One OpenCL command queue for each device associated with this context.

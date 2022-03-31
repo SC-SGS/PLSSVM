@@ -57,7 +57,7 @@ void device_assert(error_code code, std::string_view msg = "");
  * @param[in] target the target platform for which the devices must match
  * @return the command queues and used target platform (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<context>, target_platform> get_command_queues(target_platform target);
+[[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target);
 
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
