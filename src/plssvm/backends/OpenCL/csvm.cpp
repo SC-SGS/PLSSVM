@@ -63,76 +63,76 @@ csvm<T>::csvm(const parameter<T> &params) :
             break;
     }
 
-    // get all available devices wrt the requested target platform
+    // get all available OpenCL contexts including devices with respect to the requested target platform
     target_platform used_target;
     std::vector<detail::context> contexts;
     std::tie(contexts, used_target) = detail::get_contexts(target_);
 
-    // currently, only allow a single context
+    // currently, only a single context is allowed
     if (contexts.size() != 1) {
         throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were given!", contexts.size()) };
     }
 
-    // TODO: test
-    devices_ = contexts[0].queues;
-    devices_.resize(std::min(devices_.size(), num_features_));
+    // throw exception if no devices for the requested target could be found
+    if (contexts[0].devices.empty()) {
+        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
+    }
 
+    // print OpenCL info
     if (print_info_) {
         fmt::print("Using OpenCL as backend.\n");
         if (target_ == target_platform::automatic) {
             fmt::print("Using {} as automatic target platform.\n", used_target);
         }
+        fmt::print("\n");
     }
 
-    // throw exception if no devices for the requested target could be found
-    if (devices_.empty()) {
-        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
+    // create command_queues and JIT compile OpenCL kernels
+    auto jit_start_time = std::chrono::steady_clock::now();
+
+    // get kernel names
+    std::vector<std::string> kernel_names = detail::kernel_type_to_function_names(kernel_);
+    std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };
+    // the kernel order in the respective command_queue is the same as the other of the provided kernel names
+    // i.e.: kernels[0] -> q_kernel, kernels[1] -> svm_kernel, kernels[2] -> w_kernel/predict_kernel
+    devices_ = detail::create_command_queues<real_type>(contexts, used_target, kernel_sources, kernel_names, print_info_);
+
+    auto jit_end_time = std::chrono::steady_clock::now();
+    if (print_info_) {
+        fmt::print("OpenCL kernel JIT compilation done in {}.\n\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time));
     }
+
+    // if less features than devices are provided, use only nim_features_ devices
+    devices_.resize(std::min(devices_.size(), num_features_));
 
     // polynomial and rbf kernel currently only support single GPU execution
     if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
         devices_.resize(1);
     }
 
-    // resize vectors accordingly
+    // resize data vectors accordingly
     data_d_.resize(devices_.size());
     data_last_d_.resize(devices_.size());
 
     if (print_info_) {
-        // print found OpenLC devices
-        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
+        // print found OpenCL devices
+        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), used_target);
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             fmt::print("  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
         }
         fmt::print("\n");
     }
 
-    auto jit_start_time = std::chrono::steady_clock::now();
-
-    // get kernel names
-    std::vector<std::string> kernel_names = detail::kernel_type_to_function_names(kernel_);
-    std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };
-    device_kernel_ = detail::create_kernel<real_type>(contexts, used_target, kernel_sources, kernel_names);
-    // device_kernel_[0] -> q_kernel
-    // device_kernel_[1] -> svm_kernel
-    // device_kernel_[2] -> w_kernel/predict_kernel
-
-    auto jit_end_time = std::chrono::steady_clock::now();
-    if (print_info_) {
-        fmt::print("OpenCL kernel JIT compilation done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time));
-    }
-
     // sanity checks for the number of OpenCL kernels
-    PLSSVM_ASSERT(devices_.size() == device_kernel_[0].size(), fmt::format("Number of kernels for the q kernel ({}) must match the number of devices ({})!", device_kernel_[0].size(), devices_.size()));
-    PLSSVM_ASSERT(devices_.size() == device_kernel_[1].size(), fmt::format("Number of kernels for the svm kernel ({}) must match the number of devices ({})!", device_kernel_[1].size(), devices_.size()));
-    PLSSVM_ASSERT(devices_.size() == device_kernel_[2].size(), fmt::format("Number of kernels for the w/predict kernel ({}) must match the number of devices ({})!", device_kernel_[2].size(), devices_.size()));
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const detail::command_queue &queue) { return queue.kernels.size() == 3; }),
+                  "Every command queue must have exactly three associated kernels!");
 }
 
 template <typename T>
 csvm<T>::~csvm() {
     try {
         // be sure that all operations on the OpenCL devices have finished before destruction
-        for (const cl_command_queue &queue : devices_) {
+        for (const detail::command_queue &queue : devices_) {
             detail::device_synchronize(queue);
         }
     } catch (const plssvm::exception &e) {
@@ -161,15 +161,15 @@ void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::exe
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], device_kernel_[0][device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_features));
+            detail::run_kernel(devices_[device], devices_[device].kernels[0], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_features));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            detail::run_kernel(devices_[device], device_kernel_[0][device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), degree_, gamma_, coef0_);
+            detail::run_kernel(devices_[device], devices_[device].kernels[0], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            detail::run_kernel(devices_[device], device_kernel_[0][device], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), gamma_);
+            detail::run_kernel(devices_[device], devices_[device].kernels[0], grid, block, q_d.get(), data_d_[device].get(), data_last_d_[device].get(), static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), gamma_);
             break;
     }
 }
@@ -180,15 +180,15 @@ void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::e
 
     switch (kernel_) {
         case kernel_type::linear:
-            detail::run_kernel(devices_[device], device_kernel_[1][device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
+            detail::run_kernel(devices_[device], devices_[device].kernels[1], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            detail::run_kernel(devices_[device], device_kernel_[1][device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), add, degree_, gamma_, coef0_);
+            detail::run_kernel(devices_[device], devices_[device].kernels[1], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), add, degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            detail::run_kernel(devices_[device], device_kernel_[1][device], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), add, gamma_);
+            detail::run_kernel(devices_[device], devices_[device].kernels[1], grid, block, q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, static_cast<kernel_index_type>(num_rows_), static_cast<kernel_index_type>(num_cols_), add, gamma_);
             break;
     }
 }
@@ -197,7 +197,7 @@ template <typename T>
 void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
     auto [grid, block] = execution_range_to_native(range);
 
-    detail::run_kernel(devices_[device], device_kernel_[2][0], grid, block, w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), static_cast<kernel_index_type>(num_features));
+    detail::run_kernel(devices_[device], devices_[device].kernels[2], grid, block, w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), static_cast<kernel_index_type>(num_features));
 }
 
 template <typename T>
@@ -208,10 +208,10 @@ void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range,
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-            detail::run_kernel(devices_[0], device_kernel_[2][0], grid, block, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features_), degree_, gamma_, coef0_);
+            detail::run_kernel(devices_[0], devices_[0].kernels[2], grid, block, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features_), degree_, gamma_, coef0_);
             break;
         case kernel_type::rbf:
-            detail::run_kernel(devices_[0], device_kernel_[2][0], grid, block, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features_), gamma_);
+            detail::run_kernel(devices_[0], devices_[0].kernels[2], grid, block, out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points_), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features_), gamma_);
             break;
     }
 }

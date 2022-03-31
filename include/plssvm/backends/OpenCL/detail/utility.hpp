@@ -11,12 +11,13 @@
 
 #pragma once
 
-#include "plssvm/backends/OpenCL/detail/context.hpp"     // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"      // plssvm::opencl::detail::kernel
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
+#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_kernel, cl_uint, cl_int
 
@@ -63,14 +64,14 @@ void device_assert(error_code code, std::string_view msg = "");
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the command queue to synchronize
  */
-void device_synchronize(const cl_command_queue &queue);
+void device_synchronize(const command_queue &queue);
 
 /**
  * @brief Get the name of the device associated with the OpenCL command queue @p queue.
  * @param[in] queue the OpenCL command queue
  * @return the device name (`[[nodiscard]]`)
  */
-[[nodiscard]] std::string get_device_name(const cl_command_queue &queue);
+[[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
  * @brief Convert the kernel type @p kernel to the function names for the q and svm kernel functions.
@@ -89,7 +90,7 @@ void device_synchronize(const cl_command_queue &queue);
  * @return the kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_source, const std::vector<std::string> &kernel_name);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::string> &kernel_source, const std::vector<std::string> &kernel_name, bool print_info);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -118,7 +119,7 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-inline void run_kernel(const cl_command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
+inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::vector<std::size_t> &grid_size, const std::vector<std::size_t> &block_size, Args &&...args) {
     PLSSVM_ASSERT(grid_size.size() == block_size.size(), "grid_size and block_size must have the same number of dimensions!: {} != {}", grid_size.size(), block_size.size());
     PLSSVM_ASSERT(grid_size.size() <= 3, "The number of dimensions must be less or equal than 3!: {} > 3", grid_size.size());
 
@@ -141,7 +142,7 @@ inline void run_kernel(const cl_command_queue &queue, cl_kernel kernel, const st
  * @param[in] args the arguments to set
  */
 template <typename... Args>
-inline void run_kernel(const cl_command_queue &queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &&...args) {
+inline void run_kernel(const command_queue &queue, cl_kernel kernel, std::size_t grid_size, std::size_t block_size, Args &&...args) {
     run_kernel(queue, kernel, std::vector<std::size_t>{ grid_size }, std::vector<std::size_t>{ block_size }, std::forward<Args>(args)...);
 }
 

@@ -11,7 +11,11 @@
 
 #pragma once
 
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"
+
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
+
+#include <vector>  // std::vector
 
 namespace plssvm::opencl::detail {
 
@@ -28,10 +32,9 @@ class command_queue {
     /**
      * @brief Construct a command queue with the provided information.
      * @param[in] context the associated OpenCL cl_context
-     * @param[in] queue the OpenCL cl_command_queue to wrap
      * @param[in] device the associated OpenCL cl_device_id
      */
-    command_queue(cl_context context, cl_command_queue queue, cl_device_id device);
+    command_queue(cl_context context, cl_device_id device);
 
     /**
      * @brief Delete copy-constructor to make command_queue a move only type.
@@ -58,12 +61,25 @@ class command_queue {
      */
     ~command_queue();
 
-    /// The OpenCL context associated with the wrapped cl_command_queue.
-    cl_context context{};
+    /**
+     * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
+     * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
+     */
+    [[nodiscard]] operator cl_command_queue &() noexcept { return queue; }
+    /**
+     * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
+     * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
+     */
+    [[nodiscard]] operator const cl_command_queue &() const noexcept { return queue; }
+
+    void add_kernel(kernel &&compute_kernel) {
+        kernels.push_back(std::move(compute_kernel));
+    }
+
     /// The wrapped cl_command_queue.
     cl_command_queue queue{};
-    /// The OpenCL device associated with the wrapped cl_command_queue.
-    cl_device_id device{};
+    /// All OpenCL device kernel associated with the device corresponding to this command queue.
+    std::vector<kernel> kernels{};
 };
 
 }  // namespace plssvm::opencl::detail

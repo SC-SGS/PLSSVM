@@ -13,7 +13,6 @@
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
 
-#include <iostream>
 #include <vector>  // std::vector
 
 namespace plssvm::opencl::detail {
@@ -26,7 +25,9 @@ class context {
     context() = default;
     /**
      * @brief Construct a new OpenCL context.
-     * @param[in] device_context the associated OpenCL cl_context
+     * @param[in] device_context the associated OpenCL context
+     * @param[in] platform the OpenCL platform associated with this OpenCL context
+     * @param[in] devices the devices associated with this OpenCL cl_context
      */
     context(cl_context device_context, cl_platform_id platform, std::vector<cl_device_id> devices);
 
@@ -61,16 +62,6 @@ class context {
     cl_platform_id platform;
     /// All devices associated with this context.
     std::vector<cl_device_id> devices{};
-    /// One OpenCL command queue for each device associated with this context.
-    std::vector<cl_command_queue> queues{};
 };
-
-inline std::ostream &operator<<(std::ostream &out, const context &cont) {
-    out << (void *) cont.device_context << " " << cont.devices.size() << ": ";
-    for (const cl_device_id dev : cont.devices) {
-        out << (void *) dev << " ";
-    }
-    return out;
-}
 
 }  // namespace plssvm::opencl::detail

@@ -17,7 +17,7 @@
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     // used for explicitly instantiating the OpenCL backend
-    #include "CL/cl.h"
+    #include "plssvm/backends/OpenCL/detail/command_queue.hpp"
     #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -388,8 +388,8 @@ template class gpu_csvm<float, ::plssvm::hip::detail::device_ptr<float>, int>;
 template class gpu_csvm<double, ::plssvm::hip::detail::device_ptr<double>, int>;
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-template class gpu_csvm<float, ::plssvm::opencl::detail::device_ptr<float>, cl_command_queue>;
-template class gpu_csvm<double, ::plssvm::opencl::detail::device_ptr<double>, cl_command_queue>;
+template class gpu_csvm<float, ::plssvm::opencl::detail::device_ptr<float>, ::plssvm::opencl::detail::command_queue>;
+template class gpu_csvm<double, ::plssvm::opencl::detail::device_ptr<double>, ::plssvm::opencl::detail::command_queue>;
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 template class gpu_csvm<float, ::plssvm::sycl::detail::device_ptr<float>, ::sycl::queue>;
