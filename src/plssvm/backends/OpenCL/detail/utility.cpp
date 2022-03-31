@@ -372,7 +372,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         for (const std::filesystem::directory_entry &entry : dirIter) {
             if (entry.is_regular_file()) {
-                const auto i = ::plssvm::detail::extract_first_integer_from_string<std::size_t>(entry.path().string());
+                const auto i = ::plssvm::detail::extract_first_integer_from_string<std::size_t>(entry.path().filename().string());
                 std::tie(binaries[i], binary_sizes[i]) = common_read_file(entry.path());
             }
         }
