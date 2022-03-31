@@ -12,6 +12,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 
@@ -107,6 +108,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
     void run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
+
+    /// The available OpenCL contexts for the current target platform with the associated devices.
+    std::vector<detail::context> contexts_{};
 };
 
 extern template class csvm<float>;

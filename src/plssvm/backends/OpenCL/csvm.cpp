@@ -66,18 +66,17 @@ csvm<T>::csvm(const parameter<T> &params) :
             break;
     }
 
-    // get all available OpenCL contexts including devices with respect to the requested target platform
+    // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     target_platform used_target;
-    std::vector<detail::context> contexts;
-    std::tie(contexts, used_target) = detail::get_contexts(target_);
+    std::tie(contexts_, used_target) = detail::get_contexts(target_);
 
     // currently, only a single context is allowed
-    if (contexts.size() != 1) {
-        throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were given!", contexts.size()) };
+    if (contexts_.size() != 1) {
+        throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were given!", contexts_.size()) };
     }
 
     // throw exception if no devices for the requested target could be found
-    if (contexts[0].devices.empty()) {
+    if (contexts_[0].devices.empty()) {
         throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target_) };
     }
 
@@ -98,7 +97,7 @@ csvm<T>::csvm(const parameter<T> &params) :
     const std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };
     // the kernel order in the respective command_queue is the same as the other of the provided kernel names
     // i.e.: kernels[0] -> q_kernel, kernels[1] -> svm_kernel, kernels[2] -> w_kernel/predict_kernel
-    devices_ = detail::create_command_queues<real_type>(contexts, used_target, kernel_sources, kernel_names, print_info_);
+    devices_ = detail::create_command_queues<real_type>(contexts_, used_target, kernel_sources, kernel_names, print_info_);
 
     auto jit_end_time = std::chrono::steady_clock::now();
     if (print_info_) {
