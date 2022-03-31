@@ -215,14 +215,14 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         // determine the size of the log
         std::size_t log_size;
         PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size");
-        //        if (log_size > 0) {
-        // allocate memory for the log
-        std::string log(log_size, ' ');
-        // get the log
-        error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
-        // print the log
-        PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program on device {} ({})", device_idx, log));
-        //        }
+        if (log_size > 0) {
+            // allocate memory for the log
+            std::string log(log_size, ' ');
+            // get the log
+            error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+            // print the log
+            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program on device {} ({})", device_idx, log));
+        }
     };
 
     error_code err, err_bin;
@@ -312,7 +312,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
             }
         }
     }
-    // TODO: change std::size_t
+
     if (use_cached_binaries != caching_status::success) {
         fmt::print("Building OpenCL kernels from source (reason: {}).\n", caching_status_to_string(use_cached_binaries));
 
@@ -330,7 +330,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         // get sizes of binaries
         err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, contexts[0].devices.size() * sizeof(std::size_t), binary_sizes.data(), nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel (binary) kernel sizes");
-        for (std::size_t i = 0; i < binaries.size(); ++i) {
+        for (std::vector<unsigned char *>::size_type i = 0; i < binaries.size(); ++i) {
             binaries[i] = new unsigned char[binary_sizes[i]];
         }
 
@@ -342,7 +342,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         std::filesystem::remove_all(cache_dir_name);
         // write binaries to file
         std::filesystem::create_directories(cache_dir_name);
-        for (std::size_t i = 0; i < binary_sizes.size(); ++i) {
+        for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin.{}", i, checksum) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
@@ -399,8 +399,8 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
 
     // build all kernels, one for each device
     std::vector<std::vector<kernel>> kernels(kernel_names.size());
-    for (std::size_t kernel = 0; kernel < kernel_names.size(); ++kernel) {
-        for (std::size_t device = 0; device < contexts[0].devices.size(); ++device) {
+    for (std::vector<std::vector<kernel>>::size_type kernel = 0; kernel < kernel_names.size(); ++kernel) {
+        for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
             // create kernel
             kernels[kernel].emplace_back(clCreateKernel(binary_program, kernel_names[kernel].c_str(), &err));
             PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[kernel], device));
