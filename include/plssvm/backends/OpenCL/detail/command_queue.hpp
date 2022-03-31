@@ -11,22 +11,22 @@
 
 #pragma once
 
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
 
-#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
+#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
 
-#include <vector>  // std::vector
+#include <map>  // std::map
 
 namespace plssvm::opencl::detail {
 
 /**
  * @brief RAII wrapper class around a cl_command_queue.
- * @details Also contains information about the associated cl_context and cl_device_id.
+ * @details Also contains the compiled kernels associated with the command queue.
  */
 class command_queue {
   public:
     /**
-     * @brief Empty default construct command queue.
+     * @brief Empty default construct a command queue.
      */
     command_queue() = default;
     /**
@@ -72,14 +72,17 @@ class command_queue {
      */
     [[nodiscard]] operator const cl_command_queue &() const noexcept { return queue; }
 
-    void add_kernel(kernel &&compute_kernel) {
-        kernels.push_back(std::move(compute_kernel));
-    }
+    /**
+     * @brief Add a new OpenCL @p compute_kernel used for @p name to this command queue.
+     * @param[in] name the name of the kernel that is to be added
+     * @param[in] compute_kernel the kernel to add
+     */
+    void add_kernel(compute_kernel_name name, kernel &&compute_kernel);
 
     /// The wrapped cl_command_queue.
     cl_command_queue queue{};
     /// All OpenCL device kernel associated with the device corresponding to this command queue.
-    std::vector<kernel> kernels{};
+    std::map<compute_kernel_name, kernel> kernels{};
 };
 
 }  // namespace plssvm::opencl::detail

@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/OpenCL/detail/context.hpp"
 
-#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
+#include "CL/cl.h"  // cl_context, cl_platform_id, cl_device_id, clReleaseContext
 
 #include <memory>   // std::addressof
 #include <utility>  // std::exchange
@@ -19,15 +19,14 @@ context::context(cl_context p_device_context, cl_platform_id p_platform, std::ve
     device_context{ p_device_context }, platform{ p_platform }, devices{ std::move(p_devices) } {}
 
 context::context(context &&other) noexcept :
-    // TODO: check pointer
     device_context{ std::exchange(other.device_context, nullptr) },
-    platform{ other.platform },
+    platform{ std::exchange(other.platform, nullptr) },
     devices{ std::move(other.devices) } {}
 
 context &context::operator=(context &&other) {
     if (this != std::addressof(other)) {
         other.device_context = std::exchange(other.device_context, nullptr);
-        platform = other.platform;
+        platform = std::exchange(other.platform, nullptr);
         devices = std::move(other.devices);
     }
     return *this;

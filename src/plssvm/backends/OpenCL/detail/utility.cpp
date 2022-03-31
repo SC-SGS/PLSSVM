@@ -8,40 +8,40 @@
 
 #include "plssvm/backends/OpenCL/detail/utility.hpp"
 
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
-#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context, CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU,
-                          // CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clCreateKernel, clReleaseProgram,
-                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clCreateCommandQueue, clGetCommandQueueInfo
-#include "fmt/format.h"   // fmt::format
+#include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
+                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
+                          // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
+                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
+#include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <algorithm>
-#include <filesystem>  // std::filesystem::exists
-#include <fstream>     // std::ifstream
-#include <ios>         // std::ios, std::streamsize
-#include <limits>      // std::numeric_limits
-#include <map>         // std::map
-#include <regex>
+#include <algorithm>    // std::count_if
+#include <cstddef>      // std::size_t
+#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
+#include <fstream>      // std::ifstream, std::ofstream
+#include <functional>   // std::hash
+#include <ios>          // std::ios_base, std::streamsize
+#include <iterator>     // istreambuf_iterator
+#include <limits>       // std::numeric_limits
+#include <map>          // std::map
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <utility>      // std::pair, std::make_pair
+#include <tuple>        // std::tie
+#include <utility>      // std::pair, std::make_pair, std::move
 #include <vector>       // std::vector
-
-#include <iostream>
-#include <string.h>
 
 namespace plssvm::opencl::detail {
 
@@ -178,20 +178,26 @@ std::string get_device_name(const command_queue &queue) {
     return device_name;
 }
 
-std::vector<std::string> kernel_type_to_function_names(const kernel_type kernel) {
+std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(const kernel_type kernel) {
     switch (kernel) {
         case kernel_type::linear:
-            return { "device_kernel_q_linear", "device_kernel_linear", "device_kernel_w_linear" };
+            return { std::make_pair(compute_kernel_name::q_kernel, "device_kernel_q_linear"),
+                     std::make_pair(compute_kernel_name::svm_kernel, "device_kernel_linear"),
+                     std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear") };
         case kernel_type::polynomial:
-            return { "device_kernel_q_poly", "device_kernel_poly", "device_kernel_predict_poly" };
+            return { std::make_pair(compute_kernel_name::q_kernel, "device_kernel_q_poly"),
+                     std::make_pair(compute_kernel_name::svm_kernel, "device_kernel_poly"),
+                     std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_poly") };
         case kernel_type::rbf:
-            return { "device_kernel_q_radial", "device_kernel_radial", "device_kernel_predict_radial" };
+            return { std::make_pair(compute_kernel_name::q_kernel, "device_kernel_q_radial"),
+                     std::make_pair(compute_kernel_name::svm_kernel, "device_kernel_radial"),
+                     std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_radial") };
     }
     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel)) };
 }
 
 template <typename real_type>
-std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::string> &kernel_names, const bool print_info) {
+std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names, const bool print_info) {
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
         std::size_t log_size;
@@ -300,12 +306,12 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         }
 
         // create and build program
-        cl_program program = clCreateProgramWithSource(contexts[0].device_context, 1, &kernel_src_ptr, nullptr, &err);
+        cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
         err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
         if (!err) {
             // check all devices for errors
-            for (std::size_t device = 0; device < contexts[0].devices.size(); ++device) {
+            for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
                 cl_build_program_error_message(program, contexts[0].devices[device], device);
             }
         }
@@ -373,13 +379,13 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     }
 
     // build from binaries
-    cl_program binary_program = clCreateProgramWithBinary(contexts[0].device_context, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), binary_sizes.data(), const_cast<const unsigned char **>(binaries.data()), &err_bin, &err);
+    cl_program binary_program = clCreateProgramWithBinary(contexts[0], static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), binary_sizes.data(), const_cast<const unsigned char **>(binaries.data()), &err_bin, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries");
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program");
     err = clBuildProgram(binary_program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), nullptr, nullptr, nullptr);
     if (!err) {
         // check all devices for errors
-        for (std::size_t device = 0; device < contexts[0].devices.size(); ++device) {
+        for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
             cl_build_program_error_message(binary_program, contexts[0].devices[device], device);
         }
     }
@@ -387,11 +393,11 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     // build all kernels, one for each device
     std::vector<command_queue> queues;
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
-        command_queue queue(contexts[0].device_context, contexts[0].devices[device]);
+        command_queue queue(contexts[0], contexts[0].devices[device]);
         for (std::vector<std::vector<kernel>>::size_type i = 0; i < kernel_names.size(); ++i) {
             // create kernel
-            queue.add_kernel(kernel{ clCreateKernel(binary_program, kernel_names[i].c_str(), &err) });
-            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i], device));
+            queue.add_kernel(kernel_names[i].first, kernel{ clCreateKernel(binary_program, kernel_names[i].second.c_str(), &err) });
+            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i].second, device));
         }
         queues.push_back(std::move(queue));
     }
@@ -407,7 +413,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     return queues;
 }
 
-template std::vector<command_queue> create_command_queues<float>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::string> &, const bool);
-template std::vector<command_queue> create_command_queues<double>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::string> &, const bool);
+template std::vector<command_queue> create_command_queues<float>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
+template std::vector<command_queue> create_command_queues<double>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
 
 }  // namespace plssvm::opencl::detail

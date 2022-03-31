@@ -13,10 +13,7 @@
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-
-#include "CL/cl.h"
 
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
