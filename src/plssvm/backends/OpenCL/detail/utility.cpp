@@ -207,6 +207,20 @@ std::vector<std::string> kernel_type_to_function_names(const kernel_type kernel)
 
 template <typename real_type>
 std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::string> &kernel_names) {
+    const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
+        // determine the size of the log
+        std::size_t log_size;
+        PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size");
+        //        if (log_size > 0) {
+        // allocate memory for the log
+        std::string log(log_size, ' ');
+        // get the log
+        error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+        // print the log
+        PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program on device {} ({})", device_idx, log));
+        //        }
+    };
+
     error_code err, err_bin;
 
     // read kernel source files and create a single source string
@@ -294,7 +308,7 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
             }
         }
     }
-
+    // TODO: change std::size_t
     if (use_cached_binaries != caching_status::success) {
         fmt::print("Building OpenCL kernels from source (reason: {}).\n", caching_status_to_string(use_cached_binaries));
 
@@ -303,15 +317,10 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
         err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
         if (!err) {
-            // determine the size of the log
-            std::size_t log_size;
-            clGetProgramBuildInfo(program, contexts[0].devices[0], CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
-            // allocate memory for the log
-            std::string log(log_size, ' ');
-            // get the log
-            clGetProgramBuildInfo(program, contexts[0].devices[0], CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
-            // print the log
-            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program ({})", log));
+            // check all devices for errors
+            for (std::size_t device = 0; device < contexts[0].devices.size(); ++device) {
+                cl_build_program_error_message(program, contexts[0].devices[device], device);
+            }
         }
 
         // get sizes of binaries
@@ -377,16 +386,11 @@ std::vector<std::vector<kernel>> create_kernel(const std::vector<context> &conte
     PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries");
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program");
     err = clBuildProgram(binary_program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), nullptr, nullptr, nullptr);
-    if (!err) {  // TODO: device + repeat
-        // determine the size of the log
-        std::size_t log_size;
-        clGetProgramBuildInfo(binary_program, contexts[0].devices[0], CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
-        // allocate memory for the log
-        std::string log(log_size, ' ');
-        // get the log
-        clGetProgramBuildInfo(binary_program, contexts[0].devices[0], CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
-        // print the log
-        PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL binary program ({})", log));
+    if (!err) {
+        // check all devices for errors
+        for (std::size_t device = 0; device < contexts[0].devices.size(); ++device) {
+            cl_build_program_error_message(binary_program, contexts[0].devices[device], device);
+        }
     }
 
     // build all kernels, one for each device
