@@ -94,7 +94,7 @@ csvm<T>::csvm(const parameter<T> &params) :
 
     // get kernel names
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel_);
-    const std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };
+    const std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };  // TODO: via CMake?
     // the kernel order in the respective command_queue is the same as the other of the provided kernel names
     // i.e.: kernels[0] -> q_kernel, kernels[1] -> svm_kernel, kernels[2] -> w_kernel/predict_kernel
     devices_ = detail::create_command_queues<real_type>(contexts_, used_target, kernel_sources, kernel_names, print_info_);
@@ -128,6 +128,17 @@ csvm<T>::csvm(const parameter<T> &params) :
     // sanity checks for the number of OpenCL kernels
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 3; }),
                   "Every command queue must have exactly three associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::q_kernel) == 1; }),
+                  "The q_kernel device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::svm_kernel) == 1; }),
+                  "The q_kernel device kernel is missing!");
+    if (kernel_ == kernel_type::linear) {
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
+                      "The w_kernel device kernel is missing!");
+    } else {
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::predict_kernel) == 1; }),
+                      "The predict_kernel device kernel is missing!");
+    }
 }
 
 template <typename T>
