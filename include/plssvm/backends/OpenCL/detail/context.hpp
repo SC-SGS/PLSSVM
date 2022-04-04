@@ -74,7 +74,7 @@ class context {
     /// The OpenCL context associated with the platform containing the respective devices.
     cl_context device_context{};
     /// The OpenCL platform associated with this context.
-    cl_platform_id platform;
+    cl_platform_id platform{};
     /// All devices associated with this context.
     std::vector<cl_device_id> devices{};
 };
