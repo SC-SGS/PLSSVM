@@ -236,7 +236,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // TODO: other OpenCL implementation
     // create source code hash
-    const std::string checksum = fmt::format("{0:x}", plssvm::detail::sha256{}(kernel_src_string));
+    const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
 
     // convert string to const char*
     const char *kernel_src_ptr = kernel_src_string.c_str();
