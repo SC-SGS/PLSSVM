@@ -11,6 +11,7 @@
 #include "plssvm/backend_types.hpp"                // plssvm::backend_type
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
+#include "plssvm/detail/sha256.hpp"                // plssvm::detail::sha256
 #include "plssvm/kernel_types.hpp"                 // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
@@ -22,6 +23,7 @@
 #include <algorithm>  // std::generate
 #include <cstddef>    // std::size_t
 #include <random>     // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <string>     // std::string
 #include <vector>     // std::vector
 
 #include <regex>
@@ -118,6 +120,39 @@ TEST(Base, arithmetic_type_name) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<float>(), "float");
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<double>(), "double");
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<long double>(), "long double");
+}
+
+TEST(Base, sha256) {
+    // https://www.di-mgt.com.au/sha_testvectors.html
+    // example SHA256 input strings
+    std::vector<std::string> inputs = {
+        "abc",
+        "",
+        "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+        "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu",
+        std::string(1000000, 'a')
+    };
+    // corresponding SHA256 output strings
+    std::vector<std::string> correct_outputs = {
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1",
+        "cf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1",
+        "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
+    };
+
+    // check if input and output matches
+    EXPECT_EQ(inputs.size(), correct_outputs.size());
+
+    // create sha265 hasher instance and check for correct outputs
+    plssvm::detail::sha256 hasher{};
+    for (std::vector<std::string>::size_type i = 0; i < inputs.size(); ++i) {
+        const std::string sha = hasher(inputs[i]);
+        // check sha256 output size (in hex format)
+        EXPECT_EQ(sha.size(), 64);
+        // check sha256 string for correctness
+        EXPECT_EQ(sha, correct_outputs[i]) << "input: " << inputs[i] << ", output: " << sha << ", correct output: " << correct_outputs[i];
+    }
 }
 
 #if defined(PLSSVM_ENABLE_ASSERTS)
