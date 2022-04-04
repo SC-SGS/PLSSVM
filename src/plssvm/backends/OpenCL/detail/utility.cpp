@@ -15,6 +15,7 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
@@ -233,9 +234,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
-    // TODO: change to something more robust than std::hash
+    // TODO: other OpenCL implementation
     // create source code hash
-    const std::string checksum = fmt::format("{0:x}", std::hash<std::string>{}(kernel_src_string));
+    const std::string checksum = fmt::format("{0:x}", plssvm::detail::sha256{}(kernel_src_string));
 
     // convert string to const char*
     const char *kernel_src_ptr = kernel_src_string.c_str();
