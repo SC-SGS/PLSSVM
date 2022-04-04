@@ -55,6 +55,10 @@ target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DELIM='${PLSSVM_OPENCL_KERNEL_SOURCES_DELIM}')
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DIRECTORY="${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/")
 
+# set OpenCL library path
+# this path is added to the kernel source string which in turn would fail the checksum check if a different OpenCL implementation is used then was used for caching the binaries
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_OPENCL_LIBRARY_PATH="${OpenCL_LIBRARY}")
+
 # set OpenCL target version
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)
 

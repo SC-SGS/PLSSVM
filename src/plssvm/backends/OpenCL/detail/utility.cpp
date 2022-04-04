@@ -227,6 +227,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         kernel_src_string += source;
     }
 
+    // add used OpenCL library dir to kernel source string to detect a changing OpenCL implementation during checksum calculation
+    kernel_src_string.append("\n// " PLSSVM_OPENCL_BACKEND_OPENCL_LIBRARY_PATH);
+
     // replace types
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
     ::plssvm::detail::replace_all(kernel_src_string, "kernel_index_type", ::plssvm::detail::arithmetic_type_name<::plssvm::kernel_index_type>());
@@ -234,7 +237,6 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
-    // TODO: other OpenCL implementation, thread safe?
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
 
