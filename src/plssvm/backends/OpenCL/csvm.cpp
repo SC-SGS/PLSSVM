@@ -94,10 +94,9 @@ csvm<T>::csvm(const parameter<T> &params) :
 
     // get kernel names
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel_);
-    const std::vector<std::string> kernel_sources = { "detail/atomics.cl", "q_kernel.cl", "svm_kernel.cl", "predict_kernel.cl" };  // TODO: via CMake?
     // the kernel order in the respective command_queue is the same as the other of the provided kernel names
     // i.e.: kernels[0] -> q_kernel, kernels[1] -> svm_kernel, kernels[2] -> w_kernel/predict_kernel
-    devices_ = detail::create_command_queues<real_type>(contexts_, used_target, kernel_sources, kernel_names, print_info_);
+    devices_ = detail::create_command_queues<real_type>(contexts_, used_target, kernel_names, print_info_);
 
     auto jit_end_time = std::chrono::steady_clock::now();
     if (print_info_) {

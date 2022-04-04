@@ -198,7 +198,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
 }
 
 template <typename real_type>
-std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::string> &kernel_sources, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names, const bool print_info) {
+std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names, const bool print_info) {
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
         std::size_t log_size;
@@ -217,10 +217,10 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // read kernel source files and create a single source string
     std::string kernel_src_string;
-    for (const std::string &file_name : kernel_sources) {
+    for (const std::string_view file_name : ::plssvm::detail::split(PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES, PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DELIM)) {
         // read file
-        std::ifstream in{ fmt::format("{}{}", PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, file_name) };
-        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({}{})", PLSSVM_OPENCL_BACKEND_KERNEL_FILE_DIRECTORY, file_name));
+        std::ifstream in{ fmt::format("{}{}", PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DIRECTORY, file_name) };
+        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({}{})", PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DIRECTORY, file_name));
         std::string source{ (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>() };
 
         // append source to full source string
@@ -234,7 +234,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
-    // TODO: other OpenCL implementation
+    // TODO: other OpenCL implementation, thread safe?
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
 
@@ -414,7 +414,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     return queues;
 }
 
-template std::vector<command_queue> create_command_queues<float>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
-template std::vector<command_queue> create_command_queues<double>(const std::vector<context> &, const target_platform, const std::vector<std::string> &, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
+template std::vector<command_queue> create_command_queues<float>(const std::vector<context> &, const target_platform, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
+template std::vector<command_queue> create_command_queues<double>(const std::vector<context> &, const target_platform, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
 
 }  // namespace plssvm::opencl::detail
