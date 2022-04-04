@@ -16,7 +16,9 @@
 
 #include <string>  // std::string
 
-namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
+namespace plssvm {
+
+namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
 
 /**
  * @brief Exception type thrown if a problem with the SYCL backend occurs.
@@ -31,4 +33,5 @@ class backend_exception : public exception {
     explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
-}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
+}  // namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
+}  // namespace plssvm
