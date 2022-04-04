@@ -9,7 +9,6 @@
 #include "plssvm/detail/sha256.hpp"
 
 #include <array>    // std::array
-#include <cstddef>  // std::size_t
 #include <cstdint>  // std::uint32_t, std::uint64_t
 #include <limits>   // std::numeric_limits::digits
 #include <string>   // std::string
@@ -29,13 +28,13 @@ std::string sha256::operator()(std::string input) {
     const std::uint64_t L_bits = L * 8;
 
     // append a single '1' byte
-    input.append(1, 0x80);
+    input.append(1, static_cast<char>(0x80));
 
     // append K '0' byte, where K is the minimum number >= 0 such that (L + 1 + K + 8) is a multiple of 512 / 8 = 64
     const std::uint32_t K = CHUNK_SIZE - (L + 1 + 8) % CHUNK_SIZE;
     input.resize(L + 1 + K + 8);
 
-    unsigned char *input_unsigned_ptr = reinterpret_cast<unsigned char *>(input.data());
+    auto *input_unsigned_ptr = reinterpret_cast<unsigned char *>(input.data());
 
     // append L as a 8-byte big-endian integer, making the total post-processed length a multiple of 64 byte
     // such that the bits in the message are: <original message of length L> 1 <K zeros> <L as 8 byte integer> , (the number of bytes will be a multiple of 64)
@@ -44,7 +43,7 @@ std::string sha256::operator()(std::string input) {
     // break message into 512-bit chunks
     for (std::string::size_type chunk = 0; chunk < input.size() / CHUNK_SIZE; ++chunk) {
         // create a 64-entry message schedule array w[0..63] of 32-bit words
-        std::array<std::uint32_t, 64> w;
+        std::array<std::uint32_t, 64> w{};
         // copy chunk into first 16 words w[0..15] of the message schedule array
         for (int i = 0; i < 16; ++i) {
             pack32(input_unsigned_ptr + chunk * CHUNK_SIZE + i * sizeof(std::uint32_t), w[i]);
