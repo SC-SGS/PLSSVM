@@ -83,10 +83,12 @@ void device_synchronize(const command_queue &queue);
 /**
  * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and
  *        the associated compute kernels with respect to the given source files and kernel function names.
- * @details Manually caches the OpenCL JIT compiled code in the current `$TEMP` directory. The cached binaries are reused if:
+ * @details Manually caches the OpenCL JIT compiled code in the current `$TEMP` directory (np special means to prevent race conditions are implemented).
+ *          The cached binaries are reused if:
  *          1. cached files already exist
  *          2. the number of cached files match the number of needed files
  *          3. the kernel source checksum matches (no changes in the source files since the last caching)
+ *
  * @tparam real_type the floating point type used to replace the placeholders in the kernel file
  * @param[in] contexts the used OpenCL contexts
  * @param[in] target the target platform
