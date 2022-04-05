@@ -8,19 +8,20 @@
 
 #include "plssvm/backends/OpenCL/detail/utility.hpp"
 
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
-#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
-#include "plssvm/constants.hpp"                             // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
-#include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
-#include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
-#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"         // plssvm::opencl::detail::command_queue
+#include "plssvm/backends/OpenCL/detail/context.hpp"               // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/detail/error_code.hpp"            // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"                // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
+#include "plssvm/backends/OpenCL/detail/kernel_source_string.hpp"  // plssvm::opencl::detail::kernel_src_string
+#include "plssvm/backends/OpenCL/exceptions.hpp"                   // plssvm::opencl::backend_exception
+#include "plssvm/constants.hpp"                                    // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/detail/arithmetic_type_name.hpp"                  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/sha256.hpp"                                // plssvm::detail::sha256
+#include "plssvm/detail/string_conversion.hpp"                     // plssvm::detail::extract_first_integer_from_string
+#include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
+#include "plssvm/detail/utility.hpp"                               // plssvm::detail::erase_if
+#include "plssvm/exceptions/exceptions.hpp"                        // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
+#include "plssvm/target_platforms.hpp"                             // plssvm::target_platform
 
 #include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
                           // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
@@ -215,25 +216,12 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     error_code err, err_bin;
 
-    // read kernel source files and create a single source string
-    std::string kernel_src_string;
-    for (const std::string_view file_name : ::plssvm::detail::split(PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES, PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DELIM)) {
-        // read file
-        std::ifstream in{ fmt::format("{}{}", PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DIRECTORY, file_name) };
-        PLSSVM_ASSERT(in.good(), fmt::format("couldn't open kernel source file ({}{})", PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DIRECTORY, file_name));
-        std::string source{ (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>() };
+    // use the `kernel_src_string` provided in the kernel_source_string.hpp header
 
-        // append source to full source string
-        kernel_src_string += source;
-    }
-
-    // add used OpenCL library dir to kernel source string to detect a changing OpenCL implementation during checksum calculation
-    kernel_src_string.append("\n// " PLSSVM_OPENCL_BACKEND_OPENCL_LIBRARY_PATH);
-
-    // replace types
+    // replace types in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
     ::plssvm::detail::replace_all(kernel_src_string, "kernel_index_type", ::plssvm::detail::arithmetic_type_name<::plssvm::kernel_index_type>());
-    // replace constants
+    // replace constants in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 

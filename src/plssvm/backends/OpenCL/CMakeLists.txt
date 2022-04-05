@@ -43,21 +43,27 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE
 
 # set kernel files
 set(PLSSVM_OPENCL_KERNEL_SOURCES
-    detail/atomics.cl
-    q_kernel.cl
-    svm_kernel.cl
-    predict_kernel.cl
+    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/detail/atomics.cl
+    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/q_kernel.cl
+    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/svm_kernel.cl
+    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/predict_kernel.cl
 )
-set(PLSSVM_OPENCL_KERNEL_SOURCES_DELIM |)
 
-list(JOIN PLSSVM_OPENCL_KERNEL_SOURCES "${PLSSVM_OPENCL_KERNEL_SOURCES_DELIM}" PLSSVM_OPENCL_KERNEL_SOURCES_STRING)
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES="${PLSSVM_OPENCL_KERNEL_SOURCES_STRING}")
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DELIM='${PLSSVM_OPENCL_KERNEL_SOURCES_DELIM}')
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_KERNEL_SOURCES_DIRECTORY="${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/")
+# mark kernel source files as CMake configuration dependency to trigger a rebuild if the kernel sources change
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${PLSSVM_OPENCL_KERNEL_SOURCES})
 
-# set OpenCL library path
-# this path is added to the kernel source string which in turn would fail the checksum check if a different OpenCL implementation is used then was used for caching the binaries
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_OPENCL_LIBRARY_PATH="${OpenCL_LIBRARY}")
+# create single string containing all OpenCL kernel sources
+set(PLSSVM_OPENCL_KERNEL_SOURCE_STRING "")
+foreach(PLSSVM_OPENCL_KERNEL_SOURCE_FILE ${PLSSVM_OPENCL_KERNEL_SOURCES})
+    file(READ "${PLSSVM_OPENCL_KERNEL_SOURCE_FILE}" PLSSVM_OPENCL_KERNEL_SOURCE)
+    string(APPEND PLSSVM_OPENCL_KERNEL_SOURCE_STRING "${PLSSVM_OPENCL_KERNEL_SOURCE}")
+endforeach()
+string(APPEND PLSSVM_OPENCL_KERNEL_SOURCE_STRING "// ${OpenCL_LIBRARY}")
+
+# configure string with the assembled kernel sources
+message(STATUS "Generating the OpenCL kernel source string.")
+configure_file("${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/detail/kernel_source_string.hpp.in"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/detail/kernel_source_string.hpp" @ONLY)
 
 # set OpenCL target version
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)

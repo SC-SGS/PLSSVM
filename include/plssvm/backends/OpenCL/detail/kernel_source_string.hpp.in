@@ -1,0 +1,23 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief File containing a single std::string which is propagated with all OpenCL kernels during CMake configuration.
+ */
+
+#pragma once
+
+#include <string>  // std::string
+
+namespace plssvm::opencl::detail {
+
+/// An std::string containing all OpenCL kernel sources. Created and configured during CMake configuration.
+std::string kernel_src_string = R"(
+@PLSSVM_OPENCL_KERNEL_SOURCE_STRING@;
+)";
+
+}
