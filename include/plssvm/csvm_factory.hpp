@@ -32,12 +32,12 @@
     #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    #include "plssvm/backends/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
-#endif
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    #include "plssvm/backends/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm
-#endif
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+        #include "plssvm/backends/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
+    #endif
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+        #include "plssvm/backends/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm
+    #endif
 #endif
 
 namespace plssvm {
@@ -52,6 +52,11 @@ namespace plssvm {
 template <typename T>
 [[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
     switch (params.backend) {
+        case backend_type::automatic: {
+            parameter<T> new_params{ params };
+            new_params.backend = determine_default_backend();
+            return make_csvm(new_params);
+        }
         case backend_type::openmp:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
             return std::make_unique<openmp::csvm<T>>(params);
@@ -86,17 +91,17 @@ template <typename T>
                 case sycl::implementation_type::automatic:
                     return std::make_unique<PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION::csvm<T>>(params);
                 case sycl::implementation_type::dpcpp:
-#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
                     return std::make_unique<dpcpp::csvm<T>>(params);
-#else
+    #else
                     throw unsupported_backend_exception{ "No SYCL backend using DPC++ available!" };
-#endif
+    #endif
                 case sycl::implementation_type::hipsycl:
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
                     return std::make_unique<hipsycl::csvm<T>>(params);
-#else
+    #else
                     throw unsupported_backend_exception{ "No SYCL backend using hipSYCL available!" };
-#endif
+    #endif
             }
 #else
             throw unsupported_backend_exception{ "No SYCL backend available!" };

@@ -26,7 +26,7 @@
 namespace plssvm {
 
 namespace sycl {
-    using namespace ::plssvm::sycl_generic;
+using namespace ::plssvm::sycl_generic;
 }
 
 /**
@@ -192,8 +192,8 @@ class parameter {
     real_type epsilon = static_cast<real_type>(0.001);
     /// If `true` additional information (e.g. timings) will be printed during execution.
     bool print_info = true;
-    /// The used backend: OpenMP, OpenCL, CUDA, or SYCL.
-    backend_type backend = backend_type::openmp;
+    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
+    backend_type backend = backend_type::automatic;
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
     target_platform target = target_platform::automatic;
 

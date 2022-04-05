@@ -20,6 +20,8 @@ namespace plssvm {
  * @brief Enum class for all possible backend types.
  */
 enum class backend_type {
+    /** The default backend dependent on the specified target platforms. */
+    automatic,
     /** [OpenMP](https://www.openmp.org/) to target CPUs only. */
     openmp,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
@@ -38,6 +40,12 @@ enum class backend_type {
  * @return the available backends (`[[nodiscard]]`)
  */
 [[nodiscard]] std::vector<backend_type> list_available_backends();
+
+/**
+ * @brief Returns the default backend used given the specified target platforms during the CMake configuration.
+ * @return the default backend (`[[nodiscard]]`)
+ */
+[[nodiscard]] backend_type determine_default_backend();
 
 /**
  * @brief Output the @p backend to the given output-stream @p out.
