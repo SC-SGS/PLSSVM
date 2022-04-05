@@ -14,8 +14,29 @@
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm {
+
+std::vector<backend_type> list_available_backends() {
+    std::vector<backend_type> available_backends;
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
+    available_backends.push_back(backend_type::openmp);
+#endif
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
+    available_backends.push_back(backend_type::cuda);
+#endif
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+    available_backends.push_back(backend_type::hip);
+#endif
+#if defined(PLSSVM_HAS_OPENCL_BACKEND)
+    available_backends.push_back(backend_type::opencl);
+#endif
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    available_backends.push_back(backend_type::sycl);
+#endif
+    return available_backends;
+}
 
 std::ostream &operator<<(std::ostream &out, const backend_type backend) {
     switch (backend) {

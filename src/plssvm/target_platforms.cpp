@@ -14,8 +14,27 @@
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm {
+
+std::vector<target_platform> list_available_target_platforms() {
+    std::vector<target_platform> available_targets;
+#if defined(PLSSVM_HAS_CPU_TARGET)
+    available_targets.push_back(target_platform::cpu);
+#endif
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    available_targets.push_back(target_platform::gpu_nvidia);
+#endif
+#if defined(PLSSVM_HAS_AMD_TARGET)
+    available_targets.push_back(target_platform::gpu_amd);
+#endif
+#if defined(PLSSVM_HAS_INTEL_TARGET)
+    available_targets.push_back(target_platform::gpu_intel)
+};
+#endif
+return available_targets;
+}
 
 std::ostream &operator<<(std::ostream &out, const target_platform target) {
     switch (target) {

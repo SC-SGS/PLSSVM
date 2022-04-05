@@ -12,6 +12,7 @@
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -30,6 +31,13 @@ enum class backend_type {
     /** [SYCL](https://www.khronos.org/sycl/) to target GPUs from different vendors and CPUs. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL). */
     sycl
 };
+
+/**
+ * @brief Return a list of all currently available backends.
+ * @details Only backends that where found during the CMake configuration are available.
+ * @return the available backends (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<backend_type> list_available_backends();
 
 /**
  * @brief Output the @p backend to the given output-stream @p out.

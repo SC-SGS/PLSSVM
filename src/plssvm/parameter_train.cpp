@@ -8,8 +8,10 @@
 
 #include "plssvm/parameter_train.hpp"
 
+#include "plssvm/backend_types.hpp"          // plssvm::list_available_backends
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
+#include "plssvm/target_platforms.hpp"       // plssvm::list_available_target_platforms
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -48,10 +50,12 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
             ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(coef0)>()->default_value(fmt::format("{}", coef0)))
             ("c,cost", "set the parameter C", cxxopts::value<decltype(cost)>()->default_value(fmt::format("{}", cost)))
             ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(epsilon)>()->default_value(fmt::format("{}", epsilon)))
-            ("b,backend", "choose the backend: openmp|cuda|hip|opencl|sycl", cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
-            ("p,target_platform", "choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel", cxxopts::value<decltype(target)>()->default_value(detail::as_lower_case(fmt::format("{}", target))))
+            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
+            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(detail::as_lower_case(fmt::format("{}", target))))
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
             ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_kernel_invocation_type))))
             ("sycl_implementation_type", "choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl", cxxopts::value<decltype(sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_implementation_type))))
+#endif
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
@@ -107,11 +111,13 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     // parse target_platform and cast the value to the respective enum
     target = result["target_platform"].as<decltype(target)>();
 
+#if defined(PLSSVM_HAS_SYCL_IMPLEMENTATION)
     // parse kernel invocation type when using SYCL as backend
     sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
     // parse SYCL implementation used in the SYCL backend
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+#endif
 
     // parse print info
     print_info = !print_info;

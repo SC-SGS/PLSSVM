@@ -46,7 +46,7 @@ target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<CXX_COMP
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set compile definition that the OpenMP backend is available
-target_compile_definitions(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_OPENMP_BACKEND)
 
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
