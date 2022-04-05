@@ -56,6 +56,7 @@ set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 
 # set target properties

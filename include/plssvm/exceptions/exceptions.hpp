@@ -104,4 +104,17 @@ class unsupported_kernel_type_exception : public exception {
     explicit unsupported_kernel_type_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
+/**
+ * @brief Exception type thrown if an error in the generic `plssvm::detail::gpu_device_ptr` occurred.
+ */
+class gpu_device_ptr_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit gpu_device_ptr_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
 }  // namespace plssvm
