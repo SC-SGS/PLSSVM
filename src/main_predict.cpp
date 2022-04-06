@@ -5,7 +5,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Main function compiled to the `svm-predict` executable used for predicting a data set using a previously computed C-SVM model.
+ * @brief Main function compiled to the `plssvm-predict` executable used for predicting a data set using a previously computed C-SVM model.
  */
 
 #include "plssvm/core.hpp"

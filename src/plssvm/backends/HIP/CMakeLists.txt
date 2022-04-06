@@ -51,7 +51,7 @@ set(PLSSVM_HIP_SOURCES
 )
 
 # set target properties
-set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME svm-HIP)
+set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME plssvm-HIP)
 add_library(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HIP_SOURCES})
 
 # https://gitlab.kitware.com/cmake/cmake/-/issues/23210

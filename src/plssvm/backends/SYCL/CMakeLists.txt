@@ -41,7 +41,7 @@ endfunction()
 
 
 # set target properties
-set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME svm-SYCL)
+set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME plssvm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE)
 
 # list of found SYCL implementations
@@ -79,7 +79,7 @@ if(hipSYCL_FOUND)
     configure_sycl("${PLSSVM_SYCL_BACKEND_INCLUDE_NAME}" PLSSVM_SYCL_HIPSYCL_SOURCES)
 
     # set target properties
-    set_local_and_parent(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME svm-SYCL_hipsycl)
+    set_local_and_parent(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME plssvm-SYCL_hipsycl)
     add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_HIPSYCL_SOURCES} ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp)
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME}")
 
@@ -140,7 +140,7 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     configure_sycl("${PLSSVM_SYCL_BACKEND_INCLUDE_NAME}" PLSSVM_SYCL_DPCPP_SOURCES)
 
     # set target properties
-    set_local_and_parent(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME svm-SYCL_dpcpp)
+    set_local_and_parent(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp)
     add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_DPCPP_SOURCES} ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp)
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
 

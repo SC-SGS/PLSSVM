@@ -44,10 +44,10 @@ set(PLSSVM_BASE_SOURCES
 )
 
 ## create base library: linked against all backend libraries
-set(PLSSVM_BASE_LIBRARY_NAME svm-base)
+set(PLSSVM_BASE_LIBRARY_NAME plssvm-base)
 add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
 ## create all library: one target against all backends are linked
-set(PLSSVM_ALL_LIBRARY_NAME svm-all)
+set(PLSSVM_ALL_LIBRARY_NAME plssvm-all)
 add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
 
 ## create list of targets to install
@@ -177,10 +177,10 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 ##                                                 create executables                                                 ##
 ########################################################################################################################
 ## create train executable
-set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
+set(PLSSVM_EXECUTABLE_TRAIN_NAME plssvm-train)
 add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_train.cpp)
 ## create predict executable
-set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
+set(PLSSVM_EXECUTABLE_PREDICT_NAME plssvm-predict)
 add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
 
 ## append executables to installed targets
@@ -390,9 +390,9 @@ if(DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
 endif()
 
 ## change executable floating points from double precision to single precision
-option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the svm-train and svm-predict executables with single precision instead of double precision." OFF)
+option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the ${PLSSVM_EXECUTABLE_TRAIN_NAME} and ${PLSSVM_EXECUTABLE_PREDICT_NAME} executables with single precision instead of double precision." OFF)
 if(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
-    message(STATUS "Using single precision floating point numbers for svm-train and svm-predict.")
+    message(STATUS "Using single precision floating point numbers for ${PLSSVM_EXECUTABLE_TRAIN_NAME} and ${PLSSVM_EXECUTABLE_PREDICT_NAME}.")
     target_compile_definitions(${PLSSVM_EXECUTABLE_TRAIN_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
     target_compile_definitions(${PLSSVM_EXECUTABLE_PREDICT_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
 endif()

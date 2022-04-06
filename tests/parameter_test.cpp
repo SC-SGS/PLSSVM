@@ -701,7 +701,7 @@ TYPED_TEST(ParameterTrain, parse_filename) {
 // check whether the command line parsing for plssvm::parameter_train<T> is correct
 TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
     // used command line parameters
-    std::vector<std::string> argv_vec = { "./svm-train", "--backend", "cuda", "--target_platform", "gpu_nvidia", "-t", "1", "-d", "5", "--gamma", "3.1415", "-r", "0.42", "--cost", "1.89", "-e", "0.00001", "-q", "--input", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    std::vector<std::string> argv_vec = { "./plssvm-train", "--backend", "cuda", "--target_platform", "gpu_nvidia", "-t", "1", "-d", "5", "--gamma", "3.1415", "-r", "0.42", "--cost", "1.89", "-e", "0.00001", "-q", "--input", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
     std::vector<char *> argv(argv_vec.size());
     for (std::size_t i = 0; i < argv.size(); ++i) {
         argv[i] = argv_vec[i].data();
@@ -777,7 +777,7 @@ TYPED_TEST(ParameterPredict, parse_filename) {
 TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
     // used command line parameters
 
-    std::vector<std::string> argv_vec = { "./svm-predict", "--backend", "opencl", "--target_platform", "cpu", "--test", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm", "--model", PLSSVM_TEST_PATH "/data/models/5x4.libsvm.model" };
+    std::vector<std::string> argv_vec = { "./plssvm-predict", "--backend", "opencl", "--target_platform", "cpu", "--test", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm", "--model", PLSSVM_TEST_PATH "/data/models/5x4.libsvm.model" };
     std::vector<char *> argv(argv_vec.size());
     for (std::size_t i = 0; i < argv.size(); ++i) {
         argv[i] = argv_vec[i].data();

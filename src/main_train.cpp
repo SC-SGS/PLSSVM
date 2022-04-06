@@ -5,7 +5,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Main function compiled to the `svm-train` executable used for training a C-SVM model.
+ * @brief Main function compiled to the `plssvm-train` executable used for training a C-SVM model.
  */
 
 #include "plssvm/core.hpp"

@@ -172,7 +172,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `svm-train` and `svm-predict` executables
+- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `plssvm-train` and `plssvm-preidct` executables
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
@@ -275,10 +275,10 @@ python3 generate_data.py --ouput data_file --format libsvm --problem blobs --sam
 ### Training
 
 ```bash
-./svm-train --help
+./plssvm-train --help
 LS-SVM with multiple (GPU-)backends
 Usage:
-  ./svm-train [OPTION...] training_set_file [model_file]
+  ./plssvm-train [OPTION...] training_set_file [model_file]
 
   -t, --kernel_type arg         set type of kernel function. 
                                          0 -- linear: u'*v
@@ -308,19 +308,19 @@ For example, if CUDA was not available during the build step, it will not show u
 The most minimal example invocation is:
 
 ```bash
-./svm-train /path/to/data_file
+./plssvm-train /path/to/data_file
 ```
 
 An example invocation using the CUDA backend could look like:
 
 ```bash
-./svm-train --backend cuda --input /path/to/data_file
+./plssvm-train --backend cuda --input /path/to/data_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
+./plssvm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
 The `--backend=automatic` option works as follows:
@@ -346,10 +346,10 @@ If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation
 ### Predicting
 
 ```bash
-./svm-predict --help
+./plssvm-preidct --help
 LS-SVM with multiple (GPU-)backends
 Usage:
-  ./svm-predict [OPTION...] test_file model_file [output_file]
+  ./plssvm-preidct [OPTION...] test_file model_file [output_file]
 
   -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
@@ -365,16 +365,16 @@ Usage:
 An example invocation could look like:
 
 ```bash
-./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
+./plssvm-preidct --backend cuda --test /path/to/test_file --model /path/to/model_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+./plssvm-preidct --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
-The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./svm-train`) case.
+The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
 
 ## Example code for usage as library
 
@@ -433,7 +433,7 @@ find_package(plssvm CONFIG REQUIRED)
 add_executable(prog main.cpp)
 
 target_compile_features(prog PUBLIC cxx_std_17)
-target_link_libraries(prog PUBLIC plssvm::svm-all)
+target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 ```
 
 ## License
