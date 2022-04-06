@@ -55,7 +55,7 @@ backend_type determine_default_backend() {
     using decision_order_type = std::pair<target_platform, std::vector<backend_type>>;
 
     std::array<decision_order_type, 4> decision_order = {
-        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::opencl, backend_type::sycl } },  // TODO: HIP?
+        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl } },
         decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl } },
         decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl } },
         decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp } }
@@ -70,7 +70,7 @@ backend_type determine_default_backend() {
             }
         }
     }
-    throw plssvm::unsupported_backend_exception{ "Unreachable!" };  // TODO: ?!
+    throw plssvm::unsupported_backend_exception{ "Unreachable: one target platform and backend combination must exist!" };
 }
 
 std::ostream &operator<<(std::ostream &out, const backend_type backend) {
