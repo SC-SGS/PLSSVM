@@ -289,7 +289,7 @@ Usage:
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
-  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
+  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
@@ -300,6 +300,15 @@ Usage:
       --input training_set_file
                                 
       --model model_file 
+```
+
+The help message only print options available based on the CMake invocation. 
+For example, if CUDA was not available during the build step, it will not show up as possible backend in the description of the `--backend` option.
+
+The most minimal example invocation is:
+
+```bash
+./svm-train /path/to/data_file
 ```
 
 An example invocation using the CUDA backend could look like:
@@ -314,7 +323,16 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 ./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
-The `--target_platform=automatic` flag works for the different backends as follows:
+The `--backend=automatic` option works as follows:
+
+- if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl`
+- otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl`
+- otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp`
+
+Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
+
+The `--target_platform=automatic` option works for the different backends as follows:
 
 - `OpenMP`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
@@ -333,7 +351,7 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./svm-predict [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
+  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
