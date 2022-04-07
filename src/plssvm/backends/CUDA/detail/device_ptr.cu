@@ -20,7 +20,7 @@
 namespace plssvm::cuda::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, const int device) :
+device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
     base_type{ device, size } {
     if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };

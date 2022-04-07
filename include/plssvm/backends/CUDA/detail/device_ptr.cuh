@@ -52,7 +52,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      * @param[in] device the associated CUDA device
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(size_type size, int device = 0);
+    explicit device_ptr(size_type size, queue_type device = 0);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
