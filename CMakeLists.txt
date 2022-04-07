@@ -433,20 +433,6 @@ if(PLSSVM_ENABLE_TESTING)
 endif()
 
 
-
-########################################################################################################################
-##                                        enable timing generation via a script                                       ##
-########################################################################################################################
-option(PLSSVM_GENERATE_TIMING_SCRIPT "Generate a timing script used for performance measurement." OFF)
-if(PLSSVM_GENERATE_TIMING_SCRIPT)
-    configure_file(
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-            ${CMAKE_BINARY_DIR}/time.sh
-            @ONLY
-    )
-endif()
-
-
 ########################################################################################################################
 ##                                            print short (backend) summary                                           ##
 ########################################################################################################################
