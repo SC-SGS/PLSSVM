@@ -49,9 +49,7 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::w_;
 
   public:
-    /**
-     * @copydoc plssvm::csvm::predict(const std::vector<real_type>&)
-     */
+    // Be able to use overloaded base class functions.
     using base_type::predict;
 
     using typename base_type::real_type;
