@@ -386,7 +386,7 @@ if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
         # add target definition
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
     else()
-        message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
+        message(SEND_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
     endif()
 endif()
 
@@ -400,7 +400,7 @@ if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
         # add target definition
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
     else()
-        message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
+        message(SEND_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
     endif()
 endif()
 
@@ -414,7 +414,7 @@ if(DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
         # add target definition
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_OPENMP_BLOCK_SIZE=${PLSSVM_OPENMP_BLOCK_SIZE})
     else()
-        message(FATAL_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
+        message(SEND_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
     endif()
 endif()
 
