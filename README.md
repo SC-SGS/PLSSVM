@@ -10,7 +10,7 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
 
 However, normal SVMs suffer in their potential parallelizability.
-Determining the hyperplane boils down to solving a konvex quadratic problem.
+Determining the hyperplane boils down to solving a convex quadratic problem.
 For this, most SVM implementations use Sequential Minimal Optimization (SMO), an inherently sequential algorithm.
 The basic idea of this algorithm is that it takes a pair of data points and calculates the hyperplane between them.
 Afterward, two new data points are selected and the existing hyperplane is adjusted accordingly.
@@ -89,7 +89,7 @@ cmake --build .
 
 #### Target Platform Selection
 
-The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
+The CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
 
 - `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
@@ -137,6 +137,10 @@ If the architectural information for the requested GPU could not be retrieved, o
 - for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
 - for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
 - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
+
+If the `PLSSVM_TARGET_PLATFORMS` options isn't set during the CMake invocation and isn't set as environment variable, 
+CMake tries to execute the above script and uses its output to automatically set the `PLSSVM_TARGET_PLATFORMS`.
+This, however, requires the Python packages to be installed.
 
 #### Optional CMake Options
 

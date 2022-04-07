@@ -341,4 +341,4 @@ if intel_num_gpus > 0:
 
 
 cond_print("Possible -DPLSSVM_TARGET_PLATFORMS entries:")
-print("\"{}\"".format(plssvm_target_platforms))
+print("{}".format(plssvm_target_platforms))
