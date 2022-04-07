@@ -140,7 +140,7 @@ template <typename T>
 csvm<T>::~csvm() {
     try {
         // be sure that all operations on the OpenCL devices have finished before destruction
-        for (const detail::command_queue &queue : devices_) {
+        for (const queue_type &queue : devices_) {
             detail::device_synchronize(queue);
         }
     } catch (const plssvm::exception &e) {

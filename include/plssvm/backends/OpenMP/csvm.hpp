@@ -53,8 +53,8 @@ class csvm : public ::plssvm::csvm<T> {
      * @copydoc plssvm::csvm::predict(const std::vector<real_type>&)
      */
     using base_type::predict;
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
+
+    using typename base_type::real_type;
 
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.

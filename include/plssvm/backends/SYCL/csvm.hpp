@@ -67,12 +67,9 @@ template <typename T>
     using base_type::num_rows_;
 
   public:
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
-    /// The type of the SYCL device pointer.
-    using device_ptr_type = typename base_type::device_ptr_type;
-    /// The type of the SYCL device queue.
-    using queue_type = typename base_type::queue_type;
+    using typename base_type::real_type;
+    using typename base_type::device_ptr_type;
+    using typename base_type::queue_type;
 
     /**
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.

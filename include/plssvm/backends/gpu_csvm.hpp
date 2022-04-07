@@ -62,8 +62,8 @@ class gpu_csvm : public csvm<T> {
      * @copydoc plssvm::csvm::predict(const std::vector<real_type>&)
      */
     using base_type::predict;
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
+
+    using typename base_type::real_type;
     /// The type of the device pointer (dependent on the used backend).
     using device_ptr_type = device_ptr_t;
     /// The type of the device queue (dependent on the used backend).
