@@ -13,6 +13,7 @@
 
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm::detail {
 
@@ -115,5 +116,13 @@ std::string &to_upper_case(std::string &str);
  * @return the transformed string (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string as_upper_case(std::string_view str);
+
+/**
+ * @brief Split the string @p str at the positions with delimiter @p delim and return the sub-strings.
+ * @param[in] str the string to split
+ * @param[in] delim the split delimiter
+ * @return the split sub-strings (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<std::string_view> split(std::string_view str, char delim);
 
 }  // namespace plssvm::detail

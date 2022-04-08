@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"
 
-#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
+#include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
 #include <memory>   // std::addressof
 #include <utility>  // std::exchange
