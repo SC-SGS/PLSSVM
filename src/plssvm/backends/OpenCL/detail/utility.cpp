@@ -216,7 +216,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     error_code err, err_bin;
 
-    // use the `kernel_src_string` provided in the kernel_source_string.hpp header
+    // use the `raw_kernel_src_string` provided in the kernel_source_string.hpp header
+    std::string kernel_src_string{ raw_kernel_src_string };
 
     // replace types in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());

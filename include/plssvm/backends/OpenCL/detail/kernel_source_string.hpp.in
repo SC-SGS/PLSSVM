@@ -16,7 +16,7 @@
 namespace plssvm::opencl::detail {
 
 /// An std::string containing all OpenCL kernel sources. Created and configured during CMake configuration.
-std::string kernel_src_string = R"(
+constexpr const char* raw_kernel_src_string = R"(
 @PLSSVM_OPENCL_KERNEL_SOURCE_STRING@;
 )";
 
