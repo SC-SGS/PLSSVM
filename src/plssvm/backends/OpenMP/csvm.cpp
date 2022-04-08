@@ -90,7 +90,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
 
     std::vector<real_type> r(b);
 
-    // solve: r = b - (A * alpha_)
+    // r = A + alpha_ (r = b - Ax)
     run_device_kernel(q, r, alpha, *data_ptr_, -1);
 
     // delta = r.T * r
@@ -117,7 +117,7 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
         }
         iteration_start_time = std::chrono::steady_clock::now();
 
-        // Ad = A * d
+        // Ad = A * d (q = A * d)
         std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
         run_device_kernel(q, Ad, d, *data_ptr_, 1);
 
@@ -127,11 +127,16 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
         // (x = x + alpha * d)
         alpha += alpha_cd * d;
 
-        // (r = b - A * x)
-        // r = b
-        r = b;
-        // r -= A * x
-        run_device_kernel(q, r, alpha, *data_ptr_, -1);
+        if (run % 50 == 49) {
+            // (r = b - A * x)
+            // r = b
+            r = b;
+            // r -= A * x
+            run_device_kernel(q, r, alpha, *data_ptr_, -1);
+        } else {
+            // r -= alpha_cd * Ad (r = r - alpha * q)
+            r -= alpha_cd * Ad;
+        }
 
         // (delta = r^T * r)
         const real_type delta_old = delta;
