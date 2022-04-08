@@ -29,6 +29,7 @@ configure_file(
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
@@ -39,7 +40,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
 )
 
 ## create base library: linked against all backend libraries
@@ -430,20 +431,6 @@ option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
-endif()
-
-
-
-########################################################################################################################
-##                                        enable timing generation via a script                                       ##
-########################################################################################################################
-option(PLSSVM_GENERATE_TIMING_SCRIPT "Generate a timing script used for performance measurement." OFF)
-if(PLSSVM_GENERATE_TIMING_SCRIPT)
-    configure_file(
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-            ${CMAKE_BINARY_DIR}/time.sh
-            @ONLY
-    )
 endif()
 
 

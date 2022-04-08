@@ -80,6 +80,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, c
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
+     * @note Internally casts the `int` to `value_type`.
      */
     void memset(int value, size_type pos, size_type count) override;
     /**

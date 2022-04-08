@@ -2,7 +2,7 @@
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     // used for explicitly instantiating the OpenCL backend
-    #include "CL/cl.h"
+    #include "CL/cl.h"                                          // cl_mem
     #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)

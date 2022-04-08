@@ -26,7 +26,9 @@ template <typename T>
 device_ptr<T>::device_ptr(const size_type size, command_queue &queue) :
     base_type{ &queue, size } {
     error_code err;
-    data_ = clCreateBuffer(queue_->context, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
+    cl_context cont;
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr));
+    data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err);
 }
 
@@ -46,7 +48,8 @@ void device_ptr<T>::memset(const int value, const size_type pos, const size_type
     }
     const size_type rcount = std::min(count, size_ - pos);
     error_code err;
-    err = clEnqueueFillBuffer(queue_->queue, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
+    const value_type correct_value = static_cast<value_type>(value);
+    err = clEnqueueFillBuffer(queue_->queue, data_, &correct_value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
     PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
 }

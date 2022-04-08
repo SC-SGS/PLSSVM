@@ -35,8 +35,6 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [OpenCL](https://www.khronos.org/opencl/)
 - [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the commits [faaba28](https://github.com/intel/llvm/tree/faaba28541138d7ad39a7fa85fa85b863560b45f) and [6962942](https://github.com/illuhad/hipSYCL/tree/6962942c430a7b221eb167b4272c29cf397cda06) respectivelly)
 
-// tested with commit!
-
 ## Getting Started
 
 ### Dependencies
@@ -178,7 +176,6 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
-- `PLSSVM_GENERATE_TIMING_SCRIPT=ON|OFF` (default: `OFF`): configure a timing script usable for performance measurement
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
