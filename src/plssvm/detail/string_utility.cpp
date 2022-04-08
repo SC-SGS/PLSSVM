@@ -12,6 +12,7 @@
 #include <cctype>       // std::tolower, std::toupper
 #include <string>       // std::char_traits, std::string
 #include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm::detail {
 
@@ -72,6 +73,19 @@ std::string as_upper_case(const std::string_view str) {
     std::string uppercase_str{ str };
     std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
     return uppercase_str;
+}
+
+std::vector<std::string_view> split(const std::string_view str, const char delim) {
+    std::vector<std::string_view> splitted;
+
+    std::string_view::size_type pos = 0;
+    std::string_view::size_type next = 0;
+    while (next != std::string_view::npos) {
+        next = str.find_first_of(delim, pos);
+        splitted.emplace_back(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos));
+        pos = next + 1;
+    }
+    return splitted;
 }
 
 }  // namespace plssvm::detail

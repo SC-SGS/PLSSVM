@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-
 #include "CL/cl.h"  // cl_mem
 
 #include <cstddef>      // std::size_t
@@ -50,7 +48,7 @@ class device_ptr {
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
      */
-    explicit device_ptr(size_type size, command_queue &queue);
+    explicit device_ptr(size_type size, cl_command_queue &queue);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.
@@ -130,14 +128,14 @@ class device_ptr {
      * @brief Return the command queue associated with the wrapped OpenCL device pointer.
      * @return the OpenCL context (`[[nodiscard]]`)
      */
-    [[nodiscard]] command_queue &queue() noexcept {
-        return *queue_;
+    [[nodiscard]] cl_command_queue &queue() noexcept {
+        return queue_;
     }
     /**
      * @copydoc device_ptr::queue()
      */
-    [[nodiscard]] const command_queue &queue() const noexcept {
-        return *queue_;
+    [[nodiscard]] const cl_command_queue &queue() const noexcept {
+        return queue_;
     }
 
     /**
@@ -216,7 +214,7 @@ class device_ptr {
     void memcpy_to_host(pointer buffer, size_type pos, size_type count) const;
 
   private:
-    command_queue *queue_{ nullptr };
+    cl_command_queue queue_;
     cl_mem data_{ nullptr };
     size_type size_{ 0 };
 };

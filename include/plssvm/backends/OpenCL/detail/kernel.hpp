@@ -11,15 +11,34 @@
 
 #pragma once
 
-#include "CL/cl.h"  // cl_kernel, clReleaseKernel
+#include "CL/cl.h"  // cl_kernel
 
 namespace plssvm::opencl::detail {
+
+/**
+ * @brief Enum class for all different OpenCL compute kernels.
+ * @details Used to distinguish kernels in the `plssvm::opencl::detail::command_queue` class.
+ */
+enum class compute_kernel_name {
+    /// The kernels to generate the `q` vector.
+    q_kernel,
+    /// The main C-SVM kernel.
+    svm_kernel,
+    /// The predict kernel for the linear kernel function.
+    w_kernel,
+    /// The predict kernels for the polynomial and rbf kernel functions.
+    predict_kernel
+};
 
 /**
  * @brief RAII wrapper class around a cl_kernel.
  */
 class kernel {
   public:
+    /**
+     * @brief Default construct empty kernel.
+     */
+    kernel() = default;
     /**
      * @brief Construct a new wrapper around the provided @p compute_kernel.
      * @param[in] compute_kernel the cl_kernel to wrap
