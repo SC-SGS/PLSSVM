@@ -226,6 +226,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
+    // append number of device to influence checksum calculation
+    kernel_src_string.append(fmt::format("\n// num_devices: {}", contexts[0].devices.size()));
+
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
 
@@ -236,24 +239,21 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
-    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}", target);
+    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}_{}", target, checksum);
 
     // potential reasons why OpenCL caching could fail
     enum class caching_status {
         success,
         error_no_cached_files,
         error_invalid_number_of_cached_files,
-        error_checksum_missmatch
     };
     // message associated with the failed caching reason
     const auto caching_status_to_string = [](const caching_status status) {
         switch (status) {
             case caching_status::error_no_cached_files:
-                return "no cached files exist";
+                return "no cached files exist (checksum missmatch)";
             case caching_status::error_invalid_number_of_cached_files:
                 return "invalid number of cached files";
-            case caching_status::error_checksum_missmatch:
-                return "checksum missmatch";
             default:
                 return "";
         }
@@ -273,22 +273,6 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // get files in directory
         if (static_cast<std::size_t>(std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size()) {
             use_cached_binaries = caching_status::error_invalid_number_of_cached_files;
-        }
-    }
-    // if the number of files is correct, check if the hashes match
-    if (use_cached_binaries == caching_status::success) {
-        // get directory iterator
-        auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
-        for (const std::filesystem::directory_entry &entry : dirIter) {
-            if (entry.is_regular_file()) {
-                // extract checksum
-                const std::string file_name = entry.path().filename();
-                const std::string file_checksum = file_name.substr(file_name.find_last_of('.') + 1);
-                if (file_checksum != checksum) {
-                    use_cached_binaries = caching_status::error_checksum_missmatch;
-                    break;
-                }
-            }
         }
     }
 
@@ -319,12 +303,10 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, contexts[0].devices.size() * sizeof(unsigned char *), binaries.data(), nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries");
 
-        // remove potential previously cached binaries
-        std::filesystem::remove_all(cache_dir_name);
         // write binaries to file
         std::filesystem::create_directories(cache_dir_name);
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
-            std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin.{}", i, checksum) };
+            std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
