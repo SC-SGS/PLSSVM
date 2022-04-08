@@ -50,7 +50,7 @@ void command_queue::add_kernel(compute_kernel_name name, kernel &&compute_kernel
 
 command_queue::~command_queue() {
     if (queue) {
-        clReleaseCommandQueue(queue);
+        PLSSVM_OPENCL_ERROR_CHECK(clReleaseCommandQueue(queue), "error releasing cl_command_queue");
     }
 }
 

@@ -8,6 +8,8 @@
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"
 
+#include "plssvm/backends/OpenCL/detail/utility.hpp"  // PLSSVM_OPENCL_ERROR_CHECK
+
 #include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
 #include <memory>   // std::addressof
@@ -30,7 +32,7 @@ kernel &kernel::operator=(kernel &&other) {
 
 kernel::~kernel() {
     if (compute_kernel) {
-        clReleaseKernel(compute_kernel);
+        PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error realising cl_kernel");
     }
 }
 
