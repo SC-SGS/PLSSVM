@@ -22,10 +22,10 @@
     #include <unistd.h>    // close
 #endif
 
+#include <filesystem>   // std::filesystem::file_size
 #include <fstream>      // std::ifstream
-#include <ios>          // std::ios, std::streamsize
+#include <ios>          // std::streamsize
 #include <iostream>     // std::cerr, std::endl
-#include <limits>       // std::numeric_limits
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
@@ -107,14 +107,8 @@ void file_reader::open_file(const std::string_view filename) {
         throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
     }
 
-    // touch all characters in file
-    f.ignore(std::numeric_limits<std::streamsize>::max());
-    // get number of visited characters
-    num_bytes_ = f.gcount();
-    // since ignore will have set eof
-    f.clear();
-    // jump to file start
-    f.seekg(0, std::ios_base::beg);
+    // get size of file
+    num_bytes_ = static_cast<std::streamsize>(std::filesystem::file_size(filename));
 
     if (num_bytes_ > 0) {
         // allocate the necessary buffer
