@@ -149,7 +149,7 @@ void csvm<T>::write_model(const std::string &model_name) {
                     ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:e} "), j + i, d[j + i]);
                 }
             }
-            output.append(buffer, ptr);
+            output.append(buffer, ptr - buffer);
         }
         output.push_back('\n');
     };
