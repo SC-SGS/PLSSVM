@@ -19,6 +19,7 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // make custom type formattable using operator>> overload
 #include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_FALSE, EXPECT_TRUE, EXPECT_LT, SUCCESS, FAIL
 
 #ifdef __unix__
