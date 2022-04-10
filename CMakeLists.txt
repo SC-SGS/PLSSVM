@@ -152,12 +152,13 @@ else()
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
-            GIT_TAG                 d141cdbeb0fb422a3fb7173b285fd38e0d1772dc
+            GIT_TAG                 b6f4ceaed0a0a24ccf575fab6c56dd50ccf6f1a9 # release 8.1.1
             GIT_SHALLOW             TRUE
 
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
             set(FMT_DOC OFF CACHE BOOL "" FORCE)
             set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+            set(FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
