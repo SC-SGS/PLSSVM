@@ -16,7 +16,9 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "fmt/chrono.h"   // format std::chrono
+#include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/os.h"       // fmt::output_file
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #ifdef _OPENMP
@@ -128,20 +130,28 @@ void csvm<T>::write_model(const std::string &model_name) {
     }
 
     // create model file
-    std::ofstream model{ model_name.data(), std::ios::out | std::ios::trunc };
-    model << libsvm_model_header;
+    auto model = fmt::output_file(model_name);
+    model.print("{}", libsvm_model_header);
 
     // format one output-line
-    auto format_libsvm_line = [](real_type a, const std::vector<real_type> &d) -> std::string {
-        std::string line;
-        line += fmt::format("{} ", a);
-        for (typename std::vector<real_type>::size_type j = 0; j < d.size(); ++j) {
-            if (d[j] != real_type{ 0.0 }) {
-                line += fmt::format("{}:{:e} ", j, d[j]);
+    auto format_libsvm_line = [](std::string &output, const real_type a, const std::vector<real_type> &d) {
+        static constexpr std::size_t BLOCK_SIZE = 64;
+        static constexpr std::size_t CHARS_PER_BLOCK = 128;
+        static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
+        static char buffer[BUFFER_SIZE];
+        #pragma omp threadprivate(buffer)
+
+        output.append(fmt::format(FMT_COMPILE("{} "), a));
+        for (typename std::vector<real_type>::size_type j = 0; j < d.size(); j += BLOCK_SIZE) {
+            char *ptr = buffer;
+            for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, d.size() - j); ++i) {
+                if (d[j + i] != real_type{ 0.0 }) {
+                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:e} "), j + i, d[j + i]);
+                }
             }
+            output.append(buffer, ptr);
         }
-        line.push_back('\n');
-        return line;
+        output.push_back('\n');
     };
 
     volatile int count = 0;
@@ -152,13 +162,13 @@ void csvm<T>::write_model(const std::string &model_name) {
         #pragma omp for nowait
         for (typename std::vector<real_type>::size_type i = 0; i < alpha_ptr_->size(); ++i) {
             if ((*value_ptr_)[i] > 0) {
-                out_pos += format_libsvm_line((*alpha_ptr_)[i], (*data_ptr_)[i]);
+                format_libsvm_line(out_pos, (*alpha_ptr_)[i], (*data_ptr_)[i]);
             }
         }
 
         #pragma omp critical
         {
-            model.write(out_pos.data(), static_cast<std::streamsize>(out_pos.size()));
+            model.print("{}", out_pos);
             count++;
             #pragma omp flush(count, model)
         }
@@ -168,7 +178,7 @@ void csvm<T>::write_model(const std::string &model_name) {
         #pragma omp for nowait
         for (typename std::vector<real_type>::size_type i = 0; i < alpha_ptr_->size(); ++i) {
             if ((*value_ptr_)[i] < 0) {
-                out_neg += format_libsvm_line((*alpha_ptr_)[i], (*data_ptr_)[i]);
+                format_libsvm_line(out_neg, (*alpha_ptr_)[i], (*data_ptr_)[i]);
             }
         }
 
@@ -181,7 +191,7 @@ void csvm<T>::write_model(const std::string &model_name) {
 #endif
 
         #pragma omp critical
-        model.write(out_neg.data(), static_cast<std::streamsize>(out_neg.size()));
+        model.print("{}", out_neg);
     }
 
     auto end_time = std::chrono::steady_clock::now();
