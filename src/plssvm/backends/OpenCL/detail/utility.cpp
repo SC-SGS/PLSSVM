@@ -32,11 +32,12 @@
 
 #include <algorithm>    // std::count_if
 #include <cstddef>      // std::size_t
-#include <cstdint>      // std::uintmax_t
-#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry, filesize}
+#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
 #include <fstream>      // std::ifstream, std::ofstream
 #include <functional>   // std::hash
+#include <ios>          // std::ios_base, std::streamsize
 #include <iterator>     // istreambuf_iterator
+#include <limits>       // std::numeric_limits
 #include <map>          // std::map
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -324,8 +325,16 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
             std::ifstream f{ file };
-            // get the number of bytes
-            const std::uintmax_t num_bytes = std::filesystem::file_size(file);
+
+            // touch all characters in file
+            f.ignore(std::numeric_limits<std::streamsize>::max());
+            // get number of visited characters
+            std::streamsize num_bytes = f.gcount();
+            // since ignore will have set eof
+            f.clear();
+            // jump to file start
+            f.seekg(0, std::ios_base::beg);
+
             // allocate the necessary buffer
             char *file_content = new char[num_bytes];
             // read the whole file in one go
