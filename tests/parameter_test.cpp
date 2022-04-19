@@ -81,7 +81,7 @@ TYPED_TEST(Parameter, default_constructor) {
     EXPECT_EQ(params.cost, real_type{ 1 });
     EXPECT_EQ(params.epsilon, real_type{ 0.001 });
     EXPECT_TRUE(params.print_info);
-    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(params.target, plssvm::target_platform::automatic);
 
     EXPECT_TRUE(params.input_filename.empty());
@@ -646,7 +646,7 @@ TYPED_TEST(Parameter, output_operator) {
                     "cost                        1\n"
                     "epsilon                     0.001\n"
                     "print_info                  true\n"
-                    "backend                     openmp\n"
+                    "backend                     automatic\n"
                     "target platform             automatic\n"
                     "SYCL kernel invocation type automatic\n"
                     "SYCL implementation type    automatic\n"
@@ -683,7 +683,7 @@ TYPED_TEST(ParameterTrain, parse_filename) {
     EXPECT_EQ(params.cost, real_type{ 1 });
     EXPECT_EQ(params.epsilon, real_type{ 0.001 });
     EXPECT_TRUE(params.print_info);
-    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(params.target, plssvm::target_platform::automatic);
 
     EXPECT_EQ(params.input_filename, PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
@@ -758,7 +758,7 @@ TYPED_TEST(ParameterPredict, parse_filename) {
     EXPECT_EQ(params.cost, real_type{ 1 });
     EXPECT_EQ(params.epsilon, real_type{ 0.001 });
     EXPECT_TRUE(params.print_info);
-    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(params.target, plssvm::target_platform::automatic);
 
     EXPECT_EQ(params.input_filename, PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
