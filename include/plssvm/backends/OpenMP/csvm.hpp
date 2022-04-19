@@ -49,10 +49,10 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type::w_;
 
   public:
-    // Be able to use overloaded base class functions.
+    // Be able to use the predict overload from the csvm base class.
     using base_type::predict;
-
-    using typename base_type::real_type;
+    /// The type of the data. Must be either `float` or `double`.
+    using real_type = typename base_type::real_type;
 
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.

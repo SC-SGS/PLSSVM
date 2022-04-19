@@ -11,27 +11,30 @@
 
 #pragma once
 
-#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clReleaseCommandQueue
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
+
+#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
+
+#include <map>  // std::map
 
 namespace plssvm::opencl::detail {
 
 /**
  * @brief RAII wrapper class around a cl_command_queue.
- * @details Also contains information about the associated cl_context and cl_device_id.
+ * @details Also contains the compiled kernels associated with the command queue.
  */
 class command_queue {
   public:
     /**
-     * @brief Empty default construct command queue.
+     * @brief Empty default construct a command queue.
      */
     command_queue() = default;
     /**
      * @brief Construct a command queue with the provided information.
      * @param[in] context the associated OpenCL cl_context
-     * @param[in] queue the OpenCL cl_command_queue to wrap
      * @param[in] device the associated OpenCL cl_device_id
      */
-    command_queue(cl_context context, cl_command_queue queue, cl_device_id device);
+    command_queue(cl_context context, cl_device_id device);
 
     /**
      * @brief Delete copy-constructor to make command_queue a move only type.
@@ -58,12 +61,28 @@ class command_queue {
      */
     ~command_queue();
 
-    /// The OpenCL context associated with the wrapped cl_command_queue.
-    cl_context context{};
+    /**
+     * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
+     * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
+     */
+    [[nodiscard]] operator cl_command_queue &() noexcept { return queue; }
+    /**
+     * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
+     * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
+     */
+    [[nodiscard]] operator const cl_command_queue &() const noexcept { return queue; }
+
+    /**
+     * @brief Add a new OpenCL @p compute_kernel used for @p name to this command queue.
+     * @param[in] name the name of the kernel that is to be added
+     * @param[in] compute_kernel the kernel to add
+     */
+    void add_kernel(compute_kernel_name name, kernel &&compute_kernel);
+
     /// The wrapped cl_command_queue.
     cl_command_queue queue{};
-    /// The OpenCL device associated with the wrapped cl_command_queue.
-    cl_device_id device{};
+    /// All OpenCL device kernel associated with the device corresponding to this command queue.
+    std::map<compute_kernel_name, kernel> kernels{};
 };
 
 }  // namespace plssvm::opencl::detail

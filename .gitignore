@@ -72,6 +72,8 @@ docs/*
 
 # auto-generated version header
 include/plssvm/version/version.hpp
+# auto-generated OpenCL kernel_src_string
+include/plssvm/backends/OpenCL/detail/kernel_source_string.hpp
 
 # data in test folder
 !tests/data/

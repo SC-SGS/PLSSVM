@@ -13,7 +13,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>        // std::fma, std::copysign
+#include <cmath>        // std::fma
 #include <type_traits>  // std::is_arithmetic_v
 #include <vector>       // std::vector
 
@@ -173,8 +173,7 @@ template <typename T>
  */
 template <typename T>
 [[nodiscard]] inline constexpr T sign(const T x) {
-    static_assert(std::is_arithmetic_v<T>, "The type T must be an arithmetic type!");
-    return x == T{ 0 } ? T{ -1 } : static_cast<T>(std::copysign(T{ 1 }, x));
+    return x > T{ 0 } ? T{ +1 } : T{ -1 };
 }
 
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION

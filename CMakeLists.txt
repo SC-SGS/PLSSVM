@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project("PLSSVM - Parallel Least Squares Support Vector Machine"
-        VERSION 1.1.1
+        VERSION 1.2.0
         LANGUAGES CXX
         DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
@@ -29,6 +29,7 @@ configure_file(
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
@@ -71,7 +72,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
-        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4061>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062>
         )
 ## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -152,12 +153,13 @@ else()
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
-            GIT_TAG                 d141cdbeb0fb422a3fb7173b285fd38e0d1772dc
+            GIT_TAG                 b6f4ceaed0a0a24ccf575fab6c56dd50ccf6f1a9 # release 8.1.1
             GIT_SHALLOW             TRUE
 
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
             set(FMT_DOC OFF CACHE BOOL "" FORCE)
             set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+            set(FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -460,20 +462,6 @@ option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if(PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
-endif()
-
-
-
-########################################################################################################################
-##                                        enable timing generation via a script                                       ##
-########################################################################################################################
-option(PLSSVM_GENERATE_TIMING_SCRIPT "Generate a timing script used for performance measurement." OFF)
-if(PLSSVM_GENERATE_TIMING_SCRIPT)
-    configure_file(
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-            ${CMAKE_BINARY_DIR}/time.sh
-            @ONLY
-    )
 endif()
 
 

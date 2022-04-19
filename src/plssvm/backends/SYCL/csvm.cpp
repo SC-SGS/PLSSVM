@@ -94,7 +94,7 @@ csvm<T>::csvm(const parameter<T> &params) :
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
-        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
+        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", used_target) };
     }
 
     // polynomial and rbf kernel currently only support single GPU execution

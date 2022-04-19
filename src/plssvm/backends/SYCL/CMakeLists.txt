@@ -6,6 +6,12 @@
 
 message(CHECK_START "Checking for SYCL backend")
 
+#explicitly set sources that must not be configured
+set(PLSSVM_SYCL_SHARED_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+)
+
 # explicitly set sources for configuration
 set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
@@ -80,7 +86,7 @@ if(hipSYCL_FOUND)
 
     # set target properties
     set_local_and_parent(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME plssvm-SYCL_hipsycl)
-    add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_HIPSYCL_SOURCES} ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp)
+    add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_HIPSYCL_SOURCES} ${PLSSVM_SYCL_SHARED_SOURCES})
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME}")
 
     # necessary target_*_directories if more than one SYCL implementation could be found
@@ -141,7 +147,7 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
 
     # set target properties
     set_local_and_parent(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp)
-    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_DPCPP_SOURCES} ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp)
+    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_DPCPP_SOURCES} ${PLSSVM_SYCL_SHARED_SOURCES})
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
 
     # necessary target_*_directories if more than one SYCL implementation could be found
