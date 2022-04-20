@@ -491,24 +491,31 @@ endif()
 ########################################################################################################################
 ##                                           add support for `make install`                                           ##
 ########################################################################################################################
+include(GNUInstallDirs)
 ## install all necessary library targets
 install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         EXPORT plssvm_Targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
-        )
+)
 
 ## mark header to install via 'make install'
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        )
+)
 ## only mark fmt headers to install if build via FetchContent
 if(NOT fmt_FOUND)
     install(DIRECTORY "${fmt_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-            )
+    )
 endif()
+## mark man pages to install
+message(STATUS "CMAKE_INSTALL_MANDIR: ${CMAKE_INSTALL_MANDIR}")
+message(STATUS "CMAKE_INSTALL_BINDIR: ${CMAKE_INSTALL_BINDIR}")
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1 ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
+)
 
 ## manage version comparison
 include(CMakePackageConfigHelpers)
@@ -530,10 +537,10 @@ install(EXPORT plssvm_Targets
         FILE plssvmTargets.cmake
         NAMESPACE plssvm::
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
-        )
+)
 
 ## create file containing the build configuration and version information
 install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
-        )
+)
