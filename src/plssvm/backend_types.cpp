@@ -24,7 +24,7 @@
 namespace plssvm {
 
 std::vector<backend_type> list_available_backends() {
-    std::vector<backend_type> available_backends;
+    std::vector<backend_type> available_backends = { backend_type::automatic };
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     available_backends.push_back(backend_type::openmp);
 #endif

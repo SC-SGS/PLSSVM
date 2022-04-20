@@ -19,7 +19,7 @@
 namespace plssvm {
 
 std::vector<target_platform> list_available_target_platforms() {
-    std::vector<target_platform> available_targets;
+    std::vector<target_platform> available_targets = { target_platform::automatic };
 #if defined(PLSSVM_HAS_CPU_TARGET)
     available_targets.push_back(target_platform::cpu);
 #endif
