@@ -13,6 +13,7 @@
 #include "fmt/core.h"     // std::format
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
+#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::clog, std::endl
 
@@ -81,8 +82,10 @@ int main(int argc, char *argv[]) {
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
+        return EXIT_FAILURE;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
