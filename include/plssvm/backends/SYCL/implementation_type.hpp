@@ -12,6 +12,7 @@
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm::sycl_generic {
 
@@ -26,6 +27,13 @@ enum class implementation_type {
     /** Use [hipSYCL](https://github.com/illuhad/hipSYCL) as SYCL implementation. */
     hipsycl
 };
+
+/**
+ * @brief Return a list of all currently available SYCL implementations.
+ * @details Only SYCL implementations that where found during the CMake configuration are available.
+ * @return the available SYCL implementations (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<implementation_type> list_available_sycl_implementations();
 
 /**
 * @brief Output the @p impl type to the given output-stream @p out.

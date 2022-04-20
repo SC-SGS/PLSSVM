@@ -8,8 +8,9 @@
 
 #include "plssvm/parameter_predict.hpp"
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
+#include "plssvm/parameter.hpp"                          // plssvm::parameter
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -47,7 +48,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
             ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(detail::as_lower_case(fmt::format("{}", backend))))
             ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(detail::as_lower_case(fmt::format("{}", target))))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-            ("sycl_implementation_type", "choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl", cxxopts::value<decltype(sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_implementation_type))))
+            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_implementation_type))))
 #endif
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())

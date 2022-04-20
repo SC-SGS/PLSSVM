@@ -14,8 +14,20 @@
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::sycl_generic {
+
+std::vector<implementation_type> list_available_sycl_implementations() {
+    std::vector<implementation_type> available_sycl_implementations = { implementation_type::automatic };
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    available_sycl_implementations.push_back(implementation_type::dpcpp);
+#endif
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    available_sycl_implementations.push_back(implementation_type::hipsycl);
+#endif
+    return available_sycl_implementations;
+}
 
 std::ostream &operator<<(std::ostream &out, const implementation_type impl) {
     switch (impl) {
