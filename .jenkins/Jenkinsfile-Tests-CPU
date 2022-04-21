@@ -158,8 +158,6 @@ pipeline {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
-                        spack load pocl
-                        export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
                         module load network_hipsycl_cpu
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
