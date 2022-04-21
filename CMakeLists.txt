@@ -96,14 +96,16 @@ endif()
 include(FetchContent)
 
 ## try finding cxxopts
-find_package(cxxopts QUIET)
+find_package(cxxopts 3.0.0 QUIET)
 if(cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
 else()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
+    set(PLSSVM_cxxopts_VERSION v3.0.0)
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
+            GIT_TAG                 ${PLSSVM_cxxopts_VERSION}
             GIT_SHALLOW             TRUE
 
             set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -114,7 +116,8 @@ else()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
+    message(STATUS "Installed cxxopts version ${PLSSVM_cxxopts_VERSION}.")
 endif()
 
 ## try finding fast_float
@@ -123,10 +126,11 @@ if(fast_float_FOUND)
     message(STATUS "Found package fast_float.")
 else()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
+    set(PLSSVM_fast_float_VERSION v3.4.0)
     # fetch float parsing library fast_float
     FetchContent_Declare(fast_float
             GIT_REPOSITORY          https://github.com/fastfloat/fast_float
-            GIT_TAG                 8159e8bcf63c1b92f5a51fb550f966e56624b209
+            GIT_TAG                 ${PLSSVM_fast_float_VERSION}
             GIT_SHALLOW             TRUE
 
             set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
@@ -142,18 +146,20 @@ else()
             $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
+    message(STATUS "Installed fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif()
 
 ## try finding fmt
-find_package(fmt QUIET)
+find_package(fmt 8.0.0 QUIET)
 if(fmt_FOUND)
     message(STATUS "Found package fmt.")
 else()
     message(STATUS "Couldn't find package fmt. Building from source ...")
+    set(PLSSVM_fmt_VERSION 8.1.1)
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
-            GIT_TAG                 b6f4ceaed0a0a24ccf575fab6c56dd50ccf6f1a9 # release 8.1.1
+            GIT_TAG                 ${PLSSVM_fmt_VERSION}
             GIT_SHALLOW             TRUE
 
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
@@ -170,6 +176,7 @@ else()
             )
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
+    message(STATUS "Installed {fmt} version ${PLSSVM_fmt_VERSION}.")
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)

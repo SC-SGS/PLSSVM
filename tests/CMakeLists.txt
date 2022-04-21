@@ -5,16 +5,17 @@
 ########################################################################################################################
 
 ## setup testing wit GoogleTest
-find_package(GTest QUIET)
+find_package(GTest 1.11.0 QUIET)
 if(GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else()
     message(STATUS "Couldn't find package GTest. Building from source...")
+    set(PLSSVM_googletest_VERSION release-1.11.0)
     # fetch testing framework GoogleTest
     include(FetchContent)
     FetchContent_Declare(googletest
             GIT_REPOSITORY          https://github.com/google/googletest
-            GIT_TAG                 e2239ee6043f73722e7aa812a459f54a28552929
+            GIT_TAG                 ${PLSSVM_googletest_VERSION}
             GIT_SHALLOW             TRUE
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -24,6 +25,7 @@ else()
         FetchContent_Populate(googletest)
         add_subdirectory(${googletest_SOURCE_DIR} ${googletest_SOURCE_DIR} EXCLUDE_FROM_ALL)
     endif()
+    message(STATUS "Installed GoogleTest version ${PLSSVM_googletest_VERSION}.")
 endif()
 
 
