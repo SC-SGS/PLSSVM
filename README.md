@@ -84,7 +84,7 @@ git clone git@github.com:SC-SGS/PLSSVM.git
 cd PLSSVM 
 mkdir build && cd build 
 cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] .. 
-cmake --build .
+cmake --build . -j
 ```
 
 #### Target Platform Selection
@@ -227,7 +227,7 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
 
 ```bash
-make doc
+cmake --build . -- doc
 ```
 
 The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
@@ -292,7 +292,7 @@ Usage:
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
-  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
@@ -354,7 +354,7 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-preidct [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
@@ -378,6 +378,8 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 ```
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
+
+For more information see the `man` pages for `plssvm-train` and `plssvm-predict` (which are installed via `cmake --build . -- install`).
 
 ## Example code for usage as library
 
