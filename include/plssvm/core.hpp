@@ -25,6 +25,7 @@
 #include "plssvm/exceptions/exceptions.hpp"
 #include "plssvm/version/version.hpp"
 
+#include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
 /// The main namespace containing all public API functions.
@@ -60,8 +61,35 @@ namespace plssvm::opencl {}
 /// Namespace containing OpenCL backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::opencl::detail {}
 
-/// Namespace containing the C-SVM using the SYCL backend.
-namespace plssvm::sycl {}
+/// Namespace containing the C-SVM using the SYCL backend independent of the used SYCL implementation. **May not** directly be used by users. Use `plssvm::sycl` instead.
+namespace plssvm::sycl_generic {}
 
-/// Namespace containing SYCL backend specific implementation details. **Should not** directly be used by users.
+/// Namespace containing SYCL backend specific implementation details independent of the used SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::sycl_generic::detail {}
+
+/// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation.
+namespace plssvm::dpcpp {
+using namespace plssvm::sycl_generic;
+}
+
+/// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::dpcpp::detail {}
+
+/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation.
+namespace plssvm::hipsycl {
+using namespace plssvm::sycl_generic;
+}
+
+/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::hipsycl::detail {}
+
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
+namespace plssvm::sycl {
+using namespace plssvm::sycl_generic;
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
+#endif
+}
+
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::sycl::detail {}

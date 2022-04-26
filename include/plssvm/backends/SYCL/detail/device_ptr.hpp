@@ -11,20 +11,25 @@
 
 #pragma once
 
+#include "plssvm/backends/@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@/detail/constants.hpp" // forward declaration and namespace alias
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
-namespace plssvm::sycl::detail {
+namespace plssvm {
+
+namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
+
+namespace detail {
 
 /**
  * @brief Small wrapper class around a SYCL device pointer together with commonly used device functions.
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, ::sycl::queue *> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, detail::sycl::queue *> {
     /// The template base type of the OpenCL device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, ::sycl::queue *>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, detail::sycl::queue *>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -52,7 +57,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, ::sycl::queue *> {
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated SYCL queue
      */
-    device_ptr(size_type size, ::sycl::queue &queue);
+    device_ptr(size_type size, std::unique_ptr<detail::sycl::queue>& queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
@@ -94,4 +99,6 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, ::sycl::queue *> {
 extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
-}  // namespace plssvm::sycl::detail
+}  // namespace detail
+}  // namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
+}  // namespace plssvm

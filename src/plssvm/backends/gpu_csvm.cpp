@@ -22,8 +22,15 @@
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // used for explicitly instantiating the SYCL backend
-    #include "plssvm/backends/SYCL/detail/device_ptr.hpp"
     #include "sycl/sycl.hpp"
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    #include "plssvm/backends/DPCPP/detail/constants.hpp"
+    #include "plssvm/backends/DPCPP/detail/device_ptr.hpp"
+#endif
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    #include "plssvm/backends/hipSYCL/detail/constants.hpp"
+    #include "plssvm/backends/hipSYCL/detail/device_ptr.hpp"
+#endif
 #endif
 
 #include "fmt/chrono.h"  // directly print std::chrono literals with fmt
@@ -392,8 +399,14 @@ template class gpu_csvm<float, ::plssvm::opencl::detail::device_ptr<float>, ::pl
 template class gpu_csvm<double, ::plssvm::opencl::detail::device_ptr<double>, ::plssvm::opencl::detail::command_queue>;
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-template class gpu_csvm<float, ::plssvm::sycl::detail::device_ptr<float>, ::sycl::queue>;
-template class gpu_csvm<double, ::plssvm::sycl::detail::device_ptr<double>, ::sycl::queue>;
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+template class gpu_csvm<float, ::plssvm::dpcpp::detail::device_ptr<float>, std::unique_ptr<::plssvm::dpcpp::detail::sycl::queue>>;
+template class gpu_csvm<double, ::plssvm::dpcpp::detail::device_ptr<double>, std::unique_ptr<::plssvm::dpcpp::detail::sycl::queue>>;
+#endif
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+template class gpu_csvm<float, ::plssvm::hipsycl::detail::device_ptr<float>, std::unique_ptr<::plssvm::hipsycl::detail::sycl::queue>>;
+template class gpu_csvm<double, ::plssvm::hipsycl::detail::device_ptr<double>, std::unique_ptr<::plssvm::hipsycl::detail::sycl::queue>>;
+#endif
 #endif
 
 }  // namespace plssvm::detail

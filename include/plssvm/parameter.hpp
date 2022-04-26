@@ -12,7 +12,8 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -23,6 +24,10 @@
 #include <vector>       // std::vector
 
 namespace plssvm {
+
+namespace sycl {
+using namespace ::plssvm::sycl_generic;
+}
 
 /**
  * @brief Base class for encapsulating all necessary parameters possibly provided through command line arguments.
@@ -187,13 +192,15 @@ class parameter {
     real_type epsilon = static_cast<real_type>(0.001);
     /// If `true` additional information (e.g. timings) will be printed during execution.
     bool print_info = true;
-    /// The used backend: OpenMP, OpenCL, CUDA, or SYCL.
-    backend_type backend = backend_type::openmp;
+    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
+    backend_type backend = backend_type::automatic;
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
     target_platform target = target_platform::automatic;
 
     /// The kernel invocation type when using SYCL as backend.
     sycl::kernel_invocation_type sycl_kernel_invocation_type = sycl::kernel_invocation_type::automatic;
+    /// The SYCL implementation to use with --backend=sycl.
+    sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
 
     /// The name of the data/test file to parse.
     std::string input_filename{};

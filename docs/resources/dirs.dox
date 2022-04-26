@@ -43,6 +43,28 @@
  * @brief Directory containing implementation details for the CUDA backend.
  */
 
+ /**
+  * @dir include/plssvm/backends/HIP
+  * @author Alexander Van Craen
+  * @author Marcel Breyer
+  * @copyright 2018-today The PLSSVM project - All Rights Reserved
+  * @license This file is part of the PLSSVM project which is released under the MIT license.
+  *          See the LICENSE.md file in the project root for full license information.
+  *
+  * @brief Directory containing the implementation for the HIP backend.
+  */
+
+ /**
+  * @dir include/plssvm/backends/HIP/detail
+  * @author Alexander Van Craen
+  * @author Marcel Breyer
+  * @copyright 2018-today The PLSSVM project - All Rights Reserved
+  * @license This file is part of the PLSSVM project which is released under the MIT license.
+  *          See the LICENSE.md file in the project root for full license information.
+  *
+  * @brief Directory containing implementation details for the HIP backend.
+  */
+
 /**
  * @dir include/plssvm/backends/OpenCL
  * @author Alexander Van Craen

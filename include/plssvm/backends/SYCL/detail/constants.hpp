@@ -20,3 +20,26 @@
  * @brief Macro identifying the used SYCL compiler as [DPC++](https://github.com/intel/llvm).
  */
 #define PLSSVM_SYCL_BACKEND_COMPILER_DPCPP 0
+
+
+// forward declare sycl::queue from hipsycl namespace and create global ::hipsycl namespace
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+namespace hipsycl::sycl {
+class queue;
+}
+namespace plssvm::hipsycl::detail {
+    using namespace ::hipsycl;
+}
+#endif
+
+// forward declare sycl::queue from DPC++ namespace and create global ::dpcpp namespace
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+inline namespace cl {
+namespace sycl {
+class queue;
+}
+}
+namespace plssvm::dpcpp::detail {
+    using namespace cl;
+}
+#endif

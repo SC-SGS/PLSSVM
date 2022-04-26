@@ -63,13 +63,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::hip::detail::device_
     using base_type::dept_;
 
   public:
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
-
-    /// The type of the HIP device pointer.
-    using device_ptr_type = typename base_type::device_ptr_type;
-    /// The type of the HIP device queue.
-    using queue_type = typename base_type::queue_type;
+    using typename base_type::real_type;
+    using typename base_type::device_ptr_type;
+    using typename base_type::queue_type;
 
     /**
      * @brief Construct a new C-SVM using the HIP backend with the parameters given through @p params.

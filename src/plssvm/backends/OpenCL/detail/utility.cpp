@@ -304,7 +304,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries");
 
         // write binaries to file
-        std::filesystem::create_directories(cache_dir_name);
+        if (!std::filesystem::exists(cache_dir_name)) {
+            std::filesystem::create_directories(cache_dir_name);
+        }
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));

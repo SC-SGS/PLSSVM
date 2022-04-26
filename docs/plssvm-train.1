@@ -1,0 +1,89 @@
+.\" Manpage for plssvm-train.
+.TH PLSSVM-TRAIN 1 "20 April 2022" "1.2.0" "plssvm-train Manual"
+
+.SH NAME
+plssvm-train - LS-SVM with multiple (GPU-)backends
+
+.SH SYNOPSIS
+plssvm-train [OPTION...] training_set_file [model_file]
+
+.SH DESCRIPTION
+plssvm-train is a utility to train an LS-SVM using different backends to target different hardware platforms. It outputs a LIBSVM compliant model file for later prediction.
+
+.SH OPTIONS
+
+.TP
+.B -t, --kernel_type arg
+set type of kernel function.
+    0 -- linear: u'*v
+    1 -- polynomial: (gamma*u'*v + coef0)^degree
+    2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
+
+.TP
+.B -d, --degree arg
+set degree in kernel function (default: 3)
+
+.TP
+.B -g, --gamma arg
+set gamma in kernel function (default: 1 / num_features)
+
+.TP
+.B -r, --coef0 arg
+set coef0 in kernel function (default: 0)
+
+.TP
+.B -c, --cost arg
+set the parameter C (default: 1)
+
+.TP
+.B -e, --epsilon arg
+set the tolerance of termination criterion (default: 0.001)
+
+.TP
+.B -b, --backend arg
+choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
+
+.TP
+.B -p, --target_platform arg
+choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+
+.TP
+.B --sycl_kernel_invocation_type
+choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical
+
+.TP
+.B --sycl_implementation_type
+choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl
+
+.TP
+.B -q, --quiet
+quiet mode (no outputs)
+
+.TP
+.B -h, --help
+print this helper message
+
+.TP
+.B --input training_set_file
+the file containing the training data points
+
+.TP
+.B --model model_file
+the file to write the learned model to
+
+.SH EXIT STATUS
+EXIT_SUCCESS
+.RS
+if OK,
+.RE
+EXIT_FAILURE
+.RS
+if any error occurred (e.g., the training file couldn't be opened).
+
+.SH SEE ALSO
+plssvm-predict(1)
+
+.SH AUTHOR
+Alexander Van Craen <Alexander.Van-Craen@ipvs.uni-stuttgart.de>
+.br
+Marcel Breyer <Marcel.Breyer@ipvs.uni-stuttgart.de>

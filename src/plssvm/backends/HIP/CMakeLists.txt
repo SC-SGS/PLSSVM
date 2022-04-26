@@ -15,12 +15,16 @@ check_language(HIP)
 if(NOT CMAKE_HIP_COMPILER)
     message(CHECK_FAIL "not found")
     if(PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
-        message(FATAL_ERROR "Cannot find requested backend: HIP!")
+        message(SEND_ERROR "Cannot find requested backend: HIP!")
     endif()
     return()
 else()
     if(NOT DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        message(STATUS "Found requested HIP backend, but no \"amd\" targets were specified!")
+        if(PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested HIP backend, but no \"amd\" targets were specified!")
+        else()
+            message(STATUS "Found HIP backend, but no \"amd\" targets were specified!")
+        endif()
         message(CHECK_FAIL "skipped")
         return()
     endif()
@@ -48,7 +52,7 @@ set(PLSSVM_HIP_SOURCES
 )
 
 # set target properties
-set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME svm-HIP)
+set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME plssvm-HIP)
 add_library(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HIP_SOURCES})
 
 # https://gitlab.kitware.com/cmake/cmake/-/issues/23210
@@ -63,6 +67,7 @@ set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURE
 target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME} hip::device hip::host)
 
 # set compile definition that the HIP backend is available
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_HIP_BACKEND)
 target_compile_definitions(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_HIP_BACKEND)
 
 # link against interface library

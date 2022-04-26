@@ -12,7 +12,6 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"    // plssvm::sycl::atomic_op
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/constants.hpp"                       // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::handler, sycl::accessor, sycl::access::mode, sycl::access::target, sycl::range, sycl::group_barrier, sycl::pow,
@@ -20,7 +19,7 @@
 
 #include <cstddef>  // std::size_t
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 // TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
 /**
@@ -376,4 +375,4 @@ class nd_range_device_kernel_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

@@ -17,6 +17,7 @@
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
@@ -38,12 +39,13 @@
 
 namespace generic {
 
-template <template <typename> typename csvm_type, typename real_type, plssvm::backend_type backend>
+template <template <typename> typename csvm_type, typename real_type, plssvm::backend_type backend, plssvm::sycl_generic::implementation_type impl_type = plssvm::sycl_generic::implementation_type::automatic>
 inline void csvm_factory_test() {
     // create parameter object
     plssvm::parameter<real_type> params;
     params.print_info = false;
     params.backend = backend;
+    params.sycl_implementation_type = impl_type;
 
     params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
@@ -148,7 +150,7 @@ inline void generate_q_test() {
     }
 }
 
-template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel, plssvm::sycl::kernel_invocation_type invocation_type = plssvm::sycl::kernel_invocation_type::automatic>
+template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel, plssvm::sycl_generic::kernel_invocation_type invocation_type = plssvm::sycl_generic::kernel_invocation_type::automatic>
 inline void device_kernel_test() {
     // create parameter object
     plssvm::parameter<real_type> params;

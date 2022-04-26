@@ -44,20 +44,12 @@ if(PLSSVM_GENERATE_TEST_FILE)
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
-        foreach(PLSSVM_PYTHON_LIB IN ITEMS argparse sklearn)
-            # search for Python package
-            execute_process(
-                    COMMAND ${Python3_EXECUTABLE} -c "import ${PLSSVM_PYTHON_LIB}"
-                    RESULT_VARIABLE PLSSVM_PYTHON_LIB_EXIT_CODE
-                    OUTPUT_QUIET)
-            message(STATUS "Searching for ${PLSSVM_PYTHON_LIB} Python3 package")
+        include(${PROJECT_SOURCE_DIR}/cmake/check_python_libs.cmake)
+        set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn)
+        message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
+        check_python_libs(${PLSSVM_TEST_REQUIRED_LIBS} "or set PLSSVM_GENERATE_TEST_FILE to OFF.")
 
-            # emit error if package couldn't be found
-            if(NOT ${PLSSVM_PYTHON_LIB_EXIT_CODE} EQUAL 0)
-                message(FATAL_ERROR "The '${PLSSVM_PYTHON_LIB}' Python3 package is not installed. Please install it using the following command: '${Python3_EXECUTABLE} -m pip install ${PLSSVM_PYTHON_LIB}'\n or set PLSSVM_GENERATE_TEST_FILE to OFF.")
-            endif()
-        endforeach()
-
+        # generate test file
         message(STATUS "Generating test file: ${PLSSVM_TEST_FILE}.")
         execute_process(
             COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}"
@@ -118,8 +110,8 @@ gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOUR
 
 
 # add test for help messages
-add_test(NAME ParameterTrain/svm-train_help COMMAND svm-train --help)
-add_test(NAME ParameterPredict/svm-predict_help COMMAND svm-predict --help)
+add_test(NAME ParameterTrain/plssvm-train_help COMMAND plssvm-train --help)
+add_test(NAME ParameterPredict/plssvm-predict_help COMMAND plssvm-predict --help)
 
 
 # add test as coverage dependency

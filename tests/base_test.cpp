@@ -31,14 +31,17 @@
 // check whether the std::string <-> plssvm::backend_type conversions are correct
 TEST(Base, backend_type) {
     // check conversions to std::string
+    util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::automatic, "automatic");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::openmp, "openmp");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::cuda, "cuda");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::hip, "hip");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::opencl, "opencl");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::backend_type::sycl, "sycl");
-    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::backend_type>(5), "unknown");
+    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::backend_type>(6), "unknown");
 
     // check conversion from std::string
+    util::gtest_expect_string_to_enum_conversion("automatic", plssvm::backend_type::automatic);
+    util::gtest_expect_string_to_enum_conversion("AUTOmatic", plssvm::backend_type::automatic);
     util::gtest_expect_string_to_enum_conversion("openmp", plssvm::backend_type::openmp);
     util::gtest_expect_string_to_enum_conversion("OpenMP", plssvm::backend_type::openmp);
     util::gtest_expect_string_to_enum_conversion("cuda", plssvm::backend_type::cuda);

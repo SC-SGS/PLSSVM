@@ -12,6 +12,7 @@
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -30,6 +31,13 @@ enum class target_platform {
     /** Target GPUs from Intel. */
     gpu_intel
 };
+
+/**
+ * @brief Return a list of all currently available target platforms.
+ * @details Only target platforms that where requested during the CMake configuration are available.
+ * @return the available target platforms (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<target_platform> list_available_target_platforms();
 
 /**
  * @brief Output the @p target platform to the given output-stream @p out.

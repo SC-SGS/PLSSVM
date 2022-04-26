@@ -12,6 +12,7 @@
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -19,6 +20,8 @@ namespace plssvm {
  * @brief Enum class for all possible backend types.
  */
 enum class backend_type {
+    /** The default backend dependent on the specified target platforms. */
+    automatic,
     /** [OpenMP](https://www.openmp.org/) to target CPUs only. */
     openmp,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
@@ -30,6 +33,19 @@ enum class backend_type {
     /** [SYCL](https://www.khronos.org/sycl/) to target GPUs from different vendors and CPUs. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL). */
     sycl
 };
+
+/**
+ * @brief Return a list of all currently available backends.
+ * @details Only backends that where found during the CMake configuration are available.
+ * @return the available backends (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<backend_type> list_available_backends();
+
+/**
+ * @brief Returns the default backend used given the specified target platforms during the CMake configuration.
+ * @return the default backend (`[[nodiscard]]`)
+ */
+[[nodiscard]] backend_type determine_default_backend();
 
 /**
  * @brief Output the @p backend to the given output-stream @p out.

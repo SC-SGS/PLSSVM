@@ -10,7 +10,7 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
 
 However, normal SVMs suffer in their potential parallelizability.
-Determining the hyperplane boils down to solving a konvex quadratic problem.
+Determining the hyperplane boils down to solving a convex quadratic problem.
 For this, most SVM implementations use Sequential Minimal Optimization (SMO), an inherently sequential algorithm.
 The basic idea of this algorithm is that it takes a pair of data points and calculates the hyperplane between them.
 Afterward, two new data points are selected and the existing hyperplane is adjusted accordingly.
@@ -84,12 +84,12 @@ git clone git@github.com:SC-SGS/PLSSVM.git
 cd PLSSVM 
 mkdir build && cd build 
 cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] .. 
-cmake --build .
+cmake --build . -j
 ```
 
 #### Target Platform Selection
 
-The **required** CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
+The CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
 
 - `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
@@ -99,7 +99,7 @@ Valid targets are:
 
 At least one of the above targets must be present.
 
-Note that when using DPC++ only a single architectural specification for `cpu` or `amd` is allowed.
+Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
 
 To retrieve the architectural specifications of the current system, a simple Python3 script `utility/plssvm_target_platforms.py` is provided
 (required Python3 dependencies:
@@ -138,6 +138,10 @@ If the architectural information for the requested GPU could not be retrieved, o
 - for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
 - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
+If the `PLSSVM_TARGET_PLATFORMS` options isn't set during the CMake invocation and isn't set as environment variable, 
+CMake tries to execute the above script and uses its output to automatically set the `PLSSVM_TARGET_PLATFORMS`.
+This, however, requires the Python packages to be installed.
+
 #### Optional CMake Options
 
 The `[optional_options]` can be one or multiple of:
@@ -172,7 +176,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `svm-train` and `svm-predict` executables
+- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `plssvm-train` and `plssvm-preidct` executables
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
@@ -183,9 +187,18 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
 
-If the SYCL backend is available and DPC++ is used, the option `PLSSVM_SYCL_DPCPP_USE_LEVEL_ZERO` can be used to select Level-Zero as the
-DPC++ backend instead of OpenCL.
-To use DPC++ as compiler simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang path during CMake invocation.
+If the SYCL backend is available additional options can be set.
+To use DPC++ for SYCL simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
+
+If the SYCL implementation is DPC++ the following additional options are available:
+
+- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `OFF`): use Level-Zero as the DPC++ backend instead of OpenCL
+- `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
+
+If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
+**must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
+
+- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`hipsycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::hipsycl` namespace respectively
 
 ### Running the tests
 
@@ -214,7 +227,7 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
 
 ```bash
-make doc
+cmake --build . -- doc
 ```
 
 The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
@@ -265,10 +278,10 @@ python3 generate_data.py --ouput data_file --format libsvm --problem blobs --sam
 ### Training
 
 ```bash
-./svm-train --help
+./plssvm-train --help
 LS-SVM with multiple (GPU-)backends
 Usage:
-  ./svm-train [OPTION...] training_set_file [model_file]
+  ./plssvm-train [OPTION...] training_set_file [model_file]
 
   -t, --kernel_type arg         set type of kernel function. 
                                          0 -- linear: u'*v
@@ -279,70 +292,94 @@ Usage:
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
-  -b, --backend arg             choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
+  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+      --sycl_implementation_type arg
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
       --input training_set_file
                                 
-      --model model_file  
+      --model model_file 
+```
+
+The help message only print options available based on the CMake invocation. 
+For example, if CUDA was not available during the build step, it will not show up as possible backend in the description of the `--backend` option.
+
+The most minimal example invocation is:
+
+```bash
+./plssvm-train /path/to/data_file
 ```
 
 An example invocation using the CUDA backend could look like:
 
 ```bash
-./svm-train --backend cuda --input /path/to/data_file
+./plssvm-train --backend cuda --input /path/to/data_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-./svm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
+./plssvm-train --backend sycl --target_platform gpu_nvidia --input /path/to/data_file
 ```
 
-The `--target_platform=automatic` flag works for the different backends as follows:
+The `--backend=automatic` option works as follows:
+
+- if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl`
+- otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl`
+- otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp`
+
+Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
+
+The `--target_platform=automatic` option works for the different backends as follows:
 
 - `OpenMP`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
-The `--sycl_kernel_invocation_type` flag is only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, 
-except for hipSYCL on CPUs where the hierarchical formulation is used instead.
+The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
+If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for hipSYCL on CPUs where the hierarchical formulation is used instead.
+If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
 
 ### Predicting
 
 ```bash
-./svm-predict --help
+./plssvm-preidct --help
 LS-SVM with multiple (GPU-)backends
 Usage:
-  ./svm-predict [OPTION...] test_file model_file [output_file]
+  ./plssvm-preidct [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg          choose the backend: openmp|cuda|hip|opencl|sycl (default: openmp)
-  -p, --target_platform arg  choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
-  -q, --quiet                quiet mode (no outputs)
-  -h, --help                 print this helper message
-      --test test_file
-      --model model_file
+  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
+  -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+      --sycl_implementation_type arg
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+  -q, --quiet                   quiet mode (no outputs)
+  -h, --help                    print this helper message
+      --test test_file          
+      --model model_file        
       --output output_file
 ```
 
 An example invocation could look like:
 
 ```bash
-./svm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
+./plssvm-preidct --backend cuda --test /path/to/test_file --model /path/to/model_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-./svm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+./plssvm-preidct --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
-The `--target_platform=automatic` flags works like in the training (`./svm-train`) case.
+The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
+
+For more information see the `man` pages for `plssvm-train` and `plssvm-predict` (which are installed via `cmake --build . -- install`).
 
 ## Example code for usage as library
 
@@ -401,7 +438,7 @@ find_package(plssvm CONFIG REQUIRED)
 add_executable(prog main.cpp)
 
 target_compile_features(prog PUBLIC cxx_std_17)
-target_link_libraries(prog PUBLIC plssvm::svm-all)
+target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 ```
 
 ## License
