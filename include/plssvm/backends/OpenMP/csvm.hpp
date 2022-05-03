@@ -12,14 +12,15 @@
 #pragma once
 
 #include "plssvm/csvm.hpp"  // plssvm::csvm
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include <vector>  // std::vector
 
 namespace plssvm {
 
-// forward declare parameter class
-template <typename T>
-class parameter;
+// forward declare parameter class TODO
+//template <typename T>
+//class parameter;
 
 namespace openmp {
 

@@ -14,7 +14,7 @@
 #include "plssvm/backend_types.hpp"          // plssvm::backend
 #include "plssvm/csvm.hpp"                   // plssvm::csvm
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "parameter.hpp"                     // plssvm::parameter
 
 #include <memory>  // std::unique_ptr, std::make_unique
 

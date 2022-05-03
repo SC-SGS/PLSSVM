@@ -13,6 +13,7 @@
 
 #include "plssvm/kernel_types.hpp"      // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "parameter.hpp"                // plssvm::parameter
 
 #include <cstddef>      // std::size_t
 #include <memory>       // std::shared_ptr
@@ -20,11 +21,22 @@
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
+#include "NamedType/named_type.hpp"
+#include <iostream>
+#include <memory>
+#include <optional>
+#include <functional>
+#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+
 namespace plssvm {
 
-// forward declare class
-template <typename T>
-class parameter;
+// forward declare class TODO
+//template <typename T>
+//class parameter;
 
 /**
  * @brief Base class for all C-SVM backends.
@@ -279,5 +291,175 @@ class csvm {
 
 extern template class csvm<float>;
 extern template class csvm<double>;
+
+namespace new_ {
+
+inline bool print_info = true;
+
+enum class file_format_type {
+    libsvm,
+    arff
+};
+
+template <typename T>
+class parameter {
+  public:
+    using real_type = T;
+
+    parameter() = default;
+
+    kernel_type kernel = kernel_type::linear;
+    int degree = 3;
+    real_type gamma = real_type{ 0.0 };
+    real_type coef0 = real_type{ 0.0 };
+    real_type cost = real_type{ 1.0 };
+    real_type epsilon = static_cast<real_type>(0.001);
+    backend_type backend = backend_type::automatic;
+    target_platform target = target_platform::automatic;
+
+    ::plssvm::sycl_generic::kernel_invocation_type sycl_kernel_invocation_type = ::plssvm::sycl_generic::kernel_invocation_type::automatic;
+    ::plssvm::sycl_generic::implementation_type sycl_implementation_type = ::plssvm::sycl_generic::implementation_type::automatic;
+};
+
+template <typename T>
+class data_set {
+    using data_matrix_type = std::vector<std::vector<T>>;
+    using label_vector_type = std::vector<int>;
+
+  public:
+    using real_type = T;
+    using label_type = int;
+    using size_type = std::size_t;
+
+    explicit data_set(const std::string& filename);
+
+    explicit data_set(data_matrix_type &&X) : X_ptr_{ std::make_shared<data_matrix_type>(std::move(X)) } {
+        if (X_ptr_->empty()) {
+            throw std::runtime_error("empty matrix"); // TODO: correct exception
+        }
+    }
+    data_set(data_matrix_type &&X, label_vector_type &&y) : X_ptr_{ std::make_shared<data_matrix_type>(std::move(X)) }, y_ptr_{ std::make_shared<label_vector_type>(std::move(y)) } {
+        // TODO: exception?? if size != size
+    }
+    // save the data set in the given format
+    void save_data_set(const std::string& filename, file_format_type format);
+
+    // scale data features to be in range [lower, upper]
+    void scale(real_type lower, real_type upper);
+
+    [[nodiscard]] const data_matrix_type& data() const noexcept { return *X_ptr_; }
+    [[nodiscard]] std::optional<std::reference_wrapper<const label_type>> labels() const noexcept {
+        return this->has_labels() ? *y_ptr_ : std::nullopt;
+    }
+    [[nodiscard]] bool has_labels() const noexcept { return y_ptr_ != nullptr; }
+
+    [[nodiscard]] size_type num_data_points() const noexcept { return X_ptr_->size(); }
+    [[nodiscard]] size_type num_features() const noexcept { return X_ptr_->front().size(); }
+
+  private:
+    std::shared_ptr<data_matrix_type> X_ptr_{ nullptr };
+    std::shared_ptr<label_vector_type> y_ptr_{ nullptr };
+};
+
+template <typename T>
+class csvm_model {
+    using alpha_vector_type = std::vector<T>;
+
+  public:
+    using real_type = T;
+
+    // read model from file
+    explicit csvm_model(const std::string& filename);
+
+    // save model to file
+    void save_model(const std::string& filename);
+
+    // predict labels of the data_set
+    std::vector<typename data_set<real_type>::label_type> predict(const data_set<real_type> &data);
+    // predict LS-SVM values of the data_set
+    std::vector<real_type> predict_values(const data_set<real_type> &data);
+
+    // calculate the accuracy of the model
+    real_type score();
+    // calculate the accuracy of the data_set
+    real_type score(const data_set<real_type> &data);
+
+  private:
+    csvm_model(parameter<real_type> params, data_set<real_type> data) : params_{ std::move(params) }, data_{ std::move(data) }, alphas_{ std::make_shared<alpha_vector_type>() } {}
+
+    parameter<real_type> params_;
+    data_set<real_type> data_;
+
+    std::shared_ptr<alpha_vector_type> alphas_;
+    real_type rho_{ 0.0 };
+};
+
+template <typename T>
+class csvm {
+    friend csvm_model<T>;
+  public:
+    using real_type = T;
+
+    // create new SVM with the given parameters
+    explicit csvm(parameter<real_type> params) : params_{ std::move(params) } {}
+    csvm(real_type cost, target_platform target) : params_{} {
+        params_.kernel = kernel_type::linear;
+        params_.cost = cost;
+        params_.backend = backend_type::openmp;
+        params_.target = target;
+    }
+    csvm(int degree, real_type gamma, real_type coef0, real_type cost, target_platform target) : params_{} {
+        params_.kernel = kernel_type::polynomial;
+        params_.degree = degree;
+        params_.gamma = gamma;
+        params_.coef0 = coef0;
+        params_.cost = cost;
+        params_.backend = backend_type::openmp;
+        params_.target = target;
+    }
+    csvm(real_type gamma, real_type cost, target_platform target) : params_{} {
+        params_.kernel = kernel_type::rbf;
+        params_.gamma = gamma;
+        params_.cost = cost;
+        params_.backend = backend_type::openmp;
+        params_.target = target;
+    }
+
+    // learn model with default eps and iter values
+    csvm_model<real_type> fit(const data_set<real_type> &data) {
+        // TODO: implement
+        params_.epsilon = parameter<real_type>{}.epsilon;
+        return csvm_model<real_type>(params_, data);
+    }
+    // learn model until eps is reached
+    csvm_model<real_type> fit(const data_set<real_type> &data, real_type eps) {
+        // TODO: implement
+        params_.epsilon = eps;
+        return csvm_model<real_type>(params_, data);
+    }
+    // learn model using exact iter CG iterations
+    csvm_model<real_type> fit(const data_set<real_type> &data, std::size_t iter) {
+        // TODO: implement
+        params_.epsilon = parameter<real_type>{}.epsilon;
+        return csvm_model<real_type>(params_, data);
+    }
+    // learn model until eps is reached OR iter CG iterations are reached
+    csvm_model<real_type> fit(const data_set<real_type> &data, real_type eps, std::size_t iter) {
+        // TODO: implement
+        params_.epsilon = eps;
+        return csvm_model<real_type>(params_, data);
+    }
+    // learn model until accuracy for test data set is reached
+    csvm_model<real_type> fit(const data_set<real_type> &data_train, const data_set<real_type> &data_test, real_type accuracy) {
+        // TODO: implement
+        params_.epsilon = parameter<real_type>{}.epsilon;
+        return csvm_model<real_type>(params_, data_train);
+    }
+
+  private:
+    parameter<real_type> params_;
+};
+
+}
 
 }  // namespace plssvm

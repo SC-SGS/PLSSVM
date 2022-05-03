@@ -9,6 +9,7 @@
  * @brief Implements a file reader class responsible for reading the input file and parsing it into lines.
  */
 
+// TODO: move to io
 #pragma once
 
 // check if memory mapping can be supported
@@ -20,7 +21,7 @@
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
-namespace plssvm::detail {
+namespace plssvm::detail::io {
 
 /**
  * @brief The plssvm::detail::file_reader class is responsible for reading a file and splitting it into its lines.

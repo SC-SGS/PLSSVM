@@ -34,32 +34,13 @@ class parameter_predict : public parameter<T> {
     using base_type::epsilon;
     using base_type::gamma;
     using base_type::kernel;
-    using base_type::print_info;
     using base_type::sycl_implementation_type;
     using base_type::target;
 
-    using base_type::input_filename;
-    using base_type::model_filename;
-    using base_type::predict_filename;
-
-    using base_type::alpha_ptr;
-    using base_type::data_ptr;
-    using base_type::test_data_ptr;
-    using base_type::value_ptr;
-
-    using base_type::rho;
     /**
      * @brief Default construct all parameters for prediction.
      */
     parameter_predict() = default;
-
-    /**
-     * @brief Set all predict parameters to their default values and parse the given model and test file.
-     * @details Sets the predict_filename to `${input_filename}.predict`.
-     * @param[in] input_filename the name of the test data file
-     * @param[in] model_filename the name of the model file
-     */
-    explicit parameter_predict(std::string input_filename, std::string model_filename);
 
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly. Parse the given model and test file.
@@ -67,9 +48,26 @@ class parameter_predict : public parameter<T> {
      * @param[in] argv the command line arguments
      */
     parameter_predict(int argc, char **argv);
+
+    /// The name of the data/test file to parse.
+    std::string input_filename{};
+    /// The name of the model file to write the learned support vectors to/to parse the saved model from.
+    std::string model_filename{};
+    /// The name of the file to write the prediction to.
+    std::string predict_filename{};
+
+  private:
+    /**
+     * @brief Generate a predict filename based on the name of the input file.
+     * @return `${input_filename}.predict` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::string predict_name_from_input();
 };
 
 extern template class parameter_predict<float>;
 extern template class parameter_predict<double>;
+
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const parameter_predict<T> &params);
 
 }  // namespace plssvm
