@@ -88,14 +88,15 @@ file = rawfile + "." + args.format
 if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
+# TODO: index must start at 1!!!
 if args.format == "libsvm":
     from sklearn.datasets import dump_svmlight_file
     # dump data in libsvm format
     dump_svmlight_file(samples[:args.samples, :],
-                       labels[:args.samples], file)
+                       labels[:args.samples], file, zero_based=False)
     if args.test_samples > 0:
         dump_svmlight_file(samples[args.samples:, :],
-                           labels[args.samples:], test_file)
+                           labels[args.samples:], test_file, zero_based=False)
 elif args.format == "arff":
     import numpy
     import arff

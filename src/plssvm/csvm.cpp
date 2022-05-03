@@ -15,6 +15,8 @@
 #include "plssvm/kernel_types.hpp"           // plssvm::kernel_type, plssvm::kernel_function
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
+#include "plssvm/constants.hpp"
+
 #include "fmt/chrono.h"   // format std::chrono
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -39,7 +41,7 @@ namespace plssvm {
 
 template <typename T>
 csvm<T>::csvm(const parameter<T> &params) :
-    target_{ params.target }, kernel_{ params.kernel }, degree_{ params.degree }, gamma_{ params.gamma }, coef0_{ params.coef0 }, cost_{ params.cost }, epsilon_{ params.epsilon }, print_info_{ params.print_info }, data_ptr_{ params.data_ptr }, value_ptr_{ params.value_ptr }, alpha_ptr_{ params.alpha_ptr }, bias_{ -params.rho } {
+    target_{ params.target }, kernel_{ params.kernel }, degree_{ params.degree }, gamma_{ params.gamma }, coef0_{ params.coef0 }, cost_{ params.cost }, epsilon_{ params.epsilon }, print_info_{ plssvm::verbose }, data_ptr_{ nullptr }, value_ptr_{ nullptr }, alpha_ptr_{ nullptr }, bias_{ -0.0 } {
     if (data_ptr_ == nullptr) {
         throw exception{ "No data points provided!" };
     } else if (data_ptr_->empty()) {

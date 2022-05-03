@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
         }
 
         // output used parameter
-        if (params.print_info) {
+        if (plssvm::verbose) {
             fmt::print("\n");
             fmt::print("task: training\n");
             fmt::print("kernel type: {} -> ", params.kernel);
@@ -71,6 +71,9 @@ int main(int argc, char *argv[]) {
             fmt::print("\n");
         }
 
+        // create data set
+        plssvm::data_set<real_type> data{ params.input_filename };
+
         // create SVM
         auto svm = plssvm::make_csvm(params);
 
@@ -79,6 +82,36 @@ int main(int argc, char *argv[]) {
 
         // save model file
         svm->write_model(params.model_filename);
+
+//        std::vector<std::vector<double>> matrix = { { 1.0, 2.0 }, { 3.0, 4.0 }, { 5.0, 6.0 } };
+//        for (const auto& row : matrix) {
+//            for (const auto& col : row) {
+//                std::cout << col << ' ';
+//            }
+//            std::cout << std::endl;
+//        }
+//        std::cout << std::endl;
+//
+//        plssvm::data_set<double> data{ std::move(matrix) };
+//        data.scale(-2, +2);
+//
+//        for (const auto& row : data.data()) {
+//            for (const auto& col : row) {
+//                std::cout << col << ' ';
+//            }
+//            std::cout << std::endl;
+//        }
+//
+//        data.save_data_set("data.libsvm", plssvm::file_format_type::libsvm);
+////        data.save_data_set("data.arff", plssvm::file_format_type::arff);
+//
+//        plssvm::data_set<double> data2{"../data/data.libsvm"};
+////        for (const auto& row : data2.data()) {
+////            for (const auto& col : row) {
+////                std::cout << col << ' ';
+////            }
+////            std::cout << std::endl;
+////        }
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

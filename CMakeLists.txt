@@ -28,7 +28,6 @@ configure_file(
 ## set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
@@ -42,6 +41,12 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/data_set.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/libsvm_parsing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/arff_parsing.cpp
 )
 
 ## create base library: linked against all backend libraries
@@ -173,6 +178,28 @@ else()
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
+
+## try finding NamedType
+find_package(NamedType QUIET)
+if(NamedType_FOUND)
+    message(STATUS "Found package NamedType.")
+else()
+    message(STATUS "Couldn't find package NamedType. Building from source ...")
+    # fetch command line parser library NamedType
+    FetchContent_Declare(NamedType
+            GIT_REPOSITORY          https://github.com/joboccara/NamedType.git
+            GIT_TAG                 master
+            GIT_SHALLOW             TRUE
+
+            set(ENABLE_TEST OFF CACHE BOOL "" FORCE)
+            )
+    FetchContent_MakeAvailable(NamedType)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} NamedType)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${NamedType_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
+endif()
 
 
 ########################################################################################################################

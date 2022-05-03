@@ -13,6 +13,8 @@
 
 namespace plssvm {
 
+inline bool verbose = true;
+
 /// Integer type used inside kernels.
 using kernel_index_type = int;
 

@@ -10,6 +10,7 @@
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/constants.hpp"                          // plssvm::verbose
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
@@ -18,21 +19,12 @@
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdio>     // stderr
-#include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>  // std::exception
-#include <string>     // std::string
-#include <utility>    // std::move
+#include <cstdio>      // stderr
+#include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>   // std::exception
+#include <filesystem>  // std::filesystem::path
 
 namespace plssvm {
-
-template <typename T>
-parameter_train<T>::parameter_train(std::string p_input_filename) {
-    base_type::input_filename = std::move(p_input_filename);
-    base_type::model_filename = base_type::model_name_from_input();
-
-    base_type::parse_train_file(input_filename);
-}
 
 template <typename T>
 parameter_train<T>::parameter_train(int argc, char **argv) {
@@ -57,7 +49,7 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
             ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_kernel_invocation_type))))
             ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_implementation_type))))
 #endif
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
+            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
             ("model", "", cxxopts::value<decltype(model_filename)>(), "model_file");
@@ -120,8 +112,8 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 #endif
 
-    // parse print info
-    print_info = !print_info;
+    // parse whether output is quiet or not
+    plssvm::verbose = !plssvm::verbose;
 
     // parse input data filename
     if (!result.count("input")) {
@@ -135,14 +127,31 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     if (result.count("model")) {
         model_filename = result["model"].as<decltype(model_filename)>();
     } else {
-        model_filename = base_type::model_name_from_input();
+        model_filename = this->model_name_from_input();
     }
+}
 
-    base_type::parse_train_file(input_filename);
+template <typename T>
+[[nodiscard]] std::string parameter_train<T>::model_name_from_input() {
+    auto input_path = std::filesystem::path(input_filename);
+    return input_path.replace_filename(input_path.filename().string() + ".model").string();
 }
 
 // explicitly instantiate template class
 template class parameter_train<float>;
 template class parameter_train<double>;
+
+
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const parameter_train<T> &params) {
+    out << static_cast<const parameter<T>&>(params);
+    return out << fmt::format(
+               "input_filename              '{}'\n"
+               "model_filename              '{}'\n",
+               params.input_filename,
+               params.model_filename);
+}
+template std::ostream &operator<<(std::ostream &, const parameter_train<float> &);
+template std::ostream &operator<<(std::ostream &, const parameter_train<double> &);
 
 }  // namespace plssvm

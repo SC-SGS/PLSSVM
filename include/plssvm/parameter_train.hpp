@@ -34,21 +34,9 @@ class parameter_train : public parameter<T> {
     using base_type::epsilon;
     using base_type::gamma;
     using base_type::kernel;
-    using base_type::print_info;
     using base_type::target;
     using base_type::sycl_kernel_invocation_type;
     using base_type::sycl_implementation_type;
-
-    using base_type::input_filename;
-    using base_type::model_filename;
-    using base_type::predict_filename;
-
-    using base_type::alpha_ptr;
-    using base_type::data_ptr;
-    using base_type::test_data_ptr;
-    using base_type::value_ptr;
-
-    using base_type::rho;
 
     /**
      * @brief Default construct all training parameters.
@@ -56,21 +44,29 @@ class parameter_train : public parameter<T> {
     parameter_train() = default;
 
     /**
-     * @brief Set all training parameters to their default values and parse the data file.
-     * @details Sets the model_filename to `${input_filename}.model`.
-     * @param[in] input_filename the name of the data file
-     */
-    explicit parameter_train(std::string input_filename);
-
-    /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly. Parse the given data file.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
     parameter_train(int argc, char **argv);
+
+    /// The name of the data/test file to parse.
+    std::string input_filename{};
+    /// The name of the model file to write the learned support vectors to/to parse the saved model from.
+    std::string model_filename{};
+
+  private:
+    /**
+     * @brief Generate a model filename based on the name of the input file.
+     * @return `${input_filename}.model` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::string model_name_from_input();
 };
 
 extern template class parameter_train<float>;
 extern template class parameter_train<double>;
+
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const parameter_train<T> &params);
 
 }  // namespace plssvm

@@ -9,6 +9,8 @@
  * @brief Implements a conversion function from a string to an arithmetic type.
  */
 
+#pragma once
+
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::trim_left
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v

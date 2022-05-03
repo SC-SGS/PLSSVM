@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/file_reader.hpp"
+#include "plssvm/detail/io/file_reader.hpp"
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
@@ -29,7 +29,7 @@
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
-namespace plssvm::detail {
+namespace plssvm::detail::io {
 
 file_reader::file_reader(const std::string &filename, const char comment) {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)

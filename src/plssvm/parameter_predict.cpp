@@ -9,6 +9,7 @@
 #include "plssvm/parameter_predict.hpp"
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/constants.hpp"                          // plssvm::verbose
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 
@@ -16,23 +17,12 @@
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdio>     // stderr
-#include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>  // std::exception
-#include <string>     // std::string
-#include <utility>    // std::move
+#include <cstdio>      // stderr
+#include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>   // std::exception
+#include <filesystem>  // std::filesystem::path
 
 namespace plssvm {
-
-template <typename T>
-parameter_predict<T>::parameter_predict(std::string p_input_filename, std::string p_model_filename) {
-    base_type::input_filename = std::move(p_input_filename);
-    base_type::model_filename = std::move(p_model_filename);
-    base_type::predict_filename = base_type::predict_name_from_input();
-
-    base_type::parse_model_file(base_type::model_filename);
-    base_type::parse_test_file(base_type::input_filename);
-}
 
 template <typename T>
 parameter_predict<T>::parameter_predict(int argc, char **argv) {
@@ -50,7 +40,7 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
             ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", sycl_implementation_type))))
 #endif
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
+            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
             ("model", "", cxxopts::value<decltype(model_filename)>(), "model_file")
@@ -84,8 +74,8 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 #endif
 
-    // parse print info
-    print_info = !print_info;
+    // parse whether output is quiet or not
+    plssvm::verbose = !plssvm::verbose;
 
     // parse test data filename
     if (!result.count("test")) {
@@ -107,15 +97,33 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
     if (result.count("output")) {
         predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
-        predict_filename = base_type::predict_name_from_input();
+        predict_filename = this->predict_name_from_input();
     }
+}
 
-    base_type::parse_model_file(model_filename);
-    base_type::parse_test_file(input_filename);
+template <typename T>
+[[nodiscard]] std::string parameter_predict<T>::predict_name_from_input() {
+    auto input_path = std::filesystem::path(input_filename);
+    return input_path.replace_filename(input_path.filename().string() + ".predict").string();
 }
 
 // explicitly instantiate template class
 template class parameter_predict<float>;
 template class parameter_predict<double>;
+
+
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const parameter_predict<T> &params) {
+    out << static_cast<const parameter<T>&>(params);
+    return out << fmt::format(
+               "input_filename              '{}'\n"
+               "model_filename              '{}'\n"
+               "predict_filename            '{}'\n",
+               params.input_filename,
+               params.model_filename,
+               params.predict_filename);
+}
+template std::ostream &operator<<(std::ostream &, const parameter_predict<float> &);
+template std::ostream &operator<<(std::ostream &, const parameter_predict<double> &);
 
 }  // namespace plssvm
