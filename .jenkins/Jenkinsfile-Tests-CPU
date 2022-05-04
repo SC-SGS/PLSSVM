@@ -17,6 +17,40 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
     print "Proceeding!"
 }
 
+// OpenMP backend
+//def generate_openmp_stages(build_type) {
+//    return {
+//        stage('Build PLSSVM ${build_type} - OpenMP) {
+//            steps {
+//                dir('plssvm') {
+//                    sh '''
+//                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+//                        module use /home/breyerml/.modulefiles/
+//                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+//                        mkdir -p build/Release
+//                        cd build/${build_type}
+//                        rm -rf *
+//                        cmake -DCMAKE_BUILD_TYPE=${build_type} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+//                        make -j4
+//                    '''
+//                }
+//            }
+//        }
+//        stage('Run Tests ${build_type} - OpenMP') {
+//            steps {
+//                dir('plssvm') {
+//                    warnError('${build_type} tests failed!') {
+//                        sh '''
+//                            cd build/${build_type}
+//                            ctest -j4 --no-compress-output -T Test
+//                        '''
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+
 pipeline {
     agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
 
@@ -82,36 +116,29 @@ pipeline {
             }
         }
         // TODO: enable OpenCL and DPC++ on CPUs (missing OpenCL CPU runtime)
-        stage('Build PLSSVM Release - OpenMP, OpenCL, hipSYCL') {
+        // Release
+        // OpenMP backend
+        stage('Build PLSSVM Release - OpenMP) {
             steps {
                 dir('plssvm') {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        spack load llvm@14.0.0
-                        spack load pocl
-                        export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
                         module use /home/breyerml/.modulefiles/
-                        module load network_hipsycl_cpu
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                         make -j4
                     '''
                 }
             }
         }
-        stage('Run Tests Release - OpenMP, OpenCL, hipSYCL') {
+        stage('Run Tests Release - OpenMP') {
             steps {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            spack load llvm@14.0.0
-                            spack load pocl
-                            export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
-                            module use /home/breyerml/.modulefiles/
-                            module load network_hipsycl_cpu
                             cd build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -119,7 +146,8 @@ pipeline {
                 }
             }
         }
-        stage('Build PLSSVM Debug - OpenMP, OpenCL, hipSYCL') {
+        // OpenCL backend
+        stage('Build PLSSVM Release - OpenCL) {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -127,17 +155,17 @@ pipeline {
                         spack load pocl
                         export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
                         module use /home/breyerml/.modulefiles/
-                        module load network_hipsycl_cpu
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                         make -j4
                     '''
                 }
             }
         }
-        stage('Run Tests Debug - OpenMP, OpenCL, hipSYCL') {
+        stage('Run Tests Release - OpenCL') {
             steps {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
@@ -145,8 +173,6 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             spack load pocl
                             export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
-                            module use /home/breyerml/.modulefiles/
-                            module load network_hipsycl_cpu
                             cd build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -154,13 +180,141 @@ pipeline {
                 }
             }
         }
+        // SYCL backend: hipSYCL
+        stage('Build PLSSVM Release - hipSYCL) {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load network_hipsycl_cpu_2
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load network_hipsycl_cpu_2
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // Debug
+        // OpenMP backend
+        stage('Build PLSSVM Debug - OpenMP) {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - OpenMP') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // OpenCL backend
+        stage('Build PLSSVM Debug - OpenCL) {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        spack load pocl
+                        export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
+                        module use /home/breyerml/.modulefiles/
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            spack load pocl
+                            export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // SYCL backend: hipSYCL
+        stage('Build PLSSVM Debug - hipSYCL) {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load network_hipsycl_cpu_2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load network_hipsycl_cpu_2
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // Coverage Analysis
         stage('Perform Coverage Analysis') {
             steps {
                 dir('plssvm') {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load network_hipsycl_cpu
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
                         rm -rf *
