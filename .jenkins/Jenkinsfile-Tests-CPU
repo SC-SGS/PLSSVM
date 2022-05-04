@@ -19,12 +19,12 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
 }
 
 // OpenMP backend
-def generate_openmp_stages(build_type, num_data_points, num_features) {
+def generate_openmp_stages(String build_type, int num_data_points, int num_features) {
     return {
-        stage('OpenMP - ${build_type}') {
+        stage("OpenMP - ${build_type}") {
             steps {
                 dir('plssvm') {
-                    warnError('${build_type} tests failed!') {
+                    warnError("${build_type} tests failed!") {
                         sh '''
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
@@ -43,12 +43,12 @@ def generate_openmp_stages(build_type, num_data_points, num_features) {
     }
 }
 
-def_generate_opencl_stages(build_type, num_data_points, num_features) {
+def_generate_opencl_stages(String build_type, int num_data_points, int num_features) {
     return {
-        stage('OpenCL - ${build_type}') {
+        stage("OpenCL - ${build_type}") {
             steps {
                 dir('plssvm') {
-                    warnError('${build_type} tests failed!') {
+                    warnError("${build_type} tests failed!") {
                         sh '''
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             spack load pocl
@@ -69,12 +69,12 @@ def_generate_opencl_stages(build_type, num_data_points, num_features) {
     }
 }
 
-def_generate_sycl_stages(build_type, num_data_points, num_features) {
+def_generate_sycl_stages(String build_type, int num_data_points, int num_features) {
     return {
-        stage('SYCL - ${build_type}') {
+        stage("SYCL - ${build_type}") {
             steps {
                 dir('plssvm') {
-                    warnError('${build_type} tests failed!') {
+                    warnError("${build_type} tests failed!") {
                         sh '''
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
