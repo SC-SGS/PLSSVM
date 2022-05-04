@@ -21,9 +21,9 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
 // OpenMP backend
 def generate_openmp_stages(String build_type_p, Integer num_data_points_p, Integer num_features_p) {
     return {
-        stage("OpenMP - ${build_type}") {
+        stage("OpenMP - ${build_type_p}") {
             dir('plssvm') {
-                warnError("${build_type} tests failed!") {
+                warnError("${build_type_p} tests failed!") {
                     def build_type="${build_type_p}"
                     def num_data_points="${num_data_points_p}"
                     def num_features="${num_features_p}"
