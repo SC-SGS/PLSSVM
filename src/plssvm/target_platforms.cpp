@@ -30,7 +30,7 @@ std::vector<target_platform> list_available_target_platforms() {
     available_targets.push_back(target_platform::gpu_amd);
 #endif
 #if defined(PLSSVM_HAS_INTEL_TARGET)
-    available_targets.push_back(target_platform::gpu_intel)
+    available_targets.push_back(target_platform::gpu_intel);
 };
 #endif
 return available_targets;
