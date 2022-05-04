@@ -118,7 +118,7 @@ pipeline {
         // TODO: enable OpenCL and DPC++ on CPUs (missing OpenCL CPU runtime)
         // Release
         // OpenMP backend
-        stage('Build PLSSVM Release - OpenMP) {
+        stage('Build PLSSVM Release - OpenMP') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -147,7 +147,7 @@ pipeline {
             }
         }
         // OpenCL backend
-        stage('Build PLSSVM Release - OpenCL) {
+        stage('Build PLSSVM Release - OpenCL') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -181,7 +181,7 @@ pipeline {
             }
         }
         // SYCL backend: hipSYCL
-        stage('Build PLSSVM Release - hipSYCL) {
+        stage('Build PLSSVM Release - hipSYCL') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -214,7 +214,7 @@ pipeline {
         }
         // Debug
         // OpenMP backend
-        stage('Build PLSSVM Debug - OpenMP) {
+        stage('Build PLSSVM Debug - OpenMP') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -243,7 +243,7 @@ pipeline {
             }
         }
         // OpenCL backend
-        stage('Build PLSSVM Debug - OpenCL) {
+        stage('Build PLSSVM Debug - OpenCL') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -277,7 +277,7 @@ pipeline {
             }
         }
         // SYCL backend: hipSYCL
-        stage('Build PLSSVM Debug - hipSYCL) {
+        stage('Build PLSSVM Debug - hipSYCL') {
             steps {
                 dir('plssvm') {
                     sh '''
