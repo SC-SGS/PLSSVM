@@ -19,7 +19,7 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
 }
 
 // OpenMP backend
-def generate_openmp_stages(String build_type, int num_data_points, int num_features) {
+def generate_openmp_stages(String build_type, Integer num_data_points, Integer num_features) {
     return {
         stage("OpenMP - ${build_type}") {
             dir('plssvm') {
@@ -31,7 +31,7 @@ def generate_openmp_stages(String build_type, int num_data_points, int num_featu
                         mkdir -p "build/${build_type}"
                         cd "build/${build_type}"
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE="${build_type}" -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=num_data_points -DPLSSVM_TEST_FILE_NUM_FEATURES=num_features ../../
+                        cmake -DCMAKE_BUILD_TYPE=build_type -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=num_data_points -DPLSSVM_TEST_FILE_NUM_FEATURES=num_features ../../
                         make -j4
                         ctest -j4 --no-compress-output -T Test
                     '''
@@ -41,7 +41,7 @@ def generate_openmp_stages(String build_type, int num_data_points, int num_featu
     }
 }
 
-def generate_opencl_stages(String build_type, int num_data_points, int num_features) {
+def generate_opencl_stages(String build_type, Integer num_data_points, Integer num_features) {
     return {
         stage("OpenCL - ${build_type}") {
             dir('plssvm') {
@@ -53,9 +53,9 @@ def generate_opencl_stages(String build_type, int num_data_points, int num_featu
                         module use /home/breyerml/.modulefiles/
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
                         mkdir -p "build/${build_type}"
-                        cd "build/${build_type}"
+                        cd "build/${build_type}""
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE="${build_type}" -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=num_data_points -DPLSSVM_TEST_FILE_NUM_FEATURES=num_features ../../
+                        cmake -DCMAKE_BUILD_TYPE="build_type -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=num_data_points -DPLSSVM_TEST_FILE_NUM_FEATURES=num_features ../../
                         make -j4
                         ctest -j4 --no-compress-output -T Test
                     '''
@@ -65,7 +65,7 @@ def generate_opencl_stages(String build_type, int num_data_points, int num_featu
     }
 }
 
-def generate_sycl_stages(String build_type, int num_data_points, int num_features) {
+def generate_sycl_stages(String build_type, Integer num_data_points, Integer num_features) {
     return {
         stage("SYCL - ${build_type}") {
             dir('plssvm') {
@@ -77,7 +77,7 @@ def generate_sycl_stages(String build_type, int num_data_points, int num_feature
                         mkdir -p "build/${build_type}"
                         cd "build/${build_type}"
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE="${build_type}" -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=num_data_points -DPLSSVM_TEST_FILE_NUM_FEATURES=num_features ../../
+                        cmake -DCMAKE_BUILD_TYPE=build_type -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=num_data_points -DPLSSVM_TEST_FILE_NUM_FEATURES=num_features ../../
                         make -j4
                         ctest -j4 --no-compress-output -T Test
                     '''
