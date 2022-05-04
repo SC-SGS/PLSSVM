@@ -159,13 +159,18 @@ pipeline {
         }
         // TODO: enable OpenCL and DPC++ on CPUs (missing OpenCL CPU runtime)
         // Perform Tests
-        generate_openmp_stages('Release', 5000, 2000)
-        generate_opencl_stages('Release', 5000, 2000)
-        generate_sycl_stages('Release', 5000, 2000)
-        generate_openmp_stages('Debug', 100, 20)
-        generate_opencl_stages('Debug', 100, 20)
-        generate_sycl_stages('Debug', 100, 20)
-
+        stage('Perform Tests') {
+            steps {
+                script {
+                    generate_openmp_stages('Release', 5000, 2000).call()
+                    generate_opencl_stages('Release', 5000, 2000).call()
+                    generate_sycl_stages('Release', 5000, 2000).call()
+                    generate_openmp_stages('Debug', 100, 20).call()
+                    generate_opencl_stages('Debug', 100, 20).call()
+                    generate_sycl_stages('Debug', 100, 20).call()
+                }
+            }
+        }
         // Coverage Analysis
         stage('Perform Coverage Analysis') {
             steps {
