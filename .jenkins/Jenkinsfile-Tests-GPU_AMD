@@ -186,7 +186,7 @@ pipeline {
             }
         }
         // DPC++ backend
-        stage('Run Tests Release - DPC++') {
+        stage('Build PLSSVM Release - DPC++') {
             steps {
                 dir('plssvm') {
                     sh '''
