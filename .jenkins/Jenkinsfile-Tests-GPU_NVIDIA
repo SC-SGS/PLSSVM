@@ -81,8 +81,67 @@ pipeline {
                 '''
             }
         }
-        // TODO: enable HIP
-        stage('Build PLSSVM Release - CUDA, OpenCL, hipSYCL') {
+        // Release
+        // CUDA backend
+        stage('Build PLSSVM Release - CUDA') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - CUDA') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            module load cuda/11.2.2
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // OpenCL backend
+        stage('Build PLSSVM Release - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - CUDA') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            module load cuda/11.2.2
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // hipSYCL backend
+        stage('Build PLSSVM Release - hipSYCL') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -92,13 +151,13 @@ pipeline {
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j4
                     '''
                 }
             }
         }
-        stage('Run Tests Release - CUDA, OpenCL, hipSYCL') {
+        stage('Run Tests Release - hipSYCL') {
             steps {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
@@ -113,6 +172,7 @@ pipeline {
                 }
             }
         }
+        // DPC++ backend
         stage('Build PLSSVM Release - DPC++') {
             steps {
                 dir('plssvm') {
@@ -123,7 +183,7 @@ pipeline {
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF  ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j4
                     '''
                 }
@@ -144,7 +204,69 @@ pipeline {
                 }
             }
         }
-        stage('Build PLSSVM Debug - CUDA, OpenCL, hipSYCL') {
+        // Debug
+        // CUDA backend
+        stage('Build PLSSVM Debug - CUDA') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - CUDA') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module load cuda/11.2.2
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // OpenCL backend
+        stage('Build PLSSVM Debug - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module load cuda/11.2.2
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // hipSYCL backend
+        stage('Build PLSSVM Debug - hipSYCL') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -154,13 +276,13 @@ pipeline {
                         mkdir -p build/Debug
                         cd build/Debug
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
                     '''
                 }
             }
         }
-        stage('Run Tests Debug - CUDA, OpenCL, hipSYCL') {
+        stage('Run Tests Debug - CUDA') {
             steps {
                 dir('plssvm') {
                     warnError('Debug tests failed!') {
@@ -175,6 +297,7 @@ pipeline {
                 }
             }
         }
+        // DPC++ backend
         // stage('Build PLSSVM Debug - DPC++') {
         //     steps {
         //         dir('plssvm') {
