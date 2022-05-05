@@ -127,7 +127,7 @@ pipeline {
                 }
             }
         }
-        stage('Run Tests Release - CUDA') {
+        stage('Run Tests Release - OpenCL') {
             steps {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
