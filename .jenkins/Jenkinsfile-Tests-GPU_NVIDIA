@@ -204,6 +204,70 @@ pipeline {
                 }
             }
         }
+        // CUDA + OpenCL + hipSYCL + DPC++ backends simultaneously
+        stage('Build PLSSVM Release - All Available') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load cuda/11.2.2
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+
+                        # DPC++
+                        export PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/bin:$PATH
+                        export LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib:$LIBRARY_PATH
+                        export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/lib:$LD_LIBRARY_PATH
+                        export CPLUS_INCLUDE_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/projects/openmp/runtime/src:$CPLUS_INCLUDE_PATH
+
+                        export PLSSVM_SYCL_DPCPP_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/include
+
+                        # hipSYCL
+                        export PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/bin:$PATH
+                        export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/lib:$LD_LIBRARY_PATH
+
+                        export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/include
+
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/include/sycl -DOpenCL_LIBRARY=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - All Available') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load cuda/11.2.2
+                            module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+
+                            # DPC++
+                            export PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/bin:$PATH
+                            export LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib:$LIBRARY_PATH
+                            export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/lib:$LD_LIBRARY_PATH
+                            export CPLUS_INCLUDE_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/projects/openmp/runtime/src:$CPLUS_INCLUDE_PATH
+
+                            export PLSSVM_SYCL_DPCPP_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/include
+
+                            # hipSYCL
+                            export PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/bin:$PATH
+                            export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/lib:$LD_LIBRARY_PATH
+
+                            export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/include
+
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
         // Debug
         // CUDA backend
         stage('Build PLSSVM Debug - CUDA') {
