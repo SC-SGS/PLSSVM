@@ -166,7 +166,7 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
 
     # TODO: remove if DPC++ bug is fixed
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(SEND_ERROR "The SYCL backend when using DPC++ currently does not support the Debug build type. For more information see: https://github.com/intel/llvm/issues/5754")
+        message(WARNING "Our library currently may not compile in Debug mode with DPC++ due to an internal compiler error. If this is the case, please use another CMAKE_BUILD_TYPE (like RelWithDebInfo).")
     endif()
 
     # enable DPC++ SYCL support
