@@ -90,6 +90,11 @@ if(OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed up file parsing.")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+else()
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+            )
 endif()
 
 ## setup dependencies
