@@ -38,6 +38,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
@@ -208,9 +209,12 @@ add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/m
 ## create predict executable
 set(PLSSVM_EXECUTABLE_PREDICT_NAME plssvm-predict)
 add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
+## create scale executable
+set(PLSSVM_EXECUTABLE_SCALE_NAME plssvm-scale)
+add_executable(${PLSSVM_EXECUTABLE_SCALE_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_scale.cpp)
 
 ## append executables to installed targets
-list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_EXECUTABLE_PREDICT_NAME})
+list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_EXECUTABLE_SCALE_NAME})
 
 ########################################################################################################################
 ##                                            setup code coverage analysis                                            ##
@@ -246,6 +250,7 @@ if(uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
     # add executables as coverage target
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
+    add_dependencies(coverage ${PLSSVM_EXECUTABLE_SCALE_NAME})
 
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
@@ -390,6 +395,7 @@ endif()
 ## link backends against executables
 target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_EXECUTABLE_SCALE_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 
 ########################################################################################################################
@@ -445,11 +451,12 @@ if(DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
 endif()
 
 ## change executable floating points from double precision to single precision
-option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the ${PLSSVM_EXECUTABLE_TRAIN_NAME} and ${PLSSVM_EXECUTABLE_PREDICT_NAME} executables with single precision instead of double precision." OFF)
+option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the ${PLSSVM_EXECUTABLE_TRAIN_NAME}, ${PLSSVM_EXECUTABLE_PREDICT_NAME}, and ${PLSSVM_EXECUTABLE_SCALE_NAME} executables with single precision instead of double precision." OFF)
 if(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
-    message(STATUS "Using single precision floating point numbers for ${PLSSVM_EXECUTABLE_TRAIN_NAME} and ${PLSSVM_EXECUTABLE_PREDICT_NAME}.")
+    message(STATUS "Using single precision floating point numbers for ${PLSSVM_EXECUTABLE_TRAIN_NAME}, ${PLSSVM_EXECUTABLE_PREDICT_NAME}, and ${PLSSVM_EXECUTABLE_SCALE_NAME}.")
     target_compile_definitions(${PLSSVM_EXECUTABLE_TRAIN_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
     target_compile_definitions(${PLSSVM_EXECUTABLE_PREDICT_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
+    target_compile_definitions(${PLSSVM_EXECUTABLE_SCALE_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
 endif()
 
 ########################################################################################################################
@@ -464,6 +471,7 @@ if(PLSSVM_ENABLE_LTO)
         message(STATUS "Interprocedural optimization (IPO/LTO) enabled.")
         set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+        set_property(TARGET ${PLSSVM_EXECUTABLE_SCALE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     else()
         message(STATUS "Interprocedural optimization (IPO/LTO) not supported.")
     endif()

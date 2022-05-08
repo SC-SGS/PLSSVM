@@ -18,6 +18,7 @@
 #include "plssvm/parameter.hpp"
 #include "plssvm/parameter_train.hpp"
 #include "plssvm/parameter_predict.hpp"
+#include "plssvm/parameter_scale.hpp"
 
 #include "plssvm/backend_types.hpp"
 #include "plssvm/kernel_types.hpp"
