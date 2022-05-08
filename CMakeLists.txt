@@ -36,11 +36,8 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/data_set.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/libsvm_parsing.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/arff_parsing.cpp
 )
 
 ## create base library: linked against all backend libraries
