@@ -171,16 +171,16 @@ void write_libsvm_data(fmt::ostream &out, const std::shared_ptr<std::vector<std:
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, X_ptr, y_ptr, format_libsvm_line, has_label)
+    #pragma omp parallel default(none) shared(out, X_ptr, y_ptr, format_libsvm_line)
     {
-        // all support vectors with class 1
+        // all support vectors
         std::string out_string;
         #pragma omp for schedule(dynamic) nowait
-        for (typename std::vector<real_type>::size_type i = 0; i < y_ptr->size(); ++i) {
+        for (typename std::vector<real_type>::size_type i = 0; i < X_ptr->size(); ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format(FMT_COMPILE("{} "), (*y_ptr)[i]));
             }
-            format_libsvm_line(out_string, (*y_ptr)[i], (*X_ptr)[i]);
+            format_libsvm_line(out_string, (*X_ptr)[i]);
         }
 
         #pragma omp critical

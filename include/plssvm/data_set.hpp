@@ -44,7 +44,6 @@ namespace plssvm {
 template <typename T>
 using optional_ref = std::optional<std::reference_wrapper<T>>;
 
-
 template <typename T, typename U = T>
 class data_set {
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
@@ -294,9 +293,9 @@ void data_set<T, U>::write_libsvm_file(const std::string& filename) const {
     fmt::ostream out = fmt::output_file(filename);
     // write data
     if (this->has_labels()) {
-        detail::io::write_libsvm_data<true>(out, X_ptr_, labels_ptr_);
+        detail::io::write_libsvm_data<real_type, label_type, true>(out, X_ptr_, labels_ptr_);
     } else {
-        detail::io::write_libsvm_data<false>(out, X_ptr_);
+        detail::io::write_libsvm_data<real_type, label_type, false>(out, X_ptr_);
     }
 }
 
