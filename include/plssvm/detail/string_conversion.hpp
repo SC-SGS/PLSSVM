@@ -40,30 +40,35 @@ namespace plssvm::detail {
  */
 template <typename T, typename Exception = std::runtime_error>
 [[nodiscard]] inline T convert_to(std::string_view str) {
-    // select conversion function depending on the provided type
-    const auto convert_from_chars = [](const std::string_view sv, auto &val) {
-        if constexpr (std::is_floating_point_v<T>) {
-            // convert the string to a floating point value
-            return fast_float::from_chars(sv.data(), sv.data() + sv.size(), val);
-        } else if constexpr (std::is_integral_v<T>) {
-            // convert the string to an integral value
-            return std::from_chars(sv.data(), sv.data() + sv.size(), val);
-        } else {
-            // can't convert the string to a non-arithmetic type
-            static_assert(always_false_v<T>, "Can only convert arithmetic types!");
+    if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+        // convert string_view to string
+        return std::string{ trim_left(str) };
+    } else {
+        // select conversion function depending on the provided type
+        const auto convert_from_chars = [](const std::string_view sv, auto &val) {
+            if constexpr (std::is_floating_point_v<T>) {
+                // convert the string to a floating point value
+                return fast_float::from_chars(sv.data(), sv.data() + sv.size(), val);
+            } else if constexpr (std::is_integral_v<T>) {
+                // convert the string to an integral value
+                return std::from_chars(sv.data(), sv.data() + sv.size(), val);
+            } else {
+                // can't convert the string to a non-arithmetic type
+                static_assert(always_false_v<T>, "Can only convert arithmetic types!");
+            }
+        };
+
+        // remove leading whitespaces
+        str = trim_left(str);
+
+        // convert string to value fo type T
+        T val;
+        auto res = convert_from_chars(str, val);
+        if (res.ec != std::errc{}) {
+            throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, plssvm::detail::arithmetic_type_name<T>()) };
         }
-    };
-
-    // remove leading whitespaces
-    str = trim_left(str);
-
-    // convert string to value fo type T
-    T val;
-    auto res = convert_from_chars(str, val);
-    if (res.ec != std::errc{}) {
-        throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, plssvm::detail::arithmetic_type_name<T>()) };
+        return val;
     }
-    return val;
 }
 
 /**
