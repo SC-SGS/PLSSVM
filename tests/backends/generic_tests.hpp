@@ -146,7 +146,7 @@ inline void generate_q_test() {
 
     ASSERT_EQ(correct.size(), calculated.size());
     for (typename std::vector<real_type>::size_type index = 0; index < correct.size(); ++index) {
-        util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}", index));
+        util::gtest_assert_floating_point_near(correct[index], calculated[index], real_type{ 12 }, fmt::format("\tindex: {}", index));
     }
 }
 
