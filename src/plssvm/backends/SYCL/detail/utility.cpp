@@ -51,7 +51,7 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 #endif
 #if defined(PLSSVM_HAS_AMD_TARGET)
                         case target_platform::gpu_amd:
-                            if (::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) {
+                            if (::plssvm::detail::contains(vendor_string, "amd")) {
                                 target_devices.emplace_back(std::make_unique<detail::sycl::queue>(device, detail::sycl::property::queue::in_order()));
                             }
                             break;
