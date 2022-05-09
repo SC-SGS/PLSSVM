@@ -210,7 +210,6 @@ pipeline {
                         sh '''
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/dpcpp
                             cd build/Release
                             ctest -j4 --no-compress-output -T Test
