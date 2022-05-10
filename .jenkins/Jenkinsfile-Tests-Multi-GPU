@@ -305,7 +305,7 @@ pipeline {
                     --data "{
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"Jenkins Multi-GPU tests\\",
-                        \\"description\\": \\"Jenkins CI Job: Jenkins Multi-GPU testsu\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins Multi-GPU tests\\",
                         \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-Multi-GPU/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
                 }"
             '''
