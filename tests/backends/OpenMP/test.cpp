@@ -97,13 +97,13 @@ TYPED_TEST(OpenMP_CSVM, device_kernel) {
     std::uniform_real_distribution<real_type> dist(1.0, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    // create correct q vector, cost and QA_cost
-    const std::vector<real_type> q_vec = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm);
-    const real_type cost = csvm.get_cost();
-    const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
-
     // create C-SVM using the OpenMP backend
     mock_openmp_csvm csvm_openmp{ params };
+
+    // create correct q vector, cost and QA_cost
+    const std::vector<real_type> q_vec = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm_openmp.get_num_devices(), csvm);
+    const real_type cost = csvm.get_cost();
+    const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
     // setup data on device
     csvm_openmp.setup_data_on_device();

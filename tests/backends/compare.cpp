@@ -11,8 +11,9 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::pow, std::exp, std::fma
-#include <vector>  // std::vector
+#include <algorithm>  // std::min
+#include <cmath>      // std::pow, std::exp, std::fma
+#include <vector>     // std::vector
 
 namespace compare::detail {
 
@@ -28,6 +29,25 @@ real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_
 }
 template float linear_kernel(const std::vector<float> &, const std::vector<float> &);
 template double linear_kernel(const std::vector<double> &, const std::vector<double> &);
+
+template <typename real_type>
+real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const std::size_t num_devices) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
+    PLSSVM_ASSERT(num_devices > 0, "At least one device must be available!");
+
+    std::size_t block_size = x.size() / num_devices;
+    real_type result{ 0.0 };
+    for (std::size_t d = 0; d < num_devices; ++d) {
+        real_type tmp{ 0.0 };
+        for (std::size_t i = d * block_size; i < std::min(x.size(), (d + 1) * block_size); ++i) {
+            tmp = std::fma(x[i], y[i], tmp);
+        }
+        result += tmp;
+    }
+    return result;
+}
+template float linear_kernel(const std::vector<float> &, const std::vector<float> &, const std::size_t);
+template double linear_kernel(const std::vector<double> &, const std::vector<double> &, const std::size_t);
 
 template <typename real_type>
 real_type poly_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const int degree, const real_type gamma, const real_type coef0) {

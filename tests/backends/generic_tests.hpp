@@ -130,12 +130,12 @@ inline void generate_q_test() {
     mock_csvm csvm{ params };
     using real_type_csvm = typename decltype(csvm)::real_type;
 
-    // parse libsvm file and calculate q vector
-    const std::vector<real_type> correct = compare::generate_q<kernel>(csvm.get_data(), csvm);
-
     // setup C-SVM based on specified backend
     csvm_type csvm_backend{ params };
     using real_type_csvm_backend = typename decltype(csvm_backend)::real_type;
+
+    // calculate q vector
+    const std::vector<real_type> correct = compare::generate_q<kernel>(csvm.get_data(), csvm_backend.get_num_devices(), csvm);
 
     // check types
     testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_backend>();
@@ -173,16 +173,16 @@ inline void device_kernel_test() {
     std::uniform_real_distribution<real_type> dist(1.0, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    // create correct q vector, cost and QA_cost
-    const std::vector<real_type> q_vec = compare::generate_q<kernel>(csvm.get_data(), csvm);
-    const real_type cost = csvm.get_cost();
-    const real_type QA_cost = compare::kernel_function<kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
-
     // create C-SVM using the specified backend
     csvm_type csvm_backend{ params };
     using real_type_csvm_backend = typename decltype(csvm)::real_type;
     using device_ptr_type = typename decltype(csvm_backend)::device_ptr_type;
     using queue_type = typename decltype(csvm_backend)::queue_type;
+
+    // create correct q vector, cost and QA_cost
+    const std::vector<real_type> q_vec = compare::generate_q<kernel>(csvm.get_data(), csvm_backend.get_num_devices(), csvm);
+    const real_type cost = csvm.get_cost();
+    const real_type QA_cost = compare::kernel_function<kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
     // check types
     testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_backend>();

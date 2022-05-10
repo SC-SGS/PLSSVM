@@ -112,7 +112,7 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     // parse target_platform and cast the value to the respective enum
     target = result["target_platform"].as<decltype(target)>();
 
-#if defined(PLSSVM_HAS_SYCL_IMPLEMENTATION)
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
     // parse kernel invocation type when using SYCL as backend
     sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
