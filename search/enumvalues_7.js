@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['polynomial_586',['polynomial',['../namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea',1,'plssvm']]]
+  ['opencl_679',['opencl',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887',1,'plssvm']]],
+  ['openmp_680',['openmp',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f',1,'plssvm']]]
 ];

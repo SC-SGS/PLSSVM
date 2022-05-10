@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['nd_5frange_583',['nd_range',['../namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baaf4578c9c58bee746eedf6302f18a2ecf',1,'plssvm::sycl']]]
+  ['linear_677',['linear',['../namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa',1,'plssvm']]]
 ];

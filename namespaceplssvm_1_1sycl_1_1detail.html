@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -75,7 +83,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Namespace containing SYCL backend specific implementation details. <b>Should not</b> directly be used by users.  
+<p>Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. <b>Should not</b> directly be used by users.  
 <a href="namespaceplssvm_1_1sycl_1_1detail.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
@@ -86,24 +94,24 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ac8112019c7f251e54693a506a7801121"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt;::sycl::queue &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#ac8112019c7f251e54693a506a7801121">get_device_list</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
-<tr class="memdesc:ac8112019c7f251e54693a506a7801121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1sycl_1_1detail.html#ac8112019c7f251e54693a506a7801121">More...</a><br /></td></tr>
-<tr class="separator:ac8112019c7f251e54693a506a7801121"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa53a36812a1135f025dcc706d3374654"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">device_synchronize</a> (::sycl::queue &amp;queue)</td></tr>
-<tr class="memdesc:aa53a36812a1135f025dcc706d3374654"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1sycl_1_1detail.html#aa53a36812a1135f025dcc706d3374654">More...</a><br /></td></tr>
-<tr class="separator:aa53a36812a1135f025dcc706d3374654"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67e2c97cb2a8ee132e8f8995d065226f"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; std::unique_ptr&lt; detail::sycl::queue &gt; &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#a67e2c97cb2a8ee132e8f8995d065226f">get_device_list</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
+<tr class="memdesc:a67e2c97cb2a8ee132e8f8995d065226f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1sycl_1_1detail.html#a67e2c97cb2a8ee132e8f8995d065226f">More...</a><br /></td></tr>
+<tr class="separator:a67e2c97cb2a8ee132e8f8995d065226f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2dc5e0def291d46023be310208d24da1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html#a2dc5e0def291d46023be310208d24da1">device_synchronize</a> (detail::sycl::queue &amp;queue)</td></tr>
+<tr class="memdesc:a2dc5e0def291d46023be310208d24da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1sycl_1_1detail.html#a2dc5e0def291d46023be310208d24da1">More...</a><br /></td></tr>
+<tr class="separator:a2dc5e0def291d46023be310208d24da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Namespace containing SYCL backend specific implementation details. <b>Should not</b> directly be used by users. </p>
+<div class="textblock"><p>Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. <b>Should not</b> directly be used by users. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="ac8112019c7f251e54693a506a7801121"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac8112019c7f251e54693a506a7801121">&#9670;&nbsp;</a></span>get_device_list()</h2>
+<a id="a67e2c97cb2a8ee132e8f8995d065226f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67e2c97cb2a8ee132e8f8995d065226f">&#9670;&nbsp;</a></span>get_device_list()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt;std::vector&lt;::sycl::queue&gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::sycl::detail::get_device_list </td>
+          <td class="memname">std::pair&lt;std::vector&lt;std::unique_ptr&lt;detail::sycl::queue&gt; &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::sycl::detail::get_device_list </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
           <td class="paramname"><em>target</em></td><td>)</td>
@@ -129,8 +137,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aa53a36812a1135f025dcc706d3374654"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa53a36812a1135f025dcc706d3374654">&#9670;&nbsp;</a></span>device_synchronize()</h2>
+<a id="a2dc5e0def291d46023be310208d24da1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2dc5e0def291d46023be310208d24da1">&#9670;&nbsp;</a></span>device_synchronize()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -138,7 +146,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">void plssvm::sycl::detail::device_synchronize </td>
           <td>(</td>
-          <td class="paramtype">::sycl::queue &amp;&#160;</td>
+          <td class="paramtype">detail::sycl::queue &amp;&#160;</td>
           <td class="paramname"><em>queue</em></td><td>)</td>
           <td></td>
         </tr>
@@ -158,7 +166,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

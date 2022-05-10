@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -66,6 +74,9 @@ $(function() {
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
 <h3><a id="index_d"></a>- d -</h3><ul>
+<li>data_
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a6d60a23b9417dfc3f489ff8ae345ba54">plssvm::detail::gpu_device_ptr&lt; T, queue_t, device_pointer_t &gt;</a>
+</li>
 <li>data_d_
 : <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac37aa662295e1a5d2c065527920904b2">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
 </li>
@@ -95,37 +106,38 @@ $(function() {
 <li>dept_
 : <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a7219b67d6506e8aa056c4f9b5af7a363">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
 </li>
-<li>device
-: <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6d06f4d6389ae22930386fcfe85c8da6">plssvm::opencl::detail::command_queue</a>
+<li>device_context
+: <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html#a16d9af6f4d6f4ea05a9889162ea5a38f">plssvm::opencl::detail::context</a>
 </li>
 <li>device_kernel_predict_poly()
-: <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#a3d0a0e2e95037149c0fc12e0ffe50768">plssvm::sycl::device_kernel_predict_poly&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__predict__poly.html#a1c965fa6c2d32e39a8429880575e724e">plssvm::sycl_generic::device_kernel_predict_poly&lt; T &gt;</a>
 </li>
 <li>device_kernel_predict_radial()
-: <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html#a3ed6d9c0431712856307133827497b38">plssvm::sycl::device_kernel_predict_radial&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__predict__radial.html#a9daa83c9b926ee06ea6224ac2fac9e5c">plssvm::sycl_generic::device_kernel_predict_radial&lt; T &gt;</a>
 </li>
 <li>device_kernel_q_linear()
-: <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html#a68164a5df2882939fe843140ad657f3e">plssvm::sycl::device_kernel_q_linear&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__linear.html#a33a19f0e736a8ca4a5f6586814563aa1">plssvm::sycl_generic::device_kernel_q_linear&lt; T &gt;</a>
 </li>
 <li>device_kernel_q_poly()
-: <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__poly.html#a2b2d92e7717d287079cc3c4670229056">plssvm::sycl::device_kernel_q_poly&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__poly.html#a69879bfc9472f7d9bf605d79e9c56217">plssvm::sycl_generic::device_kernel_q_poly&lt; T &gt;</a>
 </li>
 <li>device_kernel_q_radial()
-: <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__radial.html#a90b302bca6dfc9d39dbf27cb73bd57a4">plssvm::sycl::device_kernel_q_radial&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__radial.html#a120b1d56daedac882c4c48caa83a16b6">plssvm::sycl_generic::device_kernel_q_radial&lt; T &gt;</a>
 </li>
 <li>device_kernel_w_linear()
-: <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html#ab06673a2178c485a95850411202e5043">plssvm::sycl::device_kernel_w_linear&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__w__linear.html#a8041664232caf0cefd2200204e818547">plssvm::sycl_generic::device_kernel_w_linear&lt; T &gt;</a>
+</li>
+<li>device_pointer_type
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">plssvm::detail::gpu_device_ptr&lt; T, queue_t, device_pointer_t &gt;</a>
 </li>
 <li>device_ptr()
 : <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a83dbf8ecff5aa9898ef9552b7119d10d">plssvm::cuda::detail::device_ptr&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1detail_1_1device__ptr.html#a100c1359dff4b2bd4752bbcf01b4c713">plssvm::hip::detail::device_ptr&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aa2d3259d2d32ce35259c6098a8dba103">plssvm::opencl::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a31eeac290a3565cca7ced08223e63fde">plssvm::sycl::detail::device_ptr&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3684e6d454c5dcbd5ee96faf817c4cfb">plssvm::sycl::detail::device_ptr&lt; T &gt;</a>
 </li>
 <li>device_ptr_type
-: <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">plssvm::cuda::csvm&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
-, <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#af2db3b3161635d12a9b35591a1ee15d3">plssvm::opencl::csvm&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a460aefd64e9fcb525e5ec9cd4e2cc759">plssvm::sycl::csvm&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
 </li>
 <li>device_reduction()
 : <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a44d77ba8fc431214240fd11c49c030f0">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
@@ -133,8 +145,12 @@ $(function() {
 <li>device_synchronize()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad9b2db9dcea9fd6cd37734810ac15e13">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a7b469988135da27717c43e5fba032cb9">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#ab8adafe97cd417551b5075d35d8a2e3d">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#af572912b4d372f10901c0f0b5279a2c6">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a060e1e4bc9fa288a9d1cc831b9dc4131">plssvm::sycl::csvm&lt; T &gt;</a>
+</li>
+<li>devices
+: <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html#adee2d75bd267c193fcc24bffc3207c0c">plssvm::opencl::detail::context</a>
 </li>
 <li>devices_
 : <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a1856f3ad4365915ca839de9c7aa5e2da">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
@@ -143,7 +159,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

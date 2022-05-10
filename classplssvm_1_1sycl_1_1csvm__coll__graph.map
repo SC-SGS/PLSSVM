@@ -1,5 +1,5 @@
 <map id="plssvm::sycl::csvm&lt; T &gt;" name="plssvm::sycl::csvm&lt; T &gt;">
-<area shape="rect" id="node1" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="443,27,627,54"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="204,5,395,76"/>
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="463,27,647,54"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="204,5,415,76"/>
 <area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,27,156,54"/>
 </map>

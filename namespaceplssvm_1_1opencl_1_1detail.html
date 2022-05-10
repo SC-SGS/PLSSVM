@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -69,6 +77,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">plssvm::opencl::detail Namespace Reference</div>  </div>
@@ -83,6 +92,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">RAII wrapper class around a cl_command_queue.  <a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html">context</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">RAII wrapper class around a cl_context.  <a href="classplssvm_1_1opencl_1_1detail_1_1context.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html">device_ptr</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Small wrapper class around an OpenCL device pointer together with commonly used device functions.  <a href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -92,6 +104,16 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">RAII wrapper class around a cl_kernel.  <a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a8595bc499618e52ef00c344694d218b5"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a> { <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5ab630857790924014c4e707a5ab16d933">q_kernel</a>
+, <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5a0acad6b7761fb58d284892bdcc1cb4cf">svm_kernel</a>
+, <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5a152d26ad8e83a8403cf81ec68b576dc9">w_kernel</a>
+, <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5aef3c7f988f2b358b5783566705689a88">predict_kernel</a>
+ }</td></tr>
+<tr class="memdesc:a8595bc499618e52ef00c344694d218b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all different OpenCL compute kernels.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">More...</a><br /></td></tr>
+<tr class="separator:a8595bc499618e52ef00c344694d218b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -107,22 +129,22 @@ Functions</h2></td></tr>
 <tr class="memitem:ac80991deea09f813c1c0e6799281223f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">device_assert</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1error__code.html">error_code</a> code, std::string_view msg=&quot;&quot;)</td></tr>
 <tr class="memdesc:ac80991deea09f813c1c0e6799281223f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the OpenCL error <code>code</code>. If <code>code</code> signals an error, throw a <code><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">More...</a><br /></td></tr>
 <tr class="separator:ac80991deea09f813c1c0e6799281223f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c423f48db815f6ee8bf0acff3e99c10"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a9c423f48db815f6ee8bf0acff3e99c10">get_command_queues</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
-<tr class="memdesc:a9c423f48db815f6ee8bf0acff3e99c10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a9c423f48db815f6ee8bf0acff3e99c10">More...</a><br /></td></tr>
-<tr class="separator:a9c423f48db815f6ee8bf0acff3e99c10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59496c0413d68e731d66868cb1ba7f7c"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html">context</a> &gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a59496c0413d68e731d66868cb1ba7f7c">get_contexts</a> (<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
+<tr class="memdesc:a59496c0413d68e731d66868cb1ba7f7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the context listing all devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a59496c0413d68e731d66868cb1ba7f7c">More...</a><br /></td></tr>
+<tr class="separator:a59496c0413d68e731d66868cb1ba7f7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8795d201b3800826ec311f66c58f66e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">device_synchronize</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &amp;queue)</td></tr>
 <tr class="memdesc:ad8795d201b3800826ec311f66c58f66e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">More...</a><br /></td></tr>
 <tr class="separator:ad8795d201b3800826ec311f66c58f66e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a79ee86d89b83d4d9606ea594be8f15d4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a79ee86d89b83d4d9606ea594be8f15d4">get_device_name</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &amp;queue)</td></tr>
 <tr class="memdesc:a79ee86d89b83d4d9606ea594be8f15d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the name of the device associated with the OpenCL command queue <code>queue</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a79ee86d89b83d4d9606ea594be8f15d4">More...</a><br /></td></tr>
 <tr class="separator:a79ee86d89b83d4d9606ea594be8f15d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8293538e911985d718aff72ff9a392c"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8293538e911985d718aff72ff9a392c">kernel_type_to_function_name</a> (<a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a>)</td></tr>
-<tr class="memdesc:ad8293538e911985d718aff72ff9a392c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the kernel type <code>kernel</code> to the function names for the q and svm kernel functions.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ad8293538e911985d718aff72ff9a392c">More...</a><br /></td></tr>
-<tr class="separator:ad8293538e911985d718aff72ff9a392c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af84a4a8cee6def24ce4cc2e06e56b217"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
-<tr class="memitem:af84a4a8cee6def24ce4cc2e06e56b217"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#af84a4a8cee6def24ce4cc2e06e56b217">create_kernel</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &gt; &amp;queues, const std::string &amp;file, const std::string &amp;kernel_name)</td></tr>
-<tr class="memdesc:af84a4a8cee6def24ce4cc2e06e56b217"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a kernel with <code>kernel_name</code> for the given command queues from the file <code>file</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#af84a4a8cee6def24ce4cc2e06e56b217">More...</a><br /></td></tr>
-<tr class="separator:af84a4a8cee6def24ce4cc2e06e56b217"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c6b6dd42f9694352f7522e14578d3ec"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a>, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a2c6b6dd42f9694352f7522e14578d3ec">kernel_type_to_function_names</a> (<a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a> <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a>)</td></tr>
+<tr class="memdesc:a2c6b6dd42f9694352f7522e14578d3ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the kernel type <code>kernel</code> to the device function names and return the compute_kernel_name identifier.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a2c6b6dd42f9694352f7522e14578d3ec">More...</a><br /></td></tr>
+<tr class="separator:a2c6b6dd42f9694352f7522e14578d3ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22e432e47473666139420ee932c4e0a2"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
+<tr class="memitem:a22e432e47473666139420ee932c4e0a2"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a22e432e47473666139420ee932c4e0a2">create_command_queues</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html">context</a> &gt; &amp;contexts, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target, const std::vector&lt; std::pair&lt; <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a>, std::string &gt;&gt; &amp;kernel_names, bool print_info)</td></tr>
+<tr class="memdesc:a22e432e47473666139420ee932c4e0a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create command queues for all devices in the OpenCL <code>contexts</code> with respect to <code>target</code> given and the associated compute kernels with respect to the given source files and kernel function names.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a22e432e47473666139420ee932c4e0a2">More...</a><br /></td></tr>
+<tr class="separator:a22e432e47473666139420ee932c4e0a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a282a05f06dd0c74a8e4f1e992918dfb8"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a282a05f06dd0c74a8e4f1e992918dfb8"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8">set_kernel_args</a> (cl_kernel <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a>, Args... args)</td></tr>
 <tr class="memdesc:a282a05f06dd0c74a8e4f1e992918dfb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set all arguments in the parameter pack <code>args</code> for the kernel <code>kernel</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8">More...</a><br /></td></tr>
@@ -138,7 +160,43 @@ Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Namespace containing OpenCL backend specific implementation details. <b>Should not</b> directly be used by users. </p>
-</div><h2 class="groupheader">Function Documentation</h2>
+</div><h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a8595bc499618e52ef00c344694d218b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8595bc499618e52ef00c344694d218b5">&#9670;&nbsp;</a></span>compute_kernel_name</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">plssvm::opencl::detail::compute_kernel_name</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enum class for all different OpenCL compute kernels. </p>
+<p>Used to distinguish kernels in the <code><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue.">plssvm::opencl::detail::command_queue</a></code> class. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a8595bc499618e52ef00c344694d218b5ab630857790924014c4e707a5ab16d933"></a>q_kernel&#160;</td><td class="fielddoc"><p>The kernels to generate the <code>q</code> vector. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a8595bc499618e52ef00c344694d218b5a0acad6b7761fb58d284892bdcc1cb4cf"></a>svm_kernel&#160;</td><td class="fielddoc"><p>The main C-SVM kernel. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a8595bc499618e52ef00c344694d218b5a152d26ad8e83a8403cf81ec68b576dc9"></a>w_kernel&#160;</td><td class="fielddoc"><p>The predict kernel for the linear kernel function. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a8595bc499618e52ef00c344694d218b5aef3c7f988f2b358b5783566705689a88"></a>predict_kernel&#160;</td><td class="fielddoc"><p>The predict kernels for the polynomial and rbf kernel functions. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
 <a id="a7db472d06389f906a246c21cb7c03cfc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7db472d06389f906a246c21cb7c03cfc">&#9670;&nbsp;</a></span>operator&lt;&lt;()</h2>
 
@@ -313,14 +371,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a9c423f48db815f6ee8bf0acff3e99c10"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c423f48db815f6ee8bf0acff3e99c10">&#9670;&nbsp;</a></span>get_command_queues()</h2>
+<a id="a59496c0413d68e731d66868cb1ba7f7c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59496c0413d68e731d66868cb1ba7f7c">&#9670;&nbsp;</a></span>get_contexts()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt;std::vector&lt;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a>&gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::opencl::detail::get_command_queues </td>
+          <td class="memname">std::pair&lt;std::vector&lt;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html">context</a>&gt;, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::opencl::detail::get_contexts </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
           <td class="paramname"><em>target</em></td><td>)</td>
@@ -329,7 +387,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic). </p>
+<p>Returns the context listing all devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic). </p>
 <p>If the selected target platform is <code><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a2bd9c0ed00116be1258e0cc66617d7c8">plssvm::target_platform::automatic</a></code> the selector tries to find devices in the following order:</p><ol type="1">
 <li>NVIDIA GPUs</li>
 <li>AMD GPUs</li>
@@ -399,14 +457,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ad8293538e911985d718aff72ff9a392c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8293538e911985d718aff72ff9a392c">&#9670;&nbsp;</a></span>kernel_type_to_function_name()</h2>
+<a id="a2c6b6dd42f9694352f7522e14578d3ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c6b6dd42f9694352f7522e14578d3ec">&#9670;&nbsp;</a></span>kernel_type_to_function_names()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt;std::string, std::string&gt; plssvm::opencl::detail::kernel_type_to_function_name </td>
+          <td class="memname">std::vector&lt;std::pair&lt;<a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a>, std::string&gt; &gt; plssvm::opencl::detail::kernel_type_to_function_names </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">kernel_type</a>&#160;</td>
           <td class="paramname"><em>kernel</em></td><td>)</td>
@@ -415,19 +473,19 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Convert the kernel type <code>kernel</code> to the function names for the q and svm kernel functions. </p>
+<p>Convert the kernel type <code>kernel</code> to the device function names and return the compute_kernel_name identifier. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">kernel</td><td>the kernel type </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the kernel function names (first: q_kernel name, second: svm_kernel name) (<code>[[nodiscard]]</code>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the kernel function names with the respective compute_kernel_name identifier (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="af84a4a8cee6def24ce4cc2e06e56b217"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af84a4a8cee6def24ce4cc2e06e56b217">&#9670;&nbsp;</a></span>create_kernel()</h2>
+<a id="a22e432e47473666139420ee932c4e0a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22e432e47473666139420ee932c4e0a2">&#9670;&nbsp;</a></span>create_command_queues()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -435,22 +493,28 @@ Functions</h2></td></tr>
 template&lt;typename real_type &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a>&gt; plssvm::opencl::detail::create_kernel </td>
+          <td class="memname">std::vector&lt;<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a>&gt; plssvm::opencl::detail::create_command_queues </td>
           <td>(</td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>queues</em>, </td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html">context</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>contexts</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>file</em>, </td>
+          <td class="paramtype"><a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&#160;</td>
+          <td class="paramname"><em>target</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>kernel_name</em>&#160;</td>
+          <td class="paramtype">const std::vector&lt; std::pair&lt; <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a>, std::string &gt;&gt; &amp;&#160;</td>
+          <td class="paramname"><em>kernel_names</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>print_info</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -460,7 +524,13 @@ template&lt;typename real_type &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Create a kernel with <code>kernel_name</code> for the given command queues from the file <code>file</code>. </p>
+<p>Create command queues for all devices in the OpenCL <code>contexts</code> with respect to <code>target</code> given and the associated compute kernels with respect to the given source files and kernel function names. </p>
+<p>Manually caches the OpenCL JIT compiled code in the current <code>$TEMP</code> directory (no special means to prevent race conditions are implemented). The cached binaries are reused if:</p><ol type="1">
+<li>cached files already exist</li>
+<li>the number of cached files match the number of needed files</li>
+<li>the kernel source checksum matches (no changes in the source files since the last caching)</li>
+</ol>
+<p>A custom SHA256 implementation is used to detect changes in the OpenCL kernel source files. Additionally, adds the path to the currently used OpenCL library as a comment to the kernel source string (before the checksum calculation) to detect changes in the used OpenCL implementation and trigger a kernel rebuild.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">real_type</td><td>the floating point type used to replace the placeholders in the kernel file </td></tr>
@@ -469,9 +539,10 @@ template&lt;typename real_type &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">queues</td><td>the used OpenCL command queues </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">file</td><td>the file containing the kernel </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">kernel_name</td><td>the name of the kernel to create </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">contexts</td><td>the used OpenCL contexts </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">target</td><td>the target platform </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">kernel_names</td><td>all kernel name for which an OpenCL cl_kernel should be build </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">print_info</td><td>if <code>true</code> prints additional info to the standard output </td></tr>
   </table>
   </dd>
 </dl>
@@ -481,7 +552,7 @@ template&lt;typename real_type &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the kernel (<code>[[nodiscard]]</code>) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the command queues with all necessary kernels (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -601,8 +672,8 @@ template&lt;typename... Args&gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">queue</td><td>the command queue on which the kernel should be executed </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">kernel</td><td>the kernel to run </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">queue</td><td>the command queue on which the kernel should be executed </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">kernel</td><td>the kernel to run </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">grid_size</td><td>the number of global work-items (possibly multi-dimensional) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">block_size</td><td>the number of work-items that make up a work-group (possibly multi-dimensional) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">args</td><td>the arguments to set </td></tr>
@@ -675,8 +746,8 @@ template&lt;typename... Args&gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">queue</td><td>the command queue on which the kernel should be executed </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">kernel</td><td>the kernel to run </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">queue</td><td>the command queue on which the kernel should be executed </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">kernel</td><td>the kernel to run </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">grid_size</td><td>the number of global work-items </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">block_size</td><td>the number of work-items that make up a work-group </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">args</td><td>the arguments to set </td></tr>
@@ -689,7 +760,7 @@ template&lt;typename... Args&gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

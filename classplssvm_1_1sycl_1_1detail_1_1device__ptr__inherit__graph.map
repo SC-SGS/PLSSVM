@@ -1,0 +1,4 @@
+<map id="plssvm::sycl::detail::device_ptr&lt; T &gt;" name="plssvm::sycl::detail::device_ptr&lt; T &gt;">
+<area shape="rect" id="node1" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="14,109,162,151"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,171,61"/>
+</map>

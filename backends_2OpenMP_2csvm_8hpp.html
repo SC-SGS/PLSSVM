@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -84,27 +92,28 @@ Include dependency graph for csvm.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="backends_2OpenMP_2csvm_8hpp__incl.png" border="0" usemap="#ainclude_2plssvm_2backends_2OpenMP_2csvm_8hpp" alt=""/></div>
 <map name="ainclude_2plssvm_2backends_2OpenMP_2csvm_8hpp" id="ainclude_2plssvm_2backends_2OpenMP_2csvm_8hpp">
-<area shape="rect" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="467,5,652,47"/>
-<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="285,95,421,121"/>
-<area shape="rect" title=" " alt="" coords="731,319,793,345"/>
-<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="338,169,522,196"/>
-<area shape="rect" title=" " alt="" coords="228,319,320,345"/>
+<area shape="rect" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="756,5,941,47"/>
+<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="585,95,721,121"/>
+<area shape="rect" title=" " alt="" coords="695,319,757,345"/>
+<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="393,169,577,196"/>
+<area shape="rect" title=" " alt="" coords="255,319,347,345"/>
 <area shape="rect" title=" " alt="" coords="5,319,76,345"/>
-<area shape="rect" href="target__platforms_8hpp.html" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="546,169,757,196"/>
-<area shape="rect" title=" " alt="" coords="77,169,154,196"/>
-<area shape="rect" title=" " alt="" coords="178,169,237,196"/>
-<area shape="rect" href="assert_8hpp.html" title="Implements a custom assert macro." alt="" coords="492,319,675,345"/>
-<area shape="rect" href="operators_8hpp.html" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="363,244,567,271"/>
-<area shape="rect" title=" " alt="" coords="385,319,448,345"/>
-<area shape="rect" href="detail_2utility_8hpp.html" title="Defines universal utility functions." alt="" coords="58,244,237,271"/>
-<area shape="rect" title=" " alt="" coords="693,244,757,271"/>
-<area shape="rect" href="source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="213,393,404,435"/>
-<area shape="rect" title=" " alt="" coords="327,483,424,509"/>
-<area shape="rect" title=" " alt="" coords="480,401,572,427"/>
-<area shape="rect" title=" " alt="" coords="596,401,685,427"/>
-<area shape="rect" title=" " alt="" coords="710,401,771,427"/>
-<area shape="rect" title=" " alt="" coords="796,401,861,427"/>
-<area shape="rect" title=" " alt="" coords="120,319,175,345"/>
+<area shape="rect" href="target__platforms_8hpp.html" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="835,169,1046,196"/>
+<area shape="rect" title=" " alt="" coords="651,169,729,196"/>
+<area shape="rect" title=" " alt="" coords="753,169,811,196"/>
+<area shape="rect" href="assert_8hpp.html" title="Implements a custom assert macro." alt="" coords="480,319,663,345"/>
+<area shape="rect" href="operators_8hpp.html" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="383,244,587,271"/>
+<area shape="rect" title=" " alt="" coords="379,319,441,345"/>
+<area shape="rect" href="detail_2utility_8hpp.html" title="Defines universal utility functions." alt="" coords="78,244,257,271"/>
+<area shape="rect" title=" " alt="" coords="783,244,847,271"/>
+<area shape="rect" href="source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="201,393,392,435"/>
+<area shape="rect" title=" " alt="" coords="315,483,412,509"/>
+<area shape="rect" title=" " alt="" coords="468,401,560,427"/>
+<area shape="rect" title=" " alt="" coords="584,401,673,427"/>
+<area shape="rect" title=" " alt="" coords="698,401,759,427"/>
+<area shape="rect" title=" " alt="" coords="784,401,849,427"/>
+<area shape="rect" title=" " alt="" coords="101,319,151,345"/>
+<area shape="rect" title=" " alt="" coords="176,319,231,345"/>
 </map>
 </div>
 </div>
@@ -135,7 +144,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

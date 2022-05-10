@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -106,20 +114,21 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="operators_8hpp__dep__incl.png" border="0" usemap="#ainclude_2plssvm_2detail_2operators_8hppdep" alt=""/></div>
 <map name="ainclude_2plssvm_2detail_2operators_8hppdep" id="ainclude_2plssvm_2detail_2operators_8hppdep">
-<area shape="rect" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="771,5,932,47"/>
-<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="769,95,933,136"/>
-<area shape="rect" href="backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="389,184,575,225"/>
-<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="941,370,1121,397"/>
-<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="599,191,786,218"/>
-<area shape="rect" href="parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="855,191,1074,218"/>
-<area shape="rect" href="gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="215,273,400,315"/>
-<area shape="rect" href="backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="424,273,609,315"/>
-<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="685,273,844,315"/>
-<area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="424,363,609,404"/>
-<area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,363,191,404"/>
-<area shape="rect" href="backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="215,363,400,404"/>
-<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="1135,273,1327,315"/>
-<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="869,273,1061,315"/>
+<area shape="rect" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="875,5,1036,47"/>
+<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="873,95,1037,136"/>
+<area shape="rect" href="backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="493,184,679,225"/>
+<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="1045,370,1225,397"/>
+<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="703,191,890,218"/>
+<area shape="rect" href="parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="959,191,1178,218"/>
+<area shape="rect" href="gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="319,273,504,315"/>
+<area shape="rect" href="backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="528,273,713,315"/>
+<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="789,273,948,315"/>
+<area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="633,363,819,404"/>
+<area shape="rect" href="backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="5,363,191,404"/>
+<area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="215,363,400,404"/>
+<area shape="rect" href="backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="424,363,609,404"/>
+<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="1239,273,1431,315"/>
+<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="973,273,1165,315"/>
 </map>
 </div>
 </div>
@@ -155,11 +164,11 @@ template&lt;typename T &gt; </td></tr>
 <tr class="separator:ae017cdbf38a31b897a890bc17c756f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">plssvm::operators::operator*</a> (const transposed&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
-<tr class="memdesc:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( <img class="formulaInl" alt="$x^T \cdot y$" src="form_1.png"/>) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">More...</a><br /></td></tr>
+<tr class="memdesc:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( \(x^T \cdot y\)) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">More...</a><br /></td></tr>
 <tr class="separator:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a3cf0ea7afd80fdea0b7ddc4d1a9d5e59">plssvm::operators::dot</a> (const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
-<tr class="memdesc:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( <img class="formulaInl" alt="$x^T \cdot y$" src="form_1.png"/>) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#a3cf0ea7afd80fdea0b7ddc4d1a9d5e59">More...</a><br /></td></tr>
+<tr class="memdesc:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( \(x^T \cdot y\)) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#a3cf0ea7afd80fdea0b7ddc4d1a9d5e59">More...</a><br /></td></tr>
 <tr class="separator:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6344cb6d38f1fe59cfd7ba0f8b3382a3"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a6344cb6d38f1fe59cfd7ba0f8b3382a3"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a6344cb6d38f1fe59cfd7ba0f8b3382a3">plssvm::operators::sum</a> (const std::vector&lt; T &gt; &amp;vec)</td></tr>
@@ -167,7 +176,7 @@ template&lt;typename T &gt; </td></tr>
 <tr class="separator:a6344cb6d38f1fe59cfd7ba0f8b3382a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f7f472e06e60dbf27aadfa8309af120"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a9f7f472e06e60dbf27aadfa8309af120"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">plssvm::operators::squared_euclidean_dist</a> (const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
-<tr class="memdesc:a9f7f472e06e60dbf27aadfa8309af120"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the squared Euclidean distance of both vectors: <img class="formulaInl" alt="$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2$" src="form_2.png"/>.  <a href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">More...</a><br /></td></tr>
+<tr class="memdesc:a9f7f472e06e60dbf27aadfa8309af120"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the squared Euclidean distance of both vectors: \(d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\).  <a href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">More...</a><br /></td></tr>
 <tr class="separator:a9f7f472e06e60dbf27aadfa8309af120"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a211feceac31d226f493966f14e7332d8"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a211feceac31d226f493966f14e7332d8"><td class="memTemplItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a211feceac31d226f493966f14e7332d8">plssvm::operators::sign</a> (const T x)</td></tr>
@@ -250,7 +259,7 @@ Marcel Breyer </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

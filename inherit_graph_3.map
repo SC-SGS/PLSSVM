@@ -1,3 +1,4 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classplssvm_1_1detail_1_1file__reader.html" title="The plssvm::detail::file_reader class is responsible for reading a file and splitting it into its lin..." alt="" coords="5,5,148,47"/>
+<area shape="rect" id="node1" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,199,61"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="247,13,412,54"/>
 </map>

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -87,15 +95,17 @@ Inheritance diagram for plssvm::csvm&lt; T &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="classplssvm_1_1csvm__inherit__graph.png" border="0" usemap="#aplssvm_1_1csvm_3_01T_01_4_inherit__map" alt="Inheritance graph"/></div>
 <map name="aplssvm_1_1csvm_3_01T_01_4_inherit__map" id="aplssvm_1_1csvm_3_01T_01_4_inherit__map">
-<area shape="rect" title="Base class for all C&#45;SVM backends." alt="" coords="5,233,156,259"/>
+<area shape="rect" title="Base class for all C&#45;SVM backends." alt="" coords="5,277,156,303"/>
 <area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="230,5,389,76"/>
-<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,101,411,186"/>
-<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="214,211,405,281"/>
-<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="228,306,391,362"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,386,415,413"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="204,100,415,171"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,195,411,281"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="228,305,391,376"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="228,401,391,457"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,481,415,507"/>
 <area shape="rect" href="classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="469,27,658,54"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,130,664,157"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,233,655,259"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,122,655,149"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,225,664,251"/>
+<area shape="rect" href="classplssvm_1_1hip_1_1csvm.html" title="A C&#45;SVM implementation using HIP as backend." alt="" coords="474,327,653,354"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -165,7 +175,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="memdesc:ad4f3f38f6540c049046027a64cbe42a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate the vector <code>q</code>, a subvector of the least-squares matrix equation.  <a href="classplssvm_1_1csvm.html#ad4f3f38f6540c049046027a64cbe42a1">More...</a><br /></td></tr>
 <tr class="separator:ad4f3f38f6540c049046027a64cbe42a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5bf3d98bc9011725e27016a0b404bf7a"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a">solver_CG</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;b, std::size_t imax, <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> eps, const std::vector&lt; <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> &gt; &amp;q)=0</td></tr>
-<tr class="memdesc:a5bf3d98bc9011725e27016a0b404bf7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> using the Conjugated Gradients algorithm.  <a href="classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a">More...</a><br /></td></tr>
+<tr class="memdesc:a5bf3d98bc9011725e27016a0b404bf7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the equation \(Ax = b\) using the Conjugated Gradients algorithm.  <a href="classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a">More...</a><br /></td></tr>
 <tr class="separator:a5bf3d98bc9011725e27016a0b404bf7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74c694fde6d4180a95be8a275296ef1f"><td class="memItemLeft" align="right" valign="top"><a id="a74c694fde6d4180a95be8a275296ef1f"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1csvm.html#a74c694fde6d4180a95be8a275296ef1f">update_w</a> ()=0</td></tr>
@@ -683,7 +693,7 @@ template&lt;typename T &gt; </div>
 <p>Generate the vector <code>q</code>, a subvector of the least-squares matrix equation. </p>
 <dl class="section return"><dt>Returns</dt><dd>the generated <code>q</code> vector (<code>[[nodiscard]]</code>) </dd></dl>
 
-<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#afe0c0095bee281b2c8ebc80e639a2569">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::sycl::detail::device_ptr&lt; T &gt;, ::sycl::queue &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#afe0c0095bee281b2c8ebc80e639a2569">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, detail::device_ptr&lt; T &gt;, std::unique_ptr&lt; detail::sycl::queue &gt; &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8cb7a3727202a2e524f279e85d0b9c61">plssvm::detail::gpu_csvm&lt; T, ::plssvm::hip::detail::device_ptr&lt; T &gt;, int &gt;</a>.</p>
 
 </div>
 </div>
@@ -735,13 +745,13 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Solves the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> using the Conjugated Gradients algorithm. </p>
+<p>Solves the equation \(Ax = b\) using the Conjugated Gradients algorithm. </p>
 <p>Solves using a slightly modified version of the CG algorithm described by <a href="https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf">Jonathan Richard Shewchuk</a>: </p><div class="image">
 <img src="cg.png" alt=""/>
 </div>
  <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">b</td><td>the right-hand side of the equation <img class="formulaInl" alt="$Ax = b$" src="form_0.png"/> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">b</td><td>the right-hand side of the equation \(Ax = b\) </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">imax</td><td>the maximum number of CG iterations </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">eps</td><td>error tolerance </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">q</td><td>subvector of the least-squares matrix equation </td></tr>
@@ -750,7 +760,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the alpha values </dd></dl>
 
-<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a1180045e6a4c5bf65259984ce541c216">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::sycl::detail::device_ptr&lt; T &gt;, ::sycl::queue &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a1180045e6a4c5bf65259984ce541c216">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, detail::device_ptr&lt; T &gt;, std::unique_ptr&lt; detail::sycl::queue &gt; &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0">plssvm::detail::gpu_csvm&lt; T, ::plssvm::hip::detail::device_ptr&lt; T &gt;, int &gt;</a>.</p>
 
 </div>
 </div>
@@ -789,7 +799,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>a <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector&lt;real_type&gt;</code></a> filled with negative values for each prediction for a data point with the negative class and positive values otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
-<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a3607896e75a9420959ce4d0a1ec06dba">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::sycl::detail::device_ptr&lt; T &gt;, ::sycl::queue &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a3607896e75a9420959ce4d0a1ec06dba">plssvm::openmp::csvm&lt; T &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, detail::device_ptr&lt; T &gt;, std::unique_ptr&lt; detail::sycl::queue &gt; &gt;</a>, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::opencl::detail::device_ptr&lt; T &gt;, ::plssvm::opencl::detail::command_queue &gt;</a>, and <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">plssvm::detail::gpu_csvm&lt; T, ::plssvm::hip::detail::device_ptr&lt; T &gt;, int &gt;</a>.</p>
 
 </div>
 </div>
@@ -909,7 +919,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -67,8 +75,14 @@ $(function() {
 <li>backend_type
 : <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">plssvm</a>
 </li>
+<li>compute_kernel_name
+: <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">plssvm::opencl::detail</a>
+</li>
+<li>implementation_type
+: <a class="el" href="namespaceplssvm_1_1sycl__generic.html#ad39a7642eb6c2101121d4264e0a2b851">plssvm::sycl_generic</a>
+</li>
 <li>kernel_invocation_type
-: <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">plssvm::sycl</a>
+: <a class="el" href="namespaceplssvm_1_1sycl__generic.html#a9ffaf5eac1acc64fca033da3106c4f10">plssvm::sycl_generic</a>
 </li>
 <li>kernel_type
 : <a class="el" href="namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703">plssvm</a>
@@ -80,7 +94,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

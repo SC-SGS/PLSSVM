@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -98,6 +106,8 @@ $(function() {
   <tr><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#a512e8d5286b9278968c47a9c5e3708de">operator=</a>(const csvm &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#a3125bc8f1cee0adb06497e6789049c9d">operator=</a>(csvm &amp;&amp;) noexcept=default</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a3607896e75a9420959ce4d0a1ec06dba">predict</a>(const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;points) override</td><td class="entry"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html">plssvm::openmp::csvm&lt; T &gt;</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">predict</a>(const std::vector&lt; real_type &gt; &amp;point)</td><td class="entry"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html">plssvm::openmp::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html#ac9deef03f546477a0f0336d8fcec8921">predict</a>(const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;points)=0</td><td class="entry"><a class="el" href="classplssvm_1_1openmp_1_1csvm.html">plssvm::openmp::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">plssvm::csvm::predict</a>(const std::vector&lt; real_type &gt; &amp;point)</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">predict_label</a>(const std::vector&lt; real_type &gt; &amp;point)</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">predict_label</a>(const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;points)</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
@@ -117,7 +127,7 @@ $(function() {
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

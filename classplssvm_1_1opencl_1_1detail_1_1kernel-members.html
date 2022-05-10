@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -75,18 +83,19 @@ $(function() {
 <p>This is the complete list of members for <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a>, including all inherited members.</p>
 <table class="directory">
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a></td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a>(cl_kernel compute_kernel) noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"><span class="mlabel">explicit</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a233822ddf8c26a9407c7993f95c717ac">kernel</a>(const kernel &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a1b6d9e625877db047d5218f5380e6849">kernel</a>(kernel &amp;&amp;other) noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac891ce33929186a5d0b53e7053d1a0d8">operator cl_kernel &amp;</a>() noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a795f16bd68f6048ecbd2ee572bb78824">operator const cl_kernel &amp;</a>() const noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a0cc00ce5221850a14631075901f1a71f">operator=</a>(const kernel &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac9854cd116157bf7b8aa6f3fff8033f4">operator=</a>(kernel &amp;&amp;other)</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">~kernel</a>()</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0">kernel</a>()=default</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a>(cl_kernel compute_kernel) noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"><span class="mlabel">explicit</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a233822ddf8c26a9407c7993f95c717ac">kernel</a>(const kernel &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a1b6d9e625877db047d5218f5380e6849">kernel</a>(kernel &amp;&amp;other) noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac891ce33929186a5d0b53e7053d1a0d8">operator cl_kernel &amp;</a>() noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a795f16bd68f6048ecbd2ee572bb78824">operator const cl_kernel &amp;</a>() const noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a0cc00ce5221850a14631075901f1a71f">operator=</a>(const kernel &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac9854cd116157bf7b8aa6f3fff8033f4">operator=</a>(kernel &amp;&amp;other)</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">~kernel</a>()</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">plssvm::opencl::detail::kernel</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

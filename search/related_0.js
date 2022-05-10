@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['swap_589',['swap',['../classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#ac516b30607b0420e586b18376952cd0c',1,'plssvm::cuda::detail::device_ptr::swap()'],['../classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#ac516b30607b0420e586b18376952cd0c',1,'plssvm::opencl::detail::device_ptr::swap()'],['../classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac516b30607b0420e586b18376952cd0c',1,'plssvm::sycl::detail::device_ptr::swap()']]]
+  ['swap_688',['swap',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a00c394738cdf6dcdd46ebb49c196e538',1,'plssvm::detail::gpu_device_ptr']]]
 ];

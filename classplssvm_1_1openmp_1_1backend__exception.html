@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -105,16 +113,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8fa342c7498080759e3c63873638654e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1openmp_1_1backend__exception.html#a8fa342c7498080759e3c63873638654e">backend_exception</a> (const std::string &amp;msg, <a class="el" href="classplssvm_1_1source__location.html">source_location</a> <a class="el" href="classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54">loc</a>=<a class="el" href="classplssvm_1_1source__location.html#ae255505ce7f9c4c9ed970e9788732b23">source_location::current</a>())</td></tr>
 <tr class="memdesc:a8fa342c7498080759e3c63873638654e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new exception forwarding the exception message and source location to <a class="el" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e...">plssvm::exception</a>.  <a href="classplssvm_1_1openmp_1_1backend__exception.html#a8fa342c7498080759e3c63873638654e">More...</a><br /></td></tr>
 <tr class="separator:a8fa342c7498080759e3c63873638654e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_classplssvm_1_1exception"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classplssvm_1_1exception')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classplssvm_1_1exception.html">plssvm::exception</a></td></tr>
-<tr class="memitem:a6e7168bb71dadebf91502c33ebb89158 inherit pub_methods_classplssvm_1_1exception"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1exception.html#a6e7168bb71dadebf91502c33ebb89158">exception</a> (const std::string &amp;msg, std::string_view class_name=&quot;exception&quot;, source_location <a class="el" href="classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54">loc</a>=<a class="el" href="classplssvm_1_1source__location.html#ae255505ce7f9c4c9ed970e9788732b23">source_location::current</a>())</td></tr>
-<tr class="memdesc:a6e7168bb71dadebf91502c33ebb89158 inherit pub_methods_classplssvm_1_1exception"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new exception forwarding the exception message to <a href="https://en.cppreference.com/w/cpp/error/runtime_error"><code>std::runtime_error</code></a>.  <a href="classplssvm_1_1exception.html#a6e7168bb71dadebf91502c33ebb89158">More...</a><br /></td></tr>
-<tr class="separator:a6e7168bb71dadebf91502c33ebb89158 inherit pub_methods_classplssvm_1_1exception"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abaa730c4dc52a31070a5ed8a40796d54 inherit pub_methods_classplssvm_1_1exception"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classplssvm_1_1source__location.html">source_location</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54">loc</a> () const noexcept</td></tr>
-<tr class="memdesc:abaa730c4dc52a31070a5ed8a40796d54 inherit pub_methods_classplssvm_1_1exception"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the information of the call side where the exception was thrown.  <a href="classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54">More...</a><br /></td></tr>
-<tr class="separator:abaa730c4dc52a31070a5ed8a40796d54 inherit pub_methods_classplssvm_1_1exception"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae801b36bcd872f2557e813b5f20aae58 inherit pub_methods_classplssvm_1_1exception"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58">what_with_loc</a> () const</td></tr>
-<tr class="memdesc:ae801b36bcd872f2557e813b5f20aae58 inherit pub_methods_classplssvm_1_1exception"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sting containing the exception's <code>what()</code> message, the name of the thrown exception class and information about the call side where the exception has been thrown.  <a href="classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58">More...</a><br /></td></tr>
-<tr class="separator:ae801b36bcd872f2557e813b5f20aae58 inherit pub_methods_classplssvm_1_1exception"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abaa730c4dc52a31070a5ed8a40796d54"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classplssvm_1_1source__location.html">source_location</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54">loc</a> () const noexcept</td></tr>
+<tr class="memdesc:abaa730c4dc52a31070a5ed8a40796d54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the information of the call side where the exception was thrown.  <a href="classplssvm_1_1exception.html#abaa730c4dc52a31070a5ed8a40796d54">More...</a><br /></td></tr>
+<tr class="separator:abaa730c4dc52a31070a5ed8a40796d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae801b36bcd872f2557e813b5f20aae58"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58">what_with_loc</a> () const</td></tr>
+<tr class="memdesc:ae801b36bcd872f2557e813b5f20aae58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sting containing the exception's <code>what()</code> message, the name of the thrown exception class and information about the call side where the exception has been thrown.  <a href="classplssvm_1_1exception.html#ae801b36bcd872f2557e813b5f20aae58">More...</a><br /></td></tr>
+<tr class="separator:ae801b36bcd872f2557e813b5f20aae58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Exception type thrown if a problem with the OpenMP backend occurs. </p>
@@ -164,13 +168,70 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="abaa730c4dc52a31070a5ed8a40796d54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abaa730c4dc52a31070a5ed8a40796d54">&#9670;&nbsp;</a></span>loc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classplssvm_1_1source__location.html">source_location</a>&amp; plssvm::exception::loc </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the information of the call side where the exception was thrown. </p>
+<dl class="section return"><dt>Returns</dt><dd>the exception's call side information (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="ae801b36bcd872f2557e813b5f20aae58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae801b36bcd872f2557e813b5f20aae58">&#9670;&nbsp;</a></span>what_with_loc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string plssvm::exception::what_with_loc </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a sting containing the exception's <code>what()</code> message, the name of the thrown exception class and information about the call side where the exception has been thrown. </p>
+<dl class="section return"><dt>Returns</dt><dd>the exception's <code>what()</code> message including source location information </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/plssvm/backends/OpenMP/<a class="el" href="backends_2OpenMP_2exceptions_8hpp_source.html">exceptions.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -88,70 +96,110 @@ $(function() {
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_CUDA_BACKEND)</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">    #include &quot;<a class="code" href="backends_2CUDA_2csvm_8hpp.html">plssvm/backends/CUDA/csvm.hpp</a>&quot;</span>  <span class="comment">// plssvm::cuda::csvm</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_OPENCL_BACKEND)</span></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor">    #include &quot;<a class="code" href="backends_2OpenCL_2csvm_8hpp.html">plssvm/backends/OpenCL/csvm.hpp</a>&quot;</span>  <span class="comment">// plssvm::opencl::csvm</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_HIP_BACKEND)</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor">    #include &quot;<a class="code" href="backends_2HIP_2csvm_8hpp.html">plssvm/backends/HIP/csvm.hpp</a>&quot;</span>  <span class="comment">// plssvm::hip::csvm</span></div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_SYCL_BACKEND)</span></div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">    #include &quot;<a class="code" href="backends_2SYCL_2csvm_8hpp.html">plssvm/backends/SYCL/csvm.hpp</a>&quot;</span>  <span class="comment">// plssvm::sycl::csvm</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_OPENCL_BACKEND)</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">    #include &quot;<a class="code" href="backends_2OpenCL_2csvm_8hpp.html">plssvm/backends/OpenCL/csvm.hpp</a>&quot;</span>  <span class="comment">// plssvm::opencl::csvm</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160; </div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160; </div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00045"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">   45</a></span>&#160;[[nodiscard]] std::unique_ptr&lt;csvm&lt;T&gt;&gt; <a class="code" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">make_csvm</a>(<span class="keyword">const</span> <a class="code" href="classplssvm_1_1parameter.html">parameter&lt;T&gt;</a> &amp;params) {</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    <span class="keywordflow">switch</span> (params.<a class="code" href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">backend</a>) {</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">backend_type::openmp</a>:</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_OPENMP_BACKEND)</span></div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;openmp::csvm&lt;T&gt;&gt;(params);</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No OpenMP backend available!&quot;</span> };</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160; </div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">backend_type::cuda</a>:</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_CUDA_BACKEND)</span></div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;cuda::csvm&lt;T&gt;&gt;(params);</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No CUDA backend available!&quot;</span> };</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160; </div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">backend_type::opencl</a>:</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_OPENCL_BACKEND)</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;opencl::csvm&lt;T&gt;&gt;(params);</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No OpenCL backend available!&quot;</span> };</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">backend_type::sycl</a>:</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_SYCL_BACKEND)</span></div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;sycl::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_SYCL_BACKEND)</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">        #include &quot;plssvm/backends/DPCPP/csvm.hpp&quot;</span>  <span class="comment">// plssvm::dpcpp::csvm</span></div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">    #endif</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)</span></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="preprocessor">        #include &quot;plssvm/backends/hipSYCL/csvm.hpp&quot;</span>  <span class="comment">// plssvm::hipsycl::csvm</span></div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="preprocessor">    #endif</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160; </div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160; </div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00053"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">   53</a></span>&#160;[[nodiscard]] std::unique_ptr&lt;csvm&lt;T&gt;&gt; <a class="code" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">make_csvm</a>(<span class="keyword">const</span> <a class="code" href="classplssvm_1_1parameter.html">parameter&lt;T&gt;</a> &amp;params) {</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    <span class="keywordflow">switch</span> (params.<a class="code" href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">backend</a>) {</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8">backend_type::automatic</a>: {</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;            <a class="code" href="classplssvm_1_1parameter.html">parameter&lt;T&gt;</a> new_params{ params };</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;            new_params.<a class="code" href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">backend</a> = <a class="code" href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">determine_default_backend</a>();</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;            <span class="keywordflow">return</span> <a class="code" href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">make_csvm</a>(new_params);</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        }</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">backend_type::openmp</a>:</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_OPENMP_BACKEND)</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;openmp::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No OpenMP backend available!&quot;</span> };</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">backend_type::cuda</a>:</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_CUDA_BACKEND)</span></div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;cuda::csvm&lt;T&gt;&gt;(params);</div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No SYCL backend available!&quot;</span> };</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No CUDA backend available!&quot;</span> };</div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    }</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;Can&#39;t recognize backend !&quot;</span> };</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;}</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160; </div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;}  <span class="comment">// namespace plssvm</span></div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160; </div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a">backend_type::hip</a>:</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_HIP_BACKEND)</span></div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;hip::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No HIP backend available!&quot;</span> };</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160; </div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">backend_type::opencl</a>:</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_OPENCL_BACKEND)</span></div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;            <span class="keywordflow">return</span> std::make_unique&lt;opencl::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No OpenCL backend available!&quot;</span> };</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160; </div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;        <span class="keywordflow">case</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">backend_type::sycl</a>:</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="preprocessor">#if defined(PLSSVM_HAS_SYCL_BACKEND)</span></div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;            <span class="keywordflow">switch</span> (params.<a class="code" href="classplssvm_1_1parameter.html#aac70755fb791daeef214669042ff4f39">sycl_implementation_type</a>) {</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;                <span class="keywordflow">case</span> sycl::implementation_type::automatic:</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;                    <span class="keywordflow">return</span> std::make_unique&lt;PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;                <span class="keywordflow">case</span> sycl::implementation_type::dpcpp:</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="preprocessor">    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)</span></div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;                    <span class="keywordflow">return</span> std::make_unique&lt;dpcpp::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="preprocessor">    #else</span></div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;                    <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No SYCL backend using DPC++ available!&quot;</span> };</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="preprocessor">    #endif</span></div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;                <span class="keywordflow">case</span> sycl::implementation_type::hipsycl:</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="preprocessor">    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)</span></div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;                    <span class="keywordflow">return</span> std::make_unique&lt;hipsycl::csvm&lt;T&gt;&gt;(params);</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;<span class="preprocessor">    #else</span></div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;                    <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No SYCL backend using hipSYCL available!&quot;</span> };</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="preprocessor">    #endif</span></div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;            }</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;            <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;No SYCL backend available!&quot;</span> };</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    }</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="keywordflow">throw</span> <a class="code" href="classplssvm_1_1unsupported__backend__exception.html">unsupported_backend_exception</a>{ <span class="stringliteral">&quot;Can&#39;t recognize backend !&quot;</span> };</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;}</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160; </div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;}  <span class="comment">// namespace plssvm</span></div>
 <div class="ttc" id="abackend__types_8hpp_html"><div class="ttname"><a href="backend__types_8hpp.html">backend_types.hpp</a></div><div class="ttdoc">Defines all possible backends. Can also include backends not available on the current target platform...</div></div>
 <div class="ttc" id="abackends_2CUDA_2csvm_8hpp_html"><div class="ttname"><a href="backends_2CUDA_2csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines a C-SVM using the CUDA backend.</div></div>
+<div class="ttc" id="abackends_2HIP_2csvm_8hpp_html"><div class="ttname"><a href="backends_2HIP_2csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines a C-SVM using the HIP backend.</div></div>
 <div class="ttc" id="abackends_2OpenCL_2csvm_8hpp_html"><div class="ttname"><a href="backends_2OpenCL_2csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines a C-SVM using the OpenCL backend.</div></div>
 <div class="ttc" id="abackends_2OpenMP_2csvm_8hpp_html"><div class="ttname"><a href="backends_2OpenMP_2csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines a C-SVM using the OpenMP backend.</div></div>
-<div class="ttc" id="abackends_2SYCL_2csvm_8hpp_html"><div class="ttname"><a href="backends_2SYCL_2csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines a C-SVM using the SYCL backend.</div></div>
-<div class="ttc" id="aclassplssvm_1_1parameter_html"><div class="ttname"><a href="classplssvm_1_1parameter.html">plssvm::parameter</a></div><div class="ttdoc">Base class for encapsulating all necessary parameters possibly provided through command line argument...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:32</div></div>
-<div class="ttc" id="aclassplssvm_1_1parameter_html_a002f0530bdb2a5e62cf4bf2111db5494"><div class="ttname"><a href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">plssvm::parameter::backend</a></div><div class="ttdeci">backend_type backend</div><div class="ttdoc">The used backend: OpenMP, OpenCL, CUDA, or SYCL.</div><div class="ttdef"><b>Definition:</b> parameter.hpp:191</div></div>
+<div class="ttc" id="aclassplssvm_1_1parameter_html"><div class="ttname"><a href="classplssvm_1_1parameter.html">plssvm::parameter</a></div><div class="ttdoc">Base class for encapsulating all necessary parameters possibly provided through command line argument...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:37</div></div>
+<div class="ttc" id="aclassplssvm_1_1parameter_html_a002f0530bdb2a5e62cf4bf2111db5494"><div class="ttname"><a href="classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494">plssvm::parameter::backend</a></div><div class="ttdeci">backend_type backend</div><div class="ttdoc">The used backend: automatic (depending on the specified target_platforms), OpenMP,...</div><div class="ttdef"><b>Definition:</b> parameter.hpp:196</div></div>
+<div class="ttc" id="aclassplssvm_1_1parameter_html_aac70755fb791daeef214669042ff4f39"><div class="ttname"><a href="classplssvm_1_1parameter.html#aac70755fb791daeef214669042ff4f39">plssvm::parameter::sycl_implementation_type</a></div><div class="ttdeci">sycl::implementation_type sycl_implementation_type</div><div class="ttdoc">The SYCL implementation to use with –backend=sycl.</div><div class="ttdef"><b>Definition:</b> parameter.hpp:203</div></div>
 <div class="ttc" id="aclassplssvm_1_1unsupported__backend__exception_html"><div class="ttname"><a href="classplssvm_1_1unsupported__backend__exception.html">plssvm::unsupported_backend_exception</a></div><div class="ttdoc">Exception type thrown if the requested backend is not supported on the target machine.</div><div class="ttdef"><b>Definition:</b> exceptions.hpp:84</div></div>
 <div class="ttc" id="acsvm_8hpp_html"><div class="ttname"><a href="csvm_8hpp.html">csvm.hpp</a></div><div class="ttdoc">Defines the base class for all C-SVM backends and implements the functionality shared by all of them.</div></div>
 <div class="ttc" id="aexceptions_2exceptions_8hpp_html"><div class="ttname"><a href="exceptions_2exceptions_8hpp.html">exceptions.hpp</a></div><div class="ttdoc">Implements custom exception classes derived from std::runtime_error including source location informa...</div></div>
-<div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all public API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:16</div></div>
+<div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all public API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:17</div></div>
+<div class="ttc" id="anamespaceplssvm_html_a72cf4479f0c75e3972f356003678e4f9"><div class="ttname"><a href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">plssvm::determine_default_backend</a></div><div class="ttdeci">backend_type determine_default_backend()</div><div class="ttdoc">Returns the default backend used given the specified target platforms during the CMake configuration.</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">plssvm::backend_type::openmp</a></div><div class="ttdeci">@ openmp</div></div>
+<div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8">plssvm::backend_type::automatic</a></div><div class="ttdeci">@ automatic</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">plssvm::backend_type::cuda</a></div><div class="ttdeci">@ cuda</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">plssvm::backend_type::opencl</a></div><div class="ttdeci">@ opencl</div></div>
+<div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a">plssvm::backend_type::hip</a></div><div class="ttdeci">@ hip</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">plssvm::backend_type::sycl</a></div><div class="ttdeci">@ sycl</div></div>
-<div class="ttc" id="anamespaceplssvm_html_ad170b84d08afc8714fd1eb4bec4ff49d"><div class="ttname"><a href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">plssvm::make_csvm</a></div><div class="ttdeci">std::unique_ptr&lt; csvm&lt; T &gt; &gt; make_csvm(const parameter&lt; T &gt; &amp;params)</div><div class="ttdoc">Construct a new C-SVM with the parameters given through params using the requested backend.</div><div class="ttdef"><b>Definition:</b> csvm_factory.hpp:45</div></div>
+<div class="ttc" id="anamespaceplssvm_html_ad170b84d08afc8714fd1eb4bec4ff49d"><div class="ttname"><a href="namespaceplssvm.html#ad170b84d08afc8714fd1eb4bec4ff49d">plssvm::make_csvm</a></div><div class="ttdeci">std::unique_ptr&lt; csvm&lt; T &gt; &gt; make_csvm(const parameter&lt; T &gt; &amp;params)</div><div class="ttdoc">Construct a new C-SVM with the parameters given through params using the requested backend.</div><div class="ttdef"><b>Definition:</b> csvm_factory.hpp:53</div></div>
 <div class="ttc" id="aparameter_8hpp_html"><div class="ttname"><a href="parameter_8hpp.html">parameter.hpp</a></div><div class="ttdoc">Implements the parameter base class encapsulating all necessary parameters.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

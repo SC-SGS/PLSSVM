@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -70,7 +78,7 @@ $(function() {
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">plssvm::sycl::detail::device_ptr&lt; T &gt; Class Template Reference</div>  </div>
@@ -81,109 +89,142 @@ $(function() {
  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="SYCL_2detail_2device__ptr_8hpp_source.html">device_ptr.hpp</a>&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for plssvm::sycl::detail::device_ptr&lt; T &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="classplssvm_1_1sycl_1_1detail_1_1device__ptr__inherit__graph.png" border="0" usemap="#aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4_inherit__map" alt="Inheritance graph"/></div>
+<map name="aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4_inherit__map" id="aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4_inherit__map">
+<area shape="rect" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="14,109,162,151"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,171,61"/>
+</map>
+<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for plssvm::sycl::detail::device_ptr&lt; T &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="classplssvm_1_1sycl_1_1detail_1_1device__ptr__coll__graph.png" border="0" usemap="#aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4_coll__map" alt="Collaboration graph"/></div>
+<map name="aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4_coll__map" id="aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4_coll__map">
+<area shape="rect" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="14,109,162,151"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,171,61"/>
+</map>
+<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aee10ce641bf69f3a92df8111c5f04a53"><td class="memItemLeft" align="right" valign="top"><a id="aee10ce641bf69f3a92df8111c5f04a53"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> = T</td></tr>
-<tr class="memdesc:aee10ce641bf69f3a92df8111c5f04a53"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the values used in the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>. <br /></td></tr>
-<tr class="separator:aee10ce641bf69f3a92df8111c5f04a53"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c8b98ad4c688b199f15e993b34326c1"><td class="memItemLeft" align="right" valign="top"><a id="a7c8b98ad4c688b199f15e993b34326c1"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a> = <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> *</td></tr>
-<tr class="memdesc:a7c8b98ad4c688b199f15e993b34326c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the wrapped <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>. <br /></td></tr>
-<tr class="separator:a7c8b98ad4c688b199f15e993b34326c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3798ec6a84a90fd16646c03771fc95b4"><td class="memItemLeft" align="right" valign="top"><a id="a3798ec6a84a90fd16646c03771fc95b4"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a> = const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> *</td></tr>
-<tr class="memdesc:a3798ec6a84a90fd16646c03771fc95b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The const type of the wrapped <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>. <br /></td></tr>
-<tr class="separator:a3798ec6a84a90fd16646c03771fc95b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8145a755535cb79f1bf983849ea9179"><td class="memItemLeft" align="right" valign="top"><a id="ac8145a755535cb79f1bf983849ea9179"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> = std::size_t</td></tr>
-<tr class="memdesc:ac8145a755535cb79f1bf983849ea9179"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used size type. <br /></td></tr>
-<tr class="separator:ac8145a755535cb79f1bf983849ea9179"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a324ae7717d0de6d9c63b889e33f8131a"><td class="memItemLeft" align="right" valign="top"><a id="a324ae7717d0de6d9c63b889e33f8131a"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> = T</td></tr>
+<tr class="memdesc:a324ae7717d0de6d9c63b889e33f8131a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the values used in the device_ptr. <br /></td></tr>
+<tr class="separator:a324ae7717d0de6d9c63b889e33f8131a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a853b151a0fbf1231ba2c33445592b545"><td class="memItemLeft" align="right" valign="top"><a id="a853b151a0fbf1231ba2c33445592b545"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a853b151a0fbf1231ba2c33445592b545">host_pointer_type</a> = <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> *</td></tr>
+<tr class="memdesc:a853b151a0fbf1231ba2c33445592b545"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the host pointer corresponding to the wrapped device pointer. <br /></td></tr>
+<tr class="separator:a853b151a0fbf1231ba2c33445592b545"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15576d5c347d0924e0c59d02705224f5"><td class="memItemLeft" align="right" valign="top"><a id="a15576d5c347d0924e0c59d02705224f5"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a15576d5c347d0924e0c59d02705224f5">const_host_pointer_type</a> = const <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> *</td></tr>
+<tr class="memdesc:a15576d5c347d0924e0c59d02705224f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The const type of the host pointer corresponding to the wrapped device pointer. <br /></td></tr>
+<tr class="separator:a15576d5c347d0924e0c59d02705224f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af266554a3b83db23fc0863ddbca49164"><td class="memItemLeft" align="right" valign="top"><a id="af266554a3b83db23fc0863ddbca49164"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> = std::size_t</td></tr>
+<tr class="memdesc:af266554a3b83db23fc0863ddbca49164"><td class="mdescLeft">&#160;</td><td class="mdescRight">The used size type. <br /></td></tr>
+<tr class="separator:af266554a3b83db23fc0863ddbca49164"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58992a52a24062959299054e95702d61"><td class="memItemLeft" align="right" valign="top"><a id="a58992a52a24062959299054e95702d61"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a58992a52a24062959299054e95702d61">queue_type</a> = detail::sycl::queue *</td></tr>
+<tr class="memdesc:a58992a52a24062959299054e95702d61"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the device queue used to manipulate the managed device memory. <br /></td></tr>
+<tr class="separator:a58992a52a24062959299054e95702d61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b17200fbc268bcadb181e7633d1ea51"><td class="memItemLeft" align="right" valign="top"><a id="a3b17200fbc268bcadb181e7633d1ea51"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">device_pointer_type</a> = T *</td></tr>
+<tr class="memdesc:a3b17200fbc268bcadb181e7633d1ea51"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of the device pointer. <br /></td></tr>
+<tr class="separator:a3b17200fbc268bcadb181e7633d1ea51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a31eeac290a3565cca7ced08223e63fde"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a31eeac290a3565cca7ced08223e63fde">device_ptr</a> ()=default</td></tr>
-<tr class="memdesc:a31eeac290a3565cca7ced08223e63fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default construct a <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> with a size of 0.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a31eeac290a3565cca7ced08223e63fde">More...</a><br /></td></tr>
+<tr class="memitem:a31eeac290a3565cca7ced08223e63fde"><td class="memItemLeft" align="right" valign="top"><a id="a31eeac290a3565cca7ced08223e63fde"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a31eeac290a3565cca7ced08223e63fde">device_ptr</a> ()=default</td></tr>
+<tr class="memdesc:a31eeac290a3565cca7ced08223e63fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default construct a <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> with a size of 0. <br /></td></tr>
 <tr class="separator:a31eeac290a3565cca7ced08223e63fde"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a008f0f6657aa70ca7ad60fc11350d2d5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a008f0f6657aa70ca7ad60fc11350d2d5">device_ptr</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957">size</a>, ::sycl::queue &amp;<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5fa2760a9befc3bdf52f12ca152ef422">queue</a>)</td></tr>
-<tr class="memdesc:a008f0f6657aa70ca7ad60fc11350d2d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates <code>size * sizeof(T)</code> bytes on the device associated with <code>queue</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a008f0f6657aa70ca7ad60fc11350d2d5">More...</a><br /></td></tr>
-<tr class="separator:a008f0f6657aa70ca7ad60fc11350d2d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a556ae09d9d72c55d7bb00d1f12ba74"><td class="memItemLeft" align="right" valign="top"><a id="a3a556ae09d9d72c55d7bb00d1f12ba74"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3a556ae09d9d72c55d7bb00d1f12ba74">device_ptr</a> (const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a3a556ae09d9d72c55d7bb00d1f12ba74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-constructor to make <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> a move only type. <br /></td></tr>
+<tr class="memitem:a3684e6d454c5dcbd5ee96faf817c4cfb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3684e6d454c5dcbd5ee96faf817c4cfb">device_ptr</a> (<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b">size</a>, std::unique_ptr&lt; detail::sycl::queue &gt; &amp;<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a1fb9181a69fc8cfe8e6d262e69c3b021">queue</a>)</td></tr>
+<tr class="memdesc:a3684e6d454c5dcbd5ee96faf817c4cfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates <code>size * sizeof(T)</code> bytes on the device associated with <code>queue</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3684e6d454c5dcbd5ee96faf817c4cfb">More...</a><br /></td></tr>
+<tr class="separator:a3684e6d454c5dcbd5ee96faf817c4cfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a556ae09d9d72c55d7bb00d1f12ba74"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3a556ae09d9d72c55d7bb00d1f12ba74">device_ptr</a> (const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;)=delete</td></tr>
+<tr class="memdesc:a3a556ae09d9d72c55d7bb00d1f12ba74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-constructor to make <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> a move only type.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3a556ae09d9d72c55d7bb00d1f12ba74">More...</a><br /></td></tr>
 <tr class="separator:a3a556ae09d9d72c55d7bb00d1f12ba74"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af21bb0788e404e41c8bca426e0e0f2b9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#af21bb0788e404e41c8bca426e0e0f2b9">device_ptr</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&amp;other) noexcept</td></tr>
-<tr class="memdesc:af21bb0788e404e41c8bca426e0e0f2b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#af21bb0788e404e41c8bca426e0e0f2b9">More...</a><br /></td></tr>
-<tr class="separator:af21bb0788e404e41c8bca426e0e0f2b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeaf8b952a42a99f6de7ab6260c158d99"><td class="memItemLeft" align="right" valign="top"><a id="aeaf8b952a42a99f6de7ab6260c158d99"></a>
-<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aeaf8b952a42a99f6de7ab6260c158d99">operator=</a> (const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;)=delete</td></tr>
-<tr class="memdesc:aeaf8b952a42a99f6de7ab6260c158d99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-assignment-operator to make <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> a move only type. <br /></td></tr>
+<tr class="memitem:a2bf94e57cf1313769affd01c9c606c0d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a2bf94e57cf1313769affd01c9c606c0d">device_ptr</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&amp;other) noexcept=default</td></tr>
+<tr class="memdesc:a2bf94e57cf1313769affd01c9c606c0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a2bf94e57cf1313769affd01c9c606c0d">More...</a><br /></td></tr>
+<tr class="separator:a2bf94e57cf1313769affd01c9c606c0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaf8b952a42a99f6de7ab6260c158d99"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aeaf8b952a42a99f6de7ab6260c158d99">operator=</a> (const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;)=delete</td></tr>
+<tr class="memdesc:aeaf8b952a42a99f6de7ab6260c158d99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-assignment-operator to make <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> a move only type.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aeaf8b952a42a99f6de7ab6260c158d99">More...</a><br /></td></tr>
 <tr class="separator:aeaf8b952a42a99f6de7ab6260c158d99"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0bbe2b84666f0b5e8b893311356368b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a0bbe2b84666f0b5e8b893311356368b1">operator=</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&amp;other) noexcept</td></tr>
-<tr class="memdesc:a0bbe2b84666f0b5e8b893311356368b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a0bbe2b84666f0b5e8b893311356368b1">More...</a><br /></td></tr>
-<tr class="separator:a0bbe2b84666f0b5e8b893311356368b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c85eea4b1931e5e71c69307d6bc9bd8"><td class="memItemLeft" align="right" valign="top"><a id="a5c85eea4b1931e5e71c69307d6bc9bd8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5c85eea4b1931e5e71c69307d6bc9bd8">~device_ptr</a> ()</td></tr>
-<tr class="memdesc:a5c85eea4b1931e5e71c69307d6bc9bd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destruct the device data. <br /></td></tr>
+<tr class="memitem:a21551ddb340b97f9b2f3624327a5754b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a21551ddb340b97f9b2f3624327a5754b">operator=</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;&amp;other) noexcept=default</td></tr>
+<tr class="memdesc:a21551ddb340b97f9b2f3624327a5754b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a21551ddb340b97f9b2f3624327a5754b">More...</a><br /></td></tr>
+<tr class="separator:a21551ddb340b97f9b2f3624327a5754b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c85eea4b1931e5e71c69307d6bc9bd8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5c85eea4b1931e5e71c69307d6bc9bd8">~device_ptr</a> ()</td></tr>
+<tr class="memdesc:a5c85eea4b1931e5e71c69307d6bc9bd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free the memory managed by the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5c85eea4b1931e5e71c69307d6bc9bd8">More...</a><br /></td></tr>
 <tr class="separator:a5c85eea4b1931e5e71c69307d6bc9bd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aec55d480722a02eb46dedcf380ce42b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aec55d480722a02eb46dedcf380ce42b0">swap</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;other) noexcept</td></tr>
-<tr class="memdesc:aec55d480722a02eb46dedcf380ce42b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swap the contents of <code>*this</code> with the contents of <code>other</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aec55d480722a02eb46dedcf380ce42b0">More...</a><br /></td></tr>
-<tr class="separator:aec55d480722a02eb46dedcf380ce42b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b6f8c66bc40b1a053690f2e2fae89f1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a1b6f8c66bc40b1a053690f2e2fae89f1">operator bool</a> () const noexcept</td></tr>
-<tr class="memdesc:a1b6f8c66bc40b1a053690f2e2fae89f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks whether <code>*this</code> currently wraps a SYCL device pointer.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a1b6f8c66bc40b1a053690f2e2fae89f1">More...</a><br /></td></tr>
-<tr class="separator:a1b6f8c66bc40b1a053690f2e2fae89f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a652a65b851041fc446d2070ddf78576e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a652a65b851041fc446d2070ddf78576e">get</a> () noexcept</td></tr>
-<tr class="memdesc:a652a65b851041fc446d2070ddf78576e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the underlying SYCL device pointer.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a652a65b851041fc446d2070ddf78576e">More...</a><br /></td></tr>
-<tr class="separator:a652a65b851041fc446d2070ddf78576e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05c8511bcf22e0d76d00468ab699727a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a05c8511bcf22e0d76d00468ab699727a">get</a> () const noexcept</td></tr>
-<tr class="memdesc:a05c8511bcf22e0d76d00468ab699727a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the underlying SYCL device pointer.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a05c8511bcf22e0d76d00468ab699727a">More...</a><br /></td></tr>
-<tr class="separator:a05c8511bcf22e0d76d00468ab699727a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acac32cccf1ace84ea688e974ca0dc957"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957">size</a> () const noexcept</td></tr>
-<tr class="memdesc:acac32cccf1ace84ea688e974ca0dc957"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of elements in the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957">More...</a><br /></td></tr>
-<tr class="separator:acac32cccf1ace84ea688e974ca0dc957"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a65bc142615e835f034c7d10f880c0532"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a65bc142615e835f034c7d10f880c0532">empty</a> () const noexcept</td></tr>
-<tr class="memdesc:a65bc142615e835f034c7d10f880c0532"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> currently maps zero elements.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a65bc142615e835f034c7d10f880c0532">More...</a><br /></td></tr>
-<tr class="separator:a65bc142615e835f034c7d10f880c0532"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5fa2760a9befc3bdf52f12ca152ef422"><td class="memItemLeft" align="right" valign="top">::sycl::queue &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5fa2760a9befc3bdf52f12ca152ef422">queue</a> () const noexcept</td></tr>
-<tr class="memdesc:a5fa2760a9befc3bdf52f12ca152ef422"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the SYCL queue associated with the wrapped SYCL device pointer.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5fa2760a9befc3bdf52f12ca152ef422">More...</a><br /></td></tr>
-<tr class="separator:a5fa2760a9befc3bdf52f12ca152ef422"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0450de8e8dcc725f4c1ac85df329593c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a0450de8e8dcc725f4c1ac85df329593c">memset</a> (int value, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> pos=0)</td></tr>
-<tr class="memdesc:a0450de8e8dcc725f4c1ac85df329593c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memset all values to <code>value</code> starting at position <code>pos</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a0450de8e8dcc725f4c1ac85df329593c">More...</a><br /></td></tr>
-<tr class="separator:a0450de8e8dcc725f4c1ac85df329593c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff7b11293175f0042821299dd8ea3bdd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aff7b11293175f0042821299dd8ea3bdd">memset</a> (int value, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> pos, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> count)</td></tr>
-<tr class="memdesc:aff7b11293175f0042821299dd8ea3bdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memset up-to <code>count</code> values to <code>value</code> starting at position <code>pos</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aff7b11293175f0042821299dd8ea3bdd">More...</a><br /></td></tr>
-<tr class="separator:aff7b11293175f0042821299dd8ea3bdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1960344b99dd739796b7888f63cb140a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a1960344b99dd739796b7888f63cb140a">memcpy_to_device</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;data_to_copy)</td></tr>
-<tr class="memdesc:a1960344b99dd739796b7888f63cb140a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a1960344b99dd739796b7888f63cb140a">More...</a><br /></td></tr>
-<tr class="separator:a1960344b99dd739796b7888f63cb140a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd817b1d155e83665752577fd98c9abd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#abd817b1d155e83665752577fd98c9abd">memcpy_to_device</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;data_to_copy, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> pos, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> count)</td></tr>
-<tr class="memdesc:abd817b1d155e83665752577fd98c9abd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at SYCL device pointer position <code>pos</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#abd817b1d155e83665752577fd98c9abd">More...</a><br /></td></tr>
-<tr class="separator:abd817b1d155e83665752577fd98c9abd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2876ade6adcfeb8a5e887de861a7b19f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a2876ade6adcfeb8a5e887de861a7b19f">memcpy_to_device</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a> data_to_copy)</td></tr>
-<tr class="memdesc:a2876ade6adcfeb8a5e887de861a7b19f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a2876ade6adcfeb8a5e887de861a7b19f">More...</a><br /></td></tr>
-<tr class="separator:a2876ade6adcfeb8a5e887de861a7b19f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8e0d69754e2c31532151248957c02af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8e0d69754e2c31532151248957c02af">memcpy_to_device</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a> data_to_copy, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> pos, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> count)</td></tr>
-<tr class="memdesc:ac8e0d69754e2c31532151248957c02af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at SYCL device pointer position <code>pos</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8e0d69754e2c31532151248957c02af">More...</a><br /></td></tr>
-<tr class="separator:ac8e0d69754e2c31532151248957c02af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5feea19bdfc9ab2e8d3aa8cbfb9f07d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ab5feea19bdfc9ab2e8d3aa8cbfb9f07d">memcpy_to_host</a> (std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;buffer) const</td></tr>
-<tr class="memdesc:ab5feea19bdfc9ab2e8d3aa8cbfb9f07d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ab5feea19bdfc9ab2e8d3aa8cbfb9f07d">More...</a><br /></td></tr>
-<tr class="separator:ab5feea19bdfc9ab2e8d3aa8cbfb9f07d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0aef49237de81721b05102fba9833bfe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a0aef49237de81721b05102fba9833bfe">memcpy_to_host</a> (std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;buffer, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> pos, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> count) const</td></tr>
-<tr class="memdesc:a0aef49237de81721b05102fba9833bfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from the device starting at SYCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a0aef49237de81721b05102fba9833bfe">More...</a><br /></td></tr>
-<tr class="separator:a0aef49237de81721b05102fba9833bfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a82402b0ed74758ba76cdca31b8a76db2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a82402b0ed74758ba76cdca31b8a76db2">memcpy_to_host</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a> buffer) const</td></tr>
-<tr class="memdesc:a82402b0ed74758ba76cdca31b8a76db2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a82402b0ed74758ba76cdca31b8a76db2">More...</a><br /></td></tr>
-<tr class="separator:a82402b0ed74758ba76cdca31b8a76db2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30b0b12b3b9b02f02efbeed1fd1babde"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a30b0b12b3b9b02f02efbeed1fd1babde">memcpy_to_host</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a> buffer, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> pos, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> count) const</td></tr>
-<tr class="memdesc:a30b0b12b3b9b02f02efbeed1fd1babde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from the device starting at SYCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a30b0b12b3b9b02f02efbeed1fd1babde">More...</a><br /></td></tr>
-<tr class="separator:a30b0b12b3b9b02f02efbeed1fd1babde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97f2717c00101ab4e2904bdc7395545c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a97f2717c00101ab4e2904bdc7395545c">memset</a> (int value, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> pos, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> count) override</td></tr>
+<tr class="memdesc:a97f2717c00101ab4e2904bdc7395545c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memset up-to <code>count</code> values to <code>value</code> starting at position <code>pos</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a97f2717c00101ab4e2904bdc7395545c">More...</a><br /></td></tr>
+<tr class="separator:a97f2717c00101ab4e2904bdc7395545c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ff5db388314d3515e067e56febf46cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5ff5db388314d3515e067e56febf46cd">memcpy_to_device</a> (<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a15576d5c347d0924e0c59d02705224f5">const_host_pointer_type</a> data_to_copy, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> pos, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> count) override</td></tr>
+<tr class="memdesc:a5ff5db388314d3515e067e56febf46cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at device pointer position <code>pos</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a5ff5db388314d3515e067e56febf46cd">More...</a><br /></td></tr>
+<tr class="separator:a5ff5db388314d3515e067e56febf46cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80a0e07950484ed8893e3d0415a4025a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a80a0e07950484ed8893e3d0415a4025a">memcpy_to_host</a> (<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a853b151a0fbf1231ba2c33445592b545">host_pointer_type</a> buffer, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> pos, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> count) const override</td></tr>
+<tr class="memdesc:a80a0e07950484ed8893e3d0415a4025a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from the device starting at device pointer position <code>pos</code> to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a80a0e07950484ed8893e3d0415a4025a">More...</a><br /></td></tr>
+<tr class="separator:a80a0e07950484ed8893e3d0415a4025a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7969a54dea1ffa4b22000e4e53d50cf5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a7969a54dea1ffa4b22000e4e53d50cf5">swap</a> (<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ae2813622c6243f5847961bfc2d1843dd">gpu_device_ptr</a> &amp;other) noexcept</td></tr>
+<tr class="memdesc:a7969a54dea1ffa4b22000e4e53d50cf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swap the contents of <code>*this</code> with the contents of <code>other</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a7969a54dea1ffa4b22000e4e53d50cf5">More...</a><br /></td></tr>
+<tr class="separator:a7969a54dea1ffa4b22000e4e53d50cf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f13f8cf487622ac5ff532b1940a2bfc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a5f13f8cf487622ac5ff532b1940a2bfc">operator bool</a> () const noexcept</td></tr>
+<tr class="memdesc:a5f13f8cf487622ac5ff532b1940a2bfc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks whether <code>*this</code> currently wraps a device pointer.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a5f13f8cf487622ac5ff532b1940a2bfc">More...</a><br /></td></tr>
+<tr class="separator:a5f13f8cf487622ac5ff532b1940a2bfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a302779fdb500e694f0871623fb9f471d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">device_pointer_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a302779fdb500e694f0871623fb9f471d">get</a> () noexcept</td></tr>
+<tr class="memdesc:a302779fdb500e694f0871623fb9f471d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the underlying device pointer.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a302779fdb500e694f0871623fb9f471d">More...</a><br /></td></tr>
+<tr class="separator:a302779fdb500e694f0871623fb9f471d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29b8ebaf8f7815e51ba201eeb01c1fe3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">device_pointer_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a29b8ebaf8f7815e51ba201eeb01c1fe3">get</a> () const noexcept</td></tr>
+<tr class="memdesc:a29b8ebaf8f7815e51ba201eeb01c1fe3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <code>I-th</code> element of the parameter pack <code>args</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a29b8ebaf8f7815e51ba201eeb01c1fe3">More...</a><br /></td></tr>
+<tr class="separator:a29b8ebaf8f7815e51ba201eeb01c1fe3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ed88a98a3970ff26e29c755b2fc6b4b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b">size</a> () const noexcept</td></tr>
+<tr class="memdesc:a3ed88a98a3970ff26e29c755b2fc6b4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of elements in the wrapped device_ptr.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b">More...</a><br /></td></tr>
+<tr class="separator:a3ed88a98a3970ff26e29c755b2fc6b4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0dbbf4e6bacb6e87154645fadde4ff4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ab0dbbf4e6bacb6e87154645fadde4ff4">empty</a> () const noexcept</td></tr>
+<tr class="memdesc:ab0dbbf4e6bacb6e87154645fadde4ff4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the device_ptr currently maps zero elements.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ab0dbbf4e6bacb6e87154645fadde4ff4">More...</a><br /></td></tr>
+<tr class="separator:ab0dbbf4e6bacb6e87154645fadde4ff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fb9181a69fc8cfe8e6d262e69c3b021"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a58992a52a24062959299054e95702d61">queue_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a1fb9181a69fc8cfe8e6d262e69c3b021">queue</a> () const noexcept</td></tr>
+<tr class="memdesc:a1fb9181a69fc8cfe8e6d262e69c3b021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the queue managing the memory of the wrapped device pointer.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a1fb9181a69fc8cfe8e6d262e69c3b021">More...</a><br /></td></tr>
+<tr class="separator:a1fb9181a69fc8cfe8e6d262e69c3b021"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41257c996c4ced9cf9462ee33e762887"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a41257c996c4ced9cf9462ee33e762887">memset</a> (int value, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> pos=0)</td></tr>
+<tr class="memdesc:a41257c996c4ced9cf9462ee33e762887"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memset all values to <code>value</code> starting at position <code>pos</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a41257c996c4ced9cf9462ee33e762887">More...</a><br /></td></tr>
+<tr class="separator:a41257c996c4ced9cf9462ee33e762887"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a338eaa78442df3c6667fda0b5b4ae4bd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a338eaa78442df3c6667fda0b5b4ae4bd">memcpy_to_device</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;data_to_copy)</td></tr>
+<tr class="memdesc:a338eaa78442df3c6667fda0b5b4ae4bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy device_ptr::size() many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a338eaa78442df3c6667fda0b5b4ae4bd">More...</a><br /></td></tr>
+<tr class="separator:a338eaa78442df3c6667fda0b5b4ae4bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f1a33e2e1377dcab5d600a78a25095f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3f1a33e2e1377dcab5d600a78a25095f">memcpy_to_device</a> (const std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;data_to_copy, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> pos, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> count)</td></tr>
+<tr class="memdesc:a3f1a33e2e1377dcab5d600a78a25095f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at device pointer position <code>pos</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3f1a33e2e1377dcab5d600a78a25095f">More...</a><br /></td></tr>
+<tr class="separator:a3f1a33e2e1377dcab5d600a78a25095f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7169be05f87a69d4fbb1285424da38e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ab7169be05f87a69d4fbb1285424da38e">memcpy_to_device</a> (<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a15576d5c347d0924e0c59d02705224f5">const_host_pointer_type</a> data_to_copy)</td></tr>
+<tr class="memdesc:ab7169be05f87a69d4fbb1285424da38e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy device_ptr::size() many values from <code>data_to_copy</code> to the device.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ab7169be05f87a69d4fbb1285424da38e">More...</a><br /></td></tr>
+<tr class="separator:ab7169be05f87a69d4fbb1285424da38e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5ebdf8bae8e0381e966d500f76f920a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ae5ebdf8bae8e0381e966d500f76f920a">memcpy_to_host</a> (std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;buffer) const</td></tr>
+<tr class="memdesc:ae5ebdf8bae8e0381e966d500f76f920a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy device_ptr::size() many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ae5ebdf8bae8e0381e966d500f76f920a">More...</a><br /></td></tr>
+<tr class="separator:ae5ebdf8bae8e0381e966d500f76f920a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b1b4982a6b8c4c32e61e2f19f8a80db"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a1b1b4982a6b8c4c32e61e2f19f8a80db">memcpy_to_host</a> (std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;buffer, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> pos, <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> count) const</td></tr>
+<tr class="memdesc:a1b1b4982a6b8c4c32e61e2f19f8a80db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy up-to <code>count</code> many values from the device starting at device pointer position <code>pos</code> to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a1b1b4982a6b8c4c32e61e2f19f8a80db">More...</a><br /></td></tr>
+<tr class="separator:a1b1b4982a6b8c4c32e61e2f19f8a80db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bb40229a575127c68ce3e992af99ba0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a4bb40229a575127c68ce3e992af99ba0">memcpy_to_host</a> (<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a853b151a0fbf1231ba2c33445592b545">host_pointer_type</a> buffer) const</td></tr>
+<tr class="memdesc:a4bb40229a575127c68ce3e992af99ba0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memcpy device_ptr::size() many values from the device to the host buffer <code>buffer</code>.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a4bb40229a575127c68ce3e992af99ba0">More...</a><br /></td></tr>
+<tr class="separator:a4bb40229a575127c68ce3e992af99ba0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:ac516b30607b0420e586b18376952cd0c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac516b30607b0420e586b18376952cd0c">swap</a> (<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;lhs, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> &amp;rhs) noexcept</td></tr>
-<tr class="memdesc:ac516b30607b0420e586b18376952cd0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swap the contents of <code>lhs</code> and <code>rhs</code>.  <a href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac516b30607b0420e586b18376952cd0c">More...</a><br /></td></tr>
-<tr class="separator:ac516b30607b0420e586b18376952cd0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a1e0d5ede98c680da08390568c11a2e8a"><td class="memItemLeft" align="right" valign="top"><a id="a1e0d5ede98c680da08390568c11a2e8a"></a>
+<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a58992a52a24062959299054e95702d61">queue_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a1e0d5ede98c680da08390568c11a2e8a">queue_</a></td></tr>
+<tr class="memdesc:a1e0d5ede98c680da08390568c11a2e8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The device queue used to manage the device memory associated with this device pointer. <br /></td></tr>
+<tr class="separator:a1e0d5ede98c680da08390568c11a2e8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d60a23b9417dfc3f489ff8ae345ba54"><td class="memItemLeft" align="right" valign="top"><a id="a6d60a23b9417dfc3f489ff8ae345ba54"></a>
+<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">device_pointer_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a6d60a23b9417dfc3f489ff8ae345ba54">data_</a></td></tr>
+<tr class="memdesc:a6d60a23b9417dfc3f489ff8ae345ba54"><td class="mdescLeft">&#160;</td><td class="mdescRight">The device pointer pointing to the managed memory. <br /></td></tr>
+<tr class="separator:a6d60a23b9417dfc3f489ff8ae345ba54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e51dce2c925f41b106c502204fc5a1e"><td class="memItemLeft" align="right" valign="top"><a id="a5e51dce2c925f41b106c502204fc5a1e"></a>
+<a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a5e51dce2c925f41b106c502204fc5a1e">size_</a></td></tr>
+<tr class="memdesc:a5e51dce2c925f41b106c502204fc5a1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The size of the managed memory. <br /></td></tr>
+<tr class="separator:a5e51dce2c925f41b106c502204fc5a1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename T&gt;<br />
@@ -197,38 +238,8 @@ class plssvm::sycl::detail::device_ptr&lt; T &gt;</h3>
   </dd>
 </dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a31eeac290a3565cca7ced08223e63fde"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a31eeac290a3565cca7ced08223e63fde">&#9670;&nbsp;</a></span>device_ptr() <span class="overload">[1/3]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">default</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Default construct a <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> with a size of 0. </p>
-<p>Always associated with device 0. </p>
-
-</div>
-</div>
-<a id="a008f0f6657aa70ca7ad60fc11350d2d5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a008f0f6657aa70ca7ad60fc11350d2d5">&#9670;&nbsp;</a></span>device_ptr() <span class="overload">[2/3]</span></h2>
+<a id="a3684e6d454c5dcbd5ee96faf817c4cfb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3684e6d454c5dcbd5ee96faf817c4cfb">&#9670;&nbsp;</a></span>device_ptr() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -238,13 +249,13 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
           <td class="paramname"><em>size</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">::sycl::queue &amp;&#160;</td>
+          <td class="paramtype">std::unique_ptr&lt; detail::sycl::queue &gt; &amp;&#160;</td>
           <td class="paramname"><em>queue</em>&#160;</td>
         </tr>
         <tr>
@@ -266,8 +277,38 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="af21bb0788e404e41c8bca426e0e0f2b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af21bb0788e404e41c8bca426e0e0f2b9">&#9670;&nbsp;</a></span>device_ptr() <span class="overload">[3/3]</span></h2>
+<a id="a3a556ae09d9d72c55d7bb00d1f12ba74"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a556ae09d9d72c55d7bb00d1f12ba74">&#9670;&nbsp;</a></span>device_ptr() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a>&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Delete copy-constructor to make <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> a move only type. </p>
+
+</div>
+</div>
+<a id="a2bf94e57cf1313769affd01c9c606c0d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bf94e57cf1313769affd01c9c606c0d">&#9670;&nbsp;</a></span>device_ptr() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -287,7 +328,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">default</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -302,9 +343,60 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a5c85eea4b1931e5e71c69307d6bc9bd8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c85eea4b1931e5e71c69307d6bc9bd8">&#9670;&nbsp;</a></span>~device_ptr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::~<a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a> </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Free the memory managed by the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>. </p>
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a0bbe2b84666f0b5e8b893311356368b1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0bbe2b84666f0b5e8b893311356368b1">&#9670;&nbsp;</a></span>operator=()</h2>
+<a id="aeaf8b952a42a99f6de7ab6260c158d99"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaf8b952a42a99f6de7ab6260c158d99">&#9670;&nbsp;</a></span>operator=() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a>&amp; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::operator= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a>&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Delete copy-assignment-operator to make <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> a move only type. </p>
+
+</div>
+</div>
+<a id="a21551ddb340b97f9b2f3624327a5754b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21551ddb340b97f9b2f3624327a5754b">&#9670;&nbsp;</a></span>operator=() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -324,15 +416,15 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">default</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Move-assignment-operator as <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> is a move-only type. </p>
-<p>Uses the copy-and-swap idiom. </p><dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">other</td><td>the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> to move-assign from </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> to move-assign from </td></tr>
   </table>
   </dd>
 </dl>
@@ -340,8 +432,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="aec55d480722a02eb46dedcf380ce42b0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aec55d480722a02eb46dedcf380ce42b0">&#9670;&nbsp;</a></span>swap()</h2>
+<a id="a97f2717c00101ab4e2904bdc7395545c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97f2717c00101ab4e2904bdc7395545c">&#9670;&nbsp;</a></span>memset() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -352,16 +444,188 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::swap </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memset </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a>&lt; T &gt; &amp;&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>pos</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memset up-to <code>count</code> values to <code>value</code> starting at position <code>pos</code>. </p>
+<p>Memset <code>[p, rcount)</code> where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>the memset value </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of values to set </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.">plssvm::gpu_device_ptr_exception</a></td><td>if <code>pos</code> is greater or equal than <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implements <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a0ed2b0a667e8d4c16f7f6c49a8941f21">plssvm::detail::gpu_device_ptr&lt; T, detail::sycl::queue * &gt;</a>.</p>
+
+</div>
+</div>
+<a id="a5ff5db388314d3515e067e56febf46cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ff5db388314d3515e067e56febf46cd">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_device </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a15576d5c347d0924e0c59d02705224f5">const_host_pointer_type</a>&#160;</td>
+          <td class="paramname"><em>data_to_copy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>pos</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at device pointer position <code>pos</code>. </p>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the device pointer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implements <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#adb1771f91a290376fdb94655d8aa7c97">plssvm::detail::gpu_device_ptr&lt; T, detail::sycl::queue * &gt;</a>.</p>
+
+</div>
+</div>
+<a id="a80a0e07950484ed8893e3d0415a4025a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80a0e07950484ed8893e3d0415a4025a">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_host </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a853b151a0fbf1231ba2c33445592b545">host_pointer_type</a>&#160;</td>
+          <td class="paramname"><em>buffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>pos</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy up-to <code>count</code> many values from the device starting at device pointer position <code>pos</code> to the host buffer <code>buffer</code>. </p>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the device pointer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implements <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a8697223d5d246f12cd122a8363af8388">plssvm::detail::gpu_device_ptr&lt; T, detail::sycl::queue * &gt;</a>.</p>
+
+</div>
+</div>
+<a id="a7969a54dea1ffa4b22000e4e53d50cf5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7969a54dea1ffa4b22000e4e53d50cf5">&#9670;&nbsp;</a></span>swap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::swap </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">gpu_device_ptr</a>&lt; T, detail::sycl::queue * &gt; &amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -376,19 +640,17 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a1b6f8c66bc40b1a053690f2e2fae89f1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b6f8c66bc40b1a053690f2e2fae89f1">&#9670;&nbsp;</a></span>operator bool()</h2>
+<a id="a5f13f8cf487622ac5ff532b1940a2bfc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f13f8cf487622ac5ff532b1940a2bfc">&#9670;&nbsp;</a></span>operator bool()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::operator bool </td>
+          <td class="memname"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::operator bool </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -396,29 +658,27 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Checks whether <code>*this</code> currently wraps a SYCL device pointer. </p>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if <code>*this</code> wraps a device pointer, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
+<p>Checks whether <code>*this</code> currently wraps a device pointer. </p>
+<p>Same as <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a302779fdb500e694f0871623fb9f471d" title="Access the underlying device pointer.">device_ptr::get()</a> != nullptr</code>. </p><dl class="section return"><dt>Returns</dt><dd><code>true</code> if <code>*this</code> wraps a device pointer, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a652a65b851041fc446d2070ddf78576e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a652a65b851041fc446d2070ddf78576e">&#9670;&nbsp;</a></span>get() <span class="overload">[1/2]</span></h2>
+<a id="a302779fdb500e694f0871623fb9f471d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a302779fdb500e694f0871623fb9f471d">&#9670;&nbsp;</a></span>get() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a> <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::get </td>
+          <td class="memname"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">device_pointer_type</a> <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::get </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -426,29 +686,27 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Access the underlying SYCL device pointer. </p>
+<p>Access the underlying device pointer. </p>
 <dl class="section return"><dt>Returns</dt><dd>the device pointer (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a05c8511bcf22e0d76d00468ab699727a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a05c8511bcf22e0d76d00468ab699727a">&#9670;&nbsp;</a></span>get() <span class="overload">[2/2]</span></h2>
+<a id="a29b8ebaf8f7815e51ba201eeb01c1fe3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29b8ebaf8f7815e51ba201eeb01c1fe3">&#9670;&nbsp;</a></span>get() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a> <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::get </td>
+          <td class="memname"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3b17200fbc268bcadb181e7633d1ea51">device_pointer_type</a> <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::get </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -456,29 +714,27 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Access the underlying SYCL device pointer. </p>
+<p>Access the underlying device pointer. </p>
 <dl class="section return"><dt>Returns</dt><dd>the device pointer (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="acac32cccf1ace84ea688e974ca0dc957"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acac32cccf1ace84ea688e974ca0dc957">&#9670;&nbsp;</a></span>size()</h2>
+<a id="a3ed88a98a3970ff26e29c755b2fc6b4b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ed88a98a3970ff26e29c755b2fc6b4b">&#9670;&nbsp;</a></span>size()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a> <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::size </td>
+          <td class="memname"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a> <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -486,29 +742,27 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the number of elements in the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>. </p>
+<p>Get the number of elements in the wrapped <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a>. </p>
 <dl class="section return"><dt>Returns</dt><dd>the size (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a65bc142615e835f034c7d10f880c0532"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a65bc142615e835f034c7d10f880c0532">&#9670;&nbsp;</a></span>empty()</h2>
+<a id="ab0dbbf4e6bacb6e87154645fadde4ff4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0dbbf4e6bacb6e87154645fadde4ff4">&#9670;&nbsp;</a></span>empty()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::empty </td>
+          <td class="memname">bool <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::empty </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -516,29 +770,27 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Check whether the <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> currently maps zero elements. </p>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if no elements are wrapped, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
+<p>Same as <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> == 0</code>. </p><dl class="section return"><dt>Returns</dt><dd><code>true</code> if no elements are wrapped, <code>false</code> otherwise (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a5fa2760a9befc3bdf52f12ca152ef422"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5fa2760a9befc3bdf52f12ca152ef422">&#9670;&nbsp;</a></span>queue()</h2>
+<a id="a1fb9181a69fc8cfe8e6d262e69c3b021"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1fb9181a69fc8cfe8e6d262e69c3b021">&#9670;&nbsp;</a></span>queue()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">::sycl::queue&amp; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::queue </td>
+          <td class="memname"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a58992a52a24062959299054e95702d61">queue_type</a> <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::queue </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -546,26 +798,27 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Return the SYCL queue associated with the wrapped SYCL device pointer. </p>
-<dl class="section return"><dt>Returns</dt><dd>the queue (<code>[[nodiscard]]</code>) </dd></dl>
+<p>Return the queue managing the memory of the wrapped device pointer. </p>
+<dl class="section return"><dt>Returns</dt><dd>the device queue (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
-<a id="a0450de8e8dcc725f4c1ac85df329593c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0450de8e8dcc725f4c1ac85df329593c">&#9670;&nbsp;</a></span>memset() <span class="overload">[1/2]</span></h2>
+<a id="a41257c996c4ced9cf9462ee33e762887"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41257c996c4ced9cf9462ee33e762887">&#9670;&nbsp;</a></span>memset() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memset </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memset </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>value</em>, </td>
@@ -573,7 +826,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
           <td class="paramname"><em>pos</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
@@ -582,420 +835,96 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Memset all values to <code>value</code> starting at position <code>pos</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>the memset value </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset (default: 0) </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs.">plssvm::sycl::backend_exception</a></td><td>if <code>pos</code> is greater or equal than <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> </td></tr>
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.">plssvm::gpu_device_ptr_exception</a></td><td>if <code>pos</code> is greater or equal than <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="aff7b11293175f0042821299dd8ea3bdd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aff7b11293175f0042821299dd8ea3bdd">&#9670;&nbsp;</a></span>memset() <span class="overload">[2/2]</span></h2>
+<a id="a338eaa78442df3c6667fda0b5b4ae4bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a338eaa78442df3c6667fda0b5b4ae4bd">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[2/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memset </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>value</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>pos</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>count</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memset up-to <code>count</code> values to <code>value</code> starting at position <code>pos</code>. </p>
-<p>Memset <code>[p, rcount)</code> where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>the memset value </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the position to start the memset </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of values to set </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs.">plssvm::sycl::backend_exception</a></td><td>if <code>pos</code> is greater or equal than <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a1960344b99dd739796b7888f63cb140a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1960344b99dd739796b7888f63cb140a">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[1/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_device </td>
-          <td>(</td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>data_to_copy</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs.">plssvm::sycl::backend_exception</a></td><td>if <code>data_to_copy</code> is too small to satisfy the memcpy </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="abd817b1d155e83665752577fd98c9abd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abd817b1d155e83665752577fd98c9abd">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[2/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_device </td>
-          <td>(</td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>data_to_copy</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>pos</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>count</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at SYCL device pointer position <code>pos</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the SYCL device pointer </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs.">plssvm::sycl::backend_exception</a></td><td>if <code>data_to_copy</code> is too small to satisfy the memcpy </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a2876ade6adcfeb8a5e887de861a7b19f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2876ade6adcfeb8a5e887de861a7b19f">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[3/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_device </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a>&#160;</td>
-          <td class="paramname"><em>data_to_copy</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ac8e0d69754e2c31532151248957c02af"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac8e0d69754e2c31532151248957c02af">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[4/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_device </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a3798ec6a84a90fd16646c03771fc95b4">const_pointer</a>&#160;</td>
-          <td class="paramname"><em>data_to_copy</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>pos</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>count</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at SYCL device pointer position <code>pos</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the SYCL device pointer </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ab5feea19bdfc9ab2e8d3aa8cbfb9f07d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab5feea19bdfc9ab2e8d3aa8cbfb9f07d">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[1/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_host </td>
-          <td>(</td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>buffer</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs.">plssvm::sycl::backend_exception</a></td><td>if <code>buffer</code> is too small </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a0aef49237de81721b05102fba9833bfe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0aef49237de81721b05102fba9833bfe">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[2/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_host </td>
-          <td>(</td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aee10ce641bf69f3a92df8111c5f04a53">value_type</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>buffer</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>pos</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>count</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy up-to <code>count</code> many values from the device starting at SYCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the SYCL device pointer </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs.">plssvm::sycl::backend_exception</a></td><td>if <code>data_to_copy</code> is too small </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a82402b0ed74758ba76cdca31b8a76db2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a82402b0ed74758ba76cdca31b8a76db2">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[3/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_host </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a>&#160;</td>
-          <td class="paramname"><em>buffer</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a30b0b12b3b9b02f02efbeed1fd1babde"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a30b0b12b3b9b02f02efbeed1fd1babde">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[4/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">plssvm::sycl::detail::device_ptr</a>&lt; T &gt;::memcpy_to_host </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a7c8b98ad4c688b199f15e993b34326c1">pointer</a>&#160;</td>
-          <td class="paramname"><em>buffer</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>pos</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#ac8145a755535cb79f1bf983849ea9179">size_type</a>&#160;</td>
-          <td class="paramname"><em>count</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Memcpy up-to <code>count</code> many values from the device starting at SYCL device pointer position <code>pos</code> to the host buffer <code>buffer</code>. </p>
-<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957" title="Get the number of elements in the device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the SYCL device pointer </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<h2 class="groupheader">Friends And Related Function Documentation</h2>
-<a id="ac516b30607b0420e586b18376952cd0c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac516b30607b0420e586b18376952cd0c">&#9670;&nbsp;</a></span>swap</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void swap </td>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memcpy_to_device </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a>&lt; T &gt; &amp;&#160;</td>
-          <td class="paramname"><em>lhs</em>, </td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data_to_copy</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.">plssvm::gpu_device_ptr_exception</a></td><td>if <code>data_to_copy</code> is too small to satisfy the memcpy </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a3f1a33e2e1377dcab5d600a78a25095f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f1a33e2e1377dcab5d600a78a25095f">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memcpy_to_device </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>data_to_copy</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html">device_ptr</a>&lt; T &gt; &amp;&#160;</td>
-          <td class="paramname"><em>rhs</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>pos</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1005,16 +934,189 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Swap the contents of <code>lhs</code> and <code>rhs</code>. </p>
+<p>Memcpy up-to <code>count</code> many values from <code>data_to_copy</code> to the device starting at device pointer position <code>pos</code>. </p>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the CUDA device pointer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.">plssvm::gpu_device_ptr_exception</a></td><td>if <code>data_to_copy</code> is too small to satisfy the memcpy </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ab7169be05f87a69d4fbb1285424da38e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7169be05f87a69d4fbb1285424da38e">&#9670;&nbsp;</a></span>memcpy_to_device() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memcpy_to_device </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a15576d5c347d0924e0c59d02705224f5">const_host_pointer_type</a>&#160;</td>
+          <td class="paramname"><em>data_to_copy</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> many values from <code>data_to_copy</code> to the device. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">lhs</td><td>a <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">rhs</td><td>a <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions.">device_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">data_to_copy</td><td>the data to copy onto the device </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ae5ebdf8bae8e0381e966d500f76f920a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5ebdf8bae8e0381e966d500f76f920a">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memcpy_to_host </td>
+          <td>(</td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>buffer</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.">plssvm::gpu_device_ptr_exception</a></td><td>if <code>buffer</code> is too small </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a1b1b4982a6b8c4c32e61e2f19f8a80db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b1b4982a6b8c4c32e61e2f19f8a80db">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memcpy_to_host </td>
+          <td>(</td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a324ae7717d0de6d9c63b889e33f8131a">value_type</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>buffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>pos</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164">size_type</a>&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy up-to <code>count</code> many values from the device starting at device pointer position <code>pos</code> to the host buffer <code>buffer</code>. </p>
+<p>Copies <code>[p, rcount)</code> values where <code>rcount</code> is the smaller value of <code>count</code> and <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> - pos</code>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pos</td><td>the starting position for the copying in the device pointer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>the number of elements to copy </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.">plssvm::gpu_device_ptr_exception</a></td><td>if <code>data_to_copy</code> is too small </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a4bb40229a575127c68ce3e992af99ba0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4bb40229a575127c68ce3e992af99ba0">&#9670;&nbsp;</a></span>memcpy_to_host() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">plssvm::detail::gpu_device_ptr</a>&lt; T, detail::sycl::queue * , T *  &gt;::memcpy_to_host </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a853b151a0fbf1231ba2c33445592b545">host_pointer_type</a>&#160;</td>
+          <td class="paramname"><em>buffer</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inherited</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memcpy <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b" title="Get the number of elements in the wrapped device_ptr.">device_ptr::size()</a> many values from the device to the host buffer <code>buffer</code>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">buffer</td><td>the buffer to copy the data to </td></tr>
   </table>
   </dd>
 </dl>
@@ -1027,7 +1129,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

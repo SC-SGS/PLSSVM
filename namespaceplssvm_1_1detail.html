@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -84,11 +92,17 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">gpu_csvm</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A C-SVM implementation for all GPU backends to reduce code duplication.  <a href="classplssvm_1_1detail_1_1gpu__csvm.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html">gpu_device_ptr</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Small wrapper class around a GPU device pointer together with commonly used device functions for all GPU backends to reduce code duplication.  <a href="classplssvm_1_1detail_1_1gpu__device__ptr.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1execution__range.html">execution_range</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class specifying a backend independent execution range.  <a href="classplssvm_1_1detail_1_1execution__range.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1file__reader.html">file_reader</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classplssvm_1_1detail_1_1file__reader.html" title="The plssvm::detail::file_reader class is responsible for reading a file and splitting it into its lin...">plssvm::detail::file_reader</a> class is responsible for reading a file and splitting it into its lines.  <a href="classplssvm_1_1detail_1_1file__reader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1detail_1_1sha256.html">sha256</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A hashing struct used for <a class="el" href="classplssvm_1_1detail_1_1sha256.html" title="A hashing struct used for sha256 hashing.">sha256</a> hashing.  <a href="classplssvm_1_1detail_1_1sha256.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -108,6 +122,10 @@ Functions</h2></td></tr>
 <tr class="memitem:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#ad63cc4410cd69b2c85a71c19b3e6c566">convert_to</a> (std::string_view str)</td></tr>
 <tr class="memdesc:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the string <code>str</code> to a value of type <code>T</code>.  <a href="namespaceplssvm_1_1detail.html#ad63cc4410cd69b2c85a71c19b3e6c566">More...</a><br /></td></tr>
 <tr class="separator:ad63cc4410cd69b2c85a71c19b3e6c566"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16de0b2459c8c3c88a004ff419eb281f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a16de0b2459c8c3c88a004ff419eb281f"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a16de0b2459c8c3c88a004ff419eb281f">extract_first_integer_from_string</a> (std::string_view str)</td></tr>
+<tr class="memdesc:a16de0b2459c8c3c88a004ff419eb281f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extract the first integer from the given string <code>str</code> and converts it to <code>T</code>.  <a href="namespaceplssvm_1_1detail.html#a16de0b2459c8c3c88a004ff419eb281f">More...</a><br /></td></tr>
+<tr class="separator:a16de0b2459c8c3c88a004ff419eb281f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0193c3037a7a004e13394d680f4048d0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">starts_with</a> (std::string_view str, std::string_view sv) noexcept</td></tr>
 <tr class="memdesc:a0193c3037a7a004e13394d680f4048d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the string <code>str</code> starts with the prefix <code>sv</code>.  <a href="namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0">More...</a><br /></td></tr>
 <tr class="separator:a0193c3037a7a004e13394d680f4048d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -150,6 +168,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a019b9816a36f2781e4146f8e1a66f218"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">as_upper_case</a> (std::string_view str)</td></tr>
 <tr class="memdesc:a019b9816a36f2781e4146f8e1a66f218"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a new string with the same content as <code>str</code> but all upper case.  <a href="namespaceplssvm_1_1detail.html#a019b9816a36f2781e4146f8e1a66f218">More...</a><br /></td></tr>
 <tr class="separator:a019b9816a36f2781e4146f8e1a66f218"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d276ad3270ad72807432ba9b672c4b6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::string_view &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a0d276ad3270ad72807432ba9b672c4b6">split</a> (std::string_view str, char delim)</td></tr>
+<tr class="memdesc:a0d276ad3270ad72807432ba9b672c4b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the string <code>str</code> at the positions with delimiter <code>delim</code> and return the sub-strings.  <a href="namespaceplssvm_1_1detail.html#a0d276ad3270ad72807432ba9b672c4b6">More...</a><br /></td></tr>
+<tr class="separator:a0d276ad3270ad72807432ba9b672c4b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acaca663ce73f98d64a61778a78636b76"><td class="memTemplParams" colspan="2">template&lt;std::size_t I, typename... Types&gt; </td></tr>
 <tr class="memitem:acaca663ce73f98d64a61778a78636b76"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#acaca663ce73f98d64a61778a78636b76">get</a> (Types &amp;&amp;...args) noexcept</td></tr>
 <tr class="memdesc:acaca663ce73f98d64a61778a78636b76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <code>I-th</code> element of the parameter pack <code>args</code>.  <a href="namespaceplssvm_1_1detail.html#acaca663ce73f98d64a61778a78636b76">More...</a><br /></td></tr>
@@ -158,6 +179,10 @@ Functions</h2></td></tr>
 <tr class="memitem:af016317e5d75fd36d039076dd2356e31"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::underlying_type_t&lt; Enum &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#af016317e5d75fd36d039076dd2356e31">to_underlying</a> (const Enum e) noexcept</td></tr>
 <tr class="memdesc:af016317e5d75fd36d039076dd2356e31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an enumeration to its underlying type.  <a href="namespaceplssvm_1_1detail.html#af016317e5d75fd36d039076dd2356e31">More...</a><br /></td></tr>
 <tr class="separator:af016317e5d75fd36d039076dd2356e31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45b057c692b6c3c6f5eb5c597fc75f23"><td class="memTemplParams" colspan="2">template&lt;class Key , class T , class Compare , class Alloc , class Pred &gt; </td></tr>
+<tr class="memitem:a45b057c692b6c3c6f5eb5c597fc75f23"><td class="memTemplItemLeft" align="right" valign="top">std::map&lt; Key, T, Compare, Alloc &gt;::size_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html#a45b057c692b6c3c6f5eb5c597fc75f23">erase_if</a> (std::map&lt; Key, T, Compare, Alloc &gt; &amp;c, Pred pred)</td></tr>
+<tr class="memdesc:a45b057c692b6c3c6f5eb5c597fc75f23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Erases all elements that satisfy the predicate <code>pred</code> from the container <code>c</code>.  <a href="namespaceplssvm_1_1detail.html#a45b057c692b6c3c6f5eb5c597fc75f23">More...</a><br /></td></tr>
+<tr class="separator:a45b057c692b6c3c6f5eb5c597fc75f23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -365,6 +390,55 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the value of type <code>T</code> denoted by <code>str</code> (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a16de0b2459c8c3c88a004ff419eb281f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16de0b2459c8c3c88a004ff419eb281f">&#9670;&nbsp;</a></span>extract_first_integer_from_string()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T plssvm::detail::extract_first_integer_from_string </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Extract the first integer from the given string <code>str</code> and converts it to <code>T</code>. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>the type to convert the first integer to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to check </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if <code>str</code> doesn't contain an integer </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the converted integer of type <code>T</code> (<code>[[nodiscard]]</code>) </dd></dl>
 
 </div>
 </div>
@@ -901,6 +975,44 @@ template&lt;typename T , typename Exception  = std::runtime_error&gt; </div>
 
 </div>
 </div>
+<a id="a0d276ad3270ad72807432ba9b672c4b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d276ad3270ad72807432ba9b672c4b6">&#9670;&nbsp;</a></span>split()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::string_view&gt; plssvm::detail::split </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char&#160;</td>
+          <td class="paramname"><em>delim</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Split the string <code>str</code> at the positions with delimiter <code>delim</code> and return the sub-strings. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">str</td><td>the string to split </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">delim</td><td>the split delimiter </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the split sub-strings (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
 <a id="acaca663ce73f98d64a61778a78636b76"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acaca663ce73f98d64a61778a78636b76">&#9670;&nbsp;</a></span>get()</h2>
 
@@ -988,10 +1100,60 @@ template&lt;typename Enum &gt; </div>
 
 </div>
 </div>
+<a id="a45b057c692b6c3c6f5eb5c597fc75f23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45b057c692b6c3c6f5eb5c597fc75f23">&#9670;&nbsp;</a></span>erase_if()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Key , class T , class Compare , class Alloc , class Pred &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::map&lt;Key, T, Compare, Alloc&gt;::size_type plssvm::detail::erase_if </td>
+          <td>(</td>
+          <td class="paramtype">std::map&lt; Key, T, Compare, Alloc &gt; &amp;&#160;</td>
+          <td class="paramname"><em>c</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Pred&#160;</td>
+          <td class="paramname"><em>pred</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Erases all elements that satisfy the predicate <code>pred</code> from the container <code>c</code>. </p>
+<p>See: <a href="https://en.cppreference.com/w/cpp/container/map/erase_if">https://en.cppreference.com/w/cpp/container/map/erase_if</a> </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Key</td><td>the type of the map's key </td></tr>
+    <tr><td class="paramname">T</td><td>the map's value type </td></tr>
+    <tr><td class="paramname">Compare</td><td>the map's comparator type </td></tr>
+    <tr><td class="paramname">Alloc</td><td>the map's allocator type </td></tr>
+    <tr><td class="paramname">Pred</td><td>the type of the predicate used to erase unwanted elements from the map </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">c</td><td>the map to erase the elements from </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pred</td><td>the predicate used to select the elements which will be erased from the map </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the number of erased elements </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

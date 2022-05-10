@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -86,6 +94,15 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1detail.html">detail</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceplssvm_1_1dpcpp"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1dpcpp.html">dpcpp</a></td></tr>
+<tr class="memdesc:namespaceplssvm_1_1dpcpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceplssvm_1_1hip"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1hip.html">hip</a></td></tr>
+<tr class="memdesc:namespaceplssvm_1_1hip"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the HIP backend. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceplssvm_1_1hipsycl"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1hipsycl.html">hipsycl</a></td></tr>
+<tr class="memdesc:namespaceplssvm_1_1hipsycl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1opencl"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl.html">opencl</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1opencl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the OpenCL backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -96,7 +113,10 @@ Namespaces</h2></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1operators"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing operator overloads for <a href="https://en.cppreference.com/w/cpp/container/vector">std::vector</a> and other mathematical functions on vectors. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1sycl"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html">sycl</a></td></tr>
-<tr class="memdesc:namespaceplssvm_1_1sycl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm_1_1sycl"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceplssvm_1_1sycl__generic"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl__generic.html">sycl_generic</a></td></tr>
+<tr class="memdesc:namespaceplssvm_1_1sycl__generic"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend independent of the used SYCL implementation. <b>May not</b> directly be used by users. Use <code><a class="el" href="namespaceplssvm_1_1sycl.html" title="Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.">plssvm::sycl</a></code> instead. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceplssvm_1_1version"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1version.html">version</a></td></tr>
 <tr class="memdesc:namespaceplssvm_1_1version"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing versioning information. <br /></td></tr>
@@ -125,6 +145,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1unsupported__kernel__type__exception.html">unsupported_kernel_type_exception</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the requested kernel type is not supported.  <a href="classplssvm_1_1unsupported__kernel__type__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html">gpu_device_ptr_exception</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if an error in the generic <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title="Small wrapper class around a GPU device pointer together with commonly used device functions for all ...">plssvm::detail::gpu_device_ptr</a></code> occurred.  <a href="classplssvm_1_1gpu__device__ptr__exception.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1source__location.html">source_location</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,...">plssvm::source_location</a> class represents certain information about the source code, such as file names, line numbers or function names.  <a href="classplssvm_1_1source__location.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,10 +167,15 @@ using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="nam
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:abdb476fa824886f6d3ec438d86579c70"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> { <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">openmp</a>
+<tr class="memitem:abdb476fa824886f6d3ec438d86579c70"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> { <br />
+&#160;&#160;<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8">automatic</a>
+, <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">openmp</a>
 , <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">cuda</a>
-, <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">opencl</a>
+, <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a">hip</a>
+, <br />
+&#160;&#160;<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">opencl</a>
 , <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">sycl</a>
+<br />
  }</td></tr>
 <tr class="memdesc:abdb476fa824886f6d3ec438d86579c70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all possible backend types.  <a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">More...</a><br /></td></tr>
 <tr class="separator:abdb476fa824886f6d3ec438d86579c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,6 +199,12 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a3ea9dba23f276dc543651130becb241a"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a3ea9dba23f276dc543651130becb241a">list_available_backends</a> ()</td></tr>
+<tr class="memdesc:a3ea9dba23f276dc543651130becb241a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a list of all currently available backends.  <a href="namespaceplssvm.html#a3ea9dba23f276dc543651130becb241a">More...</a><br /></td></tr>
+<tr class="separator:a3ea9dba23f276dc543651130becb241a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72cf4479f0c75e3972f356003678e4f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">determine_default_backend</a> ()</td></tr>
+<tr class="memdesc:a72cf4479f0c75e3972f356003678e4f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the default backend used given the specified target platforms during the CMake configuration.  <a href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">More...</a><br /></td></tr>
+<tr class="separator:a72cf4479f0c75e3972f356003678e4f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86f8cc05a5611ef6448948acc48a1ea1"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">operator&lt;&lt;</a> (std::ostream &amp;out, <a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> backend)</td></tr>
 <tr class="memdesc:a86f8cc05a5611ef6448948acc48a1ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>backend</code> to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">More...</a><br /></td></tr>
 <tr class="separator:a86f8cc05a5611ef6448948acc48a1ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -195,6 +229,9 @@ Functions</h2></td></tr>
 <tr class="memitem:abb0cb3ce206767127c82f6c2cdff79ab"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#abb0cb3ce206767127c82f6c2cdff79ab">operator&lt;&lt;</a> (std::ostream &amp;out, const <a class="el" href="classplssvm_1_1parameter.html">parameter</a>&lt; T &gt; &amp;params)</td></tr>
 <tr class="memdesc:abb0cb3ce206767127c82f6c2cdff79ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output all parameters encapsulated by <code>params</code> to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#abb0cb3ce206767127c82f6c2cdff79ab">More...</a><br /></td></tr>
 <tr class="separator:abb0cb3ce206767127c82f6c2cdff79ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cdf0c0e343972354666d74ba5461028"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a9cdf0c0e343972354666d74ba5461028">list_available_target_platforms</a> ()</td></tr>
+<tr class="memdesc:a9cdf0c0e343972354666d74ba5461028"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a list of all currently available target platforms.  <a href="namespaceplssvm.html#a9cdf0c0e343972354666d74ba5461028">More...</a><br /></td></tr>
+<tr class="separator:a9cdf0c0e343972354666d74ba5461028"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a510a230d19d4dd416e1bf4aaa6db9328"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm.html#a510a230d19d4dd416e1bf4aaa6db9328">operator&lt;&lt;</a> (std::ostream &amp;out, <a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a> target)</td></tr>
 <tr class="memdesc:a510a230d19d4dd416e1bf4aaa6db9328"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>target</code> platform to the given output-stream <code>out</code>.  <a href="namespaceplssvm.html#a510a230d19d4dd416e1bf4aaa6db9328">More...</a><br /></td></tr>
 <tr class="separator:a510a230d19d4dd416e1bf4aaa6db9328"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -242,9 +279,13 @@ constexpr <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde393
 
 <p>Enum class for all possible backend types. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f"></a>openmp&#160;</td><td class="fielddoc"><p><a href="https://www.openmp.org/">OpenMP</a> to target CPUs only. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8"></a>automatic&#160;</td><td class="fielddoc"><p>The default backend dependent on the specified target platforms. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f"></a>openmp&#160;</td><td class="fielddoc"><p><a href="https://www.openmp.org/">OpenMP</a> to target CPUs only. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868"></a>cuda&#160;</td><td class="fielddoc"><p><a href="https://developer.nvidia.com/cuda-zone">CUDA</a> to target NVIDIA GPUs only. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a"></a>hip&#160;</td><td class="fielddoc"><p><a href="https://github.com/ROCm-Developer-Tools/HIP">HIP</a> to target AMD and NVIDIA GPUs. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887"></a>opencl&#160;</td><td class="fielddoc"><p><a href="https://www.khronos.org/opencl/">OpenCL</a> to target GPUs from different vendors and CPUs. </p>
 </td></tr>
@@ -276,11 +317,11 @@ constexpr <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde393
 
 <p>Enum class for all implemented kernel functions. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa"></a>linear&#160;</td><td class="fielddoc"><p>Linear kernel function: <img class="formulaInl" alt="$\vec{u}^T \cdot \vec{v}$" src="form_3.png"/>. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa"></a>linear&#160;</td><td class="fielddoc"><p>Linear kernel function: \(\vec{u}^T \cdot \vec{v}\). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea"></a>polynomial&#160;</td><td class="fielddoc"><p>Polynomial kernel function: <img class="formulaInl" alt="$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}$" src="form_4.png"/>. </p>
+<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a89693d3333328e76f4fdeed379e8f9ea"></a>polynomial&#160;</td><td class="fielddoc"><p>Polynomial kernel function: \((gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a1c2fc056f2b0d4685d95adb8764a3912"></a>rbf&#160;</td><td class="fielddoc"><p>Radial basis function: <img class="formulaInl" alt="$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}$" src="form_5.png"/>. </p>
+<tr><td class="fieldname"><a id="a13d04ccec8f2cd5794a5d2d73dd99703a1c2fc056f2b0d4685d95adb8764a3912"></a>rbf&#160;</td><td class="fielddoc"><p>Radial basis function: \(e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\). </p>
 </td></tr>
 </table>
 
@@ -323,6 +364,46 @@ constexpr <a class="el" href="namespaceplssvm.html#aab3a343173d93c72cd62edcde393
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a3ea9dba23f276dc543651130becb241a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ea9dba23f276dc543651130becb241a">&#9670;&nbsp;</a></span>list_available_backends()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a>&gt; plssvm::list_available_backends </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return a list of all currently available backends. </p>
+<p>Only backends that where found during the CMake configuration are available. </p><dl class="section return"><dt>Returns</dt><dd>the available backends (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a72cf4479f0c75e3972f356003678e4f9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a72cf4479f0c75e3972f356003678e4f9">&#9670;&nbsp;</a></span>determine_default_backend()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> plssvm::determine_default_backend </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the default backend used given the specified target platforms during the CMake configuration. </p>
+<dl class="section return"><dt>Returns</dt><dd>the default backend (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
 <a id="a86f8cc05a5611ef6448948acc48a1ea1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a86f8cc05a5611ef6448948acc48a1ea1">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[1/4]</span></h2>
 
@@ -625,6 +706,26 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a9cdf0c0e343972354666d74ba5461028"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cdf0c0e343972354666d74ba5461028">&#9670;&nbsp;</a></span>list_available_target_platforms()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500">target_platform</a>&gt; plssvm::list_available_target_platforms </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return a list of all currently available target platforms. </p>
+<p>Only target platforms that where requested during the CMake configuration are available. </p><dl class="section return"><dt>Returns</dt><dd>the available target platforms (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
 <a id="a510a230d19d4dd416e1bf4aaa6db9328"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a510a230d19d4dd416e1bf4aaa6db9328">&#9670;&nbsp;</a></span>operator&lt;&lt;() <span class="overload">[4/4]</span></h2>
 
@@ -704,7 +805,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

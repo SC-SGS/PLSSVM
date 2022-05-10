@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -98,13 +106,14 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="exceptions_2exceptions_8hpp__dep__incl.png" border="0" usemap="#ainclude_2plssvm_2exceptions_2exceptions_8hppdep" alt=""/></div>
 <map name="ainclude_2plssvm_2exceptions_2exceptions_8hppdep" id="ainclude_2plssvm_2exceptions_2exceptions_8hppdep">
-<area shape="rect" title="Implements custom exception classes derived from std::runtime_error including source location informa..." alt="" coords="523,5,718,47"/>
+<area shape="rect" title="Implements custom exception classes derived from std::runtime_error including source location informa..." alt="" coords="629,5,823,47"/>
 <area shape="rect" href="backends_2CUDA_2exceptions_8hpp.html" title="Implements custom exception classes specific to the CUDA backend." alt="" coords="5,95,191,136"/>
-<area shape="rect" href="backends_2OpenCL_2exceptions_8hpp.html" title="Implements custom exception classes specific to the OpenCL backend." alt="" coords="215,95,400,136"/>
-<area shape="rect" href="backends_2OpenMP_2exceptions_8hpp.html" title="Implements custom exception classes specific to the OpenMP backend." alt="" coords="424,95,609,136"/>
-<area shape="rect" href="backends_2SYCL_2exceptions_8hpp.html" title="Implements custom exception classes specific to the SYCL backend." alt="" coords="633,95,819,136"/>
-<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="825,184,1005,211"/>
-<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="895,95,1053,136"/>
+<area shape="rect" href="backends_2HIP_2exceptions_8hpp.html" title="Implements custom exception classes specific to the HIP backend." alt="" coords="215,95,400,136"/>
+<area shape="rect" href="backends_2OpenCL_2exceptions_8hpp.html" title="Implements custom exception classes specific to the OpenCL backend." alt="" coords="424,95,609,136"/>
+<area shape="rect" href="backends_2OpenMP_2exceptions_8hpp.html" title="Implements custom exception classes specific to the OpenMP backend." alt="" coords="633,95,819,136"/>
+<area shape="rect" href="backends_2SYCL_2exceptions_8hpp.html" title="Implements custom exception classes specific to the SYCL backend." alt="" coords="843,95,1028,136"/>
+<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="1035,184,1215,211"/>
+<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="1104,95,1263,136"/>
 </map>
 </div>
 </div>
@@ -127,6 +136,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1unsupported__kernel__type__exception.html">plssvm::unsupported_kernel_type_exception</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if the requested kernel type is not supported.  <a href="classplssvm_1_1unsupported__kernel__type__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html">plssvm::gpu_device_ptr_exception</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if an error in the generic <code><a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title="Small wrapper class around a GPU device pointer together with commonly used device functions for all ...">plssvm::detail::gpu_device_ptr</a></code> occurred.  <a href="classplssvm_1_1gpu__device__ptr__exception.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -144,7 +156,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

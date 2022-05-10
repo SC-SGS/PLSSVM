@@ -1,0 +1,4 @@
+<map id="plssvm::cuda::detail::device_ptr&lt; T &gt;" name="plssvm::cuda::detail::device_ptr&lt; T &gt;">
+<area shape="rect" id="node1" title="Small wrapper class around a CUDA device pointer together with commonly used device functions." alt="" coords="9,95,162,136"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,165,47"/>
+</map>

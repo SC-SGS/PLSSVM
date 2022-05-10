@@ -1,0 +1,6 @@
+<map id="include/plssvm/backends/gpu_device_ptr.hpp" name="include/plssvm/backends/gpu_device_ptr.hpp">
+<area shape="rect" id="node1" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="53,5,239,47"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,95,76,121"/>
+<area shape="rect" id="node3" title=" " alt="" coords="100,95,192,121"/>
+<area shape="rect" id="node4" title=" " alt="" coords="216,95,279,121"/>
+</map>

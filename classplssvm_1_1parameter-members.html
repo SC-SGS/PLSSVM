@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -97,15 +105,16 @@ $(function() {
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a77bf3395b3eacaba22a56e9652eab1d7">print_info</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a05011e4e5b8ad1eba03c52e25dba0e35">real_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a84e381f962e794594b6bbb38ba366371">rho</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a6a3542887a62b89b454e9cc1d2697273">sycl_kernel_invocation_type</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#ad3533fefaa4428a4106850c36eb70e36">target</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a877e81c0567d5e72313cb2a1002487a8">test_data_ptr</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a99fcfe94bea2e0998b4edc9e10d63579">value_ptr</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a3024a47beb7ca7ddead221aecee2cd7f">~parameter</a>()=default</td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#aac70755fb791daeef214669042ff4f39">sycl_implementation_type</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a6a3542887a62b89b454e9cc1d2697273">sycl_kernel_invocation_type</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#ad3533fefaa4428a4106850c36eb70e36">target</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a877e81c0567d5e72313cb2a1002487a8">test_data_ptr</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a99fcfe94bea2e0998b4edc9e10d63579">value_ptr</a></td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1parameter.html#a3024a47beb7ca7ddead221aecee2cd7f">~parameter</a>()=default</td><td class="entry"><a class="el" href="classplssvm_1_1parameter.html">plssvm::parameter&lt; T &gt;</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

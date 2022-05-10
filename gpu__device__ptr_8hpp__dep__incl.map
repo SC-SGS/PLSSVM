@@ -1,0 +1,10 @@
+<map id="include/plssvm/backends/gpu_device_ptr.hpp" name="include/plssvm/backends/gpu_device_ptr.hpp">
+<area shape="rect" id="node1" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="357,5,542,47"/>
+<area shape="rect" id="node2" href="$device__ptr_8cuh.html" title="Small wrapper around a CUDA device pointer." alt="" coords="5,102,208,143"/>
+<area shape="rect" id="node4" href="$device__ptr_8hip_8hpp.html" title="Small wrapper around a HIP device pointer." alt="" coords="233,102,445,143"/>
+<area shape="rect" id="node6" href="$OpenCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a OpenCL device pointer." alt="" coords="469,95,654,151"/>
+<area shape="rect" id="node8" href="$SYCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a SYCL device pointer." alt="" coords="679,102,876,143"/>
+<area shape="rect" id="node3" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="14,199,199,240"/>
+<area shape="rect" id="node5" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="246,199,431,240"/>
+<area shape="rect" id="node7" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="469,199,654,240"/>
+</map>

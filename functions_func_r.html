@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -73,24 +81,28 @@ $(function() {
 <li>run_predict_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad4dc605a13f86f04d601906386163b7a">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#acbe87d34236a651d5791db2a751b1c4e">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a1ed1d80a704210b3f4ab9a1dc33fe4b2">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#ab6591ffe01f8e29d654b6b71a964b683">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a36ebf43112082d3517d607656703338e">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
 <li>run_q_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a0f5b432aee85e2fa79b288fc229ee7fa">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#af4e28fc6f96108a367001c8aa5353c83">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a0198dea569bc72e5cee4f15a352dc117">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#a1a19be142ef771fbe91ffe912d95d5d1">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a3c5e36bf01abe1aa38368c8f3cd7f083">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
 <li>run_svm_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aa0a9796f4e708147bf1e0a3d5fa68694">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae7dc5d00bca4f4e4971f0c2da7ce6464">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a3546c2c823990a83c6c73dc662b4c134">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#ad19e746045c5002569c25e52212fb27e">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a275b7ab28ade325eebda41202376c535">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
 <li>run_w_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ab3fefe380d23808f4779ad747f6f7d77">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a679e61d55d3602e3fcb76e80264a8835">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a5056cebd6ec265458d27de5869349289">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#af65154f940e47ad84abf811a0529f6f1">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a46405847b73e32f21683db058cd3d25c">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
@@ -98,7 +110,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

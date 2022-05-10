@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -72,9 +80,7 @@ $(function() {
 , <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a9b43d6fec66633275f311189ef6c1903">plssvm::openmp::csvm&lt; T &gt;</a>
 </li>
 <li>size()
-: <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a6f4ab2ea2d7249ef0692b1cf6acd2586">plssvm::cuda::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#af90d7e0901077c0ead9849f91e4998a0">plssvm::opencl::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#acac32cccf1ace84ea688e974ca0dc957">plssvm::sycl::detail::device_ptr&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b">plssvm::detail::gpu_device_ptr&lt; T, queue_t, device_pointer_t &gt;</a>
 </li>
 <li>solver_CG()
 : <a class="el" href="classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a">plssvm::csvm&lt; T &gt;</a>
@@ -82,15 +88,13 @@ $(function() {
 , <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a1180045e6a4c5bf65259984ce541c216">plssvm::openmp::csvm&lt; T &gt;</a>
 </li>
 <li>swap()
-: <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a68da36c858fb125e80dcc06d697a6143">plssvm::cuda::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#a818665f0d7e607f36df77c1fb586fe76">plssvm::opencl::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#aec55d480722a02eb46dedcf380ce42b0">plssvm::sycl::detail::device_ptr&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a7969a54dea1ffa4b22000e4e53d50cf5">plssvm::detail::gpu_device_ptr&lt; T, queue_t, device_pointer_t &gt;</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

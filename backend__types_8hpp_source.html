@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -75,33 +83,44 @@ $(function() {
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#pragma once</span></div>
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#include &lt;iosfwd&gt;</span>  <span class="comment">// forward declare std::ostream and std::istream</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160; </div>
-<div class="line"><a name="l00016"></a><span class="lineno"><a class="line" href="namespaceplssvm.html">   16</a></span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160; </div>
-<div class="line"><a name="l00021"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">   21</a></span>&#160;<span class="keyword">enum class</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> {</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">openmp</a>,</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">cuda</a>,</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">opencl</a>,</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">sycl</a></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;};</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160; </div>
-<div class="line"><a name="l00038"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">   38</a></span>&#160;std::ostream &amp;<a class="code" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">operator&lt;&lt;</a>(std::ostream &amp;out, <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> backend);</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
-<div class="line"><a name="l00046"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">   46</a></span>&#160;std::istream &amp;<a class="code" href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">operator&gt;&gt;</a>(std::istream &amp;in, <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> &amp;backend);</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160; </div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;}  <span class="comment">// namespace plssvm</span></div>
-<div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all public API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:16</div></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#include &lt;vector&gt;</span>  <span class="comment">// std::vector</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160; </div>
+<div class="line"><a name="l00017"></a><span class="lineno"><a class="line" href="namespaceplssvm.html">   17</a></span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceplssvm.html">plssvm</a> {</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160; </div>
+<div class="line"><a name="l00022"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">   22</a></span>&#160;<span class="keyword">enum class</span> <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> {</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8">automatic</a>,</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">openmp</a>,</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">cuda</a>,</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a">hip</a>,</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">opencl</a>,</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">sycl</a></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;};</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160; </div>
+<div class="line"><a name="l00042"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a3ea9dba23f276dc543651130becb241a">   42</a></span>&#160;[[nodiscard]] std::vector&lt;backend_type&gt; <a class="code" href="namespaceplssvm.html#a3ea9dba23f276dc543651130becb241a">list_available_backends</a>();</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160; </div>
+<div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">   48</a></span>&#160;[[nodiscard]] <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> <a class="code" href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">determine_default_backend</a>();</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160; </div>
+<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">   56</a></span>&#160;std::ostream &amp;<a class="code" href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">operator&lt;&lt;</a>(std::ostream &amp;out, <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> backend);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160; </div>
+<div class="line"><a name="l00064"></a><span class="lineno"><a class="line" href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">   64</a></span>&#160;std::istream &amp;<a class="code" href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">operator&gt;&gt;</a>(std::istream &amp;in, <a class="code" href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">backend_type</a> &amp;backend);</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160; </div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;}  <span class="comment">// namespace plssvm</span></div>
+<div class="ttc" id="anamespaceplssvm_html"><div class="ttname"><a href="namespaceplssvm.html">plssvm</a></div><div class="ttdoc">The main namespace containing all public API functions.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:17</div></div>
 <div class="ttc" id="anamespaceplssvm_html_a3cb98983f3c24b91db983a8078e8f165"><div class="ttname"><a href="namespaceplssvm.html#a3cb98983f3c24b91db983a8078e8f165">plssvm::operator&gt;&gt;</a></div><div class="ttdeci">std::istream &amp; operator&gt;&gt;(std::istream &amp;in, backend_type &amp;backend)</div><div class="ttdoc">Use the input-stream in to initialize the backend type.</div></div>
+<div class="ttc" id="anamespaceplssvm_html_a3ea9dba23f276dc543651130becb241a"><div class="ttname"><a href="namespaceplssvm.html#a3ea9dba23f276dc543651130becb241a">plssvm::list_available_backends</a></div><div class="ttdeci">std::vector&lt; backend_type &gt; list_available_backends()</div><div class="ttdoc">Return a list of all currently available backends.</div></div>
+<div class="ttc" id="anamespaceplssvm_html_a72cf4479f0c75e3972f356003678e4f9"><div class="ttname"><a href="namespaceplssvm.html#a72cf4479f0c75e3972f356003678e4f9">plssvm::determine_default_backend</a></div><div class="ttdeci">backend_type determine_default_backend()</div><div class="ttdoc">Returns the default backend used given the specified target platforms during the CMake configuration.</div></div>
 <div class="ttc" id="anamespaceplssvm_html_a86f8cc05a5611ef6448948acc48a1ea1"><div class="ttname"><a href="namespaceplssvm.html#a86f8cc05a5611ef6448948acc48a1ea1">plssvm::operator&lt;&lt;</a></div><div class="ttdeci">std::ostream &amp; operator&lt;&lt;(std::ostream &amp;out, backend_type backend)</div><div class="ttdoc">Output the backend to the given output-stream out.</div></div>
-<div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">plssvm::backend_type</a></div><div class="ttdeci">backend_type</div><div class="ttdoc">Enum class for all possible backend types.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:21</div></div>
+<div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70">plssvm::backend_type</a></div><div class="ttdeci">backend_type</div><div class="ttdoc">Enum class for all possible backend types.</div><div class="ttdef"><b>Definition:</b> backend_types.hpp:22</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f">plssvm::backend_type::openmp</a></div><div class="ttdeci">@ openmp</div></div>
+<div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a2bd9c0ed00116be1258e0cc66617d7c8">plssvm::backend_type::automatic</a></div><div class="ttdeci">@ automatic</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a39466fe22b062a34cfe09f3cc8c24868">plssvm::backend_type::cuda</a></div><div class="ttdeci">@ cuda</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887">plssvm::backend_type::opencl</a></div><div class="ttdeci">@ opencl</div></div>
+<div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a">plssvm::backend_type::hip</a></div><div class="ttdeci">@ hip</div></div>
 <div class="ttc" id="anamespaceplssvm_html_abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6"><div class="ttname"><a href="namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6">plssvm::backend_type::sycl</a></div><div class="ttdeci">@ sycl</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue." alt="" coords="5,5,171,47"/>
+<area shape="rect" id="node1" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,39,165,80"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1cuda_1_1detail_1_1device__ptr.html" title="Small wrapper class around a CUDA device pointer together with commonly used device functions." alt="" coords="213,5,367,47"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1hip_1_1detail_1_1device__ptr.html" title="Small wrapper class around a HIP device pointer together with commonly used device functions." alt="" coords="219,71,361,112"/>
 </map>

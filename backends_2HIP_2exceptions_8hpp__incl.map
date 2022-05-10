@@ -1,0 +1,8 @@
+<map id="include/plssvm/backends/HIP/exceptions.hpp" name="include/plssvm/backends/HIP/exceptions.hpp">
+<area shape="rect" id="node1" title="Implements custom exception classes specific to the HIP backend." alt="" coords="164,5,349,47"/>
+<area shape="rect" id="node2" href="$exceptions_2exceptions_8hpp.html" title="Implements custom exception classes derived from std::runtime_error including source location informa..." alt="" coords="133,95,380,121"/>
+<area shape="rect" id="node3" href="$source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="5,169,196,211"/>
+<area shape="rect" id="node6" title=" " alt="" coords="385,177,443,203"/>
+<area shape="rect" id="node4" title=" " alt="" coords="119,259,216,285"/>
+<area shape="rect" id="node5" title=" " alt="" coords="272,177,359,203"/>
+</map>

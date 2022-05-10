@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -69,22 +77,19 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#typedef-members">Typedefs</a> &#124;
-<a href="#enum-members">Enumerations</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#nested-classes">Classes</a>  </div>
   <div class="headertitle">
 <div class="title">plssvm::sycl Namespace Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Namespace containing the C-SVM using the SYCL backend.  
+<p>Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.  
 <a href="namespaceplssvm_1_1sycl.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceplssvm_1_1sycl_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl_1_1detail.html">detail</a></td></tr>
-<tr class="memdesc:namespaceplssvm_1_1sycl_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing SYCL backend specific implementation details. <b>Should not</b> directly be used by users. <br /></td></tr>
+<tr class="memdesc:namespaceplssvm_1_1sycl_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. <b>Should not</b> directly be used by users. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
@@ -95,237 +100,13 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1backend__exception.html">backend_exception</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception type thrown if a problem with the SYCL backend occurs.  <a href="classplssvm_1_1sycl_1_1backend__exception.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html">device_kernel_w_linear</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the <code>w</code> vector to speed up the prediction of the labels for data points using the linear kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html">device_kernel_predict_poly</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicts the labels for data points using the polynomial kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html">device_kernel_predict_radial</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicts the labels for data points using the radial basis functions kernel function.  <a href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html">device_kernel_q_linear</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functor to calculate the <code>q</code> vector using the linear C-SVM kernel.  <a href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__poly.html">device_kernel_q_poly</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functor to calculate the <code>q</code> vector using the polynomial C-SVM kernel.  <a href="classplssvm_1_1sycl_1_1device__kernel__q__poly.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__radial.html">device_kernel_q_radial</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functor to calculate the <code>q</code> vector using the radial basis functions C-SVM kernel.  <a href="classplssvm_1_1sycl_1_1device__kernel__q__radial.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__linear.html">hierarchical_device_kernel_linear</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the hierarchical formulation and the linear kernel function.  <a href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__linear.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__poly.html">hierarchical_device_kernel_poly</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the hierarchical formulation and the polynomial kernel function.  <a href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__poly.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__radial.html">hierarchical_device_kernel_radial</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the hierarchical formulation and the radial basis functions kernel function.  <a href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__radial.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__linear.html">nd_range_device_kernel_linear</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the nd_range formulation and the linear kernel function.  <a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__linear.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html">nd_range_device_kernel_poly</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the nd_range formulation and the polynomial kernel function.  <a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__radial.html">nd_range_device_kernel_radial</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the C-SVM kernel using the nd_range formulation and the radial basis functions kernel function.  <a href="classplssvm_1_1sycl_1_1nd__range__device__kernel__radial.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
-Typedefs</h2></td></tr>
-<tr class="memitem:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">atomic_op</a> = ::sycl::atomic_ref&lt; T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space &gt;</td></tr>
-<tr class="memdesc:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory.  <a href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">More...</a><br /></td></tr>
-<tr class="separator:ad55ad7c8bfa5b790ee7d3f841f8ea03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a2565372115455bf9e79f1aa67067175a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">local_accessor</a> = ::sycl::accessor&lt; T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local &gt;</td></tr>
-<tr class="memdesc:a2565372115455bf9e79f1aa67067175a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shortcut alias for a SYCL local accessor.  <a href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">More...</a><br /></td></tr>
-<tr class="separator:a2565372115455bf9e79f1aa67067175a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
-Enumerations</h2></td></tr>
-<tr class="memitem:aeb1466b20fd508be3035a330131ae4ba"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">kernel_invocation_type</a> { <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baa2bd9c0ed00116be1258e0cc66617d7c8">automatic</a>
-, <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baaf4578c9c58bee746eedf6302f18a2ecf">nd_range</a>
-, <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baa2c95b1531c95e0730d65f40da3b31778">hierarchical</a>
- }</td></tr>
-<tr class="memdesc:aeb1466b20fd508be3035a330131ae4ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enum class for all possible SYCL kernel invocation types.  <a href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">More...</a><br /></td></tr>
-<tr class="separator:aeb1466b20fd508be3035a330131ae4ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a49dc963787d6e57e52b01d86dac5b90f"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a49dc963787d6e57e52b01d86dac5b90f">operator&lt;&lt;</a> (std::ostream &amp;out, <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">kernel_invocation_type</a> invocation)</td></tr>
-<tr class="memdesc:a49dc963787d6e57e52b01d86dac5b90f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output the <code>invocation</code> type to the given output-stream <code>out</code>.  <a href="namespaceplssvm_1_1sycl.html#a49dc963787d6e57e52b01d86dac5b90f">More...</a><br /></td></tr>
-<tr class="separator:a49dc963787d6e57e52b01d86dac5b90f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a62139b4e09a1c50f5aad547fafa2abec"><td class="memItemLeft" align="right" valign="top">std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1sycl.html#a62139b4e09a1c50f5aad547fafa2abec">operator&gt;&gt;</a> (std::istream &amp;in, <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">kernel_invocation_type</a> &amp;invocation)</td></tr>
-<tr class="memdesc:a62139b4e09a1c50f5aad547fafa2abec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the input-stream <code>in</code> to initialize the <code>invocation</code> type.  <a href="namespaceplssvm_1_1sycl.html#a62139b4e09a1c50f5aad547fafa2abec">More...</a><br /></td></tr>
-<tr class="separator:a62139b4e09a1c50f5aad547fafa2abec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Namespace containing the C-SVM using the SYCL backend. </p>
-</div><h2 class="groupheader">Typedef Documentation</h2>
-<a id="ad55ad7c8bfa5b790ee7d3f841f8ea03f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad55ad7c8bfa5b790ee7d3f841f8ea03f">&#9670;&nbsp;</a></span>atomic_op</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#ad55ad7c8bfa5b790ee7d3f841f8ea03f">plssvm::sycl::atomic_op</a> = typedef ::sycl::atomic_ref&lt;T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space&gt;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Shortcut alias for a <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references"><code>sycl::atomic_ref</code></a> targeting global memory. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">T</td><td>the type of the accessed values </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a2565372115455bf9e79f1aa67067175a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2565372115455bf9e79f1aa67067175a">&#9670;&nbsp;</a></span>local_accessor</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a">plssvm::sycl::local_accessor</a> = typedef ::sycl::accessor&lt;T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local&gt;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Shortcut alias for a SYCL local accessor. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">T</td><td>the type of the accessed values </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="aeb1466b20fd508be3035a330131ae4ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeb1466b20fd508be3035a330131ae4ba">&#9670;&nbsp;</a></span>kernel_invocation_type</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">plssvm::sycl::kernel_invocation_type</a></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Enum class for all possible SYCL kernel invocation types. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aeb1466b20fd508be3035a330131ae4baa2bd9c0ed00116be1258e0cc66617d7c8"></a>automatic&#160;</td><td class="fielddoc"><p>Use the best kernel invocation type for the current SYCL implementation and target hardware platform. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="aeb1466b20fd508be3035a330131ae4baaf4578c9c58bee746eedf6302f18a2ecf"></a>nd_range&#160;</td><td class="fielddoc"><p>Use the <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_invoke"><em>nd_range</em> invocation type</a>. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="aeb1466b20fd508be3035a330131ae4baa2c95b1531c95e0730d65f40da3b31778"></a>hierarchical&#160;</td><td class="fielddoc"><p>Use the SYCL specific <a href="https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_hierarchical_invoke">hierarchical invocation type</a>. </p>
-</td></tr>
-</table>
-
-</div>
-</div>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="a49dc963787d6e57e52b01d86dac5b90f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a49dc963787d6e57e52b01d86dac5b90f">&#9670;&nbsp;</a></span>operator&lt;&lt;()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::ostream&amp; plssvm::sycl::operator&lt;&lt; </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>out</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">kernel_invocation_type</a>&#160;</td>
-          <td class="paramname"><em>invocation</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Output the <code>invocation</code> type to the given output-stream <code>out</code>. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">out</td><td>the output-stream to write the backend type to </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">invocation</td><td>the SYCL kernel invocation type </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>the output-stream </dd></dl>
-
-</div>
-</div>
-<a id="a62139b4e09a1c50f5aad547fafa2abec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a62139b4e09a1c50f5aad547fafa2abec">&#9670;&nbsp;</a></span>operator&gt;&gt;()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::istream&amp; plssvm::sycl::operator&gt;&gt; </td>
-          <td>(</td>
-          <td class="paramtype">std::istream &amp;&#160;</td>
-          <td class="paramname"><em>in</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4ba">kernel_invocation_type</a> &amp;&#160;</td>
-          <td class="paramname"><em>invocation</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Use the input-stream <code>in</code> to initialize the <code>invocation</code> type. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">in</td><td>input-stream to extract the backend type from </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">invocation</td><td>the SYCL kernel invocation type </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>the input-stream </dd></dl>
-
-</div>
-</div>
-</div><!-- contents -->
+<div class="textblock"><p>Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. </p>
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

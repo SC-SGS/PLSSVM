@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -91,7 +99,7 @@ $(function() {
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a585004988939ec75b503defcdf85b0d8">data_ptr_</a></td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a2698b52ada4287e0521e6004620b6063">degree_</a></td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a7219b67d6506e8aa056c4f9b5af7a363">dept_</a></td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ac9909c529ca18e40bdcbd36e1b1174b6">device_ptr_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac893b4571aad149525b43402289168cb">device_ptr_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a44d77ba8fc431214240fd11c49c030f0">device_reduction</a>(std::vector&lt; device_ptr_type &gt; &amp;buffer_d, std::vector&lt; real_type &gt; &amp;buffer)</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad9b2db9dcea9fd6cd37734810ac15e13">device_synchronize</a>(queue_type &amp;queue) final</td><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm&lt; T &gt;</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a1856f3ad4365915ca839de9c7aa5e2da">devices_</a></td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
@@ -110,13 +118,15 @@ $(function() {
   <tr><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#a512e8d5286b9278968c47a9c5e3708de">operator=</a>(const csvm &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#a3125bc8f1cee0adb06497e6789049c9d">operator=</a>(csvm &amp;&amp;) noexcept=default</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac7089c984b25e1c34a1c97f5a3083c9c">predict</a>(const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;points) final</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">predict</a>(const std::vector&lt; real_type &gt; &amp;point)</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ac9deef03f546477a0f0336d8fcec8921">predict</a>(const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;points)=0</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#ae5b7acfc6d7c2cb76aab9ad06b8f7806">plssvm::csvm::predict</a>(const std::vector&lt; real_type &gt; &amp;point)</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#a70aeac109c92024a8621d2fc955705a7">predict_label</a>(const std::vector&lt; real_type &gt; &amp;point)</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1csvm.html#ab29462ff03a9c2f4a0a44cd24a4f26f2">predict_label</a>(const std::vector&lt; std::vector&lt; real_type &gt;&gt; &amp;points)</td><td class="entry"><a class="el" href="classplssvm_1_1csvm.html">plssvm::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a789ba86c88cc056edfbcd716877827ce">print_info_</a></td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a6c09e6d53b39d6c56f54cf729f8c6385">QA_cost_</a></td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aca44fb69d54e48e7063fdca8c5d17649">queue_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">real_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm&lt; T &gt;</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a5d9fe4bad5ad345774ef3e24c31fbfcf">queue_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a6d21fdb49c960425dd00f35c95248426">real_type</a> typedef</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#aaad20702854d5b6d13610f6871269f41">run_device_kernel</a>(std::size_t device, const device_ptr_type &amp;q_d, device_ptr_type &amp;r_d, const device_ptr_type &amp;x_d, real_type add)</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad4dc605a13f86f04d601906386163b7a">run_predict_kernel</a>(const ::plssvm::detail::execution_range &amp;range, device_ptr_type &amp;out_d, const device_ptr_type &amp;alpha_d, const device_ptr_type &amp;point_d, std::size_t num_predict_points) final</td><td class="entry"><a class="el" href="classplssvm_1_1cuda_1_1csvm.html">plssvm::cuda::csvm&lt; T &gt;</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#acbe87d34236a651d5791db2a751b1c4e">gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;::run_predict_kernel</a>(const detail::execution_range &amp;range, device_ptr_type &amp;out_d, const device_ptr_type &amp;alpha_d, const device_ptr_type &amp;point_d, std::size_t num_predict_points)=0</td><td class="entry"><a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html">plssvm::detail::gpu_csvm&lt; T, ::plssvm::cuda::detail::device_ptr&lt; T &gt;, int &gt;</a></td><td class="entry"><span class="mlabel">protected</span><span class="mlabel">pure virtual</span></td></tr>
@@ -139,7 +149,7 @@ $(function() {
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

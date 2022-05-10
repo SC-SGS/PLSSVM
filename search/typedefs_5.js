@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['local_5faccessor_565',['local_accessor',['../namespaceplssvm_1_1sycl.html#a2565372115455bf9e79f1aa67067175a',1,'plssvm::sycl']]]
+  ['kernel_5findex_5ftype_655',['kernel_index_type',['../namespaceplssvm.html#aab3a343173d93c72cd62edcde3934f1a',1,'plssvm']]]
 ];

@@ -1,0 +1,7 @@
+<map id="include/plssvm/backends/HIP/detail/device_ptr.hip.hpp" name="include/plssvm/backends/HIP/detail/device_ptr.hip.hpp">
+<area shape="rect" id="node1" title="Small wrapper around a HIP device pointer." alt="" coords="40,5,252,47"/>
+<area shape="rect" id="node2" href="$gpu__device__ptr_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="65,95,227,136"/>
+<area shape="rect" id="node3" title=" " alt="" coords="5,184,76,211"/>
+<area shape="rect" id="node4" title=" " alt="" coords="100,184,192,211"/>
+<area shape="rect" id="node5" title=" " alt="" coords="216,184,279,211"/>
+</map>

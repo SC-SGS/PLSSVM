@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sycl_588',['sycl',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6',1,'plssvm']]]
+  ['q_5fkernel_683',['q_kernel',['../namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5ab630857790924014c4e707a5ab16d933',1,'plssvm::opencl::detail']]]
 ];

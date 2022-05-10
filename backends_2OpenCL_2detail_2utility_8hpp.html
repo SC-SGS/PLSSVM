@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -79,6 +87,7 @@ $(function() {
 <p>Utility functions specific to the OpenCL backend.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="command__queue_8hpp_source.html">plssvm/backends/OpenCL/detail/command_queue.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="context_8hpp_source.html">plssvm/backends/OpenCL/detail/context.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="error__code_8hpp_source.html">plssvm/backends/OpenCL/detail/error_code.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="kernel_8hpp_source.html">plssvm/backends/OpenCL/detail/kernel.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="assert_8hpp_source.html">plssvm/detail/assert.hpp</a>&quot;</code><br />
@@ -96,30 +105,32 @@ Include dependency graph for utility.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="backends_2OpenCL_2detail_2utility_8hpp__incl.png" border="0" usemap="#ainclude_2plssvm_2backends_2OpenCL_2detail_2utility_8hpp" alt=""/></div>
 <map name="ainclude_2plssvm_2backends_2OpenCL_2detail_2utility_8hpp" id="ainclude_2plssvm_2backends_2OpenCL_2detail_2utility_8hpp">
-<area shape="rect" title="Utility functions specific to the OpenCL backend." alt="" coords="919,5,1104,47"/>
-<area shape="rect" href="command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="5,95,212,136"/>
-<area shape="rect" title=" " alt="" coords="364,184,429,211"/>
-<area shape="rect" href="error__code_8hpp.html" title="Small wrapper around OpenCL&#39;s error codes." alt="" coords="500,95,688,136"/>
-<area shape="rect" title=" " alt="" coords="1125,423,1223,449"/>
-<area shape="rect" href="kernel_8hpp.html" title="Defines a very small RAII wrapper around a cl_kernel." alt="" coords="236,95,424,136"/>
-<area shape="rect" href="assert_8hpp.html" title="Implements a custom assert macro." alt="" coords="1148,259,1331,285"/>
-<area shape="rect" title=" " alt="" coords="984,341,1073,367"/>
-<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="1198,102,1382,129"/>
-<area shape="rect" title=" " alt="" coords="1665,259,1728,285"/>
-<area shape="rect" title=" " alt="" coords="1052,259,1123,285"/>
-<area shape="rect" href="target__platforms_8hpp.html" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="713,102,923,129"/>
-<area shape="rect" title=" " alt="" coords="1785,102,1843,129"/>
-<area shape="rect" title=" " alt="" coords="1868,102,1928,129"/>
-<area shape="rect" title=" " alt="" coords="786,184,850,211"/>
-<area shape="rect" href="source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="1441,333,1632,375"/>
-<area shape="rect" title=" " alt="" coords="1097,341,1189,367"/>
-<area shape="rect" title=" " alt="" coords="1214,341,1275,367"/>
-<area shape="rect" title=" " alt="" coords="1300,341,1365,367"/>
-<area shape="rect" href="operators_8hpp.html" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="1404,184,1608,211"/>
-<area shape="rect" title=" " alt="" coords="1571,259,1633,285"/>
-<area shape="rect" href="detail_2utility_8hpp.html" title="Defines universal utility functions." alt="" coords="1201,184,1379,211"/>
-<area shape="rect" title=" " alt="" coords="1447,259,1539,285"/>
-<area shape="rect" title=" " alt="" coords="1355,259,1409,285"/>
+<area shape="rect" title="Utility functions specific to the OpenCL backend." alt="" coords="790,5,976,47"/>
+<area shape="rect" href="command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="162,95,369,136"/>
+<area shape="rect" href="kernel_8hpp.html" title="Defines a very small RAII wrapper around a cl_kernel." alt="" coords="32,184,220,225"/>
+<area shape="rect" title=" " alt="" coords="225,273,290,300"/>
+<area shape="rect" href="context_8hpp.html" title="Defines a very small RAII wrapper around a cl_context including all associated devices and one comman..." alt="" coords="448,184,636,225"/>
+<area shape="rect" title=" " alt="" coords="781,273,844,300"/>
+<area shape="rect" href="error__code_8hpp.html" title="Small wrapper around OpenCL&#39;s error codes." alt="" coords="393,95,581,136"/>
+<area shape="rect" title=" " alt="" coords="957,437,1054,464"/>
+<area shape="rect" href="assert_8hpp.html" title="Implements a custom assert macro." alt="" coords="1353,273,1536,300"/>
+<area shape="rect" title=" " alt="" coords="1554,355,1644,382"/>
+<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="992,102,1176,129"/>
+<area shape="rect" title=" " alt="" coords="1172,273,1242,300"/>
+<area shape="rect" href="target__platforms_8hpp.html" title="Defines all possible targets. Can also include targets not available on the current target platform." alt="" coords="707,102,918,129"/>
+<area shape="rect" title=" " alt="" coords="1636,102,1695,129"/>
+<area shape="rect" title=" " alt="" coords="1720,102,1780,129"/>
+<area shape="rect" title=" " alt="" coords="322,273,372,300"/>
+<area shape="rect" title=" " alt="" coords="711,191,775,218"/>
+<area shape="rect" href="source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="1137,348,1328,389"/>
+<area shape="rect" title=" " alt="" coords="1352,355,1444,382"/>
+<area shape="rect" title=" " alt="" coords="1468,355,1530,382"/>
+<area shape="rect" title=" " alt="" coords="996,355,1061,382"/>
+<area shape="rect" href="operators_8hpp.html" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="1154,191,1358,218"/>
+<area shape="rect" title=" " alt="" coords="1266,273,1329,300"/>
+<area shape="rect" href="detail_2utility_8hpp.html" title="Defines universal utility functions." alt="" coords="951,191,1130,218"/>
+<area shape="rect" title=" " alt="" coords="1056,273,1148,300"/>
+<area shape="rect" title=" " alt="" coords="977,273,1032,300"/>
 </map>
 </div>
 </div>
@@ -149,22 +160,22 @@ Functions</h2></td></tr>
 <tr class="memitem:ac80991deea09f813c1c0e6799281223f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">plssvm::opencl::detail::device_assert</a> (error_code code, std::string_view msg=&quot;&quot;)</td></tr>
 <tr class="memdesc:ac80991deea09f813c1c0e6799281223f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the OpenCL error <code>code</code>. If <code>code</code> signals an error, throw a <code><a class="el" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs.">plssvm::opencl::backend_exception</a></code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ac80991deea09f813c1c0e6799281223f">More...</a><br /></td></tr>
 <tr class="separator:ac80991deea09f813c1c0e6799281223f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c423f48db815f6ee8bf0acff3e99c10"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; command_queue &gt;, target_platform &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a9c423f48db815f6ee8bf0acff3e99c10">plssvm::opencl::detail::get_command_queues</a> (target_platform target)</td></tr>
-<tr class="memdesc:a9c423f48db815f6ee8bf0acff3e99c10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a9c423f48db815f6ee8bf0acff3e99c10">More...</a><br /></td></tr>
-<tr class="separator:a9c423f48db815f6ee8bf0acff3e99c10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59496c0413d68e731d66868cb1ba7f7c"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; context &gt;, target_platform &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a59496c0413d68e731d66868cb1ba7f7c">plssvm::opencl::detail::get_contexts</a> (target_platform target)</td></tr>
+<tr class="memdesc:a59496c0413d68e731d66868cb1ba7f7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the context listing all devices matching the target platform <code>target</code> and the actually used target platform (only interesting if the provided <code>target</code> was automatic).  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a59496c0413d68e731d66868cb1ba7f7c">More...</a><br /></td></tr>
+<tr class="separator:a59496c0413d68e731d66868cb1ba7f7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8795d201b3800826ec311f66c58f66e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">plssvm::opencl::detail::device_synchronize</a> (const command_queue &amp;queue)</td></tr>
 <tr class="memdesc:ad8795d201b3800826ec311f66c58f66e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the compute device associated with <code>queue</code> to finish.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ad8795d201b3800826ec311f66c58f66e">More...</a><br /></td></tr>
 <tr class="separator:ad8795d201b3800826ec311f66c58f66e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a79ee86d89b83d4d9606ea594be8f15d4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a79ee86d89b83d4d9606ea594be8f15d4">plssvm::opencl::detail::get_device_name</a> (const command_queue &amp;queue)</td></tr>
 <tr class="memdesc:a79ee86d89b83d4d9606ea594be8f15d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the name of the device associated with the OpenCL command queue <code>queue</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a79ee86d89b83d4d9606ea594be8f15d4">More...</a><br /></td></tr>
 <tr class="separator:a79ee86d89b83d4d9606ea594be8f15d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8293538e911985d718aff72ff9a392c"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#ad8293538e911985d718aff72ff9a392c">plssvm::opencl::detail::kernel_type_to_function_name</a> (kernel_type kernel)</td></tr>
-<tr class="memdesc:ad8293538e911985d718aff72ff9a392c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the kernel type <code>kernel</code> to the function names for the q and svm kernel functions.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#ad8293538e911985d718aff72ff9a392c">More...</a><br /></td></tr>
-<tr class="separator:ad8293538e911985d718aff72ff9a392c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af84a4a8cee6def24ce4cc2e06e56b217"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
-<tr class="memitem:af84a4a8cee6def24ce4cc2e06e56b217"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; kernel &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#af84a4a8cee6def24ce4cc2e06e56b217">plssvm::opencl::detail::create_kernel</a> (const std::vector&lt; command_queue &gt; &amp;queues, const std::string &amp;file, const std::string &amp;kernel_name)</td></tr>
-<tr class="memdesc:af84a4a8cee6def24ce4cc2e06e56b217"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a kernel with <code>kernel_name</code> for the given command queues from the file <code>file</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#af84a4a8cee6def24ce4cc2e06e56b217">More...</a><br /></td></tr>
-<tr class="separator:af84a4a8cee6def24ce4cc2e06e56b217"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c6b6dd42f9694352f7522e14578d3ec"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; compute_kernel_name, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a2c6b6dd42f9694352f7522e14578d3ec">plssvm::opencl::detail::kernel_type_to_function_names</a> (kernel_type kernel)</td></tr>
+<tr class="memdesc:a2c6b6dd42f9694352f7522e14578d3ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the kernel type <code>kernel</code> to the device function names and return the compute_kernel_name identifier.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a2c6b6dd42f9694352f7522e14578d3ec">More...</a><br /></td></tr>
+<tr class="separator:a2c6b6dd42f9694352f7522e14578d3ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22e432e47473666139420ee932c4e0a2"><td class="memTemplParams" colspan="2">template&lt;typename real_type &gt; </td></tr>
+<tr class="memitem:a22e432e47473666139420ee932c4e0a2"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; command_queue &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a22e432e47473666139420ee932c4e0a2">plssvm::opencl::detail::create_command_queues</a> (const std::vector&lt; context &gt; &amp;contexts, target_platform target, const std::vector&lt; std::pair&lt; compute_kernel_name, std::string &gt;&gt; &amp;kernel_names, bool print_info)</td></tr>
+<tr class="memdesc:a22e432e47473666139420ee932c4e0a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create command queues for all devices in the OpenCL <code>contexts</code> with respect to <code>target</code> given and the associated compute kernels with respect to the given source files and kernel function names.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a22e432e47473666139420ee932c4e0a2">More...</a><br /></td></tr>
+<tr class="separator:a22e432e47473666139420ee932c4e0a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a282a05f06dd0c74a8e4f1e992918dfb8"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a282a05f06dd0c74a8e4f1e992918dfb8"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8">plssvm::opencl::detail::set_kernel_args</a> (cl_kernel kernel, Args... args)</td></tr>
 <tr class="memdesc:a282a05f06dd0c74a8e4f1e992918dfb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set all arguments in the parameter pack <code>args</code> for the kernel <code>kernel</code>.  <a href="namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8">More...</a><br /></td></tr>
@@ -188,7 +199,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

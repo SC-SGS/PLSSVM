@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -72,18 +80,22 @@ $(function() {
 , <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#afe0c0095bee281b2c8ebc80e639a2569">plssvm::openmp::csvm&lt; T &gt;</a>
 </li>
 <li>get()
-: <a class="el" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html#a21d169c44c12138efbc0494a4727e687">plssvm::cuda::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html#aede9e8d84c8b9d9b39fa2eb5b6230c0f">plssvm::opencl::detail::device_ptr&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html#a652a65b851041fc446d2070ddf78576e">plssvm::sycl::detail::device_ptr&lt; T &gt;</a>
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#a302779fdb500e694f0871623fb9f471d">plssvm::detail::gpu_device_ptr&lt; T, queue_t, device_pointer_t &gt;</a>
 </li>
 <li>gpu_csvm()
 : <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ad735acce662cb53960cfd379722b66a7">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+</li>
+<li>gpu_device_ptr()
+: <a class="el" href="classplssvm_1_1detail_1_1gpu__device__ptr.html#ae2813622c6243f5847961bfc2d1843dd">plssvm::detail::gpu_device_ptr&lt; T, queue_t, device_pointer_t &gt;</a>
+</li>
+<li>gpu_device_ptr_exception()
+: <a class="el" href="classplssvm_1_1gpu__device__ptr__exception.html#adffa1c5bbef196f0b4aff9fbbfcee08f">plssvm::gpu_device_ptr_exception</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

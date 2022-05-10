@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -84,16 +92,18 @@ Inheritance diagram for plssvm::exception:</div>
 <div class="dyncontent">
 <div class="center"><img src="classplssvm_1_1exception__inherit__graph.png" border="0" usemap="#aplssvm_1_1exception_inherit__map" alt="Inheritance graph"/></div>
 <map name="aplssvm_1_1exception_inherit__map" id="aplssvm_1_1exception_inherit__map">
-<area shape="rect" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="192,242,333,269"/>
+<area shape="rect" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="192,307,333,334"/>
 <area shape="rect" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="392,5,563,47"/>
 <area shape="rect" href="classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided file couldn&#39;t be found." alt="" coords="393,71,562,112"/>
-<area shape="rect" href="classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="403,136,551,177"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="386,201,569,243"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="381,267,573,308"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="395,332,560,373"/>
-<area shape="rect" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="398,397,557,439"/>
-<area shape="rect" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="389,463,565,504"/>
-<area shape="rect" title=" " alt="" coords="5,242,144,269"/>
+<area shape="rect" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred." alt="" coords="402,136,553,177"/>
+<area shape="rect" href="classplssvm_1_1hip_1_1backend__exception.html" title="Exception type thrown if a problem with the HIP backend occurs." alt="" coords="398,201,557,243"/>
+<area shape="rect" href="classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="403,267,551,308"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="386,332,569,373"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="381,397,573,439"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="395,463,560,504"/>
+<area shape="rect" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="398,528,557,569"/>
+<area shape="rect" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="389,593,565,635"/>
+<area shape="rect" title=" " alt="" coords="5,307,144,334"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -228,7 +238,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

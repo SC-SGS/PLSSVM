@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -76,17 +84,7 @@ $(function() {
 
 <p>Global compile-time constants specific to the SYCL backend.  
 <a href="#details">More...</a></p>
-<div class="textblock"><div class="dynheader">
-This graph shows which files directly or indirectly include this file:</div>
-<div class="dyncontent">
-<div class="center"><img src="backends_2SYCL_2detail_2constants_8hpp__dep__incl.png" border="0" usemap="#ainclude_2plssvm_2backends_2SYCL_2detail_2constants_8hppdep" alt=""/></div>
-<map name="ainclude_2plssvm_2backends_2SYCL_2detail_2constants_8hppdep" id="ainclude_2plssvm_2backends_2SYCL_2detail_2constants_8hppdep">
-<area shape="rect" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="163,5,356,47"/>
-<area shape="rect" href="svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="5,95,252,136"/>
-<area shape="rect" href="svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="276,95,507,136"/>
-</map>
-</div>
-</div>
+
 <p><a href="backends_2SYCL_2detail_2constants_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
@@ -110,7 +108,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

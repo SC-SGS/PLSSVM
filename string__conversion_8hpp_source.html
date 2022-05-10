@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -115,17 +123,28 @@ $(function() {
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <span class="keywordflow">return</span> val;</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;}</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;}  <span class="comment">// namespace plssvm::detail</span></div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00075"></a><span class="lineno"><a class="line" href="namespaceplssvm_1_1detail.html#a16de0b2459c8c3c88a004ff419eb281f">   75</a></span>&#160;[[nodiscard]] <span class="keyword">inline</span> T <a class="code" href="namespaceplssvm_1_1detail.html#a16de0b2459c8c3c88a004ff419eb281f">extract_first_integer_from_string</a>(std::string_view str) {</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <span class="keyword">const</span> std::string_view::size_type n = str.find_first_of(<span class="stringliteral">&quot;0123456789&quot;</span>);</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keywordflow">if</span> (n != std::string_view::npos) {</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;        <span class="keyword">const</span> std::string_view::size_type m = str.find_first_not_of(<span class="stringliteral">&quot;0123456789&quot;</span>, n);</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;        <span class="keywordflow">return</span> convert_to&lt;T&gt;(str.substr(n, m != std::string_view::npos ? m - n : m));</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    }</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    <span class="keywordflow">throw</span> std::runtime_error{ fmt::format(<span class="stringliteral">&quot;String {} doesn&#39;t contain any integer!&quot;</span>, str) };</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;}</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160; </div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;}  <span class="comment">// namespace plssvm::detail</span></div>
 <div class="ttc" id="aarithmetic__type__name_8hpp_html"><div class="ttname"><a href="arithmetic__type__name_8hpp.html">arithmetic_type_name.hpp</a></div><div class="ttdoc">Implements conversion functions from arithmetic types to their name as string representation.</div></div>
 <div class="ttc" id="adetail_2utility_8hpp_html"><div class="ttname"><a href="detail_2utility_8hpp.html">utility.hpp</a></div><div class="ttdoc">Defines universal utility functions.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1detail_html"><div class="ttname"><a href="namespaceplssvm_1_1detail.html">plssvm::detail</a></div><div class="ttdoc">Namespace containing implementation details. Should not directly be used by users.</div><div class="ttdef"><b>Definition:</b> csvm.hpp:25</div></div>
+<div class="ttc" id="anamespaceplssvm_1_1detail_html_a16de0b2459c8c3c88a004ff419eb281f"><div class="ttname"><a href="namespaceplssvm_1_1detail.html#a16de0b2459c8c3c88a004ff419eb281f">plssvm::detail::extract_first_integer_from_string</a></div><div class="ttdeci">T extract_first_integer_from_string(std::string_view str)</div><div class="ttdoc">Extract the first integer from the given string str and converts it to T.</div><div class="ttdef"><b>Definition:</b> string_conversion.hpp:75</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1detail_html_a3ff1b1c2f5795319cdde5d7caa5259a6"><div class="ttname"><a href="namespaceplssvm_1_1detail.html#a3ff1b1c2f5795319cdde5d7caa5259a6">plssvm::detail::trim_left</a></div><div class="ttdeci">std::string_view trim_left(std::string_view str) noexcept</div><div class="ttdoc">Returns a new std::string_view equal to str where all leading whitespaces are removed.</div></div>
 <div class="ttc" id="anamespaceplssvm_1_1detail_html_ad63cc4410cd69b2c85a71c19b3e6c566"><div class="ttname"><a href="namespaceplssvm_1_1detail.html#ad63cc4410cd69b2c85a71c19b3e6c566">plssvm::detail::convert_to</a></div><div class="ttdeci">T convert_to(std::string_view str)</div><div class="ttdoc">Converts the string str to a value of type T.</div><div class="ttdef"><b>Definition:</b> string_conversion.hpp:40</div></div>
 <div class="ttc" id="astring__utility_8hpp_html"><div class="ttname"><a href="string__utility_8hpp.html">string_utility.hpp</a></div><div class="ttdoc">Implements utility functions for string manipulation and querying.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['opencl_584',['opencl',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a93195db1ad73788fe96193503a7d8887',1,'plssvm']]],
-  ['openmp_585',['openmp',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a1dcf8ca59710cf3121728598da7a3f2f',1,'plssvm']]]
+  ['nd_5frange_678',['nd_range',['../namespaceplssvm_1_1sycl__generic.html#a9ffaf5eac1acc64fca033da3106c4f10af4578c9c58bee746eedf6302f18a2ecf',1,'plssvm::sycl_generic']]]
 ];

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -85,11 +93,11 @@ $(function() {
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af8de566bd9c37d97dfcc6eb7154fed88"><td class="memItemLeft" align="right" valign="top"><a id="af8de566bd9c37d97dfcc6eb7154fed88"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#af8de566bd9c37d97dfcc6eb7154fed88">command_queue</a> ()=default</td></tr>
-<tr class="memdesc:af8de566bd9c37d97dfcc6eb7154fed88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Empty default construct command queue. <br /></td></tr>
+<tr class="memdesc:af8de566bd9c37d97dfcc6eb7154fed88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Empty default construct a command queue. <br /></td></tr>
 <tr class="separator:af8de566bd9c37d97dfcc6eb7154fed88"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b65aa455c1ca376c5b9c142016d4d1f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a0b65aa455c1ca376c5b9c142016d4d1f">command_queue</a> (cl_context <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a0de27292c10d513305966777d1f93ea4">context</a>, cl_command_queue <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#aa3d68fd0ff6378e10c3ca3f5d3891f28">queue</a>, cl_device_id <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6d06f4d6389ae22930386fcfe85c8da6">device</a>)</td></tr>
-<tr class="memdesc:a0b65aa455c1ca376c5b9c142016d4d1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a command queue with the provided information.  <a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a0b65aa455c1ca376c5b9c142016d4d1f">More...</a><br /></td></tr>
-<tr class="separator:a0b65aa455c1ca376c5b9c142016d4d1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af537510c1681cec316f15c17f4423d94"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#af537510c1681cec316f15c17f4423d94">command_queue</a> (cl_context <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1context.html">context</a>, cl_device_id device)</td></tr>
+<tr class="memdesc:af537510c1681cec316f15c17f4423d94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a command queue with the provided information.  <a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#af537510c1681cec316f15c17f4423d94">More...</a><br /></td></tr>
+<tr class="separator:af537510c1681cec316f15c17f4423d94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15ce06accbf99ab64aba439f009d71ce"><td class="memItemLeft" align="right" valign="top"><a id="a15ce06accbf99ab64aba439f009d71ce"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a15ce06accbf99ab64aba439f009d71ce">command_queue</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">command_queue</a> &amp;)=delete</td></tr>
 <tr class="memdesc:a15ce06accbf99ab64aba439f009d71ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-constructor to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue.">command_queue</a> a move only type. <br /></td></tr>
@@ -108,28 +116,33 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a294af2419cd7b51e0f043e4c66c2e486">~command_queue</a> ()</td></tr>
 <tr class="memdesc:a294af2419cd7b51e0f043e4c66c2e486"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release the cl_command_queue resources on destruction. <br /></td></tr>
 <tr class="separator:a294af2419cd7b51e0f043e4c66c2e486"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a10cb2a239e6b97fe46e6b7e3493e73"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6a10cb2a239e6b97fe46e6b7e3493e73">operator cl_command_queue &amp;</a> () noexcept</td></tr>
+<tr class="memdesc:a6a10cb2a239e6b97fe46e6b7e3493e73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicitly convert a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue.">command_queue</a> wrapper to an OpenCL cl_command_queue.  <a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6a10cb2a239e6b97fe46e6b7e3493e73">More...</a><br /></td></tr>
+<tr class="separator:a6a10cb2a239e6b97fe46e6b7e3493e73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92e8b4cb0a91fa3650b50a2cf6e969b8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a92e8b4cb0a91fa3650b50a2cf6e969b8">operator const cl_command_queue &amp;</a> () const noexcept</td></tr>
+<tr class="memdesc:a92e8b4cb0a91fa3650b50a2cf6e969b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicitly convert a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue.">command_queue</a> wrapper to an OpenCL cl_command_queue.  <a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a92e8b4cb0a91fa3650b50a2cf6e969b8">More...</a><br /></td></tr>
+<tr class="separator:a92e8b4cb0a91fa3650b50a2cf6e969b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03a8ff0f1f236e5e4901d05a66e086eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a03a8ff0f1f236e5e4901d05a66e086eb">add_kernel</a> (<a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a> name, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&amp;compute_kernel)</td></tr>
+<tr class="memdesc:a03a8ff0f1f236e5e4901d05a66e086eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a new OpenCL <code>compute_kernel</code> used for <code>name</code> to this command queue.  <a href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a03a8ff0f1f236e5e4901d05a66e086eb">More...</a><br /></td></tr>
+<tr class="separator:a03a8ff0f1f236e5e4901d05a66e086eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a0de27292c10d513305966777d1f93ea4"><td class="memItemLeft" align="right" valign="top"><a id="a0de27292c10d513305966777d1f93ea4"></a>
-cl_context&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a0de27292c10d513305966777d1f93ea4">context</a> {}</td></tr>
-<tr class="memdesc:a0de27292c10d513305966777d1f93ea4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The OpenCL context associated with the wrapped cl_command_queue. <br /></td></tr>
-<tr class="separator:a0de27292c10d513305966777d1f93ea4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa3d68fd0ff6378e10c3ca3f5d3891f28"><td class="memItemLeft" align="right" valign="top"><a id="aa3d68fd0ff6378e10c3ca3f5d3891f28"></a>
 cl_command_queue&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#aa3d68fd0ff6378e10c3ca3f5d3891f28">queue</a> {}</td></tr>
 <tr class="memdesc:aa3d68fd0ff6378e10c3ca3f5d3891f28"><td class="mdescLeft">&#160;</td><td class="mdescRight">The wrapped cl_command_queue. <br /></td></tr>
 <tr class="separator:aa3d68fd0ff6378e10c3ca3f5d3891f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6d06f4d6389ae22930386fcfe85c8da6"><td class="memItemLeft" align="right" valign="top"><a id="a6d06f4d6389ae22930386fcfe85c8da6"></a>
-cl_device_id&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6d06f4d6389ae22930386fcfe85c8da6">device</a> {}</td></tr>
-<tr class="memdesc:a6d06f4d6389ae22930386fcfe85c8da6"><td class="mdescLeft">&#160;</td><td class="mdescRight">The OpenCL device associated with the wrapped cl_command_queue. <br /></td></tr>
-<tr class="separator:a6d06f4d6389ae22930386fcfe85c8da6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7db6f9a638686de3371cb66e55b3623a"><td class="memItemLeft" align="right" valign="top"><a id="a7db6f9a638686de3371cb66e55b3623a"></a>
+std::map&lt; <a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a>, <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a7db6f9a638686de3371cb66e55b3623a">kernels</a> {}</td></tr>
+<tr class="memdesc:a7db6f9a638686de3371cb66e55b3623a"><td class="mdescLeft">&#160;</td><td class="mdescRight">All OpenCL device kernel associated with the device corresponding to this command queue. <br /></td></tr>
+<tr class="separator:a7db6f9a638686de3371cb66e55b3623a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>RAII wrapper class around a cl_command_queue. </p>
-<p>Also contains information about the associated cl_context and cl_device_id. </p>
+<p>Also contains the compiled kernels associated with the command queue. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0b65aa455c1ca376c5b9c142016d4d1f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0b65aa455c1ca376c5b9c142016d4d1f">&#9670;&nbsp;</a></span>command_queue() <span class="overload">[1/2]</span></h2>
+<a id="af537510c1681cec316f15c17f4423d94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af537510c1681cec316f15c17f4423d94">&#9670;&nbsp;</a></span>command_queue() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -139,12 +152,6 @@ cl_device_id&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
           <td>(</td>
           <td class="paramtype">cl_context&#160;</td>
           <td class="paramname"><em>context</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">cl_command_queue&#160;</td>
-          <td class="paramname"><em>queue</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -164,7 +171,6 @@ cl_device_id&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">context</td><td>the associated OpenCL cl_context </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">queue</td><td>the OpenCL cl_command_queue to wrap </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">device</td><td>the associated OpenCL cl_device_id </td></tr>
   </table>
   </dd>
@@ -234,13 +240,106 @@ cl_device_id&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 </div>
 </div>
+<a id="a6a10cb2a239e6b97fe46e6b7e3493e73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a10cb2a239e6b97fe46e6b7e3493e73">&#9670;&nbsp;</a></span>operator cl_command_queue &amp;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">plssvm::opencl::detail::command_queue::operator cl_command_queue &amp; </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implicitly convert a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue.">command_queue</a> wrapper to an OpenCL cl_command_queue. </p>
+<dl class="section return"><dt>Returns</dt><dd>the wrapped OpenCL cl_command_queue (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a92e8b4cb0a91fa3650b50a2cf6e969b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92e8b4cb0a91fa3650b50a2cf6e969b8">&#9670;&nbsp;</a></span>operator const cl_command_queue &amp;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">plssvm::opencl::detail::command_queue::operator const cl_command_queue &amp; </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implicitly convert a <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue.">command_queue</a> wrapper to an OpenCL cl_command_queue. </p>
+<dl class="section return"><dt>Returns</dt><dd>the wrapped OpenCL cl_command_queue (<code>[[nodiscard]]</code>) </dd></dl>
+
+</div>
+</div>
+<a id="a03a8ff0f1f236e5e4901d05a66e086eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03a8ff0f1f236e5e4901d05a66e086eb">&#9670;&nbsp;</a></span>add_kernel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void plssvm::opencl::detail::command_queue::add_kernel </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceplssvm_1_1opencl_1_1detail.html#a8595bc499618e52ef00c344694d218b5">compute_kernel_name</a>&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>compute_kernel</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Add a new OpenCL <code>compute_kernel</code> used for <code>name</code> to this command queue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">name</td><td>the name of the kernel that is to be added </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">compute_kernel</td><td>the kernel to add </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/plssvm/backends/OpenCL/detail/<a class="el" href="command__queue_8hpp_source.html">command_queue.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

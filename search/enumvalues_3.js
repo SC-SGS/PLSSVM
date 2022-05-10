@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['hierarchical_581',['hierarchical',['../namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baa2c95b1531c95e0730d65f40da3b31778',1,'plssvm::sycl']]]
+  ['gpu_5famd_671',['gpu_amd',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500ad728f22a6cc35ec6cc635a7ffa220a45',1,'plssvm']]],
+  ['gpu_5fintel_672',['gpu_intel',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a14f5d066e6910bdb29ce61fcd1452598',1,'plssvm']]],
+  ['gpu_5fnvidia_673',['gpu_nvidia',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a9ec77054f198cbc11e8a492869379be0',1,'plssvm']]]
 ];

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -83,22 +91,26 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a4a6f644e16f4da2abc11ebe31ce40ef0"><td class="memItemLeft" align="right" valign="top"><a id="a4a6f644e16f4da2abc11ebe31ce40ef0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0">kernel</a> ()=default</td></tr>
+<tr class="memdesc:a4a6f644e16f4da2abc11ebe31ce40ef0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default construct empty kernel. <br /></td></tr>
+<tr class="separator:a4a6f644e16f4da2abc11ebe31ce40ef0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae74fa6ca62df335493f405e7e450cce1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">kernel</a> (cl_kernel <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a3200376dcf21ed5515873d767339325e">compute_kernel</a>) noexcept</td></tr>
 <tr class="memdesc:ae74fa6ca62df335493f405e7e450cce1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new wrapper around the provided <code>compute_kernel</code>.  <a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1">More...</a><br /></td></tr>
 <tr class="separator:ae74fa6ca62df335493f405e7e450cce1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a233822ddf8c26a9407c7993f95c717ac"><td class="memItemLeft" align="right" valign="top"><a id="a233822ddf8c26a9407c7993f95c717ac"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a233822ddf8c26a9407c7993f95c717ac">kernel</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a233822ddf8c26a9407c7993f95c717ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-constructor to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1" title="Construct a new wrapper around the provided compute_kernel.">kernel</a> a move only type. <br /></td></tr>
+<tr class="memdesc:a233822ddf8c26a9407c7993f95c717ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-constructor to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0" title="Default construct empty kernel.">kernel</a> a move only type. <br /></td></tr>
 <tr class="separator:a233822ddf8c26a9407c7993f95c717ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b6d9e625877db047d5218f5380e6849"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a1b6d9e625877db047d5218f5380e6849">kernel</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&amp;other) noexcept</td></tr>
-<tr class="memdesc:a1b6d9e625877db047d5218f5380e6849"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1" title="Construct a new wrapper around the provided compute_kernel.">kernel</a> is a move-only type.  <a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a1b6d9e625877db047d5218f5380e6849">More...</a><br /></td></tr>
+<tr class="memdesc:a1b6d9e625877db047d5218f5380e6849"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-constructor as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0" title="Default construct empty kernel.">kernel</a> is a move-only type.  <a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a1b6d9e625877db047d5218f5380e6849">More...</a><br /></td></tr>
 <tr class="separator:a1b6d9e625877db047d5218f5380e6849"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0cc00ce5221850a14631075901f1a71f"><td class="memItemLeft" align="right" valign="top"><a id="a0cc00ce5221850a14631075901f1a71f"></a>
 <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a0cc00ce5221850a14631075901f1a71f">operator=</a> (const <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;)=delete</td></tr>
-<tr class="memdesc:a0cc00ce5221850a14631075901f1a71f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-assignment-operator to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1" title="Construct a new wrapper around the provided compute_kernel.">kernel</a> a move only type. <br /></td></tr>
+<tr class="memdesc:a0cc00ce5221850a14631075901f1a71f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete copy-assignment-operator to make <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0" title="Default construct empty kernel.">kernel</a> a move only type. <br /></td></tr>
 <tr class="separator:a0cc00ce5221850a14631075901f1a71f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9854cd116157bf7b8aa6f3fff8033f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac9854cd116157bf7b8aa6f3fff8033f4">operator=</a> (<a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html">kernel</a> &amp;&amp;other)</td></tr>
-<tr class="memdesc:ac9854cd116157bf7b8aa6f3fff8033f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1" title="Construct a new wrapper around the provided compute_kernel.">kernel</a> is a move-only type.  <a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac9854cd116157bf7b8aa6f3fff8033f4">More...</a><br /></td></tr>
+<tr class="memdesc:ac9854cd116157bf7b8aa6f3fff8033f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move-assignment-operator as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0" title="Default construct empty kernel.">kernel</a> is a move-only type.  <a href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ac9854cd116157bf7b8aa6f3fff8033f4">More...</a><br /></td></tr>
 <tr class="separator:ac9854cd116157bf7b8aa6f3fff8033f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab86c9501dfc58c742ec8fe49bbfdec4e"><td class="memItemLeft" align="right" valign="top"><a id="ab86c9501dfc58c742ec8fe49bbfdec4e"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ab86c9501dfc58c742ec8fe49bbfdec4e">~kernel</a> ()</td></tr>
@@ -179,7 +191,7 @@ cl_kernel&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
 </table>
 </div><div class="memdoc">
 
-<p>Move-constructor as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1" title="Construct a new wrapper around the provided compute_kernel.">kernel</a> is a move-only type. </p>
+<p>Move-constructor as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0" title="Default construct empty kernel.">kernel</a> is a move-only type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the kernel to move the resources from </td></tr>
@@ -206,7 +218,7 @@ cl_kernel&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
       </table>
 </div><div class="memdoc">
 
-<p>Move-assignment-operator as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#ae74fa6ca62df335493f405e7e450cce1" title="Construct a new wrapper around the provided compute_kernel.">kernel</a> is a move-only type. </p>
+<p>Move-assignment-operator as <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html#a4a6f644e16f4da2abc11ebe31ce40ef0" title="Default construct empty kernel.">kernel</a> is a move-only type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">other</td><td>the kernel to move the resources from </td></tr>
@@ -279,7 +291,7 @@ cl_kernel&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -103,21 +111,22 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="assert_8hpp__dep__incl.png" border="0" usemap="#ainclude_2plssvm_2detail_2assert_8hppdep" alt=""/></div>
 <map name="ainclude_2plssvm_2detail_2assert_8hppdep" id="ainclude_2plssvm_2detail_2assert_8hppdep">
-<area shape="rect" title="Implements a custom assert macro." alt="" coords="493,5,655,47"/>
-<area shape="rect" href="backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="389,273,575,315"/>
-<area shape="rect" href="operators_8hpp.html" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="612,95,773,136"/>
-<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="611,184,775,225"/>
-<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="983,459,1163,486"/>
-<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="599,281,786,307"/>
-<area shape="rect" href="parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="855,281,1074,307"/>
-<area shape="rect" href="gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="215,363,400,404"/>
-<area shape="rect" href="backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="424,363,609,404"/>
-<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="685,363,844,404"/>
-<area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="424,452,609,493"/>
-<area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,452,191,493"/>
-<area shape="rect" href="backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="215,452,400,493"/>
-<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="869,363,1061,404"/>
-<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="1085,363,1277,404"/>
+<area shape="rect" title="Implements a custom assert macro." alt="" coords="597,5,759,47"/>
+<area shape="rect" href="backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="493,273,679,315"/>
+<area shape="rect" href="operators_8hpp.html" title="Defines (arithmetic) functions on std::vector (and scalars)." alt="" coords="716,95,877,136"/>
+<area shape="rect" href="kernel__types_8hpp.html" title="Defines all available kernel types." alt="" coords="715,184,879,225"/>
+<area shape="rect" href="core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="1087,459,1267,486"/>
+<area shape="rect" href="csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="703,281,890,307"/>
+<area shape="rect" href="parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="959,281,1178,307"/>
+<area shape="rect" href="gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="319,363,504,404"/>
+<area shape="rect" href="backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="528,363,713,404"/>
+<area shape="rect" href="csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="789,363,948,404"/>
+<area shape="rect" href="backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="633,452,819,493"/>
+<area shape="rect" href="backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="5,452,191,493"/>
+<area shape="rect" href="backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="215,452,400,493"/>
+<area shape="rect" href="backends_2SYCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="424,452,609,493"/>
+<area shape="rect" href="parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="973,363,1165,404"/>
+<area shape="rect" href="parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="1189,363,1381,404"/>
 </map>
 </div>
 </div>
@@ -156,7 +165,7 @@ Marcel Breyer </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

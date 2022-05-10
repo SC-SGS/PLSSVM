@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -74,12 +82,14 @@ $(function() {
 
 <p>This is the complete list of members for <a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#af8de566bd9c37d97dfcc6eb7154fed88">command_queue</a>()=default</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a0b65aa455c1ca376c5b9c142016d4d1f">command_queue</a>(cl_context context, cl_command_queue queue, cl_device_id device)</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a15ce06accbf99ab64aba439f009d71ce">command_queue</a>(const command_queue &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a91d1edc2b7585ec02cd31ff5a6f38df5">command_queue</a>(command_queue &amp;&amp;other) noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a0de27292c10d513305966777d1f93ea4">context</a></td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6d06f4d6389ae22930386fcfe85c8da6">device</a></td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a03a8ff0f1f236e5e4901d05a66e086eb">add_kernel</a>(compute_kernel_name name, kernel &amp;&amp;compute_kernel)</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#af8de566bd9c37d97dfcc6eb7154fed88">command_queue</a>()=default</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#af537510c1681cec316f15c17f4423d94">command_queue</a>(cl_context context, cl_device_id device)</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a15ce06accbf99ab64aba439f009d71ce">command_queue</a>(const command_queue &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a91d1edc2b7585ec02cd31ff5a6f38df5">command_queue</a>(command_queue &amp;&amp;other) noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a7db6f9a638686de3371cb66e55b3623a">kernels</a></td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a6a10cb2a239e6b97fe46e6b7e3493e73">operator cl_command_queue &amp;</a>() noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a92e8b4cb0a91fa3650b50a2cf6e969b8">operator const cl_command_queue &amp;</a>() const noexcept</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a53062199770c34d2443f760ce060e363">operator=</a>(const command_queue &amp;)=delete</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#acb9b07e64afb15374c9a609ee81d4ebd">operator=</a>(command_queue &amp;&amp;other)</td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html#aa3d68fd0ff6378e10c3ca3f5d3891f28">queue</a></td><td class="entry"><a class="el" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html">plssvm::opencl::detail::command_queue</a></td><td class="entry"></td></tr>
@@ -87,7 +97,7 @@ $(function() {
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:48:59 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

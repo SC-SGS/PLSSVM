@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -93,11 +101,11 @@ template&lt;typename T &gt; </td></tr>
 <tr class="separator:ae017cdbf38a31b897a890bc17c756f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">operator*</a> (const <a class="el" href="structplssvm_1_1operators_1_1transposed.html">transposed</a>&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
-<tr class="memdesc:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( <img class="formulaInl" alt="$x^T \cdot y$" src="form_1.png"/>) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">More...</a><br /></td></tr>
+<tr class="memdesc:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( \(x^T \cdot y\)) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#ac3d65e5f8c3626458dd7649fe0f8d029">More...</a><br /></td></tr>
 <tr class="separator:ac3d65e5f8c3626458dd7649fe0f8d029"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a3cf0ea7afd80fdea0b7ddc4d1a9d5e59">dot</a> (const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
-<tr class="memdesc:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( <img class="formulaInl" alt="$x^T \cdot y$" src="form_1.png"/>) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#a3cf0ea7afd80fdea0b7ddc4d1a9d5e59">More...</a><br /></td></tr>
+<tr class="memdesc:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the dot product ( \(x^T \cdot y\)) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>.  <a href="namespaceplssvm_1_1operators.html#a3cf0ea7afd80fdea0b7ddc4d1a9d5e59">More...</a><br /></td></tr>
 <tr class="separator:a3cf0ea7afd80fdea0b7ddc4d1a9d5e59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6344cb6d38f1fe59cfd7ba0f8b3382a3"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a6344cb6d38f1fe59cfd7ba0f8b3382a3"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a6344cb6d38f1fe59cfd7ba0f8b3382a3">sum</a> (const std::vector&lt; T &gt; &amp;vec)</td></tr>
@@ -105,7 +113,7 @@ template&lt;typename T &gt; </td></tr>
 <tr class="separator:a6344cb6d38f1fe59cfd7ba0f8b3382a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f7f472e06e60dbf27aadfa8309af120"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a9f7f472e06e60dbf27aadfa8309af120"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">squared_euclidean_dist</a> (const std::vector&lt; T &gt; &amp;lhs, const std::vector&lt; T &gt; &amp;rhs)</td></tr>
-<tr class="memdesc:a9f7f472e06e60dbf27aadfa8309af120"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the squared Euclidean distance of both vectors: <img class="formulaInl" alt="$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2$" src="form_2.png"/>.  <a href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">More...</a><br /></td></tr>
+<tr class="memdesc:a9f7f472e06e60dbf27aadfa8309af120"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the squared Euclidean distance of both vectors: \(d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\).  <a href="namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120">More...</a><br /></td></tr>
 <tr class="separator:a9f7f472e06e60dbf27aadfa8309af120"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a211feceac31d226f493966f14e7332d8"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a211feceac31d226f493966f14e7332d8"><td class="memTemplItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceplssvm_1_1operators.html#a211feceac31d226f493966f14e7332d8">sign</a> (const T x)</td></tr>
@@ -151,7 +159,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Calculate the dot product ( <img class="formulaInl" alt="$x^T \cdot y$" src="form_1.png"/>) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>. </p>
+<p>Calculate the dot product ( \(x^T \cdot y\)) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>. </p>
 <p>Uses OpenMP SIMD reduction to speedup the calculation. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the value type </td></tr>
@@ -205,7 +213,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Calculate the dot product ( <img class="formulaInl" alt="$x^T \cdot y$" src="form_1.png"/>) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>. </p>
+<p>Calculate the dot product ( \(x^T \cdot y\)) between both <a href="https://en.cppreference.com/w/cpp/container/vector"><code>std::vector</code></a>. </p>
 <p>Uses OpenMP SIMD reduction to speedup the calculation. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the value type </td></tr>
@@ -302,7 +310,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Calculates the squared Euclidean distance of both vectors: <img class="formulaInl" alt="$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2$" src="form_2.png"/>. </p>
+<p>Calculates the squared Euclidean distance of both vectors: \(d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\). </p>
 <p>Uses OpenMP SIMD reduction to speedup the calculation. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>the value type </td></tr>
@@ -360,7 +368,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

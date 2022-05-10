@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -80,21 +88,23 @@ Directory dependency graph for backends:</div>
 <div class="dyncontent">
 <div class="center"><img src="dir_aece132851e9183324b9b3740ef79635_dep.png" border="0" usemap="#adir__aece132851e9183324b9b3740ef79635__dep" alt="include/plssvm/backends"/></div>
 <map name="adir__aece132851e9183324b9b3740ef79635__dep" id="adir__aece132851e9183324b9b3740ef79635__dep">
-<area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="171,255,264,303"/>
-<area shape="rect" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="243,159,315,207"/>
-<area shape="rect" href="dir_000013_000010.html" title="1" alt="" coords="245,237,254,251"/>
+<area shape="rect" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="223,255,316,303"/>
+<area shape="rect" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="264,159,336,207"/>
+<area shape="rect" href="dir_000015_000011.html" title="1" alt="" coords="286,233,295,247"/>
 <area shape="rect" href="dir_3b1acf17ef6b0d0bb2450c7474aff8a9.html" title="CUDA" alt="" coords="37,63,109,111"/>
-<area shape="rect" href="dir_000005_000010.html" title="2" alt="" coords="191,228,200,242"/>
-<area shape="rect" href="dir_d7c00eaa22908fd671a35ffbda10ce1f.html" title="OpenCL" alt="" coords="235,63,307,111"/>
-<area shape="rect" href="dir_000006_000010.html" title="2" alt="" coords="222,229,231,244"/>
-<area shape="rect" href="dir_000006_000013.html" title="1" alt="" coords="279,132,288,147"/>
-<area shape="rect" href="dir_8b95a41a939438e5917f4497fef8e7ba.html" title="OpenMP" alt="" coords="134,63,210,111"/>
-<area shape="rect" href="dir_000007_000010.html" title="2" alt="" coords="211,227,221,242"/>
-<area shape="rect" href="dir_aeeba53c5fb17833c0f52606d68a5aa8.html" title="SYCL" alt="" coords="331,63,403,111"/>
-<area shape="rect" href="dir_000008_000010.html" title="2" alt="" coords="279,247,289,262"/>
-<area shape="rect" href="dir_000008_000013.html" title="1" alt="" coords="314,144,323,158"/>
-<area shape="rect" href="dir_aece132851e9183324b9b3740ef79635.html" alt="" coords="27,52,520,121"/>
-<area shape="rect" href="dir_9696d1624c88fbb4b2358edab2255cb6.html" title="plssvm" alt="" coords="16,16,531,313"/>
+<area shape="rect" href="dir_000005_000011.html" title="2" alt="" coords="234,228,243,243"/>
+<area shape="rect" href="dir_3cf675f4ae395b9608bea908c689fae5.html" title="HIP" alt="" coords="133,63,205,111"/>
+<area shape="rect" href="dir_000006_000011.html" title="2" alt="" coords="252,227,261,242"/>
+<area shape="rect" href="dir_d7c00eaa22908fd671a35ffbda10ce1f.html" title="OpenCL" alt="" coords="229,63,301,111"/>
+<area shape="rect" href="dir_000007_000011.html" title="2" alt="" coords="261,227,270,242"/>
+<area shape="rect" href="dir_000007_000015.html" title="1" alt="" coords="288,131,298,146"/>
+<area shape="rect" href="dir_8b95a41a939438e5917f4497fef8e7ba.html" title="OpenMP" alt="" coords="422,63,498,111"/>
+<area shape="rect" href="dir_000008_000011.html" title="2" alt="" coords="318,243,327,258"/>
+<area shape="rect" href="dir_aeeba53c5fb17833c0f52606d68a5aa8.html" title="SYCL" alt="" coords="325,63,397,111"/>
+<area shape="rect" href="dir_000009_000011.html" title="2" alt="" coords="319,242,329,257"/>
+<area shape="rect" href="dir_000009_000015.html" title="1" alt="" coords="327,141,337,155"/>
+<area shape="rect" href="dir_aece132851e9183324b9b3740ef79635.html" alt="" coords="27,52,616,121"/>
+<area shape="rect" href="dir_9696d1624c88fbb4b2358edab2255cb6.html" title="plssvm" alt="" coords="16,16,627,313"/>
 </map>
 </div>
 <table class="memberdecls">
@@ -102,6 +112,9 @@ Directory dependency graph for backends:</div>
 Directories</h2></td></tr>
 <tr class="memitem:dir_3b1acf17ef6b0d0bb2450c7474aff8a9"><td class="memItemLeft" align="right" valign="top">directory &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_3b1acf17ef6b0d0bb2450c7474aff8a9.html">CUDA</a></td></tr>
 <tr class="memdesc:dir_3b1acf17ef6b0d0bb2450c7474aff8a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Directory containing the implementation for the CUDA backend. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:dir_3cf675f4ae395b9608bea908c689fae5"><td class="memItemLeft" align="right" valign="top">directory &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_3cf675f4ae395b9608bea908c689fae5.html">HIP</a></td></tr>
+<tr class="memdesc:dir_3cf675f4ae395b9608bea908c689fae5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Directory containing the implementation for the HIP backend. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:dir_d7c00eaa22908fd671a35ffbda10ce1f"><td class="memItemLeft" align="right" valign="top">directory &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_d7c00eaa22908fd671a35ffbda10ce1f.html">OpenCL</a></td></tr>
 <tr class="memdesc:dir_d7c00eaa22908fd671a35ffbda10ce1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Directory containing the implementation for the OpenCL backend. <br /></td></tr>
@@ -118,6 +131,9 @@ Files</h2></td></tr>
 <tr class="memitem:gpu__csvm_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="gpu__csvm_8hpp.html">gpu_csvm.hpp</a> <a href="gpu__csvm_8hpp_source.html">[code]</a></td></tr>
 <tr class="memdesc:gpu__csvm_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the base class for all C-SVM backends using a GPU. Used for code duplication reduction. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gpu__device__ptr_8hpp"><td class="memItemLeft" align="right" valign="top">file &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="gpu__device__ptr_8hpp.html">gpu_device_ptr.hpp</a> <a href="gpu__device__ptr_8hpp_source.html">[code]</a></td></tr>
+<tr class="memdesc:gpu__device__ptr_8hpp"><td class="mdescLeft">&#160;</td><td class="mdescRight">Defines the base class for all C-SVM backends using a GPU. Used for code duplication reduction. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Directory containing the implementation of all four available backends: OpenMP, CUDA, OpenCL, and SYCL. </p>
@@ -129,7 +145,7 @@ Marcel Breyer </dd></dl>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

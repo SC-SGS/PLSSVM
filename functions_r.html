@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -68,24 +76,21 @@ $(function() {
 <h3><a id="index_r"></a>- r -</h3><ul>
 <li>real_type
 : <a class="el" href="classplssvm_1_1csvm.html#a6d21fdb49c960425dd00f35c95248426">plssvm::csvm&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a31d75350f62f2e65e228df1052a3fa13">plssvm::cuda::csvm&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a4e66b9e000ccdb252b6e459b5ba3e8a0">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
-, <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#af5fc8fb4059572a4a24e58d68ae81516">plssvm::opencl::csvm&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a6d21fdb49c960425dd00f35c95248426">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
 , <a class="el" href="classplssvm_1_1openmp_1_1csvm.html#a5a5763be80c6bcd70c6de5e4c817e8dc">plssvm::openmp::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1parameter.html#a05011e4e5b8ad1eba03c52e25dba0e35">plssvm::parameter&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#ac24c7c31eb4a2709dab2058392025bce">plssvm::sycl::csvm&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html#aba77910c55eafcea1dfb917d2ebbe756">plssvm::sycl::device_kernel_predict_poly&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html#ab38bea17d7a161df27ee7bc834387d62">plssvm::sycl::device_kernel_predict_radial&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html#a3140d476ae5b78cd06ed0e65f820b7c3">plssvm::sycl::device_kernel_q_linear&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__poly.html#ad235d6b9bcab3b8e0a8d7200624e06a1">plssvm::sycl::device_kernel_q_poly&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__q__radial.html#a7014bc28633e7a6f7825e1cbfb2a4c15">plssvm::sycl::device_kernel_q_radial&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html#a5ce8381a28eb1faf9c863b6db1e6ce36">plssvm::sycl::device_kernel_w_linear&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__linear.html#a9b33c69df8b897f00a69f30e0e02c994">plssvm::sycl::hierarchical_device_kernel_linear&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__poly.html#a1a4b9a51a94baa87f9f6a235b0b4044a">plssvm::sycl::hierarchical_device_kernel_poly&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__radial.html#a669ebabb773049c542f6860fe3b6aea2">plssvm::sycl::hierarchical_device_kernel_radial&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__linear.html#aabdcf1b04ae08e5cc339d44744985abe">plssvm::sycl::nd_range_device_kernel_linear&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html#af5e9bbccce45be318c376423b0e2446d">plssvm::sycl::nd_range_device_kernel_poly&lt; T &gt;</a>
-, <a class="el" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__radial.html#a84ddc0e85d339d11b327aa1ca9d95b6e">plssvm::sycl::nd_range_device_kernel_radial&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__predict__poly.html#aa52287887e23eeb760413b5f6a5b73ea">plssvm::sycl_generic::device_kernel_predict_poly&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__predict__radial.html#a9d6f00a0df2fc0ce2625b60a89424a59">plssvm::sycl_generic::device_kernel_predict_radial&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__linear.html#a733c63f786e6528ea212b2fe97048ad2">plssvm::sycl_generic::device_kernel_q_linear&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__poly.html#a5e687f1b31f6ab0f670f3e7f28637f98">plssvm::sycl_generic::device_kernel_q_poly&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__radial.html#a5c0df952cf99ad3efb630c2ec64cbc7f">plssvm::sycl_generic::device_kernel_q_radial&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1device__kernel__w__linear.html#a676cc42c04c577de168828b0f5b11a6b">plssvm::sycl_generic::device_kernel_w_linear&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__linear.html#abb64c1d07dd5fbf495035dd9e7c065d1">plssvm::sycl_generic::hierarchical_device_kernel_linear&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__poly.html#a70b6730b66a06bd8b2dc67d9a3d8a2f5">plssvm::sycl_generic::hierarchical_device_kernel_poly&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__radial.html#a06496b3379ce85a0cbb69bee53e86116">plssvm::sycl_generic::hierarchical_device_kernel_radial&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__linear.html#a2856a762bfd305ccc449ed907b0eff58">plssvm::sycl_generic::nd_range_device_kernel_linear&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__poly.html#ad64583d3d00938e9df8d36fef8fa22ea">plssvm::sycl_generic::nd_range_device_kernel_poly&lt; T &gt;</a>
+, <a class="el" href="classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__radial.html#a4e56f51ae1baed94eb9e78aac3690ede">plssvm::sycl_generic::nd_range_device_kernel_radial&lt; T &gt;</a>
 </li>
 <li>rho
 : <a class="el" href="classplssvm_1_1parameter.html#a84e381f962e794594b6bbb38ba366371">plssvm::parameter&lt; T &gt;</a>
@@ -99,24 +104,28 @@ $(function() {
 <li>run_predict_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ad4dc605a13f86f04d601906386163b7a">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#acbe87d34236a651d5791db2a751b1c4e">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a1ed1d80a704210b3f4ab9a1dc33fe4b2">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#ab6591ffe01f8e29d654b6b71a964b683">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a36ebf43112082d3517d607656703338e">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
 <li>run_q_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#a0f5b432aee85e2fa79b288fc229ee7fa">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#af4e28fc6f96108a367001c8aa5353c83">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a0198dea569bc72e5cee4f15a352dc117">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#a1a19be142ef771fbe91ffe912d95d5d1">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a3c5e36bf01abe1aa38368c8f3cd7f083">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
 <li>run_svm_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#aa0a9796f4e708147bf1e0a3d5fa68694">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#ae7dc5d00bca4f4e4971f0c2da7ce6464">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a3546c2c823990a83c6c73dc662b4c134">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#ad19e746045c5002569c25e52212fb27e">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a275b7ab28ade325eebda41202376c535">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
 <li>run_w_kernel()
 : <a class="el" href="classplssvm_1_1cuda_1_1csvm.html#ab3fefe380d23808f4779ad747f6f7d77">plssvm::cuda::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1detail_1_1gpu__csvm.html#a679e61d55d3602e3fcb76e80264a8835">plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;</a>
+, <a class="el" href="classplssvm_1_1hip_1_1csvm.html#a5056cebd6ec265458d27de5869349289">plssvm::hip::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1opencl_1_1csvm.html#af65154f940e47ad84abf811a0529f6f1">plssvm::opencl::csvm&lt; T &gt;</a>
 , <a class="el" href="classplssvm_1_1sycl_1_1csvm.html#a46405847b73e32f21683db058cd3d25c">plssvm::sycl::csvm&lt; T &gt;</a>
 </li>
@@ -124,7 +133,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +27,10 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo_90x55.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">PLSSVM - Parallel Least Squares Support Vector Machine
-   &#160;<span id="projectnumber">1.1.1</span>
+   &#160;<span id="projectnumber">1.2.0</span>
    </div>
    <div id="projectbrief">A Least Squares Support Vector Machine implementation using different backends.</div>
   </td>
@@ -72,153 +80,176 @@ $(function() {
 </div><table border="0" cellspacing="10" cellpadding="0">
 <tr><td><img src="inherit_graph_0.png" border="0" usemap="#aplssvm_1_1csvm_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1csvm_3_01T_01_4" id="aplssvm_1_1csvm_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,233,156,259"/>
+<area shape="rect" href="classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,277,156,303"/>
 <area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="230,5,389,76"/>
-<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,101,411,186"/>
-<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="214,211,405,281"/>
-<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="228,306,391,362"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,386,415,413"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="204,100,415,171"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,195,411,281"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="228,305,391,376"/>
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="228,401,391,457"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,481,415,507"/>
 <area shape="rect" href="classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="469,27,658,54"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,130,664,157"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,233,655,259"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,122,655,149"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,225,664,251"/>
+<area shape="rect" href="classplssvm_1_1hip_1_1csvm.html" title="A C&#45;SVM implementation using HIP as backend." alt="" coords="474,327,653,354"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_1.png" border="0" usemap="#aplssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4" id="aplssvm_1_1cuda_1_1detail_1_1device__ptr_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html" title="Small wrapper class around a CUDA device pointer together with commonly used device functions." alt="" coords="5,5,159,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_2.png" border="0" usemap="#aplssvm_1_1detail_1_1execution__range" alt=""/>
+<tr><td><img src="inherit_graph_1.png" border="0" usemap="#aplssvm_1_1detail_1_1execution__range" alt=""/>
 <map name="aplssvm_1_1detail_1_1execution__range" id="aplssvm_1_1detail_1_1execution__range">
 <area shape="rect" href="classplssvm_1_1detail_1_1execution__range.html" title="Class specifying a backend independent execution range." alt="" coords="5,5,191,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_3.png" border="0" usemap="#aplssvm_1_1detail_1_1file__reader" alt=""/>
+<tr><td><img src="inherit_graph_2.png" border="0" usemap="#aplssvm_1_1detail_1_1file__reader" alt=""/>
 <map name="aplssvm_1_1detail_1_1file__reader" id="aplssvm_1_1detail_1_1file__reader">
 <area shape="rect" href="classplssvm_1_1detail_1_1file__reader.html" title="The plssvm::detail::file_reader class is responsible for reading a file and splitting it into its lin..." alt="" coords="5,5,148,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_4.png" border="0" usemap="#aplssvm_1_1exception" alt=""/>
-<map name="aplssvm_1_1exception" id="aplssvm_1_1exception">
-<area shape="rect" title=" " alt="" coords="5,242,144,269"/>
-<area shape="rect" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="192,242,333,269"/>
-<area shape="rect" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="392,5,563,47"/>
-<area shape="rect" href="classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided file couldn&#39;t be found." alt="" coords="393,71,562,112"/>
-<area shape="rect" href="classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="403,136,551,177"/>
-<area shape="rect" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="386,201,569,243"/>
-<area shape="rect" href="classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="381,267,573,308"/>
-<area shape="rect" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="395,332,560,373"/>
-<area shape="rect" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="398,397,557,439"/>
-<area shape="rect" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="389,463,565,504"/>
+<tr><td><img src="inherit_graph_3.png" border="0" usemap="#aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01command__queue_01_5_00_01cl__mem_01_4" alt=""/>
+<map name="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01command__queue_01_5_00_01cl__mem_01_4" id="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01command__queue_01_5_00_01cl__mem_01_4">
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,199,61"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="247,13,412,54"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_5.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1command__queue" alt=""/>
+<tr><td><img src="inherit_graph_4.png" border="0" usemap="#aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01detail_1_1sycl_1_1queue_01_5_01_4" alt=""/>
+<map name="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01detail_1_1sycl_1_1queue_01_5_01_4" id="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01detail_1_1sycl_1_1queue_01_5_01_4">
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,171,61"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="219,13,367,54"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_5.png" border="0" usemap="#aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01int_01_4" alt=""/>
+<map name="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01int_01_4" id="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01int_01_4">
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,39,165,80"/>
+<area shape="rect" href="classplssvm_1_1cuda_1_1detail_1_1device__ptr.html" title="Small wrapper class around a CUDA device pointer together with commonly used device functions." alt="" coords="213,5,367,47"/>
+<area shape="rect" href="classplssvm_1_1hip_1_1detail_1_1device__ptr.html" title="Small wrapper class around a HIP device pointer together with commonly used device functions." alt="" coords="219,71,361,112"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_6.png" border="0" usemap="#aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01queue__t_00_01device__pointer__t_01_4" alt=""/>
+<map name="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01queue__t_00_01device__pointer__t_01_4" id="aplssvm_1_1detail_1_1gpu__device__ptr_3_01T_00_01queue__t_00_01device__pointer__t_01_4">
+<area shape="rect" href="classplssvm_1_1detail_1_1gpu__device__ptr.html" title="Small wrapper class around a GPU device pointer together with commonly used device functions for all ..." alt="" coords="5,5,173,61"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_7.png" border="0" usemap="#aplssvm_1_1detail_1_1sha256" alt=""/>
+<map name="aplssvm_1_1detail_1_1sha256" id="aplssvm_1_1detail_1_1sha256">
+<area shape="rect" href="classplssvm_1_1detail_1_1sha256.html" title="A hashing struct used for sha256 hashing." alt="" coords="5,5,175,32"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_8.png" border="0" usemap="#aplssvm_1_1exception" alt=""/>
+<map name="aplssvm_1_1exception" id="aplssvm_1_1exception">
+<area shape="rect" title=" " alt="" coords="5,307,144,334"/>
+<area shape="rect" href="classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="192,307,333,334"/>
+<area shape="rect" href="classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="392,5,563,47"/>
+<area shape="rect" href="classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided file couldn&#39;t be found." alt="" coords="393,71,562,112"/>
+<area shape="rect" href="classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred." alt="" coords="402,136,553,177"/>
+<area shape="rect" href="classplssvm_1_1hip_1_1backend__exception.html" title="Exception type thrown if a problem with the HIP backend occurs." alt="" coords="398,201,557,243"/>
+<area shape="rect" href="classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="403,267,551,308"/>
+<area shape="rect" href="classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="386,332,569,373"/>
+<area shape="rect" href="classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="381,397,573,439"/>
+<area shape="rect" href="classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="395,463,560,504"/>
+<area shape="rect" href="classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="398,528,557,569"/>
+<area shape="rect" href="classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="389,593,565,635"/>
+</map>
+</td></tr>
+<tr><td><img src="inherit_graph_9.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1command__queue" alt=""/>
 <map name="aplssvm_1_1opencl_1_1detail_1_1command__queue" id="aplssvm_1_1opencl_1_1detail_1_1command__queue">
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_6.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4" id="aplssvm_1_1opencl_1_1detail_1_1device__ptr_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="5,5,171,47"/>
+<tr><td><img src="inherit_graph_10.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1context" alt=""/>
+<map name="aplssvm_1_1opencl_1_1detail_1_1context" id="aplssvm_1_1opencl_1_1detail_1_1context">
+<area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1context.html" title="RAII wrapper class around a cl_context." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_7.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1error__code" alt=""/>
+<tr><td><img src="inherit_graph_11.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1error__code" alt=""/>
 <map name="aplssvm_1_1opencl_1_1detail_1_1error__code" id="aplssvm_1_1opencl_1_1detail_1_1error__code">
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1error__code.html" title="Class wrapping an OpenCL error code." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_8.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1kernel" alt=""/>
+<tr><td><img src="inherit_graph_12.png" border="0" usemap="#aplssvm_1_1opencl_1_1detail_1_1kernel" alt=""/>
 <map name="aplssvm_1_1opencl_1_1detail_1_1kernel" id="aplssvm_1_1opencl_1_1detail_1_1kernel">
 <area shape="rect" href="classplssvm_1_1opencl_1_1detail_1_1kernel.html" title="RAII wrapper class around a cl_kernel." alt="" coords="5,5,171,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_9.png" border="0" usemap="#aplssvm_1_1operators_1_1transposed_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_13.png" border="0" usemap="#aplssvm_1_1operators_1_1transposed_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1operators_1_1transposed_3_01T_01_4" id="aplssvm_1_1operators_1_1transposed_3_01T_01_4">
 <area shape="rect" href="structplssvm_1_1operators_1_1transposed.html" title="Wrapper struct for overloading the dot product operator." alt="" coords="5,5,152,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_10.png" border="0" usemap="#aplssvm_1_1parameter_3_01T_01_4" alt=""/>
+<tr><td><img src="inherit_graph_14.png" border="0" usemap="#aplssvm_1_1parameter_3_01T_01_4" alt=""/>
 <map name="aplssvm_1_1parameter_3_01T_01_4" id="aplssvm_1_1parameter_3_01T_01_4">
 <area shape="rect" href="classplssvm_1_1parameter.html" title="Base class for encapsulating all necessary parameters possibly provided through command line argument..." alt="" coords="5,31,188,57"/>
 <area shape="rect" href="classplssvm_1_1parameter__predict.html" title="Class for encapsulating all necessary parameters for predicting possibly provided through command lin..." alt="" coords="236,5,471,32"/>
 <area shape="rect" href="classplssvm_1_1parameter__train.html" title="Class for encapsulating all necessary parameters for training possibly provided through command line ..." alt="" coords="243,56,463,83"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_11.png" border="0" usemap="#aplssvm_1_1source__location" alt=""/>
+<tr><td><img src="inherit_graph_15.png" border="0" usemap="#aplssvm_1_1source__location" alt=""/>
 <map name="aplssvm_1_1source__location" id="aplssvm_1_1source__location">
 <area shape="rect" href="classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,..." alt="" coords="5,5,184,32"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_12.png" border="0" usemap="#aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4" id="aplssvm_1_1sycl_1_1detail_1_1device__ptr_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1detail_1_1device__ptr.html" title="Small wrapper class around a SYCL device pointer together with commonly used device functions." alt="" coords="5,5,153,47"/>
+<tr><td><img src="inherit_graph_16.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1device__kernel__predict__poly_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1device__kernel__predict__poly_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1device__kernel__predict__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1device__kernel__predict__poly.html" title="Predicts the labels for data points using the polynomial kernel function." alt="" coords="5,5,177,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_13.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__predict__poly_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__predict__poly.html" title="Predicts the labels for data points using the polynomial kernel function." alt="" coords="5,5,200,47"/>
+<tr><td><img src="inherit_graph_17.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1device__kernel__predict__radial_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1device__kernel__predict__radial_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1device__kernel__predict__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1device__kernel__predict__radial.html" title="Predicts the labels for data points using the radial basis functions kernel function." alt="" coords="5,5,177,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_14.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__predict__radial_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__predict__radial.html" title="Predicts the labels for data points using the radial basis functions kernel function." alt="" coords="5,5,208,47"/>
+<tr><td><img src="inherit_graph_18.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1device__kernel__q__linear_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1device__kernel__q__linear_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1device__kernel__q__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__linear.html" title="Functor to calculate the q vector using the linear C&#45;SVM kernel." alt="" coords="5,5,223,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_15.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__q__linear_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__q__linear.html" title="Functor to calculate the q vector using the linear C&#45;SVM kernel." alt="" coords="5,5,172,47"/>
+<tr><td><img src="inherit_graph_19.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1device__kernel__q__poly_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1device__kernel__q__poly_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1device__kernel__q__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__poly.html" title="Functor to calculate the q vector using the polynomial C&#45;SVM kernel." alt="" coords="5,5,213,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_16.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__q__poly_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__q__poly.html" title="Functor to calculate the q vector using the polynomial C&#45;SVM kernel." alt="" coords="5,5,163,47"/>
+<tr><td><img src="inherit_graph_20.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1device__kernel__q__radial_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1device__kernel__q__radial_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1device__kernel__q__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1device__kernel__q__radial.html" title="Functor to calculate the q vector using the radial basis functions C&#45;SVM kernel." alt="" coords="5,5,223,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_17.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__q__radial_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__q__radial.html" title="Functor to calculate the q vector using the radial basis functions C&#45;SVM kernel." alt="" coords="5,5,172,47"/>
+<tr><td><img src="inherit_graph_21.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1device__kernel__w__linear_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1device__kernel__w__linear_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1device__kernel__w__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1device__kernel__w__linear.html" title="Calculate the w vector to speed up the prediction of the labels for data points using the linear kern..." alt="" coords="5,5,225,47"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_18.png" border="0" usemap="#aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1device__kernel__w__linear_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1device__kernel__w__linear.html" title="Calculate the w vector to speed up the prediction of the labels for data points using the linear kern..." alt="" coords="5,5,175,47"/>
+<tr><td><img src="inherit_graph_22.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__linear_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the linear kernel function." alt="" coords="5,5,164,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_19.png" border="0" usemap="#aplssvm_1_1sycl_1_1hierarchical__device__kernel__linear_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1hierarchical__device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1hierarchical__device__kernel__linear_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the linear kernel function." alt="" coords="5,5,207,47"/>
+<tr><td><img src="inherit_graph_23.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__poly_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the polynomial kernel function." alt="" coords="5,5,164,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_20.png" border="0" usemap="#aplssvm_1_1sycl_1_1hierarchical__device__kernel__poly_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1hierarchical__device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1hierarchical__device__kernel__poly_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the polynomial kernel function." alt="" coords="5,5,197,47"/>
+<tr><td><img src="inherit_graph_24.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__radial_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1hierarchical__device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the radial basis functions kernel ..." alt="" coords="5,5,164,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_21.png" border="0" usemap="#aplssvm_1_1sycl_1_1hierarchical__device__kernel__radial_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1hierarchical__device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1hierarchical__device__kernel__radial_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1hierarchical__device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the hierarchical formulation and the radial basis functions kernel ..." alt="" coords="5,5,207,47"/>
+<tr><td><img src="inherit_graph_25.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__linear_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__linear_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the linear kernel function." alt="" coords="5,5,192,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_22.png" border="0" usemap="#aplssvm_1_1sycl_1_1nd__range__device__kernel__linear_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1nd__range__device__kernel__linear_3_01T_01_4" id="aplssvm_1_1sycl_1_1nd__range__device__kernel__linear_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__linear.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the linear kernel function." alt="" coords="5,5,207,47"/>
+<tr><td><img src="inherit_graph_26.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__poly_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__poly_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the polynomial kernel function." alt="" coords="5,5,192,61"/>
 </map>
 </td></tr>
-<tr><td><img src="inherit_graph_23.png" border="0" usemap="#aplssvm_1_1sycl_1_1nd__range__device__kernel__poly_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1nd__range__device__kernel__poly_3_01T_01_4" id="aplssvm_1_1sycl_1_1nd__range__device__kernel__poly_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the polynomial kernel function." alt="" coords="5,5,197,47"/>
-</map>
-</td></tr>
-<tr><td><img src="inherit_graph_24.png" border="0" usemap="#aplssvm_1_1sycl_1_1nd__range__device__kernel__radial_3_01T_01_4" alt=""/>
-<map name="aplssvm_1_1sycl_1_1nd__range__device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl_1_1nd__range__device__kernel__radial_3_01T_01_4">
-<area shape="rect" href="classplssvm_1_1sycl_1_1nd__range__device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the radial basis functions kernel func..." alt="" coords="5,5,207,47"/>
+<tr><td><img src="inherit_graph_27.png" border="0" usemap="#aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__radial_3_01T_01_4" alt=""/>
+<map name="aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__radial_3_01T_01_4" id="aplssvm_1_1sycl__generic_1_1nd__range__device__kernel__radial_3_01T_01_4">
+<area shape="rect" href="classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__radial.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the radial basis functions kernel func..." alt="" coords="5,5,192,61"/>
 </map>
 </td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 11 2022 18:49:00 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Tue May 10 2022 10:15:54 for PLSSVM - Parallel Least Squares Support Vector Machine by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

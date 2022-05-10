@@ -1,0 +1,8 @@
+<map id="include/plssvm/backends/SYCL/implementation_type.hpp" name="include/plssvm/backends/SYCL/implementation_type.hpp">
+<area shape="rect" id="node1" title="Defines all currently supported SYCL implementations." alt="" coords="5,5,235,47"/>
+<area shape="rect" id="node2" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="114,259,294,285"/>
+<area shape="rect" id="node3" href="$parameter_8hpp.html" title="Implements the parameter base class encapsulating all necessary parameters." alt="" coords="95,95,313,121"/>
+<area shape="rect" id="node4" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM using one of the available backends based on the provid..." alt="" coords="125,169,283,211"/>
+<area shape="rect" id="node5" href="$parameter__predict_8hpp.html" title="Implements a class encapsulating all necessary parameters for predicting using the C&#45;SVM possibly pro..." alt="" coords="308,169,500,211"/>
+<area shape="rect" id="node6" href="$parameter__train_8hpp.html" title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th..." alt="" coords="524,169,716,211"/>
+</map>

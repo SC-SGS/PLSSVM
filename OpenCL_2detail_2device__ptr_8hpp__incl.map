@@ -1,8 +1,11 @@
 <map id="include/plssvm/backends/OpenCL/detail/device_ptr.hpp" name="include/plssvm/backends/OpenCL/detail/device_ptr.hpp">
-<area shape="rect" id="node1" title="Small wrapper around a OpenCL device pointer." alt="" coords="231,5,416,61"/>
-<area shape="rect" id="node2" href="$command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="5,109,212,151"/>
-<area shape="rect" id="node3" title=" " alt="" coords="147,199,212,225"/>
-<area shape="rect" id="node4" title=" " alt="" coords="288,117,359,143"/>
-<area shape="rect" id="node5" title=" " alt="" coords="383,117,475,143"/>
-<area shape="rect" id="node6" title=" " alt="" coords="499,117,561,143"/>
+<area shape="rect" id="node1" title="Small wrapper around a OpenCL device pointer." alt="" coords="272,5,457,61"/>
+<area shape="rect" id="node2" href="$command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="120,109,327,151"/>
+<area shape="rect" id="node4" title=" " alt="" coords="199,288,264,315"/>
+<area shape="rect" id="node6" href="$gpu__device__ptr_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="431,109,594,151"/>
+<area shape="rect" id="node3" href="$kernel_8hpp.html" title="Defines a very small RAII wrapper around a cl_kernel." alt="" coords="5,199,193,240"/>
+<area shape="rect" id="node5" title=" " alt="" coords="269,206,319,233"/>
+<area shape="rect" id="node7" title=" " alt="" coords="403,206,473,233"/>
+<area shape="rect" id="node8" title=" " alt="" coords="497,206,589,233"/>
+<area shape="rect" id="node9" title=" " alt="" coords="613,206,676,233"/>
 </map>

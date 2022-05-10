@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['target_5fplatform_574',['target_platform',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500',1,'plssvm']]]
+  ['implementation_5ftype_663',['implementation_type',['../namespaceplssvm_1_1sycl__generic.html#ad39a7642eb6c2101121d4264e0a2b851',1,'plssvm::sycl_generic']]]
 ];
