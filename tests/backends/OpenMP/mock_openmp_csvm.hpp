@@ -42,4 +42,5 @@ class mock_openmp_csvm : public plssvm::openmp::csvm<T> {
     // getter for internal variable
     std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
     const std::vector<std::vector<real_type>> &get_device_data() const { return *base_type::data_ptr_; }
+    std::size_t get_num_devices() const { return 1; }
 };

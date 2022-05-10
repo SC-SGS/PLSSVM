@@ -30,6 +30,17 @@ namespace detail {
 template <typename real_type>
 [[nodiscard]] real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y);
 /**
+ * @brief Compute the value of te two vectors @p x and @p y using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
+ * @details Adds the final results in a block scheme to mimic the calculations done in the respective backends.
+ * @tparam real_type the type of the data
+ * @param[in] x the first vector
+ * @param[in] y the second vector
+ * @param[in] num_devices the number of devices used by the currently tested backend
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, std::size_t num_devices);
+/**
  * @brief Compute the value of te two vectors @p x and @p y using the polynomial kernel function: \f$(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)^{degree}\f$.
  * @tparam real_type the type of the data
  * @param[in] x the first vector
@@ -85,16 +96,21 @@ template <plssvm::kernel_type kernel, typename real_type, typename SVM>
  * @tparam real_type the type of the data
  * @tparam SVM the used SVM implementation
  * @param[in] data the data points
+ * @param[in] num_devices the number of devices used in the currently tested backend, only interesting for the linear kernel
  * @param[in] csvm the SVM encapsulating all necessary parameters
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <plssvm::kernel_type kernel, typename real_type, typename SVM>
-[[nodiscard]] std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, const SVM &csvm) {
+[[nodiscard]] std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const std::size_t num_devices, const SVM &csvm) {
     std::vector<real_type> result;
     result.reserve(data.size() - 1);
 
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
-        result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
+        if constexpr (kernel == plssvm::kernel_type::linear) {
+            result.emplace_back(detail::linear_kernel(data.back(), data[i], num_devices));
+        } else {
+            result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
+        }
     }
     return result;
 }
