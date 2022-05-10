@@ -183,7 +183,7 @@ pipeline {
                 // hipSYCL backend
                 stage('Build and Test - hipSYCL'){
                     stages{
-                        stage('Build PLSSVM hipSYCL - OpenCL') {
+                        stage('Build PLSSVM Release - hipSYCL') {
                             steps {
                                 dir('plssvm') {
                                     sh '''
