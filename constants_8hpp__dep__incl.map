@@ -1,10 +1,10 @@
 <map id="include/plssvm/constants.hpp" name="include/plssvm/constants.hpp">
-<area shape="rect" id="node1" title="Global type definitions and compile&#45;time constants." alt="" coords="942,5,1157,32"/>
+<area shape="rect" id="node1" title="Global type definitions and compile&#45;time constants." alt="" coords="945,5,1159,32"/>
 <area shape="rect" id="node2" href="$predict__kernel_8cuh.html" title="Defines the functions used for prediction for the C&#45;SVM using the CUDA backend." alt="" coords="5,80,192,121"/>
 <area shape="rect" id="node3" href="$q__kernel_8cuh.html" title="Defines CUDA functions for generating the q vector." alt="" coords="217,80,402,121"/>
 <area shape="rect" id="node4" href="$svm__kernel_8cuh.html" title="Defines the kernel functions for the C&#45;SVM using the CUDA backend." alt="" coords="426,80,611,121"/>
-<area shape="rect" id="node5" href="$q__kernel_8hip_8hpp.html" title="Defines HIP functions for generating the q vector." alt="" coords="635,80,821,121"/>
-<area shape="rect" id="node6" href="$predict__kernel_8hip_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the HIP backend." alt="" coords="845,80,1041,121"/>
+<area shape="rect" id="node5" href="$predict__kernel_8hip_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the HIP backend." alt="" coords="635,80,831,121"/>
+<area shape="rect" id="node6" href="$q__kernel_8hip_8hpp.html" title="Defines HIP functions for generating the q vector." alt="" coords="855,80,1041,121"/>
 <area shape="rect" id="node7" href="$svm__kernel_8hip_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the HIP backend." alt="" coords="1065,80,1250,121"/>
 <area shape="rect" id="node8" href="$SYCL_2q__kernel_8hpp.html" title="Defines SYCL functions for generating the q vector." alt="" coords="1274,80,1459,121"/>
 <area shape="rect" id="node9" href="$predict__kernel_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the SYCL backend." alt="" coords="1483,80,1669,121"/>
