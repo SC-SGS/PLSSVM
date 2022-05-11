@@ -29,6 +29,18 @@ std::ostream &operator<<(std::ostream &out, const kernel_type kernel) {
     return out << "unknown";
 }
 
+std::string_view kernel_type_to_math_string(const kernel_type kernel) noexcept {
+    switch (kernel) {
+        case kernel_type::linear:
+            return "u'*v";
+        case kernel_type::polynomial:
+            return "(gamma*u'*v + coef0)^degree";
+        case kernel_type::rbf:
+            return "exp(-gamma*|u-v|^2)";
+    }
+    return "unknown";
+}
+
 std::istream &operator>>(std::istream &in, kernel_type &kernel) {
     std::string str;
     in >> str;

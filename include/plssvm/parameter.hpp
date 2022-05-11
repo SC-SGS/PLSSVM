@@ -14,6 +14,7 @@
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
+#include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -42,11 +43,6 @@ class parameter {
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
-    /**
-     * @brief Virtual destructor to enable safe inheritance.
-     */
-    virtual ~parameter() = default;
-
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     kernel_type kernel = kernel_type::linear;
     /// The degree parameter used in the polynomial kernel function.
@@ -70,9 +66,6 @@ class parameter {
     sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
 };
 
-extern template class parameter<float>;
-extern template class parameter<double>;
-
 /**
  * @brief Output all parameters encapsulated by @p params to the given output-stream @p out.
  * @tparam T the type of the data
@@ -81,6 +74,30 @@ extern template class parameter<double>;
  * @return the output-stream
  */
 template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
+std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
+    return out << fmt::format(
+               "kernel_type                 {}\n"
+               "degree                      {}\n"
+               "gamma                       {}\n"
+               "coef0                       {}\n"
+               "cost                        {}\n"
+               "epsilon                     {}\n"
+               "backend                     {}\n"
+               "target platform             {}\n"
+               "SYCL kernel invocation type {}\n"
+               "SYCL implementation type    {}\n"
+               "real_type                   {}\n",
+               params.kernel,
+               params.degree,
+               params.gamma,
+               params.coef0,
+               params.cost,
+               params.epsilon,
+               params.backend,
+               params.target,
+               params.sycl_kernel_invocation_type,
+               params.sycl_implementation_type,
+               detail::arithmetic_type_name<typename parameter<T>::real_type>());
+}
 
 }  // namespace plssvm

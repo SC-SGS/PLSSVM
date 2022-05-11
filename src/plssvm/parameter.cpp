@@ -178,37 +178,37 @@ void parameter<T>::parse_model_file(const std::string &filename) {
 
 
 // explicitly instantiate template class
-template class parameter<float>;
-template class parameter<double>;
-
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
-    return out << fmt::format(
-               "kernel_type                 {}\n"
-               "degree                      {}\n"
-               "gamma                       {}\n"
-               "coef0                       {}\n"
-               "cost                        {}\n"
-               "epsilon                     {}\n"
-               "backend                     {}\n"
-               "target platform             {}\n"
-               "SYCL kernel invocation type {}\n"
-               "SYCL implementation type    {}\n"
-               "real_type                   {}\n",
-               params.kernel,
-               params.degree,
-               params.gamma,
-               params.coef0,
-               params.cost,
-               params.epsilon,
-               params.backend,
-               params.target,
-               params.sycl_kernel_invocation_type,
-               params.sycl_implementation_type,
-               detail::arithmetic_type_name<typename parameter<T>::real_type>());
-}
-template std::ostream &operator<<(std::ostream &, const parameter<float> &);
-template std::ostream &operator<<(std::ostream &, const parameter<double> &);
+//template class parameter<float>;
+//template class parameter<double>;
+//
+//
+//template <typename T>
+//std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
+//    return out << fmt::format(
+//               "kernel_type                 {}\n"
+//               "degree                      {}\n"
+//               "gamma                       {}\n"
+//               "coef0                       {}\n"
+//               "cost                        {}\n"
+//               "epsilon                     {}\n"
+//               "backend                     {}\n"
+//               "target platform             {}\n"
+//               "SYCL kernel invocation type {}\n"
+//               "SYCL implementation type    {}\n"
+//               "real_type                   {}\n",
+//               params.kernel,
+//               params.degree,
+//               params.gamma,
+//               params.coef0,
+//               params.cost,
+//               params.epsilon,
+//               params.backend,
+//               params.target,
+//               params.sycl_kernel_invocation_type,
+//               params.sycl_implementation_type,
+//               detail::arithmetic_type_name<typename parameter<T>::real_type>());
+//}
+//template std::ostream &operator<<(std::ostream &, const parameter<float> &);
+//template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
 }  // namespace plssvm

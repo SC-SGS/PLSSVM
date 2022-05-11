@@ -29,16 +29,15 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parameter_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parameter_predict.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parameter_scale.cpp
 )
 
 ## create base library: linked against all backend libraries
