@@ -16,6 +16,7 @@
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::clog, std::endl
 #include <utility>    // std::pair
+#include <variant>    // std::variant, std::visit
 
 
 // perform calculations in single precision if requested
@@ -25,6 +26,18 @@ using real_type = float;
 using real_type = double;
 #endif
 
+// two possible types: real_type + real_type and real_type + std::string
+using data_set_variants = std::variant<plssvm::data_set<real_type>, plssvm::data_set<real_type, std::string>>;
+
+// create variant based on runtime flag
+data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_scale<real_type>& params) {
+    std::pair<real_type, real_type> scaling_bounds(params.lower, params.upper);
+    if (params.base_params.strings_as_labels) {
+        return data_set_variants{ plssvm::data_set<real_type, std::string>{ params.input_filename, std::move(scaling_bounds) } };
+    } else {
+        return data_set_variants{ plssvm::data_set<real_type>{ params.input_filename, std::move(scaling_bounds) } };
+    }
+}
 
 int main(int argc, char *argv[]) {
     try {
@@ -37,11 +50,10 @@ int main(int argc, char *argv[]) {
         }
 
         // create data set and scale
-        plssvm::data_set<real_type> data{ params.input_filename, std::pair<real_type, real_type>(params.lower, params.upper) };
-
-        // write scaled data to output file
-        data.save_data_set(params.scaled_filename, params.format);
-        // TODO: label type from command line???
+        std::visit([&](auto&& data){
+            // write scaled data to output file
+            data.save_data_set(params.scaled_filename, params.format);
+        }, data_set_factory(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

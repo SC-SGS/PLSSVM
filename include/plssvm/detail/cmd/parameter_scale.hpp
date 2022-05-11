@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "plssvm/parameter.hpp"          // plssvm::parameter
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
 #include <string>  // std::string
@@ -40,6 +41,9 @@ class parameter_scale {
     * @param[in] argv the command line arguments
     */
    parameter_scale(int argc, char **argv);
+
+   /// Other parameters
+   parameter<real_type> base_params{};
 
    // TODO: more LIBSVM conform?
    real_type lower{ -1 };
