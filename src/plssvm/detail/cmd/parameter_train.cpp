@@ -50,6 +50,7 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
            ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(base_params.sycl_kernel_invocation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.sycl_kernel_invocation_type))))
            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(base_params.sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.sycl_implementation_type))))
 #endif
+           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>(base_params.strings_as_labels)->default_value(fmt::format("{}", base_params.strings_as_labels)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
@@ -113,6 +114,9 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
    base_params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(base_params.sycl_implementation_type)>();
 #endif
 
+   // parse whether strings should be used as labels
+   base_params.strings_as_labels = result["use_strings_as_labels"].as<decltype(base_params.strings_as_labels)>();
+
    // parse whether output is quiet or not
    plssvm::verbose = !plssvm::verbose;
 
@@ -160,6 +164,7 @@ std::ostream &operator<<(std::ostream &out, const parameter_train<T> &params) {
     return out << fmt::format(
                "cost: {}\n"
                "epsilon: {}\n"
+               "use strings as labels: {}\n"
                "input file (data set): '{}'\n"
                "output file (model): '{}'\n",
                params.base_params.cost,
