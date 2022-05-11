@@ -309,6 +309,9 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_SYCL_B
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
+# set manpage string
+set_local_and_parent(PLSSVM_SYCL_BACKEND_NAME_LIST "automatic;${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}")
+
 
 # generate summary string
 include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)

@@ -14,15 +14,13 @@ plssvm-predict is a utility to predict the labels of a data set using a LIBSVM m
 
 .TP
 .B -b, --backend arg
-choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
+choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 
 .TP
 .B -p, --target_platform arg
-choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 
-.TP
-.B --sycl_implementation_type
-choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+@PLSSVM_SYCL_MANPAGE_ENTRY@
 
 .TP
 .B -q, --quiet
