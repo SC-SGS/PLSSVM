@@ -40,6 +40,7 @@ parameter_scale<T>::parameter_scale(int argc, char **argv) {
                ("l,lower", "lower is the lowest (minimal) value allowed in each dimension", cxxopts::value<decltype(lower)>()->default_value(fmt::format("{}", lower)))
                ("u,upper", "upper is the highest (maximal) value allowed in each dimension", cxxopts::value<decltype(upper)>()->default_value(fmt::format("{}", upper)))
                ("f,format", "the file format to output the scaled data set to", cxxopts::value<decltype(format)>()->default_value(fmt::format("{}", format)))
+               ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>(base_params.strings_as_labels)->default_value(fmt::format("{}", base_params.strings_as_labels)))
                ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
                ("h,help", "print this helper message", cxxopts::value<bool>())
                ("input", "", cxxopts::value<decltype(input_filename)>(), "input_file")
@@ -71,6 +72,9 @@ parameter_scale<T>::parameter_scale(int argc, char **argv) {
        // parse the file format
        format = result["format"].as<decltype(format)>();
 
+       // parse whether strings should be used as labels
+       base_params.strings_as_labels = result["use_strings_as_labels"].as<decltype(base_params.strings_as_labels)>();
+
        // parse whether output is quiet or not
        plssvm::verbose = !plssvm::verbose;
 
@@ -100,11 +104,13 @@ std::ostream &operator<<(std::ostream &out, const parameter_scale<T> &params) {
    return out << fmt::format(
               "lower: {}\n"
               "upper: {}\n"
+              "use strings as labels: {}\n"
               "output file format: {}\n"
-              "input file (data set): '{}'\n",
+              "input file (data set): '{}'\n"
               "output file (scaled data set): '{}'\n",
               params.lower,
               params.upper,
+              params.base_params.strings_as_labels,
               params.format,
               params.input_filename,
               params.scaled_filename);

@@ -64,6 +64,10 @@ class parameter {
     sycl::kernel_invocation_type sycl_kernel_invocation_type = sycl::kernel_invocation_type::automatic;
     /// The SYCL implementation to use with --backend=sycl.
     sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
+
+    // TODO: here?!?
+    /// use strings as label type?
+    bool strings_as_labels{ false };
 };
 
 /**
@@ -86,6 +90,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                "target platform             {}\n"
                "SYCL kernel invocation type {}\n"
                "SYCL implementation type    {}\n"
+               "use strings as labels       {}\n"
                "real_type                   {}\n",
                params.kernel,
                params.degree,
@@ -97,6 +102,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                params.target,
                params.sycl_kernel_invocation_type,
                params.sycl_implementation_type,
+               params.strings_as_labels,
                detail::arithmetic_type_name<typename parameter<T>::real_type>());
 }
 
