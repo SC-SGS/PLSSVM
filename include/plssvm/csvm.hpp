@@ -321,6 +321,7 @@ class parameter {
     ::plssvm::sycl_generic::implementation_type sycl_implementation_type = ::plssvm::sycl_generic::implementation_type::automatic;
 };
 
+// FINISHED
 template <typename T>
 class data_set {
     using data_matrix_type = std::vector<std::vector<T>>;

@@ -41,6 +41,8 @@ enum class kernel_type {
  */
 std::ostream &operator<<(std::ostream &out, kernel_type kernel);
 
+std::string_view kernel_type_to_math_string(kernel_type kernel) noexcept;
+
 /**
  * @brief Use the input-stream @p in to initialize the @p kernel type.
  * @details The extracted value is matched case-insensitive and can be the integer value of the kernel_type.
