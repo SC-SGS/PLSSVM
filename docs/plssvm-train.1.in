@@ -41,19 +41,13 @@ set the tolerance of termination criterion (default: 0.001)
 
 .TP
 .B -b, --backend arg
-choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
+choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 
 .TP
 .B -p, --target_platform arg
-choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 
-.TP
-.B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical
-
-.TP
-.B --sycl_implementation_type
-choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl
+@PLSSVM_SYCL_MANPAGE_ENTRY@
 
 .TP
 .B -q, --quiet

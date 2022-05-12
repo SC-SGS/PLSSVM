@@ -69,8 +69,8 @@ tests/backends/SYCL/hipSYCL/*
 docs/*
 !docs/resources/
 !docs/CMakeLists.txt
-!docs/plssvm-train.1
-!docs/plssvm-predict.1
+!docs/plssvm-train.1.in
+!docs/plssvm-predict.1.in
 
 # auto-generated version header
 include/plssvm/version/version.hpp

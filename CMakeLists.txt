@@ -296,6 +296,7 @@ endif()
 
 ## parse provided target platforms
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/parse_architecture_info.cmake)
+set(PLSSVM_PLATFORM_NAME_LIST "automatic")
 foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
     if(PLSSVM_PLATFORM MATCHES "^cpu")
         # parse provided CPU architectures
@@ -304,6 +305,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
     elseif(PLSSVM_PLATFORM MATCHES "^nvidia")
         # parse provided NVIDIA GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
@@ -311,6 +313,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_nvidia")
     elseif(PLSSVM_PLATFORM MATCHES "^amd")
         # parse provided AMD GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
@@ -318,6 +321,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_amd")
     elseif(PLSSVM_PLATFORM MATCHES "^intel")
         # parse provided Intel GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
@@ -325,6 +329,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
     else()
         message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
     endif()
@@ -481,23 +486,61 @@ endif()
 ##                                            print short (backend) summary                                           ##
 ########################################################################################################################
 message(STATUS "Enabled backends with respective targets:")
+set(PLSSVM_BACKEND_NAME_LIST "automatic")
 if(TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENMP_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "openmp")
 endif()
 if(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_CUDA_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "cuda")
 endif()
 if(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_HIP_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "hip")
 endif()
 if(TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "opencl")
 endif()
 if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     foreach(SUMMARY_STRING ${PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS})
         message(STATUS "${SUMMARY_STRING}")
     endforeach()
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "sycl")
 endif()
+
+
+########################################################################################################################
+##                                                 generate man pages                                                 ##
+########################################################################################################################
+string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
+string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
+string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")
+if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+    set(PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY "
+.TP
+.B --sycl_implementation_type
+choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
+")
+    set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY "
+.TP
+.B --sycl_kernel_invocation_type
+choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+")
+endif()
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
+        @ONLY
+)
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        @ONLY
+)
 
 
 ########################################################################################################################
