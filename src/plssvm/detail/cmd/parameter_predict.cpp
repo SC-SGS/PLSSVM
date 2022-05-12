@@ -24,8 +24,7 @@
 
 namespace plssvm::detail::cmd {
 
-template <typename T>
-parameter_predict<T>::parameter_predict(int argc, char **argv) {
+parameter_predict::parameter_predict(int argc, char **argv) {
    cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
    options
        .positional_help("test_file model_file [output_file]")
@@ -35,12 +34,13 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
        .set_tab_expansion()
        // clang-format off
        .add_options()
-           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(base_params.backend)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.backend))))
-           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(base_params.target)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.target))))
+           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<backend_type>()->default_value(detail::as_lower_case("automatic")))
+           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<target_platform>()->default_value(detail::as_lower_case("automatic")))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(base_params.sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.sycl_implementation_type))))
+           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(detail::as_lower_case("automatic")))
 #endif
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>(base_params.strings_as_labels)->default_value(fmt::format("{}", base_params.strings_as_labels)))
+           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>()->default_value("false"))
+           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<bool>()->default_value("false"))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -64,19 +64,29 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // parse backend_type and cast the value to the respective enum
-   base_params.backend = result["backend"].as<decltype(base_params.backend)>();
+   // instantiate variant
+   if (result["use_float_as_real_type"].as<bool>()) {
+       base_params = parameter_variants{ parameter<float>{} };
+   } else {
+       base_params = parameter_variants { parameter<double>{} };
+   }
 
-   // parse target_platform and cast the value to the respective enum
-   base_params.target = result["target_platform"].as<decltype(base_params.target)>();
+   // parse base_params values
+   std::visit([&](auto&& params) {
+       // parse backend_type and cast the value to the respective enum
+       params.backend = result["backend"].as<decltype(params.backend)>();
+
+       // parse target_platform and cast the value to the respective enum
+       params.target = result["target_platform"].as<decltype(params.target)>();
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-   // parse SYCL implementation used in the SYCL backend
-   base_params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(base_params.sycl_implementation_type)>();
+       // parse SYCL implementation used in the SYCL backend
+       params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(params.sycl_implementation_type)>();
 #endif
 
-   // parse whether strings should be used as labels
-   base_params.strings_as_labels = result["use_strings_as_labels"].as<decltype(base_params.strings_as_labels)>();
+       // parse whether strings should be used as labels
+       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
+   }, base_params);
 
    // parse whether output is quiet or not
    plssvm::verbose = !plssvm::verbose;
@@ -106,46 +116,44 @@ parameter_predict<T>::parameter_predict(int argc, char **argv) {
    }
 }
 
-// explicitly instantiate template class
-template class parameter_predict<float>;
-template class parameter_predict<double>;
-
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter_predict<T> &params) {
-    out << fmt::format("kernel_type: {} -> {}\n", params.base_params.kernel, kernel_type_to_math_string(params.base_params.kernel));
-    switch (params.base_params.kernel) {
-        case kernel_type::linear:
-            break;
-        case kernel_type::polynomial:
-            out << fmt::format(
-                "gamma: {}\n"
-                "coef0: {}\n"
-                "degree: {}\n",
-                params.base_params.gamma,
-                params.base_params.coef0,
-                params.base_params.degree);
-            break;
-        case kernel_type::rbf:
-            out << fmt::format("gamma: {}\n", params.base_params.gamma);
-            break;
-    }
+std::ostream &operator<<(std::ostream &out, const parameter_predict &params) {
+    std::visit([&](auto&& args) {
+        out << fmt::format("kernel_type: {} -> {}\n", args.kernel, kernel_type_to_math_string(args.kernel));
+        switch (args.kernel) {
+            case kernel_type::linear:
+                break;
+            case kernel_type::polynomial:
+                out << fmt::format(
+                    "gamma: {}\n"
+                    "coef0: {}\n"
+                    "degree: {}\n",
+                    args.gamma,
+                    args.coef0,
+                    args.degree);
+                break;
+            case kernel_type::rbf:
+                out << fmt::format("gamma: {}\n", args.gamma);
+                break;
+        }
+        out << fmt::format(
+            "cost: {}\n"
+            "epsilon: {}\n"
+            "use strings as labels: {}\n"
+            "real_type: {}\n",
+            args.cost,
+            args.epsilon,
+            args.strings_as_labels,
+            detail::arithmetic_type_name<typename std::remove_reference_t<decltype(args)>::real_type>());
+    }, params.base_params);
     return out << fmt::format(
-               "cost: {}\n"
-               "epsilon: {}\n"
-               "use strings as labels: {}\n"
                "rho: {}\n"
                "input file (data set): '{}'\n"
-               "input file (model): '{}'\n",
+               "input file (model): '{}'\n"
                "output file (prediction): '{}'\n",
-               params.base_params.cost,
-               params.base_params.epsilon,
                params.rho,
                params.input_filename,
                params.model_filename,
                params.predict_filename);
 }
-template std::ostream &operator<<(std::ostream &, const parameter_predict<float> &);
-template std::ostream &operator<<(std::ostream &, const parameter_predict<double> &);
 
 }  // namespace plssvm

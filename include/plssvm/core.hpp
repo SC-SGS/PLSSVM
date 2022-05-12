@@ -16,9 +16,6 @@
 
 #include "plssvm/constants.hpp"
 #include "plssvm/parameter.hpp"
-#include "plssvm/parameter_train.hpp"
-#include "plssvm/parameter_predict.hpp"
-#include "plssvm/parameter_scale.hpp"
 
 #include "plssvm/backend_types.hpp"
 #include "plssvm/kernel_types.hpp"
@@ -29,6 +26,10 @@
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
+
+#include "plssvm/detail/cmd/parameter_train.hpp"
+#include "plssvm/detail/cmd/parameter_predict.hpp"
+#include "plssvm/detail/cmd/parameter_scale.hpp"
 
 
 #include "plssvm/data_set.hpp"
@@ -43,6 +44,7 @@ namespace plssvm::version {}
 namespace plssvm::detail {}
 
 namespace plssvm::detail::io {}
+namespace plssvm::detail::cmd {}
 
 /// Namespace containing operator overloads for [std::vector](https://en.cppreference.com/w/cpp/container/vector) and other mathematical functions on vectors.
 namespace plssvm::operators {}

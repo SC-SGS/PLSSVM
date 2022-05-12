@@ -19,16 +19,9 @@ namespace plssvm::detail::cmd {
 
 /**
 * @brief Class for encapsulating all necessary parameters for training possibly provided through command line arguments.
-* @tparam T the type of the data
 */
-template <typename T>
 class parameter_train {
-    // only float and doubles are allowed
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
-
- public:
-   using real_type = T;
-
+  public:
    /**
     * @brief Default construct all training parameters.
     */
@@ -42,7 +35,7 @@ class parameter_train {
    parameter_train(int argc, char **argv);
 
    /// Other parameters
-   parameter<real_type> base_params{};
+   parameter_variants base_params{};
 
    /// The name of the data/test file to parse.
    std::string input_filename{};
@@ -50,10 +43,6 @@ class parameter_train {
    std::string model_filename{};
 };
 
-extern template class parameter_train<float>;
-extern template class parameter_train<double>;
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter_train<T> &params);
+std::ostream &operator<<(std::ostream &out, const parameter_train &params);
 
 }  // namespace plssvm

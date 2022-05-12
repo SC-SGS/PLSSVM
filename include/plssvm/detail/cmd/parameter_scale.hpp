@@ -20,16 +20,9 @@ namespace plssvm::detail::cmd {
 
 /**
 * @brief Class for encapsulating all necessary parameters for scaling a data set possibly provided through command line arguments.
-* @tparam T the type of the data
 */
-template <typename T>
 class parameter_scale {
-    // only float and doubles are allowed
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
-
  public:
-   using real_type = T;
-
    /**
     * @brief Default construct all training parameters.
     */
@@ -43,11 +36,11 @@ class parameter_scale {
    parameter_scale(int argc, char **argv);
 
    /// Other parameters
-   parameter<real_type> base_params{};
+   parameter_variants base_params{};
 
    // TODO: more LIBSVM conform?
-   real_type lower{ -1 };
-   real_type upper{ +1 };
+   double lower{ -1 };
+   double upper{ +1 };
    file_format_type format{ file_format_type::libsvm };
 
    /// The name of the data/test file to parse.
@@ -56,10 +49,6 @@ class parameter_scale {
    std::string scaled_filename{};
 };
 
-extern template class parameter_scale<float>;
-extern template class parameter_scale<double>;
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter_scale<T> &params);
+std::ostream &operator<<(std::ostream &out, const parameter_scale &params);
 
 }  // namespace plssvm

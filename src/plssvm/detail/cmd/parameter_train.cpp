@@ -27,8 +27,7 @@
 
 namespace plssvm::detail::cmd {
 
-template <typename T>
-parameter_train<T>::parameter_train(int argc, char **argv) {
+parameter_train::parameter_train(int argc, char **argv) {
    cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
    options
        .positional_help("training_set_file [model_file]")
@@ -38,19 +37,20 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
        .set_tab_expansion()
        // clang-format off
        .add_options()
-           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<decltype(base_params.kernel)>()->default_value(fmt::format("{}", detail::to_underlying(base_params.kernel))))
-           ("d,degree", "set degree in kernel function", cxxopts::value<decltype(base_params.degree)>()->default_value(fmt::format("{}", base_params.degree)))
-           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<decltype(base_params.gamma)>())
-           ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(base_params.coef0)>()->default_value(fmt::format("{}", base_params.coef0)))
-           ("c,cost", "set the parameter C", cxxopts::value<decltype(base_params.cost)>()->default_value(fmt::format("{}", base_params.cost)))
-           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(base_params.epsilon)>()->default_value(fmt::format("{}", base_params.epsilon)))
-           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(base_params.backend)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.backend))))
-           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(base_params.target)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.target))))
+           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(fmt::format("{}", detail::to_underlying(kernel_type::linear))))
+           ("d,degree", "set degree in kernel function", cxxopts::value<int>()->default_value("3"))
+           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<double>())
+           ("r,coef0", "set coef0 in kernel function", cxxopts::value<double>()->default_value("0.0"))
+           ("c,cost", "set the parameter C", cxxopts::value<double>()->default_value("1.0"))
+           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<double>()->default_value("0.001"))
+           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<backend_type>()->default_value(detail::as_lower_case("automatic")))
+           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<target_platform>()->default_value(detail::as_lower_case("automatic")))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(base_params.sycl_kernel_invocation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.sycl_kernel_invocation_type))))
-           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(base_params.sycl_implementation_type)>()->default_value(detail::as_lower_case(fmt::format("{}", base_params.sycl_implementation_type))))
+           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<sycl::kernel_invocation_type>()->default_value(detail::as_lower_case("automatic")))
+           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(detail::as_lower_case("automatic")))
 #endif
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>(base_params.strings_as_labels)->default_value(fmt::format("{}", base_params.strings_as_labels)))
+           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>()->default_value("false"))
+           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<bool>()->default_value("false"))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
@@ -73,49 +73,62 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // parse kernel_type and cast the value to the respective enum
-   base_params.kernel = result["kernel_type"].as<decltype(base_params.kernel)>();
-
-   // parse degree
-   base_params.degree = result["degree"].as<decltype(base_params.degree)>();
-
-   // parse gamma
-   if (result.count("gamma")) {
-       base_params.gamma = result["gamma"].as<decltype(base_params.gamma)>();
-       if (base_params.gamma == decltype(base_params.gamma){ 0.0 }) {
-           fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
-           fmt::print("{}", options.help());
-           std::exit(EXIT_FAILURE);
-       }
+   // instantiate variant
+   if (result["use_float_as_real_type"].as<bool>()) {
+       base_params = parameter_variants{ parameter<float>{} };
    } else {
-       base_params.gamma = decltype(base_params.gamma){ 0.0 };
+       base_params = parameter_variants { parameter<double>{} };
    }
 
-   // parse coef0
-   base_params.coef0 = result["coef0"].as<decltype(base_params.coef0)>();
+   // parse base_params values
+   std::visit([&](auto&& params) {
+       // parse whether strings should be used as labels
+       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
 
-   // parse cost
-   base_params.cost = result["cost"].as<decltype(base_params.cost)>();
+       // parse kernel_type and cast the value to the respective enum
+       params.kernel = result["kernel_type"].as<decltype(params.kernel)>();
 
-   // parse epsilon
-   base_params.epsilon = result["epsilon"].as<decltype(base_params.epsilon)>();
+       // parse degree
+       params.degree = result["degree"].as<decltype(params.degree)>();
 
-   // parse backend_type and cast the value to the respective enum
-   base_params.backend = result["backend"].as<decltype(base_params.backend)>();
+       // parse gamma
+       if (result.count("gamma")) {
+           params.gamma = result["gamma"].as<decltype(params.gamma)>();
+           if (params.gamma == decltype(params.gamma){ 0.0 }) {
+               fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
+               fmt::print("{}", options.help());
+               std::exit(EXIT_FAILURE);
+           }
+       } else {
+           params.gamma = decltype(params.gamma){ 0.0 };
+       }
 
-   // parse target_platform and cast the value to the respective enum
-   base_params.target = result["target_platform"].as<decltype(base_params.target)>();
+       // parse coef0
+       params.coef0 = result["coef0"].as<decltype(params.coef0)>();
+
+       // parse cost
+       params.cost = result["cost"].as<decltype(params.cost)>();
+
+       // parse epsilon
+       params.epsilon = result["epsilon"].as<decltype(params.epsilon)>();
+
+       // parse backend_type and cast the value to the respective enum
+       params.backend = result["backend"].as<decltype(params.backend)>();
+
+       // parse target_platform and cast the value to the respective enum
+       params.target = result["target_platform"].as<decltype(params.target)>();
 
 #if defined(PLSSVM_HAS_SYCL_IMPLEMENTATION)
-   // parse kernel invocation type when using SYCL as backend
-   base_params.sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(base_params.sycl_kernel_invocation_type)>();
+       // parse kernel invocation type when using SYCL as backend
+       params.sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(params.sycl_kernel_invocation_type)>();
 
-   // parse SYCL implementation used in the SYCL backend
-   base_params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(base_params.sycl_implementation_type)>();
+       // parse SYCL implementation used in the SYCL backend
+       params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(params.sycl_implementation_type)>();
 #endif
 
-   // parse whether strings should be used as labels
-   base_params.strings_as_labels = result["use_strings_as_labels"].as<decltype(base_params.strings_as_labels)>();
+       // parse whether strings should be used as labels
+       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
+   }, base_params);
 
    // parse whether output is quiet or not
    plssvm::verbose = !plssvm::verbose;
@@ -137,42 +150,41 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
    }
 }
 
-// explicitly instantiate template class
-template class parameter_train<float>;
-template class parameter_train<double>;
+std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
+    std::visit([&](auto&& args) {
+        out << fmt::format("kernel_type: {} -> {}\n", args.kernel, kernel_type_to_math_string(args.kernel));
+        switch (args.kernel) {
+            case kernel_type::linear:
+                break;
+            case kernel_type::polynomial:
+                out << fmt::format(
+                    "gamma: {}\n"
+                    "coef0: {}\n"
+                    "degree: {}\n",
+                    args.gamma,
+                    args.coef0,
+                    args.degree);
+                break;
+            case kernel_type::rbf:
+                out << fmt::format("gamma: {}\n", args.gamma);
+                break;
+        }
+        out << fmt::format(
+            "cost: {}\n"
+            "epsilon: {}\n"
+            "use strings as labels: {}\n"
+            "real_type: {}\n",
+            args.cost,
+            args.epsilon,
+            args.strings_as_labels,
+            detail::arithmetic_type_name<typename std::remove_reference_t<decltype(args)>::real_type>());
+    }, params.base_params);
 
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter_train<T> &params) {
-    out << fmt::format("kernel_type: {} -> {}\n", params.base_params.kernel, kernel_type_to_math_string(params.base_params.kernel));
-    switch (params.base_params.kernel) {
-        case kernel_type::linear:
-            break;
-        case kernel_type::polynomial:
-            out << fmt::format(
-                "gamma: {}\n"
-                "coef0: {}\n"
-                "degree: {}\n",
-                params.base_params.gamma,
-                params.base_params.coef0,
-                params.base_params.degree);
-            break;
-        case kernel_type::rbf:
-            out << fmt::format("gamma: {}\n", params.base_params.gamma);
-            break;
-    }
     return out << fmt::format(
-               "cost: {}\n"
-               "epsilon: {}\n"
-               "use strings as labels: {}\n"
                "input file (data set): '{}'\n"
                "output file (model): '{}'\n",
-               params.base_params.cost,
-               params.base_params.epsilon,
                params.input_filename,
                params.model_filename);
 }
-template std::ostream &operator<<(std::ostream &, const parameter_train<float> &);
-template std::ostream &operator<<(std::ostream &, const parameter_train<double> &);
 
 }  // namespace plssvm

@@ -22,6 +22,7 @@
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
+#include <variant>      // std::variant
 #include <vector>       // std::vector
 
 namespace plssvm {
@@ -30,16 +31,22 @@ namespace sycl {
 using namespace ::plssvm::sycl_generic;
 }
 
+template <typename T>
+struct parameter;
+
+
+using parameter_variants = std::variant<parameter<float>, parameter<double>>;
+
+
 /**
  * @brief Base class for encapsulating all necessary parameters possibly provided through command line arguments.
  * @tparam T the type of the data
  */
 template <typename T>
-class parameter {
+struct parameter {
     // only float and doubles are allowed
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
-  public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
@@ -68,6 +75,7 @@ class parameter {
     // TODO: here?!?
     /// use strings as label type?
     bool strings_as_labels{ false };
+    bool float_as_real_type{ false };
 };
 
 /**
