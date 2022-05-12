@@ -19,19 +19,11 @@
 #include <variant>    // std::variant, std::visit
 
 
-// perform calculations in single precision if requested
-#ifdef PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION
-using real_type = float;
-#else
-using real_type = double;
-#endif
-
 // two possible types: real_type + real_type and real_type + std::string
 using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
 
 // create variant based on runtime flag
 data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_scale& params) {
-    std::pair<real_type, real_type> scaling_bounds(params.lower, params.upper);
     bool use_float;
     bool use_strings;
     std::visit([&](auto&& args) {
@@ -40,13 +32,13 @@ data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_scale& p
     }, params.base_params);
 
     if (use_float && use_strings) {
-        return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::move(scaling_bounds) } };
+        return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::pair<float, float>{params.lower, params.upper} } };
     } else if (use_float && !use_strings) {
-        return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::move(scaling_bounds) } };
+        return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::pair<float, float>{params.lower, params.upper} } };
     } else if (!use_float && use_strings) {
-        return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::move(scaling_bounds) } };
+        return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::pair<double, double>{params.lower, params.upper} } };
     } else {
-        return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::move(scaling_bounds) } };
+        return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::pair<double, double>{params.lower, params.upper} } };
     }
 }
 
