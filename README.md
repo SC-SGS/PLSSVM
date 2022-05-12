@@ -274,7 +274,7 @@ optional arguments:
 An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each could look like:
 
 ```bash
-python3 generate_data.py --ouput data_file --format libsvm --problem blobs --samples 1000 --features 200
+python3 generate_data.py --output data_file --format libsvm --problem blobs --samples 1000 --features 200
 ```
 
 ### Training
