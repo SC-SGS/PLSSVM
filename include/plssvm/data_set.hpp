@@ -36,6 +36,7 @@
 #include <string>      // std::string
 #include <tuple>       // std::tie
 #include <utility>     // std::move, std::pair
+#include <variant>     // std::variant
 #include <vector>      // std::vector
 
 
@@ -391,6 +392,47 @@ void data_set<T,U>::read_arff_file(const std::string &filename) {
     if (!has_label) {
         labels_ptr_ = nullptr;
     }
+}
+
+namespace detail {
+
+
+// two possible types: real_type + real_type and real_type + std::string
+using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
+
+// create variant based on runtime flag
+template <bool scale, typename cmd_parameter>
+data_set_variants data_set_factory(const cmd_parameter& params) {
+    bool use_float;
+    bool use_strings;
+    std::visit([&](auto&& args) {
+        use_float = args.float_as_real_type;
+        use_strings = args.strings_as_labels;
+    }, params.base_params);
+
+    if constexpr (scale) {
+        if (use_float && use_strings) {
+            return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::pair<float, float>{ params.lower, params.upper } } };
+        } else if (use_float && !use_strings) {
+            return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::pair<float, float>{ params.lower, params.upper } } };
+        } else if (!use_float && use_strings) {
+            return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::pair<double, double>{ params.lower, params.upper } } };
+        } else {
+            return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::pair<double, double>{ params.lower, params.upper } } };
+        }
+    } else {
+        if (use_float && use_strings) {
+            return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename } };
+        } else if (use_float && !use_strings) {
+            return data_set_variants{ plssvm::data_set<float>{ params.input_filename } };
+        } else if (!use_float && use_strings) {
+            return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename } };
+        } else {
+            return data_set_variants{ plssvm::data_set<double>{ params.input_filename } };
+        }
+    }
+}
+
 }
 
 }

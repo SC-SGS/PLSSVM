@@ -17,30 +17,8 @@
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::clog, std::endl
-#include <variant>    // std::variant, std::visit
+#include <variant>    // std::visit
 
-// two possible types: real_type + real_type and real_type + std::string
-using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
-
-// create variant based on runtime flag
-data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_train& params) {
-    bool use_float;
-    bool use_strings;
-    std::visit([&](auto&& args) {
-        use_float = args.float_as_real_type;
-        use_strings = args.strings_as_labels;
-    }, params.base_params);
-
-    if (use_float && use_strings) {
-        return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename } };
-    } else if (use_float && !use_strings) {
-        return data_set_variants{ plssvm::data_set<float>{ params.input_filename } };
-    } else if (!use_float && use_strings) {
-        return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename } };
-    } else {
-        return data_set_variants{ plssvm::data_set<double>{ params.input_filename } };
-    }
-}
 
 int main(int argc, char *argv[]) {
     try {
@@ -71,7 +49,7 @@ int main(int argc, char *argv[]) {
             // create data set
             std::visit([&](auto&& data){
                 // TODO: put code here
-            }, data_set_factory(params));
+            }, plssvm::detail::data_set_factory<false>(params));
 
         }, params.base_params);
 
