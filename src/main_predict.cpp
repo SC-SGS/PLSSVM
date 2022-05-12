@@ -23,14 +23,6 @@
 #include <variant>    // std::variant, std::visit
 #include <vector>     // std::vector
 
-
-// perform calculations in single precision if requested
-#ifdef PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION
-using real_type = float;
-#else
-using real_type = double;
-#endif
-
 // two possible types: real_type + real_type and real_type + std::string
 using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
 
