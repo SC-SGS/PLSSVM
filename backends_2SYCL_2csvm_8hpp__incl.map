@@ -1,7 +1,7 @@
 <map id="include/plssvm/backends/SYCL/csvm.hpp" name="include/plssvm/backends/SYCL/csvm.hpp">
 <area shape="rect" id="node1" title="Defines a C&#45;SVM using the SYCL backend." alt="" coords="585,5,770,47"/>
-<area shape="rect" id="node2" title=" " alt="" coords="177,95,394,151"/>
-<area shape="rect" id="node3" title=" " alt="" coords="419,95,640,151"/>
+<area shape="rect" id="node2" title=" " alt="" coords="85,95,350,151"/>
+<area shape="rect" id="node3" title=" " alt="" coords="374,95,639,151"/>
 <area shape="rect" id="node4" href="$kernel__invocation__type_8hpp.html" title="Defines all available kernel invoke types when using SYCL." alt="" coords="5,199,211,240"/>
 <area shape="rect" id="node6" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="715,102,877,143"/>
 <area shape="rect" id="node25" title=" " alt="" coords="1115,288,1192,315"/>
