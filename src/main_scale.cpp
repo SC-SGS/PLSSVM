@@ -16,31 +16,8 @@
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::clog, std::endl
 #include <utility>    // std::pair
-#include <variant>    // std::variant, std::visit
+#include <variant>    // std::visit
 
-
-// two possible types: real_type + real_type and real_type + std::string
-using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
-
-// create variant based on runtime flag
-data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_scale& params) {
-    bool use_float;
-    bool use_strings;
-    std::visit([&](auto&& args) {
-        use_float = args.float_as_real_type;
-        use_strings = args.strings_as_labels;
-    }, params.base_params);
-
-    if (use_float && use_strings) {
-        return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::pair<float, float>{params.lower, params.upper} } };
-    } else if (use_float && !use_strings) {
-        return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::pair<float, float>{params.lower, params.upper} } };
-    } else if (!use_float && use_strings) {
-        return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::pair<double, double>{params.lower, params.upper} } };
-    } else {
-        return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::pair<double, double>{params.lower, params.upper} } };
-    }
-}
 
 int main(int argc, char *argv[]) {
     try {
@@ -56,7 +33,7 @@ int main(int argc, char *argv[]) {
         std::visit([&](auto&& data){
             // write scaled data to output file
             data.save_data_set(params.scaled_filename, params.format);
-        }, data_set_factory(params));
+        }, plssvm::detail::data_set_factory<true>(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
