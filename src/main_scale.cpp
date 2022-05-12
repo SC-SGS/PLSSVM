@@ -27,22 +27,33 @@ using real_type = double;
 #endif
 
 // two possible types: real_type + real_type and real_type + std::string
-using data_set_variants = std::variant<plssvm::data_set<real_type>, plssvm::data_set<real_type, std::string>>;
+using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
 
 // create variant based on runtime flag
-data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_scale<real_type>& params) {
+data_set_variants data_set_factory(const plssvm::detail::cmd::parameter_scale& params) {
     std::pair<real_type, real_type> scaling_bounds(params.lower, params.upper);
-    if (params.base_params.strings_as_labels) {
-        return data_set_variants{ plssvm::data_set<real_type, std::string>{ params.input_filename, std::move(scaling_bounds) } };
+    bool use_float;
+    bool use_strings;
+    std::visit([&](auto&& args) {
+        use_float = args.float_as_real_type;
+        use_strings = args.strings_as_labels;
+    }, params.base_params);
+
+    if (use_float && use_strings) {
+        return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::move(scaling_bounds) } };
+    } else if (use_float && !use_strings) {
+        return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::move(scaling_bounds) } };
+    } else if (!use_float && use_strings) {
+        return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::move(scaling_bounds) } };
     } else {
-        return data_set_variants{ plssvm::data_set<real_type>{ params.input_filename, std::move(scaling_bounds) } };
+        return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::move(scaling_bounds) } };
     }
 }
 
 int main(int argc, char *argv[]) {
     try {
         // create default parameters
-        plssvm::detail::cmd::parameter_scale<real_type> params{ argc, argv };
+        plssvm::detail::cmd::parameter_scale params{ argc, argv };
 
         // output used parameter
         if (plssvm::verbose) {

@@ -19,16 +19,9 @@ namespace plssvm::detail::cmd {
 
 /**
 * @brief Class for encapsulating all necessary parameters for predicting possibly provided through command line arguments.
-* @tparam T the type of the data
 */
-template <typename T>
 class parameter_predict {
-    // only float and doubles are allowed
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
-
  public:
-   using real_type = T;
-
    /**
     * @brief Default construct all parameters for prediction.
     */
@@ -42,10 +35,10 @@ class parameter_predict {
    parameter_predict(int argc, char **argv);
 
    /// Other parameters
-   parameter<real_type> base_params{};
+   parameter_variants base_params{};
 
    /// rho
-   real_type rho{ 0.0 };
+   double rho{ 0.0 };
 
    /// The name of the data/test file to parse.
    std::string input_filename{};
@@ -55,10 +48,6 @@ class parameter_predict {
    std::string predict_filename{};
 };
 
-extern template class parameter_predict<float>;
-extern template class parameter_predict<double>;
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter_predict<T> &params);
+std::ostream &operator<<(std::ostream &out, const parameter_predict &params);
 
 }  // namespace plssvm
