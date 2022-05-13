@@ -13,7 +13,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 /**
  * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references) targeting global memory.
@@ -22,4 +22,4 @@ namespace plssvm::sycl {
 template <typename T>
 using atomic_op = ::sycl::atomic_ref<T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

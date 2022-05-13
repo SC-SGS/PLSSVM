@@ -19,6 +19,7 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // make custom type formattable using operator>> overload
 #include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_FALSE, EXPECT_TRUE, EXPECT_LT, SUCCESS, FAIL
 
 #ifdef __unix__
@@ -106,18 +107,19 @@ inline void gtest_assert_floating_point_eq(const T val1, const T val2, const std
 }
 
 /**
- * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode
+ * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
  * @tparam T the floating point type
  * @param[in] val1 first value to compare
  * @param[in] val2 second value to compare
+ * @param[in] scale scale the epsilon value by the provided value
  * @param[in] msg an optional message
  */
 template <typename T>
-inline void gtest_assert_floating_point_near(const T val1, const T val2, const std::string &msg = "") {
+inline void gtest_assert_floating_point_near(const T val1, const T val2, const T scale, const std::string &msg = "") {
     // based on: https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
 
     // set epsilon
-    const T eps = 128 * std::numeric_limits<T>::epsilon();
+    const T eps = 128 * scale * std::numeric_limits<T>::epsilon();
 
     // sanity checks for picked epsilon value
     PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon());
@@ -131,6 +133,18 @@ inline void gtest_assert_floating_point_near(const T val1, const T val2, const s
     const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
 
     EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+}
+
+/**
+ * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
+ * @tparam T the floating point type
+ * @param[in] val1 first value to compare
+ * @param[in] val2 second value to compare
+ * @param[in] msg an optional message
+ */
+template <typename T>
+inline void gtest_assert_floating_point_near(const T val1, const T val2, const std::string &msg = "") {
+    gtest_assert_floating_point_near(val1, val2, T{ 1 }, msg);
 }
 
 /**

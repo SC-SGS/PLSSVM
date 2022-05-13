@@ -12,7 +12,6 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"    // plssvm::sycl::atomic_op
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/constants.hpp"                       // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::handler, sycl::accessor, sycl::access::mode, sycl::access::target, sycl::range, sycl::group_barrier, sycl::pow,
@@ -20,7 +19,7 @@
 
 #include <cstddef>  // std::size_t
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 // TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
 /**
@@ -68,7 +67,17 @@ class nd_range_device_kernel_linear {
         kernel_index_type j = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
         real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
-        real_type data_j[INTERNAL_BLOCK_SIZE];
+        real_type data_j[INTERNAL_BLOCK_SIZE] = { { 0.0 } };
+
+        // TODO: profile: warp access optimal?
+        if (nd_idx.get_local_range(0) < THREAD_BLOCK_SIZE && nd_idx.get_local_range(1) == 0) {
+            #pragma unroll INTERNAL_BLOCK_SIZE
+            for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
+                data_intern_i_[nd_idx.get_local_range(0)][block_id] = 0.0;
+                data_intern_j_[nd_idx.get_local_range(0)][block_id] = 0.0;
+            }
+        }
+        ::sycl::group_barrier(nd_idx.get_group());
 
         if (i >= j) {
             i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
@@ -190,7 +199,17 @@ class nd_range_device_kernel_poly {
         kernel_index_type j = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
         real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
-        real_type data_j[INTERNAL_BLOCK_SIZE];
+        real_type data_j[INTERNAL_BLOCK_SIZE] = { { 0.0 } };
+
+        // TODO: profile: warp access optimal?
+        if (nd_idx.get_local_range(0) < THREAD_BLOCK_SIZE && nd_idx.get_local_range(1) == 0) {
+            #pragma unroll INTERNAL_BLOCK_SIZE
+            for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
+                data_intern_i_[nd_idx.get_local_range(0)][block_id] = 0.0;
+                data_intern_j_[nd_idx.get_local_range(0)][block_id] = 0.0;
+            }
+        }
+        ::sycl::group_barrier(nd_idx.get_group());
 
         if (i >= j) {
             i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
@@ -303,7 +322,17 @@ class nd_range_device_kernel_radial {
         kernel_index_type j = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE;
 
         real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
-        real_type data_j[INTERNAL_BLOCK_SIZE];
+        real_type data_j[INTERNAL_BLOCK_SIZE] = { { 0.0 } };
+
+        // TODO: profile: warp access optimal?
+        if (nd_idx.get_local_range(0) < THREAD_BLOCK_SIZE && nd_idx.get_local_range(1) == 0) {
+            #pragma unroll INTERNAL_BLOCK_SIZE
+            for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
+                data_intern_i_[nd_idx.get_local_range(0)][block_id] = 0.0;
+                data_intern_j_[nd_idx.get_local_range(0)][block_id] = 0.0;
+            }
+        }
+        ::sycl::group_barrier(nd_idx.get_group());
 
         if (i >= j) {
             i += nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE;
@@ -376,4 +405,4 @@ class nd_range_device_kernel_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

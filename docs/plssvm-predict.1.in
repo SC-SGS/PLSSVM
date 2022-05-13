@@ -1,0 +1,60 @@
+.\" Manpage for plssvm-predict.
+.TH PLSSVM-PREDICT 1 "20 April 2022" "1.2.0" "plssvm-predict Manual"
+
+.SH NAME
+plssvm-predict - LS-SVM with multiple (GPU-)backends
+
+.SH SYNOPSIS
+svm-predict [OPTION...] test_file model_file [output_file]
+
+.SH DESCRIPTION
+plssvm-predict is a utility to predict the labels of a data set using a LIBSVM model file and a LS-SVM supporting different backends to target different hardware platforms.
+
+.SH OPTIONS
+
+.TP
+.B -b, --backend arg
+choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
+
+.TP
+.B -p, --target_platform arg
+choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
+
+@PLSSVM_SYCL_MANPAGE_ENTRY@
+
+.TP
+.B -q, --quiet
+quiet mode (no outputs)
+
+.TP
+.B -h, --help
+print this helper message
+
+.TP
+.B --test test_file
+the file containing the test data points
+
+.TP
+.B --model model_file
+the file containing the previously created model
+
+.TP
+.B --output output_file
+the file to write the predicted labels to
+
+.SH EXIT STATUS
+EXIT_SUCCESS
+.RS
+if OK,
+.RE
+EXIT_FAILURE
+.RS
+if any error occurred (e.g., the training or model file couldn't be opened).
+
+.SH SEE ALSO
+plssvm-train(1)
+
+.SH AUTHOR
+Alexander Van Craen <Alexander.Van-Craen@ipvs.uni-stuttgart.de>
+.br
+Marcel Breyer <Marcel.Breyer@ipvs.uni-stuttgart.de>

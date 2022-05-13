@@ -15,7 +15,7 @@
 #include <ostream>  // std::ostream
 #include <string>   // std::string
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 std::ostream &operator<<(std::ostream &out, const kernel_invocation_type target) {
     switch (target) {
@@ -46,4 +46,4 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &target) {
     return in;
 }
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

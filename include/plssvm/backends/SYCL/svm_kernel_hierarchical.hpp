@@ -12,7 +12,6 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"    // plssvm::sycl::atomic_op
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 #include "plssvm/constants.hpp"                       // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/execution_range.hpp"          // plssvm::detail::execution_range
 
@@ -20,7 +19,7 @@
 
 #include <cstddef>  // std::size_t
 
-namespace plssvm::sycl {
+namespace plssvm::sycl_generic {
 
 /**
  * @brief Calculates the C-SVM kernel using the hierarchical formulation and the linear kernel function.
@@ -476,4 +475,4 @@ class hierarchical_device_kernel_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl_generic

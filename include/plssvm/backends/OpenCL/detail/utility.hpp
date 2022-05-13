@@ -12,13 +12,14 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::kernel
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"  // cl_kernel, cl_uint, cl_int
+#include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
 
 #include "fmt/core.h"  // fmt::format
 
@@ -46,7 +47,7 @@ namespace plssvm::opencl::detail {
 void device_assert(error_code code, std::string_view msg = "");
 
 /**
- * @brief Returns the list devices matching the target platform @p target and the actually used target platform
+ * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform
  *        (only interesting if the provided @p target was automatic).
  * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
  *          1. NVIDIA GPUs
@@ -57,7 +58,7 @@ void device_assert(error_code code, std::string_view msg = "");
  * @param[in] target the target platform for which the devices must match
  * @return the command queues and used target platform (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<command_queue>, target_platform> get_command_queues(target_platform target);
+[[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target);
 
 /**
  * @brief Wait for the compute device associated with @p queue to finish.
@@ -73,23 +74,35 @@ void device_synchronize(const command_queue &queue);
 [[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
- * @brief Convert the kernel type @p kernel to the function names for the q and svm kernel functions.
+ * @brief Convert the kernel type @p kernel to the device function names and return the compute_kernel_name identifier.
  * @param[in] kernel the kernel type
- * @return the kernel function names (first: q_kernel name, second: svm_kernel name) (`[[nodiscard]]`)
+ * @return the kernel function names with the respective compute_kernel_name identifier (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::string, std::string> kernel_type_to_function_name(kernel_type kernel);
+[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_type kernel);
 
 /**
- * @brief Create a kernel with @p kernel_name for the given command queues from the file @p file.
+ * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and
+ *        the associated compute kernels with respect to the given source files and kernel function names.
+ * @details Manually caches the OpenCL JIT compiled code in the current `$TEMP` directory (no special means to prevent race conditions are implemented).
+ *          The cached binaries are reused if:
+ *          1. cached files already exist
+ *          2. the number of cached files match the number of needed files
+ *          3. the kernel source checksum matches (no changes in the source files since the last caching)
+ *
+ *          A custom SHA256 implementation is used to detect changes in the OpenCL kernel source files.
+ *          Additionally, adds the path to the currently used OpenCL library as a comment to the kernel source string (before the checksum calculation) to detect
+ *          changes in the used OpenCL implementation and trigger a kernel rebuild.
+ *
  * @tparam real_type the floating point type used to replace the placeholders in the kernel file
- * @param[in] queues the used OpenCL command queues
- * @param[in] file the file containing the kernel
- * @param[in] kernel_name the name of the kernel to create
+ * @param[in] contexts the used OpenCL contexts
+ * @param[in] target the target platform
+ * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
+ * @param[in] print_info if `true` prints additional info to the standard output
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
- * @return the kernel (`[[nodiscard]]`)
+ * @return the command queues with all necessary kernels (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<kernel> create_kernel(const std::vector<command_queue> &queues, const std::string &file, const std::string &kernel_name);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names, bool print_info);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -111,8 +124,8 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
 /**
  * @brief Run the 1D @p kernel on the @p queue with the additional parameters @p args.
  * @tparam Args the types of the arguments
- * @param[in,out] queue the command queue on which the kernel should be executed
- * @param[in,out] kernel the kernel to run
+ * @param[in] queue the command queue on which the kernel should be executed
+ * @param[in] kernel the kernel to run
  * @param[in] grid_size the number of global work-items (possibly multi-dimensional)
  * @param[in] block_size the number of work-items that make up a work-group (possibly multi-dimensional)
  * @param[in] args the arguments to set
@@ -126,16 +139,16 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::
     set_kernel_args(kernel, std::forward<Args>(args)...);
 
     // enqueue kernel in command queue
-    PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue.queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
+    PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
     // wait until kernel computation finished
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue.queue), "error running OpenCL kernel");
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error running OpenCL kernel");
 }
 
 /**
  * @brief Run the 1D @p kernel on the @p queue with the additional parameters @p args.
  * @tparam Args the types of the arguments
- * @param[in,out] queue the command queue on which the kernel should be executed
- * @param[in,out] kernel the kernel to run
+ * @param[in] queue the command queue on which the kernel should be executed
+ * @param[in] kernel the kernel to run
  * @param[in] grid_size the number of global work-items
  * @param[in] block_size the number of work-items that make up a work-group
  * @param[in] args the arguments to set

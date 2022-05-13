@@ -49,4 +49,7 @@ unsupported_backend_exception::unsupported_backend_exception(const std::string &
 unsupported_kernel_type_exception::unsupported_kernel_type_exception(const std::string &msg, source_location loc) :
     exception{ msg, "unsupported_kernel_type_exception", loc } {}
 
+gpu_device_ptr_exception::gpu_device_ptr_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "gpu_device_ptr_exception", loc } {}
+
 }  // namespace plssvm

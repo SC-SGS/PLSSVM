@@ -81,7 +81,7 @@ TYPED_TEST(Parameter, default_constructor) {
     EXPECT_EQ(params.cost, real_type{ 1 });
     EXPECT_EQ(params.epsilon, real_type{ 0.001 });
     EXPECT_TRUE(params.print_info);
-    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(params.target, plssvm::target_platform::automatic);
 
     EXPECT_TRUE(params.input_filename.empty());
@@ -646,9 +646,10 @@ TYPED_TEST(Parameter, output_operator) {
                     "cost                        1\n"
                     "epsilon                     0.001\n"
                     "print_info                  true\n"
-                    "backend                     openmp\n"
+                    "backend                     automatic\n"
                     "target platform             automatic\n"
                     "SYCL kernel invocation type automatic\n"
+                    "SYCL implementation type    automatic\n"
                     "input_filename              ''\n"
                     "model_filename              ''\n"
                     "predict_filename            ''\n"
@@ -682,7 +683,7 @@ TYPED_TEST(ParameterTrain, parse_filename) {
     EXPECT_EQ(params.cost, real_type{ 1 });
     EXPECT_EQ(params.epsilon, real_type{ 0.001 });
     EXPECT_TRUE(params.print_info);
-    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(params.target, plssvm::target_platform::automatic);
 
     EXPECT_EQ(params.input_filename, PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
@@ -700,7 +701,7 @@ TYPED_TEST(ParameterTrain, parse_filename) {
 // check whether the command line parsing for plssvm::parameter_train<T> is correct
 TYPED_TEST(ParameterTrain, parse_command_line_arguments) {
     // used command line parameters
-    std::vector<std::string> argv_vec = { "./svm-train", "--backend", "cuda", "--target_platform", "gpu_nvidia", "-t", "1", "-d", "5", "--gamma", "3.1415", "-r", "0.42", "--cost", "1.89", "-e", "0.00001", "-q", "--input", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    std::vector<std::string> argv_vec = { "./plssvm-train", "--backend", "cuda", "--target_platform", "gpu_nvidia", "-t", "1", "-d", "5", "--gamma", "3.1415", "-r", "0.42", "--cost", "1.89", "-e", "0.00001", "-q", "--input", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
     std::vector<char *> argv(argv_vec.size());
     for (std::size_t i = 0; i < argv.size(); ++i) {
         argv[i] = argv_vec[i].data();
@@ -757,7 +758,7 @@ TYPED_TEST(ParameterPredict, parse_filename) {
     EXPECT_EQ(params.cost, real_type{ 1 });
     EXPECT_EQ(params.epsilon, real_type{ 0.001 });
     EXPECT_TRUE(params.print_info);
-    EXPECT_EQ(params.backend, plssvm::backend_type::openmp);
+    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(params.target, plssvm::target_platform::automatic);
 
     EXPECT_EQ(params.input_filename, PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
@@ -776,7 +777,7 @@ TYPED_TEST(ParameterPredict, parse_filename) {
 TYPED_TEST(ParameterPredict, parse_command_line_arguments) {
     // used command line parameters
 
-    std::vector<std::string> argv_vec = { "./svm-predict", "--backend", "opencl", "--target_platform", "cpu", "--test", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm", "--model", PLSSVM_TEST_PATH "/data/models/5x4.libsvm.model" };
+    std::vector<std::string> argv_vec = { "./plssvm-predict", "--backend", "opencl", "--target_platform", "cpu", "--test", PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm", "--model", PLSSVM_TEST_PATH "/data/models/5x4.libsvm.model" };
     std::vector<char *> argv(argv_vec.size());
     for (std::size_t i = 0; i < argv.size(); ++i) {
         argv[i] = argv_vec[i].data();

@@ -17,6 +17,7 @@
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
@@ -38,12 +39,13 @@
 
 namespace generic {
 
-template <template <typename> typename csvm_type, typename real_type, plssvm::backend_type backend>
+template <template <typename> typename csvm_type, typename real_type, plssvm::backend_type backend, plssvm::sycl_generic::implementation_type impl_type = plssvm::sycl_generic::implementation_type::automatic>
 inline void csvm_factory_test() {
     // create parameter object
     plssvm::parameter<real_type> params;
     params.print_info = false;
     params.backend = backend;
+    params.sycl_implementation_type = impl_type;
 
     params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
 
@@ -128,12 +130,12 @@ inline void generate_q_test() {
     mock_csvm csvm{ params };
     using real_type_csvm = typename decltype(csvm)::real_type;
 
-    // parse libsvm file and calculate q vector
-    const std::vector<real_type> correct = compare::generate_q<kernel>(csvm.get_data(), csvm);
-
     // setup C-SVM based on specified backend
     csvm_type csvm_backend{ params };
     using real_type_csvm_backend = typename decltype(csvm_backend)::real_type;
+
+    // calculate q vector
+    const std::vector<real_type> correct = compare::generate_q<kernel>(csvm.get_data(), csvm_backend.get_num_devices(), csvm);
 
     // check types
     testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_backend>();
@@ -148,7 +150,7 @@ inline void generate_q_test() {
     }
 }
 
-template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel, plssvm::sycl::kernel_invocation_type invocation_type = plssvm::sycl::kernel_invocation_type::automatic>
+template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel, plssvm::sycl_generic::kernel_invocation_type invocation_type = plssvm::sycl_generic::kernel_invocation_type::automatic>
 inline void device_kernel_test() {
     // create parameter object
     plssvm::parameter<real_type> params;
@@ -171,16 +173,16 @@ inline void device_kernel_test() {
     std::uniform_real_distribution<real_type> dist(1.0, 2.0);
     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 
-    // create correct q vector, cost and QA_cost
-    const std::vector<real_type> q_vec = compare::generate_q<kernel>(csvm.get_data(), csvm);
-    const real_type cost = csvm.get_cost();
-    const real_type QA_cost = compare::kernel_function<kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
-
     // create C-SVM using the specified backend
     csvm_type csvm_backend{ params };
     using real_type_csvm_backend = typename decltype(csvm)::real_type;
     using device_ptr_type = typename decltype(csvm_backend)::device_ptr_type;
     using queue_type = typename decltype(csvm_backend)::queue_type;
+
+    // create correct q vector, cost and QA_cost
+    const std::vector<real_type> q_vec = compare::generate_q<kernel>(csvm.get_data(), csvm_backend.get_num_devices(), csvm);
+    const real_type cost = csvm.get_cost();
+    const real_type QA_cost = compare::kernel_function<kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 
     // check types
     testing::StaticAssertTypeEq<real_type_csvm, real_type_csvm_backend>();

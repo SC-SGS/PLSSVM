@@ -63,13 +63,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::cuda::detail::device
     using base_type::dept_;
 
   public:
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = typename base_type::real_type;
-
-    /// The type of the CUDA device pointer.
-    using device_ptr_type = ::plssvm::cuda::detail::device_ptr<real_type>;
-    /// The type of the CUDA device queue.
-    using queue_type = int;
+    using typename base_type::real_type;
+    using typename base_type::device_ptr_type;
+    using typename base_type::queue_type;
 
     /**
      * @brief Construct a new C-SVM using the CUDA backend with the parameters given through @p params.

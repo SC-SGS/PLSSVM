@@ -1,0 +1,475 @@
+#!groovy
+
+def buildbadge = addEmbeddableBadgeConfiguration(id: "Jenkins", subject: "Jenkins Tests", status: "skipped")
+
+if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
+    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} triggered by branch indexing..."
+    if (env.BRANCH_NAME != "master") {
+        if (env.BUILD_NUMBER != "1") { // Always execute first build to load this configuration and thus the triggers
+            print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} skipped due being triggered by Branch Indexing instead of SCM change!"
+            buildbadge.setStatus('skipped')
+            currentBuild.result = 'ABORTED'
+            return // early exit to avoid redundant builds
+        }
+    }
+} else {
+    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} triggered by SCM change..."
+    print "Proceeding!"
+}
+
+pipeline {
+    agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
+
+    options {
+        buildDiscarder(
+            logRotator(
+                daysToKeepStr: "21",
+                numToKeepStr: "50",
+                artifactDaysToKeepStr: "21",
+                artifactNumToKeepStr: "50"
+            )
+        )
+    disableConcurrentBuilds()
+    }
+
+    triggers {
+        githubPush() // Trigger by push to respective github branch
+        pollSCM 'H/30 * * * *' // Fallback polling solution as some pushes are somehow lost
+    }
+
+    environment {
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        BRANCH_NAME = "${env.BRANCH_NAME}"
+    }
+
+    stages {
+        stage('Init') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                        curl --verbose\
+                            --request POST \
+                            --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                            --header "Content-Type: application/json" \
+                            --header "authorization: Bearer ${gitlab_token}" \
+                            --data "{
+                                \\"state\\": \\"pending\\",
+                                \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
+                                \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
+                                \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-GPU_NVIDIA/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        }"
+                    '''
+                }
+            }
+        }
+        stage('Checkout PLSSVM') {
+            steps {
+                dir('plssvm') {
+                    checkout scm
+                }
+            }
+        }
+        stage('Setup Python Dependencies'){
+            steps{
+                sh '''
+                    /usr/bin/python3.8 -m pip install --user arff
+                    /usr/bin/python3.8 -m pip install --user numpy
+                    /usr/bin/python3.8 -m pip install --user pandas
+                    /usr/bin/python3.8 -m pip install --user sklearn
+                    /usr/bin/python3.8 -m pip install --user argparse
+                '''
+            }
+        }
+        // Release
+        // CUDA backend
+        stage('Build PLSSVM Release - CUDA') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - CUDA') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            module load cuda/11.2.2
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // OpenCL backend
+        stage('Build PLSSVM Release - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            module load cuda/11.2.2
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // hipSYCL backend
+        stage('Build PLSSVM Release - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load network_hipsycl_cuda
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load network_hipsycl_cuda
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // DPC++ backend
+        stage('Build PLSSVM Release - DPC++') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load network_dpcpp_cuda
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - DPC++') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load network_dpcpp_cuda
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // CUDA + OpenCL + hipSYCL + DPC++ backends simultaneously
+        stage('Build PLSSVM Release - All Available') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load cuda/11.2.2
+                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+
+                        # DPC++
+                        export PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/bin:$PATH
+                        export LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib:$LIBRARY_PATH
+                        export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/lib:$LD_LIBRARY_PATH
+                        export CPLUS_INCLUDE_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/projects/openmp/runtime/src:$CPLUS_INCLUDE_PATH
+
+                        export PLSSVM_SYCL_DPCPP_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/include
+
+                        # hipSYCL
+                        export PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/bin:$PATH
+                        export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/lib:$LD_LIBRARY_PATH
+
+                        export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/include
+
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/include/sycl -DOpenCL_LIBRARY=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Release - All Available') {
+            steps {
+                dir('plssvm') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load cuda/11.2.2
+                            module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
+
+                            # DPC++
+                            export PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/bin:$PATH
+                            export LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib:$LIBRARY_PATH
+                            export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/lib:$LD_LIBRARY_PATH
+                            export CPLUS_INCLUDE_PATH=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/projects/openmp/runtime/src:$CPLUS_INCLUDE_PATH
+
+                            export PLSSVM_SYCL_DPCPP_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/install/include
+
+                            # hipSYCL
+                            export PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/bin:$PATH
+                            export LD_LIBRARY_PATH=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/lib:$LD_LIBRARY_PATH
+
+                            export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/hipsycl/cuda/include
+
+                            cd build/Release
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // Debug
+        // CUDA backend
+        stage('Build PLSSVM Debug - CUDA') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - CUDA') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module load cuda/11.2.2
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // OpenCL backend
+        stage('Build PLSSVM Debug - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - OpenCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module load cuda/11.2.2
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // hipSYCL backend
+        stage('Build PLSSVM Debug - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                        module use /home/breyerml/.modulefiles/
+                        module load network_hipsycl_cuda
+                        mkdir -p build/Debug
+                        cd build/Debug
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    warnError('Debug tests failed!') {
+                        sh '''
+                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            module load network_hipsycl_cuda
+                            cd build/Debug
+                            ctest -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+        // DPC++ backend
+        // stage('Build PLSSVM Debug - DPC++') {
+        //     steps {
+        //         dir('plssvm') {
+        //             sh '''
+        //                 source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+        //                 module use /home/breyerml/.modulefiles/
+        //                 module load network_dpcpp_cuda
+        //                 mkdir -p build/Debug
+        //                 cd build/Debug
+        //                 rm -rf *
+        //                 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+        //                 make -j4
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('Run Tests Debug - DPC++') {
+        //     steps {
+        //         dir('plssvm') {
+        //             warnError('Debug tests failed!') {
+        //                 sh '''
+        //                     source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
+        //                     module use /home/breyerml/.modulefiles/
+        //                     module load network_dpcpp_cuda
+        //                     cd build/Debug
+        //                     ctest -j4 --no-compress-output -T Test
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
+    }
+    post {
+        always {
+            // Process the CTest xml output with the xUnit plugin
+            xunit (
+                testTimeMargin: '3000',
+                thresholdMode: 1,
+                thresholds: [
+                    skipped(failureThreshold: '0'),
+                    failed(failureThreshold: '0')
+                ],
+                tools: [CTest(
+                    pattern: 'plssvm/build/*/Testing/**/*.xml',
+                    deleteOutputFiles: true,
+                    failIfNotNew: false,
+                    skipNoTestFiles: true,
+                    stopProcessingIfError: true
+                )]
+            )
+
+        }
+        success {
+            script {
+                buildbadge.setStatus('success')
+            }
+            sh '''
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                    --request POST \
+                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                    --header "Content-Type: application/json" \
+                    --header "authorization: Bearer ${gitlab_token}" \
+                    --data "{
+                        \\"state\\": \\"success\\",
+                        \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-GPU_NVIDIA/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                }"
+            '''
+        }
+        failure {
+            script {
+                buildbadge.setStatus('failing')
+            }
+            sh '''
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                    --request POST \
+                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                    --header "Content-Type: application/json" \
+                    --header "authorization: Bearer ${gitlab_token}" \
+                    --data "{
+                        \\"state\\": \\"failure\\",
+                        \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-GPU_NVIDIA/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                }"
+            '''
+        }
+        aborted {
+            script {
+                buildbadge.setStatus('aborted')
+            }
+            sh '''
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                    --request POST \
+                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                    --header "Content-Type: application/json" \
+                    --header "authorization: Bearer ${gitlab_token}" \
+                    --data "{
+                        \\"state\\": \\"error\\",
+                        \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-GPU_NVIDIA/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                }"
+            '''
+        }
+    }
+}

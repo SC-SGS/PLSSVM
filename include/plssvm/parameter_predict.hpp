@@ -35,6 +35,7 @@ class parameter_predict : public parameter<T> {
     using base_type::gamma;
     using base_type::kernel;
     using base_type::print_info;
+    using base_type::sycl_implementation_type;
     using base_type::target;
 
     using base_type::input_filename;

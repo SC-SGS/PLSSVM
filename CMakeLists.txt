@@ -4,10 +4,10 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.21)
 
 project("PLSSVM - Parallel Least Squares Support Vector Machine"
-        VERSION 1.1.1
+        VERSION 1.2.0
         LANGUAGES CXX
         DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
@@ -29,6 +29,7 @@ configure_file(
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
@@ -39,14 +40,15 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
 )
 
 ## create base library: linked against all backend libraries
-set(PLSSVM_BASE_LIBRARY_NAME svm-base)
+set(PLSSVM_BASE_LIBRARY_NAME plssvm-base)
 add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
 ## create all library: one target against all backends are linked
-set(PLSSVM_ALL_LIBRARY_NAME svm-all)
+set(PLSSVM_ALL_LIBRARY_NAME plssvm-all)
 add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
 
 ## create list of targets to install
@@ -70,7 +72,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ## nvcc doesn't recognize -Werror=??? option so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
-        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4061>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062>
         )
 ## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -88,20 +90,27 @@ if(OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed up file parsing.")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+else()
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+            )
 endif()
 
 ## setup dependencies
 include(FetchContent)
 
 ## try finding cxxopts
-find_package(cxxopts QUIET)
+find_package(cxxopts 3.0.0 QUIET)
 if(cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
 else()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
+    set(PLSSVM_cxxopts_VERSION v3.0.0)
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY          https://github.com/jarro2783/cxxopts.git
+            GIT_TAG                 ${PLSSVM_cxxopts_VERSION}
             GIT_SHALLOW             TRUE
 
             set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -112,7 +121,8 @@ else()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
+    message(STATUS "Installed cxxopts version ${PLSSVM_cxxopts_VERSION}.")
 endif()
 
 ## try finding fast_float
@@ -121,10 +131,11 @@ if(fast_float_FOUND)
     message(STATUS "Found package fast_float.")
 else()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
+    set(PLSSVM_fast_float_VERSION v3.4.0)
     # fetch float parsing library fast_float
     FetchContent_Declare(fast_float
             GIT_REPOSITORY          https://github.com/fastfloat/fast_float
-            GIT_TAG                 8159e8bcf63c1b92f5a51fb550f966e56624b209
+            GIT_TAG                 ${PLSSVM_fast_float_VERSION}
             GIT_SHALLOW             TRUE
 
             set(FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
@@ -140,23 +151,26 @@ else()
             $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
+    message(STATUS "Installed fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif()
 
 ## try finding fmt
-find_package(fmt QUIET)
+find_package(fmt 8.0.0 QUIET)
 if(fmt_FOUND)
     message(STATUS "Found package fmt.")
 else()
     message(STATUS "Couldn't find package fmt. Building from source ...")
+    set(PLSSVM_fmt_VERSION 8.1.1)
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY          https://github.com/fmtlib/fmt.git
-            GIT_TAG                 d141cdbeb0fb422a3fb7173b285fd38e0d1772dc
+            GIT_TAG                 ${PLSSVM_fmt_VERSION}
             GIT_SHALLOW             TRUE
 
             set(FMT_TEST OFF CACHE BOOL "" FORCE)
             set(FMT_DOC OFF CACHE BOOL "" FORCE)
             set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+            set(FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -167,6 +181,7 @@ else()
             )
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
+    message(STATUS "Installed {fmt} version ${PLSSVM_fmt_VERSION}.")
 endif()
 set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
@@ -176,10 +191,10 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 ##                                                 create executables                                                 ##
 ########################################################################################################################
 ## create train executable
-set(PLSSVM_EXECUTABLE_TRAIN_NAME svm-train)
+set(PLSSVM_EXECUTABLE_TRAIN_NAME plssvm-train)
 add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_train.cpp)
 ## create predict executable
-set(PLSSVM_EXECUTABLE_PREDICT_NAME svm-predict)
+set(PLSSVM_EXECUTABLE_PREDICT_NAME plssvm-predict)
 add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
 
 ## append executables to installed targets
@@ -242,7 +257,36 @@ if(DEFINED PLSSVM_TARGET_PLATFORMS)
 elseif(DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
     set(PLSSVM_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The target platforms to compile for." FORCE)
 else()
-    message(FATAL_ERROR "PLSSVM_TARGET_PLATFORMS must be defined (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel\"!")
+    # check for Python3 and all necessary libraries
+    find_package(Python3 COMPONENTS Interpreter Development)
+    if(NOT Python3_FOUND)
+        message(FATAL_ERROR "Can't find Python3. Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
+    endif()
+
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_python_libs.cmake)
+    set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS cpuinfo GPUtil pyamdgpuinfo pylspci)
+    message(STATUS "Checking required Python3 libraries (${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS}) to automatically determine the PLSSVM_TARGET_PLATFORMS.")
+    set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE "or manually define PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
+    check_python_libs(${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS} ${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE})
+
+    # run our `plssvm_target_platforms.py` script to determine the PLSSVM_TARGET_PLATFORMS string
+    execute_process(
+            COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py" "--quiet"
+            RESULT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE
+            OUTPUT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT
+    )
+
+    # an error occurred when running our python script
+    if(NOT ${PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE} EQUAL 0)
+        message(FATAL_ERROR
+                "Error running 'utility_scripts/plssvm_target_platforms.py'."
+                "Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
+        )
+    endif()
+
+    # set PLSSVM_TARGET_PLATFORMS
+    string(STRIP "${PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT}" PLSSVM_TARGET_PLATFORMS)
+    message(STATUS "Automatically derived PLSSVM_TARGET_PLATFORMS=\"${PLSSVM_TARGET_PLATFORMS}\".")
 endif()
 
 ## PLSSVM_TARGET_PLATFORMS must not be empty
@@ -252,6 +296,7 @@ endif()
 
 ## parse provided target platforms
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/parse_architecture_info.cmake)
+set(PLSSVM_PLATFORM_NAME_LIST "automatic")
 foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
     if(PLSSVM_PLATFORM MATCHES "^cpu")
         # parse provided CPU architectures
@@ -260,6 +305,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
     elseif(PLSSVM_PLATFORM MATCHES "^nvidia")
         # parse provided NVIDIA GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
@@ -267,6 +313,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_nvidia")
     elseif(PLSSVM_PLATFORM MATCHES "^amd")
         # parse provided AMD GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
@@ -274,6 +321,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_amd")
     elseif(PLSSVM_PLATFORM MATCHES "^intel")
         # parse provided Intel GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
@@ -281,6 +329,7 @@ foreach(PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
             message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
         endif()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
     else()
         message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
     endif()
@@ -302,6 +351,13 @@ set(PLSSVM_ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend")
 set_property(CACHE PLSSVM_ENABLE_CUDA_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_CUDA_BACKEND)
     add_subdirectory(src/plssvm/backends/CUDA)
+endif()
+
+## check for HIP backend
+set(PLSSVM_ENABLE_HIP_BACKEND AUTO CACHE STRING "Enable HIP Backend")
+set_property(CACHE PLSSVM_ENABLE_HIP_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if(PLSSVM_ENABLE_HIP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_HIP_BACKEND)
+    add_subdirectory(src/plssvm/backends/HIP)
 endif()
 
 ## check for OpenCL backend
@@ -349,7 +405,7 @@ if(DEFINED PLSSVM_THREAD_BLOCK_SIZE)
         # add target definition
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_THREAD_BLOCK_SIZE=${PLSSVM_THREAD_BLOCK_SIZE})
     else()
-        message(FATAL_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
+        message(SEND_ERROR "PLSSVM_THREAD_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_THREAD_BLOCK_SIZE}\"!")
     endif()
 endif()
 
@@ -363,7 +419,7 @@ if(DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
         # add target definition
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
     else()
-        message(FATAL_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
+        message(SEND_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
     endif()
 endif()
 
@@ -377,14 +433,14 @@ if(DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
         # add target definition
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_OPENMP_BLOCK_SIZE=${PLSSVM_OPENMP_BLOCK_SIZE})
     else()
-        message(FATAL_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
+        message(SEND_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
     endif()
 endif()
 
 ## change executable floating points from double precision to single precision
-option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the svm-train and svm-predict executables with single precision instead of double precision." OFF)
+option(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION "Build the ${PLSSVM_EXECUTABLE_TRAIN_NAME} and ${PLSSVM_EXECUTABLE_PREDICT_NAME} executables with single precision instead of double precision." OFF)
 if(PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
-    message(STATUS "Using single precision floating point numbers for svm-train and svm-predict.")
+    message(STATUS "Using single precision floating point numbers for ${PLSSVM_EXECUTABLE_TRAIN_NAME} and ${PLSSVM_EXECUTABLE_PREDICT_NAME}.")
     target_compile_definitions(${PLSSVM_EXECUTABLE_TRAIN_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
     target_compile_definitions(${PLSSVM_EXECUTABLE_PREDICT_NAME} PRIVATE PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION)
 endif()
@@ -396,13 +452,13 @@ endif()
 option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
 if(PLSSVM_ENABLE_LTO)
     include(CheckIPOSupported)
-    check_ipo_supported(RESULT PLSSVM_LTO_SUPPORTED OUTPUT PLSSVM_LTO_ERROR LANGUAGES CXX)
+    check_ipo_supported(RESULT PLSSVM_LTO_SUPPORTED LANGUAGES CXX)
     if(PLSSVM_LTO_SUPPORTED)
         message(STATUS "Interprocedural optimization (IPO/LTO) enabled.")
         set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     else()
-        message(STATUS "Interprocedural optimization (IPO/LTO) requested but not supported: ${PLSSVM_LTO_ERROR}")
+        message(STATUS "Interprocedural optimization (IPO/LTO) not supported.")
     endif()
 endif()
 
@@ -426,59 +482,93 @@ if(PLSSVM_ENABLE_TESTING)
 endif()
 
 
-
-########################################################################################################################
-##                                        enable timing generation via a script                                       ##
-########################################################################################################################
-option(PLSSVM_GENERATE_TIMING_SCRIPT "Generate a timing script used for performance measurement." OFF)
-if(PLSSVM_GENERATE_TIMING_SCRIPT)
-    configure_file(
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/time.sh.in
-            ${CMAKE_BINARY_DIR}/time.sh
-            @ONLY
-    )
-endif()
-
-
 ########################################################################################################################
 ##                                            print short (backend) summary                                           ##
 ########################################################################################################################
 message(STATUS "Enabled backends with respective targets:")
+set(PLSSVM_BACKEND_NAME_LIST "automatic")
 if(TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENMP_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "openmp")
 endif()
 if(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_CUDA_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "cuda")
+endif()
+if(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
+    message(STATUS "${PLSSVM_HIP_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "hip")
 endif()
 if(TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "opencl")
 endif()
 if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
-    message(STATUS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING}")
+    foreach(SUMMARY_STRING ${PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS})
+        message(STATUS "${SUMMARY_STRING}")
+    endforeach()
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "sycl")
 endif()
+
+
+########################################################################################################################
+##                                                 generate man pages                                                 ##
+########################################################################################################################
+string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
+string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
+string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")
+if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+    set(PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY "
+.TP
+.B --sycl_implementation_type
+choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
+")
+    set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY "
+.TP
+.B --sycl_kernel_invocation_type
+choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+")
+endif()
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
+        @ONLY
+)
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        @ONLY
+)
 
 
 ########################################################################################################################
 ##                                           add support for `make install`                                           ##
 ########################################################################################################################
+include(GNUInstallDirs)
 ## install all necessary library targets
 install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         EXPORT plssvm_Targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
-        )
+)
 
 ## mark header to install via 'make install'
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        )
+)
 ## only mark fmt headers to install if build via FetchContent
 if(NOT fmt_FOUND)
     install(DIRECTORY "${fmt_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-            )
+    )
 endif()
+## mark man pages to install
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1 ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
+)
 
 ## manage version comparison
 include(CMakePackageConfigHelpers)
@@ -500,10 +590,10 @@ install(EXPORT plssvm_Targets
         FILE plssvmTargets.cmake
         NAMESPACE plssvm::
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
-        )
+)
 
 ## create file containing the build configuration and version information
 install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
-        )
+)

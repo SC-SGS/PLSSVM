@@ -8,8 +8,8 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.9.0
         with:
           toolset: 14.29
-      - name: "Install cmake 3.20.1"
-        uses: lukka/get-cmake@v3.20.1
+      - name: "Install cmake 3.22.2"
+        uses: lukka/get-cmake@v3.22.2
       - name: "Clone Step"
         uses: actions/checkout@v2
         with:

@@ -1,0 +1,33 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  PLSSVM: A (multi-)GPGPU-accelerated Least Squares
+  Support Vector Machine
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Alexander
+    family-names: Van Craen
+    email: Alexander.Van-Craen@ipvs.uni-stuttgart.de
+    affiliation: University of Stuttgart
+    orcid: 'https://orcid.org/0000-0002-3336-7226'
+  - given-names: Marcel
+    family-names: Breyer
+    email: Marcel.Breyer@ipvs.uni-stuttgart.de
+    affiliation: University of Stuttgart
+    orcid: 'https://orcid.org/0000-0003-3574-0650'
+  - given-names: Dirk
+    family-names: Pflüger
+    email: Dirk.Pflueger@ipvs.uni-stuttgart.de
+    affiliation: University of Stuttgart
+    orcid: 'https://orcid.org/0000-0002-4360-0212'
+repository-code: 'https://github.com/SC-SGS/PLSSVM'
+url: 'https://sc-sgs.github.io/PLSSVM/'
+repository: 'https://github.com/SC-SGS/PLSSVM'
+license: MIT
+version: v1.2.0
+date-released: '2022-04-27'

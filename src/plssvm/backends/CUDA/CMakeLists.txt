@@ -13,12 +13,16 @@ check_language(CUDA)
 if(NOT CMAKE_CUDA_COMPILER)
     message(CHECK_FAIL "not found")
     if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
-        message(FATAL_ERROR "Cannot find requested backend: CUDA!")
+        message(SEND_ERROR "Cannot find requested backend: CUDA!")
     endif()
     return()
 else()
     if(NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        message(STATUS "Found requested CUDA backend, but no \"nvidia\" targets were specified!")
+        if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested CUDA backend, but no \"nvidia\" targets were specified!")
+        else()
+            message(STATUS "Found CUDA backend, but no \"nvidia\" targets were specified!")
+        endif()
         message(CHECK_FAIL "skipped")
         return()
     endif()
@@ -50,10 +54,11 @@ set(PLSSVM_CUDA_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
     ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 
 # set target properties
-set_local_and_parent(PLSSVM_CUDA_BACKEND_LIBRARY_NAME svm-CUDA)
+set_local_and_parent(PLSSVM_CUDA_BACKEND_LIBRARY_NAME plssvm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
 if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
@@ -68,6 +73,7 @@ set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTU
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set compile definition that the CUDA backend is available
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_CUDA_BACKEND)
 target_compile_definitions(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CUDA_BACKEND)
 
 # link against interface library
