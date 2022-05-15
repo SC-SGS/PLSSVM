@@ -45,7 +45,7 @@ std::size_t parse_libsvm_num_features(file_reader &reader, const std::size_t num
 
                 // check index of last feature entry
                 std::string_view::size_type pos_colon = line.find_last_of(':');
-                std::string_view::size_type pos_whitespace = line.find_last_of( ' ', pos_colon);
+                std::string_view::size_type pos_whitespace = line.find_last_of(' ', pos_colon);
                 const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos_whitespace, pos_colon - pos_whitespace));
                 num_features = std::max<std::size_t>(num_features, index);
 
@@ -145,8 +145,9 @@ bool read_libsvm_data(file_reader &reader, const std::size_t start, std::shared_
     return has_label;
 }
 
+
 template <typename real_type, typename label_type, bool has_label>
-void write_libsvm_data(fmt::ostream &out, const std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr, const std::shared_ptr<std::vector<label_type>> &y_ptr = nullptr) {
+void write_libsvm_data_impl(fmt::ostream &out, const std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr, const std::shared_ptr<std::vector<label_type>> &y_ptr) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(y_ptr != nullptr, "has_label is 'true' but no labels were provided!");
     }
@@ -186,6 +187,16 @@ void write_libsvm_data(fmt::ostream &out, const std::shared_ptr<std::vector<std:
         #pragma omp critical
         out.print("{}", out_string);
     }
+}
+
+template <typename real_type, typename label_type>
+void write_libsvm_data(fmt::ostream &out, const std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr, const std::shared_ptr<std::vector<label_type>> &y_ptr) {
+    write_libsvm_data_impl<real_type, label_type, true>(out, X_ptr, y_ptr);
+}
+
+template <typename real_type>
+void write_libsvm_data(fmt::ostream &out, const std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr) {
+    write_libsvm_data_impl<real_type, real_type, false>(out, X_ptr, nullptr);
 }
 
 }
