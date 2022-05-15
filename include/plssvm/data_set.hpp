@@ -35,6 +35,7 @@
 #include <set>         // std::set
 #include <string>      // std::string
 #include <tuple>       // std::tie
+#include <type_traits> // std::is_same_v, std::is_arithmetic_v
 #include <utility>     // std::move, std::pair
 #include <variant>     // std::variant
 #include <vector>      // std::vector
@@ -67,7 +68,7 @@ class data_set {
 
 
     // save the data set in the given format
-    void save_data_set(const std::string& filename, file_format_type format) const;
+    void save(const std::string& filename, file_format_type format) const;
 
     [[nodiscard]] const std::vector<std::vector<real_type>>& data() const noexcept { return *X_ptr_; }
     [[nodiscard]] bool has_labels() const noexcept { return y_ptr_ != nullptr; }
@@ -79,6 +80,8 @@ class data_set {
     [[nodiscard]] size_type num_labels() const noexcept { return mapping_.size(); }
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
+
+    [[nodiscard]] const std::map<real_type, label_type>& mapping() const noexcept { return mapping_; }
 
   private:
     void create_mapping();
@@ -175,7 +178,7 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X, std::vector<la
  *                                Save Data Set                               *
  ******************************************************************************/
 template <typename T, typename U>
-void data_set<T, U>::save_data_set(const std::string &filename, const file_format_type format) const {
+void data_set<T, U>::save(const std::string &filename, const file_format_type format) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save the data set
@@ -294,9 +297,9 @@ void data_set<T, U>::write_libsvm_file(const std::string& filename) const {
     fmt::ostream out = fmt::output_file(filename);
     // write data
     if (this->has_labels()) {
-        detail::io::write_libsvm_data<real_type, label_type, true>(out, X_ptr_, labels_ptr_);
+        detail::io::write_libsvm_data(out, X_ptr_, labels_ptr_);
     } else {
-        detail::io::write_libsvm_data<real_type, label_type, false>(out, X_ptr_);
+        detail::io::write_libsvm_data(out, X_ptr_);
     }
 }
 
@@ -394,8 +397,9 @@ void data_set<T,U>::read_arff_file(const std::string &filename) {
     }
 }
 
-namespace detail {
 
+// TODO:
+namespace detail {
 
 // two possible types: real_type + real_type and real_type + std::string
 using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;

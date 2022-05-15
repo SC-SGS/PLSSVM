@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         // create data set and scale
         std::visit([&](auto&& data){
             // write scaled data to output file
-            data.save_data_set(params.scaled_filename, params.format);
+            data.save(params.scaled_filename, params.format);
         }, plssvm::detail::data_set_factory<true>(params));
 
     } catch (const plssvm::exception &e) {
