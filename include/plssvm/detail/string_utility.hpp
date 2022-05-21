@@ -123,6 +123,6 @@ std::string &to_upper_case(std::string &str);
  * @param[in] delim the split delimiter
  * @return the split sub-strings (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::string_view> split(std::string_view str, char delim);
+[[nodiscard]] std::vector<std::string_view> split(std::string_view str, char delim = ' ');
 
 }  // namespace plssvm::detail
