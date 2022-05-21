@@ -291,7 +291,7 @@ class csvm {
 
 extern template class csvm<float>;
 extern template class csvm<double>;
-
+/*
 namespace new_ {
 
 inline bool print_info = true;
@@ -462,5 +462,5 @@ class csvm {
 };
 
 }
-
+*/
 }  // namespace plssvm
