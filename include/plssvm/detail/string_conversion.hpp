@@ -29,9 +29,10 @@ namespace plssvm::detail {
 /**
  * @brief Converts the string @p str to a value of type @p T.
  * @details If @p T is an integral type [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) is used,
- *          if @p T is a floating point type [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used
- *          and if @p T is neither of both, an exception is thrown.
- * @tparam T the type to convert the value of @p str to, must be an arithmetic type
+ *          if @p T is a floating point type [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used,
+ *          if @p T is a `std::string` the normal `std::string`constructor is used,
+ *          and if @p T is neither of the three, an exception is thrown.
+ * @tparam T the type to convert the value of @p str to, must be an arithmetic type or a `std::string`
  * @tparam Exception the exception type to throw in case that @p str can't be converted to a value of @p T
  *         (default: [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error)).
  * @param[in] str the string to convert
@@ -86,6 +87,27 @@ template <typename T>
         return convert_to<T>(str.substr(n, m != std::string_view::npos ? m - n : m));
     }
     throw std::runtime_error{ fmt::format("String {} doesn't contain any integer!", str) };
+}
+
+/**
+ * @brief Split the string @p str at the positions with delimiter @p delim and return the sub-strings **converted** to the type @p T.
+ * @tparam T the type to convert the value of @p str to, must be an arithmetic type or a `std::string`
+ * @param[in] str the string to split
+ * @param[in] delim the split delimiter
+ * @return the split sub-strings **converted** to the type @p T (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<T> split_as(const std::string_view str, const char delim = ' ') {
+    std::vector<T> splitted;
+
+    std::string_view::size_type pos = 0;
+    std::string_view::size_type next = 0;
+    while (next != std::string_view::npos) {
+        next = str.find_first_of(delim, pos);
+        splitted.emplace_back(convert_to<T>(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos)));
+        pos = next + 1;
+    }
+    return splitted;
 }
 
 }  // namespace plssvm::detail
