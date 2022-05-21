@@ -33,6 +33,7 @@
 
 
 #include "plssvm/data_set.hpp"
+#include "plssvm/model.hpp"
 
 /// The main namespace containing all public API functions.
 namespace plssvm {}

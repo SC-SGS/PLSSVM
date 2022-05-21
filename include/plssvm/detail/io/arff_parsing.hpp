@@ -22,7 +22,6 @@
 
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::make_tuple
@@ -32,7 +31,7 @@
 namespace plssvm::detail::io {
 
 
-std::tuple<std::size_t, std::size_t, bool> read_arff_header(file_reader &reader) {
+inline std::tuple<std::size_t, std::size_t, bool> read_arff_header(file_reader &reader) {
     std::size_t num_features = 0;
     bool has_label = false;
 
@@ -74,13 +73,13 @@ std::tuple<std::size_t, std::size_t, bool> read_arff_header(file_reader &reader)
 }
 
 template <typename real_type, typename label_type>
-void read_arff_data(file_reader &reader, std::size_t header, std::size_t num_features, std::size_t max_size, bool has_label, std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr, std::shared_ptr<std::vector<label_type>> &y_ptr) {
+inline void read_arff_data(file_reader &reader, std::size_t header, std::size_t num_features, std::size_t max_size, bool has_label, std::vector<std::vector<real_type>> &X, std::vector<label_type> &y) {
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, X_ptr, y_ptr, parallel_exception) firstprivate(header, num_features, max_size, has_label)
+    #pragma omp parallel default(none) shared(reader, X, y, parallel_exception) firstprivate(header, num_features, max_size, has_label)
     {
         #pragma omp for
-        for (std::size_t i = 0; i < X_ptr->size(); ++i) {
+        for (std::size_t i = 0; i < X.size(); ++i) {
             #pragma omp cancellation point for
             try {
                 std::string_view line = reader.line(i + header + 1);
@@ -120,9 +119,9 @@ void read_arff_data(file_reader &reader, std::size_t header, std::size_t num_fea
                         // write parsed value depending on the index
                         if (index == max_size - 1 && has_label) {
                             is_class_set = true;
-                            (*y_ptr)[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
+                            y[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
                         } else {
-                            (*X_ptr)[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            X[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
                         // remove already processes part of the line
@@ -143,14 +142,14 @@ void read_arff_data(file_reader &reader, std::size_t header, std::size_t num_fea
                         if (next_pos == std::string_view::npos) {
                             throw invalid_file_format_exception{ fmt::format("Invalid number of features/labels! Found {} but should be {}!", j, max_size - 1) };
                         }
-                        (*X_ptr)[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        X[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         pos = next_pos + 1;
                     }
                     // write last number to the correct vector (based on the fact whether labels are present or not)
                     if (has_label) {
-                        (*y_ptr)[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
+                        y[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
                     } else {
-                        (*X_ptr)[i][num_features - 1] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos));
+                        X[i][num_features - 1] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos));
                     }
                     // check whether superfluous data points are left
                     next_pos = line.find_first_of(',', pos);
@@ -178,7 +177,7 @@ void read_arff_data(file_reader &reader, std::size_t header, std::size_t num_fea
     }
 }
 
-void write_arff_header(fmt::ostream &out, const std::size_t num_features, const bool has_labels) {
+inline void write_arff_header(fmt::ostream &out, const std::size_t num_features, const bool has_labels) {
     for (std::size_t i = 0; i < num_features; ++i) {
         out.print("@ATTRIBUTE feature{} NUMERIC\n", i);
     }
@@ -189,20 +188,20 @@ void write_arff_header(fmt::ostream &out, const std::size_t num_features, const 
 }
 
 template <typename real_type, typename label_type>
-void write_arff_data(fmt::ostream &out, const std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr, const std::shared_ptr<std::vector<label_type>> &y_ptr) {
+inline void write_arff_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
     // TODO: optimize?, FMT_COMPILE Bug?
     // output with label
-    for (std::size_t i = 0; i < X_ptr->size(); ++i) {
-        out.print("{:e},{}\n", fmt::join((*X_ptr)[i], ","), (*y_ptr)[i]);
+    for (std::size_t i = 0; i < X.size(); ++i) {
+        out.print("{:e},{}\n", fmt::join(X[i], ","), y[i]);
     }
 }
 
 template <typename real_type>
-void write_arff_data(fmt::ostream &out, const std::shared_ptr<std::vector<std::vector<real_type>>> &X_ptr) {
+inline void write_arff_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &X) {
     // TODO: optimize?, FMT_COMPILE Bug?
     // output without label
-    for (std::size_t i = 0; i < X_ptr->size(); ++i) {
-        out.print("{:e}\n", fmt::join((*X_ptr)[i], ","));
+    for (std::size_t i = 0; i < X.size(); ++i) {
+        out.print("{:e}\n", fmt::join(X[i], ","));
     }
 }
 

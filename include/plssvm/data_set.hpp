@@ -53,12 +53,14 @@ class data_set {
     // because std::vector<bool> is evil
     static_assert(!std::is_same_v<U, bool>, "The second template type must NOT be 'bool'!");
 
+    // plssvm::model needs the default constructor
+    template <typename, typename>
+    friend class model;
+
   public:
     using real_type = T;
     using label_type = U;
     using size_type = std::size_t;
-
-    data_set();
 
     explicit data_set(const std::string& filename, std::optional<std::pair<real_type, real_type>> scaling = std::nullopt);
     data_set(const std::string& filename, file_format_type format, std::optional<std::pair<real_type, real_type>> scaling = std::nullopt);
@@ -73,7 +75,7 @@ class data_set {
     [[nodiscard]] const std::vector<std::vector<real_type>>& data() const noexcept { return *X_ptr_; }
     [[nodiscard]] bool has_labels() const noexcept { return y_ptr_ != nullptr; }
     [[nodiscard]] optional_ref<const std::vector<real_type>> mapped_labels() const noexcept;
-    [[nodiscard]] optional_ref<const std::vector<label_type>> labels() noexcept;
+    [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept;
 
     [[nodiscard]] label_type label_from_mapped_value(real_type val) const noexcept;
 
@@ -84,6 +86,8 @@ class data_set {
     [[nodiscard]] const std::map<real_type, label_type>& mapping() const noexcept { return mapping_; }
 
   private:
+    data_set();
+
     void create_mapping();
     void scale(std::pair<real_type, real_type> scaling);
 
@@ -216,7 +220,7 @@ auto data_set<T, U>::mapped_labels() const noexcept -> optional_ref<const std::v
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::labels() noexcept -> optional_ref<const std::vector<label_type>> {
+auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(std::cref(*labels_ptr_));
     } else {
@@ -245,7 +249,7 @@ void data_set<T, U>::create_mapping() {
     const std::set<U> unique_labels(labels_ptr_->begin(), labels_ptr_->end());
     // only binary classification allowed as of now
     if (unique_labels.size() != 2) {
-        throw exception{fmt::format("Currently only binary classification is supported, but {} different label where given!", unique_labels.size())};
+        throw exception{ fmt::format("Currently only binary classification is supported, but {} different label where given!", unique_labels.size()) };
     }
     // map binary labels to -1 and 1
     mapping_[-1] = *unique_labels.begin();
@@ -295,11 +299,12 @@ void data_set<T, U>::scale(const std::pair<real_type, real_type> scaling) {
 template <typename T, typename U>
 void data_set<T, U>::write_libsvm_file(const std::string& filename) const {
     fmt::ostream out = fmt::output_file(filename);
+
     // write data
     if (this->has_labels()) {
-        detail::io::write_libsvm_data(out, X_ptr_, labels_ptr_);
+        detail::io::write_libsvm_data(out, *X_ptr_, *labels_ptr_);
     } else {
-        detail::io::write_libsvm_data(out, X_ptr_);
+        detail::io::write_libsvm_data(out, *X_ptr_);
     }
 }
 
@@ -312,9 +317,9 @@ void data_set<T, U>::write_arff_file(const std::string &filename) const {
 
     // write data
     if (this->has_labels()) {
-        detail::io::write_arff_data(out, X_ptr_, y_ptr_);
+        detail::io::write_arff_data(out, *X_ptr_, *y_ptr_);
     } else {
-        detail::io::write_arff_data(out, X_ptr_);
+        detail::io::write_arff_data(out, *X_ptr_);
     }
 }
 
@@ -358,13 +363,17 @@ void data_set<T, U>::read_libsvm_file(const std::string &filename) {
 
     // parse sizes
     num_data_points_ = f.num_lines();
-    num_features_ = detail::io::parse_libsvm_num_features(f, f.num_lines(), 0);
+    num_features_ = detail::io::parse_libsvm_num_features(f, num_data_points_, 0);
 
-    X_ptr_ = std::make_shared<std::vector<std::vector<real_type>>>(num_data_points_, std::vector<real_type>(num_features_));
-    labels_ptr_ = std::make_shared<std::vector<label_type>>(num_data_points_);
+    std::vector<std::vector<real_type>> X(num_data_points_, std::vector<real_type>(num_features_));
+    std::vector<label_type> labels(num_data_points_);
 
     // parse file
-    const bool has_label = detail::io::read_libsvm_data(f, 0, X_ptr_, labels_ptr_);
+    const bool has_label = detail::io::read_libsvm_data(f, 0, X, labels);
+
+    // move data to pointers
+    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
+    labels_ptr_ = std::make_shared<decltype(labels)>(std::move(labels));
 
     // update shared pointer
     if (!has_label) {
@@ -385,11 +394,15 @@ void data_set<T,U>::read_arff_file(const std::string &filename) {
     num_data_points_ = f.num_lines() - (header + 1);
     num_features_ = has_label ? max_size - 1 : max_size;
 
-    X_ptr_ = std::make_shared<std::vector<std::vector<real_type>>>(num_features_, std::vector<real_type>(num_features_));
-    labels_ptr_ = std::make_shared<std::vector<label_type>>(num_data_points_);
+    std::vector<std::vector<real_type>> X(num_data_points_, std::vector<real_type>(num_features_));
+    std::vector<label_type> labels(num_data_points_);
 
     // parse file
-    detail::io::read_arff_data(f, header, num_features_, max_size, has_label, X_ptr_, labels_ptr_);
+    detail::io::read_arff_data(f, header, num_features_, max_size, has_label, X, labels);
+
+    // move data to pointers
+    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
+    labels_ptr_ = std::make_shared<decltype(labels)>(std::move(labels));
 
     // update shared pointer
     if (!has_label) {
@@ -406,7 +419,7 @@ using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set
 
 // create variant based on runtime flag
 template <bool scale, typename cmd_parameter>
-data_set_variants data_set_factory(const cmd_parameter& params) {
+inline data_set_variants data_set_factory(const cmd_parameter& params) {
     bool use_float;
     bool use_strings;
     std::visit([&](auto&& args) {
