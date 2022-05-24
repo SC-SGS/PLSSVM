@@ -1,25 +1,35 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*
-* @brief Implements a class encapsulating all necessary parameters for training the C-SVM possibly provided through command line arguments.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Implements a class encapsulating all necessary parameters for training the C-SVM possibly provided through command line arguments.
+ */
 
 #pragma once
 
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
+#include <iosfwd>  // forward declare std::ostream
 #include <string>  // std::string
 
 namespace plssvm::detail::cmd {
 
+namespace sycl {
+using namespace ::plssvm::sycl_generic;
+}
+
 /**
-* @brief Class for encapsulating all necessary parameters for training possibly provided through command line arguments.
-*/
+ * @brief Class for encapsulating all necessary parameters for training possibly provided through command line arguments.
+ */
 class parameter_train {
   public:
    /**
@@ -34,12 +44,14 @@ class parameter_train {
     */
    parameter_train(int argc, char **argv);
 
-   /// Other parameters
+   /// Other base CSVM parameters
    parameter<double> csvm_params{};
 
    /// The error tolerance parameter for the CG algorithm.
    double epsilon{ 0.001 };
-   // TODO: max_iter
+   /// The maximum number of iterations in the CG algorithm.
+   std::size_t max_iter{ 0 };
+
    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
    backend_type backend = backend_type::automatic;
    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
@@ -50,9 +62,9 @@ class parameter_train {
    /// The SYCL implementation to use with --backend=sycl.
    sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
 
-   // TODO: here?!?
-   /// use strings as label type?
+   /// `true`if `std::string` should be used as label type instead of the default type `ìnt`.
    bool strings_as_labels{ false };
+   /// `true`if `float` should be used as real type instead of the default type `double`.
    bool float_as_real_type{ false };
 
    /// The name of the data/test file to parse.
@@ -61,6 +73,12 @@ class parameter_train {
    std::string model_filename{};
 };
 
+/**
+ * @brief Output all train parameters encapsulated by @p params to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the parameters to
+ * @param[in] params the parameters
+ * @return the output-stream
+ */
 std::ostream &operator<<(std::ostream &out, const parameter_train &params);
 
 }  // namespace plssvm

@@ -6,45 +6,32 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements the parameter base class encapsulating all necessary parameters.
+ * @brief Implements the parameter class encapsulating all important C-SVM parameters.
  */
 
 #pragma once
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
-#include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
 
-#include "igor/igor.hpp"
+#include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT
 
 #include <iosfwd>       // forward declare std::ostream
-#include <memory>       // std::shared_ptr
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
-#include <variant>      // std::variant
-#include <vector>       // std::vector
 
 namespace plssvm {
 
-// TODO: move?
-namespace sycl {
-using namespace ::plssvm::sycl_generic;
-}
-
-inline constexpr auto gamma = igor::named_argument<struct gamma_tag>{};
-inline constexpr auto degree = igor::named_argument<struct degree_tag>{};
-inline constexpr auto coef0 = igor::named_argument<struct coef0_tag>{};
-inline constexpr auto cost = igor::named_argument<struct cost_tag>{};
-inline constexpr auto epsilon = igor::named_argument<struct epsilon_tag>{};
-inline constexpr auto max_iter = igor::named_argument<struct max_iter_tag>{};
-
+// create named arguments
+IGOR_MAKE_NAMED_ARGUMENT(gamma);
+IGOR_MAKE_NAMED_ARGUMENT(degree);
+IGOR_MAKE_NAMED_ARGUMENT(coef0);
+IGOR_MAKE_NAMED_ARGUMENT(cost);
+IGOR_MAKE_NAMED_ARGUMENT(epsilon);
+IGOR_MAKE_NAMED_ARGUMENT(max_iter);
 
 /**
- * @brief Base class for encapsulating all necessary parameters possibly provided through command line arguments.
- * @tparam T the type of the data
+ * @brief Base class for encapsulating all important C-SVM parameters.
+ * @tparam T the real_type used
  */
 template <typename T>
 struct parameter {
@@ -65,13 +52,20 @@ struct parameter {
     /// The cost parameter in the C-SVM.
     real_type cost = real_type{ 1.0 };
 
+    /**
+     * @brief Convert a `plssvm::parameter<T>`to a `plssvm::parameter<U>` (i.e., conversion between float <-> double).
+     * @tparam U the type to convert to
+     * @return the `plssvm::parameter` values converted to @p U
+     */
     template <typename U>
     explicit operator parameter<U>() {
-        // only float and doubles are allowed
-        static_assert(std::is_same_v<U, float> || std::is_same_v<U, double>, "The template type can only be 'float' or 'double'!");
+        // convert between parameter<float> <-> parameter<double>
         return parameter<U>{ kernel, degree, static_cast<U>(gamma), static_cast<U>(coef0), static_cast<U>(cost) };
     }
 };
+
+extern template struct parameter<float>;
+extern template struct parameter<double>;
 
 /**
  * @brief Output all parameters encapsulated by @p params to the given output-stream @p out.
@@ -81,20 +75,6 @@ struct parameter {
  * @return the output-stream
  */
 template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
-    return out << fmt::format(
-               "kernel_type                 {}\n"
-               "degree                      {}\n"
-               "gamma                       {}\n"
-               "coef0                       {}\n"
-               "cost                        {}\n"
-               "real_type                   {}\n",
-               params.kernel,
-               params.degree,
-               params.gamma,
-               params.coef0,
-               params.cost,
-               detail::arithmetic_type_name<typename parameter<T>::real_type>());
-}
+std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
 
 }  // namespace plssvm

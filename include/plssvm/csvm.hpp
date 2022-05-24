@@ -259,12 +259,20 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(epsilon))>, real_type>, "epsilon must be convertible to a real_type!");
         // set value
         epsilon_val = static_cast<real_type>(p(epsilon));
+        // check if value makes sense
+        if (epsilon_val <= real_type{ 0.0 }) {
+            throw invalid_parameter_exception{ fmt::format("epsilon must be greater than 0, but is {}!", epsilon_val) };
+        }
     }
     if constexpr (p.has(max_iter)) {
         // compile time check: the value must have the correct type
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(max_iter))>, size_type>, "max_iter must be convertible to a size_type!");
         // set value
         max_iter_val = static_cast<size_type>(p(max_iter));
+        // check if value makes sense
+        if (max_iter_val == size_type{ 0 }) {
+            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
+        }
     }
 
     using namespace plssvm::operators;

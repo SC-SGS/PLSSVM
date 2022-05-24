@@ -52,7 +52,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    csvm(target_platform target, parameter<T> params = {});
+    explicit csvm(target_platform target, parameter<T> params = {});
     template <typename... Args>
     csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
         // TODO:

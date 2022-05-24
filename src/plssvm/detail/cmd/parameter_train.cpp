@@ -1,10 +1,12 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
+
+// TODO: parameter sanity checks!?!?!
 
 #include "plssvm/detail/cmd/parameter_train.hpp"
 
@@ -37,20 +39,21 @@ parameter_train::parameter_train(int argc, char **argv) {
        .set_tab_expansion()
        // clang-format off
        .add_options()
-           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<kernel_type>()->default_value(fmt::format("{}", detail::to_underlying(kernel_type::linear))))
-           ("d,degree", "set degree in kernel function", cxxopts::value<int>()->default_value("3"))
-           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<double>())
-           ("r,coef0", "set coef0 in kernel function", cxxopts::value<double>()->default_value("0.0"))
-           ("c,cost", "set the parameter C", cxxopts::value<double>()->default_value("1.0"))
-           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<double>()->default_value("0.001"))
-           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<backend_type>()->default_value(detail::as_lower_case("automatic")))
-           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<target_platform>()->default_value(detail::as_lower_case("automatic")))
+           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<decltype(csvm_params.kernel)>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel))))
+           ("d,degree", "set degree in kernel function", cxxopts::value<decltype(csvm_params.degree)>()->default_value(fmt::format("{}", csvm_params.degree)))
+           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<decltype(csvm_params.gamma)>())
+           ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(csvm_params.coef0)>()->default_value(fmt::format("{}", csvm_params.coef0)))
+           ("c,cost", "set the parameter C", cxxopts::value<decltype(csvm_params.cost)>()->default_value(fmt::format("{}", csvm_params.cost)))
+           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(epsilon)>()->default_value(fmt::format("{}", epsilon)))
+           ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<decltype(max_iter)>())
+           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
+           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<sycl::kernel_invocation_type>()->default_value(detail::as_lower_case("automatic")))
-           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(detail::as_lower_case("automatic")))
+           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
+           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>()->default_value("false"))
-           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<bool>()->default_value("false"))
+           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
+           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
@@ -73,8 +76,6 @@ parameter_train::parameter_train(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // parse csvm_params values
-
    // parse kernel_type and cast the value to the respective enum
    csvm_params.kernel = result["kernel_type"].as<decltype(csvm_params.kernel)>();
 
@@ -89,8 +90,6 @@ parameter_train::parameter_train(int argc, char **argv) {
            fmt::print("{}", options.help());
            std::exit(EXIT_FAILURE);
        }
-   } else {
-       csvm_params.gamma = decltype(csvm_params.gamma){ 0.0 };
    }
 
    // parse coef0
@@ -101,6 +100,16 @@ parameter_train::parameter_train(int argc, char **argv) {
 
    // parse epsilon
    epsilon = result["epsilon"].as<decltype(epsilon)>();
+
+   // parse max_iter
+   if (result.count("max_iter")) {
+       max_iter = result["max_iter"].as<decltype(max_iter)>();
+       if (max_iter == decltype(max_iter){ 0 }) {
+           fmt::print(stderr, "max_iter = 0 is not allowed, it doesnt make any sense!\n");
+           fmt::print("{}", options.help());
+           std::exit(EXIT_FAILURE);
+       }
+   }
 
    // parse backend_type and cast the value to the respective enum
    backend = result["backend"].as<decltype(backend)>();
@@ -127,7 +136,7 @@ parameter_train::parameter_train(int argc, char **argv) {
 
    // parse input data filename
    if (!result.count("input")) {
-       fmt::print(stderr, "Error missing input file!");
+       fmt::print(stderr, "Error missing input file!\n");
        fmt::print("{}", options.help());
        std::exit(EXIT_FAILURE);
    }
@@ -163,12 +172,14 @@ std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
     return out << fmt::format(
         "cost: {}\n"
         "epsilon: {}\n"
+        "max_iter: {}\n"
         "use strings as labels: {}\n"
         "use float as real type instead of double: {}\n"
         "input file (data set): '{}'\n"
         "output file (model): '{}'\n",
         params.csvm_params.cost,
         params.epsilon,
+        params.max_iter,
         params.strings_as_labels,
         params.float_as_real_type,
         params.input_filename,
