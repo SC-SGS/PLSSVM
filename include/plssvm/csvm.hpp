@@ -92,24 +92,22 @@ class csvm {
     //                                                              fit model                                                              //
     //*************************************************************************************************************************************//
     template <typename label_type, typename... Args>
-    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args&&... named_args);
+    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args&&... named_args) const;
 
     //*************************************************************************************************************************************//
-    //                                                               predict                                                               //
+    //                                                          predict and score                                                          //
     //*************************************************************************************************************************************//
-    template <typename label_type = int>
-    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
-    template <typename label_type = int>
-    [[nodiscard]] std::vector<real_type> predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
+    template <typename label_type>
+    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    template <typename label_type>
+    [[nodiscard]] std::vector<real_type> predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
     // calculate the accuracy of the model
-    template <typename label_type = int>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model) {
-        return this->score(model, model.data_);
-    }
+    template <typename label_type>
+    [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
     // calculate the accuracy of the data_set
-    template <typename label_type = int>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type> &data);
+    template <typename label_type>
+    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type> &data) const;
 
   protected:
     //*************************************************************************************************************************************//
@@ -182,9 +180,10 @@ class csvm {
     }
 };
 
-//*************************************************************************************************************************************//
-//                                          constructors, destructor, and assignment operators                                         //
-//*************************************************************************************************************************************//
+
+/******************************************************************************
+ *             constructors, destructor, and assignment operators             *
+ ******************************************************************************/
 template <typename T>
 csvm<T>::csvm(parameter<real_type> params) : params_{ std::move(params) } {
     this->sanity_check_parameter();
@@ -256,7 +255,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
  *                                  fit model                                 *
  ******************************************************************************/
 template <typename T> template <typename label_type, typename... Args>
-auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_args) -> model<real_type, label_type> {
+auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_args) const -> model<real_type, label_type> {
     igor::parser p{ std::forward<Args>(named_args)... };
 
     // set default values
@@ -291,6 +290,8 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
             throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
         }
     }
+
+    // start fitting the data set using a C-SVM
 
     using namespace plssvm::operators;
 
@@ -364,10 +365,10 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
 
 
 /******************************************************************************
- *                                   predict                                  *
+ *                              predict and score                             *
  ******************************************************************************/
 template <typename T> template <typename label_type>
-auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<label_type> {
+auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> std::vector<label_type> {
     if (model.num_features() != data.num_features()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
     }
@@ -385,7 +386,7 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<real_type> {
+auto csvm<T>::predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> std::vector<real_type> {
     if (model.num_features() != data.num_features()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
     }
@@ -395,7 +396,12 @@ auto csvm<T>::predict_values(const model<real_type, label_type> &model, const da
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type> &data) -> real_type {
+auto csvm<T>::score(const model<real_type, label_type> &model) const -> real_type {
+    return this->score(model, model.data_);
+}
+
+template <typename T> template <typename label_type>
+auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type> &data) const -> real_type {
     if (!data.has_labels()) {
         throw exception{ "the data set to score must have labels set!" };
     } else if (model.num_features() != data.num_features()) {
