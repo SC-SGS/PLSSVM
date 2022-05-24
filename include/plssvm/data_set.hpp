@@ -77,7 +77,7 @@ class data_set {
     [[nodiscard]] optional_ref<const std::vector<real_type>> mapped_labels() const noexcept;
     [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept;
 
-    [[nodiscard]] label_type label_from_mapped_value(real_type val) const noexcept;
+    [[nodiscard]] label_type label_from_mapped_value(real_type val) const;
 
     [[nodiscard]] size_type num_labels() const noexcept { return mapping_.size(); }
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
@@ -229,11 +229,11 @@ auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<l
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::label_from_mapped_value(const real_type val) const noexcept -> label_type {
+auto data_set<T, U>::label_from_mapped_value(const real_type val) const -> label_type {
     if (mapping_.count(val) == 0) {
         throw exception{ "Illegal mapped value: {}!" };
     }
-    return mapping_[val];
+    return mapping_.at(val);
 }
 
 
@@ -420,29 +420,22 @@ using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set
 // create variant based on runtime flag
 template <bool scale, typename cmd_parameter>
 inline data_set_variants data_set_factory(const cmd_parameter& params) {
-    bool use_float;
-    bool use_strings;
-    std::visit([&](auto&& args) {
-        use_float = args.float_as_real_type;
-        use_strings = args.strings_as_labels;
-    }, params.base_params);
-
     if constexpr (scale) {
-        if (use_float && use_strings) {
+        if (params.float_as_real_type &&  params.strings_as_labels) {
             return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::pair<float, float>{ params.lower, params.upper } } };
-        } else if (use_float && !use_strings) {
+        } else if (params.float_as_real_type && ! params.strings_as_labels) {
             return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::pair<float, float>{ params.lower, params.upper } } };
-        } else if (!use_float && use_strings) {
+        } else if (!params.float_as_real_type &&  params.strings_as_labels) {
             return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::pair<double, double>{ params.lower, params.upper } } };
         } else {
             return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::pair<double, double>{ params.lower, params.upper } } };
         }
     } else {
-        if (use_float && use_strings) {
+        if (params.float_as_real_type &&  params.strings_as_labels) {
             return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename } };
-        } else if (use_float && !use_strings) {
+        } else if (params.float_as_real_type && ! params.strings_as_labels) {
             return data_set_variants{ plssvm::data_set<float>{ params.input_filename } };
-        } else if (!use_float && use_strings) {
+        } else if (!params.float_as_real_type &&  params.strings_as_labels) {
             return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename } };
         } else {
             return data_set_variants{ plssvm::data_set<double>{ params.input_filename } };

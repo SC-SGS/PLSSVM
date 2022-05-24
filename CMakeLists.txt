@@ -34,7 +34,6 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
@@ -142,6 +141,32 @@ else()
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            )
+endif()
+
+## try finding igor
+find_package(igor QUIET)
+if(igor_FOUND)
+    message(STATUS "Found package igor.")
+else()
+    message(STATUS "Couldn't find package igor. Building from source ...")
+    # fetch named argument library igor
+    FetchContent_Declare(igor
+            GIT_REPOSITORY          https://github.com/bluescarni/igor
+            GIT_TAG                 master
+            GIT_SHALLOW             TRUE
+
+            set(IGOR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    )
+    FetchContent_GetProperties(igor)
+    if(NOT igor_POPULATED)
+        FetchContent_Populate(igor)
+        add_subdirectory(${igor_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif()
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} igor)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
 endif()

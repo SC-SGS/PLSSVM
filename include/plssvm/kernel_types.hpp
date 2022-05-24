@@ -11,9 +11,10 @@
 
 #pragma once
 
-#include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"  // dot product, plssvm::squared_euclidean_dist
-#include "plssvm/detail/utility.hpp"    // plssvm::detail::always_false_v
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 
 #include <cmath>   // std::pow, std::exp, std::fma
 #include <iosfwd>  // forward declare std::ostream and std::istream
@@ -85,5 +86,11 @@ template <kernel_type kernel, typename real_type, typename... Args>
         static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
     }
 }
+
+template <typename>
+struct parameter;
+
+template <typename real_type>
+[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter<real_type> &params);
 
 }  // namespace plssvm

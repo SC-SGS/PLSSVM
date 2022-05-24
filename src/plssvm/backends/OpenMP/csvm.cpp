@@ -29,69 +29,70 @@
 
 namespace plssvm::openmp {
 
+// TODO: target_platform?!?!
 template <typename T>
-csvm<T>::csvm(const parameter<T> &params) :
-    ::plssvm::csvm<T>{ params } {
+csvm<T>::csvm(const target_platform target, parameter<T> params) :
+    ::plssvm::csvm<T>{ std::move(params) } {
     // check if supported target platform has been selected
-    if (target_ != target_platform::automatic && target_ != target_platform::cpu) {
-        throw backend_exception{ fmt::format("Invalid target platform '{}' for the OpenMP backend!", target_) };
+    if (target != target_platform::automatic && target != target_platform::cpu) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the OpenMP backend!", target) };
     } else {
 #if !defined(PLSSVM_HAS_CPU_TARGET)
-        throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
+        throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
     }
 
-    if (print_info_) {
+    if (verbose) {
         fmt::print("Using OpenMP as backend.\n\n");
     }
 }
 
 template <typename T>
-auto csvm<T>::generate_q() -> std::vector<real_type> {
-    std::vector<real_type> q(data_ptr_->size() - 1);
-    switch (kernel_) {
+auto csvm<T>::generate_q(const std::vector<std::vector<real_type>> &data) -> std::vector<real_type> {
+    std::vector<real_type> q(data.size() - 1);
+    switch (params_.kernel) {
         case kernel_type::linear:
-            device_kernel_q_linear(q, *data_ptr_);
+            device_kernel_q_linear(q, data);
             break;
         case kernel_type::polynomial:
-            device_kernel_q_poly(q, *data_ptr_, degree_, gamma_, coef0_);
+            device_kernel_q_poly(q, data, params_.degree, params_.gamma, params_.coef0);
             break;
         case kernel_type::rbf:
-            device_kernel_q_radial(q, *data_ptr_, gamma_);
+            device_kernel_q_radial(q, data, params_.gamma);
             break;
     }
     return q;
 }
 
 template <typename T>
-void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type add) {
-    switch (kernel_) {
+void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) {
+    switch (params_.kernel) {
         case kernel_type::linear:
-            openmp::device_kernel_linear(q, ret, d, data, QA_cost_, 1 / cost_, add);
+            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params_.cost, add);
             break;
         case kernel_type::polynomial:
-            openmp::device_kernel_poly(q, ret, d, data, QA_cost_, 1 / cost_, add, degree_, gamma_, coef0_);
+            openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params_.cost, add, params_.degree, params_.gamma, params_.coef0);
             break;
         case kernel_type::rbf:
-            openmp::device_kernel_radial(q, ret, d, data, QA_cost_, 1 / cost_, add, gamma_);
+            openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params_.cost, add, params_.gamma);
             break;
     }
 }
 
 template <typename T>
-auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax, const real_type eps, const std::vector<real_type> &q) -> std::vector<real_type> {
+auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, const real_type QA_cost, const real_type eps, const size_type max_iter) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     std::vector<real_type> alpha(b.size(), 1.0);
     const typename std::vector<real_type>::size_type dept = b.size();
 
     // sanity checks
-    PLSSVM_ASSERT(dept == num_data_points_ - 1, "Sizes mismatch!: {} != {}", dept, num_data_points_ - 1);
+    PLSSVM_ASSERT(dept == A.size() - 1, "Sizes mismatch!: {} != {}", dept, A.size() - 1);
 
     std::vector<real_type> r(b);
 
     // r = A + alpha_ (r = b - Ax)
-    run_device_kernel(q, r, alpha, *data_ptr_, -1);
+    run_device_kernel(q, r, alpha, A, QA_cost, -1);
 
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
@@ -104,22 +105,22 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
     std::chrono::milliseconds average_iteration_time{};
     std::chrono::steady_clock::time_point iteration_start_time{};
     const auto output_iteration_duration = [&]() {
-        auto iteration_end_time = std::chrono::steady_clock::now();
+        std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
         auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
         fmt::print("Done in {}.\n", iteration_duration);
         average_iteration_time += iteration_duration;
     };
 
-    std::size_t run = 0;
-    for (; run < imax; ++run) {
-        if (print_info_) {
-            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, imax, delta, eps * eps * delta0);
+    size_type iter = 0;
+    for (; iter < max_iter; ++iter) {
+        if (verbose) {
+            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         }
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * d (q = A * d)
         std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
-        run_device_kernel(q, Ad, d, *data_ptr_, 1);
+        run_device_kernel(q, Ad, d, A, QA_cost, 1);
 
         // (alpha = delta_new / (d^T * q))
         const real_type alpha_cd = delta / (transposed{ d } * Ad);
@@ -127,12 +128,12 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
         // (x = x + alpha * d)
         alpha += alpha_cd * d;
 
-        if (run % 50 == 49) {
+        if (iter % 50 == 49) {
             // (r = b - A * x)
             // r = b
             r = b;
             // r -= A * x
-            run_device_kernel(q, r, alpha, *data_ptr_, -1);
+            run_device_kernel(q, r, alpha, A, QA_cost, -1);
         } else {
             // r -= alpha_cd * Ad (r = r - alpha * q)
             r -= alpha_cd * Ad;
@@ -143,101 +144,85 @@ auto csvm<T>::solver_CG(const std::vector<real_type> &b, const std::size_t imax,
         delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
-            if (print_info_) {
+            if (verbose) {
                 output_iteration_duration();
             }
             break;
         }
 
         // (beta = delta_new / delta_old)
-        real_type beta = delta / delta_old;
+        const real_type beta = delta / delta_old;
         // d = beta * d + r
         d = beta * d + r;
 
-        if (print_info_) {
+        if (verbose) {
             output_iteration_duration();
         }
     }
-    if (print_info_) {
+    if (verbose) {
         fmt::print("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
-                   std::min(run + 1, imax),
+                   std::min(iter + 1, max_iter),
                    delta,
                    eps * eps * delta0,
-                   average_iteration_time / std::min(run + 1, imax));
+                   average_iteration_time / std::min(iter + 1, max_iter));
     }
 
     return alpha;
 }
 
 template <typename T>
-void csvm<T>::update_w() {
+void csvm<T>::update_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha, const size_type num_data_points, const size_type num_features) {
     // resize and reset all values to zero
-    w_.resize(num_features_);
+    w_.resize(num_features);
     std::fill(w_.begin(), w_.end(), real_type{ 0.0 });
 
     // calculate the w vector
-    #pragma omp parallel for
-    for (std::size_t feature_index = 0; feature_index < num_features_; ++feature_index) {
+    #pragma omp parallel for default(none) shared(alpha, A) firstprivate(num_features, num_data_points)
+    for (std::size_t feature_index = 0; feature_index < num_features; ++feature_index) {
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+: temp)
-        for (std::size_t data_index = 0; data_index < num_data_points_; ++data_index) {
-            temp += (*alpha_ptr_)[data_index] * (*data_ptr_)[data_index][feature_index];
+        for (std::size_t data_index = 0; data_index < num_data_points; ++data_index) {
+            temp += alpha[data_index] * A[data_index][feature_index];
         }
         w_[feature_index] = temp;
     }
 }
 
 template <typename T>
-auto csvm<T>::predict(const std::vector<std::vector<real_type>> &points) -> std::vector<real_type> {
+auto csvm<T>::predict_values_impl(const std::vector<std::vector<real_type>> &support_vectors,
+                             const std::vector<real_type> &alpha,
+                             const real_type rho,
+                             const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
     using namespace plssvm::operators;
-
-    PLSSVM_ASSERT(data_ptr_ != nullptr, "No data is provided!");  // exception in constructor
-    PLSSVM_ASSERT(!data_ptr_->empty(), "Data set is empty!");     // exception in constructor
-
-    // return empty vector if there are no points to predict
-    if (points.empty()) {
-        return std::vector<real_type>{};
-    }
-
-    // sanity checks
-    if (!std::all_of(points.begin(), points.end(), [&](const std::vector<real_type> &point) { return point.size() == points.front().size(); })) {
-        throw exception{ "All points in the prediction point vector must have the same number of features!" };
-    } else if (points.front().size() != data_ptr_->front().size()) {
-        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per predict point ({})!", data_ptr_->front().size(), points.front().size()) };
-    } else if (alpha_ptr_ == nullptr) {
-        throw exception{ "No alphas provided for prediction!" };
-    }
-
-    PLSSVM_ASSERT(data_ptr_->size() == alpha_ptr_->size(), "Sizes mismatch!: {} != {}", data_ptr_->size(), alpha_ptr_->size());  // exception in constructor
 
     auto start_time = std::chrono::steady_clock::now();
 
-    std::vector<real_type> out(points.size(), bias_);
-    if (kernel_ == kernel_type::linear) {
+    std::vector<real_type> out(predict_points.size(), -rho);
+    if (params_.kernel == kernel_type::linear) {
         // use faster methode in case of the linear kernel function
         if (w_.empty()) {
-            update_w();
+            update_w(support_vectors, alpha, support_vectors.size(), support_vectors.front().size());
         }
     }
 
-    #pragma omp parallel for
-    for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < points.size(); ++point_index) {
-        if (kernel_ == kernel_type::linear) {
+    #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, out)
+    for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
+        if (params_.kernel == kernel_type::linear) {
             // use faster methode in case of the linear kernel function
-            out[point_index] += transposed{ w_ } * points[point_index];
+            out[point_index] += transposed{ w_ } * predict_points[point_index];
         } else {
             real_type temp{ 0.0 };
             #pragma omp simd reduction(+: temp)
-            for (std::size_t data_index = 0; data_index < num_data_points_; ++data_index) {
-                temp += (*alpha_ptr_)[data_index] * base_type::kernel_function((*data_ptr_)[data_index], points[point_index]);
+            for (std::size_t data_index = 0; data_index < support_vectors.size(); ++data_index) {
+                temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params_);
             }
             out[point_index] += temp;
         }
     }
 
     auto end_time = std::chrono::steady_clock::now();
-    if (print_info_) {
-        fmt::print("Predicted {} data points in {}.\n", points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    if (verbose) {
+        fmt::print("Predicted {} data points in {}.\n", predict_points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 
     return out;

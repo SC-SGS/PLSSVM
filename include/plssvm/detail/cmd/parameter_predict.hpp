@@ -34,11 +34,17 @@ class parameter_predict {
     */
    parameter_predict(int argc, char **argv);
 
-   /// Other parameters
-   parameter_variants base_params{};
+   backend_type backend = backend_type::automatic;
+   /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
+   target_platform target = target_platform::automatic;
 
-   /// rho
-   double rho{ 0.0 };
+   /// The SYCL implementation to use with --backend=sycl.
+   sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
+
+   // TODO: here?!?
+   /// use strings as label type?
+   bool strings_as_labels{ false };
+   bool float_as_real_type{ false };
 
    /// The name of the data/test file to parse.
    std::string input_filename{};

@@ -25,89 +25,42 @@ int main(int argc, char *argv[]) {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parameter_train params{ argc, argv };
 
-        std::visit([&](auto&& args) {
-            // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
-            if (args.backend != plssvm::backend_type::sycl && args.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
-                std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                         "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
-                                         args.sycl_kernel_invocation_type)
-                          << std::endl;
-            }
-            // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-            if (args.backend != plssvm::backend_type::sycl && args.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
-                std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                         "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                         args.sycl_implementation_type)
-                          << std::endl;
-            }
+        // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
+        if (params.backend != plssvm::backend_type::sycl && params.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
+                                     params.sycl_kernel_invocation_type)
+                      << std::endl;
+        }
+        // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
+        if (params.backend != plssvm::backend_type::sycl && params.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                                     params.sycl_implementation_type)
+                      << std::endl;
+        }
 
-            // output used parameter
-            if (plssvm::verbose) {
-                fmt::print("\ntask: training\n{}\n", params);
-            }
-
-            // create data set
-            std::visit([&](auto&& data){
-                // TODO: put code here
-            }, plssvm::detail::data_set_factory<false>(params));
-
-        }, params.base_params);
-
-
+        // output used parameter
+        if (plssvm::verbose) {
+            fmt::print("\ntask: training\n{}\n", params);
+        }
 
         // create data set
-//        plssvm::data_set<real_type> data{ params.input_filename };
+        std::visit([&](auto&& data){
+            // TODO: put code here
+            using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
+            using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
-        // create SVM
-//        auto svm = plssvm::make_csvm(params);
+            // convert base params to correct type
+            auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
+            // create SVM
+            plssvm::openmp::csvm<real_type> svm{ plssvm::target_platform::cpu, csvm_params };
+            // learn model
+            plssvm::model<real_type, label_type> model = svm.fit(data, plssvm::epsilon = params.epsilon); // TODO: params
+            // save model to file
+            model.save(params.model_filename);
 
-        // learn
-//        svm->learn();
-
-        // save model file
-//        svm->write_model(params.model_filename);
-
-        std::vector<std::vector<double>> matrix = { { 1.0, 2.0 }, { 3.0, 4.0 }, { 5.0, 6.0 } };
-//        for (const auto& row : matrix) {
-//            for (const auto& col : row) {
-//                std::cout << col << ' ';
-//            }
-//            std::cout << std::endl;
-//        }
-//        std::cout << std::endl;
-
-        std::vector<std::string> label{ "cat", "dog", "cat" };
-        plssvm::data_set<double, std::string> data{ std::move(matrix), std::move(label), std::pair<double, double>(-1, 1)};
-//        data.scale(-2, +2);
-
-        for (const auto& row : data.data()) {
-            for (const auto& col : row) {
-                std::cout << col << ' ';
-            }
-            std::cout << std::endl;
-        }
-
-        auto lab = data.mapped_labels().value().get();
-        for (const auto& l : lab) {
-            std::cout << l << ' ';
-        }
-        std::cout << std::endl;
-        auto la = data.labels().value().get();
-        for (const auto& l : la) {
-            std::cout << l << ' ';
-        }
-        std::cout << std::endl;
-//
-//        data.save_data_set("data.libsvm", plssvm::file_format_type::libsvm);
-////        data.save_data_set("data.arff", plssvm::file_format_type::arff);
-//
-//        plssvm::data_set<double> data2{"../data/data.libsvm"};
-////        for (const auto& row : data2.data()) {
-////            for (const auto& col : row) {
-////                std::cout << col << ' ';
-////            }
-////            std::cout << std::endl;
-////        }
+        }, plssvm::detail::data_set_factory<false>(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

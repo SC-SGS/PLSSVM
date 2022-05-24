@@ -37,6 +37,10 @@ class model {
     // because std::vector<bool> is evil
     static_assert(!std::is_same_v<U, bool>, "The second template type must NOT be 'bool'!");
 
+    // plssvm::csvm needs the constructor
+    template <typename>
+    friend class csvm;
+
   public:
     using real_type = T;
     using label_type = U;
@@ -50,6 +54,8 @@ class model {
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
 
   private:
+    model(parameter<real_type> params, data_set<real_type, label_type> data);
+
     parameter<real_type> params_{};
 
     data_set<real_type, label_type> data_{}; // support vectors + labels
@@ -64,6 +70,7 @@ class model {
 /******************************************************************************
  *                                Constructors                                *
  ******************************************************************************/
+ // TODO: restructure?
 template <typename T, typename U>
 model<T, U>::model(const std::string &filename) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
@@ -93,6 +100,11 @@ model<T, U>::model(const std::string &filename) {
                    filename);
     }
 }
+
+template <typename T, typename U>
+model<T, U>::model(parameter<real_type> params, data_set<real_type, label_type> data)
+    : params_{ std::move(params) }, data_{ std::move(data) }, alpha_ptr_{ std::make_shared<std::vector<real_type>>(data_.num_data_points()) },
+      num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
 
 /******************************************************************************
  *                                 Save Model                                 *

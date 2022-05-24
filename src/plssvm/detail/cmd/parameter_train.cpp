@@ -73,62 +73,54 @@ parameter_train::parameter_train(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // instantiate variant
-   if (result["use_float_as_real_type"].as<bool>()) {
-       base_params = parameter_variants{ parameter<float>{} };
+   // parse csvm_params values
+
+   // parse kernel_type and cast the value to the respective enum
+   csvm_params.kernel = result["kernel_type"].as<decltype(csvm_params.kernel)>();
+
+   // parse degree
+   csvm_params.degree = result["degree"].as<decltype(csvm_params.degree)>();
+
+   // parse gamma
+   if (result.count("gamma")) {
+       csvm_params.gamma = result["gamma"].as<decltype(csvm_params.gamma)>();
+       if (csvm_params.gamma == decltype(csvm_params.gamma){ 0.0 }) {
+           fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
+           fmt::print("{}", options.help());
+           std::exit(EXIT_FAILURE);
+       }
    } else {
-       base_params = parameter_variants { parameter<double>{} };
+       csvm_params.gamma = decltype(csvm_params.gamma){ 0.0 };
    }
 
-   // parse base_params values
-   std::visit([&](auto&& params) {
-       // parse whether strings should be used as labels
-       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
+   // parse coef0
+   csvm_params.coef0 = result["coef0"].as<decltype(csvm_params.coef0)>();
 
-       // parse kernel_type and cast the value to the respective enum
-       params.kernel = result["kernel_type"].as<decltype(params.kernel)>();
+   // parse cost
+   csvm_params.cost = result["cost"].as<decltype(csvm_params.cost)>();
 
-       // parse degree
-       params.degree = result["degree"].as<decltype(params.degree)>();
+   // parse epsilon
+   epsilon = result["epsilon"].as<decltype(epsilon)>();
 
-       // parse gamma
-       if (result.count("gamma")) {
-           params.gamma = result["gamma"].as<decltype(params.gamma)>();
-           if (params.gamma == decltype(params.gamma){ 0.0 }) {
-               fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
-               fmt::print("{}", options.help());
-               std::exit(EXIT_FAILURE);
-           }
-       } else {
-           params.gamma = decltype(params.gamma){ 0.0 };
-       }
+   // parse backend_type and cast the value to the respective enum
+   backend = result["backend"].as<decltype(backend)>();
 
-       // parse coef0
-       params.coef0 = result["coef0"].as<decltype(params.coef0)>();
-
-       // parse cost
-       params.cost = result["cost"].as<decltype(params.cost)>();
-
-       // parse epsilon
-       params.epsilon = result["epsilon"].as<decltype(params.epsilon)>();
-
-       // parse backend_type and cast the value to the respective enum
-       params.backend = result["backend"].as<decltype(params.backend)>();
-
-       // parse target_platform and cast the value to the respective enum
-       params.target = result["target_platform"].as<decltype(params.target)>();
+   // parse target_platform and cast the value to the respective enum
+   target = result["target_platform"].as<decltype(target)>();
 
 #if defined(PLSSVM_HAS_SYCL_IMPLEMENTATION)
-       // parse kernel invocation type when using SYCL as backend
-       params.sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(params.sycl_kernel_invocation_type)>();
+   // parse kernel invocation type when using SYCL as backend
+   sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
-       // parse SYCL implementation used in the SYCL backend
-       params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(params.sycl_implementation_type)>();
+   // parse SYCL implementation used in the SYCL backend
+   sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 #endif
 
-       // parse whether strings should be used as labels
-       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
-   }, base_params);
+   // parse whether strings should be used as labels
+   strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
+
+   // parse whether floats should be used as real_type
+   float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
 
    // parse whether output is quiet or not
    plssvm::verbose = !plssvm::verbose;
@@ -151,40 +143,36 @@ parameter_train::parameter_train(int argc, char **argv) {
 }
 
 std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
-    std::visit([&](auto&& args) {
-        out << fmt::format("kernel_type: {} -> {}\n", args.kernel, kernel_type_to_math_string(args.kernel));
-        switch (args.kernel) {
-            case kernel_type::linear:
-                break;
-            case kernel_type::polynomial:
-                out << fmt::format(
-                    "gamma: {}\n"
-                    "coef0: {}\n"
-                    "degree: {}\n",
-                    args.gamma,
-                    args.coef0,
-                    args.degree);
-                break;
-            case kernel_type::rbf:
-                out << fmt::format("gamma: {}\n", args.gamma);
-                break;
-        }
-        out << fmt::format(
-            "cost: {}\n"
-            "epsilon: {}\n"
-            "use strings as labels: {}\n"
-            "real_type: {}\n",
-            args.cost,
-            args.epsilon,
-            args.strings_as_labels,
-            detail::arithmetic_type_name<typename std::remove_reference_t<decltype(args)>::real_type>());
-    }, params.base_params);
-
+    out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel, kernel_type_to_math_string(params.csvm_params.kernel));
+    switch (params.csvm_params.kernel) {
+        case kernel_type::linear:
+            break;
+        case kernel_type::polynomial:
+            out << fmt::format(
+                "gamma: {}\n"
+                "coef0: {}\n"
+                "degree: {}\n",
+                params.csvm_params.gamma,
+                params.csvm_params.coef0,
+                params.csvm_params.degree);
+            break;
+        case kernel_type::rbf:
+            out << fmt::format("gamma: {}\n", params.csvm_params.gamma);
+            break;
+    }
     return out << fmt::format(
-               "input file (data set): '{}'\n"
-               "output file (model): '{}'\n",
-               params.input_filename,
-               params.model_filename);
+        "cost: {}\n"
+        "epsilon: {}\n"
+        "use strings as labels: {}\n"
+        "use float as real type instead of double: {}\n"
+        "input file (data set): '{}'\n"
+        "output file (model): '{}'\n",
+        params.csvm_params.cost,
+        params.epsilon,
+        params.strings_as_labels,
+        params.float_as_real_type,
+        params.input_filename,
+        params.model_filename);
 }
 
 }  // namespace plssvm

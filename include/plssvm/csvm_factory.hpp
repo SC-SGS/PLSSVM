@@ -110,4 +110,10 @@ template <typename T>
     throw unsupported_backend_exception{ "Can't recognize backend !" };
 }
 
+template <typename real_type, typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvm<real_type>> make_csvm2(const backend_type backend, const target_platform target, Args&&... args) {
+    // TODO: implement
+    return std::make_unique<plssvm::openmp::csvm<real_type>>(target, std::forward<Args>(args)...);
+}
+
 }  // namespace plssvm

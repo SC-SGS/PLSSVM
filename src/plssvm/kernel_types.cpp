@@ -9,6 +9,7 @@
 #include "plssvm/kernel_types.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
@@ -57,5 +58,23 @@ std::istream &operator>>(std::istream &in, kernel_type &kernel) {
     }
     return in;
 }
+
+template <typename real_type>
+real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter<real_type> &params) {
+    PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
+
+    switch (params.kernel) {
+        case kernel_type::linear:
+            return kernel_function<kernel_type::linear>(xi, xj);
+        case kernel_type::polynomial:
+            return kernel_function<kernel_type::polynomial>(xi, xj, params.degree, params.gamma, params.coef0);
+        case kernel_type::rbf:
+            return kernel_function<kernel_type::rbf>(xi, xj, params.gamma);
+    }
+    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(params.kernel)) };
+}
+
+template float kernel_function(const std::vector<float> &, const std::vector<float> &, const parameter<float> &);
+template double kernel_function(const std::vector<double> &, const std::vector<double> &, const parameter<double> &);
 
 }  // namespace plssvm

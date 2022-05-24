@@ -29,61 +29,66 @@ int main(int argc, char *argv[]) {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parameter_predict params{ argc, argv };
 
-        std::visit([&](auto&& args) {
-            // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-            if (args.backend != plssvm::backend_type::sycl && args.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
-                std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                         "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                         args.sycl_implementation_type)
-                          << std::endl;
+        // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
+        if (params.backend != plssvm::backend_type::sycl && params.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                                     params.sycl_implementation_type)
+                      << std::endl;
+        }
+
+        // output used parameter
+        if (plssvm::verbose) {
+            fmt::print("\ntask: prediction\n{}\n", params);
+        }
+
+        // create data set
+        std::visit([&](auto &&data) {
+            // TODO: put code here
+            using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
+            using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
+
+            // create model
+            plssvm::model<real_type, label_type> model{ params.model_filename };
+            // create default csvm
+            plssvm::openmp::csvm<real_type> svm{ plssvm::target_platform::cpu };
+            // predict labels
+            const std::vector<label_type> predicted_labels = svm.predict(model, data);
+
+            // write prediction file
+            {
+                std::chrono::time_point start_time = std::chrono::steady_clock::now();
+
+                fmt::ostream out = fmt::output_file(params.predict_filename);
+                out.print("{}", fmt::join(predicted_labels, "\n"));
+
+                std::chrono::time_point end_time = std::chrono::steady_clock::now();
+                if (plssvm::verbose) {
+                    fmt::print("Wrote prediction file ('{}') with {} labels in {}.\n",
+                               params.predict_filename,
+                               predicted_labels.size(),
+                               std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+                }
             }
 
-            // output used parameter
-            if (plssvm::verbose) {
-                fmt::print("\ntask: prediction\n{}\n", params);
+            // print achieved accuracy (if possible)
+            if (data.has_labels()) {
+                const std::vector<label_type> &correct_labels = data.labels().value();
+                std::size_t correct{ 0 };
+                for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+                    // check whether prediction is correct
+                    if (predicted_labels[i] == correct_labels[i]) {
+                        ++correct;
+                    }
+                }
+                // print accuracy
+                fmt::print("Accuracy = {}% ({}/{}) (classification)\n",
+                           static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
+                           correct,
+                           data.num_data_points());
             }
 
-            // create data set
-            std::visit([&](auto &&data) {
-                // TODO: put code here
-            }, plssvm::detail::data_set_factory<false>(params));
-
-            //        // create SVM
-            //        auto svm = plssvm::make_csvm(params.base_params);
-            //
-            //        // predict labels
-            //        const std::vector<real_type> labels = svm->predict_label(*params.test_data_ptr);
-            //
-            //        // write prediction file
-            //        {
-            //            auto start_time = std::chrono::steady_clock::now();
-            //            std::ofstream out{ params.predict_filename };
-            //            out << fmt::format("{}", fmt::join(labels, "\n"));
-            //            auto end_time = std::chrono::steady_clock::now();
-            //            if (params.print_info) {
-            //                fmt::print("Wrote prediction file ('{}') with {} labels in {}.\n",
-            //                           params.predict_filename,
-            //                           labels.size(),
-            //                           std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-            //            }
-            //        }
-            //
-            //        // print achieved accuracy if possible
-            //        if (params.value_ptr) {
-            //            unsigned long long correct = 0;
-            //            for (typename std::vector<real_type>::size_type i = 0; i < labels.size(); ++i) {
-            //                // check of prediction was correct
-            //                if ((*params.value_ptr)[i] * labels[i] > real_type{ 0.0 }) {
-            //                    ++correct;
-            //                }
-            //            }
-            //            // print accuracy
-            //            fmt::print("Accuracy = {}% ({}/{}) (classification)\n",
-            //                       static_cast<real_type>(correct) / static_cast<real_type>(params.test_data_ptr->size()) * real_type{ 100 },
-            //                       correct,
-            //                       params.test_data_ptr->size());
-            //        }
-        }, params.base_params);
+        }, plssvm::detail::data_set_factory<false>(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
