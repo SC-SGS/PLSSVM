@@ -35,7 +35,25 @@ class parameter_train {
    parameter_train(int argc, char **argv);
 
    /// Other parameters
-   parameter_variants base_params{};
+   parameter<double> csvm_params{};
+
+   /// The error tolerance parameter for the CG algorithm.
+   double epsilon{ 0.001 };
+   // TODO: max_iter
+   /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
+   backend_type backend = backend_type::automatic;
+   /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
+   target_platform target = target_platform::automatic;
+
+   /// The kernel invocation type when using SYCL as backend.
+   sycl::kernel_invocation_type sycl_kernel_invocation_type = sycl::kernel_invocation_type::automatic;
+   /// The SYCL implementation to use with --backend=sycl.
+   sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
+
+   // TODO: here?!?
+   /// use strings as label type?
+   bool strings_as_labels{ false };
+   bool float_as_real_type{ false };
 
    /// The name of the data/test file to parse.
    std::string input_filename{};

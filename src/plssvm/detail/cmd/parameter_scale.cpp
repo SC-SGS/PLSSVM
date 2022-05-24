@@ -63,13 +63,6 @@ parameter_scale::parameter_scale(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // instantiate variant
-   if (result["use_float_as_real_type"].as<bool>()) {
-       base_params = parameter_variants{ parameter<float>{} };
-   } else {
-       base_params = parameter_variants { parameter<double>{} };
-   }
-
    // parse the lowest allowed value
    lower = result["lower"].as<decltype(lower)>();
 
@@ -79,12 +72,11 @@ parameter_scale::parameter_scale(int argc, char **argv) {
    // parse the file format
    format = result["format"].as<decltype(format)>();
 
-   // parse base_params values
-   std::visit([&](auto&& params) {
-       // parse whether strings should be used as labels
-       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
+   // parse whether strings should be used as labels
+   strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
 
-   }, base_params);
+   // parse whether floats should be used as real_type
+   float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
 
    // parse whether output is quiet or not
    plssvm::verbose = !plssvm::verbose;
@@ -108,25 +100,18 @@ parameter_scale::parameter_scale(int argc, char **argv) {
 
 
 std::ostream &operator<<(std::ostream &out, const parameter_scale &params) {
-   bool strings_as_labels;
-   std::string_view real_type_string;
-   std::visit([&](auto&& arg) {
-       strings_as_labels = arg.strings_as_labels;
-       real_type_string = detail::arithmetic_type_name<typename std::remove_reference_t<decltype(arg)>::real_type>();
-   }, params.base_params);
-
    return out << fmt::format(
               "lower: {}\n"
               "upper: {}\n"
               "use strings as labels: {}\n"
-              "real_type: {}\n"
+              "use float as real type instead of double: {}\n"
               "output file format: {}\n"
               "input file (data set): '{}'\n"
               "output file (scaled data set): '{}'\n",
               params.lower,
               params.upper,
-              strings_as_labels,
-              real_type_string,
+              params.strings_as_labels,
+              params.float_as_real_type,
               params.format,
               params.input_filename,
               params.scaled_filename);

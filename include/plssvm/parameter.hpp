@@ -18,6 +18,8 @@
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
+#include "igor/igor.hpp"
+
 #include <iosfwd>       // forward declare std::ostream
 #include <memory>       // std::shared_ptr
 #include <string>       // std::string
@@ -27,15 +29,17 @@
 
 namespace plssvm {
 
+// TODO: move?
 namespace sycl {
 using namespace ::plssvm::sycl_generic;
 }
 
-template <typename T>
-struct parameter;
-
-
-using parameter_variants = std::variant<parameter<float>, parameter<double>>;
+inline constexpr auto gamma = igor::named_argument<struct gamma_tag>{};
+inline constexpr auto degree = igor::named_argument<struct degree_tag>{};
+inline constexpr auto coef0 = igor::named_argument<struct coef0_tag>{};
+inline constexpr auto cost = igor::named_argument<struct cost_tag>{};
+inline constexpr auto epsilon = igor::named_argument<struct epsilon_tag>{};
+inline constexpr auto max_iter = igor::named_argument<struct max_iter_tag>{};
 
 
 /**
@@ -60,22 +64,13 @@ struct parameter {
     real_type coef0 = real_type{ 0.0 };
     /// The cost parameter in the C-SVM.
     real_type cost = real_type{ 1.0 };
-    /// The error tolerance parameter for the CG algorithm.
-    real_type epsilon = static_cast<real_type>(0.001);
-    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
-    backend_type backend = backend_type::automatic;
-    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
-    target_platform target = target_platform::automatic;
 
-    /// The kernel invocation type when using SYCL as backend.
-    sycl::kernel_invocation_type sycl_kernel_invocation_type = sycl::kernel_invocation_type::automatic;
-    /// The SYCL implementation to use with --backend=sycl.
-    sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
-
-    // TODO: here?!?
-    /// use strings as label type?
-    bool strings_as_labels{ false };
-    bool float_as_real_type{ false };
+    template <typename U>
+    explicit operator parameter<U>() {
+        // only float and doubles are allowed
+        static_assert(std::is_same_v<U, float> || std::is_same_v<U, double>, "The template type can only be 'float' or 'double'!");
+        return parameter<U>{ kernel, degree, static_cast<U>(gamma), static_cast<U>(coef0), static_cast<U>(cost) };
+    }
 };
 
 /**
@@ -93,24 +88,12 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                "gamma                       {}\n"
                "coef0                       {}\n"
                "cost                        {}\n"
-               "epsilon                     {}\n"
-               "backend                     {}\n"
-               "target platform             {}\n"
-               "SYCL kernel invocation type {}\n"
-               "SYCL implementation type    {}\n"
-               "use strings as labels       {}\n"
                "real_type                   {}\n",
                params.kernel,
                params.degree,
                params.gamma,
                params.coef0,
                params.cost,
-               params.epsilon,
-               params.backend,
-               params.target,
-               params.sycl_kernel_invocation_type,
-               params.sycl_implementation_type,
-               params.strings_as_labels,
                detail::arithmetic_type_name<typename parameter<T>::real_type>());
 }
 

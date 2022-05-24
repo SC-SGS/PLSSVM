@@ -64,29 +64,21 @@ parameter_predict::parameter_predict(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // instantiate variant
-   if (result["use_float_as_real_type"].as<bool>()) {
-       base_params = parameter_variants{ parameter<float>{} };
-   } else {
-       base_params = parameter_variants { parameter<double>{} };
-   }
+   // parse csvm_params values
 
-   // parse base_params values
-   std::visit([&](auto&& params) {
-       // parse backend_type and cast the value to the respective enum
-       params.backend = result["backend"].as<decltype(params.backend)>();
+   // parse backend_type and cast the value to the respective enum
+   backend = result["backend"].as<decltype(backend)>();
 
-       // parse target_platform and cast the value to the respective enum
-       params.target = result["target_platform"].as<decltype(params.target)>();
+   // parse target_platform and cast the value to the respective enum
+   target = result["target_platform"].as<decltype(target)>();
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-       // parse SYCL implementation used in the SYCL backend
-       params.sycl_implementation_type = result["sycl_implementation_type"].as<decltype(params.sycl_implementation_type)>();
+   // parse SYCL implementation used in the SYCL backend
+   sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 #endif
 
-       // parse whether strings should be used as labels
-       params.strings_as_labels = result["use_strings_as_labels"].as<decltype(params.strings_as_labels)>();
-   }, base_params);
+   // parse whether strings should be used as labels
+   strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
 
    // parse whether output is quiet or not
    plssvm::verbose = !plssvm::verbose;
@@ -117,43 +109,17 @@ parameter_predict::parameter_predict(int argc, char **argv) {
 }
 
 std::ostream &operator<<(std::ostream &out, const parameter_predict &params) {
-    std::visit([&](auto&& args) {
-        out << fmt::format("kernel_type: {} -> {}\n", args.kernel, kernel_type_to_math_string(args.kernel));
-        switch (args.kernel) {
-            case kernel_type::linear:
-                break;
-            case kernel_type::polynomial:
-                out << fmt::format(
-                    "gamma: {}\n"
-                    "coef0: {}\n"
-                    "degree: {}\n",
-                    args.gamma,
-                    args.coef0,
-                    args.degree);
-                break;
-            case kernel_type::rbf:
-                out << fmt::format("gamma: {}\n", args.gamma);
-                break;
-        }
-        out << fmt::format(
-            "cost: {}\n"
-            "epsilon: {}\n"
-            "use strings as labels: {}\n"
-            "real_type: {}\n",
-            args.cost,
-            args.epsilon,
-            args.strings_as_labels,
-            detail::arithmetic_type_name<typename std::remove_reference_t<decltype(args)>::real_type>());
-    }, params.base_params);
     return out << fmt::format(
-               "rho: {}\n"
-               "input file (data set): '{}'\n"
-               "input file (model): '{}'\n"
-               "output file (prediction): '{}'\n",
-               params.rho,
-               params.input_filename,
-               params.model_filename,
-               params.predict_filename);
+        "use strings as labels: {}\n"
+        "use float as real type instead of double: {}\n"
+        "input file (data set): '{}'\n"
+        "input file (model): '{}'\n"
+        "output file (prediction): '{}'\n",
+        params.strings_as_labels,
+        params.float_as_real_type,
+        params.input_filename,
+        params.model_filename,
+        params.predict_filename);
 }
 
 }  // namespace plssvm

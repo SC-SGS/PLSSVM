@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include "plssvm/parameter.hpp"          // plssvm::parameter
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
 #include <string>  // std::string
@@ -35,13 +34,13 @@ class parameter_scale {
     */
    parameter_scale(int argc, char **argv);
 
-   /// Other parameters
-   parameter_variants base_params{};
-
    // TODO: more LIBSVM conform?
    double lower{ -1 };
    double upper{ +1 };
    file_format_type format{ file_format_type::libsvm };
+
+   bool strings_as_labels{ false };
+   bool float_as_real_type{ false };
 
    /// The name of the data/test file to parse.
    std::string input_filename{};

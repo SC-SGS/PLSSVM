@@ -24,6 +24,9 @@ namespace plssvm::detail {
 template <typename>
 constexpr bool always_false_v = false;
 
+template <typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
 /**
  * @brief Get the @p I-th element of the parameter pack @p args.
  * @tparam I the index of the element to get
