@@ -6,8 +6,6 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-// TODO: parameter sanity checks!?!?!
-
 #include "plssvm/detail/cmd/parameter_train.hpp"
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
