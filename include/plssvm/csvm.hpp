@@ -9,6 +9,9 @@
  * @brief Defines the base class for all C-SVM backends and implements the functionality shared by all of them.
  */
 
+
+// TODO: parameter sanity checks!?!?!
+
 #pragma once
 
 #include "plssvm/kernel_types.hpp"      // plssvm::kernel_type
@@ -18,16 +21,17 @@
 #include "plssvm/data_set.hpp"          // plssvm::data_set
 
 #include <cstddef>      // std::size_t
-#include <memory>       // std::shared_ptr
 #include <string>       // std::string
-#include <type_traits>  // std::is_same_v
+#include <type_traits>  // std::is_same_v, std::is_convertible_v
 #include <vector>       // std::vector
+#include <utility>      // std::move, std::forward
 
-
-#include <iostream>
+#include <iostream>     // std::clog, std::endl TODO
 #include <memory>
 #include <optional>
 #include <functional>
+
+#include "plssvm/constants.hpp"
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
@@ -37,32 +41,35 @@
 
 namespace plssvm {
 
-// forward declare class TODO
-//template <typename T>
-//class parameter;
-
 /**
  * @brief Base class for all C-SVM backends.
  * @tparam T the type of the data
  */
-template <typename T>//, typename U = int>
+template <typename T>
 class csvm {
     // only float and doubles are allowed
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
-//    static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
-//    // because std::vector<bool> is evil
-//    static_assert(!std::is_same_v<U, bool>, "The second template type must NOT be 'bool'!");
 
   public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
-//    using label_type = U;
     using size_type = std::size_t;
 
     //*************************************************************************************************************************************//
-    //                                                      special member functions                                                       //
+    //                                          constructors, destructor, and assignment operators                                         //
     //*************************************************************************************************************************************//
-//    explicit csvm(const parameter<T> &params);
+    explicit csvm(parameter<real_type> params = {});
+    template <typename... Args>
+    explicit csvm(kernel_type kernel, Args&&... named_args);
+
+    /**
+     * @brief Default copy-constructor since a virtual destructor has been declared.
+     */
+    csvm(const csvm &) = default;
+    /**
+     * @brief Default move-constructor since a virtual destructor has been declared.
+     */
+    csvm(csvm &&) noexcept = default;
 
     /**
      * @brief Virtual destructor to enable safe inheritance.
@@ -70,33 +77,15 @@ class csvm {
     virtual ~csvm() = default;
 
     /**
-     * @brief Delete expensive copy-constructor to make csvm a move only type.
+     * @brief Default copy-assignment-operator since a virtual destructor has been declared.
+     * @return `*this`
      */
-    csvm(const csvm &) = delete;
+    csvm &operator=(const csvm &) = default;
     /**
-     * @brief Move-constructor as csvm is a move-only type.
-     */
-    csvm(csvm &&) noexcept = default;
-    /**
-     * @brief Delete expensive copy-assignment-operator to make csvm a move only type.
-     */
-    csvm &operator=(const csvm &) = delete;
-    /**
-     * @brief Move-assignment-operator as csvm is a move-only type.
+     * @brief Default move-assignment-operator since a virtual destructor has been declared.
      * @return `*this`
      */
     csvm &operator=(csvm &&) noexcept = default;
-
-
-    //*************************************************************************************************************************************//
-    //                                                             constructors                                                            //
-    //*************************************************************************************************************************************//
-    // TODO:
-
-    explicit csvm(parameter<real_type> params = {}) : params_{ std::move(params) } {}
-
-    template <typename... Args>
-    explicit csvm(kernel_type kernel, Args&&... named_args);
 
 
     //*************************************************************************************************************************************//
@@ -176,11 +165,31 @@ class csvm {
 //    real_type bias_{};
     /// The normal vector used for speeding up the prediction in case of the linear kernel function.
     std::vector<real_type> w_{};
+
+  private:
+    void sanity_check_parameter() {
+        // kernel: valid kernel function
+        if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
+            throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
+        }
+        // gamma: must be greater than 0
+        if (params_.gamma <= real_type{ 0.0 }) {
+            throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0, but is {}!", params_.gamma) };
+        }
+        // degree: all allowed
+        // coef0: all allowed
+        // cost: all allowed
+    }
 };
 
-/******************************************************************************
- *                                 constructor                                *
- ******************************************************************************/
+//*************************************************************************************************************************************//
+//                                          constructors, destructor, and assignment operators                                         //
+//*************************************************************************************************************************************//
+template <typename T>
+csvm<T>::csvm(parameter<real_type> params) : params_{ std::move(params) } {
+    this->sanity_check_parameter();
+}
+
 template <typename T> template <typename... Args>
 csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
     igor::parser p{ std::forward<Args>(named_args)... };
@@ -195,13 +204,18 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
     // compile time check: only some named parameters are allowed
     static_assert(!p.has_other_than(gamma, degree, coef0, cost), "An illegal named parameter has been passed!");
 
+    // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
+    const auto print_warning = [kernel](const std::string_view param_name) {
+        fmt::print(stderr, "{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_type_to_math_string(kernel));
+    };
+
     // compile time/runtime check: the values must have the correct types
     if constexpr (p.has(gamma)) {
         // compile time check: the value must have the correct type
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(gamma))>, decltype(params_.gamma)>, "gamma must be convertible to a real_type!");
         // runtime check: the value may only be used with a specific kernel type
         if (kernel == kernel_type::linear) {
-            std::clog << "gamma parameter provided to the linear kernel, which is not used!" << std::endl;
+            print_warning("gamma");
         }
         // set value
         params_.gamma = static_cast<decltype(params_.gamma)>(p(gamma));
@@ -211,7 +225,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(degree))>, decltype(params_.degree)>, "degree must be convertible to an int!");
         // runtime check: the value may only be used with a specific kernel type
         if (kernel == kernel_type::linear || kernel == kernel_type::rbf) {
-            std::clog << fmt::format("degree parameter provided to the {} kernel, which is not used!", kernel) << std::endl;
+            print_warning("degree");
         }
         // set value
         params_.degree = static_cast<decltype(params_.degree)>(p(degree));
@@ -221,7 +235,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(coef0))>, decltype(params_.coef0)>, "coef0 must be convertible to a real_type!");
         // runtime check: the value may only be used with a specific kernel type
         if (kernel == kernel_type::linear || kernel == kernel_type::rbf) {
-            std::clog << fmt::format("coef0 parameter provided to the {} kernel, which is not used!", kernel) << std::endl;
+            print_warning("coef0");
         }
         // set value
         params_.coef0 = static_cast<decltype(params_.coef0)>(p(coef0));
@@ -232,6 +246,9 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
         // set value
         params_.cost = static_cast<decltype(params_.cost)>(p(cost));
     }
+
+    // check if parameters make sense
+    this->sanity_check_parameter();
 }
 
 
@@ -243,7 +260,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     igor::parser p{ std::forward<Args>(named_args)... };
 
     // set default values
-    real_type epsilon_val = 0.001;
+    auto epsilon_val = static_cast<real_type>(0.001);
     size_type max_iter_val = data.num_features();
 
     // compile time check: only named parameter are permitted
