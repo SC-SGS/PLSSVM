@@ -8,10 +8,10 @@
 
 #include "plssvm/detail/cmd/parameter_predict.hpp"
 
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
+#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
 #include "plssvm/constants.hpp"                          // plssvm::verbose
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
-#include "plssvm/parameter.hpp"                          // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -34,13 +34,13 @@ parameter_predict::parameter_predict(int argc, char **argv) {
        .set_tab_expansion()
        // clang-format off
        .add_options()
-           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<backend_type>()->default_value(detail::as_lower_case("automatic")))
-           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<target_platform>()->default_value(detail::as_lower_case("automatic")))
+           ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<backend_type>()->default_value(fmt::format("{}", backend)))
+           ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<target_platform>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(detail::as_lower_case("automatic")))
+           ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>()->default_value("false"))
-           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<bool>()->default_value("false"))
+           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
+           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -64,8 +64,6 @@ parameter_predict::parameter_predict(int argc, char **argv) {
        std::exit(EXIT_SUCCESS);
    }
 
-   // parse csvm_params values
-
    // parse backend_type and cast the value to the respective enum
    backend = result["backend"].as<decltype(backend)>();
 
@@ -85,7 +83,7 @@ parameter_predict::parameter_predict(int argc, char **argv) {
 
    // parse test data filename
    if (!result.count("test")) {
-       fmt::print(stderr, "Error missing test file!");
+       fmt::print(stderr, "Error missing test file!\n");
        fmt::print("{}", options.help());
        std::exit(EXIT_FAILURE);
    }
@@ -93,7 +91,7 @@ parameter_predict::parameter_predict(int argc, char **argv) {
 
    // parse model filename
    if (!result.count("model")) {
-       fmt::print(stderr, "Error missing model file!");
+       fmt::print(stderr, "Error missing model file!\n");
        fmt::print("{}", options.help());
        std::exit(EXIT_FAILURE);
    }

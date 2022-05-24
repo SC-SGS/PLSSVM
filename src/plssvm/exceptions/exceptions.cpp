@@ -37,6 +37,9 @@ std::string exception::what_with_loc() const {
         loc_.line());
 }
 
+invalid_parameter_exception::invalid_parameter_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "invalid_parameter_exception", loc } {}
+
 file_not_found_exception::file_not_found_exception(const std::string &msg, source_location loc) :
     exception{ msg, "file_not_found_exception", loc } {}
 

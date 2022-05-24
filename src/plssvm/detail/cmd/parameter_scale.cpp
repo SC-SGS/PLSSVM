@@ -1,19 +1,14 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
 
 #include "plssvm/detail/cmd/parameter_scale.hpp"
 
-#include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
-#include "plssvm/constants.hpp"                          // plssvm::verbose
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
-#include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
-#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/constants.hpp"  // plssvm::verbose
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -39,8 +34,8 @@ parameter_scale::parameter_scale(int argc, char **argv) {
            ("l,lower", "lower is the lowest (minimal) value allowed in each dimension", cxxopts::value<decltype(lower)>()->default_value(fmt::format("{}", lower)))
            ("u,upper", "upper is the highest (maximal) value allowed in each dimension", cxxopts::value<decltype(upper)>()->default_value(fmt::format("{}", upper)))
            ("f,format", "the file format to output the scaled data set to", cxxopts::value<decltype(format)>()->default_value(fmt::format("{}", format)))
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<bool>()->default_value("false"))
-           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<bool>()->default_value("false"))
+           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
+           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "input_file")
@@ -83,7 +78,7 @@ parameter_scale::parameter_scale(int argc, char **argv) {
 
    // parse input data filename
    if (!result.count("input")) {
-       fmt::print(stderr, "Error missing input file!");
+       fmt::print(stderr, "Error missing input file!\n");
        fmt::print("{}", options.help());
        std::exit(EXIT_FAILURE);
    }
@@ -98,13 +93,12 @@ parameter_scale::parameter_scale(int argc, char **argv) {
    }
 }
 
-
 std::ostream &operator<<(std::ostream &out, const parameter_scale &params) {
    return out << fmt::format(
               "lower: {}\n"
               "upper: {}\n"
               "use strings as labels: {}\n"
-              "use float as real type instead of double: {}\n"
+              "use float as real type: {}\n"
               "output file format: {}\n"
               "input file (data set): '{}'\n"
               "output file (scaled data set): '{}'\n",
