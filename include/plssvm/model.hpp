@@ -61,6 +61,9 @@ class model {
     data_set<real_type, label_type> data_{}; // support vectors + labels
     std::shared_ptr<std::vector<real_type>> alpha_ptr_{ nullptr };
 
+    // used to speedup prediction in case of the linear kernel function
+    std::shared_ptr<std::vector<real_type>> w_{ nullptr };
+
     real_type rho_{ 0.0 };
 
     size_type num_support_vectors_{ 0 };
@@ -116,10 +119,10 @@ void model<T, U>::save(const std::string &filename) const {
     fmt::ostream out = fmt::output_file(filename);
 
     // save model file header
-    detail::io::write_libsvm_model_header(out, params_, rho_, data_);
+    const std::vector<label_type> label_order = detail::io::write_libsvm_model_header(out, params_, rho_, data_);
 
     // save model file support vectors
-    detail::io::write_libsvm_model_data(out, data_.data(), *alpha_ptr_, data_.mapped_labels().value().get());
+    detail::io::write_libsvm_model_data(out, data_.data(), *alpha_ptr_, data_.labels().value().get(), label_order);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {

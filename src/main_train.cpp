@@ -54,9 +54,9 @@ int main(int argc, char *argv[]) {
             // convert base params to correct type
             auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
             // create SVM
-            plssvm::openmp::csvm<real_type> svm{ plssvm::target_platform::cpu, csvm_params }; // TODO: other backends too
+            auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);
             // learn model
-            plssvm::model<real_type, label_type> model = svm.fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
+            plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
             // save model to file
             model.save(params.model_filename);
 

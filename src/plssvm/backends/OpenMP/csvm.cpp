@@ -29,10 +29,13 @@
 
 namespace plssvm::openmp {
 
-// TODO: target_platform?!?!
 template <typename T>
-csvm<T>::csvm(const target_platform target, parameter<T> params) :
-    ::plssvm::csvm<T>{ std::move(params) } {
+csvm<T>::csvm(const target_platform target, parameter<T> params) : ::plssvm::csvm<T>{ std::move(params) } {
+    this->init(target);
+}
+
+template <typename T>
+void csvm<T>::init(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::cpu) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the OpenMP backend!", target) };
@@ -171,52 +174,62 @@ auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, c
 }
 
 template <typename T>
-void csvm<T>::update_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha, const size_type num_data_points, const size_type num_features) {
-    // resize and reset all values to zero
-    w_.resize(num_features);
-    std::fill(w_.begin(), w_.end(), real_type{ 0.0 });
+auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) -> std::vector<real_type> {
+    const size_type num_data_points = A.size();
+    const size_type num_features = A.front().size();
+
+    // create w vector and fill with zeros
+    std::vector<real_type> w(num_features, real_type{ 0.0 });
 
     // calculate the w vector
-    #pragma omp parallel for default(none) shared(alpha, A) firstprivate(num_features, num_data_points)
-    for (std::size_t feature_index = 0; feature_index < num_features; ++feature_index) {
+    #pragma omp parallel for default(none) shared(A, alpha, w) firstprivate(num_features, num_data_points)
+    for (size_type feature_index = 0; feature_index < num_features; ++feature_index) {
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+: temp)
-        for (std::size_t data_index = 0; data_index < num_data_points; ++data_index) {
+        for (size_type data_index = 0; data_index < num_data_points; ++data_index) {
             temp += alpha[data_index] * A[data_index][feature_index];
         }
-        w_[feature_index] = temp;
+        w[feature_index] = temp;
     }
+    return w;
 }
 
 template <typename T>
-auto csvm<T>::predict_values_impl(const std::vector<std::vector<real_type>> &support_vectors,
-                             const std::vector<real_type> &alpha,
-                             const real_type rho,
-                             const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
+auto csvm<T>::predict_values_impl(const parameter<real_type> &params,
+                                  const std::vector<std::vector<real_type>> &support_vectors,
+                                  const std::vector<real_type> &alpha,
+                                  const real_type rho,
+                                  std::shared_ptr<std::vector<real_type>> &w,
+                                  const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     auto start_time = std::chrono::steady_clock::now();
 
     std::vector<real_type> out(predict_points.size(), -rho);
-    if (params_.kernel == kernel_type::linear) {
+    if (params.kernel == kernel_type::linear) {
         // use faster methode in case of the linear kernel function
-        if (w_.empty()) {
-            update_w(support_vectors, alpha, support_vectors.size(), support_vectors.front().size());
+        if (w == nullptr) {
+            w = std::make_shared<std::vector<real_type>>(calculate_w(support_vectors, alpha));
         }
     }
 
-    #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, out)
+    #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
-        if (params_.kernel == kernel_type::linear) {
-            // use faster methode in case of the linear kernel function
-            out[point_index] += transposed{ w_ } * predict_points[point_index];
-        } else {
-            real_type temp{ 0.0 };
-            #pragma omp simd reduction(+: temp)
-            for (std::size_t data_index = 0; data_index < support_vectors.size(); ++data_index) {
-                temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params_);
-            }
-            out[point_index] += temp;
+        switch (params.kernel) {
+            case kernel_type::linear:
+                out[point_index] += transposed{ *w } * predict_points[point_index];
+                break;
+            case kernel_type::polynomial:
+            case kernel_type::rbf:
+                {
+                    real_type temp{ 0.0 };
+                    #pragma omp simd reduction(+: temp)
+                    for (size_type data_index = 0; data_index < support_vectors.size(); ++data_index) {
+                        temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params);
+                    }
+                    out[point_index] += temp;
+                }
+                break;
         }
     }
 

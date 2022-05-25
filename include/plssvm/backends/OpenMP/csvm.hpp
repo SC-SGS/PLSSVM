@@ -13,6 +13,7 @@
 
 #include "plssvm/csvm.hpp"  // plssvm::csvm
 #include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/target_platforms.hpp"
 
 #include <vector>  // std::vector
 
@@ -36,11 +37,8 @@ class csvm : public ::plssvm::csvm<T> {
     using base_type = ::plssvm::csvm<T>;
 
     using base_type::params_;
-    using base_type::w_;
 
   public:
-    // Be able to use the predict overload from the csvm base class.
-    using base_type::predict_values;
     /// The type of the data. Must be either `float` or `double`.
     using typename base_type::real_type;
     using typename base_type::size_type;
@@ -55,22 +53,17 @@ class csvm : public ::plssvm::csvm<T> {
     explicit csvm(target_platform target, parameter<T> params = {});
     template <typename... Args>
     csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
-        // TODO:
-        if (verbose) {
-            fmt::print("Using OpenMP as backend.\n\n");
-        }
+        this->init(target);
     }
 
-    /**
-     * @copydoc plssvm::csvm::predict(const std::vector<std::vector<real_type>>&)
-     */
-//    [[nodiscard]] std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) override;
-    [[nodiscard]] std::vector<real_type> predict_values_impl(const std::vector<std::vector<real_type>> &support_vectors,
-                                                                const std::vector<real_type> &alpha,
-                                                                real_type rho,
-                                                                const std::vector<std::vector<real_type>> &predict_points) override;
-
   protected:
+    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params,
+                                                             const std::vector<std::vector<real_type>> &support_vectors,
+                                                             const std::vector<real_type> &alpha,
+                                                             real_type rho,
+                                                             std::shared_ptr<std::vector<real_type>> &w,
+                                                             const std::vector<std::vector<real_type>> &predict_points) override;
+
     /**
      * @copydoc plssvm::csvm::setup_data_on_device
      */
@@ -88,7 +81,7 @@ class csvm : public ::plssvm::csvm<T> {
     /**
      * @copydoc plssvm::csvm::update_w
      */
-    void update_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha, size_type num_data_points, size_type num_features) override;
+    std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) override;
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.
@@ -99,6 +92,9 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
     void run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type add);
+
+  private:
+    void init(target_platform target);
 };
 
 extern template class csvm<float>;
