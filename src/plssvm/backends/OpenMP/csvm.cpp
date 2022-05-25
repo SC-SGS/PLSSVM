@@ -51,39 +51,39 @@ void csvm<T>::init(const target_platform target) {
 }
 
 template <typename T>
-auto csvm<T>::generate_q(const std::vector<std::vector<real_type>> &data) -> std::vector<real_type> {
+auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) -> std::vector<real_type> {
     std::vector<real_type> q(data.size() - 1);
-    switch (params_.kernel) {
+    switch (params.kernel) {
         case kernel_type::linear:
             device_kernel_q_linear(q, data);
             break;
         case kernel_type::polynomial:
-            device_kernel_q_poly(q, data, params_.degree, params_.gamma, params_.coef0);
+            device_kernel_q_poly(q, data, params.degree, params.gamma, params.coef0);
             break;
         case kernel_type::rbf:
-            device_kernel_q_radial(q, data, params_.gamma);
+            device_kernel_q_radial(q, data, params.gamma);
             break;
     }
     return q;
 }
 
 template <typename T>
-void csvm<T>::run_device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) {
-    switch (params_.kernel) {
+void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) {
+    switch (params.kernel) {
         case kernel_type::linear:
-            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params_.cost, add);
+            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
             break;
         case kernel_type::polynomial:
-            openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params_.cost, add, params_.degree, params_.gamma, params_.coef0);
+            openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree, params.gamma, params.coef0);
             break;
         case kernel_type::rbf:
-            openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params_.cost, add, params_.gamma);
+            openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma);
             break;
     }
 }
 
 template <typename T>
-auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, const real_type QA_cost, const real_type eps, const size_type max_iter) -> std::vector<real_type> {
+auto csvm<T>::conjugate_gradient(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, const real_type QA_cost, const real_type eps, const size_type max_iter) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     std::vector<real_type> alpha(b.size(), 1.0);
@@ -95,7 +95,7 @@ auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, c
     std::vector<real_type> r(b);
 
     // r = A + alpha_ (r = b - Ax)
-    run_device_kernel(q, r, alpha, A, QA_cost, -1);
+    run_device_kernel(params, q, r, alpha, A, QA_cost, -1);
 
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
@@ -123,7 +123,7 @@ auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, c
 
         // Ad = A * d (q = A * d)
         std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
-        run_device_kernel(q, Ad, d, A, QA_cost, 1);
+        run_device_kernel(params, q, Ad, d, A, QA_cost, 1);
 
         // (alpha = delta_new / (d^T * q))
         const real_type alpha_cd = delta / (transposed{ d } * Ad);
@@ -136,7 +136,7 @@ auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, c
             // r = b
             r = b;
             // r -= A * x
-            run_device_kernel(q, r, alpha, A, QA_cost, -1);
+            run_device_kernel(params, q, r, alpha, A, QA_cost, -1);
         } else {
             // r -= alpha_cd * Ad (r = r - alpha * q)
             r -= alpha_cd * Ad;
@@ -173,6 +173,7 @@ auto csvm<T>::conjugate_gradient(const std::vector<std::vector<real_type>> &A, c
     return alpha;
 }
 
+
 template <typename T>
 auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) -> std::vector<real_type> {
     const size_type num_data_points = A.size();
@@ -203,15 +204,7 @@ auto csvm<T>::predict_values_impl(const parameter<real_type> &params,
                                   const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
-    auto start_time = std::chrono::steady_clock::now();
-
     std::vector<real_type> out(predict_points.size(), -rho);
-    if (params.kernel == kernel_type::linear) {
-        // use faster methode in case of the linear kernel function
-        if (w == nullptr) {
-            w = std::make_shared<std::vector<real_type>>(calculate_w(support_vectors, alpha));
-        }
-    }
 
     #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
@@ -232,12 +225,6 @@ auto csvm<T>::predict_values_impl(const parameter<real_type> &params,
                 break;
         }
     }
-
-    auto end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        fmt::print("Predicted {} data points in {}.\n", predict_points.size(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-    }
-
     return out;
 }
 

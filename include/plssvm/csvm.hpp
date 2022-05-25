@@ -91,16 +91,16 @@ class csvm {
     //                                                          predict and score                                                          //
     //*************************************************************************************************************************************//
     template <typename label_type>
-    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    [[nodiscard]] std::vector<label_type> predict(model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
     template <typename label_type>
-    [[nodiscard]] std::vector<real_type> predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    [[nodiscard]] std::vector<real_type> predict_values(model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
 
     // calculate the accuracy of the model
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
+    [[nodiscard]] real_type score(model<real_type, label_type> &model);
     // calculate the accuracy of the data_set
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type> &data) const;
+    [[nodiscard]] real_type score(model<real_type, label_type> &model, const data_set<real_type> &data);
 
 
   protected:
@@ -108,36 +108,51 @@ class csvm {
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
     /**
-     * @brief Initialize the data on the respective device(s) (e.g. GPUs).
+     * @brief Initialize the data on the respective device(s) (e.g., GPUs).
      */
     virtual void setup_data_on_device() = 0;
     /**
+     * @brief Free all resources from the respective device(s) (e.g., GPUs).
+     */
+    virtual void clear_data_from_device() = 0;
+    /**
      * @brief Generate the vector `q`, a subvector of the least-squares matrix equation.
+     * @param[in] params the C-SVM parameters used in the respective kernel functions
+     * @param[in] data the data used to generate the `q` vector
      * @return the generated `q` vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data) = 0;
+    [[nodiscard]] virtual std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) = 0;
     /**
      * @brief Solves the equation \f$Ax = b\f$ using the Conjugated Gradients algorithm.
      * @details Solves using a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
      * \image html cg.png
+     * @param[in] params the C-SVM parameters used in the respective kernel functions
+     * @param[in] A the matrix of the equation \f$Ax = b\f$
      * @param[in] b the right-hand side of the equation \f$Ax = b\f$
-     * @param[in] imax the maximum number of CG iterations
-     * @param[in] eps error tolerance
      * @param[in] q subvector of the least-squares matrix equation
-     * @return the alpha values
+     * @param[in] QA_cost the bottom right matrix entry multiplied by the cost parameter
+     * @param[in] eps error tolerance
+     * @param[in] max_iter the maximum number of CG iterations
+     * @return the alpha values (`[[nodiscard]]`)
      */
-    virtual std::vector<real_type> conjugate_gradient(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, real_type QA_cost, real_type eps, size_type max_iter) = 0;
+    [[nodiscard]] virtual std::vector<real_type> conjugate_gradient(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, real_type QA_cost, real_type eps, size_type max_iter) = 0;
     /**
-     * @brief Updates the normal vector #w_, used to speed-up the prediction in case of the linear kernel function, to the current data and alpha values.
+     * @brief Calculate the normal vector w to the current data and alpha values, used to speed-up the prediction in case of the linear kernel function.
+     * @param[in] A the data set used for calculating the normal vector
+     * @param[in] alpha the alpha values
+     * @return the w vector (`[[nodiscard]]`)
      */
     virtual std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @param[in] points the data points to predict
+     * @param[in] params the C-SVM parameters used in the respective kernel functions
+     * @param[in] support_vectors the previously learned support vectors
+     * @param[in] alpha the alpha values associated with the support vectors
+     * @param[in] rho the rho value determined after training the model
+     * @param[in] w the normal vector to speedup prediction in case of the linear kernel function, `nullptr` in case of the polynomial or rbf kernel
+     * @param[in] predict_points the points to predict
      * @return a [`std::vector<real_type>`](https://en.cppreference.com/w/cpp/container/vector) filled with negative values for each prediction for a data point with the negative class and positive values otherwise (`[[nodiscard]]`)
      */
-//    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) = 0;
-    // TODO: API: sizes?!?
     [[nodiscard]] virtual std::vector<real_type> predict_values_impl(const parameter<real_type> &params,
                                                                      const std::vector<std::vector<real_type>> &support_vectors,
                                                                      const std::vector<real_type> &alpha,
@@ -145,14 +160,10 @@ class csvm {
                                                                      std::shared_ptr<std::vector<real_type>> &w,
                                                                      const std::vector<std::vector<real_type>> &predict_points) = 0;
 
-
-    //*************************************************************************************************************************************//
-    //                                              parameter initialized by the constructor                                               //
-    //*************************************************************************************************************************************//
-//  private: // TODO: private
-    parameter<real_type> params_{};
-
   private:
+    /**
+     * @brief Perform some sanity checks on the passed C-SVM parameters.
+     */
     void sanity_check_parameter() {
         // kernel: valid kernel function
         if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
@@ -166,6 +177,8 @@ class csvm {
         // coef0: all allowed
         // cost: all allowed
     }
+
+    parameter<real_type> params_{};
 };
 
 
@@ -298,31 +311,22 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     // create model
     model<real_type, label_type> csvm_model{ params, data };
 
+    std::chrono::time_point start_time = std::chrono::steady_clock::now();
+
     // move data to the device(s)
     this->setup_data_on_device();
 
-    std::chrono::time_point start_time = std::chrono::steady_clock::now();
+    // create q vector
+    const std::vector<real_type> q = generate_q(params, data.data());
 
-    real_type QA_cost{};
-    std::vector<real_type> q{};
+    // calculate QA_costs
+    const real_type QA_cost = kernel_function(data.data().back(), data.data().back(), params) + real_type{ 1.0 } / params.cost;
+
+    // update b
     std::vector<real_type> b = data.mapped_labels().value().get();
     const real_type b_back_value = b.back();
-    #pragma omp parallel sections default(none) shared(q, data, b, b_back_value, QA_cost, params_)
-    {
-        #pragma omp section
-        {
-            q = generate_q(data.data());
-        }
-        #pragma omp section
-        {
-            b.pop_back();
-            b -= b_back_value;
-        }
-        #pragma omp section
-        {
-            QA_cost = kernel_function(data.data().back(), data.data().back(), params_) + real_type{ 1.0 } / params_.cost;
-        }
-    }
+    b.pop_back();
+    b -= b_back_value;
 
     std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
@@ -333,14 +337,18 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
 
     // solve the minimization problem
     std::vector<real_type>& alpha = *csvm_model.alpha_ptr_;
-    alpha = conjugate_gradient(data.data(), b, q, QA_cost, epsilon_val, max_iter_val);
+    alpha = conjugate_gradient(params, data.data(), b, q, QA_cost, epsilon_val, max_iter_val);
     csvm_model.rho_ = -(b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha));
     alpha.push_back(-sum(alpha));
+
+    // free resources from device
+    this->clear_data_from_device();
 
     end_time = std::chrono::steady_clock::now();
     if (verbose) {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
+
     return csvm_model;
 }
 
@@ -349,7 +357,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
  *                              predict and score                             *
  ******************************************************************************/
 template <typename T> template <typename label_type>
-auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> std::vector<label_type> {
+auto csvm<T>::predict(model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<label_type> {
     if (model.num_features() != data.num_features()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
     }
@@ -367,22 +375,40 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> std::vector<real_type> {
+auto csvm<T>::predict_values(model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<real_type> {
     if (model.num_features() != data.num_features()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
     }
 
+    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
+
+    // move data to the device(s)
+    this->setup_data_on_device();
+
+    // use faster methode in case of the linear kernel function
+    if (model.params_.kernel == kernel_type::linear && model.w_ == nullptr) {
+        model.w_ = std::make_shared<std::vector<real_type>>(calculate_w(model.data_.data(), *model.alpha_ptr_));
+    }
+    const std::vector<real_type> predicted_values = predict_values_impl(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, model.w_, data.data());
+
+    // free resources from device
+    this->clear_data_from_device();
+
+    const std::chrono::time_point end_time = std::chrono::steady_clock::now();
+    if (verbose) {
+        fmt::print("Predicted {} data points in {}.\n", data.num_data_points(), std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+    }
     // forward implementation to derived classes
-    return predict_values_impl(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, data.data(), model.w_);
+    return predicted_values;
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model) const -> real_type {
+auto csvm<T>::score(model<real_type, label_type> &model) -> real_type {
     return this->score(model, model.data_);
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type> &data) const -> real_type {
+auto csvm<T>::score(model<real_type, label_type> &model, const data_set<real_type> &data) -> real_type {
     if (!data.has_labels()) {
         throw exception{ "the data set to score must have labels set!" };
     } else if (model.num_features() != data.num_features()) {
