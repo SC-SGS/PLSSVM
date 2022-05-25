@@ -139,7 +139,7 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
 }
 
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
+inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
     // save model file header
     out.print("svm_type c_svc\nkernel_type {}\n", params.kernel);
     switch (params.kernel) {
@@ -172,10 +172,12 @@ inline void write_libsvm_model_header(fmt::ostream &out, const parameter<real_ty
 
     out.print("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {}\nSV\n",
               data.num_labels(), fmt::join(label_values, " "), data.num_data_points(), fmt::join(label_counts, " "), rho);
+
+    return label_values;
 }
 
-template <typename real_type>
-inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<real_type> &mapped_labels) {
+template <typename real_type, typename label_type>
+inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<label_type> &labels, const std::vector<label_type> &label_order) {
     // format one output-line
     auto format_libsvm_line = [](std::string &output, const real_type a, const std::vector<real_type> &d) {
         static constexpr std::size_t BLOCK_SIZE = 64;
@@ -196,45 +198,26 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
         }
         output.push_back('\n');
     };
+    // TODO: PERFORMANCE!
+    std::vector<std::vector<std::string>> out_strings;
 
-    volatile int count = 0;
-    #pragma omp parallel default(none) shared(out, support_vectors, alpha, mapped_labels, format_libsvm_line, count)
+    #pragma omp parallel default(none) shared(out, support_vectors, alpha, labels, label_order, format_libsvm_line, out_strings)
     {
-        // all support vectors with class 1
-        std::string out_pos;
-        #pragma omp for nowait
+        #pragma omp single
+        out_strings.resize(omp_get_num_threads(), std::vector<std::string>(label_order.size()));
+
+        // format all lines
+        #pragma omp for
         for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-            if (mapped_labels[i] > 0) {
-                format_libsvm_line(out_pos, alpha[i], support_vectors[i]);
-            }
+            format_libsvm_line(out_strings[omp_get_thread_num()][std::find(label_order.begin(), label_order.end(), labels[i]) - label_order.begin()], alpha[i], support_vectors[i]);
         }
+    }
 
-        #pragma omp critical
-        {
-            out.print("{}", out_pos);
-            count++;
-            #pragma omp flush(count, out)
+    // output strings
+    for (typename std::vector<label_type>::size_type i = 0; i < label_order.size(); ++i) {
+        for (typename std::vector<std::vector<std::string>>::size_type j = 0; j < out_strings.size(); ++j) {
+            out.print("{}", out_strings[j][i]);
         }
-
-        // all support vectors with class -1
-        std::string out_neg;
-        #pragma omp for nowait
-        for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-            if (mapped_labels[i] < 0) {
-                format_libsvm_line(out_neg, alpha[i], support_vectors[i]);
-            }
-        }
-
-        // wait for all threads to write support vectors for class 1
-#ifdef _OPENMP
-        while (count < omp_get_num_threads()) {
-        }
-#else
-        #pragma omp barrier
-#endif
-
-        #pragma omp critical
-        out.print("{}", out_neg);
     }
 }
 
