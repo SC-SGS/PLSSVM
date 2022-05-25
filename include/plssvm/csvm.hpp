@@ -9,35 +9,27 @@
  * @brief Defines the base class for all C-SVM backends and implements the functionality shared by all of them.
  */
 
-
-// TODO: parameter sanity checks!?!?!
-
 #pragma once
 
-#include "plssvm/kernel_types.hpp"      // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
-#include "plssvm/parameter.hpp"         // plssvm::parameter
-#include "plssvm/model.hpp"             // plssvm::model
+#include "plssvm/constants.hpp"         // plssvm::verbose
 #include "plssvm/data_set.hpp"          // plssvm::data_set
+#include "plssvm/detail/utility.hpp"    // plssvm::detail::to_underlying, plssvm::detail::remove_cvref_t
+#include "plssvm/kernel_types.hpp"      // plssvm::kernel_type
+#include "plssvm/model.hpp"             // plssvm::model
+#include "plssvm/parameter.hpp"         // plssvm::parameter
 
+#include "igor/igor.hpp"  // igor::parser
+#include "fmt/core.h"     // fmt::format, fmt::print
+
+#include <chrono>       // std::chrono::{steady_clock, duration_cast}
 #include <cstddef>      // std::size_t
+#include <cstdio>       // stderr
 #include <string>       // std::string
+#include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v, std::is_convertible_v
-#include <vector>       // std::vector
 #include <utility>      // std::move, std::forward
+#include <vector>       // std::vector
 
-#include <iostream>     // std::clog, std::endl TODO
-#include <memory>
-#include <optional>
-#include <functional>
-
-#include "plssvm/constants.hpp"
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
-#include "plssvm/detail/utility.hpp"
 
 namespace plssvm {
 
@@ -92,7 +84,8 @@ class csvm {
     //                                                              fit model                                                              //
     //*************************************************************************************************************************************//
     template <typename label_type, typename... Args>
-    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args&&... named_args) const;
+    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args&&... named_args);
+
 
     //*************************************************************************************************************************************//
     //                                                          predict and score                                                          //
@@ -108,6 +101,7 @@ class csvm {
     // calculate the accuracy of the data_set
     template <typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type> &data) const;
+
 
   protected:
     //*************************************************************************************************************************************//
@@ -136,7 +130,7 @@ class csvm {
     /**
      * @brief Updates the normal vector #w_, used to speed-up the prediction in case of the linear kernel function, to the current data and alpha values.
      */
-    virtual void update_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha, size_type num_data_points, size_type num_features) = 0;
+    virtual std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @param[in] points the data points to predict
@@ -144,25 +138,19 @@ class csvm {
      */
 //    [[nodiscard]] virtual std::vector<real_type> predict(const std::vector<std::vector<real_type>> &points) = 0;
     // TODO: API: sizes?!?
-    [[nodiscard]] virtual std::vector<real_type> predict_values_impl(const std::vector<std::vector<real_type>> &support_vectors,
+    [[nodiscard]] virtual std::vector<real_type> predict_values_impl(const parameter<real_type> &params,
+                                                                     const std::vector<std::vector<real_type>> &support_vectors,
                                                                      const std::vector<real_type> &alpha,
                                                                      real_type rho,
+                                                                     std::shared_ptr<std::vector<real_type>> &w,
                                                                      const std::vector<std::vector<real_type>> &predict_points) = 0;
 
 
     //*************************************************************************************************************************************//
     //                                              parameter initialized by the constructor                                               //
     //*************************************************************************************************************************************//
-
+//  private: // TODO: private
     parameter<real_type> params_{};
-
-//    //*************************************************************************************************************************************//
-//    //                                                         internal variables                                                          //
-//    //*************************************************************************************************************************************//
-//    /// The bias after learning.
-//    real_type bias_{};
-    /// The normal vector used for speeding up the prediction in case of the linear kernel function.
-    std::vector<real_type> w_{};
 
   private:
     void sanity_check_parameter() {
@@ -254,8 +242,9 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
 /******************************************************************************
  *                                  fit model                                 *
  ******************************************************************************/
+ // TODO: const?
 template <typename T> template <typename label_type, typename... Args>
-auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_args) const -> model<real_type, label_type> {
+auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_args) -> model<real_type, label_type> {
     igor::parser p{ std::forward<Args>(named_args)... };
 
     // set default values
@@ -299,15 +288,15 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
         throw exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
 
-    bool reset_gamma{ false };
-    if (params_.gamma == real_type{ 0.0 }) {
+    // copy parameter and set gamma if necessary
+    parameter<real_type> params{ params_ };
+    if (params.gamma == real_type{ 0.0 }) {
         // no gamma provided -> use default value which depends on the number of features of the data set
-        params_.gamma = real_type{ 1.0 } / data.num_features();
-        reset_gamma = true;
+        params.gamma = real_type{ 1.0 } / data.num_features();
     }
 
     // create model
-    model<real_type, label_type> csvm_model{ params_, data };
+    model<real_type, label_type> csvm_model{ params, data };
 
     // move data to the device(s)
     this->setup_data_on_device();
@@ -348,14 +337,6 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     csvm_model.rho_ = -(b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha));
     alpha.push_back(-sum(alpha));
 
-    // TODO: necessary?
-    w_.clear();
-
-    // default gamma has been used -> reset gamma to 0.0
-    if (reset_gamma) {
-        params_.gamma = 0.0;
-    }
-
     end_time = std::chrono::steady_clock::now();
     if (verbose) {
         fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
@@ -392,7 +373,7 @@ auto csvm<T>::predict_values(const model<real_type, label_type> &model, const da
     }
 
     // forward implementation to derived classes
-    return predict_values_impl(model.data_.data(), *model.alpha_ptr_, model.rho_, data.data());
+    return predict_values_impl(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, data.data(), model.w_);
 }
 
 template <typename T> template <typename label_type>

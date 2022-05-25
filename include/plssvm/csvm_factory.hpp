@@ -14,9 +14,7 @@
 #include "plssvm/backend_types.hpp"          // plssvm::backend
 #include "plssvm/csvm.hpp"                   // plssvm::csvm
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
-#include "parameter.hpp"                     // plssvm::parameter
-
-#include <memory>  // std::unique_ptr, std::make_unique
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -40,6 +38,9 @@
     #endif
 #endif
 
+#include <memory>   // std::unique_ptr, std::make_unique
+#include <utility>  // std::forward
+
 namespace plssvm {
 
 /**
@@ -49,38 +50,35 @@ namespace plssvm {
  * @throws plssvm::unsupported_backend_exception if the requested backend isn't available
  * @return [`std::unique_ptr`](https://en.cppreference.com/w/cpp/memory/unique_ptr) to the constructed C-SVM (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const parameter<T> &params) {
-    switch (params.backend) {
-        case backend_type::automatic: {
-            parameter<T> new_params{ params };
-            new_params.backend = determine_default_backend();
-            return make_csvm(new_params);
-        }
+template <typename T, typename... Args>
+[[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, Args&&... args) {
+    switch (backend) {
+        case backend_type::automatic:
+            return make_csvm<T>(determine_default_backend(), target, std::forward<Args>(args)...);
         case backend_type::openmp:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-            return std::make_unique<openmp::csvm<T>>(params);
+            return std::make_unique<openmp::csvm<T>>(target, std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No OpenMP backend available!" };
 #endif
 
         case backend_type::cuda:
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-            return std::make_unique<cuda::csvm<T>>(params);
+            return std::make_unique<cuda::csvm<T>>(target, std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No CUDA backend available!" };
 #endif
 
         case backend_type::hip:
 #if defined(PLSSVM_HAS_HIP_BACKEND)
-            return std::make_unique<hip::csvm<T>>(params);
+            return std::make_unique<hip::csvm<T>>(target, std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No HIP backend available!" };
 #endif
 
         case backend_type::opencl:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-            return std::make_unique<opencl::csvm<T>>(params);
+            return std::make_unique<opencl::csvm<T>>(target, std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No OpenCL backend available!" };
 #endif
@@ -92,13 +90,13 @@ template <typename T>
                     return std::make_unique<PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION::csvm<T>>(params);
                 case sycl::implementation_type::dpcpp:
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-                    return std::make_unique<dpcpp::csvm<T>>(params);
+                    return std::make_unique<dpcpp::csvm<T>>(target, std::forward<Args>(args)...);
     #else
                     throw unsupported_backend_exception{ "No SYCL backend using DPC++ available!" };
     #endif
                 case sycl::implementation_type::hipsycl:
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-                    return std::make_unique<hipsycl::csvm<T>>(params);
+                    return std::make_unique<hipsycl::csvm<T>>(target, std::forward<Args>(args)...);
     #else
                     throw unsupported_backend_exception{ "No SYCL backend using hipSYCL available!" };
     #endif
@@ -108,12 +106,6 @@ template <typename T>
 #endif
     }
     throw unsupported_backend_exception{ "Can't recognize backend !" };
-}
-
-template <typename real_type, typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm<real_type>> make_csvm2(const backend_type backend, const target_platform target, Args&&... args) {
-    // TODO: implement
-    return std::make_unique<plssvm::openmp::csvm<real_type>>(target, std::forward<Args>(args)...);
 }
 
 }  // namespace plssvm
