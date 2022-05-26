@@ -42,7 +42,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    explicit csvm(target_platform target, parameter<T> params = {});
+    explicit csvm(target_platform target, parameter<real_type> params = {});
     template <typename... Args>
     csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
         this->init(target);
@@ -52,7 +52,7 @@ class csvm : public ::plssvm::csvm<T> {
     /**
      * @copydoc plssvm::csvm::setup_data_on_device
      */
-    void setup_data_on_device() override {
+    void setup_data_on_device([[maybe_unused]] const std::vector<std::vector<real_type>> &data) override {
         // OpenMP device is the CPU -> no special load functions
     }
     /**

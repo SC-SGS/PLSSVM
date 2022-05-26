@@ -110,7 +110,7 @@ class csvm {
     /**
      * @brief Initialize the data on the respective device(s) (e.g., GPUs).
      */
-    virtual void setup_data_on_device() = 0;
+    virtual void setup_data_on_device(const std::vector<std::vector<real_type>> &data) = 0;
     /**
      * @brief Free all resources from the respective device(s) (e.g., GPUs).
      */
@@ -314,7 +314,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // move data to the device(s)
-    this->setup_data_on_device();
+    this->setup_data_on_device(data.data());
 
     // create q vector
     const std::vector<real_type> q = generate_q(params, data.data());
@@ -383,7 +383,7 @@ auto csvm<T>::predict_values(const model<real_type, label_type> &model, const da
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // move data to the device(s)
-    this->setup_data_on_device();
+    this->setup_data_on_device(model.data_.data());
 
     // use faster methode in case of the linear kernel function
     if (model.params_.kernel == kernel_type::linear && model.w_->empty()) {
