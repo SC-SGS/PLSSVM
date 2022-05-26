@@ -61,7 +61,7 @@ class model {
     data_set<real_type, label_type> data_{}; // support vectors + labels
     std::shared_ptr<std::vector<real_type>> alpha_ptr_{ nullptr };
 
-    // used to speedup prediction in case of the linear kernel function
+    // used to speedup prediction in case of the linear kernel function, must be initialized to empty vector instead of nullptr
     std::shared_ptr<std::vector<real_type>> w_{ std::make_shared<std::vector<real_type>>() };
 
     real_type rho_{ 0.0 };
