@@ -196,12 +196,8 @@ auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const st
 }
 
 template <typename T>
-auto csvm<T>::predict_values_impl(const parameter<real_type> &params,
-                                  const std::vector<std::vector<real_type>> &support_vectors,
-                                  const std::vector<real_type> &alpha,
-                                  const real_type rho,
-                                  std::shared_ptr<std::vector<real_type>> &w,
-                                  const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
+auto csvm<T>::predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha,
+                                  const real_type rho, const std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     std::vector<real_type> out(predict_points.size(), -rho);
@@ -210,7 +206,7 @@ auto csvm<T>::predict_values_impl(const parameter<real_type> &params,
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
         switch (params.kernel) {
             case kernel_type::linear:
-                out[point_index] += transposed{ *w } * predict_points[point_index];
+                out[point_index] += transposed{ w } * predict_points[point_index];
                 break;
             case kernel_type::polynomial:
             case kernel_type::rbf:

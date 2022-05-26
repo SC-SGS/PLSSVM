@@ -91,16 +91,16 @@ class csvm {
     //                                                          predict and score                                                          //
     //*************************************************************************************************************************************//
     template <typename label_type>
-    [[nodiscard]] std::vector<label_type> predict(model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
+    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
     template <typename label_type>
-    [[nodiscard]] std::vector<real_type> predict_values(model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
+    [[nodiscard]] std::vector<real_type> predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
 
     // calculate the accuracy of the model
     template <typename label_type>
-    [[nodiscard]] real_type score(model<real_type, label_type> &model);
+    [[nodiscard]] real_type score(const model<real_type, label_type> &model);
     // calculate the accuracy of the data_set
     template <typename label_type>
-    [[nodiscard]] real_type score(model<real_type, label_type> &model, const data_set<real_type> &data);
+    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type> &data);
 
 
   protected:
@@ -157,7 +157,7 @@ class csvm {
                                                                      const std::vector<std::vector<real_type>> &support_vectors,
                                                                      const std::vector<real_type> &alpha,
                                                                      real_type rho,
-                                                                     std::shared_ptr<std::vector<real_type>> &w,
+                                                                     const std::vector<real_type> &w,
                                                                      const std::vector<std::vector<real_type>> &predict_points) = 0;
 
   private:
@@ -357,7 +357,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
  *                              predict and score                             *
  ******************************************************************************/
 template <typename T> template <typename label_type>
-auto csvm<T>::predict(model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<label_type> {
+auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<label_type> {
     if (model.num_features() != data.num_features()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
     }
@@ -375,7 +375,7 @@ auto csvm<T>::predict(model<real_type, label_type> &model, const data_set<real_t
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::predict_values(model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<real_type> {
+auto csvm<T>::predict_values(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<real_type> {
     if (model.num_features() != data.num_features()) {
         throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
     }
@@ -386,10 +386,10 @@ auto csvm<T>::predict_values(model<real_type, label_type> &model, const data_set
     this->setup_data_on_device();
 
     // use faster methode in case of the linear kernel function
-    if (model.params_.kernel == kernel_type::linear && model.w_ == nullptr) {
-        model.w_ = std::make_shared<std::vector<real_type>>(calculate_w(model.data_.data(), *model.alpha_ptr_));
+    if (model.params_.kernel == kernel_type::linear && model.w_->empty()) {
+        *model.w_ = calculate_w(model.data_.data(), *model.alpha_ptr_);
     }
-    const std::vector<real_type> predicted_values = predict_values_impl(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, model.w_, data.data());
+    const std::vector<real_type> predicted_values = predict_values_impl(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, *model.w_, data.data());
 
     // free resources from device
     this->clear_data_from_device();
@@ -403,12 +403,12 @@ auto csvm<T>::predict_values(model<real_type, label_type> &model, const data_set
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::score(model<real_type, label_type> &model) -> real_type {
+auto csvm<T>::score(const model<real_type, label_type> &model) -> real_type {
     return this->score(model, model.data_);
 }
 
 template <typename T> template <typename label_type>
-auto csvm<T>::score(model<real_type, label_type> &model, const data_set<real_type> &data) -> real_type {
+auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type> &data) -> real_type {
     if (!data.has_labels()) {
         throw exception{ "the data set to score must have labels set!" };
     } else if (model.num_features() != data.num_features()) {
