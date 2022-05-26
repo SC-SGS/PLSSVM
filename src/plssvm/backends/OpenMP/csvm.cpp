@@ -30,7 +30,7 @@
 namespace plssvm::openmp {
 
 template <typename T>
-csvm<T>::csvm(const target_platform target, parameter<T> params) : ::plssvm::csvm<T>{ std::move(params) } {
+csvm<T>::csvm(const target_platform target, parameter<real_type> params) : ::plssvm::csvm<T>{ std::move(params) } {
     this->init(target);
 }
 

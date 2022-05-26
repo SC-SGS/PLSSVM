@@ -11,6 +11,9 @@
 
 #pragma once
 
+#include "plssvm/kernel_types.hpp"
+#include "plssvm/target_platforms.hpp"
+#include "plssvm/parameter.hpp"
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
@@ -22,8 +25,8 @@
 namespace plssvm {
 
 // forward declare parameter class
-template <typename T>
-class parameter;
+//template <typename T>
+//class parameter;
 
 namespace detail {
 
@@ -45,16 +48,16 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     /// The template base type of the OpenCL C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::device_ptr<T>, ::plssvm::opencl::detail::command_queue>;
 
-    using base_type::coef0_;
-    using base_type::cost_;
-    using base_type::degree_;
-    using base_type::gamma_;
-    using base_type::kernel_;
-    using base_type::num_data_points_;
-    using base_type::num_features_;
-    using base_type::print_info_;
-    using base_type::QA_cost_;
-    using base_type::target_;
+//    using base_type::coef0_;
+//    using base_type::cost_;
+//    using base_type::degree_;
+//    using base_type::gamma_;
+//    using base_type::kernel_;
+//    using base_type::num_data_points_;
+//    using base_type::num_features_;
+//    using base_type::print_info_;
+//    using base_type::QA_cost_;
+//    using base_type::target_;
 
     using base_type::data_d_;
     using base_type::data_last_d_;
@@ -64,6 +67,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
 
   public:
     using typename base_type::real_type;
+    using typename base_type::size_type;
     using typename base_type::device_ptr_type;
     using typename base_type::queue_type;
 
@@ -74,7 +78,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
      * @throws plssvm::opencl::backend_exception if the requested plssvm::target_platform isn't available
      * @throws plssvm::opencl::backend_exception if no possible OpenCL devices could be found
      */
-    explicit csvm(const parameter<T> &params);
+    explicit csvm(target_platform target, parameter<real_type> params = {});
+
+    template <typename... Args>
+    csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+        this->init(target, kernel);
+    }
 
     /**
      * @brief Wait for all operations on all devices to finish.
@@ -91,22 +100,25 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
      */
-    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, std::size_t num_features) final;
+    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
-    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type add, std::size_t num_features) final;
+    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type QA_cost, real_type add, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_features) final;
+    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_data_points, std::size_t num_features) final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    void run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_predict_points) final;
+    void run_predict_kernel(const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) final;
 
     /// The available OpenCL contexts for the current target platform with the associated devices.
     std::vector<detail::context> contexts_{};
+
+  private:
+    void init(target_platform target, kernel_type kernel);
 };
 
 extern template class csvm<float>;

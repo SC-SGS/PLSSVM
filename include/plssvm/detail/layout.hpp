@@ -79,17 +79,23 @@ template <typename real_type>
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
+    std::vector<real_type> ret;
+
     switch (layout) {
         case layout_type::aos:
-            return transform_to_aos_layout(matrix, boundary_size, num_points, num_features);
+            ret = transform_to_aos_layout(matrix, boundary_size, num_points, num_features);
+            break;
         case layout_type::soa:
-            return transform_to_soa_layout(matrix, boundary_size, num_points, num_features);
+            ret = transform_to_soa_layout(matrix, boundary_size, num_points, num_features);
+            break;
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
         fmt::print("Transformed dataset from 2D to 1D {} in {}.\n", layout, std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
+
+    return ret;
 }
 
 }
