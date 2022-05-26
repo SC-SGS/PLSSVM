@@ -62,7 +62,7 @@ class model {
     std::shared_ptr<std::vector<real_type>> alpha_ptr_{ nullptr };
 
     // used to speedup prediction in case of the linear kernel function
-    std::shared_ptr<std::vector<real_type>> w_{ nullptr };
+    std::shared_ptr<std::vector<real_type>> w_{ std::make_shared<std::vector<real_type>>() };
 
     real_type rho_{ 0.0 };
 

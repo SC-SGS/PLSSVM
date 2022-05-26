@@ -76,7 +76,7 @@ class csvm : public ::plssvm::csvm<T> {
     /**
      * @copydoc plssvm::csvm::predict_values_impl
      */
-    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::shared_ptr<std::vector<real_type>> &w, const std::vector<std::vector<real_type>> &predict_points) override;
+    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, const std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) override;
 
 
     /**
