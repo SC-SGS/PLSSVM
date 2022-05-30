@@ -270,11 +270,15 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solver_CG(const std::vector<real_type> 
         }
 
         if (run % 50 == 49) {
-            // r = b
-            r_d[0].memcpy_to_device(b, 0, dept_);
             #pragma omp parallel for
-            for (typename std::vector<queue_type>::size_type device = 1; device < devices_.size(); ++device) {
-                r_d[device].memset(0);
+            for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+                if (device == 0) {
+                    // r = b
+                    r_d[device].memcpy_to_device(b, 0, dept_);
+                } else {
+                    // set r to 0
+                    r_d[device].memset(0);
+                }
 
                 // r -= A * x
                 run_device_kernel(device, q_d[device], r_d[device], x_d[device], -1);
