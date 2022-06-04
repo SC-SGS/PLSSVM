@@ -358,12 +358,14 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
 
 template <typename T>
 void csvm<T>::sanity_check_parameter() {
+    // TODO: call side doesnt make sense!
     // kernel: valid kernel function
     if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
     }
-    // gamma: must be greater than 0
-    if (params_.gamma <= real_type{ 0.0 }) {
+
+    // gamma: must be greater than 0, but only in the polynomial and rbf kernel
+    if ((params_.kernel == kernel_type::polynomial || params_.kernel == kernel_type::rbf) && params_.gamma <= real_type{ 0.0 }) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0, but is {}!", params_.gamma) };
     }
     // degree: all allowed
