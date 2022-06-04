@@ -51,7 +51,7 @@ void csvm<T>::init(const target_platform target) {
 }
 
 template <typename T>
-auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) -> std::vector<real_type> {
+auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const -> std::vector<real_type> {
     std::vector<real_type> q(data.size() - 1);
     switch (params.kernel) {
         case kernel_type::linear:
@@ -68,7 +68,7 @@ auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<s
 }
 
 template <typename T>
-void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) {
+void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
     switch (params.kernel) {
         case kernel_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
@@ -83,8 +83,21 @@ void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::v
 }
 
 template <typename T>
-auto csvm<T>::conjugate_gradient(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, const real_type QA_cost, const real_type eps, const size_type max_iter) -> std::vector<real_type> {
+auto csvm<T>::solve_system_of_linear_equations(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const size_type max_iter) const -> std::pair<std::vector<real_type>, real_type> {
     using namespace plssvm::operators;
+
+    // create q vector
+    const std::vector<real_type> q = this->generate_q(params, A);
+
+    // calculate QA_costs
+    const real_type QA_cost = kernel_function(A.back(), A.back(), params) + real_type{ 1.0 } / params.cost;
+
+    // update b
+    const real_type b_back_value = b.back();
+    b.pop_back();
+    b -= b_back_value;
+
+    // CG
 
     std::vector<real_type> alpha(b.size(), 1.0);
     const typename std::vector<real_type>::size_type dept = b.size();
@@ -170,12 +183,16 @@ auto csvm<T>::conjugate_gradient(const parameter<real_type> &params, const std::
                    average_iteration_time / std::min(iter + 1, max_iter));
     }
 
-    return alpha;
+    // calculate bias
+    const real_type bias = b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha);
+    alpha.push_back(-sum(alpha));
+
+    return std::make_pair(std::move(alpha), -bias);
 }
 
 
 template <typename T>
-auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) -> std::vector<real_type> {
+auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) const -> std::vector<real_type> {
     const size_type num_data_points = A.size();
     const size_type num_features = A.front().size();
 
@@ -197,10 +214,15 @@ auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const st
 
 template <typename T>
 auto csvm<T>::predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha,
-                                  const real_type rho, const std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) -> std::vector<real_type> {
+                                  const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     std::vector<real_type> out(predict_points.size(), -rho);
+
+    // use faster methode in case of the linear kernel function
+    if (params.kernel == kernel_type::linear && w.empty()) {
+        w = calculate_w(support_vectors, alpha);
+    }
 
     #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {

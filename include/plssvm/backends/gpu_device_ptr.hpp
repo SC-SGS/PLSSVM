@@ -51,7 +51,7 @@ class gpu_device_ptr {
      * @param[in] queue the queue to manage the device_ptr
      * @param[in] size the size of the managed memory
      */
-    gpu_device_ptr(queue_type queue, size_type size);
+    gpu_device_ptr(const queue_type queue, size_type size);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.

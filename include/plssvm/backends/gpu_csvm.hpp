@@ -11,18 +11,12 @@
 
 #pragma once
 
-#include "plssvm/csvm.hpp"  // plssvm::csvm
+#include "plssvm/csvm.hpp"       // plssvm::csvm
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
-#include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm {
-
-//// forward declare parameter class
-//template <typename T>
-//class parameter;
-
-namespace detail {
+namespace plssvm::detail {
 
 // forward declare execution_range class
 class execution_range;
@@ -39,23 +33,6 @@ class gpu_csvm : public csvm<T> {
   protected:
     /// The template base type of the C-SVM class.
     using base_type = ::plssvm::csvm<T>;
-
-//    using base_type::alpha_ptr_;
-//    using base_type::bias_;
-//    using base_type::coef0_;
-//    using base_type::cost_;
-//    using base_type::data_ptr_;
-//    using base_type::degree_;
-//    using base_type::epsilon_;
-//    using base_type::gamma_;
-//    using base_type::kernel_;
-//    using base_type::num_data_points_;
-//    using base_type::num_features_;
-//    using base_type::print_info_;
-//    using base_type::QA_cost_;
-//    using base_type::target_;
-//    using base_type::value_ptr_;
-//    using base_type::w_;
 
   public:
     using typename base_type::real_type;
@@ -83,22 +60,21 @@ class gpu_csvm : public csvm<T> {
     /**
      * @copydoc plssvm::csvm::setup_data_on_device
      */
-    void setup_data_on_device(const std::vector<std::vector<real_type>> &data) final;
-    void clear_data_from_device() final;
+    [[nodiscard]] std::tuple<std::vector<device_ptr_type>, std::vector<device_ptr_type>, std::vector<size_type>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, size_type num_data_points, size_type num_features, size_type boundary_size) const;
     /**
      * @copydoc plssvm::csvm::generate_q
      */
-    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) final;
+    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, size_type num_data_points, const std::vector<size_type> &feature_ranges, size_type boundary_size) const;
     /**
      * @copydoc plssvm::csvm::solver_CG
      */
-    [[nodiscard]] std::vector<real_type> conjugate_gradient(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, real_type QA_cost, real_type eps, size_type max_iter) final;
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, size_type max_iter) const final;
     /**
      * @copydoc plssvm::csvm::update_w
      */
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) final;
+    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const std::vector<device_ptr_type> &alpha_d, size_type num_data_points, const std::vector<size_type> &feature_ranges) const;
 
-    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, const std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) final;
+    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const final;
 
 
     /**
@@ -109,13 +85,13 @@ class gpu_csvm : public csvm<T> {
      * @param[in] x_d the right-hand side of the equation
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(std::size_t device, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type QA_cost, real_type add);
+    void run_device_kernel(size_type device, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d,const std::vector<size_type> &feature_ranges, real_type QA_cost, real_type add, size_type dept, size_type boundary_size) const;
     /**
      * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each device.
      * @param[in,out] buffer_d the data to gather
      * @param[in,out] buffer the reduced data
      */
-    void device_reduction(std::vector<device_ptr_type> &buffer_d, std::vector<real_type> &buffer);
+    void device_reduction(std::vector<device_ptr_type> &buffer_d, std::vector<real_type> &buffer) const;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
@@ -124,7 +100,7 @@ class gpu_csvm : public csvm<T> {
      * @brief Synchronize the device denoted by @p queue.
      * @param[in,out] queue the queue denoting the device to synchronize
      */
-    virtual void device_synchronize(queue_type &queue) = 0;
+    virtual void device_synchronize(const queue_type &queue) const = 0;
     /**
      * @brief Run the GPU kernel filling the `q` vector.
      * @param[in] device the device ID denoting the GPU on which the kernel should be executed
@@ -132,7 +108,7 @@ class gpu_csvm : public csvm<T> {
      * @param[out] q_d the `q` vector to fill
      * @param[in] num_features number of features used for the calculation on the @p device
      */
-    virtual void run_q_kernel(std::size_t device, const detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, std::size_t num_features) = 0;
+    virtual void run_q_kernel(size_type device, const detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, size_type num_data_points_padded, size_type num_features) const = 0;
     /**
      * @brief Run the main GPU kernel used in the CG algorithm.
      * @param[in] device the device ID denoting the GPU on which the kernel should be executed
@@ -143,7 +119,7 @@ class gpu_csvm : public csvm<T> {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      * @param[in] num_features number of features used for the calculation in the @p device
      */
-    virtual void run_svm_kernel(std::size_t device, const detail::execution_range &range, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, real_type QA_cost, real_type add, std::size_t num_features) = 0;
+    virtual void run_svm_kernel(size_type device, const detail::execution_range &range, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, real_type QA_cost, real_type add, size_type num_data_points_padded, size_type num_features) const = 0;
     /**
      * @brief Run the GPU kernel (only on the first GPU) the calculate the `w` vector used to speed up the prediction when using the linear kernel function.
      * @param[in] device the device ID denoting the GPU on which the kernel should be executed
@@ -152,7 +128,7 @@ class gpu_csvm : public csvm<T> {
      * @param[in] alpha_d the previously calculated weight for each data point
      * @param[in] num_features number of features used for the calculation on the @p device
      */
-    virtual void run_w_kernel(std::size_t device, const detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, std::size_t num_data_points, std::size_t num_features) = 0;
+    virtual void run_w_kernel(size_type device, const detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, size_type num_data_points, size_type num_features) const = 0;
     /**
      * @brief Run the GPU kernel (only on the first GPU) to predict the new data points @p point_d.
      * @param[in] range the execution range used to launch the kernel
@@ -161,29 +137,11 @@ class gpu_csvm : public csvm<T> {
      * @param[in] point_d the data points to predict
      * @param[in] num_predict_points the number of data points to predict
      */
-    virtual void run_predict_kernel(const detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) = 0;
+    virtual void run_predict_kernel(const detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, size_type num_support_vectors, size_type num_predict_points, size_type num_features) const = 0;
 
-    //*************************************************************************************************************************************//
-    //                                             internal variables specific to GPU backends                                             //
-    //*************************************************************************************************************************************//
-    /// The number of data points excluding the last data point.
-    size_type dept_{};
-    /// The boundary size used to remove boundary condition checks inside the kernels.
-    size_type boundary_size_{};
-    /// The number of rows to calculate including the boundary values.
-    size_type num_rows_{};
-    /// The number of columns in the data matrix (= the number of features per data point).
-    size_type num_cols_{};
-    /// The feature range per GPU. The GPU with the ID `i` uses the features: `[feature_ranges_[i], feature_ranges_[i + 1])`.
-    std::vector<size_type> feature_ranges_;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
-    /// The data saved across all devices.
-    std::vector<device_ptr_type> data_d_{};
-    /// The last row of the data matrix.
-    std::vector<device_ptr_type> data_last_d_{};
 };
 
-}  // namespace detail
-}  // namespace plssvm
+}  // namespace plssvm::detail

@@ -23,7 +23,7 @@
 namespace plssvm::opencl::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, command_queue &queue) :
+device_ptr<T>::device_ptr(const size_type size, const command_queue &queue) :
     base_type{ &queue, size } {
     error_code err;
     cl_context cont;
