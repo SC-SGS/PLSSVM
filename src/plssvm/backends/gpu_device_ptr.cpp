@@ -114,8 +114,8 @@ template class gpu_device_ptr<float, int>;
 template class gpu_device_ptr<double, int>;
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-template class gpu_device_ptr<float, ::plssvm::opencl::detail::command_queue *, cl_mem>;
-template class gpu_device_ptr<double, ::plssvm::opencl::detail::command_queue *, cl_mem>;
+template class gpu_device_ptr<float, const ::plssvm::opencl::detail::command_queue *, cl_mem>;
+template class gpu_device_ptr<double, const ::plssvm::opencl::detail::command_queue *, cl_mem>;
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
