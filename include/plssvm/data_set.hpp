@@ -73,7 +73,7 @@ class data_set {
     void save(const std::string& filename, file_format_type format) const;
 
     [[nodiscard]] const std::vector<std::vector<real_type>>& data() const noexcept { return *X_ptr_; }
-    [[nodiscard]] bool has_labels() const noexcept { return y_ptr_ != nullptr; }
+    [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
     [[nodiscard]] optional_ref<const std::vector<real_type>> mapped_labels() const noexcept;
     [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept;
 
