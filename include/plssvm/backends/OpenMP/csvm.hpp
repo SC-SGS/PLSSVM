@@ -50,33 +50,21 @@ class csvm : public ::plssvm::csvm<T> {
 
   private:
     /**
-     * @copydoc plssvm::csvm::setup_data_on_device
-     */
-    void setup_data_on_device([[maybe_unused]] const std::vector<std::vector<real_type>> &data) override {
-        // OpenMP device is the CPU -> no special load functions
-    }
-    /**
-     * @copydoc plssvm::csvm::clear_data_from_device
-     */
-    void clear_data_from_device() override {
-        // OpenMP device is the CPU -> no special clear functions
-    }
-    /**
      * @copydoc plssvm::csvm::generate_q
      */
-    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) override;
+    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const;
     /**
      * @copydoc plssvm::csvm::solver_CG
      */
-    [[nodiscard]] std::vector<real_type> conjugate_gradient(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, real_type QA_cost, real_type eps, size_type max_iter) override;
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, size_type max_iter) const override;
     /**
      * @copydoc plssvm::csvm::calculate_w
      */
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) override;
+    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) const;
     /**
      * @copydoc plssvm::csvm::predict_values_impl
      */
-    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, const std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) override;
+    [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const override;
 
 
     /**
@@ -87,7 +75,7 @@ class csvm : public ::plssvm::csvm<T> {
      * @param[in] data the data
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type add);
+    void run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type add) const;
 
   private:
     /**

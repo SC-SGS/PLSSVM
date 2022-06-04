@@ -23,9 +23,9 @@ namespace plssvm::opencl::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, cl_mem> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem> {
     /// The template base type of the OpenCL device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, command_queue *, cl_mem>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -53,7 +53,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, c
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
      */
-    device_ptr(size_type size, command_queue &queue);
+    device_ptr(size_type size, const command_queue &queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
@@ -76,7 +76,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, c
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::~gpu_device_ptr()
      */
-    ~device_ptr();
+    ~device_ptr() override;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)

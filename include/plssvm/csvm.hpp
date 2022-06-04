@@ -84,7 +84,7 @@ class csvm {
     //                                                              fit model                                                              //
     //*************************************************************************************************************************************//
     template <typename label_type, typename... Args>
-    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args&&... named_args);
+    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args&&... named_args) const;
 
 
     //*************************************************************************************************************************************//
@@ -108,21 +108,6 @@ class csvm {
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
     /**
-     * @brief Initialize the data on the respective device(s) (e.g., GPUs).
-     */
-    virtual void setup_data_on_device(const std::vector<std::vector<real_type>> &data) = 0;
-    /**
-     * @brief Free all resources from the respective device(s) (e.g., GPUs).
-     */
-    virtual void clear_data_from_device() = 0;
-    /**
-     * @brief Generate the vector `q`, a subvector of the least-squares matrix equation.
-     * @param[in] params the C-SVM parameters used in the respective kernel functions
-     * @param[in] data the data used to generate the `q` vector
-     * @return the generated `q` vector (`[[nodiscard]]`)
-     */
-    [[nodiscard]] virtual std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) = 0;
-    /**
      * @brief Solves the equation \f$Ax = b\f$ using the Conjugated Gradients algorithm.
      * @details Solves using a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
      * \image html cg.png
@@ -135,14 +120,7 @@ class csvm {
      * @param[in] max_iter the maximum number of CG iterations
      * @return the alpha values (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<real_type> conjugate_gradient(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &b, const std::vector<real_type> &q, real_type QA_cost, real_type eps, size_type max_iter) = 0;
-    /**
-     * @brief Calculate the normal vector w to the current data and alpha values, used to speed-up the prediction in case of the linear kernel function.
-     * @param[in] A the data set used for calculating the normal vector
-     * @param[in] alpha the alpha values
-     * @return the w vector (`[[nodiscard]]`)
-     */
-    virtual std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) = 0;
+    [[nodiscard]] virtual std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, size_type max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @param[in] params the C-SVM parameters used in the respective kernel functions
@@ -153,30 +131,13 @@ class csvm {
      * @param[in] predict_points the points to predict
      * @return a [`std::vector<real_type>`](https://en.cppreference.com/w/cpp/container/vector) filled with negative values for each prediction for a data point with the negative class and positive values otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<real_type> predict_values_impl(const parameter<real_type> &params,
-                                                                     const std::vector<std::vector<real_type>> &support_vectors,
-                                                                     const std::vector<real_type> &alpha,
-                                                                     real_type rho,
-                                                                     const std::vector<real_type> &w,
-                                                                     const std::vector<std::vector<real_type>> &predict_points) = 0;
+    [[nodiscard]] virtual std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const = 0;
 
   private:
     /**
      * @brief Perform some sanity checks on the passed C-SVM parameters.
      */
-    void sanity_check_parameter() {
-        // kernel: valid kernel function
-        if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
-            throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
-        }
-        // gamma: must be greater than 0
-        if (params_.gamma <= real_type{ 0.0 }) {
-            throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0, but is {}!", params_.gamma) };
-        }
-        // degree: all allowed
-        // coef0: all allowed
-        // cost: all allowed
-    }
+    void sanity_check_parameter();
 
     parameter<real_type> params_{};
 };
@@ -255,9 +216,8 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
 /******************************************************************************
  *                                  fit model                                 *
  ******************************************************************************/
- // TODO: const?
 template <typename T> template <typename label_type, typename... Args>
-auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_args) -> model<real_type, label_type> {
+auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_args) const -> model<real_type, label_type> {
     igor::parser p{ std::forward<Args>(named_args)... };
 
     // set default values
@@ -308,45 +268,19 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
         params.gamma = real_type{ 1.0 } / data.num_features();
     }
 
+
+    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
+
     // create model
     model<real_type, label_type> csvm_model{ params, data };
 
-    std::chrono::time_point start_time = std::chrono::steady_clock::now();
-
-    // move data to the device(s)
-    this->setup_data_on_device(data.data());
-
-    // create q vector
-    const std::vector<real_type> q = generate_q(params, data.data());
-
-    // calculate QA_costs
-    const real_type QA_cost = kernel_function(data.data().back(), data.data().back(), params) + real_type{ 1.0 } / params.cost;
-
-    // update b
-    std::vector<real_type> b = data.mapped_labels().value().get();
-    const real_type b_back_value = b.back();
-    b.pop_back();
-    b -= b_back_value;
-
-    std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        fmt::print("Setup for solving the optimization problem done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-    }
-
-    start_time = std::chrono::steady_clock::now();
-
     // solve the minimization problem
-    std::vector<real_type>& alpha = *csvm_model.alpha_ptr_;
-    alpha = conjugate_gradient(params, data.data(), b, q, QA_cost, epsilon_val, max_iter_val);
-    csvm_model.rho_ = -(b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha));
-    alpha.push_back(-sum(alpha));
+    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(params, data.data(), data.mapped_labels().value().get(), epsilon_val, max_iter_val);
 
-    // free resources from device
-    this->clear_data_from_device();
 
-    end_time = std::chrono::steady_clock::now();
+    const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Solved minimization problem (r = b - Ax) using CG in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+        fmt::print("Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
     }
 
     return csvm_model;
@@ -382,17 +316,7 @@ auto csvm<T>::predict_values(const model<real_type, label_type> &model, const da
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    // move data to the device(s)
-    this->setup_data_on_device(model.data_.data());
-
-    // use faster methode in case of the linear kernel function
-    if (model.params_.kernel == kernel_type::linear && model.w_->empty()) {
-        *model.w_ = calculate_w(model.data_.data(), *model.alpha_ptr_);
-    }
     const std::vector<real_type> predicted_values = predict_values_impl(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, *model.w_, data.data());
-
-    // free resources from device
-    this->clear_data_from_device();
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
@@ -429,6 +353,22 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
         }
     }
     return static_cast<real_type>(correct) / static_cast<real_type>(predicted_labels.size());
+}
+
+
+template <typename T>
+void csvm<T>::sanity_check_parameter() {
+    // kernel: valid kernel function
+    if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
+        throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
+    }
+    // gamma: must be greater than 0
+    if (params_.gamma <= real_type{ 0.0 }) {
+        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0, but is {}!", params_.gamma) };
+    }
+    // degree: all allowed
+    // coef0: all allowed
+    // cost: all allowed
 }
 
 }  // namespace plssvm
