@@ -47,16 +47,17 @@ int main(int argc, char *argv[]) {
 
         // create data set
         std::visit([&](auto&& data){
-            // TODO: put code here
             using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // convert base params to correct type
-            auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
+            const auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
             // create SVM
-            auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);
+            const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);
             // learn model
-            plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
+            using csvm_type = typename decltype(svm)::element_type;
+            const typename csvm_type::size_type max_iter = params.max_iter == 0 ? data.num_data_points() : params.max_iter;
+            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = max_iter);
             // save model to file
             model.save(params.model_filename);
 

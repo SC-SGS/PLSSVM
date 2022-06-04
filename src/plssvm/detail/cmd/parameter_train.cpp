@@ -177,7 +177,7 @@ std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
         "output file (model): '{}'\n",
         params.csvm_params.cost,
         params.epsilon,
-        params.max_iter,
+        params.max_iter == 0 ? std::string{ "1 / num_data_points" } : std::to_string(params.max_iter),
         params.strings_as_labels,
         params.float_as_real_type,
         params.input_filename,
