@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
         // output used parameter
         if (plssvm::verbose) {
-            fmt::print("\ntask: prediction\n{}\n", params);
+            fmt::print("\ntask: prediction\n{}\n\n", params);
         }
 
         // create data set
@@ -64,10 +64,10 @@ int main(int argc, char *argv[]) {
 
                 std::chrono::time_point end_time = std::chrono::steady_clock::now();
                 if (plssvm::verbose) {
-                    fmt::print("Wrote prediction file ('{}') with {} labels in {}.\n",
-                               params.predict_filename,
+                    fmt::print("Write {} predictions in {} to the file '{}'.\n",
                                predicted_labels.size(),
-                               std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+                               std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                               params.predict_filename);
                 }
             }
 

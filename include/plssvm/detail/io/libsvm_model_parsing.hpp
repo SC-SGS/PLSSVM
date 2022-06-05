@@ -141,15 +141,15 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
 template <typename real_type, typename label_type>
 inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
     // save model file header
-    out.print("svm_type c_svc\nkernel_type {}\n", params.kernel);
+    std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel);
     switch (params.kernel) {
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-            out.print("degree {}\ngamma {}\ncoef0 {}\n", params.degree, params.gamma, params.coef0);
+            out_string += fmt::format("degree {}\ngamma {}\ncoef0 {}\n", params.degree, params.gamma, params.coef0);
             break;
         case kernel_type::rbf:
-            out.print("gamma {}\n", params.gamma);
+            out_string += fmt::format("gamma {}\n", params.gamma);
             break;
     }
 
@@ -170,8 +170,13 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
         label_counts[i] = label_counts_map[label_values[i]];
     }
 
-    out.print("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {}\nSV\n",
-              data.num_labels(), fmt::join(label_values, " "), data.num_data_points(), fmt::join(label_counts, " "), rho);
+    out_string += fmt::format("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {}\nSV\n",
+                              data.num_labels(), fmt::join(label_values, " "), data.num_data_points(), fmt::join(label_counts, " "), rho);
+
+    // print model header
+    fmt::print("\n{}\n", out_string);
+    // write model header to file
+    out.print(out_string);
 
     return label_values;
 }
@@ -191,7 +196,8 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
             char *ptr = buffer;
             for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, d.size() - j); ++i) {
                 if (d[j + i] != real_type{ 0.0 }) {
-                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:e} "), j + i, d[j + i]);
+                    // add 1 to the index since LIBSVM assumes 1-based feature indexing
+                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:e} "), j + i + 1, d[j + i]);
                 }
             }
             output.append(buffer, ptr - buffer);

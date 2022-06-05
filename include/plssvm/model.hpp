@@ -96,7 +96,7 @@ model<T, U>::model(const std::string &filename) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n",
+        fmt::print("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
                    num_support_vectors_,
                    num_features_,
                    std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
