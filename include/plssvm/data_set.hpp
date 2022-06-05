@@ -411,35 +411,34 @@ void data_set<T,U>::read_arff_file(const std::string &filename) {
 }
 
 
-// TODO:
 namespace detail {
 
-// two possible types: real_type + real_type and real_type + std::string
+// two possible types: real_type + int and real_type + std::string
 using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
+
+template <bool scale, typename real_type, typename cmd_parameter>
+inline data_set_variants data_set_factory_imp(const cmd_parameter& params) {
+    std::optional<std::pair<real_type, real_type>> scale_range = std::nullopt;
+    // set scale range if the data set should be scaled
+    if constexpr (scale) {
+        scale_range = std::pair<real_type, real_type>{ params.lower, params.upper };
+    }
+    // select the label_type based on the command line parameter
+    if (params.strings_as_labels) {
+        return data_set_variants{ plssvm::data_set<real_type, std::string>{ params.input_filename, scale_range } };
+    } else {
+        return data_set_variants{ plssvm::data_set<real_type>{ params.input_filename, scale_range } };
+    }
+}
 
 // create variant based on runtime flag
 template <bool scale, typename cmd_parameter>
 inline data_set_variants data_set_factory(const cmd_parameter& params) {
-    if constexpr (scale) {
-        if (params.float_as_real_type &&  params.strings_as_labels) {
-            return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename, std::pair<float, float>{ params.lower, params.upper } } };
-        } else if (params.float_as_real_type && ! params.strings_as_labels) {
-            return data_set_variants{ plssvm::data_set<float>{ params.input_filename, std::pair<float, float>{ params.lower, params.upper } } };
-        } else if (!params.float_as_real_type &&  params.strings_as_labels) {
-            return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename, std::pair<double, double>{ params.lower, params.upper } } };
-        } else {
-            return data_set_variants{ plssvm::data_set<double>{ params.input_filename, std::pair<double, double>{ params.lower, params.upper } } };
-        }
+    // select the real_type based on command line parameter
+    if (params.float_as_real_type) {
+        return data_set_factory_imp<scale, float>(params);
     } else {
-        if (params.float_as_real_type &&  params.strings_as_labels) {
-            return data_set_variants{ plssvm::data_set<float, std::string>{ params.input_filename } };
-        } else if (params.float_as_real_type && ! params.strings_as_labels) {
-            return data_set_variants{ plssvm::data_set<float>{ params.input_filename } };
-        } else if (!params.float_as_real_type &&  params.strings_as_labels) {
-            return data_set_variants{ plssvm::data_set<double, std::string>{ params.input_filename } };
-        } else {
-            return data_set_variants{ plssvm::data_set<double>{ params.input_filename } };
-        }
+        return data_set_factory_imp<scale, double>(params);
     }
 }
 
