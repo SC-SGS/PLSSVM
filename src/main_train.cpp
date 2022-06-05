@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
         // output used parameter
         if (plssvm::verbose) {
-            fmt::print("\ntask: training\n{}\n", params);
+            fmt::print("\ntask: training\n{}\n\n", params);
         }
 
         // create data set
