@@ -109,7 +109,13 @@ inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::
                     }
 
                     // get index
-                    const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos)) - 1;
+                    auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                    // LIBSVM assumes a 1-based indexing -> if the parsed index is 0 this condition is violated
+                    if (index == 0) {
+                        throw invalid_file_format_exception{ "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!" };
+                    }
+                    // since arrays start at 0, reduce 1 based index by one
+                    --index;
                     pos = next_pos + 1;
 
                     // get value
