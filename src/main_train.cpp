@@ -55,9 +55,7 @@ int main(int argc, char *argv[]) {
             // create SVM
             const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);
             // learn model
-            using csvm_type = typename decltype(svm)::element_type;
-            const typename csvm_type::size_type max_iter = params.max_iter == 0 ? data.num_data_points() : params.max_iter;
-            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = max_iter);
+            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
             // save model to file
             model.save(params.model_filename);
 

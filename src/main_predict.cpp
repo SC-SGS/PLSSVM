@@ -44,7 +44,6 @@ int main(int argc, char *argv[]) {
 
         // create data set
         std::visit([&](auto &&data) {
-            // TODO: put code here
             using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 

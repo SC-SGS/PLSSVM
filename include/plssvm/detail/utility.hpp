@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "plssvm/default_value.hpp"  // plssvm::default_value
+
 #include <cstddef>      // std::size_t
 #include <map>          // std::map
 #include <tuple>        // std::forward_as_tuple, std::get
@@ -50,6 +52,11 @@ template <typename Enum>
 [[nodiscard]] constexpr std::underlying_type_t<Enum> to_underlying(const Enum e) noexcept {
     static_assert(std::is_enum_v<Enum>, "e must be an enumeration type!");
     return static_cast<std::underlying_type_t<Enum>>(e);
+}
+
+template <typename Enum>
+[[nodiscard]] constexpr std::underlying_type_t<Enum> to_underlying(const default_value<Enum> &e) noexcept {
+    return to_underlying(e.value());
 }
 
 /**
