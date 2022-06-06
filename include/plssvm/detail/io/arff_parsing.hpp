@@ -17,8 +17,9 @@
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::to_upper_case, plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 
-#include "fmt/format.h"  // fmt::format, fmt::join
-#include "fmt/os.h"      // fmt::ostream
+#include "fmt/format.h"   // fmt::format, fmt::join
+#include "fmt/os.h"       // fmt::ostream
+#include "fmt/compile.h"  // FMT_COMPILE
 
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
@@ -189,19 +190,33 @@ inline void write_arff_header(fmt::ostream &out, const std::size_t num_features,
 
 template <typename real_type, typename label_type>
 inline void write_arff_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
-    // TODO: optimize?, FMT_COMPILE Bug?
-    // output with label
-    for (std::size_t i = 0; i < X.size(); ++i) {
-        out.print("{:e},{}\n", fmt::join(X[i], ","), y[i]);
+    #pragma omp parallel default(none) shared(out, X, y)
+    {
+        // all support vectors
+        std::string out_string;
+        #pragma omp for schedule(dynamic) nowait
+        for (std::size_t i = 0; i < X.size(); ++i) {
+            out_string.append(fmt::format(FMT_COMPILE("{:e},{}\n"), fmt::join(X[i], ","), y[i]));
+        }
+
+        #pragma omp critical
+        out.print("{}", out_string);
     }
 }
 
 template <typename real_type>
 inline void write_arff_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &X) {
-    // TODO: optimize?, FMT_COMPILE Bug?
-    // output without label
-    for (std::size_t i = 0; i < X.size(); ++i) {
-        out.print("{:e}\n", fmt::join(X[i], ","));
+    #pragma omp parallel default(none) shared(out, X)
+    {
+        // all support vectors
+        std::string out_string;
+        #pragma omp for schedule(dynamic) nowait
+        for (std::size_t i = 0; i < X.size(); ++i) {
+            out.print(FMT_COMPILE("{:e}\n"), fmt::join(X[i], ","));
+        }
+
+        #pragma omp critical
+        out.print("{}", out_string);
     }
 }
 
