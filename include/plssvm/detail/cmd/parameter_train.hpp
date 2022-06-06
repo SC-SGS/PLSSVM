@@ -14,6 +14,7 @@
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/default_value.hpp"                         // plssvm::default_value
 #include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -48,9 +49,9 @@ class parameter_train {
    parameter<double> csvm_params{};
 
    /// The error tolerance parameter for the CG algorithm.
-   double epsilon{ 0.001 };
+   default_value<double> epsilon = default_init<double>{ 0.001 };
    /// The maximum number of iterations in the CG algorithm.
-   std::size_t max_iter{ 0 };
+   default_value<std::size_t> max_iter = default_init<std::size_t>{ 0 };
 
    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
    backend_type backend = backend_type::automatic;

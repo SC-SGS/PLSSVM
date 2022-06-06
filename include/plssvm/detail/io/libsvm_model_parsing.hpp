@@ -55,13 +55,13 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
                 }
             } else if (detail::starts_with(line, "gamma")) {
                 // parse gamma
-                params.gamma = detail::convert_to<decltype(params.gamma)>(value);
+                params.gamma = detail::convert_to<typename decltype(params.gamma)::value_type>(value);
             } else if (detail::starts_with(line, "degree")) {
                 // parse degree
-                params.degree = detail::convert_to<decltype(params.degree)>(value);
+                params.degree = detail::convert_to<typename decltype(params.degree)::value_type>(value);
             } else if (detail::starts_with(line, "coef0")) {
                 // parse coef0
-                params.coef0 = detail::convert_to<decltype(params.coef0)>(value);
+                params.coef0 = detail::convert_to<typename decltype(params.coef0)::value_type>(value);
             } else if (detail::starts_with(line, "nr_class")) {
                 // number of classes must be 2
                 const auto nr_class = detail::convert_to<unsigned long long>(value);

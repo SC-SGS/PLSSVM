@@ -221,8 +221,8 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     igor::parser p{ std::forward<Args>(named_args)... };
 
     // set default values
-    auto epsilon_val = static_cast<real_type>(0.001);
-    size_type max_iter_val = data.num_features();
+    default_value epsilon_val = default_init<real_type>{ 0.001 };
+    default_value max_iter_val = default_init<size_type>{ data.num_data_points() };
 
     // compile time check: only named parameter are permitted
     static_assert(!p.has_unnamed_arguments(), "Can only use named parameter!");
@@ -233,23 +233,41 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
 
     // compile time/runtime check: the values must have the correct types
     if constexpr (p.has(epsilon)) {
-        // compile time check: the value must have the correct type
-        static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(epsilon))>, real_type>, "epsilon must be convertible to a real_type!");
-        // set value
-        epsilon_val = static_cast<real_type>(p(epsilon));
-        // check if value makes sense
-        if (epsilon_val <= real_type{ 0.0 }) {
-            throw invalid_parameter_exception{ fmt::format("epsilon must be greater than 0, but is {}!", epsilon_val) };
+        if constexpr (std::is_same_v<detail::remove_cvref_t<decltype(p(epsilon))>, decltype(epsilon)>) {
+            // a plssvm::default_value has been provided
+            if (!p(epsilon).is_default()) {
+                // only override it if it doesn't hold the default value
+                epsilon_val = p(epsilon);
+            }
+        } else {
+            // a normal value (not wrapped) has been provided
+            // compile time check: the value must have the correct type
+            static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(epsilon))>, real_type>, "epsilon must be convertible to a real_type!");
+            // set value
+            epsilon_val = static_cast<real_type>(p(epsilon));
+            // check if value makes sense
+            if (epsilon_val <= real_type{ 0.0 }) {
+                throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
+            }
         }
     }
     if constexpr (p.has(max_iter)) {
-        // compile time check: the value must have the correct type
-        static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(max_iter))>, size_type>, "max_iter must be convertible to a size_type!");
-        // set value
-        max_iter_val = static_cast<size_type>(p(max_iter));
-        // check if value makes sense
-        if (max_iter_val == size_type{ 0 }) {
-            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
+        if constexpr (std::is_same_v<detail::remove_cvref_t<decltype(p(max_iter))>, decltype(max_iter_val)>) {
+            // a plssvm::default_value has been provided
+            if (!p(max_iter).is_default()) {
+                // only override it if it doesn't hold the default value
+                max_iter_val = p(max_iter);
+            }
+        } else {
+            // a normal value (not wrapped) has been provided
+            // compile time check: the value must have the correct type
+            static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(max_iter))>, size_type>, "max_iter must be convertible to a size_type!");
+            // set value
+            max_iter_val = static_cast<size_type>(p(max_iter));
+            // check if value makes sense
+            if (max_iter_val == size_type{ 0 }) {
+                throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
+            }
         }
     }
 
@@ -263,7 +281,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
 
     // copy parameter and set gamma if necessary
     parameter<real_type> params{ params_ };
-    if (params.gamma == real_type{ 0.0 }) {
+    if (params.gamma.is_default()) {
         // no gamma provided -> use default value which depends on the number of features of the data set
         params.gamma = real_type{ 1.0 } / data.num_features();
     }
@@ -275,7 +293,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     model<real_type, label_type> csvm_model{ params, data };
 
     // solve the minimization problem
-    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(params, data.data(), data.mapped_labels().value().get(), epsilon_val, max_iter_val);
+    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(params, data.data(), data.mapped_labels().value().get(), epsilon_val.value(), max_iter_val.value());
 
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
@@ -358,14 +376,13 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
 
 template <typename T>
 void csvm<T>::sanity_check_parameter() {
-    // TODO: call side doesnt make sense!
     // kernel: valid kernel function
     if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
     }
 
-    // gamma: must be greater than 0, but only in the polynomial and rbf kernel
-    if ((params_.kernel == kernel_type::polynomial || params_.kernel == kernel_type::rbf) && params_.gamma <= real_type{ 0.0 }) {
+    // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
+    if ((params_.kernel == kernel_type::polynomial || params_.kernel == kernel_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0, but is {}!", params_.gamma) };
     }
     // degree: all allowed

@@ -9,11 +9,12 @@
 #include "plssvm/detail/cmd/parameter_train.hpp"
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
-#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type_to_math_string
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
 #include "plssvm/constants.hpp"                          // plssvm::verbose
+#include "plssvm/default_value.hpp"                      // plssvm::default_value
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
+#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type_to_math_string
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
@@ -37,13 +38,13 @@ parameter_train::parameter_train(int argc, char **argv) {
        .set_tab_expansion()
        // clang-format off
        .add_options()
-           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<decltype(csvm_params.kernel)>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel))))
-           ("d,degree", "set degree in kernel function", cxxopts::value<decltype(csvm_params.degree)>()->default_value(fmt::format("{}", csvm_params.degree)))
-           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<decltype(csvm_params.gamma)>())
-           ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(csvm_params.coef0)>()->default_value(fmt::format("{}", csvm_params.coef0)))
-           ("c,cost", "set the parameter C", cxxopts::value<decltype(csvm_params.cost)>()->default_value(fmt::format("{}", csvm_params.cost)))
-           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(epsilon)>()->default_value(fmt::format("{}", epsilon)))
-           ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<decltype(max_iter)>())
+           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<typename decltype(csvm_params.kernel)::value_type>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel))))
+           ("d,degree", "set degree in kernel function", cxxopts::value<typename decltype(csvm_params.degree)::value_type>()->default_value(fmt::format("{}", csvm_params.degree)))
+           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<typename decltype(csvm_params.gamma)::value_type>())
+           ("r,coef0", "set coef0 in kernel function", cxxopts::value<typename decltype(csvm_params.coef0)::value_type>()->default_value(fmt::format("{}", csvm_params.coef0)))
+           ("c,cost", "set the parameter C", cxxopts::value<typename decltype(csvm_params.cost)::value_type>()->default_value(fmt::format("{}", csvm_params.cost)))
+           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<typename decltype(epsilon)::value_type>()->default_value(fmt::format("{}", epsilon)))
+           ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<typename decltype(max_iter)::value_type>())
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -75,38 +76,54 @@ parameter_train::parameter_train(int argc, char **argv) {
    }
 
    // parse kernel_type and cast the value to the respective enum
-   csvm_params.kernel = result["kernel_type"].as<decltype(csvm_params.kernel)>();
+   if (result.count("kernel_type")) {
+       csvm_params.kernel = result["kernel_type"].as<typename decltype(csvm_params.kernel)::value_type>();
+   }
 
    // parse degree
-   csvm_params.degree = result["degree"].as<decltype(csvm_params.degree)>();
+   if (result.count("degree")) {
+      csvm_params.degree = result["degree"].as<typename decltype(csvm_params.degree)::value_type>();
+   }
 
    // parse gamma
    if (result.count("gamma")) {
-       csvm_params.gamma = result["gamma"].as<decltype(csvm_params.gamma)>();
-       if (csvm_params.gamma == decltype(csvm_params.gamma){ 0.0 }) {
-           fmt::print(stderr, "gamma = 0.0 is not allowed, it doesnt make any sense!\n");
+       typename decltype(csvm_params.gamma)::value_type gamma_input = result["gamma"].as<typename decltype(csvm_params.gamma)::value_type>();
+       // check if the provided gamma is legal
+       if (gamma_input <= decltype(gamma_input){ 0.0 }) {
+           fmt::print(stderr, "gamma must be greater than 0.0, but is {}!\n", gamma_input);
            fmt::print("{}", options.help());
            std::exit(EXIT_FAILURE);
        }
+       // provided gamma was legal -> override default value
+       csvm_params.gamma = gamma_input;
    }
 
    // parse coef0
-   csvm_params.coef0 = result["coef0"].as<decltype(csvm_params.coef0)>();
+   if (result.count("coef0")) {
+       csvm_params.coef0 = result["coef0"].as<typename decltype(csvm_params.coef0)::value_type>();
+   }
 
    // parse cost
-   csvm_params.cost = result["cost"].as<decltype(csvm_params.cost)>();
+   if (result.count("cost")) {
+       csvm_params.cost = result["cost"].as<typename decltype(csvm_params.cost)::value_type>();
+   }
 
    // parse epsilon
-   epsilon = result["epsilon"].as<decltype(epsilon)>();
+   if (result.count("epsilon")) {
+       epsilon = result["epsilon"].as<typename decltype(epsilon)::value_type>();
+   }
 
    // parse max_iter
    if (result.count("max_iter")) {
-       max_iter = result["max_iter"].as<decltype(max_iter)>();
-       if (max_iter == decltype(max_iter){ 0 }) {
-           fmt::print(stderr, "max_iter = 0 is not allowed, it doesnt make any sense!\n");
+       typename decltype(max_iter)::value_type max_iter_input = result["max_iter"].as<typename decltype(max_iter)::value_type>();
+       // check if the provided max_iter is legal
+       if (max_iter_input == decltype(max_iter_input){ 0 }) {
+           fmt::print(stderr, "max_iter must be greater than 0, but is {}!\n", max_iter_input);
            fmt::print("{}", options.help());
            std::exit(EXIT_FAILURE);
        }
+       // provided max_iter was legal -> override default value
+       max_iter = max_iter_input;
    }
 
    // parse backend_type and cast the value to the respective enum
@@ -155,29 +172,33 @@ std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-            out << fmt::format(
-                "gamma: {}\n"
-                "coef0: {}\n"
-                "degree: {}\n",
-                params.csvm_params.gamma,
-                params.csvm_params.coef0,
-                params.csvm_params.degree);
+            {
+                if (params.csvm_params.gamma.is_default()) {
+                    out << "gamma: 1 / num_features (default)\n";
+                } else {
+                    out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
+                }
+                out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
+                out << fmt::format("degree: {}{}\n", params.csvm_params.degree.value(), params.csvm_params.degree.is_default() ? " (default)" : "");
+            }
             break;
         case kernel_type::rbf:
             out << fmt::format("gamma: {}\n", params.csvm_params.gamma);
             break;
     }
+    out << fmt::format("cost: {}{}\n", params.csvm_params.cost.value(), params.csvm_params.cost.is_default() ? " (default)" : "");
+    out << fmt::format("epsilon: {}{}\n", params.epsilon.value(), params.epsilon.is_default() ? " (default)" : "");
+    if (params.max_iter.is_default()) {
+        out << "max_iter: num_data_points (default)\n";
+    } else {
+        out << fmt::format("max_iter: {}\n", params.max_iter.value());
+    }
+
     return out << fmt::format(
-        "cost: {}\n"
-        "epsilon: {}\n"
-        "max_iter: {}\n"
         "use strings as labels: {}\n"
         "use float as real type instead of double: {}\n"
         "input file (data set): '{}'\n"
         "output file (model): '{}'\n",
-        params.csvm_params.cost,
-        params.epsilon,
-        params.max_iter == 0 ? std::string{ "num_data_points" } : std::to_string(params.max_iter),
         params.strings_as_labels,
         params.float_as_real_type,
         params.input_filename,

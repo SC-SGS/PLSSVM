@@ -11,7 +11,8 @@
 
 #pragma once
 
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
+#include "plssvm/default_value.hpp"  // plssvm::default_value
+#include "plssvm/kernel_types.hpp"   // plssvm::kernel_type
 
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT
 
@@ -42,15 +43,15 @@ struct parameter {
     using real_type = T;
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
-    kernel_type kernel = kernel_type::linear;
+    default_value<kernel_type> kernel = default_init<kernel_type>{ kernel_type::linear };
     /// The degree parameter used in the polynomial kernel function.
-    int degree = 3;
+    default_value<int> degree = default_init<int>{ 3 };
     /// The gamma parameter used in the polynomial and rbf kernel functions.
-    real_type gamma = real_type{ 0.0 };
+    default_value<real_type> gamma = default_init<real_type>{ 0.0 };
     /// The coef0 parameter used in the polynomial kernel function.
-    real_type coef0 = real_type{ 0.0 };
+    default_value<real_type> coef0 = default_init<real_type>{ 0.0 };
     /// The cost parameter in the C-SVM.
-    real_type cost = real_type{ 1.0 };
+    default_value<real_type> cost = default_init<real_type>{ 1.0 };
 
     /**
      * @brief Convert a `plssvm::parameter<T>`to a `plssvm::parameter<U>` (i.e., conversion between float <-> double).
@@ -60,7 +61,7 @@ struct parameter {
     template <typename U>
     explicit operator parameter<U>() {
         // convert between parameter<float> <-> parameter<double>
-        return parameter<U>{ kernel, degree, static_cast<U>(gamma), static_cast<U>(coef0), static_cast<U>(cost) };
+        return parameter<U>{ kernel, degree, gamma, coef0, cost };
     }
 };
 
