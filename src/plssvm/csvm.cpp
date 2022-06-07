@@ -253,7 +253,7 @@ void csvm<T>::learn() {
 
     // solve minimization
     std::vector<real_type> alpha;
-    alpha = solver_CG(b, num_features_, epsilon_, q);
+    alpha = solver_CG(b, num_data_points_, epsilon_, q);
     bias_ = value_ptr_->back() + QA_cost_ * sum(alpha) - (transposed{ q } * alpha);
     alpha.emplace_back(-sum(alpha));
 
