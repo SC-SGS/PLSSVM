@@ -177,12 +177,17 @@ inline void read_arff_data(file_reader &reader, std::size_t header, std::size_t 
     }
 }
 
+template <typename label_type>
 inline void write_arff_header(fmt::ostream &out, const std::size_t num_features, const bool has_labels) {
     for (std::size_t i = 0; i < num_features; ++i) {
         out.print("@ATTRIBUTE feature{} NUMERIC\n", i);
     }
     if (has_labels) {
-        out.print("@ATTRIBUTE class NUMERIC\n\n");
+        if constexpr (std::is_same_v<detail::remove_cvref_t<label_type>, std::string>) {
+            out.print("@ATTRIBUTE class STRING\n\n");
+        } else {
+            out.print("@ATTRIBUTE class NUMERIC\n\n");
+        }
     }
     out.print("@DATA\n");
 }

@@ -313,7 +313,7 @@ void data_set<T, U>::write_arff_file(const std::string &filename) const {
     fmt::ostream out = fmt::output_file(filename);
 
     // write header information
-    detail::io::write_arff_header(out, num_features_, this->has_labels());
+    detail::io::write_arff_header<label_type>(out, num_features_, this->has_labels());
 
     // write data
     if (this->has_labels()) {
