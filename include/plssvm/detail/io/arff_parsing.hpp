@@ -19,7 +19,6 @@
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "fmt/os.h"       // fmt::ostream
-#include "fmt/compile.h"  // FMT_COMPILE
 
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
@@ -196,7 +195,7 @@ inline void write_arff_data(fmt::ostream &out, const std::vector<std::vector<rea
         std::string out_string;
         #pragma omp for schedule(dynamic) nowait
         for (std::size_t i = 0; i < X.size(); ++i) {
-            out_string.append(fmt::format(FMT_COMPILE("{:e},{}\n"), fmt::join(X[i], ","), y[i]));
+            out_string.append(fmt::format("{},{}\n", fmt::join(X[i], ","), y[i]));
         }
 
         #pragma omp critical
@@ -212,7 +211,7 @@ inline void write_arff_data(fmt::ostream &out, const std::vector<std::vector<rea
         std::string out_string;
         #pragma omp for schedule(dynamic) nowait
         for (std::size_t i = 0; i < X.size(); ++i) {
-            out.print(FMT_COMPILE("{:e}\n"), fmt::join(X[i], ","));
+            out.print("{}\n", fmt::join(X[i], ","));
         }
 
         #pragma omp critical
