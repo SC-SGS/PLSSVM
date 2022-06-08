@@ -44,13 +44,16 @@ inline std::tuple<std::size_t, std::size_t, bool> read_arff_header(file_reader &
             // ignore relation
             continue;
         } else if (detail::starts_with(line, "@ATTRIBUTE")) {
-            if (line.find("NUMERIC") == std::string::npos) {
-                throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", reader.line(header_line)) };
-            }
-            if (has_label) {
-                throw invalid_file_format_exception{ "Only the last ATTRIBUTE may be CLASS!" };
-            } else if (line.find("CLASS") != std::string::npos) {
+            if (line.find("CLASS") != std::string::npos) {
+                if (has_label) {
+                    // only one class attribute is allowed
+                    throw invalid_file_format_exception{ "Only the last ATTRIBUTE may be CLASS!" };
+                }
+                // found a class
                 has_label = true;
+                continue; // don't increment num_features
+            } else if (line.find("NUMERIC") == std::string::npos) {
+                throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", reader.line(header_line)) };
             }
             // add a feature
             ++num_features;
