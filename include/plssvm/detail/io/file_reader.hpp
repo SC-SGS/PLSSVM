@@ -9,7 +9,6 @@
  * @brief Implements a file reader class responsible for reading the input file and parsing it into lines.
  */
 
-// TODO: move to io
 #pragma once
 
 // check if memory mapping can be supported

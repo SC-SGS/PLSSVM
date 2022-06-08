@@ -92,7 +92,6 @@ file = rawfile + "." + args.format
 if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
-# TODO: index must start at 1!!!
 if args.format == "libsvm":
     from sklearn.datasets import dump_svmlight_file
     # dump data in libsvm format
