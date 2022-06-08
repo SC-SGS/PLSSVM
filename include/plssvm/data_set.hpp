@@ -317,7 +317,7 @@ void data_set<T, U>::write_arff_file(const std::string &filename) const {
 
     // write data
     if (this->has_labels()) {
-        detail::io::write_arff_data(out, *X_ptr_, *y_ptr_);
+        detail::io::write_arff_data(out, *X_ptr_, *labels_ptr_);
     } else {
         detail::io::write_arff_data(out, *X_ptr_);
     }
