@@ -73,7 +73,6 @@ class model {
 /******************************************************************************
  *                                Constructors                                *
  ******************************************************************************/
- // TODO: restructure?
 template <typename T, typename U>
 model<T, U>::model(const std::string &filename) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();

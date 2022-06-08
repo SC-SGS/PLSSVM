@@ -11,20 +11,18 @@
 
 #pragma once
 
-#include "plssvm/constants.hpp"
-#include "plssvm/detail/assert.hpp"
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include "fmt/core.h"
+#include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"
 
-#include <algorithm>
-#include <chrono>
-#include <ostream>
-#include <vector>
+#include <algorithm>  // std::all_of
+#include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast}
+#include <cstddef>    // std::size_t
+#include <ostream>    // std::ostream
+#include <vector>     // std::vector
 
 namespace plssvm::detail {
-
-// TODO: test
 
 template <typename real_type>
 [[nodiscard]] inline std::vector<real_type> transform_to_soa_layout(const std::vector<std::vector<real_type>> &matrix, const std::size_t boundary_size, const std::size_t num_points, const std::size_t num_features) {
