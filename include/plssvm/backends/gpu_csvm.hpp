@@ -56,15 +56,19 @@ class gpu_csvm : public csvm<T> {
      */
     virtual ~gpu_csvm() = default;
 
+    [[nodiscard]] size_type num_available_devices() const noexcept {
+        return devices_.size();
+    }
+
   protected:
     /**
      * @copydoc plssvm::csvm::setup_data_on_device
      */
-    [[nodiscard]] std::tuple<std::vector<device_ptr_type>, std::vector<device_ptr_type>, std::vector<size_type>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, size_type num_data_points, size_type num_features, size_type boundary_size) const;
+    [[nodiscard]] std::tuple<std::vector<device_ptr_type>, std::vector<device_ptr_type>, std::vector<size_type>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, size_type num_data_points, size_type num_features, size_type boundary_size, size_type num_used_devices) const;
     /**
      * @copydoc plssvm::csvm::generate_q
      */
-    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, size_type num_data_points, const std::vector<size_type> &feature_ranges, size_type boundary_size) const;
+    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, size_type num_data_points, const std::vector<size_type> &feature_ranges, size_type boundary_size, size_type num_used_devices) const;
     /**
      * @copydoc plssvm::csvm::solver_CG
      */
@@ -72,7 +76,7 @@ class gpu_csvm : public csvm<T> {
     /**
      * @copydoc plssvm::csvm::update_w
      */
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const std::vector<device_ptr_type> &alpha_d, size_type num_data_points, const std::vector<size_type> &feature_ranges) const;
+    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const std::vector<device_ptr_type> &alpha_d, size_type num_data_points, const std::vector<size_type> &feature_ranges, size_type num_used_devices) const;
 
     [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const final;
 
@@ -92,6 +96,8 @@ class gpu_csvm : public csvm<T> {
      * @param[in,out] buffer the reduced data
      */
     void device_reduction(std::vector<device_ptr_type> &buffer_d, std::vector<real_type> &buffer) const;
+
+    [[nodiscard]] size_type select_num_used_devices(kernel_type kernel, size_type num_features) const noexcept;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //

@@ -107,14 +107,6 @@ void csvm<T>::init(const target_platform target, const kernel_type kernel) {
         fmt::print("OpenCL kernel JIT compilation done in {}.\n\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time));
     }
 
-    // if less features than devices are provided, use only num_features_ devices
-//    devices_.resize(std::min(devices_.size(), num_features_)); // TODO:
-
-    // polynomial and rbf kernel currently only support single GPU execution
-    if (kernel == kernel_type::polynomial || kernel == kernel_type::rbf) {
-        devices_.resize(1);
-    }
-
     if (verbose) {
         // print found OpenCL devices
         fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), used_target);
