@@ -35,12 +35,13 @@
 #endif
 #endif
 
-#include "fmt/core.h"    // fmt::print
+#include "fmt/core.h"    // fmt::print, fmt::format
 
 #include <algorithm>  // std::all_of, std::min, std::max
 #include <chrono>     // std::chrono
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
+#include <iostream>   // std::clog, std::endl
 #include <vector>     // std::vector
 
 namespace plssvm::detail {
@@ -50,21 +51,21 @@ gpu_csvm<T, device_ptr_t, queue_t>::gpu_csvm(parameter<real_type> params) :
     base_type{ std::move(params) } {}
 
 template <typename T, typename device_ptr_t, typename queue_t>
-auto gpu_csvm<T, device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vector<real_type>> &data, const size_type num_data_points, const size_type num_features, const size_type boundary_size) const -> std::tuple<std::vector<device_ptr_type>, std::vector<device_ptr_type>, std::vector<size_type>> {
+auto gpu_csvm<T, device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vector<real_type>> &data, const size_type num_data_points, const size_type num_features, const size_type boundary_size, const size_type num_used_devices) const -> std::tuple<std::vector<device_ptr_type>, std::vector<device_ptr_type>, std::vector<size_type>> {
     // calculate the number of features per device
-    std::vector<size_type> feature_ranges(devices_.size() + 1);
-    for (typename std::vector<queue_type>::size_type device = 0; device <= devices_.size(); ++device) {
-        feature_ranges.push_back(device * num_features / devices_.size());
+    std::vector<size_type> feature_ranges(num_used_devices + 1);
+    for (typename std::vector<queue_type>::size_type device = 0; device <= num_used_devices; ++device) {
+        feature_ranges.push_back(device * num_features / num_used_devices);
     }
 
     // transform 2D to 1D SoA data
     const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::soa, data, boundary_size, num_data_points);
 
-    std::vector<device_ptr_type> data_last_d(devices_.size());
-    std::vector<device_ptr_type> data_d(devices_.size());
+    std::vector<device_ptr_type> data_last_d(num_used_devices);
+    std::vector<device_ptr_type> data_d(num_used_devices);
 
-    #pragma omp parallel for default(none) shared(devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points, boundary_size, num_features)
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points, boundary_size, num_features)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         const size_type num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
 
         // initialize data_last on device
@@ -81,11 +82,11 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::setup_data_on_device(const std::vector<
 }
 
 template <typename T, typename device_ptr_t, typename queue_t>
-auto gpu_csvm<T, device_ptr_t, queue_t>::generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const size_type num_data_points, const std::vector<size_type> &feature_ranges, const size_type boundary_size) const -> std::vector<real_type> {
-    std::vector<device_ptr_type> q_d(devices_.size());
+auto gpu_csvm<T, device_ptr_t, queue_t>::generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const size_type num_data_points, const std::vector<size_type> &feature_ranges, const size_type boundary_size, const size_type num_used_devices) const -> std::vector<real_type> {
+    std::vector<device_ptr_type> q_d(num_used_devices);
 
-    #pragma omp parallel for default(none) shared(q_d, devices_, data_d, data_last_d, feature_ranges, params) firstprivate(num_data_points, boundary_size, THREAD_BLOCK_SIZE)
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    #pragma omp parallel for default(none) shared(num_used_devices, q_d, devices_, data_d, data_last_d, feature_ranges, params) firstprivate(num_data_points, boundary_size, THREAD_BLOCK_SIZE)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         q_d[device] = device_ptr_type{ num_data_points + boundary_size, devices_[device] };
         q_d[device].memset(0);
 
@@ -109,10 +110,12 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
     const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const size_type num_features = A.front().size();
 
+    const size_type num_used_devices = select_num_used_devices(params.kernel, num_features);
+
     std::vector<device_ptr_type> data_d;
     std::vector<device_ptr_type> data_last_d;
     std::vector<size_type> feature_ranges;
-    std::tie(data_d, data_last_d, feature_ranges) = this->setup_data_on_device(A, dept, num_features, boundary_size);
+    std::tie(data_d, data_last_d, feature_ranges) = this->setup_data_on_device(A, dept, num_features, boundary_size, num_used_devices);
 
     // create q vector
     const std::vector<real_type> q = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size);
@@ -126,13 +129,13 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
     b -= b_back_value;
 
     std::vector<real_type> x(dept, 1.0);
-    std::vector<device_ptr_type> x_d(devices_.size());
+    std::vector<device_ptr_type> x_d(num_used_devices);
 
     std::vector<real_type> r(dept, 0.0);
-    std::vector<device_ptr_type> r_d(devices_.size());
+    std::vector<device_ptr_type> r_d(num_used_devices);
 
-    #pragma omp parallel for default(none) shared(devices_, x, x_d, r_d) firstprivate(dept, boundary_size)
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d, r_d) firstprivate(dept, boundary_size)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         x_d[device] = device_ptr_type{ dept + boundary_size, devices_[device] };
         x_d[device].memset(0);
         x_d[device].memcpy_to_device(x, 0, dept);
@@ -142,9 +145,9 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
     }
     r_d[0].memcpy_to_device(b, 0, dept);
 
-    std::vector<device_ptr_type> q_d(devices_.size());
-    #pragma omp parallel for default(none) shared(devices_, q, q_d, r_d, x_d, data_d, feature_ranges, params) firstprivate(dept, boundary_size, QA_cost, num_features)
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    std::vector<device_ptr_type> q_d(num_used_devices);
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, q, q_d, r_d, x_d, data_d, feature_ranges, params) firstprivate(dept, boundary_size, QA_cost, num_features)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         q_d[device] = device_ptr_type{ dept + boundary_size, devices_[device] };
         q_d[device].memset(0);
         q_d[device].memcpy_to_device(q, 0, dept);
@@ -159,8 +162,8 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
     const real_type delta0 = delta;
     std::vector<real_type> Ad(dept);
 
-    std::vector<device_ptr_type> Ad_d(devices_.size());
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    std::vector<device_ptr_type> Ad_d(num_used_devices);
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         Ad_d[device] = device_ptr_type{ dept + boundary_size, devices_[device] };
     }
 
@@ -184,8 +187,8 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * r (q = A * d)
-        #pragma omp parallel for default(none) shared(devices_, Ad_d, r_d, q_d, data_d, feature_ranges, params) firstprivate(dept, QA_cost, boundary_size, num_features)
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        #pragma omp parallel for default(none) shared(num_used_devices, devices_, Ad_d, r_d, q_d, data_d, feature_ranges, params) firstprivate(dept, QA_cost, boundary_size, num_features)
+        for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept);
 
@@ -200,16 +203,16 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         // (x = x + alpha * d)
         x += alpha_cd * d;
 
-        #pragma omp parallel for default(none) shared(devices_, x, x_d) firstprivate(dept)
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        #pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d) firstprivate(dept)
+        for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             x_d[device].memcpy_to_device(x, 0, dept);
         }
 
         if (run % 50 == 49) {
             // r = b
             r_d[0].memcpy_to_device(b, 0, dept);
-            #pragma omp parallel for default(none) shared(devices_, r_d, q_d, x_d, data_d, feature_ranges, params) firstprivate(QA_cost, dept, boundary_size, num_features)
-            for (typename std::vector<queue_type>::size_type device = 1; device < devices_.size(); ++device) {
+            #pragma omp parallel for default(none) shared(num_used_devices, devices_, r_d, q_d, x_d, data_d, feature_ranges, params) firstprivate(QA_cost, dept, boundary_size, num_features)
+            for (typename std::vector<queue_type>::size_type device = 1; device < num_used_devices; ++device) {
                 r_d[device].memset(0);
 
                 // r -= A * x
@@ -239,8 +242,8 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         d = beta * d + r;
 
         // r_d = d
-        #pragma omp parallel for default(none) shared(devices_, r_d, d) firstprivate(dept)
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        #pragma omp parallel for default(none) shared(num_used_devices, devices_, r_d, d) firstprivate(dept)
+        for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             r_d[device].memcpy_to_device(d, 0, dept);
         }
 
@@ -265,12 +268,12 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
 }
 
 template <typename T, typename device_ptr_t, typename queue_t>
-auto gpu_csvm<T, device_ptr_t, queue_t>::calculate_w(const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const std::vector<device_ptr_type> &alpha_d, const size_type num_data_points, const std::vector<size_type> &feature_ranges) const-> std::vector<real_type> {
+auto gpu_csvm<T, device_ptr_t, queue_t>::calculate_w(const std::vector<device_ptr_type> &data_d, const std::vector<device_ptr_type> &data_last_d, const std::vector<device_ptr_type> &alpha_d, const size_type num_data_points, const std::vector<size_type> &feature_ranges, const size_type num_used_devices) const-> std::vector<real_type> {
     // create w vector and fill with zeros
     std::vector<real_type> w(std::accumulate(feature_ranges.begin(), feature_ranges.end(), size_type{ 0 }), real_type{ 0.0 });
 
-    #pragma omp parallel for default(none) shared(devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         // feature splitting on multiple devices
         const size_type num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
 
@@ -299,11 +302,13 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict_values_impl(const parameter<rea
     const size_type num_features = predict_points.front().size();
     const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
 
-    auto [data_d, data_last_d, feature_ranges] = this->setup_data_on_device(support_vectors, num_support_vectors - 1, num_features, boundary_size);
+    const size_type num_used_devices = select_num_used_devices(params.kernel, num_features);
 
-    std::vector<device_ptr_type> alpha_d(devices_.size());
-    #pragma omp parallel for default(none) shared(devices_, alpha_d, alpha) firstprivate(num_support_vectors)
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+    auto [data_d, data_last_d, feature_ranges] = this->setup_data_on_device(support_vectors, num_support_vectors - 1, num_features, boundary_size, num_used_devices);
+
+    std::vector<device_ptr_type> alpha_d(num_used_devices);
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, alpha_d, alpha) firstprivate(num_support_vectors)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         alpha_d[device] = device_ptr_type{ num_support_vectors + THREAD_BLOCK_SIZE, devices_[device] };
         alpha_d[device].memset(0);
         alpha_d[device].memcpy_to_device(alpha, 0, num_support_vectors);
@@ -364,20 +369,36 @@ void gpu_csvm<T, device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr
     device_synchronize(devices_[0]);
     buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
 
-    if (devices_.size() > 1) {
+    if (buffer_d.size() > 1) {
         std::vector<real_type> ret(buffer.size());
-        for (typename std::vector<queue_type>::size_type device = 1; device < devices_.size(); ++device) {
+        for (typename std::vector<device_ptr_type>::size_type device = 1; device < buffer_d.size(); ++device) {
             device_synchronize(devices_[device]);
             buffer_d[device].memcpy_to_host(ret, 0, ret.size());
 
             buffer += ret;
         }
 
-        #pragma omp parallel for default(none) shared(devices_, buffer_d, buffer)
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        #pragma omp parallel for default(none) shared(buffer_d, buffer)
+        for (typename std::vector<device_ptr_type>::size_type device = 0; device < buffer_d.size(); ++device) {
             buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
         }
     }
+}
+
+template <typename T, typename device_ptr_t, typename queue_t>
+auto gpu_csvm<T, device_ptr_t, queue_t>::select_num_used_devices(const kernel_type kernel, const size_type num_features) const noexcept -> size_type {
+    // polynomial and rbf kernel currently only support single GPU execution
+    if (kernel == kernel_type::polynomial || kernel == kernel_type::rbf) {
+        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
+        return 1;
+    }
+
+    // the number of used devices may not exceed the number of features
+    const size_type num_used_devices = std::min(devices_.size(), num_features);
+    if (num_used_devices < devices_.size()) {
+        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
+    }
+    return num_used_devices;
 }
 
 // explicitly instantiate template class depending on available backends
