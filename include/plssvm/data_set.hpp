@@ -273,21 +273,19 @@ void data_set<T, U>::scale(const std::pair<real_type, real_type> scaling) {
         throw plssvm::exception(fmt::format("Illegal interval specification: lower ({}) < upper ({}).", lower, upper));
     }
 
-    real_type min_entry = std::numeric_limits<real_type>::max();
-    real_type max_entry = std::numeric_limits<real_type>::lowest();
+    for (size_type feature = 0; feature < num_features_; ++feature) {
+        real_type min_entry = std::numeric_limits<real_type>::max();
+        real_type max_entry = std::numeric_limits<real_type>::lowest();
 
-    #pragma omp parallel for collapse(2) reduction(min:min_entry) reduction(max:max_entry) default(none) shared(X_ptr_) firstprivate(num_data_points_, num_features_)
-    for (size_type row = 0; row < num_data_points_; ++row) {
-        for (size_type col = 0; col < num_features_; ++col) {
-            min_entry = std::min(min_entry, (*X_ptr_)[row][col]);
-            max_entry = std::max(max_entry, (*X_ptr_)[row][col]);
+        // calculate min and max values feature wise
+        for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
+            min_entry = std::min(min_entry, (*X_ptr_)[data_point][feature]);
+            max_entry = std::max(max_entry, (*X_ptr_)[data_point][feature]);
         }
-    }
 
-    #pragma omp parallel for collapse(2) default(none) shared(X_ptr_) firstprivate(upper, lower, max_entry, min_entry, num_data_points_, num_features_)
-    for (size_type row = 0; row < num_data_points_; ++row) {
-        for (size_type col = 0; col < num_features_; ++col) {
-            (*X_ptr_)[row][col] = (upper - lower) / (max_entry - min_entry) * ((*X_ptr_)[row][col] - max_entry) + upper;
+        // scale data points feature wise
+        for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
+            (*X_ptr_)[data_point][feature] = (upper - lower) / (max_entry - min_entry) * ((*X_ptr_)[data_point][feature] - max_entry) + upper;
         }
     }
 }
