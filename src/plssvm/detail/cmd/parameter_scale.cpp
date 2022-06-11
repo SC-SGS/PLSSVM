@@ -34,6 +34,8 @@ parameter_scale::parameter_scale(int argc, char **argv) {
            ("l,lower", "lower is the lowest (minimal) value allowed in each dimension", cxxopts::value<decltype(lower)>()->default_value(fmt::format("{}", lower)))
            ("u,upper", "upper is the highest (maximal) value allowed in each dimension", cxxopts::value<decltype(upper)>()->default_value(fmt::format("{}", upper)))
            ("f,format", "the file format to output the scaled data set to", cxxopts::value<decltype(format)>()->default_value(fmt::format("{}", format)))
+           ("s,save_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
+           ("r,restore_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
@@ -91,6 +93,24 @@ parameter_scale::parameter_scale(int argc, char **argv) {
        std::filesystem::path input_path{ input_filename };
        scaled_filename = input_path.replace_filename(input_path.filename().string() + ".scaled").string();
    }
+
+   if (result.count("save_filename") && result.count("restore_filename")) {
+       fmt::print(stderr, "Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!");
+       fmt::print("{}", options.help());
+       std::exit(EXIT_FAILURE);
+   }
+
+   if (result.count("save_filename")) {
+       save_filename = result["save_filename"].as<decltype(save_filename)>();
+   }
+
+   if (result.count("restore_filename")) {
+       if (result.count("lower") || result.count("upper")) {
+           std::clog << "Warning: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u" << std::endl;
+       }
+       restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
+   }
+
 }
 
 std::ostream &operator<<(std::ostream &out, const parameter_scale &params) {
