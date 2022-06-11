@@ -11,16 +11,17 @@
 
 #pragma once
 
-#include "plssvm/constants.hpp"                     // plssvm::verbose
-#include "plssvm/detail/cmd/parameter_predict.hpp"  // plssvm::detail::cmd::parameter_predict
-#include "plssvm/detail/cmd/parameter_scale.hpp"    // plssvm::detail::cmd::parameter_scale
-#include "plssvm/detail/cmd/parameter_train.hpp"    // plssvm::detail::cmd::parameter_train
-#include "plssvm/exceptions/exceptions.hpp"         // plssvm::exception
-#include "plssvm/file_format_types.hpp"             // plssvm::file_format_type
-#include "plssvm/detail/io/arff_parsing.hpp"        // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
-#include "plssvm/detail/io/file_reader.hpp"         // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_parsing.hpp"      // plssvm::detail::io::{read_arff_header, read_arff_data, write_arff_header, write_arff_data}
-#include "plssvm/detail/string_utility.hpp"         // plssvm::detail::ends_with
+#include "plssvm/constants.hpp"                          // plssvm::verbose
+#include "plssvm/detail/cmd/parameter_predict.hpp"       // plssvm::detail::cmd::parameter_predict
+#include "plssvm/detail/cmd/parameter_scale.hpp"         // plssvm::detail::cmd::parameter_scale
+#include "plssvm/detail/cmd/parameter_train.hpp"         // plssvm::detail::cmd::parameter_train
+#include "plssvm/exceptions/exceptions.hpp"              // plssvm::exception
+#include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
+#include "plssvm/detail/io/arff_parsing.hpp"             // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
+#include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_header, read_arff_data, write_arff_header, write_arff_data}
+#include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{read_scaling_factors}
+#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
 
 #include "fmt/core.h"    // fmt::format, fmt::print
 #include "fmt/chrono.h"  // directly output std::chrono times via fmt
@@ -533,33 +534,8 @@ template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const std::string &filename) {
     detail::io::file_reader f{  filename, '#' };
 
-    // at least two lines ("x" + scale interval)
-    if (f.num_lines() < 2) {
-        throw invalid_file_format_exception{ fmt::format("At least two lines must be present, but only {} were given!", f.num_lines()) };
-    }
-
-    // discard first line
-    // second line contains the scaling range
-    const std::vector<real_type> scale_to_interval = detail::split_as<real_type>(f.line(1));
-    if (scale_to_interval.size() != 2) {
-        throw invalid_file_format_exception{ fmt::format("The interval to which the data points should be scaled can only contain two values, but {} were given!", scale_to_interval.size()) };
-    }
-    scaling_interval = std::make_pair(scale_to_interval[0], scale_to_interval[1]);
-
-    // parse scaling factors
-    scaling_factors.resize(f.num_lines() - 2);
-    #pragma omp parallel for default(none) shared(scaling_factors, f)
-    for (size_type i = 0; i < scaling_factors.size(); ++i) {
-        const std::string_view line = f.line(i + 2);
-        const std::vector<real_type> values = detail::split_as<real_type>(line);
-        if (values.size() != 3) {
-            throw invalid_file_format_exception{ fmt::format("Each line must exactly contain three values, but {} were given!", values.size()) };
-        }
-        // ignore first value
-        scaling_factors[i].feature = static_cast<size_type>(values[0]) - 1;
-        scaling_factors[i].lower = values[1];
-        scaling_factors[i].upper = values[2];
-    }
+    // read scaling values from file
+    detail::io::read_scaling_factors(f, scaling_interval, scaling_factors);
 }
 
 template <typename T, typename U>
@@ -571,11 +547,9 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     fmt::ostream out = fmt::output_file(filename);
-    out.print("x\n");
-    out.print("{} {}\n", scaling_interval.first, scaling_interval.second);
-    for (const factors &f : scaling_factors) {
-        out.print(FMT_COMPILE("{} {} {}\n"), f.index + 1, f.lower, f.upper);
-    }
+
+    // write scaling values to file
+    detail::io::write_scaling_factors(out, scaling_interval, scaling_factors);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
