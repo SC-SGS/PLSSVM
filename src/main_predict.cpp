@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
                            data.num_data_points());
             }
 
-        }, plssvm::detail::data_set_factory<false>(params));
+        }, plssvm::detail::data_set_factory(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

@@ -35,8 +35,6 @@ class parameter_scale {
     */
    parameter_scale(int argc, char **argv);
 
-   // TODO: more LIBSVM conform?
-
    /// The lower bound of the scaled data values.
    double lower{ -1 };
    /// The upper bound of the scaled data values.
@@ -53,6 +51,8 @@ class parameter_scale {
    std::string input_filename{};
    /// The name of the model file to write the learned support vectors to/to parse the saved model from.
    std::string scaled_filename{};
+   std::string save_filename{};
+   std::string restore_filename{};
 };
 
 /**

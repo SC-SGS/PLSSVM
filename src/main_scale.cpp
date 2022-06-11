@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         std::visit([&](auto&& data){
             // write scaled data to output file
             data.save(params.scaled_filename, params.format);
-        }, plssvm::detail::data_set_factory<true>(params));
+        }, plssvm::detail::data_set_factory(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
