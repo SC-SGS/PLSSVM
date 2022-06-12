@@ -202,8 +202,9 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
         output.push_back('\n');
     };
 
-    volatile int count = 0;
-    #pragma omp parallel default(none) shared(count, alpha, format_libsvm_line, label_order, labels, support_vectors, out)
+    // initialize volatile array
+    volatile int* counts = new volatile int[label_order.size()]{};
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out)
     {
         // support vectors with the first class
         std::string out_first;
@@ -217,8 +218,8 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
         #pragma omp critical
         {
             out.print("{}", out_first);
-            count++;
-            #pragma omp flush(count, out)
+            counts[0]++;
+            #pragma omp flush(counts, out)
         }
 
         for (std::size_t l = 1; l < label_order.size(); ++l) {
@@ -233,11 +234,8 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
             }
             // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
-            while (count < omp_get_num_threads()) {
+            while (counts[l - 1] < omp_get_num_threads()) {
             }
-            #pragma omp master
-            count = 0;
-            #pragma omp barrier
 #else
             #pragma omp barrier
 #endif
@@ -245,11 +243,12 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
             #pragma omp critical
             {
                 out.print("{}", out_first);
-                count++;
-                #pragma omp flush(count, out)
+                counts[l]++;
+                #pragma omp flush(counts, out)
             }
         }
     }
+    delete[] counts;
 }
 
 }
