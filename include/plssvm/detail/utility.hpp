@@ -72,7 +72,7 @@ template <typename Enum>
  * @return the number of erased elements
  */
 template <class Key, class T, class Compare, class Alloc, class Pred>
-typename std::map<Key, T, Compare, Alloc>::size_type erase_if(std::map<Key, T, Compare, Alloc> &c, Pred pred) {
+[[nodiscard]] inline typename std::map<Key, T, Compare, Alloc>::size_type erase_if(std::map<Key, T, Compare, Alloc> &c, Pred pred) {
     auto old_size = c.size();
     for (auto i = c.begin(), last = c.end(); i != last;) {
         if (pred(*i)) {
@@ -82,6 +82,11 @@ typename std::map<Key, T, Compare, Alloc>::size_type erase_if(std::map<Key, T, C
         }
     }
     return old_size - c.size();
+}
+
+template <typename Key, typename T, typename Compare, typename Alloc>
+[[nodiscard]] inline bool contains_key(const std::map<Key, T, Compare, Alloc> &map, const Key &key) {
+    return map.count(key) > 0;
 }
 
 }  // namespace plssvm::detail
