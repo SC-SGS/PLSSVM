@@ -117,15 +117,15 @@ std::ostream &operator<<(std::ostream &out, const parameter_scale &params) {
    return out << fmt::format(
               "lower: {}\n"
               "upper: {}\n"
-              "use strings as labels: {}\n"
-              "use float as real type: {}\n"
+              "label_type: {}\n"
+              "real_type: {}\n"
               "output file format: {}\n"
               "input file (data set): '{}'\n"
               "output file (scaled data set): '{}'\n",
               params.lower,
               params.upper,
-              params.strings_as_labels,
-              params.float_as_real_type,
+              params.strings_as_labels ? "std::string" : "int (default)",
+              params.float_as_real_type ? "float" : "double (default)",
               params.format,
               params.input_filename,
               params.scaled_filename);

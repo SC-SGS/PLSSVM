@@ -12,6 +12,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
 #include "plssvm/constants.hpp"                          // plssvm::verbose
 #include "plssvm/default_value.hpp"                      // plssvm::default_value
+#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type_to_math_string
@@ -195,12 +196,12 @@ std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
     }
 
     return out << fmt::format(
-        "use strings as labels: {}\n"
-        "use float as real type instead of double: {}\n"
+        "label_type: {}\n"
+        "real_type: {}\n"
         "input file (data set): '{}'\n"
         "output file (model): '{}'\n",
-        params.strings_as_labels,
-        params.float_as_real_type,
+        params.strings_as_labels ? "std::string" : "int (default)",
+        params.float_as_real_type ? "float" : "double (default)",
         params.input_filename,
         params.model_filename);
 }
