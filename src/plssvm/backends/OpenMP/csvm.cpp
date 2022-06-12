@@ -45,8 +45,16 @@ void csvm<T>::init(const target_platform target) {
 #endif
     }
 
+    // get the number of used OpenMP threads
+    int num_omp_threads = 0;
+    #pragma omp parallel default(none) shared(num_omp_threads)
+    {
+        #pragma omp master
+        num_omp_threads = omp_get_num_threads();
+    }
+
     if (verbose) {
-        fmt::print("Using OpenMP as backend.\n\n");
+        fmt::print("Using OpenMP as backend with {} threads.\n\n", num_omp_threads);
     }
 }
 
