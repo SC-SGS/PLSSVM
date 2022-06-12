@@ -202,68 +202,52 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
         output.push_back('\n');
     };
 
-    if (label_order.size() == 2) {
-        // optimized case
-        const label_type &first_label = label_order[0];
-        const label_type &second_label = label_order[1];
-        volatile int count = 0;
-        #pragma omp parallel default(none) shared(count, alpha, format_libsvm_line, labels, support_vectors, out) firstprivate(first_label, second_label)
+    volatile int count = 0;
+    #pragma omp parallel default(none) shared(count, alpha, format_libsvm_line, label_order, labels, support_vectors, out)
+    {
+        // support vectors with the first class
+        std::string out_first;
+        #pragma omp for nowait
+        for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
+            if (labels[i] == label_order[0]) {
+                format_libsvm_line(out_first, alpha[i], support_vectors[i]);
+            }
+        }
+
+        #pragma omp critical
         {
-            // all support vectors with the first class
-            std::string out_pos;
+            out.print("{}", out_first);
+            count++;
+            #pragma omp flush(count, out)
+        }
+
+        for (std::size_t l = 1; l < label_order.size(); ++l) {
+            // the support vectors with the i-th class
+            std::string out_ith;
+
             #pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-                if (labels[i] == first_label) {
-                    format_libsvm_line(out_pos, alpha[i], support_vectors[i]);
+                if (labels[i] == label_order[l]) {
+                    format_libsvm_line(out_ith, alpha[i], support_vectors[i]);
                 }
             }
-
-            #pragma omp critical
-            {
-                out.print("{}", out_pos);
-                count++;
-                #pragma omp flush(count, out)
-            }
-
-            // all support vectors with the second class
-            std::string out_neg;
-            #pragma omp for nowait
-            for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-                if (labels[i] == second_label) {
-                    format_libsvm_line(out_neg, alpha[i], support_vectors[i]);
-                }
-            }
-
-            // wait for all threads to write support vectors for class 1
+            // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
             while (count < omp_get_num_threads()) {
             }
+            #pragma omp master
+            count = 0;
+            #pragma omp barrier
 #else
-    #pragma omp barrier
+            #pragma omp barrier
 #endif
 
             #pragma omp critical
-            out.print("{}", out_neg);
-        }
-    } else {
-        // unoptimized case
-        std::vector<std::vector<std::string>> out_strings;
-
-        #pragma omp parallel default(none) shared(out, support_vectors, alpha, labels, label_order, format_libsvm_line, out_strings)
-        {
-            #pragma omp single
-            out_strings.resize(label_order.size(), std::vector<std::string>(omp_get_num_threads()));
-
-            // format all lines
-            #pragma omp for
-            for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-                format_libsvm_line(out_strings[std::find(label_order.begin(), label_order.end(), labels[i]) - label_order.begin()][omp_get_thread_num()], alpha[i], support_vectors[i]);
+            {
+                out.print("{}", out_first);
+                count++;
+                #pragma omp flush(count, out)
             }
-        }
-
-        // output strings
-        for (const std::vector<std::string> &str : out_strings) {
-            out.print("{}", fmt::join(str, ""));
         }
     }
 }
