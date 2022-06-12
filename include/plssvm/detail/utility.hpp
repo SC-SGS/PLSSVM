@@ -72,7 +72,7 @@ template <typename Enum>
  * @return the number of erased elements
  */
 template <class Key, class T, class Compare, class Alloc, class Pred>
-[[nodiscard]] inline typename std::map<Key, T, Compare, Alloc>::size_type erase_if(std::map<Key, T, Compare, Alloc> &c, Pred pred) {
+inline typename std::map<Key, T, Compare, Alloc>::size_type erase_if(std::map<Key, T, Compare, Alloc> &c, Pred pred) {
     auto old_size = c.size();
     for (auto i = c.begin(), last = c.end(); i != last;) {
         if (pred(*i)) {

@@ -118,7 +118,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
     std::tie(data_d, data_last_d, feature_ranges) = this->setup_data_on_device(A, dept, num_features, boundary_size, num_used_devices);
 
     // create q vector
-    const std::vector<real_type> q = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size);
+    const std::vector<real_type> q = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size, num_used_devices);
 
     // calculate QA_costs
     const real_type QA_cost = kernel_function(A.back(), A.back(), params) + real_type{ 1.0 } / params.cost;
@@ -318,7 +318,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict_values_impl(const parameter<rea
 
     // use faster methode in case of the linear kernel function
     if (params.kernel == kernel_type::linear && w.empty()) {
-        w = calculate_w(data_d, data_last_d, alpha_d, support_vectors.size(), feature_ranges);
+        w = calculate_w(data_d, data_last_d, alpha_d, support_vectors.size(), feature_ranges, num_used_devices);
     }
 
     if (params.kernel == kernel_type::linear) {
