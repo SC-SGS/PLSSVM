@@ -153,7 +153,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         q_d[device].memcpy_to_device(q, 0, dept);
 
         // r = Ax (r = b - Ax)
-        run_device_kernel(device, feature_ranges, params, r_d[device], data_d[device], q_d[device], QA_cost, x_d[device], real_type{ -1.0 }, dept, boundary_size);
+        run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, -1, dept, boundary_size);
     }
     device_reduction(r_d, r);
 
@@ -190,8 +190,9 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         #pragma omp parallel for default(none) shared(num_used_devices, devices_, Ad_d, r_d, q_d, data_d, feature_ranges, params) firstprivate(dept, QA_cost, boundary_size, num_features)
         for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             Ad_d[device].memset(0);
+            r_d[device].memset(0, dept);
 
-            run_device_kernel(device, feature_ranges, params, r_d[device], data_d[device], q_d[device], QA_cost, Ad_d[device], real_type{ 1.0 }, dept, boundary_size);
+            run_device_kernel(device, params, q_d[device], Ad_d[device], r_d[device], data_d[device], feature_ranges, QA_cost, 1, dept, boundary_size);
         }
         // update Ad (q)
         device_reduction(Ad_d, Ad);
@@ -215,7 +216,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
                 r_d[device].memset(0);
 
                 // r -= A * x
-                run_device_kernel(device, feature_ranges, params, r_d[device], data_d[device], q_d[device], QA_cost, x_d[device], real_type{ -1.0 }, dept, boundary_size);
+                run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, -1, dept, boundary_size);
             }
 
             device_reduction(r_d, r);
@@ -354,7 +355,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::predict_values_impl(const parameter<rea
 
 
 template <typename T, typename device_ptr_t, typename queue_t>
-void gpu_csvm<T, device_ptr_t, queue_t>::run_device_kernel(const size_type device, const std::vector<size_type> &feature_ranges, const parameter<real_type> &params, device_ptr_type &r_d, const device_ptr_type &data_d, const device_ptr_type &q_d, const real_type QA_cost, const device_ptr_type &x_d, const real_type add, const size_type dept, const size_type boundary_size) const {
+void gpu_csvm<T, device_ptr_t, queue_t>::run_device_kernel(const size_type device, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const std::vector<size_type> &feature_ranges, const real_type QA_cost, const real_type add, const size_type dept, const size_type boundary_size) const {
     const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(boundary_size)));
     const detail::execution_range range({ grid, grid }, { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE });
 
