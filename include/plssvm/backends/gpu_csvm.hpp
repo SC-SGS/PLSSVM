@@ -89,7 +89,7 @@ class gpu_csvm : public csvm<T> {
      * @param[in] x_d the right-hand side of the equation
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
-    void run_device_kernel(size_type device, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d,const std::vector<size_type> &feature_ranges, real_type QA_cost, real_type add, size_type dept, size_type boundary_size) const;
+    void run_device_kernel(size_type device, const std::vector<size_type> &feature_ranges, const parameter<real_type> &params, device_ptr_type &r_d, const device_ptr_type &data_d, const device_ptr_type &q_d, real_type QA_cost, const device_ptr_type &x_d, real_type add, size_type dept, size_type boundary_size) const;
     /**
      * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each device.
      * @param[in,out] buffer_d the data to gather
