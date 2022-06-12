@@ -55,7 +55,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::setup_data_on_device(const std::vector<
     // calculate the number of features per device
     std::vector<size_type> feature_ranges(num_used_devices + 1);
     for (typename std::vector<queue_type>::size_type device = 0; device <= num_used_devices; ++device) {
-        feature_ranges.push_back(device * num_features / num_used_devices);
+        feature_ranges[device] = device * num_features / num_used_devices;
     }
 
     // transform 2D to 1D SoA data
