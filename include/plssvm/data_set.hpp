@@ -89,6 +89,20 @@ class data_set {
         std::vector<factors> scaling_factors{};
     };
 
+    class label_mapper {
+      public:
+        label_mapper(const std::vector<label_type> &labels);
+
+        [[nodiscard]] const real_type &get_mapped_value_by_label(const label_type &label) const;
+        [[nodiscard]] const label_type &get_label_by_mapped_value(const real_type &mapped_value) const;
+        [[nodiscard]] size_type num_mappings() const noexcept;
+        [[nodiscard]] std::vector<label_type> labels() const;
+
+      private:
+        std::map<label_type, real_type> label_to_mapped_{};
+        std::map<real_type, label_type> mapped_to_label_{};
+    };
+
 
     explicit data_set(const std::string& filename);
     data_set(const std::string& filename, file_format_type format);
@@ -112,11 +126,11 @@ class data_set {
 
     [[nodiscard]] label_type label_from_mapped_value(real_type val) const;
 
-    [[nodiscard]] size_type num_labels() const noexcept { return mapping_ != nullptr ? mapping_->size() : 0; }
+    [[nodiscard]] size_type num_labels() const noexcept { return mapping_ != nullptr ? mapping_->num_mappings() : 0; }
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
 
-    [[nodiscard]] optional_ref<const std::map<real_type, label_type>> mapping() const noexcept;
+    [[nodiscard]] optional_ref<const label_mapper> mapping() const noexcept;
 
     [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
     [[nodiscard]] optional_ref<const scaling> scaling_factors() const noexcept;
@@ -141,7 +155,7 @@ class data_set {
     size_type num_data_points_{ 0 };
     size_type num_features_{ 0 };
 
-    std::shared_ptr<std::map<real_type, label_type>> mapping_{ nullptr };
+    std::shared_ptr<const label_mapper> mapping_{ nullptr };
 
     std::shared_ptr<scaling> scale_parameters_{ nullptr };
 };
@@ -292,7 +306,7 @@ auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<l
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::mapping() const noexcept -> optional_ref<const std::map<real_type, label_type>> {
+auto data_set<T, U>::mapping() const noexcept -> optional_ref<const label_mapper> {
     if (this->has_labels()) {
         return std::make_optional(std::cref(*mapping_));
     } else {
@@ -313,10 +327,8 @@ template <typename T, typename U>
 auto data_set<T, U>::label_from_mapped_value(const real_type val) const -> label_type {
     if (mapping_ == nullptr) {
         throw exception{ "No mapping exists!" };
-    } else if (mapping_->count(val) == 0) {
-        throw exception{ "Illegal mapped value: {}!" };
     }
-    return mapping_->at(val);
+    return mapping_->get_label_by_mapped_value(val);
 }
 
 
@@ -328,26 +340,16 @@ template <typename T, typename U>
 void data_set<T, U>::create_mapping() {
     PLSSVM_ASSERT(labels_ptr_ != nullptr, "Can't create mapping if no labels are provided!");
 
-    std::map<real_type, label_type> mapping{};
-
-    // get unique labels
-    const std::set<U> unique_labels(labels_ptr_->begin(), labels_ptr_->end());
-    // only binary classification allowed as of now
-    if (unique_labels.size() != 2) {
-        throw exception{ fmt::format("Currently only binary classification is supported, but {} different label where given!", unique_labels.size()) };
-    }
-    // map binary labels to -1 and 1
-    mapping[-1] = *unique_labels.begin();
-    mapping[1] = *(++unique_labels.begin());
+    label_mapper mapper{ *labels_ptr_ };
 
     // convert input labels to now mapped values
     std::vector<real_type> tmp(labels_ptr_->size());
-    #pragma omp parallel for default(none) shared(tmp, labels_ptr_, mapping)
+    #pragma omp parallel for default(none) shared(tmp, labels_ptr_, mapper)
     for (typename std::vector<real_type>::size_type i = 0; i < tmp.size(); ++i) {
-        tmp[i] = std::find_if(mapping.begin(), mapping.end(), [&](const auto &kv) { return kv.second == (*labels_ptr_)[i]; })->first;
+        tmp[i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
     }
     y_ptr_ = std::make_shared<std::vector<real_type>>(std::move(tmp));
-    mapping_ = std::make_shared<std::map<real_type, label_type>>(std::move(mapping));
+    mapping_ = std::make_shared<const label_mapper>(std::move(mapper));
 }
 
 template <typename T, typename U>
@@ -558,6 +560,59 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
 }
 
 
+/******************************************************************************
+ *                          Label Mapper Nested-Class                         *
+ ******************************************************************************/
+template <typename T, typename U>
+data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &labels) {
+    // we are only interested in unique labels
+    std::set<label_type> unique_labels(labels.begin(), labels.end());
+    // currently, only two different labels are supported
+    if (unique_labels.size() != 2) {
+        throw std::runtime_error{ fmt::format("Currently only binary classification is supported, but {} different labels were given!", unique_labels.size()) };
+    }
+    // create mapping
+    // first label
+    auto it = unique_labels.begin();
+    label_to_mapped_[*it] = -1;
+    mapped_to_label_[-1] = *it;
+    // second label
+    ++it;
+    label_to_mapped_[*it] = +1;
+    mapped_to_label_[+1] = *it;
+}
+
+template <typename T, typename U>
+auto data_set<T, U>::label_mapper::get_mapped_value_by_label(const label_type &label) const -> const real_type & {
+    if (!detail::contains_key(label_to_mapped_, label)) {
+        throw exception{ fmt::format("Label {} unknown in this label mapping!", label) };
+    }
+    return label_to_mapped_.at(label);
+}
+
+template <typename T, typename U>
+auto data_set<T, U>::label_mapper::get_label_by_mapped_value(const real_type &mapped_value) const -> const label_type & {
+    if (!detail::contains_key(mapped_to_label_, mapped_value)) {
+        throw exception{ fmt::format("Mapped value {} unknown in this label mapping!", mapped_value) };
+    }
+    return mapped_to_label_.at(mapped_value);
+}
+
+template <typename T, typename U>
+auto data_set<T, U>::label_mapper::num_mappings() const noexcept -> size_type {
+    PLSSVM_ASSERT(label_to_mapped_.size() == 2 && mapped_to_label_.size() == 2, "Both maps must contain exactly two values, but {} and {} were given!", label_to_mapped_.size(), mapped_to_label_.size());
+    return label_to_mapped_.size();
+}
+
+template <typename T, typename U>
+auto data_set<T, U>::label_mapper::labels() const -> std::vector<label_type> {
+    std::vector<label_type> available_labels;
+    available_labels.reserve(this->num_mappings());
+    for (const auto& [key, value] : label_to_mapped_) {
+        available_labels.push_back(key);
+    }
+    return available_labels;
+}
 
 namespace detail {
 
