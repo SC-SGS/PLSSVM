@@ -153,7 +153,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         q_d[device].memcpy_to_device(q, 0, dept);
 
         // r = Ax (r = b - Ax)
-        run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, -1, dept, boundary_size);
+        run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, real_type{ -1.0 }, dept, boundary_size);
     }
     device_reduction(r_d, r);
 
@@ -192,7 +192,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept);
 
-            run_device_kernel(device, params, q_d[device], Ad_d[device], r_d[device], data_d[device], feature_ranges, QA_cost, 1, dept, boundary_size);
+            run_device_kernel(device, params, q_d[device], Ad_d[device], r_d[device], data_d[device], feature_ranges, QA_cost, real_type{ 1.0 }, dept, boundary_size);
         }
         // update Ad (q)
         device_reduction(Ad_d, Ad);
@@ -219,7 +219,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
                     r_d[device].memset(0);
                 }
                 // r -= A * x
-                run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, -1, dept, boundary_size);
+                run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, real_type{ -1.0 }, dept, boundary_size);
             }
 
             device_reduction(r_d, r);
