@@ -91,7 +91,7 @@ class data_set {
 
     class label_mapper {
       public:
-        label_mapper(const std::vector<label_type> &labels);
+        explicit label_mapper(const std::vector<label_type> &labels);
 
         [[nodiscard]] const real_type &get_mapped_value_by_label(const label_type &label) const;
         [[nodiscard]] const label_type &get_label_by_mapped_value(const real_type &mapped_value) const;
@@ -619,15 +619,15 @@ namespace detail {
 // two possible types: real_type + int and real_type + std::string
 using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
 
-template <typename real_type, typename label_type>
+template <typename real_type, typename label_type = typename data_set<real_type>::label_type>
 inline data_set_variants data_set_factory_impl(const cmd::parameter_train &params) {
     return data_set_variants{ plssvm::data_set<real_type, label_type>{ params.input_filename } };
 }
-template <typename real_type, typename label_type>
+template <typename real_type, typename label_type = typename data_set<real_type>::label_type>
 inline data_set_variants data_set_factory_impl(const cmd::parameter_predict &params) {
     return data_set_variants{ plssvm::data_set<real_type, label_type>{ params.input_filename } };
 }
-template <typename real_type, typename label_type>
+template <typename real_type, typename label_type = typename data_set<real_type>::label_type>
 inline data_set_variants data_set_factory_impl(const cmd::parameter_scale &params) {
     if (!params.restore_filename.empty()) {
         return data_set_variants{ plssvm::data_set<real_type, label_type>{ params.input_filename, { params.restore_filename } } };
@@ -641,11 +641,11 @@ inline data_set_variants data_set_factory(const cmd_parameter &params) {
     if (params.float_as_real_type && params.strings_as_labels) {
         return data_set_factory_impl<float, std::string>(params);
     } else if (params.float_as_real_type && !params.strings_as_labels) {
-        return data_set_factory_impl<float, int>(params);
+        return data_set_factory_impl<float>(params);
     } else if (!params.float_as_real_type && params.strings_as_labels) {
         return data_set_factory_impl<double, std::string>(params);
     } else {
-        return data_set_factory_impl<double, int>(params);
+        return data_set_factory_impl<double>(params);
     }
 }
 
