@@ -154,11 +154,8 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
     }
 
     // get the original labels (not the mapped once)
-    std::vector<label_type> label_values;
-    label_values.reserve(data.num_labels());
-    for (const auto& [key, val] : data.mapping().value().get()) {
-        label_values.push_back(val);
-    }
+    const std::vector<label_type> label_values = data.mapping().value().get().labels();
+
     // count the occurrence of each label
     std::map<label_type, std::size_t> label_counts_map;
     for (const label_type &l : data.labels().value().get()) {
