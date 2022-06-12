@@ -207,20 +207,18 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
     #pragma omp parallel default(none) shared(out, support_vectors, alpha, labels, label_order, format_libsvm_line, out_strings)
     {
         #pragma omp single
-        out_strings.resize(omp_get_num_threads(), std::vector<std::string>(label_order.size()));
+        out_strings.resize(label_order.size(), std::vector<std::string>(omp_get_num_threads()));
 
         // format all lines
         #pragma omp for
         for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-            format_libsvm_line(out_strings[omp_get_thread_num()][std::find(label_order.begin(), label_order.end(), labels[i]) - label_order.begin()], alpha[i], support_vectors[i]);
+            format_libsvm_line(out_strings[std::find(label_order.begin(), label_order.end(), labels[i]) - label_order.begin()][omp_get_thread_num()], alpha[i], support_vectors[i]);
         }
     }
 
     // output strings
-    for (typename std::vector<label_type>::size_type i = 0; i < label_order.size(); ++i) {
-        for (typename std::vector<std::vector<std::string>>::size_type j = 0; j < out_strings.size(); ++j) {
-            out.print("{}", out_strings[j][i]);
-        }
+    for (const std::vector<std::string> &str : out_strings) {
+        out.print("{}", fmt::join(str, ""));
     }
 }
 
