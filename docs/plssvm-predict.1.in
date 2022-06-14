@@ -31,6 +31,10 @@ quiet mode (no outputs)
 print this helper message
 
 .TP
+.B -v, --version
+print version information
+
+.TP
 .B --test test_file
 the file containing the test data points
 

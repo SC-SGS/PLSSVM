@@ -15,12 +15,6 @@ project("PLSSVM - Parallel Least Squares Support Vector Machine"
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
-## configure version file
-configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp
-        @ONLY
-)
 
 ########################################################################################################################
 ##                                      create and set necessary base properties                                      ##
@@ -42,7 +36,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
-)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp)
 
 ## create base library: linked against all backend libraries
 set(PLSSVM_BASE_LIBRARY_NAME plssvm-base)
@@ -509,6 +503,20 @@ if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     endforeach()
     list(APPEND PLSSVM_BACKEND_NAME_LIST "sycl")
 endif()
+
+
+########################################################################################################################
+##                                               configure version file                                               ##
+########################################################################################################################
+message(STATUS "Configuring version and git metadata.")
+set(PRE_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp.in")
+set(POST_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp")
+include(cmake/git_watcher.cmake)
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp
+        @ONLY
+)
 
 
 ########################################################################################################################

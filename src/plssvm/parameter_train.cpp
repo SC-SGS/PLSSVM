@@ -13,6 +13,8 @@
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata{is_populated, commit_sha1, commit_date, branch}
+#include "plssvm/version/version.hpp"                    // plssvm::version::{name, version, target_platforms}
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -59,6 +61,7 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
 #endif
             ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(print_info)->default_value(fmt::format("{}", !print_info)))
             ("h,help", "print this helper message", cxxopts::value<bool>())
+            ("v,version", "print version information", cxxopts::value<bool>())
             ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
             ("model", "", cxxopts::value<decltype(model_filename)>(), "model_file");
     // clang-format on
@@ -76,6 +79,24 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
     // print help message and exit
     if (result.count("help")) {
         fmt::print("{}", options.help());
+        std::exit(EXIT_SUCCESS);
+    }
+
+    // print version info
+    if (result.count("version")) {
+        fmt::print("plssvm-train v{} ", version::version);
+        if (version::git_metadata::is_populated()) {
+            std::string_view date = version::git_metadata::commit_date();
+            date.remove_suffix(date.size() - date.find_last_of(' '));
+            fmt::print("({} {} {} ({}))", version::git_metadata::remote_url(), version::git_metadata::branch(), version::git_metadata::commit_sha1(), date);
+        }
+        fmt::print("\n\n{}\n", version::name);
+        fmt::print("  PLSSVM_TARGET_PLATFORMS: {}\n", version::detail::target_platforms);
+        fmt::print("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+        fmt::print("  available SYCL implementations: {}\n", sycl::list_available_sycl_implementations());
+#endif
+        fmt::print("\nCopyright(C) 2018-today The PLSSVM project - All Rights Reserved\nThis is free software distributed under the MIT license; see the source for more information.\n");
         std::exit(EXIT_SUCCESS);
     }
 

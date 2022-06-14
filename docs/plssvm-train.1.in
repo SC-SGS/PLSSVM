@@ -58,6 +58,10 @@ quiet mode (no outputs)
 print this helper message
 
 .TP
+.B -v, --version
+print version information
+
+.TP
 .B --input training_set_file
 the file containing the training data points
 

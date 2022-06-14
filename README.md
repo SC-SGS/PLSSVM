@@ -302,6 +302,7 @@ Usage:
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
+  -v, --version                 print version information
       --input training_set_file
                                 
       --model model_file 
@@ -362,6 +363,7 @@ Usage:
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
+  -v, --version                 print version information
       --test test_file          
       --model model_file        
       --output output_file
