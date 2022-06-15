@@ -91,8 +91,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_OpenMP
+                        cd build/Release_OpenMP
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                         make -j4
@@ -105,7 +105,7 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            cd build/Release
+                            cd build/Release_OpenMP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -122,8 +122,8 @@ pipeline {
                         export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
                         module use /home/breyerml/.modulefiles/
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_OpenCL
+                        cd build/Release_OpenCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                         make -j4
@@ -139,7 +139,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             spack load pocl
                             export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
-                            cd build/Release
+                            cd build/Release_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -154,8 +154,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load network_hipsycl_cpu_2
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_hipSYCL
+                        cd build/Release_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                         make -j4
@@ -171,7 +171,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
                             module load network_hipsycl_cpu_2
-                            cd build/Release
+                            cd build/Release_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -221,8 +221,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_OpenMP
+                        cd build/Debug_OpenMP
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -235,7 +235,7 @@ pipeline {
                 dir('plssvm') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            cd build/Debug
+                            cd build/Debug_OpenMP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -252,8 +252,8 @@ pipeline {
                         export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
                         module use /home/breyerml/.modulefiles/
                         module load cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_OpenCL
+                        cd build/Debug_OpenCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -269,7 +269,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             spack load pocl
                             export LIBRARY_PATH=/import/sgs.scratch/breyerml/spack/opt/spack/linux-ubuntu20.04-cascadelake/gcc-9.3.0/pocl-1.8-cufe6pralz3viyfybyyhp4cgipqadbac/lib:$LIBRARY_PATH
-                            cd build/Debug
+                            cd build/Debug_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -284,8 +284,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load network_hipsycl_cpu_2
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_hipSYCL
+                        cd build/Debug_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -301,7 +301,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
                             module load network_hipsycl_cpu_2
-                            cd build/Debug
+                            cd build/Debug_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
