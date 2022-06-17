@@ -94,7 +94,7 @@ parameter_train<T>::parameter_train(int argc, char **argv) {
         fmt::print("  PLSSVM_TARGET_PLATFORMS: {}\n", version::detail::target_platforms);
         fmt::print("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-        fmt::print("  available SYCL implementations: {}\n", sycl::list_available_sycl_implementations());
+        fmt::print("  available SYCL implementations: {}\n", fmt::join(sycl::list_available_sycl_implementations(), ", "));
 #endif
         fmt::print("\nCopyright(C) 2018-today The PLSSVM project - All Rights Reserved\nThis is free software distributed under the MIT license; see the source for more information.\n");
         std::exit(EXIT_SUCCESS);
