@@ -239,7 +239,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
+    // create caching folder in the temporary directory and change the permissions such that everybody has read/write access
     const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}_{}", target, checksum);
+    std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all);
 
     // potential reasons why OpenCL caching could fail
     enum class caching_status {
