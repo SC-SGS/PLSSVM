@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--output", help="the output file to write the samples to (without extension)")
 parser.add_argument(
-    "--format", help="the file format; either arff or libsvm", required=True)
+    "--format", help="the file format; either arff, libsvm, or csv", required=True)
 parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
                     default="blobs")
 parser.add_argument(
@@ -128,6 +128,15 @@ elif args.format == "arff":
     dump_arff_file(data[:args.samples, :], file, 'train data set')
     if args.test_samples > 0:
         dump_arff_file(data[args.samples:, :], test_file, 'test data set')
+elif args.format == "csv":
+    import numpy
+    # concatenate features and labels of the training data set
+    data = numpy.c_[samples, labels]
+    numpy.savetxt(file, data[:args.samples, :], delimiter=',')
+    # concatenate features and labels of the test data set if necessary
+    if args.test_samples > 0:
+        data = numpy.c_[samples, labels]
+        numpy.savetxt(test_file, data[args.samples:, :], delimiter=',')
 else:
     raise RuntimeError("Only arff and libsvm supported as file format!")
 
