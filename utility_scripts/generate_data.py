@@ -10,6 +10,7 @@
 
 import argparse
 from timeit import default_timer as timer
+import os
 
 # data set creation
 from sklearn.datasets import make_classification
@@ -80,8 +81,11 @@ print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 print("Saving samples... ", end="", flush=True)
 start_time = timer()
 # set file names
-rawfile = args.output if args.output is not None else "{}x{}".format(
-    args.samples, args.features)
+if args.output is not None:
+    rawfile = os.path.join(args.output, "{}x{}".format(args.samples, args.features)) if os.path.isdir(args.output) else args.output
+else:
+    rawfile = "{}x{}".format(args.samples, args.features)
+
 if rawfile.endswith(args.format):
     rawfile = rawfile[:-(len(args.format)+1)]
 file = rawfile + "." + args.format
