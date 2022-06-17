@@ -89,8 +89,8 @@ pipeline {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_CUDA
+                        cd build/Release_CUDA
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j4
@@ -104,7 +104,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            cd build/Release
+                            cd build/Release_CUDA
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -118,8 +118,8 @@ pipeline {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_OpenCL
+                        cd build/Release_OpenCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
                         make -j4
@@ -133,7 +133,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            cd build/Release
+                            cd build/Release_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -148,8 +148,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load network_hipsycl_cuda
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_hipSYCL
+                        cd build/Release_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j4
@@ -165,7 +165,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
                             module load network_hipsycl_cuda
-                            cd build/Release
+                            cd build/Release_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -180,8 +180,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load network_dpcpp_cuda
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_dpcpp
+                        cd build/Release_dpcpp
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j4
@@ -197,7 +197,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
                             module load network_dpcpp_cuda
-                            cd build/Release
+                            cd build/Release_dpcpp
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -276,8 +276,8 @@ pipeline {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_CUDA
+                        cd build/Debug_CUDA
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -292,7 +292,7 @@ pipeline {
                         sh '''
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module load cuda/11.2.2
-                            cd build/Debug
+                            cd build/Debug_CUDA
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -306,8 +306,8 @@ pipeline {
                     sh '''
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module load cuda/11.2.2 cmake-3.22.2-gcc-9.3.0-wi6mnc2
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_OpenCL
+                        cd build/Debug_OpenCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -322,7 +322,7 @@ pipeline {
                         sh '''
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module load cuda/11.2.2
-                            cd build/Debug
+                            cd build/Debug_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -337,8 +337,8 @@ pipeline {
                         source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                         module use /home/breyerml/.modulefiles/
                         module load network_hipsycl_cuda
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_hipSYCL
+                        cd build/Debug_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -354,7 +354,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
                             module load network_hipsycl_cuda
-                            cd build/Debug
+                            cd build/Debug_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }

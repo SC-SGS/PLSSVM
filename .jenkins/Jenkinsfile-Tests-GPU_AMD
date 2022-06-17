@@ -92,8 +92,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/dpcpp
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_HIP
+                        cd build/Release_HIP
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j4
@@ -110,7 +110,7 @@ pipeline {
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/dpcpp
-                            cd build/Release
+                            cd build/Release_HIP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -126,8 +126,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/dpcpp
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_OpenCL
+                        cd build/Release_OpenCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
                         make -j4
@@ -144,7 +144,7 @@ pipeline {
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/dpcpp
-                            cd build/Release
+                            cd build/Release_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -160,8 +160,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/hipsycl
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_hipSYCL
+                        cd build/Release_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON ../../
                         make -j4
@@ -178,7 +178,7 @@ pipeline {
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/hipsycl
-                            cd build/Release
+                            cd build/Release_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -194,8 +194,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/dpcpp
-                        mkdir -p build/Release
-                        cd build/Release
+                        mkdir -p build/Release_DPCPP
+                        cd build/Release_DPCPP
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_ASSERTS=ON ../../
                         make -j4
@@ -211,7 +211,7 @@ pipeline {
                             source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/dpcpp
-                            cd build/Release
+                            cd build/Release_DPCPP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -262,8 +262,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/dpcpp
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_HIP
+                        cd build/Debug_HIP
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -280,7 +280,7 @@ pipeline {
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/dpcpp
-                            cd build/Debug
+                            cd build/Debug_HIP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -296,8 +296,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/dpcpp
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_OpenCL
+                        cd build/Debug_OpenCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -314,7 +314,7 @@ pipeline {
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/dpcpp
-                            cd build/Debug
+                            cd build/Debug_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -330,8 +330,8 @@ pipeline {
                         module use /home/breyerml/.modulefiles/
                         module load plssvm/pcsgs09/hip
                         module load plssvm/pcsgs09/hipsycl
-                        mkdir -p build/Debug
-                        cd build/Debug
+                        mkdir -p build/Debug_hipSYCL
+                        cd build/Debug_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
@@ -348,7 +348,7 @@ pipeline {
                             module use /home/breyerml/.modulefiles/
                             module load plssvm/pcsgs09/hip
                             module load plssvm/pcsgs09/hipsycl
-                            cd build/Debug
+                            cd build/Debug_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
