@@ -13,6 +13,7 @@
 #include <algorithm>    // std::min
 #include <cstddef>      // std::size_t
 #include <numeric>      // std::accumulate
+#include <memory>       // std::unique_ptr
 #include <sstream>      // std::stringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -179,22 +180,33 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
 }
 
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<label_type> &labels, const std::vector<label_type> &label_order) {
+inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<label_type> &labels, const std::vector<label_type> &label_order, const std::size_t num_features) {
+    // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
+    // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
+    // scientific notation: 3 chars (number in front of decimal separator including a sign + decimal separator) + 10 chars (part after the decimal separator, specified during formatting) +
+    //                      5 chars exponent (e + sign + maximum potential exponent (308 -> 3 digits)
+    // separators: 2 chars (: between index and feature + whitespace after feature value)
+    // -> 40 chars in total
+    // -> increased to 48 chars to be on the safe side
+    constexpr std::size_t CHARS_PER_BLOCK = 48;
+    // results in 48 B * 128 B = 6 KiB stack buffer per thread
+    constexpr std::size_t BLOCK_SIZE = 128;
+    // use 1 MiB as buffer per thread
+    constexpr std::size_t STRING_BUFFER_SIZE = 1024 * 1024;
+
     // format one output-line
-    auto format_libsvm_line = [](std::string &output, const real_type a, const std::vector<real_type> &d) {
-        static constexpr std::size_t BLOCK_SIZE = 64;
-        static constexpr std::size_t CHARS_PER_BLOCK = 128;
-        static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
-        static char buffer[BUFFER_SIZE];
+    auto format_libsvm_line = [=](std::string &output, const real_type a, const std::vector<real_type> &d) {
+        static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
+        static char buffer[STACK_BUFFER_SIZE];
         #pragma omp threadprivate(buffer)
 
-        output.append(fmt::format(FMT_COMPILE("{} "), a));
+        output.append(fmt::format(FMT_COMPILE("{:.10e} "), a));
         for (typename std::vector<real_type>::size_type j = 0; j < d.size(); j += BLOCK_SIZE) {
             char *ptr = buffer;
             for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, d.size() - j); ++i) {
                 if (d[j + i] != real_type{ 0.0 }) {
                     // add 1 to the index since LIBSVM assumes 1-based feature indexing
-                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:e} "), j + i + 1, d[j + i]);
+                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, d[j + i]);
                 }
             }
             output.append(buffer, ptr - buffer);
@@ -204,32 +216,59 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
 
     // initialize volatile array
     volatile int* counts = new volatile int[label_order.size()]{};
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out)
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
     {
+        // preallocate string buffer, only ONE allocation
+        std::string out_string;
+        out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
+
         // support vectors with the first class
-        std::string out_first;
         #pragma omp for nowait
         for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
             if (labels[i] == label_order[0]) {
-                format_libsvm_line(out_first, alpha[i], support_vectors[i]);
+                format_libsvm_line(out_string, alpha[i], support_vectors[i]);
+
+                // if the buffer is full, write it to the file
+                if (out_string.size() > STRING_BUFFER_SIZE) {
+                    #pragma omp critical
+                    {
+                        out.print(out_string);
+                        #pragma omp flush(out)
+                    }
+                    // clear buffer
+                    out_string.clear();
+                }
             }
         }
 
         #pragma omp critical
         {
-            out.print("{}", out_first);
+            if (!out_string.empty()) {
+                out.print(out_string);
+                out_string.clear();
+            }
             counts[0]++;
             #pragma omp flush(counts, out)
         }
 
-        for (std::size_t l = 1; l < label_order.size(); ++l) {
+        for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
             // the support vectors with the i-th class
-            std::string out_ith;
 
             #pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
                 if (labels[i] == label_order[l]) {
-                    format_libsvm_line(out_ith, alpha[i], support_vectors[i]);
+                    format_libsvm_line(out_string, alpha[i], support_vectors[i]);
+
+                    // if the buffer is full, write it to the file
+                    if (out_string.size() > STRING_BUFFER_SIZE) {
+                        #pragma omp critical
+                        {
+                            out.print(out_string);
+                            #pragma omp flush(out)
+                        }
+                        // clear buffer
+                        out_string.clear();
+                    }
                 }
             }
             // wait for all threads to write support vectors for previous class
@@ -242,7 +281,10 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
 
             #pragma omp critical
             {
-                out.print("{}", out_first);
+                if (!out_string.empty()) {
+                    out.print(out_string);
+                    out_string.clear();
+                }
                 counts[l]++;
                 #pragma omp flush(counts, out)
             }
