@@ -11,22 +11,18 @@
 
 #pragma once
 
-#include "plssvm/kernel_types.hpp"
-#include "plssvm/target_platforms.hpp"
-#include "plssvm/parameter.hpp"
+#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 
-#include <cstddef>  // std::size_t
+#include <utility>  // std::forward
 #include <vector>   // std::vector
 
 namespace plssvm {
-
-// forward declare parameter class
-//template <typename T>
-//class parameter;
 
 namespace detail {
 
