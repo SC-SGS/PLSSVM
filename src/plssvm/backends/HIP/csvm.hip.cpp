@@ -101,7 +101,7 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 template <typename T>
 void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points_padded, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
-    
+
     detail::set_device(device);
     switch (params.kernel) {
         case kernel_type::linear:
