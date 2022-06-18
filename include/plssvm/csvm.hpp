@@ -224,8 +224,6 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     default_value epsilon_val = default_init<real_type>{ 0.001 };
     default_value max_iter_val = default_init<size_type>{ data.num_data_points() };
 
-    // TODO: what if only max_iter is given???
-
     // compile time check: only named parameter are permitted
     static_assert(!p.has_unnamed_arguments(), "Can only use named parameter!");
     // compile time check: each named parameter must only be passed once
@@ -274,8 +272,6 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     }
 
     // start fitting the data set using a C-SVM
-
-    using namespace plssvm::operators;
 
     if (!data.has_labels()) {
         throw exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
