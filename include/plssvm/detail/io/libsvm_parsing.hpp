@@ -77,11 +77,11 @@ inline std::size_t parse_libsvm_num_features(file_reader &reader, const std::siz
 }
 
 template <typename real_type, typename label_type>
-inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::vector<std::vector<real_type>> &X, std::vector<label_type> &y) {
+inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::vector<std::vector<real_type>> &X, std::vector<label_type> &y, const std::size_t num_features) {
     std::exception_ptr parallel_exception;
     bool has_label = true;
 
-    #pragma omp parallel default(none) shared(reader, start, X, y, parallel_exception, has_label)
+    #pragma omp parallel default(none) shared(reader, start, X, y, parallel_exception, has_label) firstprivate(num_features)
     {
         #pragma omp for reduction(&& : has_label)
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < X.size(); ++i) {
@@ -101,6 +101,7 @@ inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::
                 }
 
                 // get data
+                std::vector<real_type> vline(num_features);
                 while (true) {
                     std::string_view::size_type next_pos = line.find_first_of(':', pos);
                     // no further data points
@@ -120,9 +121,11 @@ inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::
 
                     // get value
                     next_pos = line.find_first_of(' ', pos);
-                    X[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                    vline[index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                     pos = next_pos;
                 }
+                // move filled line to overall matrix
+                X[i] = std::move(vline);
             } catch (const std::exception &) {
                 // catch first exception and store it
                 #pragma omp critical
