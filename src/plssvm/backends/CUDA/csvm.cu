@@ -33,23 +33,26 @@
 namespace plssvm::cuda {
 
 template <typename T>
-csvm<T>::csvm(const parameter<T> &params) :
-    base_type{ params } {
+csvm<T>::csvm(target_platform target, parameter<real_type> params) : base_type{ params } {
+    this->init(target);
+}
+
+template <typename T>
+void csvm<T>::init(const target_platform target) {
     // check if supported target platform has been selected
-    if (target_ != target_platform::automatic && target_ != target_platform::gpu_nvidia) {
-        throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target_) };
+    if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target) };
     } else {
 #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-        throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target_) };
+        throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
     }
 
-    if (print_info_) {
+    if (plssvm::verbose) {
         fmt::print("Using CUDA as backend.\n");
     }
 
     // get all available devices wrt the requested target platform
-    devices_.resize(std::min<std::size_t>(detail::get_device_count(), num_features_));
     std::iota(devices_.begin(), devices_.end(), 0);
 
     // throw exception if no CUDA devices could be found
@@ -57,16 +60,7 @@ csvm<T>::csvm(const parameter<T> &params) :
         throw backend_exception{ "CUDA backend selected but no CUDA devices were found!" };
     }
 
-    // polynomial and rbf kernel currently only support single GPU execution
-    if (kernel_ == kernel_type::polynomial || kernel_ == kernel_type::rbf) {
-        devices_.resize(1);
-    }
-
-    // resize vectors accordingly
-    data_d_.resize(devices_.size());
-    data_last_d_.resize(devices_.size());
-
-    if (print_info_) {
+    if (plssvm::verbose) {
         // print found CUDA devices
         fmt::print("Found {} CUDA device(s):\n", devices_.size());
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
@@ -92,7 +86,7 @@ csvm<T>::~csvm() {
 }
 
 template <typename T>
-void csvm<T>::device_synchronize(queue_type &queue) {
+void csvm<T>::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
@@ -103,69 +97,69 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 }
 
 template <typename T>
-void csvm<T>::run_q_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &q_d, const std::size_t num_features) {
+void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points_padded, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
-    switch (kernel_) {
+    switch (params.kernel) {
         case kernel_type::linear:
-            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_features);
+            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_q_poly<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, degree_, gamma_, coef0_);
+            cuda::device_kernel_q_poly<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_q_radial<<<grid, block>>>(q_d.get(), data_d_[device].get(), data_last_d_[device].get(), num_rows_, num_cols_, gamma_);
+            cuda::device_kernel_q_radial<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
 }
 
 template <typename T>
-void csvm<T>::run_svm_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const real_type add, const std::size_t num_features) {
+void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const real_type QA_cost, const real_type add, const size_type num_data_points_padded, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
-    switch (kernel_) {
+    switch (params.kernel) {
         case kernel_type::linear:
-            cuda::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_features, add, device);
+            cuda::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
             break;
         case kernel_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, degree_, gamma_, coef0_);
+            cuda::device_kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d_[device].get(), QA_cost_, 1 / cost_, num_rows_, num_cols_, add, gamma_);
+            cuda::device_kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
 }
 
 template <typename T>
-void csvm<T>::run_w_kernel(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const std::size_t num_features) {
+void csvm<T>::run_w_kernel(const size_type device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
-    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), data_d_[device].get(), data_last_d_[device].get(), alpha_d.get(), num_data_points_, num_features);
+    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features));
     detail::peek_at_last_error();
 }
 
 template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const std::size_t num_predict_points) {
+void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_support_vectors, const size_type num_predict_points, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(0);
-    switch (kernel_) {
+    switch (params.kernel) {
         case kernel_type::linear:
             break;
         case kernel_type::polynomial:
-            cuda::device_kernel_predict_poly<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, degree_, gamma_, coef0_);
+            cuda::device_kernel_predict_poly<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_type::rbf:
-            cuda::device_kernel_predict_radial<<<grid, block>>>(out_d.get(), data_d_[0].get(), data_last_d_[0].get(), alpha_d.get(), num_data_points_, point_d.get(), num_predict_points, num_features_, gamma_);
+            cuda::device_kernel_predict_radial<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
