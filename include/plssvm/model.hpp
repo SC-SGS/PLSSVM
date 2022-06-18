@@ -121,7 +121,7 @@ void model<T, U>::save(const std::string &filename) const {
     const std::vector<label_type> label_order = detail::io::write_libsvm_model_header(out, params_, rho_, data_);
 
     // save model file support vectors
-    detail::io::write_libsvm_model_data(out, data_.data(), *alpha_ptr_, data_.labels().value().get(), label_order);
+    detail::io::write_libsvm_model_data(out, data_.data(), *alpha_ptr_, data_.labels().value().get(), label_order, num_features_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
