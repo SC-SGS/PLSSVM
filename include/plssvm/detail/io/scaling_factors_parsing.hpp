@@ -61,7 +61,7 @@ void write_scaling_factors(fmt::ostream &out, const std::pair<real_type, real_ty
     out.print("x\n");
     out.print("{} {}\n", scaling_interval.first, scaling_interval.second);
     for (const factors_type &f : scaling_factors) {
-        out.print(FMT_COMPILE("{} {} {}\n"), f.index + 1, f.lower, f.upper);
+        out.print("{} {} {}\n", f.feature + 1, f.lower, f.upper);
     }
 }
 
