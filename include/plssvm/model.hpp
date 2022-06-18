@@ -84,11 +84,11 @@ model<T, U>::model(const std::string &filename) {
 
     // create support vectors and alpha pointer
     num_features_ = detail::io::parse_libsvm_num_features(f, num_support_vectors_, header + 1);
-    std::vector<std::vector<real_type>> support_vectors(num_support_vectors_, std::vector<real_type>(num_features_));
+    std::vector<std::vector<real_type>> support_vectors(num_support_vectors_);
     alpha_ptr_ = std::make_shared<std::vector<real_type>>(num_support_vectors_);
 
     // parse libsvm model data
-    detail::io::read_libsvm_data(f, header + 1, support_vectors, *alpha_ptr_);
+    detail::io::read_libsvm_data(f, header + 1, support_vectors, *alpha_ptr_, num_features_);
 
     // create data set
     data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(data_labels) };

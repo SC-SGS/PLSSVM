@@ -480,11 +480,11 @@ void data_set<T, U>::read_libsvm_file(const std::string &filename) {
     num_data_points_ = f.num_lines();
     num_features_ = detail::io::parse_libsvm_num_features(f, num_data_points_, 0);
 
-    std::vector<std::vector<real_type>> X(num_data_points_, std::vector<real_type>(num_features_));
+    std::vector<std::vector<real_type>> X(num_data_points_);
     std::vector<label_type> labels(num_data_points_);
 
     // parse file
-    const bool has_label = detail::io::read_libsvm_data(f, 0, X, labels);
+    const bool has_label = detail::io::read_libsvm_data(f, 0, X, labels, num_features_);
 
     // move data to pointers
     X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
