@@ -117,7 +117,6 @@ class data_set {
 
     // save the data set in the given format
     void save(const std::string &filename, file_format_type format) const;
-    void save_scaling_factors(const std::string &filename) const;
 
     [[nodiscard]] const std::vector<std::vector<real_type>>& data() const noexcept { return *X_ptr_; }
     [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
@@ -272,15 +271,6 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
                    format,
                    filename);
     }
-}
-
-template <typename T, typename U>
-void data_set<T, U>::save_scaling_factors(const std::string &filename) const {
-    if (this->is_scaled()) {
-        throw exception{ "Data set not scaled so no scaling factors can be saved!" };
-    }
-
-    scale_parameters_->save(filename);
 }
 
 
@@ -542,7 +532,7 @@ data_set<T, U>::scaling::scaling(const std::string &filename) {
 
 template <typename T, typename U>
 void data_set<T, U>::scaling::save(const std::string &filename) const {
-    if (this->is_scaled()) {
+    if (scaling_factors.empty()) {
         throw exception{ "Data set not scaled so no scaling factors can be saved!" };
     }
 

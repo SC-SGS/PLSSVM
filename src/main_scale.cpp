@@ -33,6 +33,12 @@ int main(int argc, char *argv[]) {
         std::visit([&](auto&& data){
             // write scaled data to output file
             data.save(params.scaled_filename, params.format);
+
+            // save scaling parameters if requested
+            if (!params.save_filename.empty() && data.scaling_factors().has_value()) {
+                data.scaling_factors()->get().save(params.save_filename);
+            }
+
         }, plssvm::detail::data_set_factory(params));
 
     } catch (const plssvm::exception &e) {
