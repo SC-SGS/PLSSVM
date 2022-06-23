@@ -445,6 +445,28 @@ target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 ```
 
+## Citing PLSSVM
+
+If you use PLSSVM in your research, we kindly request you to cite:
+
+```text
+@inproceedings{10.1145/3529538.3529980,
+  author = {Van Craen, Alexander and Breyer, Marcel and Pfl\"{u}ger, Dirk},
+  title = {PLSSVM: A (multi-)GPGPU-accelerated Least Squares Support Vector Machine},
+  year = {2022},
+  isbn = {978-1-6654-9747-3},
+  publisher = {IEEE},
+  url = {https://doi.org/10.1109/IPDPSW55747.2022.00138},
+  doi = {10.1109/IPDPSW55747.2022.00138},
+  booktitle = {International Parallel and Distributed Processing Symposium Workshops (IPDPSW)},
+  keywords = {Machine Learning, SVM, Optimization, Performance Evaluation, Graphics Processors, OpenMP, CUDA, OpenCL, SYCL},
+  location = {Lyon, France},
+  series = {IPDPSW'22},
+  note = {to be published}
+}
+```
+For a full list of all publications involving PLSSVM see our [Wiki Page](https://github.com/SC-SGS/PLSSVM/wiki/List-of-Publications-involving-PLSSVM).
+
 ## License
 
 The PLSSVM library is distributed under the MIT [license](https://github.com/SC-SGS/PLSSVM/blob/main/LICENSE.md).
