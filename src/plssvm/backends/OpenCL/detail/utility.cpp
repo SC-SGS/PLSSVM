@@ -241,7 +241,6 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // create caching folder in the temporary directory and change the permissions such that everybody has read/write access
     const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}_{}", target, checksum);
-    std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all);
 
     // potential reasons why OpenCL caching could fail
     enum class caching_status {
@@ -309,6 +308,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         if (!std::filesystem::exists(cache_dir_name)) {
             std::filesystem::create_directories(cache_dir_name);
         }
+        std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all);
+
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
