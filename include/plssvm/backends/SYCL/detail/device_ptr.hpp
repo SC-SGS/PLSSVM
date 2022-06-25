@@ -57,7 +57,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, detail::sycl::queu
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated SYCL queue
      */
-    device_ptr(size_type size, std::unique_ptr<detail::sycl::queue>& queue);
+    device_ptr(size_type size, const std::unique_ptr<detail::sycl::queue>& queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)

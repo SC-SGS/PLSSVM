@@ -101,8 +101,9 @@ std::pair<std::vector<std::unique_ptr<detail::sycl::queue>>, ::plssvm::target_pl
     }
 }
 
-void device_synchronize(detail::sycl::queue &queue) {
-    queue.wait_and_throw();
+void device_synchronize(const detail::sycl::queue &queue) {
+    // TODO:
+    //queue.wait_and_throw();
 }
 
 }  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail

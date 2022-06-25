@@ -22,7 +22,7 @@
 namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
     template <typename T>
-    device_ptr<T>::device_ptr(const size_type size, std::unique_ptr<detail::sycl::queue> &queue) :
+    device_ptr<T>::device_ptr(const size_type size, const std::unique_ptr<detail::sycl::queue> &queue) :
         base_type{ queue.get(), size } {
         data_ = detail::sycl::malloc_device<value_type>(size_, *queue_);
     }
