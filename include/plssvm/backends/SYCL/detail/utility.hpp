@@ -41,7 +41,7 @@ namespace detail {
  * @brief Wait for the compute device associated with @p queue to finish.
  * @param[in] queue the SYCL queue to synchronize
  */
-void device_synchronize(const detail::sycl::queue &queue);
+void device_synchronize(detail::sycl::queue &queue);
 
 }  // namespace detail
 }  // namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
