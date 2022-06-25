@@ -39,9 +39,10 @@ namespace plssvm::detail {
  * @throws Exception if @p str can't be converted to a value of type @p T
  * @return the value of type @p T denoted by @p str (`[[nodiscard]]`)
  */
-template <typename T, typename Exception = std::runtime_error>
+template <typename T, typename Exception = std::runtime_error,
+    std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<detail::remove_cvref_t<T>, std::string>, bool> = true>
 [[nodiscard]] inline T convert_to(std::string_view str) {
-    if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+    if constexpr (std::is_same_v<detail::remove_cvref_t<T>, std::string>) {
         // convert string_view to string
         return std::string{ trim_left(str) };
     } else {
@@ -53,9 +54,6 @@ template <typename T, typename Exception = std::runtime_error>
             } else if constexpr (std::is_integral_v<T>) {
                 // convert the string to an integral value
                 return std::from_chars(sv.data(), sv.data() + sv.size(), val);
-            } else {
-                // can't convert the string to a non-arithmetic type
-                static_assert(always_false_v<T>, "Can only convert arithmetic types!");
             }
         };
 
