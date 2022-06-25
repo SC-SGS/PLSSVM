@@ -81,7 +81,7 @@ template <typename T>
     /**
      * @copydoc plssvm::detail::gpu_csvm::device_synchronize
      */
-    void device_synchronize(queue_type &queue) const final;
+    void device_synchronize(const queue_type &queue) const final;
 
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
