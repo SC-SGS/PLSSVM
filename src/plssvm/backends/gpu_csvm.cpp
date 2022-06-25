@@ -209,7 +209,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
         }
 
         if (run % 50 == 49) {
-            #pragma omp parallel for default(none) shared(devices_, r_d, q_d, x_d, params) firstprivate(QA_cost, dept)
+            #pragma omp parallel for default(none) shared(devices_, r_d, b, q_d, x_d, params, data_d, feature_ranges) firstprivate(QA_cost, dept)
             for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
                 if (device == 0) {
                     // r = b

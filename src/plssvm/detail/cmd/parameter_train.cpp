@@ -17,6 +17,7 @@
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type_to_math_string
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/version/version.hpp"                    // plssvm::version::{name, version}, plssvm::version::detail::{target_platforms, print_git_info, copyright_notice}
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -56,6 +57,7 @@ parameter_train::parameter_train(int argc, char **argv) {
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
+           ("v,version", "print version information", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
            ("model", "", cxxopts::value<decltype(model_filename)>(), "model_file");
    // clang-format on
@@ -75,6 +77,21 @@ parameter_train::parameter_train(int argc, char **argv) {
        fmt::print("{}", options.help());
        std::exit(EXIT_SUCCESS);
    }
+
+   // print version info
+   if (result.count("version")) {
+       fmt::print("plssvm-train v{} ", version::version);
+       version::detail::print_git_info();
+       fmt::print("\n\n{}\n", version::name);
+       fmt::print("  PLSSVM_TARGET_PLATFORMS: {}\n", version::detail::target_platforms);
+       fmt::print("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+       fmt::print("  available SYCL implementations: {}\n", fmt::join(sycl::list_available_sycl_implementations(), ", "));
+#endif
+       fmt::print("\n{}\n", version::detail::copyright_notice);
+       std::exit(EXIT_SUCCESS);
+   }
+
 
    // parse kernel_type and cast the value to the respective enum
    if (result.count("kernel_type")) {
@@ -133,7 +150,7 @@ parameter_train::parameter_train(int argc, char **argv) {
    // parse target_platform and cast the value to the respective enum
    target = result["target_platform"].as<decltype(target)>();
 
-#if defined(PLSSVM_HAS_SYCL_IMPLEMENTATION)
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
    // parse kernel invocation type when using SYCL as backend
    sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 

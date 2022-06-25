@@ -8,7 +8,8 @@
 
 #include "plssvm/detail/cmd/parameter_scale.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::verbose
+#include "plssvm/constants.hpp"                          // plssvm::verbose
+#include "plssvm/version/version.hpp"                    // plssvm::version::{name, version}, plssvm::version::detail::{target_platforms, print_git_info, copyright_notice}
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -40,6 +41,7 @@ parameter_scale::parameter_scale(int argc, char **argv) {
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>(plssvm::verbose)->default_value(fmt::format("{}", !plssvm::verbose)))
            ("h,help", "print this helper message", cxxopts::value<bool>())
+           ("v,version", "print version information", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "input_file")
            ("scaled", "", cxxopts::value<decltype(scaled_filename)>(), "scaled_file");
    // clang-format on
@@ -57,6 +59,16 @@ parameter_scale::parameter_scale(int argc, char **argv) {
    // print help message and exit
    if (result.count("help")) {
        fmt::print("{}", options.help());
+       std::exit(EXIT_SUCCESS);
+   }
+
+   // print version info
+   if (result.count("version")) {
+       fmt::print("plssvm-train v{} ", version::version);
+       version::detail::print_git_info();
+       fmt::print("\n\n{}\n", version::name);
+       fmt::print("  PLSSVM_TARGET_PLATFORMS: {}\n", version::detail::target_platforms);
+       fmt::print("\n{}\n", version::detail::copyright_notice);
        std::exit(EXIT_SUCCESS);
    }
 

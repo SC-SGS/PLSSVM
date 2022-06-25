@@ -11,6 +11,10 @@
 
 #pragma once
 
+#include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
+
+#include "fmt/core.h"  // fmt::print
+
 #include <string_view>  // std::string_view
 
 namespace plssvm::version {
@@ -52,6 +56,17 @@ namespace detail {
  * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
  */
 constexpr std::string_view target_platforms = "@PLSSVM_TARGET_PLATFORMS@";
+
+constexpr std::string_view copyright_notice = "Copyright(C) 2018-today The PLSSVM project - All Rights Reserved\n"
+                                              "This is free software distributed under the MIT license; see the source for more information.";
+
+inline void print_git_info() {
+   if (git_metadata::is_populated()) {
+       std::string_view date = git_metadata::commit_date();
+       date.remove_suffix(date.size() - date.find_last_of(' '));
+       fmt::print("({} {} {} ({}))", git_metadata::remote_url(), git_metadata::branch(), git_metadata::commit_sha1(), date);
+   }
+}
 
 }
 
