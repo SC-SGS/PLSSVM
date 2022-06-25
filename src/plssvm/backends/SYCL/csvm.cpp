@@ -127,7 +127,7 @@ csvm<T>::~csvm() {
 
 template <typename T>
 void csvm<T>::device_synchronize(const queue_type &queue) const {
-    detail::device_synchronize(queue);
+    detail::device_synchronize(*queue);
 }
 
 template <std::size_t I>
