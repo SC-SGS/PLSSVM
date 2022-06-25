@@ -107,7 +107,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::solve_system_of_linear_equations(const 
     using namespace plssvm::operators;
 
     const size_type dept = A.size() - 1;
-    const size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    constexpr size_type boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const size_type num_features = A.front().size();
 
     const size_type num_used_devices = select_num_used_devices(params.kernel, num_features);
