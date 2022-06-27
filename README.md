@@ -82,7 +82,7 @@ Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FIL
 Building the library can be done using the normal CMake approach:
 
 ```bash
-git clone git@github.com:SC-SGS/PLSSVM.git
+git clone https://github.com/SC-SGS/PLSSVM.git
 cd PLSSVM 
 mkdir build && cd build 
 cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] .. 
