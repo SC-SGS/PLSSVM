@@ -65,6 +65,11 @@ template <typename T, typename... Args>
                         plssvm::cost = params.cost,
                         std::forward<Args>(args)...);
 }
+// make_csvm for prediction
+template <typename T>
+[[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target) {
+    return make_csvm<T>(backend, target, parameter<T>{}.kernel);
+}
 
 // make_csvm using igor flags --X
 template <typename T, typename... Args>

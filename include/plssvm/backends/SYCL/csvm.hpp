@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "plssvm/detail/utility.hpp"
 #include "plssvm/kernel_types.hpp"                                                  // plssvm::kernel_type
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
 #include "plssvm/parameter.hpp"
@@ -76,7 +77,7 @@ template <typename T>
 
         if constexpr (p.has(sycl_kernel_invocation_type)) {
             // compile time check: the value must have the correct type
-            static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(sycl_kernel_invocation_type))>, decltype(invocation_type_)>, "sycl_kernel_invocation_type must be convertible to a kernel_invocation_type!");
+            static_assert(std::is_convertible_v<plssvm::detail::remove_cvref_t<decltype(p(sycl_kernel_invocation_type))>, decltype(invocation_type_)>, "sycl_kernel_invocation_type must be convertible to a kernel_invocation_type!");
             // set value
             invocation_type_ = static_cast<decltype(invocation_type_)>(p(sycl_kernel_invocation_type));
         }
