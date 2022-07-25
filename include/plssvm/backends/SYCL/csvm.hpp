@@ -63,10 +63,24 @@ template <typename T>
      * @throws plssvm::sycl::backend_exception if the requested plssvm::target_platform isn't available
      * @throws plssvm::sycl::backend_exception if no possible OpenCL devices could be found
      */
-    explicit csvm(target_platform target, parameter<real_type> params = {});
+    explicit csvm(target_platform target, kernel_invocation_type invocation_type = kernel_invocation_type::automatic, parameter<real_type> params = {});
+    explicit csvm(target_platform target, parameter<real_type> params);
 
     template <typename... Args>
-    csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+    csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, named_args... } {
+        // set kernel invocation type
+        igor::parser p{ std::forward<Args>(named_args)... };
+
+        // compile time check: only some named parameters are allowed
+        static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
+
+        if constexpr (p.has(sycl_kernel_invocation_type)) {
+            // compile time check: the value must have the correct type
+            static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(sycl_kernel_invocation_type))>, decltype(invocation_type_)>, "sycl_kernel_invocation_type must be convertible to a kernel_invocation_type!");
+            // set value
+            invocation_type_ = static_cast<decltype(invocation_type_)>(p(sycl_kernel_invocation_type));
+        }
+
         // TODO: additional parameter?!?!!!
         this->init(target);
     }
@@ -104,7 +118,7 @@ template <typename T>
     void init(target_platform target);
 
     /// The SYCL kernel invocation type for the svm kernel. Either nd_range or hierarchical.
-    kernel_invocation_type invocation_type_;
+    kernel_invocation_type invocation_type_{ kernel_invocation_type::automatic };
 };
 
 extern template class csvm<float>;

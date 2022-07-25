@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parameter_train params{ argc, argv };
-
+        // TODO: default_value
         // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
         if (params.backend != plssvm::backend_type::sycl && params.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
@@ -53,7 +53,9 @@ int main(int argc, char *argv[]) {
             // convert base params to correct type
             const auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
             // create SVM
-            const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);
+            const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params,
+                                                          plssvm::sycl_implementation_type = params.sycl_implementation_type,
+                                                          plssvm::sycl_kernel_invocation_type = params.sycl_kernel_invocation_type);
             // learn model
             const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
             // save model to file

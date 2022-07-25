@@ -37,9 +37,14 @@
 namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
 
 template <typename T>
+csvm<T>::csvm(target_platform target, kernel_invocation_type invocation_type, parameter<real_type> params) :
+    base_type{ params }, invocation_type_{ invocation_type } {
+    this->init(target);
+}
+
+template <typename T>
 csvm<T>::csvm(target_platform target, parameter<real_type> params) :
-    base_type{ params }, invocation_type_{ kernel_invocation_type::nd_range } {
-        // TODO: invocation type
+    base_type{ params }, invocation_type_{ kernel_invocation_type::automatic } {
     this->init(target);
 }
 
