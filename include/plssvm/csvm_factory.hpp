@@ -76,13 +76,6 @@ template <typename T, typename... Args>
 [[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, const kernel_type kernel, Args&&... args) {
     // check igor parameter
     igor::parser p{ args... };
-    // compile time check: only named parameter are permitted
-    static_assert(!p.has_unnamed_arguments(), "Can only use named parameter!");
-    // compile time check: each named parameter must only be passed once
-    static_assert(!p.has_duplicates(), "Can only use each named parameter once!");
-    // compile time check: only some named parameters are allowed
-    static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
-
 
     switch (backend) {
         case backend_type::automatic:
