@@ -82,7 +82,6 @@ template <typename T>
             invocation_type_ = static_cast<decltype(invocation_type_)>(p(sycl_kernel_invocation_type));
         }
 
-        // TODO: additional parameter?!?!!!
         this->init(target);
     }
 

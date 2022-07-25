@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parameter_train params{ argc, argv };
-        // TODO: default_value
+
         // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
         if (params.backend != plssvm::backend_type::sycl && params.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
