@@ -29,6 +29,7 @@ IGOR_MAKE_NAMED_ARGUMENT(coef0);
 IGOR_MAKE_NAMED_ARGUMENT(cost);
 IGOR_MAKE_NAMED_ARGUMENT(epsilon);
 IGOR_MAKE_NAMED_ARGUMENT(max_iter);
+IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 
 /**
  * @brief Base class for encapsulating all important C-SVM parameters.

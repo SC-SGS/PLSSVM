@@ -163,7 +163,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
     // compile time check: each named parameter must only be passed once
     static_assert(!p.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!p.has_other_than(gamma, degree, coef0, cost), "An illegal named parameter has been passed!");
+    static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type), "An illegal named parameter has been passed!");
 
     // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
     const auto print_warning = [kernel](const std::string_view param_name) {
