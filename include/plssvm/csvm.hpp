@@ -166,8 +166,10 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
     static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
 
     // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
-    const auto print_warning = [kernel](const std::string_view param_name) {
-        fmt::print(stderr, "{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_type_to_math_string(kernel));
+    const auto print_warning_if_not_default = [kernel](const auto val, const std::string_view param_name) {
+        if (!val.is_default()) {
+            fmt::print(stderr, "{} parameter provided, which is not used in the {} kernel ({})!\n", param_name, kernel, kernel_type_to_math_string(kernel));
+        }
     };
 
     // compile time/runtime check: the values must have the correct types
@@ -176,7 +178,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(gamma))>, decltype(params_.gamma)>, "gamma must be convertible to a real_type!");
         // runtime check: the value may only be used with a specific kernel type
         if (kernel == kernel_type::linear) {
-            print_warning("gamma");
+            print_warning_if_not_default(p(gamma), "gamma");
         }
         // set value
         params_.gamma = static_cast<decltype(params_.gamma)>(p(gamma));
@@ -186,7 +188,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(degree))>, decltype(params_.degree)>, "degree must be convertible to an int!");
         // runtime check: the value may only be used with a specific kernel type
         if (kernel == kernel_type::linear || kernel == kernel_type::rbf) {
-            print_warning("degree");
+            print_warning_if_not_default(p(degree), "degree");
         }
         // set value
         params_.degree = static_cast<decltype(params_.degree)>(p(degree));
@@ -196,7 +198,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
         static_assert(std::is_convertible_v<detail::remove_cvref_t<decltype(p(coef0))>, decltype(params_.coef0)>, "coef0 must be convertible to a real_type!");
         // runtime check: the value may only be used with a specific kernel type
         if (kernel == kernel_type::linear || kernel == kernel_type::rbf) {
-            print_warning("coef0");
+            print_warning_if_not_default(p(coef0), "coef0");
         }
         // set value
         params_.coef0 = static_cast<decltype(params_.coef0)>(p(coef0));
