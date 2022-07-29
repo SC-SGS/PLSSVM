@@ -13,10 +13,13 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
-#include <cstddef>      // std::size_t
-#include <map>          // std::map
-#include <tuple>        // std::forward_as_tuple, std::get
-#include <type_traits>  // std::underlying_type_t, std::is_enum_v
+#include <cstddef>        // std::size_t
+#include <map>            // std::map
+#include <set>            // std::set
+#include <tuple>          // std::forward_as_tuple, std::get
+#include <type_traits>    // std::underlying_type_t, std::is_enum_v
+#include <unordered_map>  // std::unordered_map
+#include <unordered_set>  // std::unordered_set
 
 namespace plssvm::detail {
 
@@ -56,8 +59,28 @@ template <typename Enum>
 
 template <typename Enum>
 [[nodiscard]] constexpr std::underlying_type_t<Enum> to_underlying(const default_value<Enum> &e) noexcept {
+    static_assert(std::is_enum_v<Enum>, "e must be an enumeration type!");
     return to_underlying(e.value());
 }
+
+
+namespace impl {
+
+template <typename Container, typename Pred>
+inline typename Container::size_type erase_if(Container &c, Pred pred) {
+    auto old_size = c.size();
+    for (auto i = c.begin(), last = c.end(); i != last;) {
+        if (pred(*i)) {
+            i = c.erase(i);
+        } else {
+            ++i;
+        }
+    }
+    return old_size - c.size();
+}
+
+}
+
 
 /**
  * @brief Erases all elements that satisfy the predicate @p pred from the container @p c.
@@ -71,22 +94,45 @@ template <typename Enum>
  * @param[in] pred the predicate used to select the elements which will be erased from the map
  * @return the number of erased elements
  */
-template <class Key, class T, class Compare, class Alloc, class Pred>
-inline typename std::map<Key, T, Compare, Alloc>::size_type erase_if(std::map<Key, T, Compare, Alloc> &c, Pred pred) {
-    auto old_size = c.size();
-    for (auto i = c.begin(), last = c.end(); i != last;) {
-        if (pred(*i)) {
-            i = c.erase(i);
-        } else {
-            ++i;
-        }
-    }
-    return old_size - c.size();
+template <typename Key, typename T, typename Compare, typename Allocator, typename Pred>
+inline typename std::map<Key, T, Compare, Allocator>::size_type erase_if(std::map<Key, T, Compare, Allocator> &c, Pred pred) {
+    return impl::erase_if(c, pred);
 }
 
-template <typename Key, typename T, typename Compare, typename Alloc>
-[[nodiscard]] inline bool contains_key(const std::map<Key, T, Compare, Alloc> &map, const Key &key) {
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator, typename Pred>
+inline typename std::unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type erase_if(std::unordered_map<Key, T, Hash, KeyEqual, Allocator> &c, Pred pred) {
+    return impl::erase_if(c, pred);
+}
+
+template <typename Key, typename Compare, typename Allocator, typename Pred>
+inline typename std::set<Key, Compare, Allocator>::size_type erase_if(std::set<Key, Compare, Allocator> &c, Pred pred) {
+    return impl::erase_if(c, pred);
+}
+
+template <typename Key, typename Hash, typename KeyEqual, typename Allocator, typename Pred>
+inline typename std::unordered_set<Key, Hash, KeyEqual, Allocator>::size_type erase_if(std::unordered_set<Key, Hash, KeyEqual, Allocator> &c, Pred pred) {
+    return impl::erase_if(c, pred);
+}
+
+
+template <typename Key, typename T, typename Compare, typename Allocator>
+[[nodiscard]] inline bool contains_key(const std::map<Key, T, Compare, Allocator> &map, const Key &key) {
     return map.count(key) > 0;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+[[nodiscard]] inline bool contains_key(const std::unordered_map<Key, T, Hash, KeyEqual, Allocator> &map, const Key &key) {
+    return map.count(key) > 0;
+}
+
+template <typename Key, typename Compare, typename Allocator>
+[[nodiscard]] inline bool contains_key(const std::set<Key, Compare, Allocator> &set, const Key &key) {
+    return set.count(key) > 0;
+}
+
+template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
+[[nodiscard]] inline bool contains_key(const std::unordered_set<Key, Hash, KeyEqual, Allocator> &set, const Key &key) {
+    return set.count(key) > 0;
 }
 
 }  // namespace plssvm::detail
