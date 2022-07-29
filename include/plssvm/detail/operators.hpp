@@ -69,7 +69,11 @@
     }                                                                                                 \
     template <typename T>                                                                             \
     [[nodiscard]] inline std::vector<T> operator Op(const T lhs, std::vector<T> rhs) {                \
-        return rhs Op##= lhs;                                                                         \
+        _Pragma("omp simd")                                                                           \
+        for (typename std::vector<T>::size_type i = 0; i < rhs.size(); ++i) {                         \
+            rhs[i] = lhs Op rhs[i];                                                                   \
+        }                                                                                             \
+        return rhs;                                                                                   \
     }
 // clang-format on
 
