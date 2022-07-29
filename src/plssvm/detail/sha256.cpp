@@ -17,7 +17,7 @@
 
 namespace plssvm::detail {
 
-std::string sha256::operator()(std::string input) {
+std::string sha256::operator()(std::string input) const {
     // Initialize hash values: (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
     std::array<std::uint32_t, 8> hash_values = { 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 };
 
@@ -105,7 +105,7 @@ std::string sha256::operator()(std::string input) {
     return fmt::format("{:02x}", fmt::join(digest, ""));
 }
 
-void sha256::pack32(const unsigned char *str, std::uint32_t &x) {
+void sha256::pack32(const unsigned char *str, std::uint32_t &x) const {
     x = static_cast<std::uint32_t>(str[3])
         | static_cast<std::uint32_t>(str[2] << 8)
         | static_cast<std::uint32_t>(str[1] << 16)
