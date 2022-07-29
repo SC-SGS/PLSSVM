@@ -12,8 +12,10 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+#include "plssvm/constants.hpp"
 
 #include "fmt/core.h"     // fmt::format
+#include "fmt/chrono.h"
 #include "fmt/ostream.h"
 
 #include <algorithm>  // std::all_of
@@ -72,8 +74,11 @@ template <typename real_type>
     // perform some sanity checks
     PLSSVM_ASSERT(!matrix.empty(), "Matrix is empty!");
     PLSSVM_ASSERT(num_points <= matrix.size(), "Num points to transform can not exceed matrix size!");
+#if defined(PLSSVM_ASSERT_ENABLED)
     const typename std::vector<real_type>::size_type num_features = matrix.front().size();
-    PLSSVM_ASSERT(std::all_of(matrix.begin(), matrix.end(), [=](const std::vector<real_type> &point) { return point.size() == num_features; }), "Feature sizes mismatch! All features should have size {}!", num_features);
+    const bool has_same_num_features = std::all_of(matrix.begin(), matrix.end(), [=](const std::vector<real_type> &point) { return point.size() == num_features; });
+    PLSSVM_ASSERT(has_same_num_features, "Feature sizes mismatch! All features should have size {}!", num_features);
+#endif
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
