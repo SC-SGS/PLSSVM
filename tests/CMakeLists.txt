@@ -94,9 +94,18 @@ set(PLSSVM_BASE_TEST_NAME Base_tests)
 
 # list all necessary sources
 set(PLSSVM_BASE_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/base_test.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm_test.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/parameter_test.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/base_test.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/csvm_test.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/parameter_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/execution_range.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/layout.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
 )
 
 # create test executable
@@ -123,4 +132,4 @@ endif()
 
 
 # add tests for the available backends
-add_subdirectory(backends)
+#add_subdirectory(backends)
