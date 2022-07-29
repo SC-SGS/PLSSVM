@@ -85,7 +85,7 @@ namespace plssvm::detail {
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
  */
-void replace_all(std::string &str, std::string_view what, std::string_view with);
+std::string &replace_all(std::string &str, std::string_view what, std::string_view with);
 
 /**
  * @brief Convert the string @p str to its all lower case representation.

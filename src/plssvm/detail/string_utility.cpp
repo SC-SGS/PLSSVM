@@ -47,10 +47,16 @@ std::string_view trim(const std::string_view str) noexcept {
     return trim_left(trim_right(str));
 }
 
-void replace_all(std::string &str, const std::string_view what, const std::string_view with) {
+std::string &replace_all(std::string &str, const std::string_view what, const std::string_view with) {
+    // prevent endless loop if the "what" string is empty -> nothing to do
+    if (what.empty()) {
+        return str;
+    }
+    // replace occurrences of "what" with "with"
     for (std::string::size_type pos = 0; std::string::npos != (pos = str.find(what.data(), pos, what.length())); pos += with.length()) {
         str.replace(pos, what.length(), with.data(), with.length());
     }
+    return str;
 }
 
 std::string &to_lower_case(std::string &str) {
@@ -77,6 +83,11 @@ std::string as_upper_case(const std::string_view str) {
 
 std::vector<std::string_view> split(const std::string_view str, const char delim) {
     std::vector<std::string_view> splitted;
+
+    // if the input str is empty, return an empty vector
+    if (str.empty()) {
+        return splitted;
+    }
 
     std::string_view::size_type pos = 0;
     std::string_view::size_type next = 0;
