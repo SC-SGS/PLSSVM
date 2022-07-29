@@ -41,10 +41,10 @@ namespace plssvm::detail {
  */
 template <typename T, typename Exception = std::runtime_error,
     std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<detail::remove_cvref_t<T>, std::string>, bool> = true>
-[[nodiscard]] inline T convert_to(std::string_view str) {
+[[nodiscard]] inline T convert_to(const std::string_view str) {
     if constexpr (std::is_same_v<detail::remove_cvref_t<T>, std::string>) {
         // convert string_view to string
-        return std::string{ trim_left(str) };
+        return std::string{ trim(str) };
     } else {
         // select conversion function depending on the provided type
         const auto convert_from_chars = [](const std::string_view sv, auto &val) {
@@ -58,11 +58,11 @@ template <typename T, typename Exception = std::runtime_error,
         };
 
         // remove leading whitespaces
-        str = trim_left(str);
+       const std::string_view trimmed_str = trim_left(str);
 
         // convert string to value fo type T
         T val;
-        auto res = convert_from_chars(str, val);
+        auto res = convert_from_chars(trimmed_str, val);
         if (res.ec != std::errc{}) {
             throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, plssvm::detail::arithmetic_type_name<T>()) };
         }
@@ -71,7 +71,7 @@ template <typename T, typename Exception = std::runtime_error,
 }
 
 /**
- * @brief Extract the first integer from the given string @p str and converts it to @p T.
+ * @brief Extract the first integer from the given string @p str and converts it to @p T ignoring a potential sign.
  * @tparam T the type to convert the first integer to
  * @param[in] str the string to check
  * @throws std::runtime_error if @p str doesn't contain an integer
@@ -84,7 +84,7 @@ template <typename T>
         const std::string_view::size_type m = str.find_first_not_of("0123456789", n);
         return convert_to<T>(str.substr(n, m != std::string_view::npos ? m - n : m));
     }
-    throw std::runtime_error{ fmt::format("String {} doesn't contain any integer!", str) };
+    throw std::runtime_error{ fmt::format("String \"{}\" doesn't contain any integer!", str) };
 }
 
 /**
@@ -97,6 +97,11 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::vector<T> split_as(const std::string_view str, const char delim = ' ') {
     std::vector<T> splitted;
+
+    // if the input str is empty, return an empty vector
+    if (str.empty()) {
+        return splitted;
+    }
 
     std::string_view::size_type pos = 0;
     std::string_view::size_type next = 0;
