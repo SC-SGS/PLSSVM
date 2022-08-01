@@ -22,6 +22,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 ## set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/layout.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp

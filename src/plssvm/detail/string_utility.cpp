@@ -82,21 +82,21 @@ std::string as_upper_case(const std::string_view str) {
 }
 
 std::vector<std::string_view> split(const std::string_view str, const char delim) {
-    std::vector<std::string_view> splitted;
+    std::vector<std::string_view> split_str;
 
     // if the input str is empty, return an empty vector
     if (str.empty()) {
-        return splitted;
+        return split_str;
     }
 
     std::string_view::size_type pos = 0;
     std::string_view::size_type next = 0;
     while (next != std::string_view::npos) {
         next = str.find_first_of(delim, pos);
-        splitted.emplace_back(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos));
+        split_str.emplace_back(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos));
         pos = next + 1;
     }
-    return splitted;
+    return split_str;
 }
 
 }  // namespace plssvm::detail

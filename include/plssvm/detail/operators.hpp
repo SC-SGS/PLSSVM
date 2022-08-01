@@ -9,6 +9,8 @@
  * @brief Defines (arithmetic) functions on [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) (and scalars).
  */
 
+#ifndef PLSSVM_DETAIL_OPERATORS_HPP_
+#define PLSSVM_DETAIL_OPERATORS_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
@@ -143,7 +145,8 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+:val)
+#pragma omp simd reduction(+ \
+                           : val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -183,3 +186,5 @@ template <typename T>
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
 
 }  // namespace plssvm::operators
+
+#endif  // PLSSVM_DETAIL_OPERATORS_HPP_

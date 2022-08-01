@@ -10,16 +10,20 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include "gtest/gtest.h"  // TEST, ASSERT_DEATH
+#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, ASSERT_DEATH
 
+// only test if assertions are enabled
 #if defined(PLSSVM_ASSERT_ENABLED)
 
-// check whether the PLSSVM_ASSERT works correctly
-TEST(BaseDeathTest, plssvm_assert) {
+TEST(PLSSVMAssert, assert_true) {
+    // must not trigger an assertion
     PLSSVM_ASSERT(true, "TRUE");
+}
 
-    // can't use a matcher due to the used emphasis and color specification in assertion message
-    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "");
+TEST(PLSSVMAssert, assert_false) {
+    // can't use a regex matcher due to the used emphasis and color specification in the assertion message
+    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::HasSubstr("FALSE"));
 }
 
 #endif

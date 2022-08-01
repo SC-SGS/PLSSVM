@@ -8,8 +8,8 @@
  * @brief Tests for the functions in the utility header.
  */
 
-#include "plssvm/default_value.hpp"   // plssvm::default_value
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::{always_false, remove_cvref_t, get, to_underlying, erase_if, contains_key}
+#include "plssvm/default_value.hpp"   // plssvm::default_value
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
@@ -18,27 +18,25 @@
 #include <type_traits>    // std::is_same_v
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
-#include <utility>        // std::pair
 
-
-TEST(Base_Detail, always_false) {
+TEST(Utility, always_false) {
     EXPECT_FALSE(plssvm::detail::always_false_v<void>);
     EXPECT_FALSE(plssvm::detail::always_false_v<int>);
     EXPECT_FALSE(plssvm::detail::always_false_v<double>);
 }
 
-TEST(Base_Detail, remove_cvref_t) {
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double&>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double&>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double&>>));
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double&>>));
+TEST(Utility, remove_cvref_t) {
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double &>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double &>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double &>>) );
+    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double &>>) );
 }
 
-TEST(Base_Detail, get) {
+TEST(Utility, get) {
     EXPECT_EQ(plssvm::detail::get<0>(0, 1, 2, 3, 4), 0);
     EXPECT_EQ(plssvm::detail::get<1>(0, 1.5, 2, 3, 4), 1.5);
     EXPECT_EQ(plssvm::detail::get<2>(0, 1, -2, 3, 4), -2);
@@ -46,29 +44,41 @@ TEST(Base_Detail, get) {
     EXPECT_EQ(plssvm::detail::get<4>(0, 1, 2, 3, "abc"), "abc");
 }
 
-TEST(Base_Detail, to_underlying) {
-    enum class int_enum { a, b, c = 10 };
+TEST(Utility, to_underlying_int) {
+    enum class int_enum { a,
+                          b,
+                          c = 10 };
 
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::a), 0);
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::b), 1);
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::c), 10);
+}
 
-    enum class char_enum { a = 'a', b = 'b', c = 'c' };
+TEST(Utility, to_underlying_char) {
+    enum class char_enum : char { a = 'a',
+                                  b = 'b',
+                                  c = 'c' };
 
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::a), 'a');
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::b), 'b');
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::c), 'c');
 }
 
-TEST(Base_Detail, to_underlying_default_value) {
-    enum class int_enum { a, b, c = 10 };
+TEST(Utility, to_underlying_default_value_int) {
+    enum class int_enum { a,
+                          b,
+                          c = 10 };
 
     plssvm::default_value<int_enum> int_default;
     EXPECT_EQ(plssvm::detail::to_underlying(int_default = int_enum::a), 0);
     EXPECT_EQ(plssvm::detail::to_underlying(int_default = int_enum::b), 1);
     EXPECT_EQ(plssvm::detail::to_underlying(int_default = int_enum::c), 10);
+}
 
-    enum class char_enum { a = 'a', b = 'b', c = 'c' };
+TEST(Utility, to_underlying_default_value_char) {
+    enum class char_enum : char { a = 'a',
+                                  b = 'b',
+                                  c = 'c' };
 
     plssvm::default_value<char_enum> char_default;
     EXPECT_EQ(plssvm::detail::to_underlying(char_default = char_enum::a), 'a');
@@ -76,70 +86,68 @@ TEST(Base_Detail, to_underlying_default_value) {
     EXPECT_EQ(plssvm::detail::to_underlying(char_default = char_enum::c), 'c');
 }
 
-TEST(Base_Detail, erase_if) {
-    // std::map
-    std::map<int, int> m = { { 0, 0 }, { 1, 1 } };
-    EXPECT_EQ(plssvm::detail::erase_if(m, [](const std::pair<int, int> p) { return p.second % 2 == 0; }), 1);
-    EXPECT_EQ(m.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(m, [](const std::pair<int, int> p) { return p.second % 2 == 0; }), 0);
-    EXPECT_EQ(m.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(m, [](const std::pair<int, int> p) { return p.second % 2 == 1; }), 1);
-    EXPECT_TRUE(m.empty());
+template <typename T>
+class UtilityMapContainer : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        // initialize map
+        map = { { 0, 0 }, { 1, 1 } };
+    }
 
-    // std::unordered_map
-    std::unordered_map<int, int> um = { { 0, 0 }, { 1, 1 } };
-    EXPECT_EQ(plssvm::detail::erase_if(um, [](const std::pair<int, int> p) { return p.second % 2 == 0; }), 1);
-    EXPECT_EQ(um.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(um, [](const std::pair<int, int> p) { return p.second % 2 == 0; }), 0);
-    EXPECT_EQ(um.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(um, [](const std::pair<int, int> p) { return p.second % 2 == 1; }), 1);
-    EXPECT_TRUE(um.empty());
+    using map_type = T;
+    map_type map;
+};
 
-    // std::set
-    std::set<int> s = { 0, 1 };
-    EXPECT_EQ(plssvm::detail::erase_if(s, [](const int k) { return k % 2 == 0; }), 1);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(s, [](const int k) { return k % 2 == 0; }), 0);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(s, [](const int k) { return k % 2 == 1; }), 1);
-    EXPECT_TRUE(s.empty());
+// the map container types to test
+using map_types = ::testing::Types<std::map<int, int>, std::unordered_map<int, int>>;
 
-    // std::unordered_set
-    std::unordered_set<int> us = { 0, 1 };
-    EXPECT_EQ(plssvm::detail::erase_if(us, [](const int k) { return k % 2 == 0; }), 1);
-    EXPECT_EQ(us.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(us, [](const int k) { return k % 2 == 0; }), 0);
-    EXPECT_EQ(us.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(us, [](const int k) { return k % 2 == 1; }), 1);
-    EXPECT_TRUE(us.empty());
+TYPED_TEST_SUITE(UtilityMapContainer, map_types);
+
+TYPED_TEST(UtilityMapContainer, erase_if) {
+    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type p) { return p.second % 2 == 0; }), 1);
+    EXPECT_EQ(this->map.size(), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type p) { return p.second % 2 == 0; }), 0);
+    EXPECT_EQ(this->map.size(), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type p) { return p.second % 2 == 1; }), 1);
+    EXPECT_TRUE(this->map.empty());
 }
 
-TEST(Base_Detail, contains_key) {
-    // std::map
-    std::map<int, int> m = { { 0, 0 }, { 1, 1 } };
-    EXPECT_TRUE(plssvm::detail::contains_key(m, 0));
-    EXPECT_TRUE(plssvm::detail::contains_key(m, 1));
-    EXPECT_FALSE(plssvm::detail::contains_key(m, 2));
-    EXPECT_FALSE(plssvm::detail::contains_key(m, -1));
+TYPED_TEST(UtilityMapContainer, contains_key) {
+    EXPECT_TRUE(plssvm::detail::contains_key(this->map, 0));
+    EXPECT_TRUE(plssvm::detail::contains_key(this->map, 1));
+    EXPECT_FALSE(plssvm::detail::contains_key(this->map, 2));
+    EXPECT_FALSE(plssvm::detail::contains_key(this->map, -1));
+}
 
-    // std::unordered_map
-    std::unordered_map<int, int> um = { { 0, 0 }, { 1, 1 } };
-    EXPECT_TRUE(plssvm::detail::contains_key(um, 0));
-    EXPECT_TRUE(plssvm::detail::contains_key(um, 1));
-    EXPECT_FALSE(plssvm::detail::contains_key(um, 2));
-    EXPECT_FALSE(plssvm::detail::contains_key(um, -1));
+template <typename T>
+class UtilitySetContainer : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        // initialize set
+        set = { 0, 1 };
+    }
 
-    // std::set
-    std::set<int> s = { 0, 1 };
-    EXPECT_TRUE(plssvm::detail::contains_key(s, 0));
-    EXPECT_TRUE(plssvm::detail::contains_key(s, 1));
-    EXPECT_FALSE(plssvm::detail::contains_key(s, 2));
-    EXPECT_FALSE(plssvm::detail::contains_key(s, -1));
+    using set_type = T;
+    set_type set;
+};
 
-    // std::unordered_set
-    std::unordered_set<int> us = { 0, 1 };
-    EXPECT_TRUE(plssvm::detail::contains_key(us, 0));
-    EXPECT_TRUE(plssvm::detail::contains_key(us, 1));
-    EXPECT_FALSE(plssvm::detail::contains_key(us, 2));
-    EXPECT_FALSE(plssvm::detail::contains_key(us, -1));
+// the set container types to test
+using set_types = ::testing::Types<std::set<int>, std::unordered_set<int>>;
+
+TYPED_TEST_SUITE(UtilitySetContainer, set_types);
+
+TYPED_TEST(UtilitySetContainer, erase_if) {
+    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type p) { return p % 2 == 0; }), 1);
+    EXPECT_EQ(this->set.size(), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type p) { return p % 2 == 0; }), 0);
+    EXPECT_EQ(this->set.size(), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type p) { return p % 2 == 1; }), 1);
+    EXPECT_TRUE(this->set.empty());
+}
+
+TYPED_TEST(UtilitySetContainer, contains_key) {
+    EXPECT_TRUE(plssvm::detail::contains_key(this->set, 0));
+    EXPECT_TRUE(plssvm::detail::contains_key(this->set, 1));
+    EXPECT_FALSE(plssvm::detail::contains_key(this->set, 2));
+    EXPECT_FALSE(plssvm::detail::contains_key(this->set, -1));
 }

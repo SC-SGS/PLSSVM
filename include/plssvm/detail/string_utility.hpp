@@ -9,6 +9,8 @@
  * @brief Implements utility functions for string manipulation and querying.
  */
 
+#ifndef PLSSVM_DETAIL_STRING_UTILITY_HPP_
+#define PLSSVM_DETAIL_STRING_UTILITY_HPP_
 #pragma once
 
 #include <string>       // std::string
@@ -126,3 +128,5 @@ std::string &to_upper_case(std::string &str);
 [[nodiscard]] std::vector<std::string_view> split(std::string_view str, char delim = ' ');
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_DETAIL_STRING_UTILITY_HPP_

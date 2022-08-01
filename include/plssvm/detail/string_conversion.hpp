@@ -9,20 +9,24 @@
  * @brief Implements a conversion function from a string to an arithmetic type.
  */
 
+#ifndef PLSSVM_DETAIL_STRING_CONVERSION_HPP_
+#define PLSSVM_DETAIL_STRING_CONVERSION_HPP_
 #pragma once
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::trim_left
-#include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left}
+#include "plssvm/detail/utility.hpp"               // plssvm::detail::remove_cvref_t
 
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format
 
 #include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error
+#include <string>        // std::string
 #include <string_view>   // std::string_view
 #include <system_error>  // std:errc
-#include <type_traits>   // std::is_floating_point_v, std::is_integral_v
+#include <type_traits>   // std::enable_if_t, std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
+#include <vector>        // std::vector
 
 namespace plssvm::detail {
 
@@ -30,7 +34,7 @@ namespace plssvm::detail {
  * @brief Converts the string @p str to a value of type @p T.
  * @details If @p T is an integral type [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) is used,
  *          if @p T is a floating point type [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used,
- *          if @p T is a `std::string` the normal `std::string`constructor is used,
+ *          if @p T is a `std::string` the normal `std::string` constructor is used,
  *          and if @p T is neither of the three, an exception is thrown.
  * @tparam T the type to convert the value of @p str to, must be an arithmetic type or a `std::string`
  * @tparam Exception the exception type to throw in case that @p str can't be converted to a value of @p T
@@ -39,10 +43,9 @@ namespace plssvm::detail {
  * @throws Exception if @p str can't be converted to a value of type @p T
  * @return the value of type @p T denoted by @p str (`[[nodiscard]]`)
  */
-template <typename T, typename Exception = std::runtime_error,
-    std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<detail::remove_cvref_t<T>, std::string>, bool> = true>
+template <typename T, typename Exception = std::runtime_error, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<remove_cvref_t<T>, std::string>, bool> = true>
 [[nodiscard]] inline T convert_to(const std::string_view str) {
-    if constexpr (std::is_same_v<detail::remove_cvref_t<T>, std::string>) {
+    if constexpr (std::is_same_v<remove_cvref_t<T>, std::string>) {
         // convert string_view to string
         return std::string{ trim(str) };
     } else {
@@ -58,7 +61,7 @@ template <typename T, typename Exception = std::runtime_error,
         };
 
         // remove leading whitespaces
-       const std::string_view trimmed_str = trim_left(str);
+        const std::string_view trimmed_str = trim_left(str);
 
         // convert string to value fo type T
         T val;
@@ -75,7 +78,7 @@ template <typename T, typename Exception = std::runtime_error,
  * @tparam T the type to convert the first integer to
  * @param[in] str the string to check
  * @throws std::runtime_error if @p str doesn't contain an integer
- * @return the converted integer of type @p T (`[[nodiscard]]`)
+ * @return the converted first integer of type @p T (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T extract_first_integer_from_string(std::string_view str) {
@@ -96,21 +99,23 @@ template <typename T>
  */
 template <typename T>
 [[nodiscard]] inline std::vector<T> split_as(const std::string_view str, const char delim = ' ') {
-    std::vector<T> splitted;
+    std::vector<T> split_str;
 
     // if the input str is empty, return an empty vector
     if (str.empty()) {
-        return splitted;
+        return split_str;
     }
 
     std::string_view::size_type pos = 0;
     std::string_view::size_type next = 0;
     while (next != std::string_view::npos) {
         next = str.find_first_of(delim, pos);
-        splitted.emplace_back(convert_to<T>(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos)));
+        split_str.emplace_back(convert_to<T>(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos)));
         pos = next + 1;
     }
-    return splitted;
+    return split_str;
 }
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_DETAIL_STRING_CONVERSION_HPP_

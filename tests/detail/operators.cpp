@@ -14,292 +14,311 @@
 
 #include <vector>  // std::vector
 
+// make all operator overloads available in all tests
+using namespace plssvm::operators;
+
+template <typename T>
+class Operators : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        a = { 1, 2, 3, 4, 5 };
+        b = { 1.5, 2.5, 3.5, 4.5, 5.5 };
+        scalar = 1.5;
+    }
+
+    using real_type = T;
+
+    std::vector<real_type> a{};
+    std::vector<real_type> b{};
+    std::vector<real_type> empty{};
+    real_type scalar{};
+};
+
+template <typename T>
+class OperatorsDeathTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        a = { 1, 2, 3, 4 };
+        b = { 5, 6 };
+    }
+
+    using real_type = T;
+
+    std::vector<real_type> a{};
+    std::vector<real_type> b{};
+};
+
 // the floating point types to test
 using floating_point_types = ::testing::Types<float, double>;
 
 // testsuite for "normal" tests
-template <typename T>
-class BaseOperators : public ::testing::Test {};
-TYPED_TEST_SUITE(BaseOperators, floating_point_types);
-
+TYPED_TEST_SUITE(Operators, floating_point_types);
 // testsuite for death tests
-template <typename T>
-class BaseOperatorsDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(BaseOperatorsDeathTest, floating_point_types);
+TYPED_TEST_SUITE(OperatorsDeathTest, floating_point_types);
 
-TYPED_TEST(BaseOperators, operator_add) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    std::vector<real_type> a = { 0, 1, 2, 3, 4 };
-    std::vector<real_type> b = { 5, 6, 7, 8, 9 };
-    const real_type scalar = 42.5;
-
-    // addition using two vectors
-    std::vector<real_type> c = { 5, 7, 9, 11, 13 };
-    EXPECT_EQ(a + b, c);
-    EXPECT_EQ(b + a, c);
-    EXPECT_EQ(b += a, c);
-
-    // addition using a vector and a scalar
-    c = { 42.5, 43.5, 44.5, 45.5, 46.5 };
-    EXPECT_EQ(a + scalar, c);
-    EXPECT_EQ(scalar + a, c);
-    EXPECT_EQ(a += scalar, c);
-
-    // add empty vectors
-    const std::vector<real_type> empty_vec;
-    a.clear();
-    ASSERT_EQ(a.size(), 0);
-
-    EXPECT_EQ(a + a, empty_vec);
-    EXPECT_EQ(a += a, empty_vec);
-    EXPECT_EQ(a + scalar, empty_vec);
-    EXPECT_EQ(scalar + a, empty_vec);
-    EXPECT_EQ(a += scalar, empty_vec);
+TYPED_TEST(Operators, operator_add_binary) {
+    // binary addition using two vectors
+    const std::vector<typename TestFixture::real_type> c = { 2.5, 4.5, 6.5, 8.5, 10.5 };
+    EXPECT_EQ(this->a + this->b, c);
+    EXPECT_EQ(this->b + this->a, c);
+}
+TYPED_TEST(Operators, operator_add_compound) {
+    // compound addition using two vectors
+    const std::vector<typename TestFixture::real_type> c = { 2.5, 4.5, 6.5, 8.5, 10.5 };
+    EXPECT_EQ(this->a += this->b, c);
+}
+TYPED_TEST(Operators, operator_add_scalar_binary) {
+    // binary addition using a vector and a scalar
+    const std::vector<typename TestFixture::real_type> c = { 2.5, 3.5, 4.5, 5.5, 6.5 };
+    EXPECT_EQ(this->a + this->scalar, c);
+    EXPECT_EQ(this->scalar + this->a, c);
+}
+TYPED_TEST(Operators, operator_add_scalar_compound) {
+    // compound addition using a vector and a scalar
+    const std::vector<typename TestFixture::real_type> c = { 2.5, 3.5, 4.5, 5.5, 6.5 };
+    EXPECT_EQ(this->a += this->scalar, c);
+}
+TYPED_TEST(Operators, operator_add_binary_empty) {
+    // binary addition using two empty vectors
+    EXPECT_EQ(this->empty + this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_add_compound_empty) {
+    // compound addition using two empty vectors
+    EXPECT_EQ(this->empty += this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_add_scalar_binary_empty) {
+    // binary addition using an empty vector and a scalar
+    EXPECT_EQ(this->empty + this->scalar, this->empty);
+    EXPECT_EQ(this->scalar + this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_add_scalar_compound_empty) {
+    // compound addition using an empty vector and a scalar
+    EXPECT_EQ(this->empty += this->scalar, this->empty);
+}
+TYPED_TEST(OperatorsDeathTest, operator_add_binary) {
+    // try to binary add vectors with different sizes
+    EXPECT_DEATH(auto ret = this->a + this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(auto ret = this->b + this->a, "Sizes mismatch!: 2 != 4");
+}
+TYPED_TEST(OperatorsDeathTest, operator_add_compound) {
+    // try to compound add vectors with different sizes
+    EXPECT_DEATH(this->a += this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(this->b += this->a, "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(BaseOperatorsDeathTest, operator_add) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    [[maybe_unused]] std::vector<real_type> ret;
-
-    // try to add vectors with different sizes
-    std::vector<real_type> a = { 0, 1, 2, 3 };
-    std::vector<real_type> b = { 4, 5 };
-    EXPECT_DEATH(ret = a + b, "");
-    EXPECT_DEATH(ret = b + a, "");
-    EXPECT_DEATH(a += b, "");
-    EXPECT_DEATH(b += a, "");
+TYPED_TEST(Operators, operator_subtract_binary) {
+    // binary subtraction using two vectors
+    {
+        const std::vector<typename TestFixture::real_type> c = { -0.5, -0.5, -0.5, -0.5, -0.5 };
+        EXPECT_EQ(this->a - this->b, c);
+    }
+    {
+        const std::vector<typename TestFixture::real_type> c = { 0.5, 0.5, 0.5, 0.5, 0.5 };
+        EXPECT_EQ(this->b - this->a, c);
+    }
+}
+TYPED_TEST(Operators, operator_subtract_compound) {
+    // compound subtraction using two vectors
+    const std::vector<typename TestFixture::real_type> c = { -0.5, -0.5, -0.5, -0.5, -0.5 };
+    EXPECT_EQ(this->a -= this->b, c);
+}
+TYPED_TEST(Operators, operator_subtract_scalar_binary) {
+    // binary subtraction using a vector and a scalar
+    {
+        const std::vector<typename TestFixture::real_type> c = { -0.5, 0.5, 1.5, 2.5, 3.5 };
+        EXPECT_EQ(this->a - this->scalar, c);
+    }
+    {
+        const std::vector<typename TestFixture::real_type> c = { 0.5, -0.5, -1.5, -2.5, -3.5 };
+        EXPECT_EQ(this->scalar - this->a, c);
+    }
+}
+TYPED_TEST(Operators, operator_subtract_scalar_compound) {
+    // compound subtraction using a vector and a scalar
+    const std::vector<typename TestFixture::real_type> c = { -0.5, 0.5, 1.5, 2.5, 3.5 };
+    EXPECT_EQ(this->a -= this->scalar, c);
+}
+TYPED_TEST(Operators, operator_subtract_binary_empty) {
+    // binary subtraction using two empty vectors
+    EXPECT_EQ(this->empty - this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_subtract_compound_empty) {
+    // compound subtraction using two empty vectors
+    EXPECT_EQ(this->empty -= this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_subtract_scalar_binary_empty) {
+    // binary subtraction using an empty vector and a scalar
+    EXPECT_EQ(this->empty - this->scalar, this->empty);
+    EXPECT_EQ(this->scalar - this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_subtract_scalar_compound_empty) {
+    // compound subtraction using an empty vector and a scalar
+    EXPECT_EQ(this->empty -= this->scalar, this->empty);
+}
+TYPED_TEST(OperatorsDeathTest, operator_subtract_binary) {
+    // try to binary subtract vectors with different sizes
+    EXPECT_DEATH(auto ret = this->a - this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(auto ret = this->b - this->a, "Sizes mismatch!: 2 != 4");
+}
+TYPED_TEST(OperatorsDeathTest, operator_subtract_compound) {
+    // try to compound subtract vectors with different sizes
+    EXPECT_DEATH(this->a -= this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(this->b -= this->a, "Sizes mismatch!: 2 != 4");
 }
 
-
-TYPED_TEST(BaseOperators, operator_subtract) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    std::vector<real_type> a = { 0, 1, 2, 3, 4 };
-    std::vector<real_type> b = { 5, 6, 7, 8, 9 };
-    const real_type scalar = 1.5;
-
-    // subtraction using two vectors
-    std::vector<real_type> c = { -5, -5, -5, -5, -5 };
-    EXPECT_EQ(a - b, c);
-    c = { 5, 5, 5, 5, 5 };
-    EXPECT_EQ(b - a, c);
-    EXPECT_EQ(b -= a, c);
-
-    // subtraction using a vector and a scalar
-    c = { -1.5, -0.5, 0.5, 1.5, 2.5 };
-    EXPECT_EQ(a - scalar, c);
-    c = { 1.5, 0.5, -0.5, -1.5, -2.5 };
-    EXPECT_EQ(scalar - a, c);
-    c = { -1.5, -0.5, 0.5, 1.5, 2.5 };
-    EXPECT_EQ(a -= scalar, c);
-
-    // subtract empty vectors
-    const std::vector<real_type> empty_vec;
-    a.clear();
-    ASSERT_EQ(a.size(), 0);
-
-    EXPECT_EQ(a - a, empty_vec);
-    EXPECT_EQ(a -= a, empty_vec);
-    EXPECT_EQ(a - scalar, empty_vec);
-    EXPECT_EQ(scalar - a, empty_vec);
-    EXPECT_EQ(a -= scalar, empty_vec);
+TYPED_TEST(Operators, operator_multiply_binary) {
+    // binary multiplication using two vectors
+    const std::vector<typename TestFixture::real_type> c = { 1.5, 5, 10.5, 18, 27.5 };
+    EXPECT_EQ(this->a * this->b, c);
+    EXPECT_EQ(this->b * this->a, c);
+}
+TYPED_TEST(Operators, operator_multiply_compound) {
+    // compound multiplication using two vectors
+    const std::vector<typename TestFixture::real_type> c = { 1.5, 5, 10.5, 18, 27.5 };
+    EXPECT_EQ(this->a *= this->b, c);
+}
+TYPED_TEST(Operators, operator_multiply_scalar_binary) {
+    // binary multiplication using a vector and a scalar
+    const std::vector<typename TestFixture::real_type> c = { 1.5, 3, 4.5, 6, 7.5 };
+    EXPECT_EQ(this->a * this->scalar, c);
+    EXPECT_EQ(this->scalar * this->a, c);
+}
+TYPED_TEST(Operators, operator_multiply_scalar_compound) {
+    // compound multiplication using a vector and a scalar
+    const std::vector<typename TestFixture::real_type> c = { 1.5, 3, 4.5, 6, 7.5 };
+    EXPECT_EQ(this->a *= this->scalar, c);
+}
+TYPED_TEST(Operators, operator_multiply_binary_empty) {
+    // binary multiplication using two empty vectors
+    EXPECT_EQ(this->empty * this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_multiply_compound_empty) {
+    // compound multiplication using two empty vectors
+    EXPECT_EQ(this->empty *= this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_multiply_scalar_binary_empty) {
+    // binary multiplication using an empty vector and a scalar
+    EXPECT_EQ(this->empty * this->scalar, this->empty);
+    EXPECT_EQ(this->scalar * this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_multiply_scalar_compound_empty) {
+    // compound multiplication using an empty vector and a scalar
+    EXPECT_EQ(this->empty *= this->scalar, this->empty);
+}
+TYPED_TEST(OperatorsDeathTest, operator_multiply_binary) {
+    // try to binary multiply vectors with different sizes
+    EXPECT_DEATH(auto ret = this->a * this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(auto ret = this->b * this->a, "Sizes mismatch!: 2 != 4");
+}
+TYPED_TEST(OperatorsDeathTest, operator_multiply_compound) {
+    // try to compound multiply vectors with different sizes
+    EXPECT_DEATH(this->a *= this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(this->b *= this->a, "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(BaseOperatorsDeathTest, operator_subtract) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    [[maybe_unused]] std::vector<real_type> ret;
-
-    // try to subtract vectors with different sizes
-    std::vector<real_type> a = { 0, 1, 2, 3 };
-    std::vector<real_type> b = { 4, 5 };
-    EXPECT_DEATH(ret = a - b, "");
-    EXPECT_DEATH(ret = b - a, "");
-    EXPECT_DEATH(a -= b, "");
-    EXPECT_DEATH(b -= a, "");
+TYPED_TEST(Operators, operator_divide_binary) {
+    // binary division using two vectors
+    {
+        const std::vector<typename TestFixture::real_type> c = { 1.0 / 1.5, 2.0 / 2.5, 3.0 / 3.5, 4.0 / 4.5, 5.0 / 5.5 };
+        EXPECT_EQ(this->a / this->b, c);
+    }
+    {
+        const std::vector<typename TestFixture::real_type> c = { 1.5, 2.5 / 2.0, 3.5 / 3.0, 4.5 / 4.0, 5.5 / 5.0 };
+        EXPECT_EQ(this->b / this->a, c);
+    }
+}
+TYPED_TEST(Operators, operator_divide_compound) {
+    // compound division using two vectors
+    const std::vector<typename TestFixture::real_type> c = { 1.0 / 1.5, 2.0 / 2.5, 3.0 / 3.5, 4.0 / 4.5, 5.0 / 5.5 };
+    EXPECT_EQ(this->a /= this->b, c);
+}
+TYPED_TEST(Operators, operator_divide_scalar_binary) {
+    // binary division using a vector and a scalar
+    {
+        const std::vector<typename TestFixture::real_type> c = { 1.0 / 1.5, 2.0 / 1.5, 2.0, 4.0 / 1.5, 5.0 / 1.5 };
+        EXPECT_EQ(this->a / this->scalar, c);
+    }
+    {
+        const std::vector<typename TestFixture::real_type> c = { 1.5, 1.5/2.0, 0.5, 1.5/4.0, 1.5/5.0 };
+        EXPECT_EQ(this->scalar / this->a, c);
+    }
+}
+TYPED_TEST(Operators, operator_divide_scalar_compound) {
+    // compound division using a vector and a scalar
+    const std::vector<typename TestFixture::real_type> c = { 1.0 / 1.5, 2.0 / 1.5, 2.0, 4.0 / 1.5, 5.0 / 1.5 };
+    EXPECT_EQ(this->a /= this->scalar, c);
+}
+TYPED_TEST(Operators, operator_divide_binary_empty) {
+    // binary division using two empty vectors
+    EXPECT_EQ(this->empty / this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_divide_compound_empty) {
+    // compound division using two empty vectors
+    EXPECT_EQ(this->empty /= this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_divide_scalar_binary_empty) {
+    // binary division using an empty vector and a scalar
+    EXPECT_EQ(this->empty / this->scalar, this->empty);
+    EXPECT_EQ(this->scalar / this->empty, this->empty);
+}
+TYPED_TEST(Operators, operator_divide_scalar_compound_empty) {
+    // compound division using an empty vector and a scalar
+    EXPECT_EQ(this->empty /= this->scalar, this->empty);
+}
+TYPED_TEST(OperatorsDeathTest, operator_divide_binary) {
+    // try to binary division vectors with different sizes
+    EXPECT_DEATH(auto ret = this->a / this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(auto ret = this->b / this->a, "Sizes mismatch!: 2 != 4");
+}
+TYPED_TEST(OperatorsDeathTest, operator_divide_compound) {
+    // try to compound division vectors with different sizes
+    EXPECT_DEATH(this->a /= this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(this->b /= this->a, "Sizes mismatch!: 2 != 4");
 }
 
-
-TYPED_TEST(BaseOperators, operator_multiply) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    std::vector<real_type> a = { 0, 1, 2, 3, 4 };
-    std::vector<real_type> b = { 5, 6, 7, 8, 9 };
-    const real_type scalar = 1.5;
-
-    // multiplication using two vectors
-    std::vector<real_type> c = { 0, 6, 14, 24, 36 };
-    EXPECT_EQ(a * b, c);
-    EXPECT_EQ(b * a, c);
-    EXPECT_EQ(b *= a, c);
-
-    // multiplication using a vector and a scalar
-    c = { 0, 1.5, 3, 4.5, 6 };
-    EXPECT_EQ(a * scalar, c);
-    EXPECT_EQ(scalar * a, c);
-    EXPECT_EQ(a *= scalar, c);
-
-    // multiply empty vectors
-    const std::vector<real_type> empty_vec;
-    a.clear();
-    ASSERT_EQ(a.size(), 0);
-
-    EXPECT_EQ(a * a, empty_vec);
-    EXPECT_EQ(a *= a, empty_vec);
-    EXPECT_EQ(a * scalar, empty_vec);
-    EXPECT_EQ(scalar * a, empty_vec);
-    EXPECT_EQ(a *= scalar, empty_vec);
+TYPED_TEST(Operators, operator_dot_function) {
+    // calculate dot product using the dot function
+    EXPECT_EQ(dot(this->a, this->b), 62.5);
+    EXPECT_EQ(dot(this->b, this->a), 62.5);
 }
-
-TYPED_TEST(BaseOperatorsDeathTest, operator_multiply) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    [[maybe_unused]] std::vector<real_type> ret;
-
-    // try to multiply vectors with different sizes
-    std::vector<real_type> a = { 0, 1, 2, 3 };
-    std::vector<real_type> b = { 4, 5 };
-    EXPECT_DEATH(ret = a * b, "");
-    EXPECT_DEATH(ret = b * a, "");
-    EXPECT_DEATH(a *= b, "");
-    EXPECT_DEATH(b *= a, "");
+TYPED_TEST(Operators, operator_dot_transposed) {
+    // calculate dot product using the transposed overload function
+    EXPECT_EQ(transposed{ this->a } * this->b, 62.5);
+    EXPECT_EQ(transposed{ this->b } * this->a, 62.5);
 }
-
-
-TYPED_TEST(BaseOperators, operator_divide) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    std::vector<real_type> a = { 1, 1, 2, 3, 4 };
-    std::vector<real_type> b = { 5, 6, 7, 8, 9 };
-    const real_type scalar = 1.5;
-
-    // division using two vectors
-    std::vector<real_type> c = { 1. / 5., 1. / 6., 2. / 7., 3. / 8., 4. / 9. };
-    EXPECT_EQ(a / b, c);
-    c = { 5, 6, 3.5, 8. / 3., 2.25 };
-    EXPECT_EQ(b / a, c);
-    EXPECT_EQ(b /= a, c);
-
-    // division using a vector and a scalar
-    c = { 1. / 1.5, 1. / 1.5, 2. / 1.5, 2, 4. / 1.5 };
-    EXPECT_EQ(a / scalar, c);
-    c = { 1.5, 1.5, 0.75, 0.5, 0.375 };
-    EXPECT_EQ(scalar / a, c);
-    c = { 1. / 1.5, 1. / 1.5, 2. / 1.5, 2, 4. / 1.5 };
-    EXPECT_EQ(a /= scalar, c);
-
-    // divide empty vectors
-    const std::vector<real_type> empty_vec;
-    a.clear();
-    ASSERT_EQ(a.size(), 0);
-
-    EXPECT_EQ(a / a, empty_vec);
-    EXPECT_EQ(a /= a, empty_vec);
-    EXPECT_EQ(a / scalar, empty_vec);
-    EXPECT_EQ(scalar / a, empty_vec);
-    EXPECT_EQ(a /= scalar, empty_vec);
-}
-
-TYPED_TEST(BaseOperatorsDeathTest, operator_divide) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    [[maybe_unused]] std::vector<real_type> ret;
-
-    // try to divide vectors with different sizes
-    std::vector<real_type> a = { 0, 1, 2, 3 };
-    std::vector<real_type> b = { 4, 5 };
-    EXPECT_DEATH(ret = a / b, "");
-    EXPECT_DEATH(ret = b / a, "");
-    EXPECT_DEATH(a /= b, "");
-    EXPECT_DEATH(b /= a, "");
-}
-
-
-TYPED_TEST(BaseOperators, operator_dot) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    const std::vector<real_type> a = { 0, 1, 2, 3, 4 };
-    const std::vector<real_type> b = { 5, 6, 7, 8, 9 };
-
-    // calculate dot product
-    EXPECT_EQ(dot(a, b), 80);
-    EXPECT_EQ(dot(b, a), 80);
-    EXPECT_EQ(transposed{ a } * b, 80);
-    EXPECT_EQ(transposed{ b } * a, 80);
-}
-
-TYPED_TEST(BaseOperatorsDeathTest, operator_dot) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    [[maybe_unused]] real_type ret;
-
+TYPED_TEST(OperatorsDeathTest, operator_dot_function) {
     // try to calculate the dot product with vectors of different sizes
-    std::vector<real_type> a = { 0, 1, 2, 3 };
-    const std::vector<real_type> b = { 4, 5 };
-    EXPECT_DEATH(ret = dot(a, b), "");
-    EXPECT_DEATH(ret = dot(b, a), "");
-    EXPECT_DEATH(ret = transposed{ a } * b, "");
-    EXPECT_DEATH(ret = transposed{ b } * a, "");
+    EXPECT_DEATH([[maybe_unused]] auto ret = dot(this->a, this->b), "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH([[maybe_unused]] auto ret = dot(this->b, this->a), "Sizes mismatch!: 2 != 4");
+}
+TYPED_TEST(OperatorsDeathTest, operator_dot_transposed) {
+    // try to calculate the dot product with vectors of different sizes
+    EXPECT_DEATH([[maybe_unused]] auto ret = transposed{ this->a } * this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH([[maybe_unused]] auto ret = transposed{ this->b } * this->a, "Sizes mismatch!: 2 != 4");
 }
 
-
-TYPED_TEST(BaseOperators, operator_sum) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
+TYPED_TEST(Operators, operator_sum) {
     // sum vector elements
-    const std::vector<real_type> a = { 0, 1, 2, 3, 4 };
-    EXPECT_EQ(sum(a), 10);
-
-    const std::vector<real_type> b = { -1.5, 4, -5.5, -3.5, 1.5 };
-    EXPECT_EQ(sum(b), -5);
+    EXPECT_EQ(sum(this->a), 15);
+    EXPECT_EQ(sum(this->b), 17.5);
 }
 
-
-TYPED_TEST(BaseOperators, operator_squared_euclidean_dist) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    const std::vector<real_type> a = { 0, 1, 2, 3, 4 };
-    const std::vector<real_type> b = { 5, 6, 7, 8, 9 };
-
+TYPED_TEST(Operators, operator_squared_euclidean_dist) {
     // calculate the squared euclidean distance between two vectors
-    EXPECT_EQ(squared_euclidean_dist(a, b), 125);
+    EXPECT_EQ(squared_euclidean_dist(this->a, this->b), 1.25);
 }
-
-TYPED_TEST(BaseOperatorsDeathTest, operator_squared_euclidean_dist) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    [[maybe_unused]] real_type ret;
-
+TYPED_TEST(OperatorsDeathTest, operator_squared_euclidean_dist) {
     // try to calculate the squared euclidean distance between two vectors with different distance
-    std::vector<real_type> a = { 0, 1, 2, 3 };
-    const std::vector<real_type> b = { 4, 5 };
-    EXPECT_DEATH(ret = squared_euclidean_dist(a, b), "");
-    EXPECT_DEATH(ret = squared_euclidean_dist(b, a), "");
+    EXPECT_DEATH([[maybe_unused]] auto ret = squared_euclidean_dist(this->a, this->b), "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH([[maybe_unused]] auto ret = squared_euclidean_dist(this->b, this->a), "Sizes mismatch!: 2 != 4");
 }
 
-
-TYPED_TEST(BaseOperators, operator_sign) {
-    using real_type = TypeParam;
-    using namespace plssvm::operators;
-
-    EXPECT_EQ(sign(real_type{ -2.4 }), -1);
-    EXPECT_EQ(sign(real_type{ -4 }), -1);
-    EXPECT_EQ(sign(real_type{ 0 }), -1);
-    EXPECT_EQ(sign(real_type{ 1.6 }), 1);
-    EXPECT_EQ(sign(real_type{ 3 }), 1);
+TYPED_TEST(Operators, operator_sign_positive) {
+    EXPECT_EQ(sign(typename TestFixture::real_type{ 1.6 }), 1);
+    EXPECT_EQ(sign(typename TestFixture::real_type{ 3 }), 1);
+}
+TYPED_TEST(Operators, operator_sign_negative) {
+    EXPECT_EQ(sign(typename TestFixture::real_type{ -2.4 }), -1);
+    EXPECT_EQ(sign(typename TestFixture::real_type{ -4 }), -1);
+    EXPECT_EQ(sign(typename TestFixture::real_type{ 0 }), -1);
 }

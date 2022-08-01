@@ -1,10 +1,10 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
 
 #include "plssvm/detail/execution_range.hpp"
 
@@ -13,7 +13,6 @@
 #include "fmt/format.h"  // fmt::format, fmt::join
 
 #include <algorithm>         // std::copy
-#include <array>             // std::array
 #include <cstddef>           // std::size_t
 #include <initializer_list>  // std::initializer_list
 #include <ostream>           // std::ostream

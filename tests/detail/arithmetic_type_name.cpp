@@ -5,14 +5,14 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for the implementation converting arithmetic types to their value.
+ * @brief Tests for the implementation converting arithmetic types to their name as string.
  */
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ
 
-TEST(Base_detail, arithmetic_type_name) {
+TEST(ArithmeticTypeName, type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<bool>(), "bool");
 
     // character types
@@ -39,7 +39,7 @@ TEST(Base_detail, arithmetic_type_name) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<long double>(), "long double");
 }
 
-TEST(Base_detail, arithmetic_type_name_const) {
+TEST(ArithmeticTypeName, const_type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const bool>(), "const bool");
 
     // character types
@@ -66,7 +66,7 @@ TEST(Base_detail, arithmetic_type_name_const) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const long double>(), "const long double");
 }
 
-TEST(Base_detail, arithmetic_type_name_volatile) {
+TEST(ArithmeticTypeName, volatile_type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<volatile bool>(), "volatile bool");
 
     // character types
@@ -93,9 +93,9 @@ TEST(Base_detail, arithmetic_type_name_volatile) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<volatile long double>(), "volatile long double");
 }
 
-TEST(Base_detail, arithmetic_type_name_const_volatile) {
+TEST(ArithmeticTypeName, const_volatile_type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const volatile bool>(), "const volatile bool");
-    
+
     // character types
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const volatile char>(), "const volatile char");
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const volatile signed char>(), "const volatile signed char");
