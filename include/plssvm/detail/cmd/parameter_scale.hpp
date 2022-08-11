@@ -9,6 +9,8 @@
  * @brief Implements a class encapsulating all necessary parameters for scaling a data set possibly provided through command line arguments.
  */
 
+#ifndef PLSSVM_DETAIL_CMD_PARAMETER_SCALE_HPP_
+#define PLSSVM_DETAIL_CMD_PARAMETER_SCALE_HPP_
 #pragma once
 
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
@@ -22,37 +24,34 @@ namespace plssvm::detail::cmd {
  * @brief Class for encapsulating all necessary parameters for scaling a data set possibly provided through command line arguments.
  */
 class parameter_scale {
- public:
-   /**
-    * @brief Default construct all training parameters.
-    */
-   parameter_scale() = default;
+  public:
+    /**
+     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the scale parameters accordingly.
+     * @param[in] argc the number of passed command line arguments
+     * @param[in] argv the command line arguments
+     */
+    parameter_scale(int argc, char **argv);
 
-   /**
-    * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the scale parameters accordingly.
-    * @param[in] argc the number of passed command line arguments
-    * @param[in] argv the command line arguments
-    */
-   parameter_scale(int argc, char **argv);
+    /// The lower bound of the scaled data values.
+    double lower{ -1 };
+    /// The upper bound of the scaled data values.
+    double upper{ +1 };
+    /// The file type (currently either LIBSVM or ARFF) to which the scaled data should be written to.
+    file_format_type format{ file_format_type::libsvm };
 
-   /// The lower bound of the scaled data values.
-   double lower{ -1 };
-   /// The upper bound of the scaled data values.
-   double upper{ +1 };
-   /// The file type (either LIBSVM or ARFF) to which the scaled data should be written to.
-   file_format_type format{ file_format_type::libsvm };
+    /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
+    bool strings_as_labels{ false };
+    /// `true` if `float` should be used as real type instead of the default type `double`.
+    bool float_as_real_type{ false };
 
-   /// `true`if `std::string` should be used as label type instead of the default type `ìnt`.
-   bool strings_as_labels{ false };
-   /// `true`if `float` should be used as real type instead of the default type `double`.
-   bool float_as_real_type{ false };
-
-   /// The name of the data/test file to parse.
-   std::string input_filename{};
-   /// The name of the model file to write the learned support vectors to/to parse the saved model from.
-   std::string scaled_filename{};
-   std::string save_filename{};
-   std::string restore_filename{};
+    /// The name of the data file to scale.
+    std::string input_filename{};
+    /// The name of the scaled data file to save.
+    std::string scaled_filename{};
+    /// The name of the file where the scaling factors are saved.
+    std::string save_filename{};
+    /// The name of the file from which the scaling factors should be restored.
+    std::string restore_filename{};
 };
 
 /**
@@ -63,4 +62,6 @@ class parameter_scale {
  */
 std::ostream &operator<<(std::ostream &out, const parameter_scale &params);
 
-}  // namespace plssvm
+}  // namespace plssvm::detail::cmd
+
+#endif  // PLSSVM_DETAIL_CMD_PARAMETER_SCALE_HPP_

@@ -70,6 +70,17 @@ struct parameter {
 extern template struct parameter<float>;
 extern template struct parameter<double>;
 
+
+// comparison operations
+template <typename T>
+constexpr bool operator==(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+    return lhs.kernel == rhs.kernel && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
+}
+template <typename T>
+constexpr bool operator!=(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+    return !(lhs == rhs);
+}
+
 /**
  * @brief Output all parameters encapsulated by @p params to the given output-stream @p out.
  * @tparam T the type of the data

@@ -9,6 +9,8 @@
  * @brief Implements a class encapsulating all necessary parameters for predicting using the C-SVM possibly provided through command line arguments.
  */
 
+#ifndef PLSSVM_DETAIL_CMD_PARAMETER_PREDICT_HPP_
+#define PLSSVM_DETAIL_CMD_PARAMETER_PREDICT_HPP_
 #pragma once
 
 #include "plssvm/backend_types.hpp"                      // plssvm::backend_type
@@ -25,41 +27,36 @@ using namespace ::plssvm::sycl_generic;
 }
 
 /**
- * @brief Class for encapsulating all necessary parameters for predicting possibly provided through command line arguments.
+ * @brief Class for encapsulating all necessary parameters for prediction normally provided through command line arguments.
  */
 class parameter_predict {
- public:
-   /**
-    * @brief Default construct all parameters for prediction.
-    */
-   parameter_predict() = default;
+  public:
+    /**
+     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
+     * @param[in] argc the number of passed command line arguments
+     * @param[in] argv the command line arguments
+     */
+    parameter_predict(int argc, char **argv);
 
-   /**
-    * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly. Parse the given model and test file.
-    * @param[in] argc the number of passed command line arguments
-    * @param[in] argv the command line arguments
-    */
-   parameter_predict(int argc, char **argv);
+    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, CUDA, HIP, OpenCL, or SYCL.
+    backend_type backend{ backend_type::automatic };
+    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
+    target_platform target{ target_platform::automatic };
 
-   /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
-   backend_type backend = backend_type::automatic;
-   /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
-   target_platform target = target_platform::automatic;
+    /// The SYCL implementation to use with --backend=sycl.
+    sycl::implementation_type sycl_implementation_type{ sycl::implementation_type::automatic };
 
-   /// The SYCL implementation to use with --backend=sycl.
-   sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
+    /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
+    bool strings_as_labels{ false };
+    /// `true` if `float` should be used as real type instead of the default type `double`.
+    bool float_as_real_type{ false };
 
-   /// `true`if `std::string` should be used as label type instead of the default type `ìnt`.
-   bool strings_as_labels{ false };
-   /// `true`if `float` should be used as real type instead of the default type `double`.
-   bool float_as_real_type{ false };
-
-   /// The name of the data/test file to parse.
-   std::string input_filename{};
-   /// The name of the model file to write the learned support vectors to/to parse the saved model from.
-   std::string model_filename{};
-   /// The name of the file to write the prediction to.
-   std::string predict_filename{};
+    /// The name of the data file to predict.
+    std::string input_filename{};
+    /// The name of the model file containing the support vectors used for prediction.
+    std::string model_filename{};
+    /// The name of the file to write the predicted labels to.
+    std::string predict_filename{};
 };
 
 /**
@@ -70,4 +67,6 @@ class parameter_predict {
  */
 std::ostream &operator<<(std::ostream &out, const parameter_predict &params);
 
-}  // namespace plssvm
+}  // namespace plssvm::detail::cmd
+
+#endif  // PLSSVM_DETAIL_CMD_PARAMETER_PREDICT_HPP_

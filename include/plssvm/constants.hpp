@@ -9,11 +9,14 @@
  * @brief Global type definitions and compile-time constants.
  */
 
+#ifndef PLSSVM_CONSTANTS_HPP_
+#define PLSSVM_CONSTANTS_HPP_
 #pragma once
 
 namespace plssvm {
 
-inline bool verbose = true;
+constexpr bool verbose_default = true;
+inline bool verbose = verbose_default;
 
 /// Integer type used inside kernels.
 using kernel_index_type = int;
@@ -45,3 +48,5 @@ static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than
 static_assert(OPENMP_BLOCK_SIZE > 0, "OPENMP_BLOCK_SIZE must be greater than 0!");
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_CONSTANTS_HPP_
