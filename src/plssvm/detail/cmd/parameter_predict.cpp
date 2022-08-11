@@ -13,7 +13,7 @@
 #include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
-#include "plssvm/version/version.hpp"                    // plssvm::version::{name, version}, plssvm::version::detail::{target_platforms, print_git_info, copyright_notice}
+#include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -82,15 +82,7 @@ parameter_predict::parameter_predict(int argc, char **argv) {
 
     // print version info
     if (result.count("version")) {
-        fmt::print("plssvm-predict v{} ", version::version);
-        version::detail::print_git_info();
-        fmt::print("\n\n{}\n", version::name);
-        fmt::print("  PLSSVM_TARGET_PLATFORMS: {}\n", version::detail::target_platforms);
-        fmt::print("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
-#if defined(PLSSVM_HAS_SYCL_BACKEND)
-        fmt::print("  available SYCL implementations: {}\n", fmt::join(sycl::list_available_sycl_implementations(), ", "));
-#endif
-        fmt::print("\n{}\n", version::detail::copyright_notice);
+        fmt::print("{}", version::detail::get_version_info("plssvm-predict"));
         std::exit(EXIT_SUCCESS);
     }
 

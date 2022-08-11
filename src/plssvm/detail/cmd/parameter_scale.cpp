@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"        // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
-#include "plssvm/version/version.hpp"  // plssvm::version::{name, version}, plssvm::version::detail::{target_platforms, print_git_info, copyright_notice}
+#include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -77,11 +77,7 @@ parameter_scale::parameter_scale(int argc, char **argv) {
 
     // print version info
     if (result.count("version")) {
-        fmt::print("plssvm-train v{} ", version::version);
-        version::detail::print_git_info();
-        fmt::print("\n\n{}\n", version::name);
-        fmt::print("  PLSSVM_TARGET_PLATFORMS: {}\n", version::detail::target_platforms);
-        fmt::print("\n{}\n", version::detail::copyright_notice);
+        fmt::print("{}", version::detail::get_version_info("plssvm-scale", false));
         std::exit(EXIT_SUCCESS);
     }
 
