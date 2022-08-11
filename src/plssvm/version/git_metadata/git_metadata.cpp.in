@@ -8,8 +8,7 @@
 
 #include "plssvm/version/git_metadata/git_metadata.hpp"
 
-#include <string_view>
-
+#include <string_view>  // std::string_view
 
 namespace plssvm::version::git_metadata {
 
