@@ -46,4 +46,4 @@ std::string_view remote_url() {
     return "@GIT_REMOTE_URL@";
 }
 
-}
+}  // namespace plssvm::version::git_metadata
