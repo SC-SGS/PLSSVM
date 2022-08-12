@@ -16,7 +16,7 @@
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::ExitedWithCode
+                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
 #include <string>  // std::string
 #include <tuple>   // std::tuple
@@ -147,25 +147,27 @@ INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleRestoreFilename, ::testin
 
 class ParameterScaleUseStringsAsLabels : public ParameterScale, public ::testing::WithParamInterface<bool> {};
 TEST_P(ParameterScaleUseStringsAsLabels, parsing) {
+    const bool value = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-scale --use_strings_as_labels={} data.libsvm", GetParam()));
+    this->CreateCMDArgs(fmt::format("./plssvm-scale --use_strings_as_labels={} data.libsvm", value));
     // create parameter object
     plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.strings_as_labels, GetParam());
+    EXPECT_EQ(params.strings_as_labels, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseStringsAsLabels, ::testing::Values(true, false));
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseStringsAsLabels, ::testing::Bool());
 
 class ParameterScaleUseFloatAsRealType : public ParameterScale, public ::testing::WithParamInterface<bool> {};
 TEST_P(ParameterScaleUseFloatAsRealType, parsing) {
+    const bool value = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-scale --use_float_as_real_type={} data.libsvm", GetParam()));
+    this->CreateCMDArgs(fmt::format("./plssvm-scale --use_float_as_real_type={} data.libsvm", value));
     // create parameter object
     plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.float_as_real_type, GetParam());
+    EXPECT_EQ(params.float_as_real_type, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseFloatAsRealType, ::testing::Values(true, false));
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseFloatAsRealType, ::testing::Bool());
 
 class ParameterScaleQuiet : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterScaleQuiet, parsing) {

@@ -16,7 +16,7 @@
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::ExitedWithCode
+                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
 #include <string>  // std::string
 #include <tuple>   // std::tuple
@@ -125,10 +125,11 @@ INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictTargetPlatform, ::tes
 
 class ParameterPredictSYCLImplementation : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterPredictSYCLImplementation, parsing) {
+    const std::string &value = GetParam();
     // convert string to sycl::implementation_type
-    const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl_generic::implementation_type>(GetParam());
+    const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl_generic::implementation_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-predict --sycl_implementation_type={} data.libsvm data.libsvm.model", GetParam()));
+    this->CreateCMDArgs(fmt::format("./plssvm-predict --sycl_implementation_type={} data.libsvm data.libsvm.model", value));
     // create parameter object
     plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
     // test for correctness
@@ -140,25 +141,27 @@ INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictSYCLImplementation, :
 
 class ParameterPredictUseStringsAsLabels : public ParameterPredict, public ::testing::WithParamInterface<bool> {};
 TEST_P(ParameterPredictUseStringsAsLabels, parsing) {
+    const bool value = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-predict --use_strings_as_labels={} data.libsvm data.libsvm.model", GetParam()));
+    this->CreateCMDArgs(fmt::format("./plssvm-predict --use_strings_as_labels={} data.libsvm data.libsvm.model", value));
     // create parameter object
     plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.strings_as_labels, GetParam());
+    EXPECT_EQ(params.strings_as_labels, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseStringsAsLabels, ::testing::Values(true, false));
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseStringsAsLabels, ::testing::Bool());
 
 class ParameterPredictUseFloatAsRealType : public ParameterPredict, public ::testing::WithParamInterface<bool> {};
 TEST_P(ParameterPredictUseFloatAsRealType, parsing) {
+    const bool value = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-predict --use_float_as_real_type={} data.libsvm data.libsvm.model", GetParam()));
+    this->CreateCMDArgs(fmt::format("./plssvm-predict --use_float_as_real_type={} data.libsvm data.libsvm.model", value));
     // create parameter object
     plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.float_as_real_type, GetParam());
+    EXPECT_EQ(params.float_as_real_type, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseFloatAsRealType, ::testing::Values(true, false));
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseFloatAsRealType, ::testing::Bool());
 
 class ParameterPredictQuiet : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterPredictQuiet, parsing) {
