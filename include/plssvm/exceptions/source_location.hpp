@@ -9,6 +9,8 @@
  * @brief Implements a custom [`std::source_location`](https://en.cppreference.com/w/cpp/utility/source_location) implementation for C++17.
  */
 
+#ifndef PLSSVM_EXCEPTIONS_SOURCE_LOCATION_HPP_
+#define PLSSVM_EXCEPTIONS_SOURCE_LOCATION_HPP_
 #pragma once
 
 #include <cstdint>      // std::uint_least32_t
@@ -76,3 +78,5 @@ class source_location {
 };
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_EXCEPTIONS_SOURCE_LOCATION_HPP_
