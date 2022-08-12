@@ -129,6 +129,12 @@ gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOUR
 # add test for help messages
 add_test(NAME ParameterTrain/plssvm-train_help COMMAND plssvm-train --help)
 add_test(NAME ParameterPredict/plssvm-predict_help COMMAND plssvm-predict --help)
+add_test(NAME ParameterScale/plssvm-scale_help COMMAND plssvm-scale --help)
+
+# add test for version messages
+add_test(NAME ParameterTrain/plssvm-train_version COMMAND plssvm-train --version)
+add_test(NAME ParameterPredict/plssvm-predict_version COMMAND plssvm-predict --version)
+add_test(NAME ParameterScale/plssvm-scale_version COMMAND plssvm-scale --version)
 
 
 # add test as coverage dependency
