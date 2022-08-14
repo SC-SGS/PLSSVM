@@ -9,6 +9,8 @@
  * @brief Defines all possible backends. Can also include backends not available on the current target platform.
  */
 
+#ifndef PLSSVM_BACKEND_TYPES_HPP_
+#define PLSSVM_BACKEND_TYPES_HPP_
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
@@ -64,3 +66,5 @@ std::ostream &operator<<(std::ostream &out, backend_type backend);
 std::istream &operator>>(std::istream &in, backend_type &backend);
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_BACKEND_TYPES_HPP_
