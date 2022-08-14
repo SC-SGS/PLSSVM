@@ -574,7 +574,7 @@ data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_typ
 
 template <typename T, typename U>
 auto data_set<T, U>::label_mapper::get_mapped_value_by_label(const label_type &label) const -> const real_type & {
-    if (!detail::contains_key(label_to_mapped_, label)) {
+    if (!detail::contains(label_to_mapped_, label)) {
         throw exception{ fmt::format("Label {} unknown in this label mapping!", label) };
     }
     return label_to_mapped_.at(label);
@@ -582,7 +582,7 @@ auto data_set<T, U>::label_mapper::get_mapped_value_by_label(const label_type &l
 
 template <typename T, typename U>
 auto data_set<T, U>::label_mapper::get_label_by_mapped_value(const real_type &mapped_value) const -> const label_type & {
-    if (!detail::contains_key(mapped_to_label_, mapped_value)) {
+    if (!detail::contains(mapped_to_label_, mapped_value)) {
         throw exception{ fmt::format("Mapped value {} unknown in this label mapping!", mapped_value) };
     }
     return mapped_to_label_.at(mapped_value);

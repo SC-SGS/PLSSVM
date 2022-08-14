@@ -112,11 +112,11 @@ TYPED_TEST(UtilityMapContainer, erase_if) {
     EXPECT_TRUE(this->map.empty());
 }
 
-TYPED_TEST(UtilityMapContainer, contains_key) {
-    EXPECT_TRUE(plssvm::detail::contains_key(this->map, 0));
-    EXPECT_TRUE(plssvm::detail::contains_key(this->map, 1));
-    EXPECT_FALSE(plssvm::detail::contains_key(this->map, 2));
-    EXPECT_FALSE(plssvm::detail::contains_key(this->map, -1));
+TYPED_TEST(UtilityMapContainer, contains) {
+    EXPECT_TRUE(plssvm::detail::contains(this->map, 0));
+    EXPECT_TRUE(plssvm::detail::contains(this->map, 1));
+    EXPECT_FALSE(plssvm::detail::contains(this->map, 2));
+    EXPECT_FALSE(plssvm::detail::contains(this->map, -1));
 }
 
 template <typename T>
@@ -145,9 +145,43 @@ TYPED_TEST(UtilitySetContainer, erase_if) {
     EXPECT_TRUE(this->set.empty());
 }
 
-TYPED_TEST(UtilitySetContainer, contains_key) {
-    EXPECT_TRUE(plssvm::detail::contains_key(this->set, 0));
-    EXPECT_TRUE(plssvm::detail::contains_key(this->set, 1));
-    EXPECT_FALSE(plssvm::detail::contains_key(this->set, 2));
-    EXPECT_FALSE(plssvm::detail::contains_key(this->set, -1));
+TYPED_TEST(UtilitySetContainer, contains) {
+    EXPECT_TRUE(plssvm::detail::contains(this->set, 0));
+    EXPECT_TRUE(plssvm::detail::contains(this->set, 1));
+    EXPECT_FALSE(plssvm::detail::contains(this->set, 2));
+    EXPECT_FALSE(plssvm::detail::contains(this->set, -1));
+}
+
+
+template <typename T>
+class UtilityVectorContainer : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        // initialize vector
+        vec = { 0, 1 };
+    }
+
+    using vector_type = T;
+    vector_type vec;
+};
+
+// the vector container types to test
+using vector_types = ::testing::Types<std::vector<int>>;
+
+TYPED_TEST_SUITE(UtilityVectorContainer, vector_types);
+
+TYPED_TEST(UtilityVectorContainer, erase_if) {
+    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type p) { return p % 2 == 0; }), 1);
+    EXPECT_EQ(this->vec.size(), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type p) { return p % 2 == 0; }), 0);
+    EXPECT_EQ(this->vec.size(), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type p) { return p % 2 == 1; }), 1);
+    EXPECT_TRUE(this->vec.empty());
+}
+
+TYPED_TEST(UtilityVectorContainer, contains) {
+    EXPECT_TRUE(plssvm::detail::contains(this->vec, 0));
+    EXPECT_TRUE(plssvm::detail::contains(this->vec, 1));
+    EXPECT_FALSE(plssvm::detail::contains(this->vec, 2));
+    EXPECT_FALSE(plssvm::detail::contains(this->vec, -1));
 }

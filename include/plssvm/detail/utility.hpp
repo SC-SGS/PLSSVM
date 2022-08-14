@@ -15,13 +15,16 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
+#include <algorithm>      // std::remove_if
 #include <cstddef>        // std::size_t
+#include <iterator>       // std::distance
 #include <map>            // std::map
 #include <set>            // std::set
 #include <tuple>          // std::forward_as_tuple, std::get
 #include <type_traits>    // std::remove_cv_t, std::remove_reference_t, std::underlying_type_t, std::is_enum_v
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
+#include <vector>         // std::vector
 
 namespace plssvm::detail {
 
@@ -156,6 +159,23 @@ inline typename std::unordered_set<Key, Hash, KeyEqual, Allocator>::size_type er
 }
 
 /**
+ * @brief Erases all elements that satisfy the predicate @p pred from the [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) @p vec.
+ * @tparam T the value type of the vector
+ * @tparam Allocator the vector's allocator type
+ * @tparam Pred the type of the predicate used to erase unwanted elements from the vector
+ * @param[in, out] vec the vector to erase the elements from
+ * @param[in] pred the predicate used to select the elements which will be erased from the vector
+ * @return the number of erased elements
+ */
+template <typename T, typename Allocator, typename Pred>
+inline typename std::vector<T, Allocator>::size_type erase_if(std::vector<T, Allocator> &vec, Pred pred) {
+    auto it = std::remove_if(vec.begin(), vec.end(), pred);
+    auto r = std::distance(it, vec.end());
+    vec.erase(it, vec.end());
+    return r;
+}
+
+/**
  * @brief Check whether the [`std::map`](https://en.cppreference.com/w/cpp/container/map) @p map contains the key @p key.
  * @tparam Key the type of the map's key
  * @tparam T the map's value type
@@ -166,7 +186,7 @@ inline typename std::unordered_set<Key, Hash, KeyEqual, Allocator>::size_type er
  * @return `true` if the @p key exists in the @p map, otherwise `false` (`[[nodiscard]]`)
  */
 template <typename Key, typename T, typename Compare, typename Allocator>
-[[nodiscard]] inline bool contains_key(const std::map<Key, T, Compare, Allocator> &map, const Key &key) {
+[[nodiscard]] inline bool contains(const std::map<Key, T, Compare, Allocator> &map, const Key &key) {
     return map.count(key) > 0;
 }
 
@@ -182,7 +202,7 @@ template <typename Key, typename T, typename Compare, typename Allocator>
  * @return `true` if the @p key exists in the @p map, otherwise `false` (`[[nodiscard]]`)
  */
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-[[nodiscard]] inline bool contains_key(const std::unordered_map<Key, T, Hash, KeyEqual, Allocator> &map, const Key &key) {
+[[nodiscard]] inline bool contains(const std::unordered_map<Key, T, Hash, KeyEqual, Allocator> &map, const Key &key) {
     return map.count(key) > 0;
 }
 
@@ -196,7 +216,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
  * @return `true` if the @p key exists in the @p set, otherwise `false` (`[[nodiscard]]`)
  */
 template <typename Key, typename Compare, typename Allocator>
-[[nodiscard]] inline bool contains_key(const std::set<Key, Compare, Allocator> &set, const Key &key) {
+[[nodiscard]] inline bool contains(const std::set<Key, Compare, Allocator> &set, const Key &key) {
     return set.count(key) > 0;
 }
 
@@ -211,8 +231,21 @@ template <typename Key, typename Compare, typename Allocator>
  * @return `true` if the @p key exists in the @p set, otherwise `false` (`[[nodiscard]]`)
  */
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-[[nodiscard]] inline bool contains_key(const std::unordered_set<Key, Hash, KeyEqual, Allocator> &set, const Key &key) {
+[[nodiscard]] inline bool contains(const std::unordered_set<Key, Hash, KeyEqual, Allocator> &set, const Key &key) {
     return set.count(key) > 0;
+}
+
+/**
+ * @brief Check whether the [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) @p vec contains the value @p val.
+ * @tparam T the value type of the vector
+ * @tparam Allocator the vector's allocator type
+ * @param[in] vec the vector which may contain the @p val
+ * @param[in] val the value to check
+ * @return `true` if the @p val exists in the @p vec, otherwise `false` (`[[nodiscard]]`)
+ */
+template <typename T, typename Allocator>
+[[nodiscard]] inline bool contains(const std::vector<T, Allocator> &vec, const T val) {
+    return std::find(vec.cbegin(), vec.cend(), val) != vec.cend();
 }
 
 }  // namespace plssvm::detail
