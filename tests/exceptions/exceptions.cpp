@@ -49,7 +49,7 @@ TYPED_TEST(Exceptions, exception_source_location) {
 
     EXPECT_EQ(e.loc().file_name(), __FILE__);
     EXPECT_THAT(e.loc().function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(e.loc().line(), 27);   // attention: hardcoded line!
+    EXPECT_EQ(e.loc().line(), 28);   // attention: hardcoded line!
     EXPECT_EQ(e.loc().column(), 0);  // attention: always 0!
 }
 
@@ -68,7 +68,7 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     regex_patterns.emplace_back(fmt::format("{} thrown:", util::exception_type_name<exception_type>()));
     regex_patterns.emplace_back("  in file      " __FILE__);
     regex_patterns.emplace_back("  in function  .*dummy.*");
-    regex_patterns.emplace_back("  @ line       27");
+    regex_patterns.emplace_back("  @ line       28");
 
     // number of lines and what message and regex matchers must be equal
     ASSERT_EQ(what_lines.size(), regex_patterns.size());
