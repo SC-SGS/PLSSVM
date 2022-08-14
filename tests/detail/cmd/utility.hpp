@@ -75,36 +75,6 @@ class ParameterBase : public ::testing::Test {
     std::streambuf *sbuf_{ nullptr };
 };
 
-/*
- * Convert the parameter to a std::string using a std::ostringstream.
- */
-template <typename T>
-inline std::string convert_to_string(const T &param) {
-    std::ostringstream os;
-    os << param;
-    // test if output was successful
-    [&]() {
-        // need immediate invoked lambda because of void return in ASSERT_FALSE
-        ASSERT_FALSE(os.fail());
-    }();
-    return os.str();
-}
-/*
- * Convert the std::string to a value of type T using a std::istringstream.
- */
-template <typename T>
-inline T convert_from_string(const std::string &str) {
-    std::istringstream is{ str };
-    T param{};
-    is >> param;
-    // test if input was successful
-    [&]() {
-        // need immediate invoked lambda because of void return in ASSERT_FALSE
-        ASSERT_FALSE(is.fail());
-    }();
-    return param;
-}
-
 }  // namespace util
 
 #endif  // PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_

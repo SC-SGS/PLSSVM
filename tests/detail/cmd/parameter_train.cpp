@@ -11,7 +11,8 @@
 #include "plssvm/detail/cmd/parameter_train.hpp"
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
-#include "utility.hpp"  // util::{ParameterBase, convert_to_string, convert_from_string}
+#include "../../utility.hpp"  // util::{convert_to_string, convert_from_string}
+#include "utility.hpp"        // util::ParameterBase
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr

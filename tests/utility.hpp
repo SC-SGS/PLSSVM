@@ -201,6 +201,39 @@ inline void gtest_expect_correct_csvm_factory(const plssvm::parameter<T> &params
     EXPECT_NE(res, nullptr);
 }
 
+
+/*
+ * Convert the parameter to a std::string using a std::ostringstream.
+ */
+template <typename T>
+inline std::string convert_to_string(const T &param) {
+    std::ostringstream os;
+    os << param;
+    // test if output was successful
+    [&]() {
+        // need immediate invoked lambda because of void return in ASSERT_FALSE
+        ASSERT_FALSE(os.fail());
+    }();
+    return os.str();
+}
+/*
+ * Convert the std::string to a value of type T using a std::istringstream.
+ */
+template <typename T>
+inline T convert_from_string(const std::string &str) {
+    std::istringstream is{ str };
+    T param{};
+    is >> param;
+    // test if input was successful
+    [&]() {
+        // need immediate invoked lambda because of void return in ASSERT_FALSE
+        ASSERT_FALSE(is.fail());
+    }();
+    return param;
+}
+
+
+
 /**
  * @brief Defines a macro like
  *        <a href="https://chromium.googlesource.com/external/github.com/google/googletest/+/HEAD/googletest/docs/advanced.md">googletest</a>'s
