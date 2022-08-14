@@ -9,6 +9,8 @@
  * @brief Implements custom exception classes derived from [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error) including source location information.
  */
 
+#ifndef PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
+#define PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
 #pragma once
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
@@ -40,14 +42,16 @@ class exception : public std::runtime_error {
     [[nodiscard]] const source_location &loc() const noexcept;
 
     /**
-     * @brief Returns a sting containing the exception's `what()` message, the name of the thrown exception class and information about the call
+     * @brief Returns a sting containing the exception's `what()` message, the name of the thrown exception class, and information about the call
      *        side where the exception has been thrown.
-     * @return the exception's `what()` message including source location information
+     * @return the exception's `what()` message including source location information (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string what_with_loc() const;
 
   private:
+    /// The name of the thrown exception class.
     const std::string_view class_name_;
+    /// The call side source location information.
     source_location loc_;
 };
 
@@ -131,3 +135,5 @@ class gpu_device_ptr_exception : public exception {
 };
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
