@@ -13,6 +13,8 @@
 #define PLSSVM_BACKEND_TYPES_HPP_
 #pragma once
 
+#include "plssvm/target_platforms.hpp"  // plssvm::list_available_target_platforms
+
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector
 
@@ -45,9 +47,12 @@ enum class backend_type {
 
 /**
  * @brief Returns the default backend used given the specified target platforms during the CMake configuration.
- * @return the default backend (`[[nodiscard]]`)
+ * @param[in] available_backends list of backends, if no backends are provided, queries all available backends
+ * @param[in] available_target_platforms list of target platforms, if no target platforms are provided, queries all available target platforms
+ * @return the default backend given the available backends and target platforms (`[[nodiscard]]`)
  */
-[[nodiscard]] backend_type determine_default_backend();
+[[nodiscard]] backend_type determine_default_backend(const std::vector<backend_type> &available_backends = list_available_backends(),
+                                                     const std::vector<target_platform> &available_target_platforms = list_available_target_platforms());
 
 /**
  * @brief Output the @p backend to the given output-stream @p out.

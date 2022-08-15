@@ -13,6 +13,9 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
 #include "plssvm/target_platforms.hpp"       // plssvm::list_available_target_platforms
 
+#include "fmt/format.h"   // fmt::format, fmt::join
+#include "fmt/ostream.h"  // be able to format types with an operator<< overload
+
 #include <algorithm>  // std::find
 #include <array>      // std::array
 #include <ios>        // std::ios::failbit
@@ -44,12 +47,7 @@ std::vector<backend_type> list_available_backends() {
     return available_backends;
 }
 
-// TODO: available_* as parameter with default values?
-backend_type determine_default_backend() {
-    // determine available backends and target platforms
-    const std::vector<backend_type> available_backends = list_available_backends();
-    const std::vector<target_platform> available_target_platforms = list_available_target_platforms();
-
+backend_type determine_default_backend(const std::vector<backend_type> &available_backends, const std::vector<target_platform> &available_target_platforms) {
     // the decision order based on empiric findings
     using decision_order_type = std::pair<target_platform, std::vector<backend_type>>;
     std::array<decision_order_type, 4> decision_order = {
@@ -69,7 +67,9 @@ backend_type determine_default_backend() {
             }
         }
     }
-    throw unsupported_backend_exception{ "Unreachable: one target platform and backend combination must exist!" };
+    throw unsupported_backend_exception{ fmt::format("Error: unsupported backend and target platform combination: [{}]x[{}]!",
+                                                     fmt::join(available_backends, ", "),
+                                                     fmt::join(available_target_platforms, ", ")) };
 }
 
 std::ostream &operator<<(std::ostream &out, const backend_type backend) {
