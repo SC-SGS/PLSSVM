@@ -13,13 +13,13 @@
 #include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::format, fmt::join
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdio>      // stderr
 #include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>   // std::exception
 #include <filesystem>  // std::filesystem::path
+#include <iostream>    // std::cout, std::cerr, std::clog, std::endl
 
 namespace plssvm::detail::cmd {
 
@@ -58,26 +58,27 @@ parameter_scale::parameter_scale(int argc, char **argv) {
         options.parse_positional({ "input", "scaled" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        fmt::print("{}\n{}\n", e.what(), options.help());
+        std::cerr << e.what() << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        fmt::print(stderr, "Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " "));
-        fmt::print("{}", options.help());
+        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
     // print help message and exit
     if (result.count("help")) {
-        fmt::print("{}", options.help());
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
     // print version info
     if (result.count("version")) {
-        fmt::print("{}", version::detail::get_version_info("plssvm-scale", false));
+        std::cout << version::detail::get_version_info("plssvm-scale", false) << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
@@ -89,8 +90,8 @@ parameter_scale::parameter_scale(int argc, char **argv) {
 
     // lower must be strictly less than upper!
     if (lower >= upper) {
-        fmt::print(stderr, "Error invalid scaling range [lower, upper] with [{}, {}]!\n", lower, upper);
-        fmt::print("{}", options.help());
+        std::cerr << fmt::format("Error invalid scaling range [lower, upper] with [{}, {}]!", lower, upper) << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
@@ -108,8 +109,8 @@ parameter_scale::parameter_scale(int argc, char **argv) {
 
     // parse input data filename
     if (!result.count("input")) {
-        fmt::print(stderr, "Error missing input file!\n");
-        fmt::print("{}", options.help());
+        std::cerr << "Error missing input file!" << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
     input_filename = result["input"].as<decltype(input_filename)>();
@@ -124,8 +125,8 @@ parameter_scale::parameter_scale(int argc, char **argv) {
 
     // can only use one of save_filename or restore_filename
     if (result.count("save_filename") && result.count("restore_filename")) {
-        fmt::print(stderr, "Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!\n");
-        fmt::print("{}", options.help());
+        std::cerr << "Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!" << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 

@@ -16,13 +16,13 @@
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::format, fmt::join
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdio>      // stderr
 #include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>   // std::exception
 #include <filesystem>  // std::filesystem::path
+#include <iostream>    // std::cout, std::cerr, std::endl
 
 namespace plssvm::detail::cmd {
 
@@ -62,27 +62,27 @@ parameter_predict::parameter_predict(int argc, char **argv) {
         options.parse_positional({ "test", "model", "output" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        fmt::print(stderr, "{}\n", e.what());
-        fmt::print("{}\n", options.help());
+        std::cerr << e.what() << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        fmt::print(stderr, "Only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " "));
-        fmt::print("{}", options.help());
+        std::cerr << fmt::format("Only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
     // print help message and exit
     if (result.count("help")) {
-        fmt::print("{}", options.help());
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
     // print version info
     if (result.count("version")) {
-        fmt::print("{}", version::detail::get_version_info("plssvm-predict"));
+        std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
@@ -108,16 +108,16 @@ parameter_predict::parameter_predict(int argc, char **argv) {
 
     // parse test data filename
     if (!result.count("test")) {
-        fmt::print(stderr, "Error missing test file!\n");
-        fmt::print("{}", options.help());
+        std::cerr << "Error missing test file!" << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
     input_filename = result["test"].as<decltype(input_filename)>();
 
     // parse model filename
     if (!result.count("model")) {
-        fmt::print(stderr, "Error missing model file!\n");
-        fmt::print("{}", options.help());
+        std::cerr << "Error missing model file!" << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
     model_filename = result["model"].as<decltype(model_filename)>();

@@ -21,10 +21,10 @@
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/core.h"     // ffmt::format, fmt::join
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdio>      // stderr
+#include <iostream>    // std::cout, std::cerr, std::clog, std::endl
 #include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>   // std::exception
 #include <filesystem>  // std::filesystem::path
@@ -73,26 +73,27 @@ parameter_train::parameter_train(int argc, char **argv) {
         options.parse_positional({ "input", "model" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        fmt::print("{}\n{}\n", e.what(), options.help());
+        std::cerr << e.what() << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        fmt::print(stderr, "Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " "));
-        fmt::print("{}", options.help());
+        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
     // print help message and exit
     if (result.count("help")) {
-        fmt::print("{}", options.help());
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
     // print version info
     if (result.count("version")) {
-        fmt::print("{}", version::detail::get_version_info("plssvm-train"));
+        std::cout << version::detail::get_version_info("plssvm-train") << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
@@ -111,8 +112,8 @@ parameter_train::parameter_train(int argc, char **argv) {
         typename decltype(csvm_params.gamma)::value_type gamma_input = result["gamma"].as<typename decltype(csvm_params.gamma)::value_type>();
         // check if the provided gamma is legal
         if (gamma_input <= decltype(gamma_input){ 0.0 }) {
-            fmt::print(stderr, "gamma must be greater than 0.0, but is {}!\n", gamma_input);
-            fmt::print("{}", options.help());
+            std::cerr << fmt::format("gamma must be greater than 0.0, but is {}!", gamma_input) << std::endl;
+            std::cout << options.help() << std::endl;
             std::exit(EXIT_FAILURE);
         }
         // provided gamma was legal -> override default value
@@ -139,8 +140,8 @@ parameter_train::parameter_train(int argc, char **argv) {
         const auto max_iter_input = result["max_iter"].as<long long int>();
         // check if the provided max_iter is legal
         if (max_iter_input <= decltype(max_iter_input){ 0 }) {
-            fmt::print(stderr, "max_iter must be greater than 0, but is {}!\n", max_iter_input);
-            fmt::print("{}", options.help());
+            std::cerr << fmt::format("max_iter must be greater than 0, but is {}!", max_iter_input) << std::endl;
+            std::cout << options.help() << std::endl;
             std::exit(EXIT_FAILURE);
         }
         // provided max_iter was legal -> override default value
@@ -172,8 +173,8 @@ parameter_train::parameter_train(int argc, char **argv) {
 
     // parse input data filename
     if (!result.count("input")) {
-        fmt::print(stderr, "Error missing input file!\n");
-        fmt::print("{}", options.help());
+        std::cerr << "Error missing input file!" << std::endl;
+        std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
     input_filename = result["input"].as<decltype(input_filename)>();
