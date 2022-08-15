@@ -45,13 +45,16 @@ class ParameterBase : public ::testing::Test {
             std::strcpy(argv[i], cmd_line_split[i].c_str());
         }
     }
+    /*
+     * Start capturing std::cout. Automatically called at the beginning of a test.
+     */
     void SetUp() override {
         // capture std::cout
         sbuf_ = std::cout.rdbuf();
         std::cout.rdbuf(buffer_.rdbuf());
     }
     /*
-     * Free memory used for argv. Automatically called at the end of a test.
+     * Free memory used for argv and end capturing std::cout. Automatically called at the end of a test.
      */
     void TearDown() override {
         // free memory at the end
