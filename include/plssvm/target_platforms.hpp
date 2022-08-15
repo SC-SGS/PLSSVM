@@ -9,6 +9,8 @@
  * @brief Defines all possible targets. Can also include targets not available on the current target platform.
  */
 
+#ifndef PLSSVM_TARGET_PLATFORMS_HPP_
+#define PLSSVM_TARGET_PLATFORMS_HPP_
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
@@ -56,3 +58,5 @@ std::ostream &operator<<(std::ostream &out, target_platform target);
 std::istream &operator>>(std::istream &in, target_platform &target);
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_TARGET_PLATFORMS_HPP_

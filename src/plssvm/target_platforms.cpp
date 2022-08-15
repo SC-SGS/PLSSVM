@@ -32,7 +32,7 @@ std::vector<target_platform> list_available_target_platforms() {
 #if defined(PLSSVM_HAS_INTEL_TARGET)
     available_targets.push_back(target_platform::gpu_intel);
 #endif
-return available_targets;
+    return available_targets;
 }
 
 std::ostream &operator<<(std::ostream &out, const target_platform target) {
