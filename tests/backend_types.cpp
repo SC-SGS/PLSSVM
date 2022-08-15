@@ -28,7 +28,7 @@ TEST(BackendType, to_string) {
     EXPECT_EQ(util::convert_to_string(plssvm::backend_type::opencl), "opencl");
     EXPECT_EQ(util::convert_to_string(plssvm::backend_type::sycl), "sycl");
 }
-TEST(Backend_Type, to_string_unknown) {
+TEST(BackendType, to_string_unknown) {
     // check conversions to std::string from unknown backend_type
     EXPECT_EQ(util::convert_to_string(static_cast<plssvm::backend_type>(6)), "unknown");
 }
