@@ -41,6 +41,16 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        rocm_path = "/opt/rocm-5.2.0"
+        ROCM_PATH = "$rocm_path"
+        LD_LIBRARY_PATH = "${env.LD_LIBRARY_PATH}:${rocm_path}/lib64:${rocm_path}/lib:${rocm_path}/opencl/lib/x86_64:${rocm_path}/hsa/lib:${rocm_path}/hip/lib:${env.WORKSPACE}/llvm/build/install/lib:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux"
+        CPLUS_INCLUDE_PATH = "${env.CPLUS_INCLUDE_PATH}:${rocm_path}/hip/include:${env.WORKSPACE}/llvm/build/projects/openmp/runtime/src:${env.WORKSPACE}/llvm/build/install/include/sycl"
+        CMAKE_PREFIX_PATH = "${env.CMAKE_PREFIX_PATH"}:${rocm_path}/hip:${rocm_path}"
+        DPCPP_INSTALL_DIR = "${env.WORKSPACE}/llvm/build"
+        PLSSVM_SYCL_DPCPP_INCLUDE_DIR = "${env.WORKSPACE}/llvm/build/install/include"
+        PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906"
+        PATH = "${env.PATH}:${env.WORKSPACE}/llvm/build/bin"
+        LIBRARY_PATH = "${env.LIBRARY_PATH}:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux"
     }
 
     stages {
@@ -82,16 +92,40 @@ pipeline {
                 '''
             }
         }
+        stage('install spack with ninja and cmake') {
+            steps{
+                sh '''
+                    git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+                    . spack/share/spack/setup-env.sh
+                    spack install ninja cmake
+                    '''
+            }
+        }
+
+
+
+        stage('Build DPCPP') {
+            steps{
+                sh '''
+                    . spack/share/spack/setup-env.sh
+                    spack load ninja
+                    spack load cmake
+                    git clone --dept 1 --branch 2022-06 git@github.com:intel/llvm.git
+                    cd llvm
+                    python buildbot/configure.py --hip --llvm-external-projects="compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                    python buildbot/compile.py
+                    '''
+            }
+        }
+
         // Release
         // HIP backend
         stage('Build PLSSVM Release - HIP') {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
                         rm -rf *
@@ -106,10 +140,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
                             cd build/Release_HIP
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -122,10 +152,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Release_OpenCL
                         cd build/Release_OpenCL
                         rm -rf *
@@ -140,10 +168,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
                             cd build/Release_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -156,10 +180,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/hipsycl
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Release_hipSYCL
                         cd build/Release_hipSYCL
                         rm -rf *
@@ -174,10 +196,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/hipsycl
                             cd build/Release_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -190,10 +208,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Release_DPCPP
                         cd build/Release_DPCPP
                         rm -rf *
@@ -208,9 +224,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/dpcpp
                             cd build/Release_DPCPP
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -223,9 +236,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/dpcpp plssvm/pcsgs09/hipsycl
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
 
                         mkdir -p build/Release
                         cd build/Release
@@ -241,10 +253,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/dpcpp plssvm/pcsgs09/hipsycl
-
                             cd build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -258,10 +266,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Debug_HIP
                         cd build/Debug_HIP
                         rm -rf *
@@ -276,10 +282,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
                             cd build/Debug_HIP
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -292,10 +294,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Debug_OpenCL
                         cd build/Debug_OpenCL
                         rm -rf *
@@ -310,10 +310,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
                             cd build/Debug_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -326,10 +322,8 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/hipsycl
+                        . spack/share/spack/setup-env.sh
+                        spack load cmake
                         mkdir -p build/Debug_hipSYCL
                         cd build/Debug_hipSYCL
                         rm -rf *
@@ -344,10 +338,6 @@ pipeline {
                 dir('plssvm') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/hipsycl
                             cd build/Debug_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
@@ -408,6 +398,11 @@ pipeline {
                     stopProcessingIfError: true
                 )]
             )
+            // cleanup
+            sh '''
+                rm -rf llvm
+                rm -rf spack
+            '''
 
         }
         success {
