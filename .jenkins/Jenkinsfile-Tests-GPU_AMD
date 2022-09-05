@@ -114,7 +114,7 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                    ls -l
+                    rm -rf llvm
                     if [ ! -d "llvm/build" ]; then
 
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
