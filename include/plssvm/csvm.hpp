@@ -223,8 +223,8 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     igor::parser p{ std::forward<Args>(named_args)... };
 
     // set default values
-    default_value epsilon_val = default_init<real_type>{ 0.001 };
-    default_value max_iter_val = default_init<size_type>{ data.num_data_points() };
+    default_value epsilon_val{default_init<real_type>{ 0.001 }};
+    default_value max_iter_val{default_init<size_type>{ data.num_data_points() } };
 
     // compile time check: only named parameter are permitted
     static_assert(!p.has_unnamed_arguments(), "Can only use named parameter!");

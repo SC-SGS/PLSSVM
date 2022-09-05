@@ -55,15 +55,15 @@ struct parameter {
     }
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
-    default_value<kernel_type> kernel = default_init<kernel_type>{ kernel_type::linear };
+    default_value<kernel_type> kernel{ default_init<kernel_type>{ kernel_type::linear } };
     /// The degree parameter used in the polynomial kernel function.
-    default_value<int> degree = default_init<int>{ 3 };
+    default_value<int> degree{ default_init<int>{ 3 } };
     /// The gamma parameter used in the polynomial and rbf kernel functions.
-    default_value<real_type> gamma = default_init<real_type>{ 0.0 };
+    default_value<real_type> gamma{ default_init<real_type>{ 0.0 } };
     /// The coef0 parameter used in the polynomial kernel function.
-    default_value<real_type> coef0 = default_init<real_type>{ 0.0 };
+    default_value<real_type> coef0{ default_init<real_type>{ 0.0 } };
     /// The cost parameter in the C-SVM.
-    default_value<real_type> cost = default_init<real_type>{ 1.0 };
+    default_value<real_type> cost{ default_init<real_type>{ 1.0 } };
 
     /**
      * @brief Convert a `plssvm::parameter<T>`to a `plssvm::parameter<U>` (i.e., conversion between float <-> double).
