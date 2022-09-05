@@ -45,7 +45,7 @@ pipeline {
         ROCM_PATH = "$rocm_path"
         LD_LIBRARY_PATH = "${env.LD_LIBRARY_PATH}:${rocm_path}/lib64:${rocm_path}/lib:${rocm_path}/opencl/lib/x86_64:${rocm_path}/hsa/lib:${rocm_path}/hip/lib:${env.WORKSPACE}/llvm/build/install/lib:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux"
         CPLUS_INCLUDE_PATH = "${env.CPLUS_INCLUDE_PATH}:${rocm_path}/hip/include:${env.WORKSPACE}/llvm/build/projects/openmp/runtime/src:${env.WORKSPACE}/llvm/build/install/include/sycl"
-        CMAKE_PREFIX_PATH = "${env.CMAKE_PREFIX_PATH"}:${rocm_path}/hip:${rocm_path}"
+        CMAKE_PREFIX_PATH = """${env.CMAKE_PREFIX_PATH"}:${rocm_path}/hip:${rocm_path}"""
         DPCPP_INSTALL_DIR = "${env.WORKSPACE}/llvm/build"
         PLSSVM_SYCL_DPCPP_INCLUDE_DIR = "${env.WORKSPACE}/llvm/build/install/include"
         PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906"
