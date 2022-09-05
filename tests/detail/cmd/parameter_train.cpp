@@ -117,7 +117,7 @@ TEST_F(ParameterTrain, all_arguments_output) {
 
     // test output string
     std::string correct =
-        "kernel_type: polynomial -> (gamma*u'*v + coef0)^degree\n"
+        "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
         "gamma: 1.5\n"
         "coef0: -1.5\n"
         "degree: 2\n"
