@@ -44,6 +44,16 @@ struct parameter {
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
+    parameter() = default;
+    parameter(const kernel_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) {
+        // TODO: necessary? -> default_value constructor!
+        kernel = kernel_p;
+        degree = degree_p;
+        gamma = gamma_p;
+        coef0 = coef0_p;
+        cost = cost_p;
+    }
+
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
     default_value<kernel_type> kernel = default_init<kernel_type>{ kernel_type::linear };
     /// The degree parameter used in the polynomial kernel function.
@@ -69,7 +79,6 @@ struct parameter {
 
 extern template struct parameter<float>;
 extern template struct parameter<double>;
-
 
 // comparison operations
 template <typename T>

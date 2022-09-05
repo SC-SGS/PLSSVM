@@ -9,6 +9,8 @@
  * @brief Defines all available kernel types.
  */
 
+#ifndef PLSSVM_KERNEL_TYPES_HPP_
+#define PLSSVM_KERNEL_TYPES_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -87,10 +89,21 @@ template <kernel_type kernel, typename real_type, typename... Args>
     }
 }
 
+// forward declare parameter class
 template <typename>
 struct parameter;
 
+/**
+ * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function and kernel parameter stored in @p params.
+ * @tparam real_type the type of the values
+ * @param[in] xi the first vector
+ * @param[in] xj the second vector
+ * @param[in] params class encapsulating the kernel type and kernel parameters
+ * @return the computed kernel function value (`[[nodiscard]]`)
+ */
 template <typename real_type>
 [[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter<real_type> &params);
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_KERNEL_TYPES_HPP_

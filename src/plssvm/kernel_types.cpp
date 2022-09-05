@@ -35,7 +35,7 @@ std::string_view kernel_type_to_math_string(const kernel_type kernel) noexcept {
         case kernel_type::linear:
             return "u'*v";
         case kernel_type::polynomial:
-            return "(gamma*u'*v + coef0)^degree";
+            return "(gamma*u'*v+coef0)^degree";
         case kernel_type::rbf:
             return "exp(-gamma*|u-v|^2)";
     }
