@@ -41,8 +41,10 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+
         ROCM_PATH = "/opt/rocm-5.2.0"
-        LD_LIBRARY_PATH = "${env.LD_LIBRARY_PATH}:${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${env.WORKSPACE}/llvm/build/install/lib:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux"
+
+        LD_LIBRARY_PATH = "${env.LD_LIBRARY_PATH}:${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${env.WORKSPACE}/llvm/build/install/lib:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux:/data/scratch/jenkins/workspace/PLSSVM_Github-GPU_AMD_jenkins/llvm/build/projects/compiler-rt/lib"
         CPLUS_INCLUDE_PATH = "${env.CPLUS_INCLUDE_PATH}:${ROCM_PATH}/hip/include:${env.WORKSPACE}/llvm/build/projects/openmp/runtime/src:${env.WORKSPACE}/llvm/build/install/include/sycl"
         CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
         DPCPP_INSTALL_DIR = "${env.WORKSPACE}/llvm/build"
@@ -117,7 +119,7 @@ pipeline {
                     if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
                         cd llvm
-                        python buildbot/configure.py --hip --llvm-external-projects="compiler-rt,openmp,clang-tools-extra" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                        python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
                         python buildbot/compile.py
                     fi
                     '''
