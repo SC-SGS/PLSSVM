@@ -15,11 +15,15 @@
 
 namespace plssvm {
 
+// TODO: something better than an unprotected global variable?
+
+/// Per default use a verbose output of all information.
 constexpr bool verbose_default = true;
+/// If `true` use verbose output of information (e.g., runtimes). May be changed by a user.
 inline bool verbose = verbose_default;
 
 /// Integer type used inside kernels.
-using kernel_index_type = int;
+using kernel_index_type = int;  // TODO: remove?
 
 /// Global compile-time constant used for internal caching.
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
