@@ -94,7 +94,7 @@ pipeline {
         stage('install spack with ninja and cmake') {
             steps{
                 sh '''
-                    git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+                    git clone --dept 1 -c feature.manyFiles=true https://github.com/spack/spack.git
                     . spack/share/spack/setup-env.sh
                     spack install ninja cmake
                     '''
