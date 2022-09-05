@@ -131,6 +131,9 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
+                        echo $PATH
+                        cmake --version
+                        ls ~
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
                         rm -rf *
