@@ -1,11 +1,19 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
+
 #include "plssvm/file_format_types.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
-#include <ios>        // std::ios::failbit
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
+#include <ios>      // std::ios::failbit
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
 
 namespace plssvm {
 
@@ -34,4 +42,4 @@ std::istream &operator>>(std::istream &in, file_format_type &format) {
     return in;
 }
 
-}
+}  // namespace plssvm

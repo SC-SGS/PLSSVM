@@ -119,6 +119,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
 )
 
 # create test executable
