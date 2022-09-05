@@ -48,7 +48,7 @@ pipeline {
         DPCPP_INSTALL_DIR = "${env.WORKSPACE}/llvm/build"
         PLSSVM_SYCL_DPCPP_INCLUDE_DIR = "${env.WORKSPACE}/llvm/build/install/include"
         PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906"
-        PATH = "${env.WORKSPACE}/llvm/build/bin:${env.WORKSPACE}:${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin${env.PATH}"
+        PATH = "${env.WORKSPACE}/llvm/build/bin:${env.WORKSPACE}:${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:${env.PATH}"
         LIBRARY_PATH = "${env.LIBRARY_PATH}:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux"
     }
 
