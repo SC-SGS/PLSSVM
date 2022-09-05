@@ -94,11 +94,17 @@ pipeline {
         stage('install ninja and cmake') {
             steps{
                 sh '''
-                    wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
-                    unzip ninja-linux.zip
+                    if [ -f ninja ] then;
+                        wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+                        unzip ninja-linux.zip
+                        rm ninja-linux.zip*
+                    fi
 
-                    wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
-                    tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
+                    if [ -d cmake-3.24.1-linux-x86_64 ] then;
+                        wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
+                        tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
+                        rm cmake-3.24.1-linux-x86_64.tar.gz*
+                    fi
                     '''
             }
         }
@@ -108,10 +114,13 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                    git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
-                    cd llvm
-                    python buildbot/configure.py --hip --llvm-external-projects="compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
-                    python buildbot/compile.py
+                    if [ ! -d "llvm" ] then;
+
+                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
+                        cd llvm
+                        python buildbot/configure.py --hip --llvm-external-projects="compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                        python buildbot/compile.py
+                    fi
                     '''
             }
         }
@@ -382,9 +391,7 @@ pipeline {
             )
             // cleanup
             sh '''
-                rm -rf llvm
-                rm -rf cmake-3.24.1-linux-x86_64
-                rm ninja
+
             '''
 
         }
