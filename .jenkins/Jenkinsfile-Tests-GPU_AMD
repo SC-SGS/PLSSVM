@@ -94,6 +94,7 @@ pipeline {
         stage('install ninja and cmake') {
             steps{
                 sh '''
+                    chmod a+rwx -R *
                     if [ ! -f ninja ]; then
                         wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                         unzip ninja-linux.zip
@@ -130,7 +131,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        echo $LD_LIBRARY_PATH
+
 
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
