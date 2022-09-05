@@ -94,13 +94,13 @@ pipeline {
         stage('install ninja and cmake') {
             steps{
                 sh '''
-                    if [ -f ninja ]; then
+                    if [ ! -f ninja ]; then
                         wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                         unzip ninja-linux.zip
                         rm ninja-linux.zip*
                     fi
 
-                    if [ -d cmake-3.24.1-linux-x86_64 ]; then
+                    if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
                         wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
                         tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
                         rm cmake-3.24.1-linux-x86_64.tar.gz*
