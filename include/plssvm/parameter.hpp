@@ -73,7 +73,7 @@ struct parameter {
     template <typename U>
     explicit operator parameter<U>() {
         // convert between parameter<float> <-> parameter<double>
-        return parameter<U>{ kernel, degree, gamma, coef0, cost };
+        return parameter<U>{ kernel, degree, static_cast<U>(gamma.value()), static_cast<U>(coef0.value()), static_cast<U>(cost.value()) };
     }
 };
 
