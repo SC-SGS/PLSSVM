@@ -96,7 +96,8 @@ pipeline {
                 sh '''
                     git clone --dept 1 -c feature.manyFiles=true https://github.com/spack/spack.git
                     . spack/share/spack/setup-env.sh
-                    spack install ninja cmake
+                    spack external find
+                    spack install ninja cmake@3.21.0
                     '''
             }
         }
