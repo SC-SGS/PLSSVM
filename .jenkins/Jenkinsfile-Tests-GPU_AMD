@@ -382,6 +382,7 @@ pipeline {
             )
             // cleanup
             sh '''
+                rm -rf llvm
                 rm -rf cmake-3.24.1-linux-x86_64
                 rm ninja
             '''
