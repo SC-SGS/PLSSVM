@@ -51,7 +51,7 @@ pipeline {
         PLSSVM_SYCL_DPCPP_INCLUDE_DIR = "${env.WORKSPACE}/llvm/build/install/include"
         PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906"
         PATH = "${env.WORKSPACE}/llvm/build/bin:${env.WORKSPACE}:${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:${env.PATH}"
-        LIBRARY_PATH = "${env.LIBRARY_PATH}:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/linux"
+        LIBRARY_PATH = "${env.LIBRARY_PATH}:${env.WORKSPACE}/llvm/build/lib:${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
     }
 
     stages {
@@ -116,11 +116,15 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
+                    if [ ! -d "llvm/build" ]; then
+                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
                         cd llvm
                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
                         python buildbot/compile.py
                         cmake --build build -- omp
                         cmake --build build -- install
+                    fi
+                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
                     '''
             }
         }
