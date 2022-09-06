@@ -128,6 +128,26 @@ pipeline {
             }
         }
 
+
+        stage('Build HipSYCL') {
+            steps{
+                sh '''
+		    if [ ! -d "${env.WORKSPACE}/hipsycl-install " ]; then
+                        mkdir ${env.WORKSPACE}/hipsycl-install
+                        git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git
+                        cd hipSYCL
+                        mkdir build
+                        cd build
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${env.WORKSPACE}/hipsycl-install -DCMAKE_CXX_COMPILER=clang++ ..
+                        make -j
+                        make install
+                        cd ${env.WORKSPACE}
+                        rm -rf hipSYCL
+                    fi
+                    ls ${env.WORKSPACE}/hipsycl-install
+                    '''
+            }
+        }
         // Release
         // HIP backend
         stage('Build PLSSVM Release - HIP') {
