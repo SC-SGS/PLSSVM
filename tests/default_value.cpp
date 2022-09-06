@@ -390,3 +390,54 @@ TEST(DefaultValue, swap_free_function) {
     EXPECT_EQ(val2.value(), 1);
     EXPECT_EQ(val2.get_default(), 1);
 }
+
+using relation_op_func_ptr = bool(*)(const plssvm::default_value<int>&, const plssvm::default_value<int>&);
+class DefaultValueRelational : public ::testing::TestWithParam<std::tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>> {
+  protected:
+    void SetUp() override {
+        val1 = 42;
+    }
+
+    plssvm::default_value<int> val1{ plssvm::default_init{ 1 } };
+    plssvm::default_value<int> val2{ plssvm::default_init{ 1 } };
+    plssvm::default_value<int> val3{ plssvm::default_init{ 42 } };
+};
+
+TEST_P(DefaultValueRelational, relational_operators) {
+    auto [op, op_name, booleans] = GetParam();
+
+    // perform relational tests
+    EXPECT_EQ(op(this->val1, this->val2), booleans[0]);
+    EXPECT_EQ(op(this->val1, this->val3), booleans[1]);
+    EXPECT_EQ(op(this->val2, this->val3), booleans[2]);
+
+    // perform tests for idempotence
+    EXPECT_EQ(op(this->val1, this->val1), booleans[3]);
+    EXPECT_EQ(op(this->val2, this->val2), booleans[4]);
+    EXPECT_EQ(op(this->val3, this->val3), booleans[5]);
+}
+// clang format off
+INSTANTIATE_TEST_SUITE_P(DefaultValue, DefaultValueRelational, ::testing::Values(
+                        std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator==, "Equal", { false, true, false, true, true, true }),
+                        std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator!=, "Unequal", { true, false, true, false, false, false }),
+                        std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator<, "Less", { false, false, true, false, false, false }),
+                        std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator>, "Greater", { true, false, false, false, false, false }),
+                        std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator<=, "LessOrEqual", { false, true, true, true, true, true }),
+                        std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator>=, "GreaterOrEqual", { true, true, false, true, true, true })),
+                        [](const testing::TestParamInfo<DefaultValueRelational::ParamType>& param_info) {
+                            return std::string{ std::get<1>(param_info.param) };
+                        });
+// clang format on
+
+TEST(DefaultValue, hash) {
+    // create default_value and hash it
+    plssvm::default_value val1{ plssvm::default_init{ 42 }};
+    EXPECT_EQ(std::hash<plssvm::default_value<int>>{}(val1), std::hash<int>{}(42));
+
+    plssvm::default_value val2{ plssvm::default_init<std::string>{ "Hello, World!" }};
+    EXPECT_EQ(std::hash<plssvm::default_value<std::string>>{}(val2), std::hash<std::string>{}("Hello, World!"));
+
+    plssvm::default_value val3{ plssvm::default_init{ 3.1415 }};
+    val3 = 2.7182;
+    EXPECT_EQ(std::hash<plssvm::default_value<double>>{}(val3), std::hash<double>{}(2.7182));
+}

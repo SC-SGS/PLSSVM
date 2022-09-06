@@ -9,6 +9,8 @@
  * @brief Implements a class used to be able to distinguish between the default value of a variable and an assigned value.
  */
 
+#ifndef PLSSVM_DEFAULT_VALUE_HPP_
+#define PLSSVM_DEFAULT_VALUE_HPP_
 #pragma once
 
 #include <cstddef>      // std::size_t
@@ -198,18 +200,19 @@ class default_value {
  * @return the output-stream
  */
 template <typename T>
-std::ostream &operator<<(std::ostream &out, const default_value<T> &val) {
+inline std::ostream &operator<<(std::ostream &out, const default_value<T> &val) {
     return out << val.value();
 }
 /**
  * @brief Use the input-stream @p in to initialize the default_value @p val.
  * @details Sets the user defined value, i.e., `is_default()` will return `false` and the default value will **not** be used.
+ * @tparam T the type of the wrapped value
  * @param[in,out] in input-stream to extract the wrapped default_value value from
  * @param[in] val the default_value
  * @return the input-stream
  */
 template <typename T>
-std::istream &operator>>(std::istream &in, default_value<T> &val) {
+inline std::istream &operator>>(std::istream &in, default_value<T> &val) {
     in >> val.value_;
     val.use_default_init_ = false;
     return in;
@@ -225,29 +228,70 @@ constexpr void swap(default_value<T> &lhs, default_value<T> &rhs) noexcept(noexc
     lhs.swap(rhs);
 }
 
-// comparison operations
+/**
+ * @brief Compares **the two active** values @p lhs and @p rhs for equality.
+ * @tparam T the type of the wrapped value
+ * @param[in] lhs the first default_value
+ * @param[in] rhs the second default_value
+ * @return `true` if the active values are equal, `false` otherwise (`[[nodiscard]]`)
+ */
 template <typename T>
-constexpr bool operator==(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator==(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return lhs.value() == rhs.value();
 }
+/**
+ * @brief Compares **the two active** values @p lhs and @p rhs for inequality.
+ * @tparam T the type of the wrapped value
+ * @param[in] lhs the first default_value
+ * @param[in] rhs the second default_value
+ * @return `true` if the active values are unequal, `false` otherwise (`[[nodiscard]]`)
+ */
 template <typename T>
-constexpr bool operator!=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator!=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs == rhs);
 }
+/**
+ * @brief Compares **the two active** values: @p lhs < @p rhs.
+ * @tparam T the type of the wrapped value
+ * @param[in] lhs the first default_value
+ * @param[in] rhs the second default_value
+ * @return `true` if the active values of @p lhs is less than the active value of @p rhs, `false` otherwise (`[[nodiscard]]`)
+ */
 template <typename T>
-constexpr bool operator<(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator<(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return lhs.value() < rhs.value();
 }
+/**
+ * @brief Compares **the two active** values: @p lhs > @p rhs.
+ * @tparam T the type of the wrapped value
+ * @param[in] lhs the first default_value
+ * @param[in] rhs the second default_value
+ * @return `true` if the active values of @p lhs is greater than the active value of @p rhs, `false` otherwise (`[[nodiscard]]`)
+ */
 template <typename T>
-constexpr bool operator>(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator>(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return rhs < lhs;
 }
+/**
+ * @brief Compares **the two active** values: @p lhs <= @p rhs.
+ * @tparam T the type of the wrapped value
+ * @param[in] lhs the first default_value
+ * @param[in] rhs the second default_value
+ * @return `true` if the active values of @p lhs is less or equal than the active value of @p rhs, `false` otherwise (`[[nodiscard]]`)
+ */
 template <typename T>
-constexpr bool operator<=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator<=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs > rhs);
 }
+/**
+ * @brief Compares **the two active** values: @p lhs >= @p rhs.
+ * @tparam T the type of the wrapped value
+ * @param[in] lhs the first default_value
+ * @param[in] rhs the second default_value
+ * @return `true` if the active values of @p lhs is greater or equal than the active value of @p rhs, `false` otherwise (`[[nodiscard]]`)
+ */
 template <typename T>
-constexpr bool operator>=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs < rhs);
 }
 
@@ -255,11 +299,22 @@ constexpr bool operator>=(const default_value<T> &lhs, const default_value<T> &r
 
 namespace std {
 
+/**
+ * @brief Hashing struct specialization in the `std` namespace for a default_value.
+ * @details Necessary to be able to use a default_value, e.g., in a `std::unordered_map`.
+ */
 template <typename T>
 struct hash<plssvm::default_value<T>> {
+    /**
+     * @brief Overload the function call operator for a default_value.
+     * @param[in] val the default_value to hash
+     * @return the hash value of @p val
+     */
     std::size_t operator()(const plssvm::default_value<T> &val) const noexcept {
         return std::hash<T>{}(val.value());
     }
 };
 
 }  // namespace std
+
+#endif  // PLSSVM_DEFAULT_VALUE_HPP_
