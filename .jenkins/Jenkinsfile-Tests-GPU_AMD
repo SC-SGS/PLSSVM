@@ -135,7 +135,7 @@ pipeline {
                 dir('plssvm') {
                     sh '''
 
-
+			llc --version
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
                         rm -rf *
