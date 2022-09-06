@@ -110,7 +110,7 @@ struct parameter {
      * @param[in] other the other parameter set to compare this one with
      * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
      */
-    constexpr bool equivalent(const parameter &other) noexcept {
+    constexpr bool equivalent(const parameter &other) const noexcept {
         // equality check, but only the member variables that a necessary for the current kernel type are compared!
         // cannot be equal if both parameters have different kernel types
         if (kernel != other.kernel) {
@@ -167,8 +167,8 @@ template <typename T>
  * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] constexpr bool svm_equal(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
-    return lhs.svm(rhs);
+[[nodiscard]] constexpr bool equivalent(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+    return lhs.equivalent(rhs);
 }
 
 /**
