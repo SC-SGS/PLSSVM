@@ -116,7 +116,7 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-		    if [ ! -d "llvm/build" ]; then
+		            if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
                         cd llvm
                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
@@ -133,8 +133,6 @@ pipeline {
             steps{
                 sh '''
 		    if [ ! -d "$WORKSPACE/hipsycl-install " ]; then
-                        rm -rf $WORKSPACE/hipsycl-install
-                        rm -rf hipSYCL
                         mkdir $WORKSPACE/hipsycl-install
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git
                         cd hipSYCL
@@ -146,7 +144,6 @@ pipeline {
                         cd $WORKSPACE
                         rm -rf hipSYCL
                     fi
-                    ls $WORKSPACE/hipsycl-install
                     '''
             }
         }
@@ -156,13 +153,11 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-
-			llc --version
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DCLANGRT_BUILTINS:FILEPATH=/data/scratch/jenkins/workspace/PLSSVM_Github-GPU_AMD_jenkins/llvm/build/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu/libclang_rt.builtins.a ../../
-                        make VERBOSE=TRUE
+                        make -j
                     '''
                 }
             }
@@ -187,7 +182,7 @@ pipeline {
                         mkdir -p build/Release_OpenCL
                         cd build/Release_OpenCL
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=$WORKDIR/llvm/build/include/sycl -DOpenCL_LIBRARY=$WORKDIR/llvm/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
                         make -j4
                     '''
                 }
@@ -239,7 +234,7 @@ pipeline {
                         mkdir -p build/Release_DPCPP
                         cd build/Release_DPCPP
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_ASSERTS=ON ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp ../../
                         make -j4
                     '''
                 }
@@ -266,7 +261,7 @@ pipeline {
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=$WORKDIR/llvm/build/include/sycl -DOpenCL_LIBRARY=$WORKDIR/llvm/build/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
                         make -j4
                     '''
                 }
@@ -293,7 +288,7 @@ pipeline {
                         mkdir -p build/Debug_HIP
                         cd build/Debug_HIP
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
                     '''
                 }
@@ -319,7 +314,7 @@ pipeline {
                         mkdir -p build/Debug_OpenCL
                         cd build/Debug_OpenCL
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=$WORKDIR/llvm/build/include/sycl -DOpenCL_LIBRARY=$WORKDIR/llvm/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
                     '''
                 }
