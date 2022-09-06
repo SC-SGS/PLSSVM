@@ -132,7 +132,7 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-		            if [ ! -d "hipsycl-install " ]; then
+		            if [ ! -d "hipsycl-install" ]; then
                         mkdir hipsycl-install
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git
                         cd hipSYCL
