@@ -43,7 +43,7 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
 
         ROCM_PATH = "/opt/rocm-5.2.0"
-
+        WORKSPACE = ${env.WORKSPACE}
         LD_LIBRARY_PATH = "${env.WORKSPACE}/llvm/build/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${env.LD_LIBRARY_PATH}:${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${env.WORKSPACE}/llvm/build/install/lib:${env.WORKSPACE}/llvm/build/lib"
         CPLUS_INCLUDE_PATH = "${env.CPLUS_INCLUDE_PATH}:${ROCM_PATH}/hip/include:${env.WORKSPACE}/llvm/build/projects/openmp/runtime/src:${env.WORKSPACE}/llvm/build/install/include/sycl"
         CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
@@ -132,19 +132,19 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-		    if [ ! -d "${env.WORKSPACE}/hipsycl-install " ]; then
+		    if [ ! -d "$WORKSPACE/hipsycl-install " ]; then
                         mkdir ${env.WORKSPACE}/hipsycl-install
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git
                         cd hipSYCL
                         mkdir build
                         cd build
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${env.WORKSPACE}/hipsycl-install -DCMAKE_CXX_COMPILER=clang++ ..
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$WORKSPACE/hipsycl-install -DCMAKE_CXX_COMPILER=clang++ ..
                         make -j
                         make install
                         cd ${env.WORKSPACE}
                         rm -rf hipSYCL
                     fi
-                    ls ${env.WORKSPACE}/hipsycl-install
+                    ls $WORKSPACE/hipsycl-install
                     '''
             }
         }
