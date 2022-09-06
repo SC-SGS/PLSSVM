@@ -141,7 +141,7 @@ pipeline {
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$WORKSPACE/hipsycl-install -DCMAKE_CXX_COMPILER=clang++ ..
                         make -j
                         make install
-                        cd ${env.WORKSPACE}
+                        cd $WORKSPACE
                         rm -rf hipSYCL
                     fi
                     ls $WORKSPACE/hipsycl-install
