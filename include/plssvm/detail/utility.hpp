@@ -78,8 +78,13 @@ template <typename Enum>
     return to_underlying(e.value());
 }
 
-/*
+/**
  * @brief Implements an erase_if function for different containers according to https://en.cppreference.com/w/cpp/container/map/erase_if.
+ * @tparam Container the container type
+ * @tparam Pred the type of the unary-predicate
+ * @param[in,out] c the container to erase the elements that match the predicate @p pred from
+ * @param[in] pred the predicate the to be erased elements must match
+ * @return the number of erased elements
  */
 template <typename Container, typename Pred>
 inline typename Container::size_type erase_if_impl(Container &c, Pred pred) {

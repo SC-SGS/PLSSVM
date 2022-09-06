@@ -19,7 +19,7 @@ namespace plssvm::version::git_metadata {
 
 /**
  * @brief Check whether the metadata has been successfully populated.
- * @detail There may be no metadata of there wasn't a .git directory (e.g., downloaded source code without revision history).
+ * @details There may be no metadata of there wasn't a .git directory (e.g., downloaded source code without revision history).
  * @return `true` if the metadata has been successfully populated, otherwise `false` (`[[nodiscard]]`)
  */
 [[nodiscard]] bool is_populated();

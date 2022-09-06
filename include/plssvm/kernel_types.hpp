@@ -44,6 +44,12 @@ enum class kernel_type {
  */
 std::ostream &operator<<(std::ostream &out, kernel_type kernel);
 
+/**
+ * @brief Return the mathematical representation of the kernel_type @p kernel.
+ * @details Uses placeholders for the scalar values and vectors.
+ * @param[in] kernel the kernel type
+ * @return the mathematical representation of @p kernel
+ */
 std::string_view kernel_type_to_math_string(kernel_type kernel) noexcept;
 
 /**

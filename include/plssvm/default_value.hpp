@@ -71,7 +71,8 @@ class default_value {
 
     /**
      * @brief Construct a default_value object using the provided **default** value.
-     * @note `is_default()` will return `true` afterward!
+     * @details Afterward, `is_default()` will return `true`!
+     * @param[in] default_val set the default value of this default_value wrapper
      */
     constexpr explicit default_value(default_init<value_type> default_val = default_init<value_type>{}) noexcept(std::is_nothrow_move_constructible_v<value_type>) :
         default_init_{ std::move_if_noexcept(default_val) } {}
@@ -221,7 +222,7 @@ inline std::istream &operator>>(std::istream &in, default_value<T> &val) {
 /**
  * @brief Swap the content of two default_values @p lhs and @p rhs.
  * @param[in,out] lhs the first default_value
- * @param[in,out] lhs the second default_value
+ * @param[in,out] rhs the second default_value
  */
 template <typename T>
 constexpr void swap(default_value<T> &lhs, default_value<T> &rhs) noexcept(noexcept(lhs.swap(rhs))) {

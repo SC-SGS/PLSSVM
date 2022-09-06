@@ -86,6 +86,7 @@ namespace plssvm::detail {
  * @param[in,out] str the string to replace the values
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
+ * @return the replaced string
  */
 std::string &replace_all(std::string &str, std::string_view what, std::string_view with);
 
