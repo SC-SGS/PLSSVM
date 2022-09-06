@@ -10,13 +10,12 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "utility.hpp"                // util::{convert_to_string, convert_from_string}
+#include "utility.hpp"  // util::convert_to_string
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "fmt/core.h"  // fmt::format
 
-#include <sstream>  // std::istringstream
-#include <vector>   // std::vector
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+                          // ::testing::{Test, Types}
 
 template <typename T>
 class Parameter : public ::testing::Test {};
