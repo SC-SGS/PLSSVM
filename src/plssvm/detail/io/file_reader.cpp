@@ -31,7 +31,22 @@
 
 namespace plssvm::detail::io {
 
-file_reader::file_reader(const std::string &filename, const char comment) {
+file_reader::file_reader(const std::string &filename) {
+    // open the provided file
+    this->open(filename);
+}
+
+file_reader::~file_reader() {
+    // close the file at the end
+    this->close();
+}
+
+void file_reader::open(const std::string &filename) {
+    // no other file might be currently open in this file_reader
+    if (this->is_open()) {
+        throw file_reader_exception{ "This file_reader is already associated to a file!" };
+    }
+
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
     // headers for memory mapped IO are present -> try it
     this->open_memory_mapped_file(filename);
@@ -39,22 +54,58 @@ file_reader::file_reader(const std::string &filename, const char comment) {
     // memory mapped IO headers are missing -> use std::ifstream instead
     this->open_file(filename);
 #endif
-    // split read data into lines
-    this->parse_lines(comment);
+
+    is_open_ = true;
+}
+bool file_reader::is_open() const noexcept {
+    return is_open_;
+}
+void file_reader::close() {
+    if (this->is_open()) {
+#if defined(PLSSVM_HAS_MEMORY_MAPPING)
+        if (must_unmap_file_) {
+            // unmap file
+            ::munmap(file_content_, num_bytes_);
+            // close file descriptor
+            ::close(file_descriptor_);
+        }
+        file_content_ = nullptr;
+#endif
+        // delete allocated buffer (deleting nullptr is a no-op)
+        delete[] file_content_;
+
+        is_open_ = false;
+    }
 }
 
-file_reader::~file_reader() {
-#if defined(PLSSVM_HAS_MEMORY_MAPPING)
-    if (must_unmap_file_) {
-        // unmap file
-        munmap(file_content_, num_bytes_);
-        // close file descriptor
-        close(file_descriptor_);
+const std::vector<std::string_view> &file_reader::read_lines(char comment) {
+    if (!this->is_open()) {
+        throw file_reader_exception{ "This file_reader is currently not associated to a file!" };
     }
-    file_content_ = nullptr;
-#endif
-    // delete allocated buffer (deleting nullptr is a no-op)
-    delete[] file_content_;
+    // create view from buffer
+    std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
+    std::string_view::size_type pos = 0;
+    while (true) {
+        // find newline
+        const std::string_view::size_type next_pos = file_content_view.find_first_of('\n', pos);
+        if (next_pos == std::string_view::npos) {
+            break;
+        }
+        // remove trailing whitespaces
+        const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
+        // add line iff the line is not empty and doesn't with a comment
+        if (!sv.empty() && !starts_with(sv, comment)) {
+            lines_.push_back(sv);
+        }
+        pos = next_pos + 1;
+    }
+    // add last line
+    const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
+    if (!sv.empty() && !starts_with(sv, comment)) {
+        lines_.push_back(sv);
+    }
+
+    return lines_;
 }
 
 typename std::vector<std::string_view>::size_type file_reader::num_lines() const noexcept {
@@ -71,16 +122,16 @@ const std::vector<std::string_view> &file_reader::lines() const noexcept {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
 void file_reader::open_memory_mapped_file(const std::string_view filename) {
     // open the file
-    file_descriptor_ = open(filename.data(), O_RDONLY);
+    file_descriptor_ = ::open(filename.data(), O_RDONLY);
     struct stat attr {};
     // check if file could be opened
     if (fstat(file_descriptor_, &attr) == -1) {
-        close(file_descriptor_);
+        ::close(file_descriptor_);
         throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
     }
     if (attr.st_size == 0) {
         // can't memory map empty file
-        close(file_descriptor_);
+        ::close(file_descriptor_);
         this->open_file(filename);
     } else {
         // memory map file
@@ -88,7 +139,7 @@ void file_reader::open_memory_mapped_file(const std::string_view filename) {
         // check if memory mapping was successful
         if (static_cast<void *>(file_content_) == MAP_FAILED) {
             // memory mapping wasn't successful -> try reading file with std::ifstream
-            close(file_descriptor_);
+            ::close(file_descriptor_);
             std::cerr << "Memory mapping failed, falling back to std::ifstream." << std::endl;
             this->open_file(filename);
         } else {
@@ -126,29 +177,4 @@ void file_reader::open_file(const std::string_view filename) {
     }
 }
 
-void file_reader::parse_lines(const char comment) {
-    // create view from buffer
-    std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
-    std::string_view::size_type pos = 0;
-    while (true) {
-        // find newline
-        const std::string_view::size_type next_pos = file_content_view.find_first_of('\n', pos);
-        if (next_pos == std::string_view::npos) {
-            break;
-        }
-        // remove trailing whitespaces
-        const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, next_pos - pos });
-        // add line iff the line is not empty and doesn't with a comment
-        if (!sv.empty() && !starts_with(sv, comment)) {
-            lines_.push_back(sv);
-        }
-        pos = next_pos + 1;
-    }
-    // add last line
-    const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
-    if (!sv.empty() && !starts_with(sv, comment)) {
-        lines_.push_back(sv);
-    }
-}
-
-}  // namespace plssvm::detail
+}  // namespace plssvm::detail::io

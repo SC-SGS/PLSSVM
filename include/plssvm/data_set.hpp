@@ -464,7 +464,8 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
 
 template <typename T, typename U>
 void data_set<T, U>::read_libsvm_file(const std::string &filename) {
-    detail::io::file_reader f{ filename, '#' };
+    detail::io::file_reader f{ filename };
+    f.read_lines('#');
 
     // parse sizes
     num_data_points_ = f.num_lines();
@@ -488,7 +489,8 @@ void data_set<T, U>::read_libsvm_file(const std::string &filename) {
 
 template <typename T, typename U>
 void data_set<T,U>::read_arff_file(const std::string &filename) {
-    detail::io::file_reader f{ filename, '%' };
+    detail::io::file_reader f{ filename };
+    f.read_lines('%');
 
     // parse arff header, structured binding
     size_type header = 0;
@@ -524,7 +526,8 @@ data_set<T, U>::scaling::scaling(const real_type lower, const real_type upper) :
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const std::string &filename) {
-    detail::io::file_reader f{  filename, '#' };
+    detail::io::file_reader f{  filename };
+    f.read_lines('#');
 
     // read scaling values from file
     detail::io::read_scaling_factors(f, scaling_interval, scaling_factors);

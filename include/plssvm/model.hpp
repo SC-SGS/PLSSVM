@@ -12,21 +12,21 @@
 #pragma once
 
 #include "plssvm/constants.hpp"
-#include "plssvm/parameter.hpp"
 #include "plssvm/data_set.hpp"
-#include "plssvm/detail/io/libsvm_parsing.hpp"
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"
+#include "plssvm/detail/io/libsvm_parsing.hpp"
+#include "plssvm/parameter.hpp"
 
 #include "fmt/core.h"
 #include "fmt/os.h"
 
 #include <chrono>
-#include <memory>       // std::shared_ptr, std::make_shared
+#include <memory>  // std::shared_ptr, std::make_shared
+#include <numeric>
+#include <sstream>
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
-#include <sstream>
-#include <numeric>
 
 namespace plssvm {
 
@@ -46,9 +46,9 @@ class model {
     using label_type = U;
     using size_type = std::size_t;
 
-    explicit model(const std::string& filename);
+    explicit model(const std::string &filename);
 
-    void save(const std::string& filename) const;
+    void save(const std::string &filename) const;
 
     [[nodiscard]] size_type num_support_vectors() const noexcept { return num_support_vectors_; }
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
@@ -58,7 +58,7 @@ class model {
 
     parameter<real_type> params_{};
 
-    data_set<real_type, label_type> data_{}; // support vectors + labels
+    data_set<real_type, label_type> data_{};  // support vectors + labels
     std::shared_ptr<std::vector<real_type>> alpha_ptr_{ nullptr };
 
     // used to speedup prediction in case of the linear kernel function, must be initialized to empty vector instead of nullptr
@@ -77,7 +77,8 @@ template <typename T, typename U>
 model<T, U>::model(const std::string &filename) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    detail::io::file_reader f{ filename, '#' };
+    detail::io::file_reader f{ filename };
+    f.read_lines('#');
 
     // parse libsvm header
     auto [header, data_labels] = detail::io::read_libsvm_model_header<real_type, label_type, size_type>(f, params_, rho_, num_support_vectors_);
@@ -104,9 +105,8 @@ model<T, U>::model(const std::string &filename) {
 }
 
 template <typename T, typename U>
-model<T, U>::model(parameter<real_type> params, data_set<real_type, label_type> data)
-    : params_{ std::move(params) }, data_{ std::move(data) }, alpha_ptr_{ std::make_shared<std::vector<real_type>>(data_.num_data_points()) },
-      num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
+model<T, U>::model(parameter<real_type> params, data_set<real_type, label_type> data) :
+    params_{ std::move(params) }, data_{ std::move(data) }, alpha_ptr_{ std::make_shared<std::vector<real_type>>(data_.num_data_points()) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
 
 /******************************************************************************
  *                                 Save Model                                 *
@@ -133,4 +133,4 @@ void model<T, U>::save(const std::string &filename) const {
     }
 }
 
-}
+}  // namespace plssvm

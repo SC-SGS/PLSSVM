@@ -9,6 +9,8 @@
  * @brief Implements a file reader class responsible for reading the input file and parsing it into lines.
  */
 
+#ifndef PLSSVM_DETAIL_IO_FILE_READER_HPP_
+#define PLSSVM_DETAIL_IO_FILE_READER_HPP_
 #pragma once
 
 // check if memory mapping can be supported
@@ -30,19 +32,46 @@ namespace plssvm::detail::io {
 class file_reader {
   public:
     /**
-     * @brief Reads the file denoted by @p filename (possibly using memory mapped IO) and splits it into lines, ignoring empty lines and lines starting with
-     *        the comment token @p comment.
-     * @param[in] filename the file to read and split into lines
-     * @param[in] comment the character used to denote comments
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
+     * @brief Creates a new file_reader **without** associating it to a file.
      */
-    file_reader(const std::string &filename, char comment);
-
+    file_reader() = default;
+    /**
+     * @brief Create a new file_reader and associate it to the @p filename by opening it (possibly memory mapping it).
+     * @param[in] filename the file to open
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     */
+    explicit file_reader(const std::string &filename);
     /**
      * @brief Unmap the file and close the file descriptor used by the memory mapped IO operations and delete the allocated buffer.
      */
     ~file_reader();
+
+    /**
+     * @brief Associates the current file_reader with the file denoted by @p filename, i.e., opens the file @p filename (possible memory mapping it).
+     * @details This function is called by the constructor of file_reader accepting a std::string and is not usually invoked directly.
+     * @param[in] filename the file to open
+     * @throws plssvm::file_reader_exception if the file_reader has already opened another file
+     */
+    void open(const std::string &filename);
+    /**
+     * @brief Checks whether this file_reader is currently associated with a file.
+     * @return `true` if a file is currently open, `false` otherwise (`[[nodiscard]]`)
+     */
+    [[nodiscard]] bool is_open() const noexcept;
+    /**
+     * @brief Unmap the file and close the file descriptor used by the memory mapped IO operations and delete the allocated buffer.
+     * @details This function is called by the destructor of file_reader when the object goes out of scope and is not usually invoked directly.
+     */
+    void close();
+
+    /**
+     * @brief Read the content of the associated file and splits it into lines, ignoring empty lines and lines starting with
+     *        the comment token @p comment.
+     * @param[in] comment a character at the beginning of a line that causes this line to be ignored (used to filter comments)
+     * @throws plssvm::file_reader_exception if no file is currently opened by this file_reader
+     * @return the split lines
+     */
+    const std::vector<std::string_view> &read_lines(char comment = '\0');
 
     /**
      * @brief Return the number of parsed lines.
@@ -69,16 +98,10 @@ class file_reader {
      */
     void open_memory_mapped_file(std::string_view filename);
 #endif
-
     /*
      * Read the file using a normal std::ifstream.
      */
     void open_file(std::string_view filename);
-
-    /*
-     * Split the file into its lines, ignoring empty lines and lines starting with a comment.
-     */
-    void parse_lines(char comment);
 
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
     int file_descriptor_{ 0 };
@@ -87,6 +110,9 @@ class file_reader {
     char *file_content_{ nullptr };
     std::streamsize num_bytes_{ 0 };
     std::vector<std::string_view> lines_{};
+    bool is_open_{ false };
 };
 
-}  // namespace plssvm::detail
+}  // namespace plssvm::detail::io
+
+#endif  // PLSSVM_DETAIL_IO_FILE_READER_HPP_
