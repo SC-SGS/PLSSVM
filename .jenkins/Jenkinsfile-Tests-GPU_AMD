@@ -116,7 +116,7 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                    if [ ! -d "llvm" ]; then
+                    if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
                         cd llvm
                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
@@ -124,7 +124,6 @@ pipeline {
                         cmake --build build -- omp
                         cmake --build build -- install
                     fi
-                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git
                     '''
             }
         }
