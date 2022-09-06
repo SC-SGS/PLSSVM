@@ -57,7 +57,7 @@ struct parameter {
     /**
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
-    parameter() = default;
+    constexpr parameter() noexcept = default;
     /**
      * @brief Construct a parameter set by explicitly overwriting the SVM parameters' default values.
      * @param[in] kernel_p the kernel type: linear, polynomial, or radial-basis functions (rbf)
@@ -66,7 +66,7 @@ struct parameter {
      * @param[in] coef0_p the coef0 used in the polynomial kernel function
      * @param[in] cost_p the cost used in all kernel functions
      */
-    parameter(const kernel_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) {
+    constexpr parameter(const kernel_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept {
         // not in member initializer list since we want to override the default value
         kernel = kernel_p;
         degree = degree_p;
@@ -92,7 +92,7 @@ struct parameter {
      * @return the `plssvm::parameter` values converted to @p U
      */
     template <typename U>
-    explicit operator parameter<U>() {
+    constexpr explicit operator parameter<U>() const {
         if constexpr (std::is_same_v<U, real_type>) {
             // no special conversions needed
             return parameter<real_type>{ *this };
