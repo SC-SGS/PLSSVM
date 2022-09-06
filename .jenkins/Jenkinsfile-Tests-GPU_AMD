@@ -133,7 +133,7 @@ pipeline {
             steps{
                 sh '''
 		    if [ ! -d "$WORKSPACE/hipsycl-install " ]; then
-                        mkdir ${env.WORKSPACE}/hipsycl-install
+                        mkdir $WORKSPACE/hipsycl-install
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git
                         cd hipSYCL
                         mkdir build
