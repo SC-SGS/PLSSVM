@@ -69,6 +69,19 @@ class invalid_parameter_exception : public exception {
 };
 
 /**
+ * @brief Exception type thrown if the file_reader is used inappropriately (e.g., if two files should be opened at the same time).
+ */
+class file_reader_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit file_reader_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
  * @brief Exception type thrown if the provided file couldn't be found.
  */
 class file_not_found_exception : public exception {

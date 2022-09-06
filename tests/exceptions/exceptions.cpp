@@ -29,7 +29,8 @@ Exception dummy(const std::string &msg) {
 }
 
 // enumerate all custom exception types; ATTENTION: don't forget to also specialize the PLSSVM_CREATE_EXCEPTION_TYPE_NAME macro if a new exception type is added
-using exception_types = ::testing::Types<plssvm::exception, plssvm::invalid_parameter_exception, plssvm::file_not_found_exception, plssvm::invalid_file_format_exception,
+using exception_types = ::testing::Types<plssvm::exception, plssvm::invalid_parameter_exception, plssvm::file_reader_exception,
+                                         plssvm::file_not_found_exception, plssvm::invalid_file_format_exception,
                                          plssvm::unsupported_backend_exception, plssvm::unsupported_kernel_type_exception, plssvm::gpu_device_ptr_exception>;
 
 template <typename T>
