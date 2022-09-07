@@ -291,33 +291,33 @@ pipeline {
         }
         // Debug
         // HIP backend
-        stage('Build PLSSVM Debug - HIP') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        mkdir -p build/Debug_HIP
-                        cd build/Debug_HIP
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Debug - HIP') {
-            when {
-                expression { false }
-            }
-            steps {
-                dir('plssvm/build/Debug_HIP') {
-                    warnError('Debug tests failed!') {
-                        sh '''
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('Build PLSSVM Debug - HIP') {
+        //     steps {
+        //         dir('plssvm') {
+        //             sh '''
+        //                 mkdir -p build/Debug_HIP
+        //                 cd build/Debug_HIP
+        //                 rm -rf *
+        //                 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+        //                 make -j4
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('Run Tests Debug - HIP') {
+        //     when {
+        //         expression { false }
+        //     }
+        //     steps {
+        //         dir('plssvm/build/Debug_HIP') {
+        //             warnError('Debug tests failed!') {
+        //                 sh '''
+        //                     ctest -j4 --no-compress-output -T Test
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
         // OpenCL backend
         stage('Build PLSSVM Debug - OpenCL') {
             steps {
