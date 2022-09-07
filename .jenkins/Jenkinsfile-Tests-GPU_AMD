@@ -163,9 +163,6 @@ pipeline {
             }
         }
         stage('Run Tests Release - HIP') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Release_HIP') {
                     warnError('Release tests failed!') {
@@ -191,9 +188,6 @@ pipeline {
             }
         }
         stage('Run Tests Release - OpenCL') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
@@ -219,9 +213,6 @@ pipeline {
             }
         }
         stage('Run Tests Release - hipSYCL') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Release_hipSYCL') {
                     warnError('Release tests failed!') {
@@ -247,9 +238,6 @@ pipeline {
             }
         }
         stage('Run Tests Release - DPC++') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Release_DPCPP') {
                     warnError('Release tests failed!') {
@@ -276,9 +264,6 @@ pipeline {
             }
         }
         stage('Run Tests Release - All Available') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Release') {
                     warnError('Release tests failed!') {
@@ -305,9 +290,6 @@ pipeline {
         //     }
         // }
         // stage('Run Tests Debug - HIP') {
-        //     when {
-        //         expression { false }
-        //     }
         //     steps {
         //         dir('plssvm/build/Debug_HIP') {
         //             warnError('Debug tests failed!') {
@@ -333,9 +315,6 @@ pipeline {
             }
         }
         stage('Run Tests Debug - OpenCL') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Debug_OpenCL') {
                     warnError('Debug tests failed!') {
@@ -361,9 +340,6 @@ pipeline {
             }
         }
         stage('Run Tests Debug - hipSYCL') {
-            when {
-                expression { false }
-            }
             steps {
                 dir('plssvm/build/Debug_hipSYCL') {
                     warnError('Debug tests failed!') {
