@@ -101,9 +101,11 @@ pipeline {
 
         stage('set ROCm PATHs') {
             steps{
-                env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/LD_LIBRARY_PATHhip/lib:${env.LD_LIBRARY_PATH}"
-                env.CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
-                env.CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
+                script{
+                    env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/LD_LIBRARY_PATHhip/lib:${env.LD_LIBRARY_PATH}"
+                    env.CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
+                    env.CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
+                }
             }
         }
         stage('install ninja and cmake') {
@@ -206,7 +208,7 @@ pipeline {
                 dir('plssvm/build/Release_HIP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            // ctest -j4 --no-compress-output -T Test
+                            ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -231,7 +233,7 @@ pipeline {
                 dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            // ctest -j4 --no-compress-output -T Test
+                            ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -259,7 +261,7 @@ pipeline {
                 dir('plssvm/build/Release_hipSYCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            // ctest -j4 --no-compress-output -T Test
+                            ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -284,7 +286,7 @@ pipeline {
                 dir('plssvm/build/Release_DPCPP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            // ctest -j4 --no-compress-output -T Test
+                            ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
