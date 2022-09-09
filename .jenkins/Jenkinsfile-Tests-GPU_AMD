@@ -147,6 +147,8 @@ pipeline {
 
                     env.PATH="$DPCPP_PATH/bin:$WORKSPACE:$PATH"
 
+                    env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+
                 }
 
             }
