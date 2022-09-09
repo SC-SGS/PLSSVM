@@ -149,7 +149,7 @@ pipeline {
 
                     env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
 
-                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:${CPLUS_INCLUDE_PATH}
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:$CPLUS_INCLUDE_PATH"
 
                 }
 
