@@ -235,6 +235,7 @@ pipeline {
                     sh '''
                     echo $env.CPLUS_INCLUDE_PATH
                     echo $CPLUS_INCLUDE_PATH
+                    echo $PATH
                         mkdir -p build/Release_hipSYCL
                         cd build/Release_hipSYCL
                         rm -rf *
