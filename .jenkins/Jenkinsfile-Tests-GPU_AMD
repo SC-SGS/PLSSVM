@@ -47,11 +47,11 @@ pipeline {
 
         PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906" // TODO: remove when no longer needed
 
-        // ROCM / HIP
-        ROCM_PATH = "/opt/rocm-5.2.0"
-        LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-        CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
-        CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
+        // // ROCM / HIP
+        // ROCM_PATH = "/opt/rocm-5.2.0"
+        // LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+        // CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
+        // CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
@@ -141,12 +141,15 @@ pipeline {
                         cmake --build build -- install
                     fi
 
-                    export env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
-                    export env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$LD_LIBRARY_PATH"
-                    export env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:$CPLUS_INCLUDE_PATH"
-                    export env.PATH="$DPCPP_PATH/bin:$WORKSPACE:$PATH"
-                    export env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                    echo $PATH
                 '''
+                script{
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$LD_LIBRARY_PATH"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:${CPLUS_INCLUDE_PATH}"
+                    env.PATH="$DPCPP_PATH/bin:$WORKSPACE:$PATH"
+                    env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                }
 
             }
         }
