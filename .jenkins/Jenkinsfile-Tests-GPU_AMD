@@ -118,9 +118,9 @@ pipeline {
                         rm cmake-3.24.1-linux-x86_64.tar.gz*
                     fi
 
-                         PATH = "$WORKSPACE:$PATH"
+                        export PATH="$WORKSPACE:$PATH"
 
-                         PATH = "$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        export PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
                     '''
 
             }
