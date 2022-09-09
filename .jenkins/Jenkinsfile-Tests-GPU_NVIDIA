@@ -120,7 +120,6 @@ pipeline {
             steps{
                 sh '''
                     module load cuda/11.2.2
-                    # rm -rf llvm
 		            if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm
                         cd llvm
@@ -145,8 +144,9 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                    rm -rf $HIPSYCL_PATH
                     rm -rf hipSYCL
+                    rm -rf $HIPSYCL_PATH
+                    module load cuda/11.2.2
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL
