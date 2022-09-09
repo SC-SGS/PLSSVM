@@ -145,7 +145,7 @@ pipeline {
                 '''
                 script{
                     env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
-                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$LD_LIBRARY_PATH"
+                    LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$LD_LIBRARY_PATH"
 
                 }
 
