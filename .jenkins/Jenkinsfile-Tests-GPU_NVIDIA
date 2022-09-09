@@ -120,7 +120,7 @@ pipeline {
             steps{
                 sh '''
                     module load cuda/11.2.2
-                    rm -rf llvm
+                    # rm -rf llvm
 		            if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm
                         cd llvm
@@ -129,13 +129,12 @@ pipeline {
                         cmake --build build -- omp
                         cmake --build build -- install
                     fi
-
                 '''
                 script{
                     env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
                     env.PATH="$DPCPP_PATH/bin:$PATH"
                     env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
-                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
                     env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
                 }
 
