@@ -119,10 +119,10 @@ pipeline {
                     fi
 
                         // ninja
-                        PATH = "${env.WORKSPACE}:$PATH"
+                        export PATH="${env.WORKSPACE}:$PATH"
 
                         // cmake
-                        PATH = "${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        export PATH="${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH"
                     '''
 
             }
@@ -142,13 +142,13 @@ pipeline {
                         cmake --build build -- install
                     fi
 
+                    echo $PATH
 
-
-                    LIBRARY_PATH = "${DPCPP_PATH}/lib:${DPCPP_PATH}/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${LIBRARY_PATH}"
-                    LD_LIBRARY_PATH = "${DPCPP_PATH}/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${DPCPP_PATH}/install/lib:${DPCPP_PATH}/lib:${LD_LIBRARY_PATH}"
-                    env.CPLUS_INCLUDE_PATH = "${DPCPP_PATH}/projects/openmp/runtime/src:${DPCPP_PATH}/install/include/sycl:${CPLUS_INCLUDE_PATH}"
-                    PATH = "${DPCPP_PATH}/bin:${WORKSPACE}:${PATH}"
-                    PLSSVM_SYCL_DPCPP_INCLUDE_DIR = "${DPCPP_PATH}/install/include" // TODO: remove when no longer needed
+                    export LIBRARY_PATH="${DPCPP_PATH}/lib:${DPCPP_PATH}/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${LIBRARY_PATH}"
+                    export LD_LIBRARY_PATH="${DPCPP_PATH}/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${DPCPP_PATH}/install/lib:${DPCPP_PATH}/lib:${LD_LIBRARY_PATH}"
+                    export env.CPLUS_INCLUDE_PATH="${DPCPP_PATH}/projects/openmp/runtime/src:${DPCPP_PATH}/install/include/sycl:${CPLUS_INCLUDE_PATH}"
+                    export PATH="${DPCPP_PATH}/bin:${WORKSPACE}:${PATH}"
+                    export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="${DPCPP_PATH}/install/include" // TODO: remove when no longer needed
                 '''
 
             }
