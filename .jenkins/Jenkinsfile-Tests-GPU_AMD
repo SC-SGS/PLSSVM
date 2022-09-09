@@ -141,7 +141,7 @@ pipeline {
                         cmake --build build -- install
                     fi
 
-                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$LIBRARY_PATH"
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
                     env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$LD_LIBRARY_PATH"
                     env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:$CPLUS_INCLUDE_PATH"
                     env.PATH="$DPCPP_PATH/bin:$WORKSPACE:$PATH"
