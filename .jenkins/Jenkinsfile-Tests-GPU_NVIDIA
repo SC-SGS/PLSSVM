@@ -190,7 +190,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                             # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -213,12 +213,11 @@ pipeline {
         }
         stage('Run Tests Release - OpenCL') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            cd build/Release_OpenCL
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -245,7 +244,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -272,7 +271,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -299,9 +298,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-
-                            cd build/Release
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -329,7 +326,7 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -356,8 +353,7 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            cd build/Debug_OpenCL
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -384,7 +380,7 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            # ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
