@@ -147,6 +147,7 @@ pipeline {
             steps{
                 sh '''
                     rm -rf $HIPSYCL_PATH
+                    rm -rf hipSYCL
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL
