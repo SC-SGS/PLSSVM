@@ -44,7 +44,6 @@ pipeline {
         WORKSPACE = "${env.WORKSPACE}"
         //LD_LIBRARY_PATH = "${env.LD_LIBRARY_PATH}"
         //CPLUS_INCLUDE_PATH = "${env.CPLUS_INCLUDE_PATH}"
-        PATH = "${env.PATH}"
 
         PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906" // TODO: remove when no longer needed
 
@@ -121,8 +120,8 @@ pipeline {
 
                     '''
                     script{
-                        PATH="$WORKSPACE:$PATH"
-                        PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        env.PATH="$WORKSPACE:$PATH"
+                        env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
                     }
 
             }
