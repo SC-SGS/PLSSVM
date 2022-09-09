@@ -119,10 +119,10 @@ pipeline {
                     fi
 
                         // ninja
-                        export PATH="${env.WORKSPACE}:$PATH"
+                        export PATH="$WORKSPACE:$PATH"
 
                         // cmake
-                        export PATH="${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        export PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
                     '''
 
             }
