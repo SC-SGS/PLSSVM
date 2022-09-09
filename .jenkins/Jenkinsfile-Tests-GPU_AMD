@@ -117,15 +117,14 @@ pipeline {
                         tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
                         rm cmake-3.24.1-linux-x86_64.tar.gz*
                     fi
-                    '''
-                    script{
+
                         // ninja
                         PATH = "${env.WORKSPACE}:$PATH"
 
                         // cmake
                         PATH = "${env.WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                    '''
 
-                    }
             }
         }
 
@@ -142,15 +141,16 @@ pipeline {
                         cmake --build build -- omp
                         cmake --build build -- install
                     fi
-                    '''
 
-                script{
+
+
                     LIBRARY_PATH = "${DPCPP_PATH}/lib:${DPCPP_PATH}/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${LIBRARY_PATH}"
                     LD_LIBRARY_PATH = "${DPCPP_PATH}/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:${DPCPP_PATH}/install/lib:${DPCPP_PATH}/lib:${LD_LIBRARY_PATH}"
                     env.CPLUS_INCLUDE_PATH = "${DPCPP_PATH}/projects/openmp/runtime/src:${DPCPP_PATH}/install/include/sycl:${CPLUS_INCLUDE_PATH}"
                     PATH = "${DPCPP_PATH}/bin:${WORKSPACE}:${PATH}"
                     PLSSVM_SYCL_DPCPP_INCLUDE_DIR = "${DPCPP_PATH}/install/include" // TODO: remove when no longer needed
-                }
+                '''
+
             }
         }
 
