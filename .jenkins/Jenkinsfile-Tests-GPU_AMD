@@ -98,6 +98,14 @@ pipeline {
                 '''
             }
         }
+
+        stage('set ROCm PATHs') {
+            steps{
+                env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/LD_LIBRARY_PATHhip/lib:${env.LD_LIBRARY_PATH}"
+                env.CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
+                env.CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
+            }
+        }
         stage('install ninja and cmake') {
             steps{
                 sh '''
@@ -119,7 +127,7 @@ pipeline {
                     script{
                         env.PATH="$WORKSPACE:$PATH"
                         env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
-                        env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${env.LD_LIBRARY_PATH}"
+                        env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/LD_LIBRARY_PATHhip/lib:${env.LD_LIBRARY_PATH}"
                         env.CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
                         env.CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
                     }
