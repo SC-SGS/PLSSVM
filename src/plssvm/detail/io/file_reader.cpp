@@ -22,6 +22,7 @@
     #include <unistd.h>    // close
 #endif
 
+#include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
 #include <iostream>     // std::cerr, std::endl
@@ -31,7 +32,15 @@
 
 namespace plssvm::detail::io {
 
+file_reader::file_reader(const char *filename) {
+    // open the provided file
+    this->open(filename);
+}
 file_reader::file_reader(const std::string &filename) {
+    // open the provided file
+    this->open(filename);
+}
+file_reader::file_reader(const std::filesystem::path &filename) {
     // open the provided file
     this->open(filename);
 }
@@ -41,7 +50,7 @@ file_reader::~file_reader() {
     this->close();
 }
 
-void file_reader::open(const std::string &filename) {
+void file_reader::open(const char *filename) {
     // no other file might be currently open in this file_reader
     if (this->is_open()) {
         throw file_reader_exception{ "This file_reader is already associated to a file!" };
@@ -57,6 +66,15 @@ void file_reader::open(const std::string &filename) {
 
     is_open_ = true;
 }
+void file_reader::open(const std::string &filename) {
+    // open the provided file
+    this->open(filename.c_str());
+}
+void file_reader::open(const std::filesystem::path &filename) {
+    // open the provided file
+    this->open(filename.string().c_str());
+}
+
 bool file_reader::is_open() const noexcept {
     return is_open_;
 }
@@ -69,16 +87,22 @@ void file_reader::close() {
             // close file descriptor
             ::close(file_descriptor_);
         }
+        file_descriptor_ = 0;
         file_content_ = nullptr;
+        must_unmap_file_ = false;
 #endif
         // delete allocated buffer (deleting nullptr is a no-op)
         delete[] file_content_;
+        num_bytes_ = 0;
+
+        // clear lines vector
+        lines_.clear();
 
         is_open_ = false;
     }
 }
 
-const std::vector<std::string_view> &file_reader::read_lines(char comment) {
+const std::vector<std::string_view> &file_reader::read_lines(const std::string_view comment) {
     if (!this->is_open()) {
         throw file_reader_exception{ "This file_reader is currently not associated to a file!" };
     }
@@ -107,6 +131,9 @@ const std::vector<std::string_view> &file_reader::read_lines(char comment) {
 
     return lines_;
 }
+const std::vector<std::string_view> &file_reader::read_lines(const char comment) {
+    return this->read_lines(std::string_view{ &comment, 1 }); // TODO: check if it produces the desired results
+}
 
 typename std::vector<std::string_view>::size_type file_reader::num_lines() const noexcept {
     return lines_.size();
@@ -120,9 +147,9 @@ const std::vector<std::string_view> &file_reader::lines() const noexcept {
 }
 
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
-void file_reader::open_memory_mapped_file(const std::string_view filename) {
+void file_reader::open_memory_mapped_file(const char *filename) {
     // open the file
-    file_descriptor_ = ::open(filename.data(), O_RDONLY);
+    file_descriptor_ = ::open(filename, O_RDONLY);
     struct stat attr {};
     // check if file could be opened
     if (fstat(file_descriptor_, &attr) == -1) {
@@ -151,9 +178,9 @@ void file_reader::open_memory_mapped_file(const std::string_view filename) {
 }
 #endif
 
-void file_reader::open_file(const std::string_view filename) {
+void file_reader::open_file(const char *filename) {
     // open the file
-    std::ifstream f{ filename.data() };
+    std::ifstream f{ filename };
     if (f.fail()) {
         throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
     }
