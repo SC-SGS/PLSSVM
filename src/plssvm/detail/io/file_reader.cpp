@@ -27,7 +27,10 @@
 #include <ios>          // std::ios, std::streamsize
 #include <iostream>     // std::cerr, std::endl
 #include <limits>       // std::numeric_limits
+#include <memory>       // std::addressof
+#include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <utility>      // std::exchange, std::move, std::swap
 #include <vector>       // std::vector
 
 namespace plssvm::detail::io {
@@ -48,6 +51,27 @@ file_reader::file_reader(const std::filesystem::path &filename) {
 file_reader::~file_reader() {
     // close the file at the end
     this->close();
+}
+
+file_reader::file_reader(file_reader &&other) noexcept :
+#if defined(PLSSVM_HAS_MEMORY_MAPPING)
+    file_descriptor_{ std::exchange(other.file_descriptor_, 0) },
+    must_unmap_file_{ std::exchange(other.must_unmap_file_, false) },
+#endif
+    file_content_{ std::exchange(other.file_content_, nullptr) },
+    num_bytes_{ std::exchange(other.num_bytes_, 0) },
+    lines_{ std::move(other.lines_) },
+    is_open_{ std::exchange(other.is_open_, false) } {
+}
+
+file_reader &file_reader::operator=(file_reader &&other) noexcept {
+    // guard against self assignment
+    if (this != std::addressof(other)) {
+        // use copy and swap idiom
+        file_reader tmp{ std::move(other) };
+        this->swap(tmp);
+    }
+    return *this;
 }
 
 void file_reader::open(const char *filename) {
@@ -144,7 +168,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     return lines_;
 }
 const std::vector<std::string_view> &file_reader::read_lines(const char comment) {
-    return this->read_lines(std::string_view{ &comment, 1 });  // TODO: check if it produces the desired results
+    return this->read_lines(std::string_view{ &comment, 1 });
 }
 
 typename std::vector<std::string_view>::size_type file_reader::num_lines() const noexcept {

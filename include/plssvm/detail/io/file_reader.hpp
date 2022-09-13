@@ -63,7 +63,7 @@ class file_reader {
     /**
      * @brief Default the move-constructor since file_reader is move-only.
      */
-    file_reader(file_reader &&) noexcept = default;
+    file_reader(file_reader &&) noexcept;
     /**
      * @brief Delete the copy-assignment operator since file_reader is move-only.
      * @return *this
@@ -73,7 +73,7 @@ class file_reader {
      * @brief Default the move-assignment operator since file_reader is move-only.
      * @return *this
      */
-    file_reader &operator=(file_reader &&) noexcept = default;
+    file_reader &operator=(file_reader &&) noexcept;
 
     /**
      * @brief Associates the current file_reader with the file denoted by @p filename, i.e., opens the file @p filename (possible memory mapping it).
@@ -170,7 +170,7 @@ class file_reader {
     /// `true` if the file could successfully be memory mapped and, therefore, must also be unmapped at the end, `false` otherwise.
     bool must_unmap_file_{ false };
 #endif
-    /// The content of the file. Pointer to the memory mapped area or to a separately allocated memory area holding the file's content.
+    /// The content of the file. Pointer to the memory mapped area or to a separately allocated memory area holding the file's content. If the file is empty, corresponds to a `nullptr`!
     char *file_content_{ nullptr };
     /// The number of bytes stored in file_content_.
     std::streamsize num_bytes_{ 0 };
