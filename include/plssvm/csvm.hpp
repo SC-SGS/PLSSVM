@@ -166,7 +166,7 @@ csvm<T>::csvm(kernel_type kernel, Args&&... named_args) {
     static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
 
     // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
-    const auto print_warning_if_not_default = [kernel](const auto val, const std::string_view param_name) {
+    [[maybe_unused]] const auto print_warning_if_not_default = [kernel](const auto val, const std::string_view param_name) {
         if (!val.is_default()) {
             fmt::print(stderr, "{} parameter provided, which is not used in the {} kernel ({})!\n", param_name, kernel, kernel_type_to_math_string(kernel));
         }
