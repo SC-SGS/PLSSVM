@@ -114,10 +114,10 @@ template <typename real_type>
  */
 template <typename real_type>
 [[nodiscard]] inline std::vector<real_type> transform_to_layout(const layout_type layout, const std::vector<std::vector<real_type>> &matrix, const std::size_t boundary_size, const std::size_t num_points) {
-    const typename std::vector<real_type>::size_type num_features = matrix.front().size();
     // perform some sanity checks
     PLSSVM_ASSERT(!matrix.empty(), "Matrix is empty!");
     PLSSVM_ASSERT(num_points <= matrix.size(), "Number of data points to transform can not exceed matrix size!");
+    const typename std::vector<real_type>::size_type num_features = matrix.front().size();
 #if defined(PLSSVM_ASSERT_ENABLED)
     const bool has_same_num_features = std::all_of(matrix.begin(), matrix.end(), [=](const std::vector<real_type> &point) { return point.size() == num_features; });
     PLSSVM_ASSERT(has_same_num_features, "Feature sizes mismatch! All features should have size {}.", num_features);
