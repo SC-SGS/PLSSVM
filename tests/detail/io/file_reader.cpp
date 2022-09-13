@@ -82,11 +82,12 @@ TEST(FileReader, move_assign) {
     EXPECT_EQ(reader1.buffer(), nullptr);
 }
 
-// the floating point types to test
-using open_paramete_types = ::testing::Types<const char *, std::string, std::filesystem::path>;
 
 template <typename T>
 class FileReaderConstructWithOpen : public ::testing::Test {};
+
+// the input filename types to test
+using open_paramete_types = ::testing::Types<const char *, std::string, std::filesystem::path>;
 TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_paramete_types);
 
 TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
