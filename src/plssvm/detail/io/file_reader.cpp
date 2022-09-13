@@ -102,6 +102,18 @@ void file_reader::close() {
     }
 }
 
+void file_reader::swap(file_reader &other) {
+    using std::swap;
+#if defined(PLSSVM_HAS_MEMORY_MAPPING)
+    swap(file_descriptor_, other.file_descriptor_);
+    swap(must_unmap_file_, other.must_unmap_file_);
+#endif
+    swap(file_content_, other.file_content_);
+    swap(num_bytes_, other.num_bytes_);
+    swap(lines_, other.lines_);
+    swap(is_open_, other.is_open_);
+}
+
 const std::vector<std::string_view> &file_reader::read_lines(const std::string_view comment) {
     if (!this->is_open()) {
         throw file_reader_exception{ "This file_reader is currently not associated to a file!" };
@@ -132,7 +144,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     return lines_;
 }
 const std::vector<std::string_view> &file_reader::read_lines(const char comment) {
-    return this->read_lines(std::string_view{ &comment, 1 }); // TODO: check if it produces the desired results
+    return this->read_lines(std::string_view{ &comment, 1 });  // TODO: check if it produces the desired results
 }
 
 typename std::vector<std::string_view>::size_type file_reader::num_lines() const noexcept {
@@ -144,6 +156,9 @@ std::string_view file_reader::line(const typename std::vector<std::string_view>:
 }
 const std::vector<std::string_view> &file_reader::lines() const noexcept {
     return lines_;
+}
+const char *file_reader::buffer() const noexcept {
+    return file_content_;
 }
 
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
@@ -202,6 +217,10 @@ void file_reader::open_file(const char *filename) {
             throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
         }
     }
+}
+
+void swap(file_reader &lhs, file_reader &rhs) {
+    lhs.swap(rhs);
 }
 
 }  // namespace plssvm::detail::io
