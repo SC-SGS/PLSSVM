@@ -22,6 +22,7 @@
 #include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::remove
 #include <string>      // std::string
+#include <tuple>       // std::ignore
 #include <utility>     // std::pair
 #include <vector>      // std::vector
 
@@ -44,12 +45,10 @@ TYPED_TEST_SUITE(ScalingFactorsReadDeathTest, floating_point_types);
 
 TYPED_TEST(ScalingFactorsRead, read) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
     // parse scaling factors!
-    plssvm::detail::io::read_scaling_factors(PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt", scaling_interval, scaling_factors);
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
+    reader.read_lines('#');
+    const auto &[scaling_interval, scaling_factors] = plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader);
 
     // check for correctness
     // scaling interval
@@ -69,12 +68,11 @@ TYPED_TEST(ScalingFactorsRead, read) {
 }
 TYPED_TEST(ScalingFactorsRead, read_no_scaling_factors) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
 
     // parse scaling factors!
-    plssvm::detail::io::read_scaling_factors(PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt", scaling_interval, scaling_factors);
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt" };
+    reader.read_lines('#');
+    const auto &[scaling_interval, scaling_factors] = plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader);
 
     // check for correctness
     // scaling interval
@@ -85,121 +83,86 @@ TYPED_TEST(ScalingFactorsRead, read_no_scaling_factors) {
 }
 TYPED_TEST(ScalingFactorsRead, too_many_scaling_interval_values) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_interval_values.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 3 were given!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_interval_values.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 3 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, too_few_scaling_interval_values) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_interval_values.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 1 were given!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_interval_values.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 1 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, no_header) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/no_header.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "The first line must only contain an 'x', but is \"-1.4 2.6\"!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/no_header.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "The first line must only contain an 'x', but is \"-1.4 2.6\"!");
 }
 TYPED_TEST(ScalingFactorsRead, too_few_lines) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_lines.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "At least two lines must be present, but only 1 were given!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_lines.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "At least two lines must be present, but only 1 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, empty) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/empty.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "At least two lines must be present, but only 0 were given!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "At least two lines must be present, but only 0 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, too_few_scaling_factor_values) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_factor_values.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "Each line must contain exactly three values, but 2 were given!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_factor_values.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "Each line must contain exactly three values, but 2 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, too_many_scaling_factor_values) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_factor_values.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "Each line must contain exactly three values, but 4 were given!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_factor_values.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "Each line must contain exactly three values, but 4 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, zero_based_scaling_factors) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/zero_based_scaling_factors.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), plssvm::invalid_file_format_exception, "The scaling factors must be provided one-based, but are zero-based!");
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/zero_based_scaling_factors.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "The scaling factors must be provided one-based, but are zero-based!");
 }
 TYPED_TEST(ScalingFactorsRead, invalid_number) {
     using real_type = TypeParam;
-    // create placeholder for the output parameters
-    std::pair<real_type, real_type> scaling_interval{};
-    std::vector<factors<real_type>> scaling_factors{};
-
-    // file to be used
-    const std::string filename = PLSSVM_TEST_PATH "/data/scaling_factors/invalid/invalid_number.txt";
 
     // parse scaling factors!
-    EXPECT_THROW_WHAT(plssvm::detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<real_type>()));
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/invalid_number.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<real_type>()));
 }
 
-TYPED_TEST(ScalingFactorsReadDeathTest, read_with_already_provided_scaling_factors) {
+TYPED_TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
     using real_type = TypeParam;
     // define data to write
     std::pair<real_type, real_type> interval{ -1.5, 1.5 };
     std::vector<factors<real_type>> scaling_factors{ factors<real_type>{} };  // at least one scaling factor must be given!
 
     // create temporary file containing the scaling factors
-    EXPECT_DEATH(plssvm::detail::io::read_scaling_factors("", interval, scaling_factors), "1 scaling factors are already provided!");
+    plssvm::detail::io::file_reader reader{};
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), "The file_reader is currently not associated with a file!");
 }
 
 template <typename T>

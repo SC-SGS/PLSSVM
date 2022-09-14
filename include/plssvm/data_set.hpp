@@ -540,8 +540,11 @@ data_set<T, U>::scaling::scaling(const real_type lower, const real_type upper) :
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const std::string &filename) {
+    detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+
     // read scaling values from file
-    detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors);
+    std::tie(scaling_interval, scaling_factors) = detail::io::parse_scaling_factors<real_type, factors>(reader);
 }
 
 template <typename T, typename U>
