@@ -41,7 +41,7 @@ TEST(FileReader, default_construct) {
 
 TEST(FileReader, move_construct) {
     // construct first file_reader
-    plssvm::detail::io::file_reader reader1{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    plssvm::detail::io::file_reader reader1{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     reader1.read_lines('#');
 
     // move-construct second file_reader
@@ -62,7 +62,7 @@ TEST(FileReader, move_construct) {
 
 TEST(FileReader, move_assign) {
     // construct first file_reader
-    plssvm::detail::io::file_reader reader1{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    plssvm::detail::io::file_reader reader1{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     reader1.read_lines('#');
 
     // default-construct second file_reader and move-assign reader1 to it
@@ -92,7 +92,7 @@ TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_paramete_types);
 
 TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
     // create file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     // construct a file_reader
     plssvm::detail::io::file_reader reader{ filename };
 
@@ -126,7 +126,7 @@ TYPED_TEST_SUITE(FileReaderOpen, open_paramete_types);
 
 TYPED_TEST(FileReaderOpen, non_empty_file) {
     // create default constructed file reader and open it using the file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);
@@ -184,7 +184,7 @@ TEST(FileReader, is_open) {
 
 TEST(FileReader, close) {
     // create a new file_reader and associate it to a file
-    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     ASSERT_TRUE(reader.is_open());
 
     // close the file
@@ -198,7 +198,7 @@ TEST(FileReader, close) {
 }
 TEST(FileReader, close_twice) {
     // create a new file_reader and associate it to a file
-    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     ASSERT_TRUE(reader.is_open());
 
     // close the file twice should do no harm
@@ -215,7 +215,7 @@ TEST(FileReader, close_twice) {
 TEST(FileReader, swap_member_function) {
     // create two file readers
     plssvm::detail::io::file_reader reader1{};
-    plssvm::detail::io::file_reader reader2{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    plssvm::detail::io::file_reader reader2{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     reader2.read_lines('#');
 
     // swap the two file readers
@@ -250,7 +250,7 @@ const std::vector<std::tuple<std::string, char, std::vector<std::string_view>>> 
                                  "0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1",
                                  "{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}",
                                  "{0 1.88494043717792, 1 1.00518564317278263, 2 0.298499933047586044, 3 1.6464627048813514, 4 -1}" }),
-    std::make_tuple(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm", '#', std::vector<std::string_view>{
+    std::make_tuple(PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm", '#', std::vector<std::string_view>{
                                  "# comment",
                                  "1 1:-1.117827500607882 2:-2.9087188881250993 3:0.66638344270039144 4:1.0978832703949288",
                                  "1 1:-0.5282118298909262 2:-0.335880984968183973 3:0.51687296029754564 4:0.54604461446026",
@@ -363,7 +363,7 @@ INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLinesDeathTest, ::testing::Values
 TEST(FileReader, swap_free_function) {
     // create two file readers
     plssvm::detail::io::file_reader reader1{};
-    plssvm::detail::io::file_reader reader2{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    plssvm::detail::io::file_reader reader2{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     reader2.read_lines('#');
 
     // swap the two file readers
