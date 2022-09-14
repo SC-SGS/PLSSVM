@@ -74,32 +74,38 @@ void read_scaling_factors(const std::string &filename, std::pair<real_type, real
     // parse scaling factors
     std::exception_ptr parallel_exception;
     scaling_factors.resize(reader.num_lines() - 2);
-    #pragma omp parallel for default(none) shared(parallel_exception, scaling_factors, reader)
-    for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
-        try {
-            // parse the current line
-            const std::string_view line = reader.line(i + 2);
-            const std::vector<real_type> values = detail::split_as<real_type>(line);
-            // check if the line contains the correct number of values
-            if (values.size() != 3) {
-                throw invalid_file_format_exception{ fmt::format("Each line must contain exactly three values, but {} were given!", values.size()) };
-            }
-            // set the scaling factor based on the parsed values
-            auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
-            // check if we are one-based, i.e., no 0 must be read as feature value
-            if (feature == 0) {
-                throw invalid_file_format_exception{ "The scaling factors must be provided one-based, but are zero-based!" };
-            }
-            scaling_factors[i].feature = feature - 1;
-            scaling_factors[i].lower = values[1];
-            scaling_factors[i].upper = values[2];
-        } catch (const std::exception &) {
-            // catch first exception and store it
-            #pragma omp critical
-            {
-                if (!parallel_exception) {
-                    parallel_exception = std::current_exception();
+    #pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
+    {
+        #pragma omp for
+        for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
+            #pragma omp cancellation point for
+            try {
+                // parse the current line
+                const std::string_view line = reader.line(i + 2);
+                const std::vector<real_type> values = detail::split_as<real_type>(line);
+                // check if the line contains the correct number of values
+                if (values.size() != 3) {
+                    throw invalid_file_format_exception{ fmt::format("Each line must contain exactly three values, but {} were given!", values.size()) };
                 }
+                // set the scaling factor based on the parsed values
+                auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
+                // check if we are one-based, i.e., no 0 must be read as feature value
+                if (feature == 0) {
+                    throw invalid_file_format_exception{ "The scaling factors must be provided one-based, but are zero-based!" };
+                }
+                scaling_factors[i].feature = feature - 1;
+                scaling_factors[i].lower = values[1];
+                scaling_factors[i].upper = values[2];
+            } catch (const std::exception &) {
+                // catch first exception and store it
+                #pragma omp critical
+                {
+                    if (!parallel_exception) {
+                        parallel_exception = std::current_exception();
+                    }
+                }
+                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
+                #pragma omp cancel for
             }
         }
     }
