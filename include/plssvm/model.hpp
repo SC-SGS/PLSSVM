@@ -83,16 +83,16 @@ model<T, U>::model(const std::string &filename) {
     // parse libsvm header
     auto [header, data_labels] = detail::io::read_libsvm_model_header<real_type, label_type, size_type>(f, params_, rho_, num_support_vectors_);
 
-    // create support vectors and alpha pointer
-    num_features_ = detail::io::parse_libsvm_num_features(f, num_support_vectors_, header + 1);
+    // create support vectors and alpha vector
     std::vector<std::vector<real_type>> support_vectors(num_support_vectors_);
-    alpha_ptr_ = std::make_shared<std::vector<real_type>>(num_support_vectors_);
+    std::vector<real_type> alphas(num_support_vectors_);
 
     // parse libsvm model data
-    detail::io::read_libsvm_data(f, header + 1, support_vectors, *alpha_ptr_, num_features_);
+    std::tie(num_support_vectors_, num_features_, support_vectors, alphas) = detail::io::parse_libsvm_data<real_type, real_type>(f, header + 1);
 
     // create data set
     data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(data_labels) };
+    alpha_ptr_ = std::make_shared<decltype(alphas)>(std::move(alphas));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {

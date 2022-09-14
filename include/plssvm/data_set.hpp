@@ -462,28 +462,42 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
     }
 }
 
+// TODO: condense some functions since they are completely moved to the utility header
+
 template <typename T, typename U>
 void data_set<T, U>::read_libsvm_file(const std::string &filename) {
     detail::io::file_reader f{ filename };
     f.read_lines('#');
+//
+//    // parse sizes
+//    num_data_points_ = f.num_lines();
+//    num_features_ = detail::io::parse_libsvm_num_features(f, num_data_points_, 0);
+//
+//    std::vector<std::vector<real_type>> X(num_data_points_);
+//    std::vector<label_type> labels(num_data_points_);
+//
+//    // parse file
+//    const bool has_label = detail::io::read_libsvm_data(f, 0, X, labels, num_features_);
+//
+//    // move data to pointers
+//    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
+//    labels_ptr_ = std::make_shared<decltype(labels)>(std::move(labels));
+//
+//    // update shared pointer
+//    if (!has_label) {
+//        labels_ptr_ = nullptr;
+//    }
+    std::vector<std::vector<real_type>> X{};
+    std::vector<label_type> y{};
 
-    // parse sizes
-    num_data_points_ = f.num_lines();
-    num_features_ = detail::io::parse_libsvm_num_features(f, num_data_points_, 0);
-
-    std::vector<std::vector<real_type>> X(num_data_points_);
-    std::vector<label_type> labels(num_data_points_);
-
-    // parse file
-    const bool has_label = detail::io::read_libsvm_data(f, 0, X, labels, num_features_);
-
-    // move data to pointers
-    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
-    labels_ptr_ = std::make_shared<decltype(labels)>(std::move(labels));
+    std::tie(num_data_points_, num_features_, X, y) = detail::io::parse_libsvm_data<real_type, label_type>(f);
 
     // update shared pointer
-    if (!has_label) {
+    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
+    if (y.empty()) {
         labels_ptr_ = nullptr;
+    } else {
+        labels_ptr_ = std::make_shared<decltype(y)>(std::move(y));
     }
 }
 

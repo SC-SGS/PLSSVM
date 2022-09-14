@@ -9,6 +9,8 @@
  * @brief Implements parsing functions for the LIBSVM file format.
  */
 
+#ifndef PLSSVM_DETAIL_IO_LIBSVM_PARSING_HPP_
+#define PLSSVM_DETAIL_IO_LIBSVM_PARSING_HPP_
 #pragma once
 
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
@@ -16,9 +18,9 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "fmt/compile.h" // FMT_COMPILE
-#include "fmt/format.h"  // fmt::format, fmt::format_to
-#include "fmt/os.h"      // fmt::ostream
+#include "fmt/compile.h"  // FMT_COMPILE
+#include "fmt/format.h"   // fmt::format, fmt::format_to
+#include "fmt/os.h"       // fmt::ostream
 
 #include <algorithm>    // std::max, std::min
 #include <cstddef>      // std::size_t
@@ -28,37 +30,46 @@
 #include <utility>      // std::move
 #include <vector>       // std::vector
 
-
 namespace plssvm::detail::io {
 
-inline std::size_t parse_libsvm_num_features(file_reader &reader, const std::size_t num_data_points, const std::size_t start) {
+// TODO: API
+inline std::size_t parse_libsvm_num_features(const std::vector<std::string_view> &lines, const std::size_t skipped_lines) {
     std::size_t num_features = 0;
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, parallel_exception, num_features) firstprivate(num_data_points, start)
+#pragma omp parallel default(none) shared(lines, parallel_exception, num_features) firstprivate(skipped_lines)
     {
-        #pragma omp for reduction(max : num_features)
-        for (std::size_t i = 0; i < num_data_points; ++i) {
-            #pragma omp cancellation point for
+#pragma omp for reduction(max \
+                          : num_features)
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+#pragma omp cancellation point for
             try {
-                std::string_view line = reader.line(i + start);
+                const std::string_view line = lines[i + skipped_lines];
 
                 // check index of last feature entry
-                std::string_view::size_type pos_colon = line.find_last_of(':');
+                const std::string_view::size_type pos_colon = line.find_last_of(':');
+                if (pos_colon == std::string_view::npos) {
+                    // no features could be found -> can't contribute to the number of feature calculation
+                    continue;
+                }
                 std::string_view::size_type pos_whitespace = line.find_last_of(' ', pos_colon);
+                if (pos_whitespace == std::string_view::npos) {
+                    // no whitespace BEFORE the last colon could be found
+                    // this may only happen if NO labels are given
+                    pos_whitespace = 0;
+                }
                 const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos_whitespace, pos_colon - pos_whitespace));
                 num_features = std::max<std::size_t>(num_features, index);
-
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
+// cancel parallel execution, needs env variable OMP_CANCELLATION=true
+#pragma omp cancel for
             }
         }
     }
@@ -68,33 +79,43 @@ inline std::size_t parse_libsvm_num_features(file_reader &reader, const std::siz
         std::rethrow_exception(parallel_exception);
     }
 
+    return num_features;
+}
+
+template <typename real_type, typename label_type>
+[[maybe_unused]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>>
+parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
+    // parse sizes
+    const std::size_t num_data_points = reader.num_lines();
+    const std::size_t num_features = parse_libsvm_num_features(reader.lines(), skipped_lines);
+
     // no features were parsed -> invalid file
     if (num_features == 0) {
         throw invalid_file_format_exception{ fmt::format("Can't parse file: no data points are given!") };
     }
 
-    return num_features;
-}
+    // create vector containing the data and label
+    std::vector<std::vector<real_type>> data(num_data_points);
+    std::vector<label_type> label(num_data_points);
 
-template <typename real_type, typename label_type>
-inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::vector<std::vector<real_type>> &X, std::vector<label_type> &y, const std::size_t num_features) {
     std::exception_ptr parallel_exception;
     bool has_label = true;
 
-    #pragma omp parallel default(none) shared(reader, start, X, y, parallel_exception, has_label) firstprivate(num_features)
+#pragma omp parallel default(none) shared(reader, skipped_lines, data, label, parallel_exception, has_label) firstprivate(num_features)
     {
-        #pragma omp for reduction(&& : has_label)
-        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < X.size(); ++i) {
-            #pragma omp cancellation point for
+#pragma omp for reduction(&& \
+                          : has_label)
+        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
+#pragma omp cancellation point for
             try {
-                std::string_view line = reader.line(i + start);
+                std::string_view line = reader.line(i + skipped_lines);
 
                 // check if class labels are present (not necessarily the case for test files)
                 std::string_view::size_type pos = line.find_first_of(" \n");
                 std::string_view::size_type first_colon = line.find_first_of(":\n");
                 if (first_colon >= pos) {
                     // get class or alpha
-                    y[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
+                    label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
                 } else {
                     has_label = false;
                     pos = 0;
@@ -125,17 +146,17 @@ inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::
                     pos = next_pos;
                 }
                 // move filled line to overall matrix
-                X[i] = std::move(vline);
+                data[i] = std::move(vline);
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
+// cancel parallel execution, needs env variable OMP_CANCELLATION=true
+#pragma omp cancel for
             }
         }
     }
@@ -145,9 +166,8 @@ inline bool read_libsvm_data(file_reader &reader, const std::size_t start, std::
         std::rethrow_exception(parallel_exception);
     }
 
-    return has_label;
+    return std::make_tuple(num_data_points, num_features, std::move(data), has_label ? std::move(label) : std::vector<label_type>{});
 }
-
 
 template <typename real_type, typename label_type, bool has_label>
 inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
@@ -161,7 +181,7 @@ inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vec
         static constexpr std::size_t CHARS_PER_BLOCK = 128;
         static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static char buffer[BUFFER_SIZE];
-        #pragma omp threadprivate(buffer)
+#pragma omp threadprivate(buffer)
 
         for (typename std::vector<real_type>::size_type j = 0; j < d.size(); j += BLOCK_SIZE) {
             char *ptr = buffer;
@@ -175,11 +195,11 @@ inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vec
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, X, y, format_libsvm_line)
+#pragma omp parallel default(none) shared(out, X, y, format_libsvm_line)
     {
         // all support vectors
         std::string out_string;
-        #pragma omp for schedule(dynamic) nowait
+#pragma omp for schedule(dynamic) nowait
         for (typename std::vector<real_type>::size_type i = 0; i < X.size(); ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format(FMT_COMPILE("{} "), y[i]));
@@ -187,7 +207,7 @@ inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vec
             format_libsvm_line(out_string, X[i]);
         }
 
-        #pragma omp critical
+#pragma omp critical
         out.print("{}", out_string);
     }
 }
@@ -202,4 +222,6 @@ inline void write_libsvm_data(fmt::ostream &out, const std::vector<std::vector<r
     write_libsvm_data_impl<real_type, real_type, false>(out, X, {});
 }
 
-}
+}  // namespace plssvm::detail::io
+
+#endif  // PLSSVM_DETAIL_IO_LIBSVM_PARSING_HPP_
