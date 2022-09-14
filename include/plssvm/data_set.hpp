@@ -526,11 +526,8 @@ data_set<T, U>::scaling::scaling(const real_type lower, const real_type upper) :
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const std::string &filename) {
-    detail::io::file_reader f{  filename };
-    f.read_lines('#');
-
     // read scaling values from file
-    detail::io::read_scaling_factors(f, scaling_interval, scaling_factors);
+    detail::io::read_scaling_factors(filename, scaling_interval, scaling_factors);
 }
 
 template <typename T, typename U>
@@ -541,10 +538,8 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    fmt::ostream out = fmt::output_file(filename);
-
     // write scaling values to file
-    detail::io::write_scaling_factors(out, scaling_interval, scaling_factors);
+    detail::io::write_scaling_factors(filename, scaling_interval, scaling_factors);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
