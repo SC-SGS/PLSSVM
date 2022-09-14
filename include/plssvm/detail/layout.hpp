@@ -68,7 +68,7 @@ template <typename real_type>
 [[nodiscard]] inline std::vector<real_type> transform_to_aos_layout(const std::vector<std::vector<real_type>> &matrix, const std::size_t boundary_size, const std::size_t num_points, const std::size_t num_features) {
     std::vector<real_type> vec(num_points * (num_features + boundary_size));
 
-#pragma omp parallel for collapse(2) default(none) shared(vec, matrix) firstprivate(num_features, num_points, boundary_size)
+    #pragma omp parallel for collapse(2) default(none) shared(vec, matrix) firstprivate(num_features, num_points, boundary_size)
     for (std::size_t row = 0; row < num_points; ++row) {
         for (std::size_t col = 0; col < num_features; ++col) {
             vec[row * (num_features + boundary_size) + col] = matrix[row][col];
@@ -92,7 +92,7 @@ template <typename real_type>
 [[nodiscard]] inline std::vector<real_type> transform_to_soa_layout(const std::vector<std::vector<real_type>> &matrix, const std::size_t boundary_size, const std::size_t num_points, const std::size_t num_features) {
     std::vector<real_type> vec(num_features * (num_points + boundary_size));
 
-#pragma omp parallel for collapse(2) default(none) shared(vec, matrix) firstprivate(num_features, num_points, boundary_size)
+    #pragma omp parallel for collapse(2) default(none) shared(vec, matrix) firstprivate(num_features, num_points, boundary_size)
     for (std::size_t col = 0; col < num_features; ++col) {
         for (std::size_t row = 0; row < num_points; ++row) {
             vec[col * (num_points + boundary_size) + row] = matrix[row][col];
