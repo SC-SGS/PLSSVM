@@ -38,6 +38,33 @@ using type_combinations_types = ::testing::Types<
     type_combinations<double, int>,
     type_combinations<double, std::string>>;
 
+
+class LIBSVMParseNumFeatures : public ::testing::TestWithParam<std::pair<std::string, std::size_t>> {};
+TEST_P(LIBSVMParseNumFeatures, num_features) {
+    const auto &[filename_part, num_features] = GetParam();
+
+    // parse the LIBSVM file
+    const std::string filename = fmt::format("{}{}", PLSSVM_TEST_PATH, filename_part);
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_EQ((plssvm::detail::io::parse_libsvm_num_features(reader.lines())), num_features);
+}
+INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
+                                                                  std::make_pair("/data/libsvm/5x4_int.libsvm", 4),
+                                                                  std::make_pair("/data/libsvm/5x4_sparse_string.libsvm", 4),
+                                                                  std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
+                                                                  std::make_pair("/data/libsvm/500x200.libsvm", 200),
+                                                                  std::make_pair("/data/empty.txt", 0)));
+
+TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/index_with_alpha_char_at_the_beginning.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_num_features(reader.lines())), plssvm::invalid_file_format_exception,
+                      "Can't convert ' !2' to a value of type unsigned long!");
+}
+
 template <typename T>
 class LIBSVMParseDense : public ::testing::Test {
   protected:
@@ -219,7 +246,7 @@ TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Can't convert ' !1' to a value of type unsigned long!");
+                      "Can't convert ' !2' to a value of type unsigned long!");
 }
 TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
     using current_real_type = typename TypeParam::real_type;
@@ -275,4 +302,26 @@ TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
                       "Inconsistent label specification found (some data points are labeled, others are not)!");
+}
+TYPED_TEST(LIBSVMParse, non_increasing_indices) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/non_increasing_indices.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
+}
+TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/non_strictly_increasing_indices.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "The features indices must be strictly increasing, but 2 is smaller or equal than 3!");
 }

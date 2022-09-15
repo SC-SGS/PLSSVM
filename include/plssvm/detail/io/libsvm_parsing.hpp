@@ -32,8 +32,7 @@
 
 namespace plssvm::detail::io {
 
-// TODO: API
-[[nodiscard]] inline std::size_t parse_libsvm_num_features(const std::vector<std::string_view> &lines, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::size_t parse_libsvm_num_features(const std::vector<std::string_view> &lines, const std::size_t skipped_lines = 0) {
     std::size_t num_features = 0;
     std::exception_ptr parallel_exception;
 
@@ -109,6 +108,7 @@ parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
 #pragma omp cancellation point for
             try {
                 std::string_view line = reader.line(i + skipped_lines);
+                unsigned long last_index = 0;
 
                 // check if class labels are present (not necessarily the case for test files)
                 std::string_view::size_type pos = line.find_first_of(" \n");
@@ -133,10 +133,17 @@ parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
 
                     // get index
                     auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+
                     // LIBSVM assumes a 1-based indexing -> if the parsed index is 0 this condition is violated
                     if (index == 0) {
                         throw invalid_file_format_exception{ "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!" };
                     }
+                    // the indices must be strictly increasing!
+                    if (last_index >= index) {
+                        throw invalid_file_format_exception{fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}!", index, last_index)};
+                    }
+                    last_index = index;
+
                     // since arrays start at 0, reduce 1 based index by one
                     --index;
                     pos = next_pos + 1;
