@@ -300,6 +300,13 @@ TEST_P(FileReaderLines, parse_lines_without_string_comments) {
     // no comments have been filtered (but newlines)
     EXPECT_EQ(reader.lines(), filter_lines(lines, "@ATTRIBUTE"));
 }
+TEST(FileReaderLines, parse_lines_without_associated_file) {
+    // create file_reader without associating it to a file
+    plssvm::detail::io::file_reader reader{};
+
+    // reading lines while no file is associated is impossible!
+    EXPECT_THROW_WHAT(reader.read_lines(), plssvm::file_reader_exception, "This file_reader is currently not associated to a file!");
+}
 TEST_P(FileReaderLines, num_lines) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file

@@ -10,6 +10,8 @@
 
 #include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
 
+#include "../utility.hpp"  // util::convert_to_string
+
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ
 
 #include <array>             // std::array
@@ -76,4 +78,20 @@ TEST(ExecutionRange, array) {
     check_execution_range(execution_range{ std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 1>{ 11 } }, std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 11, 1, 1 });
     check_execution_range(execution_range{ std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 2>{ 21, 22 } }, std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 21, 22, 1 });
     check_execution_range(execution_range{ std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 31, 32, 33 } }, std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 31, 32, 33 });
+}
+
+TEST(ExecutionRange, to_string) {
+    using plssvm::detail::execution_range;
+
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 11 }, { 11 } }), "grid: [11, 1, 1]; block: [11, 1, 1]");
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 11 }, { 21, 22 } }), "grid: [11, 1, 1]; block: [21, 22, 1]");
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 11 }, { 31, 32, 33 } }), "grid: [11, 1, 1]; block: [31, 32, 33]");
+
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 21, 22 }, { 11 } }), "grid: [21, 22, 1]; block: [11, 1, 1]");
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 21, 22 }, { 21, 22 } }), "grid: [21, 22, 1]; block: [21, 22, 1]");
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 21, 22 }, { 31, 32, 33 } }), "grid: [21, 22, 1]; block: [31, 32, 33]");
+
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 31, 32, 33 }, { 11 } }), "grid: [31, 32, 33]; block: [11, 1, 1]");
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 31, 32, 33 }, { 21, 22 } }), "grid: [31, 32, 33]; block: [21, 22, 1]");
+    EXPECT_EQ(util::convert_to_string(execution_range{ { 31, 32, 33 }, { 31, 32, 33 } }), "grid: [31, 32, 33]; block: [31, 32, 33]");
 }

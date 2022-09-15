@@ -62,6 +62,10 @@ TEST(KernelType, kernel_to_math_string) {
     EXPECT_EQ(plssvm::kernel_type_to_math_string(plssvm::kernel_type::polynomial), "(gamma*u'*v+coef0)^degree");
     EXPECT_EQ(plssvm::kernel_type_to_math_string(plssvm::kernel_type::rbf), "exp(-gamma*|u-v|^2)");
 }
+TEST(KernelType, kernel_to_math_string_unkown) {
+    // check conversion from an unknown plssvm::kernel_type to the (non-existing) math string
+    EXPECT_EQ(plssvm::kernel_type_to_math_string(static_cast<plssvm::kernel_type>(3)), "unknown");
+}
 
 template <typename T>
 std::vector<T> generate_random_vector(const std::size_t size) {

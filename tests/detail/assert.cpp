@@ -26,3 +26,13 @@ TEST(PLSSVMAssert, assert_false) {
 }
 
 #endif
+
+// check the internal check_assertion function
+TEST(PLSSVMAssert, check_assertion_true) {
+    // calling check assertion with true shouldn't do anything
+    plssvm::detail::check_assertion(true, "", plssvm::source_location::current(), "");
+}
+TEST(PLSSVMAssert, check_assertion_false) {
+    // calling check assertion with false should abort
+    EXPECT_DEATH(plssvm::detail::check_assertion(false, "cond", plssvm::source_location::current(), "msg {}", 1), "cond");
+}

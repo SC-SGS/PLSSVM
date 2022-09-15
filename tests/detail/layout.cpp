@@ -10,26 +10,41 @@
 
 #include "plssvm/detail/layout.hpp"
 
-#include "plssvm/constants.hpp"
-#include "utility.hpp"  // util::gtest_expect_enum_to_string_string_conversion
+#include "plssvm/constants.hpp"  // plssvm::verbose
+#include "utility.hpp"           // util::gtest_expect_enum_to_string_string_conversion
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH
 
+#include <sstream>  // std::istringstream
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-TEST(Layout, layout_enum_conversion) {
+// check whether the plssvm::detail::layout_type -> std::string conversions are correct
+TEST(Layout, to_string) {
     // check conversion to std::string
     util::gtest_expect_enum_to_string_string_conversion(plssvm::detail::layout_type::aos, "Array-of-Structs (AoS)");
     util::gtest_expect_enum_to_string_string_conversion(plssvm::detail::layout_type::soa, "Struct-of-Arrays (SoA)");
+}
+TEST(Layout, to_string_unknown) {
+    // check conversions to std::string from unknown layout_type
     util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::detail::layout_type>(2), "unknown");
+}
 
+// check whether the std::string -> plssvm::detail::layout_type conversions are correct
+TEST(Layout, from_string) {
     // check conversion from std::string
     util::gtest_expect_string_to_enum_conversion("aos", plssvm::detail::layout_type::aos);
     util::gtest_expect_string_to_enum_conversion("Array-of-Structs", plssvm::detail::layout_type::aos);
     util::gtest_expect_string_to_enum_conversion("soa", plssvm::detail::layout_type::soa);
     util::gtest_expect_string_to_enum_conversion("Struct-of-Arrays", plssvm::detail::layout_type::soa);
+}
+TEST(Layout, from_string_unknown) {
+    // foo isn't a valid layout_type
+    std::istringstream ss{ "foo" };
+    plssvm::detail::layout_type l;
+    ss >> l;
+    EXPECT_TRUE(ss.fail());
 }
 
 template <typename T>

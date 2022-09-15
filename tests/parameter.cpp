@@ -165,6 +165,8 @@ TYPED_TEST(Parameter, equivalent_member_function) {
     const plssvm::parameter<real_type> params5{ plssvm::kernel_type::linear, 2, -0.02, 0.5, 1.0 };
     const plssvm::parameter<real_type> params6{ plssvm::kernel_type::polynomial, 2, 0.02, 1.5, 1.0 };
     const plssvm::parameter<real_type> params7{ plssvm::kernel_type::polynomial, 2, 0.02, 1.5, 1.0 };
+    const plssvm::parameter<real_type> params8{ static_cast<plssvm::kernel_type>(3), 3, 0.2, -1.5, 0.1 };
+    const plssvm::parameter<real_type> params9{ static_cast<plssvm::kernel_type>(3), 3, 0.2, -1.5, 0.1 };
 
     // test
     EXPECT_TRUE(params1.equivalent(params2));
@@ -173,6 +175,8 @@ TYPED_TEST(Parameter, equivalent_member_function) {
     EXPECT_FALSE(params3.equivalent(params4));
     EXPECT_TRUE(params3.equivalent(params5));
     EXPECT_TRUE(params6.equivalent(params7));
+    EXPECT_FALSE(params6.equivalent(params8));
+    EXPECT_FALSE(params8.equivalent(params9));
 }
 TYPED_TEST(Parameter, equivalent_member_function_default_constructed) {
     using real_type = TypeParam;
@@ -194,6 +198,8 @@ TYPED_TEST(Parameter, equivalent_free_function) {
     const plssvm::parameter<real_type> params5{ plssvm::kernel_type::linear, 2, -0.02, 0.5, 1.0 };
     const plssvm::parameter<real_type> params6{ plssvm::kernel_type::polynomial, 2, 0.02, 1.5, 1.0 };
     const plssvm::parameter<real_type> params7{ plssvm::kernel_type::polynomial, 2, 0.02, 1.5, 1.0 };
+    const plssvm::parameter<real_type> params8{ static_cast<plssvm::kernel_type>(3), 3, 0.2, -1.5, 0.1 };
+    const plssvm::parameter<real_type> params9{ static_cast<plssvm::kernel_type>(3), 3, 0.2, -1.5, 0.1 };
 
     // test
     EXPECT_TRUE(plssvm::equivalent(params1, params2));
@@ -202,6 +208,8 @@ TYPED_TEST(Parameter, equivalent_free_function) {
     EXPECT_FALSE(plssvm::equivalent(params3, params4));
     EXPECT_TRUE(plssvm::equivalent(params3, params5));
     EXPECT_TRUE(plssvm::equivalent(params6, params7));
+    EXPECT_FALSE(plssvm::equivalent(params6, params8));
+    EXPECT_FALSE(plssvm::equivalent(params8, params9));
 }
 TYPED_TEST(Parameter, equivalent_free_function_default_constructed) {
     using real_type = TypeParam;

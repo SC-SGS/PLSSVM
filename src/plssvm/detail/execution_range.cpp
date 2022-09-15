@@ -28,7 +28,7 @@ execution_range::execution_range(const std::initializer_list<std::size_t> p_grid
 }
 
 std::ostream &operator<<(std::ostream &out, const execution_range &range) {
-    return out << fmt::format("grid: [{}]; block: [{}]", fmt::join(range.grid, " "), fmt::join(range.block, " "));
+    return out << fmt::format("grid: [{}]; block: [{}]", fmt::join(range.grid, ", "), fmt::join(range.block, ", "));
 }
 
 }  // namespace plssvm::detail
