@@ -138,19 +138,14 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-		            if [ ! -d "llvm/build" ]; then
-                        echo $PATH
-                        srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                        echo $PATH &&\
-                        module load cuda/11.2.2 &&\
-                        rm -rf llvm &&\
-                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm &&\
-                        cd llvm &&\
-                        python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
-                        python buildbot/compile.py &&\
-                        cmake --build build -- omp &&\
-                        cmake --build build -- install "
-                    fi
+                    srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
+                    module load cuda/11.2.2 &&\
+                    git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm  || echo \"llvm already existing\" &&\
+                    cd llvm &&\
+                    python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
+                    python buildbot/compile.py &&\
+                    cmake --build build -- omp &&\
+                    cmake --build build -- install "
                 '''
                 script{
                     env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
