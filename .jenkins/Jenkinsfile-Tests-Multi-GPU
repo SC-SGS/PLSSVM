@@ -40,6 +40,12 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+
+                // DPCPP
+        DPCPP_PATH = "/scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM/llvm/build"
+
+        // hipSYCL
+        HIPSYCL_PATH = "/scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM/hipsycl-install"
     }
 
     stages {
@@ -120,8 +126,8 @@ pipeline {
 
                     '''
                     script{
-                        env.PATH="$WORKSPACE:$PATH"
-                        env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        env.PATH="$/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:$PATH"
+                        env.PATH="$/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$PATH"
                     }
 
             }
@@ -134,9 +140,10 @@ pipeline {
                 sh '''
 		            if [ ! -d "llvm/build" ]; then
                         echo $PATH
-                        srun -w argon-gtx -N 1 -n 1 -t 01:00:00 bash -c "\
+                        srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
                         echo $PATH &&\
                         module load cuda/11.2.2 &&\
+                        rm -rf llvm &&\
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm &&\
                         cd llvm &&\
                         python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" &&\
