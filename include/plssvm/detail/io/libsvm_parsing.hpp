@@ -33,7 +33,7 @@
 namespace plssvm::detail::io {
 
 // TODO: API
-inline std::size_t parse_libsvm_num_features(const std::vector<std::string_view> &lines, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::size_t parse_libsvm_num_features(const std::vector<std::string_view> &lines, const std::size_t skipped_lines) {
     std::size_t num_features = 0;
     std::exception_ptr parallel_exception;
 
@@ -83,7 +83,7 @@ inline std::size_t parse_libsvm_num_features(const std::vector<std::string_view>
 }
 
 template <typename real_type, typename label_type>
-[[maybe_unused]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>>
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>>
 parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
     // parse sizes
     const std::size_t num_data_points = reader.num_lines();
@@ -99,12 +99,12 @@ parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
-    bool has_label = true;
+    bool has_label = false;
+    bool has_no_label = false;
 
-#pragma omp parallel default(none) shared(reader, skipped_lines, data, label, parallel_exception, has_label) firstprivate(num_features)
+#pragma omp parallel default(none) shared(reader, skipped_lines, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_features)
     {
-#pragma omp for reduction(&& \
-                          : has_label)
+#pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
 #pragma omp cancellation point for
             try {
@@ -115,9 +115,10 @@ parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
                 std::string_view::size_type first_colon = line.find_first_of(":\n");
                 if (first_colon >= pos) {
                     // get class or alpha
+                    has_label = true;
                     label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
                 } else {
-                    has_label = false;
+                    has_no_label = true;
                     pos = 0;
                 }
 
@@ -165,8 +166,12 @@ parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
     if (parallel_exception) {
         std::rethrow_exception(parallel_exception);
     }
+    if (has_label && has_no_label) {
+        // some data points where given with labels, BUT some data pints where given without labels
+        throw invalid_file_format_exception{ "Inconsistent label specification found (some data points are labeled, others are not)!" };
+    }
 
-    return std::make_tuple(num_data_points, num_features, std::move(data), has_label ? std::move(label) : std::vector<label_type>{});
+    return std::make_tuple(num_data_points, num_features, std::move(data), !has_no_label ? std::move(label) : std::vector<label_type>{});
 }
 
 template <typename real_type, typename label_type, bool has_label>

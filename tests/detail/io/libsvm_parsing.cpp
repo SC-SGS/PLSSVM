@@ -39,7 +39,7 @@ using type_combinations_types = ::testing::Types<
     type_combinations<double, std::string>>;
 
 template <typename T>
-class LIBSVMReadDense : public ::testing::Test {
+class LIBSVMParseDense : public ::testing::Test {
   protected:
     void SetUp() override {
         // fill label vector based on the label_type
@@ -66,10 +66,10 @@ class LIBSVMReadDense : public ::testing::Test {
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(LIBSVMReadDense, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseDense, type_combinations_types);
 
 template <typename T>
-class LIBSVMReadSparse : public ::testing::Test {
+class LIBSVMParseSparse : public ::testing::Test {
   protected:
     void SetUp() override {
         // fill label vector based on the label_type
@@ -97,17 +97,17 @@ class LIBSVMReadSparse : public ::testing::Test {
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(LIBSVMReadSparse, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseSparse, type_combinations_types);
 
 template <typename T>
-class LIBSVMRead : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMRead, type_combinations_types);
+class LIBSVMParse : public ::testing::Test {};
+TYPED_TEST_SUITE(LIBSVMParse, type_combinations_types);
 
 template <typename T>
-class LIBSVMReadDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMReadDeathTest, type_combinations_types);
+class LIBSVMParseDeathTest : public ::testing::Test {};
+TYPED_TEST_SUITE(LIBSVMParseDeathTest, type_combinations_types);
 
-TYPED_TEST(LIBSVMReadDense, read) {
+TYPED_TEST(LIBSVMParseDense, read) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
@@ -125,7 +125,7 @@ TYPED_TEST(LIBSVMReadDense, read) {
     EXPECT_EQ(label, this->correct_label);
 }
 
-TYPED_TEST(LIBSVMReadSparse, read) {
+TYPED_TEST(LIBSVMParseSparse, read) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
@@ -143,7 +143,7 @@ TYPED_TEST(LIBSVMReadSparse, read) {
     EXPECT_EQ(label, this->correct_label);
 }
 
-TYPED_TEST(LIBSVMRead, read_without_label) {
+TYPED_TEST(LIBSVMParse, read_without_label) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
@@ -167,7 +167,7 @@ TYPED_TEST(LIBSVMRead, read_without_label) {
     EXPECT_TRUE(label.empty());
 }
 
-TYPED_TEST(LIBSVMRead, zero_based_features) {
+TYPED_TEST(LIBSVMParse, zero_based_features) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
@@ -175,10 +175,10 @@ TYPED_TEST(LIBSVMRead, zero_based_features) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/zero_based_features.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT((plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
                       "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
-TYPED_TEST(LIBSVMRead, arff_file) {
+TYPED_TEST(LIBSVMParse, arff_file) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
@@ -186,9 +186,9 @@ TYPED_TEST(LIBSVMRead, arff_file) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/5x4.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW((plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception);
+    EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception);
 }
-TYPED_TEST(LIBSVMRead, empty) {
+TYPED_TEST(LIBSVMParse, empty) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
@@ -196,6 +196,83 @@ TYPED_TEST(LIBSVMRead, empty) {
     const std::string filename = PLSSVM_TEST_PATH "/data/empty.txt";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT((plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
                       "Can't parse file: no data points are given!");
+}
+TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/feature_with_alpha_char_at_the_beginning.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      fmt::format("Can't convert 'a-1.11' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
+}
+TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/index_with_alpha_char_at_the_beginning.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "Can't convert ' !1' to a value of type unsigned long!");
+}
+TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/invalid_colon_at_the_beginning.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "Can't convert '' to a value of type unsigned long!");
+}
+TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/invalid_colon_in_the_middle.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "Can't convert ' :2' to a value of type unsigned long!");
+}
+TYPED_TEST(LIBSVMParse, missing_feature_value) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/missing_feature_value.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
+}
+TYPED_TEST(LIBSVMParse, missing_index_value) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/missing_index_value.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "Can't convert ' ' to a value of type unsigned long!");
+}
+TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/inconsistent_label_specification.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
+                      "Inconsistent label specification found (some data points are labeled, others are not)!");
 }
