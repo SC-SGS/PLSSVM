@@ -95,8 +95,8 @@ pipeline {
                 dir('plssvm'){
                     sh '''
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                         if [ ! -f tests/data/5000x2000.libsvm ]; then \
-                            python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000\
+                         if [ ! -f tests/data/5000x2000.libsvm ]; then; \
+                            python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000; \
                         fi"
                     '''
                 }
