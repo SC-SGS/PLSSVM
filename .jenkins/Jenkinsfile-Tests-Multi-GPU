@@ -140,7 +140,7 @@ pipeline {
                 sh '''
                     srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                     module load cuda/11.2.2 &&\
-                    git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm  || echo \"llvm already existing\" &&\
+                    git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm  || true; \
                     cd llvm &&\
                     python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
                     python buildbot/compile.py &&\
@@ -167,7 +167,7 @@ pipeline {
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                             module load cuda/11.2.2; \
                             mkdir $HIPSYCL_PATH; \
-                            git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL  || echo \"hipsycl already existing\" ; \
+                            git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL  || true; \
                             cd hipSYCL && \
                             mkdir build && \
                             cd build && \
