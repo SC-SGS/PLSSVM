@@ -42,10 +42,10 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
 
                 // DPCPP
-        DPCPP_PATH = "/scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM/llvm/build"
+        DPCPP_PATH = "/scratch/jenkins/plssvm/PLSSVM_Github-Multi-GPU_jenkin/PLSSVM/llvm/build"
 
         // hipSYCL
-        HIPSYCL_PATH = "/scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM/hipsycl-install"
+        HIPSYCL_PATH = "/scratch/jenkins/plssvm/PLSSVM_Github-Multi-GPU_jenkin/PLSSVM/hipsycl-install"
     }
 
     stages {
@@ -138,7 +138,7 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                    srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
+                    srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/PLSSVM_Github-Multi-GPU_jenkin/PLSSVM bash -c "\
                     module load cuda/11.2.2 &&\
                     git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm  || echo \"llvm already existing\" &&\
                     cd llvm &&\
@@ -162,9 +162,10 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                    module load cuda/11.2.2
+
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 bash -c "\
+                            module load cuda/11.2.2; \
                             mkdir $HIPSYCL_PATH; \
                             git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL; \
                             cd hipSYCL && \
