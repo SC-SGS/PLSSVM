@@ -135,8 +135,10 @@ pipeline {
             steps{
                 sh '''
 		            if [ ! -d "llvm/build" ]; then
+                        echo $PATH
                         srun -w argon-gtx -N 1 -n 1 -t 01:00:00 bash -c "\
-                        module load cuda/11.2.2
+                        echo $PATH &&\
+                        module load cuda/11.2.2 &&\
                         git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm &&\
                         cd llvm &&\
                         python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" &&\
