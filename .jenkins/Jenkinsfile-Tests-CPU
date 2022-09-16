@@ -178,7 +178,7 @@ pipeline {
                     cd ..
                     source spack/share/spack/setup-env.sh
                     spack clean -a
-                    spack install  pocl@master+distro
+                    spack install  pocl@1.8+distro
                     '''
             }
         }
