@@ -311,8 +311,7 @@ pipeline {
                                         mkdir -p build/Release_dpcpp &&\
                                         cd build/Release_dpcpp &&\
                                         rm -rf * &&\
-                                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON  -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp
-                                        -DPLSSVM_ENABLE_LTO=OFF -S ../../ &&\
+                                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON  -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_LTO=OFF -S ../../ &&\
                                         make -j4 "
                                     '''
                                 }
