@@ -117,6 +117,7 @@ void file_reader::close() {
 #endif
         // delete allocated buffer (deleting nullptr is a no-op)
         delete[] file_content_;
+        file_content_ = nullptr;
         num_bytes_ = 0;
 
         // clear lines vector
