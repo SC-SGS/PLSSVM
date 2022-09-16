@@ -173,12 +173,9 @@ pipeline {
                 sh '''
                     git clone https://github.com/spack/spack.git || true
                     source spack/share/spack/setup-env.sh
-                    spack external find
+                    rm -f ~/.spack/packages.yaml
                     spack clean -a
-                    echo $PATH
-                    ./ninja --version
-                    spack find ninja
-                    spack install --dirty pocl@1.8+distro || true
+                    spack install  pocl@1.8+distro || true
                     cat /tmp/simsgs/spack-stage/spack-stage-llvm-12.0.1-zyeqtbgcg4l2fanpeb2g2pmvhmfjnu4t/spack-build-out.txt
                     '''
             }
