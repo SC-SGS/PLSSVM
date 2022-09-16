@@ -413,16 +413,11 @@ void data_set<T, U>::write_libsvm_file(const std::string& filename) const {
 
 template <typename T, typename U>
 void data_set<T, U>::write_arff_file(const std::string &filename) const {
-    fmt::ostream out = fmt::output_file(filename);
-
-    // write header information
-    detail::io::write_arff_header<label_type>(out, num_features_, this->has_labels());
-
-    // write data
+    // write file
     if (this->has_labels()) {
-        detail::io::write_arff_data(out, *X_ptr_, *labels_ptr_);
+        detail::io::write_arff_data(filename, *X_ptr_, *labels_ptr_);
     } else {
-        detail::io::write_arff_data(out, *X_ptr_);
+        detail::io::write_arff_data(filename, *X_ptr_);
     }
 }
 
@@ -464,68 +459,40 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
 
 template <typename T, typename U>
 void data_set<T, U>::read_libsvm_file(const std::string &filename) {
-    detail::io::file_reader f{ filename };
-    f.read_lines('#');
-//
-//    // parse sizes
-//    num_data_points_ = f.num_lines();
-//    num_features_ = detail::io::parse_libsvm_num_features(f, num_data_points_, 0);
-//
-//    std::vector<std::vector<real_type>> X(num_data_points_);
-//    std::vector<label_type> labels(num_data_points_);
-//
-//    // parse file
-//    const bool has_label = detail::io::read_libsvm_data(f, 0, X, labels, num_features_);
-//
-//    // move data to pointers
-//    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
-//    labels_ptr_ = std::make_shared<decltype(labels)>(std::move(labels));
-//
-//    // update shared pointer
-//    if (!has_label) {
-//        labels_ptr_ = nullptr;
-//    }
-    std::vector<std::vector<real_type>> X{};
-    std::vector<label_type> y{};
+    detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
 
-    std::tie(num_data_points_, num_features_, X, y) = detail::io::parse_libsvm_data<real_type, label_type>(f);
+    std::vector<std::vector<real_type>> data{};
+    std::vector<label_type> label{};
+
+    std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_libsvm_data<real_type, label_type>(reader);
 
     // update shared pointer
-    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
-    if (y.empty()) {
+    X_ptr_ = std::make_shared<decltype(data)>(std::move(data));
+    if (label.empty()) {
         labels_ptr_ = nullptr;
     } else {
-        labels_ptr_ = std::make_shared<decltype(y)>(std::move(y));
+        labels_ptr_ = std::make_shared<decltype(label)>(std::move(label));
     }
 }
 
 template <typename T, typename U>
 void data_set<T,U>::read_arff_file(const std::string &filename) {
-    detail::io::file_reader f{ filename };
-    f.read_lines('%');
+    detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
 
-    // parse arff header, structured binding
-    size_type header = 0;
-    size_type max_size = 0;
-    bool has_label = false;
-    std::tie(header, max_size, has_label) = detail::io::read_arff_header(f);
-
-    num_data_points_ = f.num_lines() - (header + 1);
-    num_features_ = has_label ? max_size - 1 : max_size;
-
-    std::vector<std::vector<real_type>> X(num_data_points_, std::vector<real_type>(num_features_));
-    std::vector<label_type> labels(num_data_points_);
+    std::vector<std::vector<real_type>> data{};
+    std::vector<label_type> label{};
 
     // parse file
-    detail::io::read_arff_data(f, header, num_features_, max_size, has_label, X, labels);
-
-    // move data to pointers
-    X_ptr_ = std::make_shared<decltype(X)>(std::move(X));
-    labels_ptr_ = std::make_shared<decltype(labels)>(std::move(labels));
+    std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_arff_data<real_type, label_type>(reader);
 
     // update shared pointer
-    if (!has_label) {
+    X_ptr_ = std::make_shared<decltype(data)>(std::move(data));
+    if (label.empty()) {
         labels_ptr_ = nullptr;
+    } else {
+        labels_ptr_ = std::make_shared<decltype(label)>(std::move(label));
     }
 }
 
