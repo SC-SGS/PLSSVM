@@ -176,6 +176,7 @@ pipeline {
                     spack external find
                     echo $PATH
                     ./ninja --version
+                    spack find ninja
                     spack install --dirty pocl@1.8+distro || true
                     cat /tmp/simsgs/spack-stage/spack-stage-llvm-12.0.1-zyeqtbgcg4l2fanpeb2g2pmvhmfjnu4t/spack-build-out.txt
                     '''
