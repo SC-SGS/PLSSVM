@@ -40,10 +40,10 @@ namespace plssvm::detail::io {
     {
 #pragma omp for reduction(max \
                           : num_features)
-        for (std::size_t i = 0; i < lines.size(); ++i) {
+        for (std::size_t i = skipped_lines; i < lines.size(); ++i) {
 #pragma omp cancellation point for
             try {
-                const std::string_view line = lines[i + skipped_lines];
+                const std::string_view line = lines[i];
 
                 // check index of last feature entry
                 const std::string_view::size_type pos_colon = line.find_last_of(':');
@@ -82,10 +82,13 @@ namespace plssvm::detail::io {
 }
 
 template <typename real_type, typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>>
-parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
+    PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
+    // sanity check: can't skip more lines than are present
+    PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
+
     // parse sizes
-    const std::size_t num_data_points = reader.num_lines();
+    const std::size_t num_data_points = reader.num_lines() - skipped_lines;
     const std::size_t num_features = parse_libsvm_num_features(reader.lines(), skipped_lines);
 
     // no features were parsed -> invalid file
@@ -107,7 +110,7 @@ parse_libsvm_data(file_reader &reader, const std::size_t skipped_lines = 0) {
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
 #pragma omp cancellation point for
             try {
-                std::string_view line = reader.line(i + skipped_lines);
+                std::string_view line = reader.line(skipped_lines + i);
                 unsigned long last_index = 0;
 
                 // check if class labels are present (not necessarily the case for test files)

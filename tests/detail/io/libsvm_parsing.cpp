@@ -130,10 +130,6 @@ template <typename T>
 class LIBSVMParse : public ::testing::Test {};
 TYPED_TEST_SUITE(LIBSVMParse, type_combinations_types);
 
-template <typename T>
-class LIBSVMParseDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMParseDeathTest, type_combinations_types);
-
 TYPED_TEST(LIBSVMParseDense, read) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
@@ -150,6 +146,29 @@ TYPED_TEST(LIBSVMParseDense, read) {
     EXPECT_EQ(data, this->correct_data);
 
     EXPECT_EQ(label, this->correct_label);
+}
+TYPED_TEST(LIBSVMParseDense, read_skip_lines) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+    // skip half of all lines
+    const std::size_t skipped = 3;
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, skipped);
+
+    // check for correct sizes
+    ASSERT_EQ(num_data_points, reader.num_lines() - skipped);
+    ASSERT_EQ(num_features, 4);
+
+    for (std::size_t i = 0; i < num_data_points; ++i) {
+        EXPECT_EQ(data[i], this->correct_data[skipped + i]);
+    }
+
+    for (std::size_t i = 0; i < num_data_points; ++i) {
+        EXPECT_EQ(label[i], this->correct_label[skipped + i]);
+    }
 }
 
 TYPED_TEST(LIBSVMParseSparse, read) {
@@ -168,6 +187,29 @@ TYPED_TEST(LIBSVMParseSparse, read) {
     EXPECT_EQ(data, this->correct_data);
 
     EXPECT_EQ(label, this->correct_label);
+}
+TYPED_TEST(LIBSVMParseSparse, read_skip_lines) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+    // skip half of all lines
+    const std::size_t skipped = 3;
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, skipped);
+
+    // check for correct sizes
+    ASSERT_EQ(num_data_points, reader.num_lines() - skipped);
+    ASSERT_EQ(num_features, 4);
+
+    for (std::size_t i = 0; i < num_data_points; ++i) {
+        EXPECT_EQ(data[i], this->correct_data[i + skipped]);
+    }
+
+    for (std::size_t i = 0; i < num_data_points; ++i) {
+        EXPECT_EQ(label[i], this->correct_label[i + skipped]);
+    }
 }
 
 TYPED_TEST(LIBSVMParse, read_without_label) {
@@ -324,4 +366,29 @@ TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
                       "The features indices must be strictly increasing, but 2 is smaller or equal than 3!");
+}
+
+template <typename T>
+class LIBSVMParseDeathTest : public ::testing::Test {};
+TYPED_TEST_SUITE(LIBSVMParseDeathTest, type_combinations_types);
+
+TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // open file_reader without associating it to a file
+    plssvm::detail::io::file_reader reader{};
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), "The file_reader is currently not associated with a file!");
+}
+TYPED_TEST(LIBSVMParseDeathTest, skip_too_many_lines) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    // try to skip more lines than are present in the data file
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, 6)), "Tried to skipp 6 lines, but only 5 are present!");
+
 }
