@@ -144,7 +144,7 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                    module load cuda/11.2.2
+                    rm -rf $HIPSYCL_PATH
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL
@@ -220,7 +220,7 @@ pipeline {
                     sh '''
                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
                         spack load pocl
-
+                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
                         mkdir -p build/Release_OpenCL
                         cd build/Release_OpenCL
                         rm -rf *
@@ -237,7 +237,7 @@ pipeline {
                         sh '''
                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
-
+                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -336,7 +336,7 @@ pipeline {
                     sh '''
                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
                         spack load pocl
-
+                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
                         mkdir -p build/Debug_OpenCL
                         cd build/Debug_OpenCL
                         rm -rf *
@@ -353,7 +353,7 @@ pipeline {
                         sh '''
                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
-
+                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
