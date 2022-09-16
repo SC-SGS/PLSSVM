@@ -40,6 +40,7 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        WORKSPACE= "${env.WORKSPACE}"
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
@@ -174,6 +175,7 @@ pipeline {
                     source spack/share/spack/setup-env.sh
                     spack external find
                     spack install pocl@1.8+distro || true
+                    cat /tmp/simsgs/spack-stage/spack-stage-llvm-12.0.1-zyeqtbgcg4l2fanpeb2g2pmvhmfjnu4t/spack-build-out.txt
                     '''
             }
         }
@@ -212,7 +214,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source ${env.WORKSPACE}/spack/share/spack/setup-env.sh
+                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
                         spack load pocl
 
                         mkdir -p build/Release_OpenCL
@@ -229,7 +231,7 @@ pipeline {
                 dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source ${env.WORKSPACE}/spack/share/spack/setup-env.sh
+                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
 
                             ctest -j4 --no-compress-output -T Test
@@ -268,7 +270,7 @@ pipeline {
 //            steps {
 //                dir('plssvm') {
 //                    sh '''
-//                        source ${env.WORKSPACE}/spack/share/spack/setup-env.sh
+//                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
 //                        module use /home/breyerml/.modulefiles/
 //                        spack load pocl
 //                        module load network_hipsycl_cpu_pocl
@@ -286,7 +288,7 @@ pipeline {
 //                dir('plssvm') {
 //                    warnError('Release tests failed!') {
 //                        sh '''
-//                            source ${env.WORKSPACE}/spack/share/spack/setup-env.sh
+//                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
 //                            module use /home/breyerml/.modulefiles/
 //                            spack load pocl
 //                            module load network_hipsycl_cpu_pocl
@@ -328,7 +330,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source ${env.WORKSPACE}/spack/share/spack/setup-env.sh
+                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
                         spack load pocl
 
                         mkdir -p build/Debug_OpenCL
@@ -345,7 +347,7 @@ pipeline {
                 dir('plssvm/build/Debug_OpenCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            source ${env.WORKSPACE}/spack/share/spack/setup-env.sh
+                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
 
                             ctest -j4 --no-compress-output -T Test
