@@ -171,12 +171,10 @@ pipeline {
         stage('spack and pocl') {
             steps{
                 sh '''
-                    git clone https://github.com/spack/spack.git || true
+                    rm -rf spack
+                    git clone --branch v0.18.1 --dept1 https://github.com/spack/spack.git || true
                     source spack/share/spack/setup-env.sh
-                    rm -f ~/.spack/packages.yaml
-                    spack clean -a
-                    spack install  pocl@1.8+distro || true
-                    cat /tmp/simsgs/spack-stage/spack-stage-llvm-12.0.1-zyeqtbgcg4l2fanpeb2g2pmvhmfjnu4t/spack-build-out.txt
+                    spack install  pocl@master+distro
                     '''
             }
         }
