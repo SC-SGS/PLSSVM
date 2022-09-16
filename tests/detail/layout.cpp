@@ -161,8 +161,6 @@ TYPED_TEST(Layout, struct_of_arrays_fewer_data_points) {
     EXPECT_EQ(soa_indirect, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_indirect, ", "), fmt::join(correct_soa, ", "));
 }
 
-#if defined(PLSSVM_ASSERT_ENABLED)
-
 template <typename T>
 class LayoutDeathTest : public ::testing::Test {};
 TYPED_TEST_SUITE(LayoutDeathTest, floating_point_types);
@@ -200,5 +198,3 @@ TYPED_TEST(LayoutDeathTest, empty_features) {
     EXPECT_DEATH(auto res = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 2), "All features are empty!");
     EXPECT_DEATH(auto res = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 2), "All features are empty!");
 }
-
-#endif

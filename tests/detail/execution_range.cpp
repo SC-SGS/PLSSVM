@@ -42,8 +42,6 @@ TEST(ExecutionRange, initializer_list) {
     check_execution_range(execution_range{ { 31, 32, 33 }, { 31, 32, 33 } }, std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 31, 32, 33 });
 }
 
-#if defined(PLSSVM_ASSERT_ENABLED)
-
 TEST(ExecutionRangeDeathTest, initializer_list_too_few_dimensions) {
     using plssvm::detail::execution_range;
 
@@ -61,8 +59,6 @@ TEST(ExecutionRangeDeathTest, initializer_list_too_many_dimensions) {
     EXPECT_DEATH((execution_range{ { 41, 42, 43, 44 }, { 11 } }), "The number of grid sizes specified must be between 1 and 3, but is 4!");
     EXPECT_DEATH((execution_range{ { 11 }, { 51, 52, 53, 54, 55 } }), "The number of block sizes specified must be between 1 and 3, but is 5!");
 }
-
-#endif
 
 TEST(ExecutionRange, array) {
     using plssvm::detail::execution_range;

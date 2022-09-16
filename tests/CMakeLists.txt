@@ -137,7 +137,20 @@ target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRAR
 
 # add tests to google test
 include(GoogleTest)
-gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE)
+set(PLSSVM_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE}}")
+if (PLSSVM_ENABLE_ASSERTS OR NOT "${PLSSVM_CMAKE_CXX_FLAGS}" MATCHES ".*NDEBUG.*")
+    # assertions are enabled -> enable Google death tests
+    message(STATUS "Enabling GTest's death tests.")
+    gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME}
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+else()
+    # assertions are disabled -> disable Google death tests
+    message(STATUS "Disabling GTest's death tests.")
+    gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME}
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests
+            EXTRA_ARGS --gtest_filter -*DeathTest)
+endif()
 
 
 # add test for help messages
