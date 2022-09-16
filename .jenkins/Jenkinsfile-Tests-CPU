@@ -172,7 +172,7 @@ pipeline {
             steps{
                 sh '''
                     rm -rf spack
-                    git clone --branch v0.18.1 --dept1 https://github.com/spack/spack.git || true
+                    git clone --branch v0.18.1 --dept 1 https://github.com/spack/spack.git || true
                     source spack/share/spack/setup-env.sh
                     spack install  pocl@master+distro
                     '''
