@@ -172,8 +172,8 @@ pipeline {
                 sh '''
                     git clone https://github.com/spack/spack.git || true
                     source spack/share/spack/setup-env.sh
-                    spack install pocl@1.8+distro
-
+                    spack external find
+                    spack install pocl@1.8+distro || true
                     '''
             }
         }
