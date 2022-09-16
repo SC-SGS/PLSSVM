@@ -10,20 +10,23 @@
 
 #include "plssvm/detail/io/libsvm_parsing.hpp"
 
-#include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../utility.hpp"  // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
+#include "../../utility.hpp"  // util::create_temp_file, EXPECT_THROW_WHAT
 
+#include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ
-                                   // ::testing::{Test, Types}
+#include "gtest/gtest.h"           // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
+                                   // ::testing::{Test, Types, TestWithParam, Values}
 
-#include <cstddef>     // std::size_t
-#include <filesystem>  // std::filesystem::remove
-#include <string>      // std::string
-#include <utility>     // std::pair
-#include <vector>      // std::vector
+#include <cstddef>      // std::size_t
+#include <filesystem>   // std::filesystem::remove
+#include <string>       // std::string
+#include <tuple>        // std::ignore
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::pair, std::make_pair
+#include <vector>       // std::vector
 
 // struct for the used type combinations
 template <typename T, typename U>
@@ -49,12 +52,14 @@ TEST_P(LIBSVMParseNumFeatures, num_features) {
     reader.read_lines('#');
     EXPECT_EQ((plssvm::detail::io::parse_libsvm_num_features(reader.lines())), num_features);
 }
+// clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
-                                                                  std::make_pair("/data/libsvm/5x4_int.libsvm", 4),
-                                                                  std::make_pair("/data/libsvm/5x4_sparse_string.libsvm", 4),
-                                                                  std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
-                                                                  std::make_pair("/data/libsvm/500x200.libsvm", 200),
-                                                                  std::make_pair("/data/empty.txt", 0)));
+                                                      std::make_pair("/data/libsvm/5x4_int.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/5x4_sparse_string.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
+                                                      std::make_pair("/data/libsvm/500x200.libsvm", 200),
+                                                      std::make_pair("/data/empty.txt", 0)));
+// clang-format on
 
 TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
     // parse the LIBSVM file
@@ -605,4 +610,15 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label), ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
+}
+TYPED_TEST(LIBSVMWriteDeathTest, labels_provided_but_not_written) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
+    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("42") };
+
+    // try to write the necessary data to the file
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_data_impl<real_type, label_type, false>(this->filename, data, label)), "has_label is 'false' but labels were provided!");
 }
