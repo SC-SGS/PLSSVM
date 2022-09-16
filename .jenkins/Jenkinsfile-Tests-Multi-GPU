@@ -324,7 +324,6 @@ pipeline {
                                         sh '''
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
                                             module load cuda/11.2.2 &&\
-                                            module load plssvm/argon-gtx/dpcpp &&\
                                             cd build/Release_dpcpp &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
