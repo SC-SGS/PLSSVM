@@ -144,8 +144,6 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                    rm -rf hipSYCL
-                    rm -rf $HIPSYCL_PATH
                     module load cuda/11.2.2
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
