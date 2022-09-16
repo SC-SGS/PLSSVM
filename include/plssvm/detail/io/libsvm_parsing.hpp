@@ -106,7 +106,9 @@ template <typename real_type, typename label_type>
 
 #pragma omp parallel default(none) shared(reader, skipped_lines, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_features)
     {
-#pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
+#pragma omp for reduction(||                        \
+                          : has_label) reduction(|| \
+                                                 : has_no_label)
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
 #pragma omp cancellation point for
             try {
@@ -143,7 +145,7 @@ template <typename real_type, typename label_type>
                     }
                     // the indices must be strictly increasing!
                     if (last_index >= index) {
-                        throw invalid_file_format_exception{fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}!", index, last_index)};
+                        throw invalid_file_format_exception{ fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}!", index, last_index) };
                     }
                     last_index = index;
 
@@ -185,10 +187,14 @@ template <typename real_type, typename label_type>
 }
 
 template <typename real_type, typename label_type, bool has_label>
-inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
+inline void write_libsvm_data_impl(const std::string &filename, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
     if constexpr (has_label) {
-        PLSSVM_ASSERT(!y.empty(), "has_label is 'true' but no labels were provided!");
+        PLSSVM_ASSERT(X.empty() || !y.empty(), "has_label is 'true' but no labels were provided!");
+        PLSSVM_ASSERT(X.size() == y.size(), "Number of data points ({}) and number of labels ({}) mismatch!", X.size(), y.size());
     }
+
+    // create output file
+    fmt::ostream out = fmt::output_file(filename);
 
     // format one output-line
     auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &d) {
@@ -202,7 +208,7 @@ inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vec
             char *ptr = buffer;
             for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, d.size() - j); ++i) {
                 if (d[j + i] != real_type{ 0.0 }) {
-                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:e} "), j + i + 1, d[j + i]);
+                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, d[j + i]);
                 }
             }
             output.append(buffer, ptr - buffer);
@@ -228,13 +234,13 @@ inline void write_libsvm_data_impl(fmt::ostream &out, const std::vector<std::vec
 }
 
 template <typename real_type, typename label_type>
-inline void write_libsvm_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
-    write_libsvm_data_impl<real_type, label_type, true>(out, X, y);
+inline void write_libsvm_data(const std::string &filename, const std::vector<std::vector<real_type>> &X, const std::vector<label_type> &y) {
+    write_libsvm_data_impl<real_type, label_type, true>(filename, X, y);
 }
 
 template <typename real_type>
-inline void write_libsvm_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &X) {
-    write_libsvm_data_impl<real_type, real_type, false>(out, X, {});
+inline void write_libsvm_data(const std::string &filename, const std::vector<std::vector<real_type>> &X) {
+    write_libsvm_data_impl<real_type, real_type, false>(filename, X, {});
 }
 
 }  // namespace plssvm::detail::io

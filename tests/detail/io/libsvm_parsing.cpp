@@ -25,6 +25,7 @@
 #include <utility>     // std::pair
 #include <vector>      // std::vector
 
+// struct for the used type combinations
 template <typename T, typename U>
 struct type_combinations {
     using real_type = T;
@@ -37,7 +38,6 @@ using type_combinations_types = ::testing::Types<
     type_combinations<float, std::string>,
     type_combinations<double, int>,
     type_combinations<double, std::string>>;
-
 
 class LIBSVMParseNumFeatures : public ::testing::TestWithParam<std::pair<std::string, std::size_t>> {};
 TEST_P(LIBSVMParseNumFeatures, num_features) {
@@ -61,8 +61,7 @@ TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/index_with_alpha_char_at_the_beginning.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_num_features(reader.lines())), plssvm::invalid_file_format_exception,
-                      "Can't convert ' !2' to a value of type unsigned long!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_num_features(reader.lines())), plssvm::invalid_file_format_exception, "Can't convert ' !2' to a value of type unsigned long!");
 }
 
 template <typename T>
@@ -244,8 +243,7 @@ TYPED_TEST(LIBSVMParse, zero_based_features) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/zero_based_features.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
 TYPED_TEST(LIBSVMParse, arff_file) {
     using current_real_type = typename TypeParam::real_type;
@@ -265,8 +263,7 @@ TYPED_TEST(LIBSVMParse, empty) {
     const std::string filename = PLSSVM_TEST_PATH "/data/empty.txt";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Can't parse file: no data points are given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Can't parse file: no data points are given!");
 }
 TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
     using current_real_type = typename TypeParam::real_type;
@@ -276,8 +273,7 @@ TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/feature_with_alpha_char_at_the_beginning.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      fmt::format("Can't convert 'a-1.11' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, fmt::format("Can't convert 'a-1.11' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
 }
 TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
     using current_real_type = typename TypeParam::real_type;
@@ -287,8 +283,7 @@ TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/index_with_alpha_char_at_the_beginning.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Can't convert ' !2' to a value of type unsigned long!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Can't convert ' !2' to a value of type unsigned long!");
 }
 TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
     using current_real_type = typename TypeParam::real_type;
@@ -298,8 +293,7 @@ TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/invalid_colon_at_the_beginning.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Can't convert '' to a value of type unsigned long!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Can't convert '' to a value of type unsigned long!");
 }
 TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
     using current_real_type = typename TypeParam::real_type;
@@ -309,8 +303,7 @@ TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/invalid_colon_in_the_middle.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Can't convert ' :2' to a value of type unsigned long!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Can't convert ' :2' to a value of type unsigned long!");
 }
 TYPED_TEST(LIBSVMParse, missing_feature_value) {
     using current_real_type = typename TypeParam::real_type;
@@ -320,8 +313,7 @@ TYPED_TEST(LIBSVMParse, missing_feature_value) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/missing_feature_value.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
 }
 TYPED_TEST(LIBSVMParse, missing_index_value) {
     using current_real_type = typename TypeParam::real_type;
@@ -331,8 +323,7 @@ TYPED_TEST(LIBSVMParse, missing_index_value) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/missing_index_value.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Can't convert ' ' to a value of type unsigned long!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Can't convert ' ' to a value of type unsigned long!");
 }
 TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
     using current_real_type = typename TypeParam::real_type;
@@ -342,8 +333,7 @@ TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/inconsistent_label_specification.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "Inconsistent label specification found (some data points are labeled, others are not)!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Inconsistent label specification found (some data points are labeled, others are not)!");
 }
 TYPED_TEST(LIBSVMParse, non_increasing_indices) {
     using current_real_type = typename TypeParam::real_type;
@@ -353,8 +343,7 @@ TYPED_TEST(LIBSVMParse, non_increasing_indices) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/non_increasing_indices.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
 }
 TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
     using current_real_type = typename TypeParam::real_type;
@@ -364,8 +353,7 @@ TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/non_strictly_increasing_indices.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception,
-                      "The features indices must be strictly increasing, but 2 is smaller or equal than 3!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "The features indices must be strictly increasing, but 2 is smaller or equal than 3!");
 }
 
 template <typename T>
@@ -390,5 +378,231 @@ TYPED_TEST(LIBSVMParseDeathTest, skip_too_many_lines) {
     reader.read_lines('#');
     // try to skip more lines than are present in the data file
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, 6)), "Tried to skipp 6 lines, but only 5 are present!");
+}
 
+template <typename T>
+class LIBSVMWriteBase : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        // create a temporary file containing the scaling factors
+        filename = util::create_temp_file();
+    }
+    void TearDown() override {
+        // remove the temporary file at the end
+        std::filesystem::remove(filename);
+    }
+
+    std::string filename;
+};
+
+template <typename T>
+class LIBSVMWrite : public LIBSVMWriteBase<T> {};
+TYPED_TEST_SUITE(LIBSVMWrite, type_combinations_types);
+
+template <typename T>
+class LIBSVMWriteDeathTest : public LIBSVMWriteBase<T> {};
+TYPED_TEST_SUITE(LIBSVMWriteDeathTest, type_combinations_types);
+
+TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> label{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label = std::vector<int>{ -1, 1, -1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label = std::vector<std::string>{ "cat", "dog", "cat" };
+    }
+
+    // write the necessary data to the file
+    plssvm::detail::io::write_libsvm_data(this->filename, data, label);
+
+    // read the previously written file to check for correctness
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines();
+
+    // check if the correct number of lines have been read
+    ASSERT_EQ(reader.num_lines(), data.size());
+    // check the lines
+    for (std::size_t i = 0; i < data.size(); ++i) {
+        const std::string line = fmt::format("{} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", label[i], data[i][0], data[i][1], data[i][2]);
+        bool line_found = false;
+        for (std::size_t j = 0; j < reader.num_lines(); ++j) {
+            if (reader.line(j) == line) {
+                line_found = true;
+            }
+        }
+        if (!line_found) {
+            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+        }
+    }
+}
+TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
+    using real_type = typename TypeParam::real_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+
+    // write the necessary data to the file
+    plssvm::detail::io::write_libsvm_data(this->filename, data);
+
+    // read the previously written file to check for correctness
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines();
+
+    // check if the correct number of lines have been read
+    ASSERT_EQ(reader.num_lines(), data.size());
+    // check the lines
+    for (std::size_t i = 0; i < data.size(); ++i) {
+        const std::string line = fmt::format("1:{:.10e} 2:{:.10e} 3:{:.10e} ", data[i][0], data[i][1], data[i][2]);
+        bool line_found = false;
+        for (std::size_t j = 0; j < reader.num_lines(); ++j) {
+            if (reader.line(j) == line) {
+                line_found = true;
+            }
+        }
+        if (!line_found) {
+            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+        }
+    }
+}
+
+TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 0.0 } }
+    };
+    std::vector<label_type> label{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label = std::vector<int>{ -1, 1, -1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label = std::vector<std::string>{ "cat", "dog", "cat" };
+    }
+
+    // write the necessary data to the file
+    plssvm::detail::io::write_libsvm_data(this->filename, data, label);
+
+    // read the previously written file to check for correctness
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines();
+
+    // check if the correct number of lines have been read
+    ASSERT_EQ(reader.num_lines(), data.size());
+    // check the lines
+    for (std::size_t i = 0; i < data.size(); ++i) {
+        // assemble correct line
+        std::string line = fmt::format("{} ", label[i]);
+        for (std::size_t j = 0; j < data[i].size(); ++j) {
+            if (data[i][j] != real_type{ 0.0 }) {
+                line += fmt::format("{}:{:.10e} ", j + 1, data[i][j]);
+            }
+        }
+
+        bool line_found = false;
+        for (std::size_t j = 0; j < reader.num_lines(); ++j) {
+            if (reader.line(j) == line) {
+                line_found = true;
+            }
+        }
+        if (!line_found) {
+            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+        }
+    }
+}
+TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
+    using real_type = typename TypeParam::real_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 0.0 } }
+    };
+
+    // write the necessary data to the file
+    plssvm::detail::io::write_libsvm_data(this->filename, data);
+
+    // read the previously written file to check for correctness
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines();
+
+    // check if the correct number of lines have been read
+    ASSERT_EQ(reader.num_lines(), data.size());
+    // check the lines
+    for (std::size_t i = 0; i < data.size(); ++i) {
+        // assemble correct line
+        std::string line{};
+        for (std::size_t j = 0; j < data[i].size(); ++j) {
+            if (data[i][j] != real_type{ 0.0 }) {
+                line += fmt::format("{}:{:.10e} ", j + 1, data[i][j]);
+            }
+        }
+
+        bool line_found = false;
+        for (std::size_t j = 0; j < reader.num_lines(); ++j) {
+            if (reader.line(j) == line) {
+                line_found = true;
+            }
+        }
+        if (!line_found) {
+            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+        }
+    }
+}
+
+TYPED_TEST(LIBSVMWrite, empty_data) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{};
+    const std::vector<label_type> label{};
+
+    // write the necessary data to the file
+    plssvm::detail::io::write_libsvm_data(this->filename, data, label);
+
+    // read the previously written file to check for correctness
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines();
+
+    EXPECT_EQ(reader.num_lines(), 0);
+    EXPECT_TRUE(reader.lines().empty());
+}
+
+TYPED_TEST(LIBSVMWriteDeathTest, data_with_provided_empty_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } } };
+    const std::vector<label_type> label{};
+
+    // try to write the necessary data to the file
+    EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label), "has_label is 'true' but no labels were provided!");
+}
+TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
+    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("42") };
+
+    // try to write the necessary data to the file
+    EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label), ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
 }

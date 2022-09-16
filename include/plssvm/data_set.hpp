@@ -403,13 +403,11 @@ void data_set<T, U>::scale() {
  ******************************************************************************/
 template <typename T, typename U>
 void data_set<T, U>::write_libsvm_file(const std::string& filename) const {
-    fmt::ostream out = fmt::output_file(filename);
-
     // write data
     if (this->has_labels()) {
-        detail::io::write_libsvm_data(out, *X_ptr_, *labels_ptr_);
+        detail::io::write_libsvm_data(filename, *X_ptr_, *labels_ptr_);
     } else {
-        detail::io::write_libsvm_data(out, *X_ptr_);
+        detail::io::write_libsvm_data(filename, *X_ptr_);
     }
 }
 
