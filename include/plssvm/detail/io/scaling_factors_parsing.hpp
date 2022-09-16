@@ -44,11 +44,16 @@ namespace plssvm::detail::io {
  * Note that the scaling factors are given using an one-based indexing scheme, but are internally stored using zero-based indexing.
  * @tparam real_type the used floating point type
  * @tparam factors_type plssvm::data_set<real_type>::scaling::factors (cannot be forward declared or included)
- * @param[in,out] reader the file_reader used to read the scaling factors
+ * @param[in] reader the file_reader used to read the scaling factors
+ * @throws plssvm::invalid_file_format_exception if the header is omitted ('x' and the scaling interval)
+ * @throws plssvm::invalid_file_format_exception if the first line doesn't only contain `x`
+ * @throws plssvm::invalid_file_format_exception if the scaling interval is provided with more or less than two values
+ * @throws plssvm::invalid_file_format_exception if the scaling factors are provided with more or less than three values
+ * @throws plssvm::invalid_file_format_exception if the scaling factors feature index is zero-based instead of one-based
  * @return the read scaling interval and factors (`[[nodiscard]]`)
  */
 template <typename real_type, typename factors_type>
-[[nodiscard]] inline std::tuple<std::pair<real_type, real_type>, std::vector<factors_type>> parse_scaling_factors(file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::pair<real_type, real_type>, std::vector<factors_type>> parse_scaling_factors(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
     // at least two lines ("x" + scale interval)
