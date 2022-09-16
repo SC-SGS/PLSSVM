@@ -174,7 +174,7 @@ pipeline {
                     rm -rf spack
                     git clone --branch v0.18.1 https://github.com/spack/spack.git || true
                     cd spack
-                    git checkout https://github.com/spack/spack/commit/f52f6e99dbf1131886a80112b8c79dfc414afb7c var/spack/repos/builtin/packages/pocl/package.py
+                    git checkout https://github.com/spack/spack/commit/f52f6e99dbf1131886a80112b8c79dfc414afb7c -- var/spack/repos/builtin/packages/pocl/package.py
                     cd ..
                     source spack/share/spack/setup-env.sh
                     spack clean -a
