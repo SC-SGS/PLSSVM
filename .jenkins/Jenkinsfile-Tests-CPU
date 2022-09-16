@@ -143,23 +143,6 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                    git clone https://github.com/spack/spack.git || true
-                    source spack/share/spack/setup-env.sh
-                    spack install pocl@1.8+distro
-
-                    '''
-
-                script{
-                    env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
-                    env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
-                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR = "${HIPSYCL_PATH}/include"
-                }
-            }
-        }
-
-        stage('spack and pocl') {
-            steps{
-                sh '''
                     module load cuda/11.2.2
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
@@ -182,6 +165,20 @@ pipeline {
                 }
             }
         }
+
+
+        stage('spack and pocl') {
+            steps{
+                sh '''
+                    git clone https://github.com/spack/spack.git || true
+                    source spack/share/spack/setup-env.sh
+                    spack install pocl@1.8+distro
+
+                    '''
+            }
+        }
+
+
 
         // TODO: enable DPC++ on CPUs (missing OpenCL CPU runtime)
         // Release
