@@ -15,11 +15,15 @@
 #include "fmt/core.h"  // fmt::format
 
 // check if memory mapping can be supported
-#if defined(PLSSVM_HAS_MEMORY_MAPPING)
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     #include <fcntl.h>     // open, O_RDONLY
     #include <sys/mman.h>  // mmap, munmap
     #include <sys/stat.h>  // fstat
     #include <unistd.h>    // close
+#elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+    #include <windows.h>  // CreateFile, GetLastError, GetFileSizeEx, CreateFileMapping, MapViewOfFile, UnmapViewOfFile, CloseHandle
+                          // HANDLE, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY,l INVALID_HANDLE_VALUE, ERROR_FILE_NOT_FOUND,
+                          // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
 #endif
 
 #include <filesystem>   // std::filesystem::path
@@ -55,7 +59,12 @@ file_reader::~file_reader() {
 
 file_reader::file_reader(file_reader &&other) noexcept :
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
+    #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     file_descriptor_{ std::exchange(other.file_descriptor_, 0) },
+    #elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+    file_{ std::exchange(other.file_, HANDLE{}) },
+    mapped_file_{ std::exchange(other.mapped_file_, HANDLE{}) },
+    #endif
     must_unmap_file_{ std::exchange(other.must_unmap_file_, false) },
 #endif
     file_content_{ std::exchange(other.file_content_, nullptr) },
@@ -80,9 +89,12 @@ void file_reader::open(const char *filename) {
         throw file_reader_exception{ "This file_reader is already associated to a file!" };
     }
 
-#if defined(PLSSVM_HAS_MEMORY_MAPPING)
-    // headers for memory mapped IO are present -> try it
-    this->open_memory_mapped_file(filename);
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
+    // headers for memory mapped IO on UNIX are present -> try it
+    this->open_memory_mapped_file_unix(filename);
+#elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+    // headers for memory mapped IO on Windows are present -> try it
+    this->open_memory_mapped_file_windows(filename);
 #else
     // memory mapped IO headers are missing -> use std::ifstream instead
     this->open_file(filename);
@@ -104,7 +116,7 @@ bool file_reader::is_open() const noexcept {
 }
 void file_reader::close() {
     if (this->is_open()) {
-#if defined(PLSSVM_HAS_MEMORY_MAPPING)
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
         if (must_unmap_file_) {
             // unmap file
             ::munmap(file_content_, num_bytes_);
@@ -112,6 +124,19 @@ void file_reader::close() {
             ::close(file_descriptor_);
         }
         file_descriptor_ = 0;
+        file_content_ = nullptr;
+        must_unmap_file_ = false;
+#elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+        if (must_unmap_file_) {
+            // unmap view
+            UnmapViewOfFile(file_content_);
+            // unmap mapped file
+            CloseHandle(mapped_file_);
+            // close file
+            CloseHandle(file_);
+        }
+        file_ = HANDLE{};
+        mapped_file_ = HANDLE{};
         file_content_ = nullptr;
         must_unmap_file_ = false;
 #endif
@@ -130,7 +155,12 @@ void file_reader::close() {
 void file_reader::swap(file_reader &other) {
     using std::swap;
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
+    #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     swap(file_descriptor_, other.file_descriptor_);
+    #elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+    swap(file_, other.file_);
+    swap(mapped_file_, other.mapped_file_);
+    #endif
     swap(must_unmap_file_, other.must_unmap_file_);
 #endif
     swap(file_content_, other.file_content_);
@@ -148,7 +178,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     std::string_view::size_type pos = 0;
     while (true) {
         // find newline
-        const std::string_view::size_type next_pos = file_content_view.find_first_of('\n', pos);
+        const std::string_view::size_type next_pos = file_content_view.find_first_of("\r\n", pos);
         if (next_pos == std::string_view::npos) {
             break;
         }
@@ -158,7 +188,8 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         if (!sv.empty() && !starts_with(sv, comment)) {
             lines_.push_back(sv);
         }
-        pos = next_pos + 1;
+        // correctly handle \r\n
+        pos = std::min(file_content_view.find_first_not_of("\r\n", next_pos), file_content_view.size());
     }
     // add last line
     const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + pos, file_content_view.size() - pos });
@@ -186,8 +217,8 @@ const char *file_reader::buffer() const noexcept {
     return file_content_;
 }
 
-#if defined(PLSSVM_HAS_MEMORY_MAPPING)
-void file_reader::open_memory_mapped_file(const char *filename) {
+void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *filename) {
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     // open the file
     file_descriptor_ = ::open(filename, O_RDONLY);
     struct stat attr {};
@@ -210,13 +241,68 @@ void file_reader::open_memory_mapped_file(const char *filename) {
             std::cerr << "Memory mapping failed, falling back to std::ifstream." << std::endl;
             this->open_file(filename);
         } else {
-            // set size
+            // memory mapping was successful -> set size
             num_bytes_ = static_cast<std::streamsize>(attr.st_size);
             must_unmap_file_ = true;
         }
     }
-}
+#else
+    throw file_reader_exception{ "Called open_memory_mapped_file_unix(), but the necessary headers couldn't be found!" };
 #endif
+}
+
+void file_reader::open_memory_mapped_file_windows([[maybe_unused]] const char *filename) {
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+    // open the file
+    file_ = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
+    // check if file could be opened
+    if (file_ == INVALID_HANDLE_VALUE) {
+        // check if the problem was that the file could not be found
+        if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+            throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
+        }
+        // something else went wrong -> try reading file with std::ifstream
+        std::cerr << fmt::format("Memory mapping failed (during opening the file ({})), falling back to std::ifstream.", GetLastError()) << std::endl;
+        this->open_file(filename);
+    } else {
+        // get file size
+        LARGE_INTEGER size;
+        GetFileSizeEx(file_, &size);
+        if (size.QuadPart == 0) {
+            // can't memory map empty file
+            CloseHandle(file_);
+            this->open_file(filename);
+        } else {
+            // create memory mapping
+            mapped_file_ = CreateFileMapping(file_, nullptr, PAGE_READONLY, 0, 0, nullptr);
+            // check if memory mapping was successful
+            if (mapped_file_ == nullptr) {
+                // something went wrong -> close file and try reading it with std::ifstream
+                CloseHandle(file_);
+                std::cerr << fmt::format("Memory mapping failed (during memory mapping the file ({})), falling back to std::ifstream.", GetLastError()) << std::endl;
+                this->open_file(filename);
+            } else {
+                // open file view used to read the actual data
+                file_content_ = static_cast<char *>(MapViewOfFile(mapped_file_, FILE_MAP_READ, 0, 0, 0));
+                // check if creating the view was successful
+                if (file_content_ == nullptr) {
+                    // something went wrong -> close (mapped) file and try reading it with std::ifstream
+                    CloseHandle(mapped_file_);
+                    CloseHandle(file_);
+                    std::cerr << fmt::format("Memory mapping failed (during creating the file view ({})), falling back to std::ifstream.", GetLastError()) << std::endl;
+                    this->open_file(filename);
+                } else {
+                    // memory mapping was successful -> set size
+                    num_bytes_ = static_cast<std::streamsize>(size.QuadPart);
+                    must_unmap_file_ = true;
+                }
+            }
+        }
+    }
+#else
+    throw file_reader_exception{ "Called open_memory_mapped_file_windows(), but the necessary headers couldn't be found!" };
+#endif
+}
 
 void file_reader::open_file(const char *filename) {
     // open the file

@@ -15,7 +15,15 @@
 
 // check if memory mapping can be supported
 #if __has_include(<fcntl.h>) && __has_include(<sys/mman.h>) && __has_include(<sys/stat.h>) && __has_include(<unistd.h>)
+    // supported (UNIX system)
     #define PLSSVM_HAS_MEMORY_MAPPING
+    #define PLSSVM_HAS_MEMORY_MAPPING_UNIX
+#elif __has_include(<windows.h>)
+    // supported (Windows system)
+    #define PLSSVM_HAS_MEMORY_MAPPING
+    #define PLSSVM_HAS_MEMORY_MAPPING_WINDOWS
+
+    #include <windows.h>  // HANDLE
 #endif
 
 #include <filesystem>   // std::filesystem::path
@@ -147,15 +155,22 @@ class file_reader {
     [[nodiscard]] const char *buffer() const noexcept;
 
   private:
-#if defined(PLSSVM_HAS_MEMORY_MAPPING)
     /**
-     * @brief Try to open the file @p filename and "read" its content using memory mapped IO.
+     * @brief Try to open the file @p filename and "read" its content using memory mapped IO on UNIX systems.
      * @details Currently memory mapped IO is only supported under Linux systems. If the file could not be memory mapped, automatically falls back to open_file().
      * @param[in] filename the file to open
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
      */
-    void open_memory_mapped_file(const char *filename);
-#endif
+    void open_memory_mapped_file_unix(const char *filename);
+
+    /**
+     * @brief Try to open the file @p filename and "read" its content using memory mapped IO on Windows systems.
+     * @details Currently memory mapped IO is only supported under Linux systems. If the file could not be memory mapped, automatically falls back to open_file().
+     * @param[in] filename the file to open
+     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
+     */
+    void open_memory_mapped_file_windows(const char *filename);
+
     /**
      * @brief Read open the file and read its content in one buffer using a normal std::ifstream.
      * @param[in] filename the file to open
@@ -165,8 +180,15 @@ class file_reader {
     void open_file(const char *filename);
 
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
+    #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     /// The file descriptor used in the POSIX file and memory mapped IO functions.
     int file_descriptor_{ 0 };
+    #elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+    /// The file handle used in the Windows file and memory mapped IO functions.
+    HANDLE file_{};
+    /// The file handle for the memory mapped file in Windows.
+    HANDLE mapped_file_{};
+    #endif
     /// `true` if the file could successfully be memory mapped and, therefore, must also be unmapped at the end, `false` otherwise.
     bool must_unmap_file_{ false };
 #endif
