@@ -11,6 +11,7 @@
 import argparse
 from timeit import default_timer as timer
 import os
+import humanize
 
 # data set creation
 from sklearn.datasets import make_classification
@@ -144,8 +145,8 @@ end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
 # output info
-print("Created training data set '{}' with {} data points and {} features.".format(
-    file, args.samples, args.features))
+print("Created training data set '{}' ({}) with {} data points and {} features.".format(
+    file, humanize.naturalsize(os.path.getsize(file)), args.samples, args.features))
 if args.test_samples > 0:
     print("Created test data set '{}' with {} data points and {} features."
           .format(test_file, args.test_samples, args.features))

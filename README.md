@@ -251,8 +251,8 @@ In order to use all functionality, the following Python3 modules must be install
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html),
 [`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/),
 [`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/),
-[`matplotlib`](https://pypi.org/project/matplotlib/) and
-[`mpl_toolkits`](https://pypi.org/project/matplotlib/)
+[`matplotlib`](https://pypi.org/project/matplotlib/), [`mpl_toolkits`](https://pypi.org/project/matplotlib/),
+and [`humanize`](https://pypi.org/project/humanize/).
 
 ```bash
 python3 utility_scripts/generate_data**.py --help
