@@ -362,8 +362,7 @@ TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
 
     // check if the i-th line is correct
     ASSERT_EQ(reader.lines().size(), filter_lines(lines, comment).size());
-    [[maybe_unused]] std::string_view ret;
-    EXPECT_DEATH(ret = reader.line(reader.num_lines()), fmt::format("Out-of-bounce access!: {} >= {}", reader.num_lines(), reader.num_lines()));
+    EXPECT_DEATH(std::ignore = reader.line(reader.num_lines()), fmt::format("Out-of-bounce access!: {} >= {}", reader.num_lines(), reader.num_lines()));
 }
 INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLinesDeathTest, ::testing::ValuesIn(file_lines));
 
