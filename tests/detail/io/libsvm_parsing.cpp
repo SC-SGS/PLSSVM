@@ -254,7 +254,7 @@ TYPED_TEST(LIBSVMParse, arff_file) {
     using current_label_type = typename TypeParam::label_type;
 
     // parse the ARFF file
-    const std::string filename = PLSSVM_TEST_PATH "/data/arff/5x4.arff";
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/5x4_int.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception);

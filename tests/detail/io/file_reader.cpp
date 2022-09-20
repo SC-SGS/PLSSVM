@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, Types, TestWithParam, ValuesIn}
 
-#include <cstddef>      // std::Size_t
+#include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::path
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -235,7 +235,7 @@ TEST(FileReader, swap_member_function) {
 
 // clang-format off
 const std::vector<std::tuple<std::string, char, std::vector<std::string_view>>> file_lines{
-    std::make_tuple(PLSSVM_TEST_PATH "/data/arff/5x4.arff", '%', std::vector<std::string_view>{
+    std::make_tuple(PLSSVM_TEST_PATH "/data/arff/5x4_int.arff", '%', std::vector<std::string_view>{
                                  "% Title",
                                  "% comments",
                                  "@RELATION name",
@@ -243,13 +243,13 @@ const std::vector<std::tuple<std::string, char, std::vector<std::string_view>>> 
                                  "@ATTRIBUTE second   numeric",
                                  "@ATTRIBUTE third    Numeric",
                                  "@ATTRIBUTE fourth   NUMERIC",
-                                 "@ATTRIBUTE class    NUMERIC",
+                                 "@ATTRIBUTE class    {-1,1}",
                                  "@DATA",
                                  "-1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1",
                                  "-0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1",
+                                 "0.0,0.60276937379453293,-0.13086851759108944,0.0,-1",
                                  "0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1",
-                                 "{1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}",
-                                 "{0 1.88494043717792, 1 1.00518564317278263, 2 0.298499933047586044, 3 1.6464627048813514, 4 -1}" }),
+                                 "1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1" }),
     std::make_tuple(PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm", '#', std::vector<std::string_view>{
                                  "# comment",
                                  "1 1:-1.117827500607882 2:-2.9087188881250993 3:0.66638344270039144 4:1.0978832703949288",

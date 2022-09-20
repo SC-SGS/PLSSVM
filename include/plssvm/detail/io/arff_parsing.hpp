@@ -17,10 +17,12 @@
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::to_upper_case, plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 
+#include "fmt/chrono.h"  // fmt::localtime
 #include "fmt/format.h"  // fmt::format, fmt::join
 #include "fmt/os.h"      // fmt::ostream
 
 #include <cstddef>      // std::size_t
+#include <ctime>        // std::time
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -29,7 +31,9 @@
 
 namespace plssvm::detail::io {
 
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::size_t> parse_arff_header(file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::size_t> parse_arff_header(const file_reader &reader) {
+    PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
+
     std::size_t num_features = 0;
     std::size_t label_idx = 0;
     bool has_label = false;
@@ -145,8 +149,8 @@ namespace plssvm::detail::io {
 }
 
 template <typename real_type, typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_arff_data(file_reader &reader) {
-    std::exception_ptr parallel_exception;
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
+    PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
     // parse arff header, structured bindings can't be used because of the OpenMP parallel section
     std::size_t num_header_lines = 0;
@@ -157,11 +161,13 @@ template <typename real_type, typename label_type>
 
     // calculate data set sizes
     const std::size_t num_data_points = reader.num_lines() - num_header_lines;
-    const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label); //has_label ? num_attributes - 1 : num_attributes;
+    const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label);
 
     // create data and label vectors
     std::vector<std::vector<real_type>> data(num_data_points, std::vector<real_type>(num_features));
     std::vector<label_type> label(num_data_points);
+
+    std::exception_ptr parallel_exception;
 
 #pragma omp parallel default(none) shared(reader, data, label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
     {
@@ -193,7 +199,7 @@ template <typename real_type, typename label_type>
                         }
 
                         // get index
-                        const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                        auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         if (index >= num_attributes) {
                             // index too big for specified number of features
                             throw invalid_file_format_exception{ fmt::format("Trying to add feature/label at index {} but the maximum index is {}!", index, num_attributes - 1) };
@@ -207,9 +213,13 @@ template <typename real_type, typename label_type>
                         if (has_label && index == label_idx) {
                             // write label value
                             is_class_set = true;
-                            label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
+                            label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         } else {
                             // write feature value
+                            // if the feature index is larger than the label index, the index must be reduced in order to write the feature to the correct data index
+                            if (has_label && index > label_idx) {
+                                --index;
+                            }
                             data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
@@ -267,6 +277,13 @@ template <typename real_type, typename label_type>
 
 template <typename real_type, typename label_type, bool has_label>
 inline void write_arff_data_impl(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
+    if constexpr (has_label) {
+        PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
+        PLSSVM_ASSERT(data.size() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.size(), label.size());
+    } else {
+        PLSSVM_ASSERT(label.empty(), "has_label is 'false' but labels were provided!");
+    }
+
     // create file
     fmt::ostream out = fmt::output_file(filename);
 
@@ -276,18 +293,16 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
         return;
     }
     const std::size_t num_features = data.front().size();
-
+    // write arff header with current time stamp
+    out.print("@RELATION {:%Y-%m-%d %H:%M:%S}\n", fmt::localtime(std::time(nullptr)));
     // write arff header for features
     for (std::size_t i = 0; i < num_features; ++i) {
-        out.print("@ATTRIBUTE feature{} NUMERIC\n", i);
+        out.print("@ATTRIBUTE feature_{} NUMERIC\n", i);
     }
     // write arff header for the label if existing
     if constexpr (has_label) {
-        if constexpr (std::is_same_v<detail::remove_cvref_t<label_type>, std::string>) {
-            out.print("@ATTRIBUTE class STRING\n\n");
-        } else {
-            out.print("@ATTRIBUTE class NUMERIC\n\n");
-        }
+        const std::set<label_type> available_labels{ label.begin(), label.end() };
+        out.print("@ATTRIBUTE class {{{}}}\n", fmt::join(available_labels, ","));
     }
     out.print("@DATA\n");
 
@@ -299,9 +314,9 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
 #pragma omp for schedule(dynamic) nowait
         for (std::size_t i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
-                out_string.append(fmt::format("{},{}\n", fmt::join(data[i], ","), label[i]));
+                out_string.append(fmt::format("{:.10e},{}\n", fmt::join(data[i], ","), label[i]));
             } else {
-                out.print("{}\n", fmt::join(data[i], ","));
+                out_string.append(fmt::format("{:.10e}\n", fmt::join(data[i], ",")));
             }
         }
 
