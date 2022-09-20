@@ -9,17 +9,19 @@
  * @brief Implements parsing functions for the ARFF file format.
  */
 
+#ifndef PLSSVM_DETAIL_IO_ARFF_PARSING_HPP_
+#define PLSSVM_DETAIL_IO_ARFF_PARSING_HPP_
 #pragma once
 
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/operators.hpp"          // plssvm::operator::sign
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::to_upper_case, plssvm::detail::starts_with
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 
 #include "fmt/chrono.h"  // fmt::localtime
 #include "fmt/format.h"  // fmt::format, fmt::join
-#include "fmt/os.h"      // fmt::ostream
+#include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
 #include <cstddef>      // std::size_t
 #include <ctime>        // std::time
@@ -27,13 +29,30 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::make_tuple
+#include <utility>      // std::move
 #include <vector>       // std::vector
 
 namespace plssvm::detail::io {
 
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::size_t> parse_arff_header(const file_reader &reader) {
-    PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
-
+/**
+ * @brief Parse the ARFF file header, i.e., determine the number of features, the length of the ARRF header, whether the data set is annotated with labels
+ *        and at which position the label is written in the data set.
+ * @param[in] lines the ARFF header to parse
+ * @throws plssvm::invalid_file_format_exception if the \@RELATION field does not come before any other \@ATTRIBUTE
+ * @throws plssvm::invalid_file_format_exception if the \@RELATION field does not have a name
+ * @throws plssvm::invalid_file_format_exception if the \@RELATION field does have a name with whitespaces but is not quoted
+ * @throws plssvm::invalid_file_format_exception if an \@ATTRIBUTE field has the type NUMERIC **and** the name CLASS
+ * @throws plssvm::invalid_file_format_exception if an \@ATTRIBUTE field does not have a name
+ * @throws plssvm::invalid_file_format_exception if an \@ATTRIBUTE field does have a name with whitespaces but is not quoted
+ * @throws plssvm::invalid_file_format_exception if multiple \@ATTRIBUTES with the name CLASS are provided
+ * @throws plssvm::invalid_file_format_exception if the class field does not provide any labels
+ * @throws plssvm::invalid_file_format_exception if the class field provides labels that are no enclosed in {} (ARFF nominal attributes)
+ * @throws plssvm::invalid_file_format_exception if a header entry starts with an @ but is none of \@RELATION, \@ATTRIBUTE, or \@DATA
+ * @throws plssvm::invalid_file_format_exception if no feature attributes are provided
+ * @throws plssvm::invalid_file_format_exception if the \@DATA attribute is missing
+ * @return the necessary header information: [num_features, num_header_lines, has_label, label_idx] (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::size_t> parse_arff_header(const std::vector<std::string_view> &lines) {
     std::size_t num_features = 0;
     std::size_t label_idx = 0;
     bool has_label = false;
@@ -59,9 +78,9 @@ namespace plssvm::detail::io {
 
     // parse arff header
     std::size_t header_line = 0;
-    for (; header_line < reader.num_lines(); ++header_line) {
+    for (; header_line < lines.size(); ++header_line) {
         // get next line and convert content to all upper case
-        const std::string_view line{ reader.line(header_line) };
+        const std::string_view line = lines[header_line];
         const std::string upper_case_line = detail::as_upper_case(line);
         // relation fields are ignored
         if (detail::starts_with(upper_case_line, "@RELATION")) {
@@ -140,7 +159,7 @@ namespace plssvm::detail::io {
         // no @ATTRIBUTE fields
         throw invalid_file_format_exception{ "Can't parse file: no feature ATTRIBUTES are defined!" };
     }
-    if (header_line + 1 >= reader.num_lines()) {
+    if (header_line + 1 >= lines.size()) {
         // no data points provided
         throw invalid_file_format_exception{ "Can't parse file: @DATA is missing!" };
     }
@@ -148,6 +167,42 @@ namespace plssvm::detail::io {
     return std::make_tuple(num_features, header_line + 1, has_label, has_label ? label_idx : 0);
 }
 
+/**
+ * @brief Parse all data points and potential label using the file @p reader, ignoring all empty lines and lines starting with an `%`.
+ *        If no labels are found, returns an empty vector.
+ * @details An example file can look like
+ * @code
+ * @RELATION name
+ *
+ * @ATTRIBUTE feature_0   numeric
+ * @ATTRIBUTE feature_1   numeric
+ * @ATTRIBUTE feature_2   numeric
+ * @ATTRIBUTE feature_3   numeric
+ * @ATTRIBUTE class       {-1,1}
+ *
+ * @DATA
+ * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1
+ * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1
+ * 0.0,0.60276937379453293,-0.13086851759108944,0.0,-1
+ * 0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1
+ * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
+ * @endcode
+ * @tparam real_type the floating point type
+ * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @param[in] reader the file_reader used to read the ARFF data
+ * @note The features must be provided with zero-based indices!
+ * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
+ * @throws plssvm::invalid_file_format_exception if a label couldn't be converted to the provided @p label_type
+ * @throws plssvm::invalid_file_format_exception if a feature index couldn't be converted to `unsigned long`
+ * @throws plssvm::invalid_file_format_exception if a feature value couldn't be converted to the provided @p real_type
+ * @throws plssvm::invalid_file_format_exception if an '@' is read inside the \@DATA section
+ * @throws plssvm::invalid_file_format_exception if a closing curly brace '}' is missing in the sparse data point description
+ * @throws plssvm::invalid_file_format_exception if an closing curly brace '{' is missing in the sparse data point description
+ * @throws plssvm::invalid_file_format_exception if a index is out-of-bounce with respect to the provided ARFF header information
+ * @throws plssvm::invalid_file_format_exception if the ARFF header specifies labels but any data point misses a label
+ * @throws plssvm::invalid_file_format_exception if the number of found features and labels mismatches the numbers provided in the ARFF header
+ * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
+ */
 template <typename real_type, typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
@@ -157,7 +212,7 @@ template <typename real_type, typename label_type>
     std::size_t num_features = 0;
     bool has_label = false;
     std::size_t label_idx = 0;
-    std::tie(num_features, num_header_lines, has_label, label_idx) = detail::io::parse_arff_header(reader);
+    std::tie(num_features, num_header_lines, has_label, label_idx) = detail::io::parse_arff_header(reader.lines());
 
     // calculate data set sizes
     const std::size_t num_data_points = reader.num_lines() - num_header_lines;
@@ -275,6 +330,35 @@ template <typename real_type, typename label_type>
     return std::make_tuple(num_data_points, num_features, std::move(data), has_label ? std::move(label) : std::vector<label_type>{});
 }
 
+/**
+ * @brief Write the provided @p data and @p labels to the ARFF file @p filename.
+ * @details An example file can look like
+ * @code
+ * @RELATION name
+ *
+ * @ATTRIBUTE feature_0   numeric
+ * @ATTRIBUTE feature_1   numeric
+ * @ATTRIBUTE feature_2   numeric
+ * @ATTRIBUTE feature_3   numeric
+ * @ATTRIBUTE class       {-1,1}
+ *
+ * @DATA
+ * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1
+ * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1
+ * 0.0,0.60276937379453293,-0.13086851759108944,0.0,-1
+ * 0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1
+ * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
+ * @endcode
+ * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
+ * @tparam real_type the floating point type
+ * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
+ * @param[in] filename the filename to write the data to
+ * @param[in] data the data points to write to the file
+ * @param[in] label the labels to write to the file
+ * @note The resulting order of the data points in the ARFF file is unspecified!
+ * @note The features are written using zero-based indices!
+ */
 template <typename real_type, typename label_type, bool has_label>
 inline void write_arff_data_impl(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
@@ -325,14 +409,71 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
     }
 }
 
+/**
+ * @brief Write the provided @p data and @p labels to the ARFF file @p filename.
+ * @details An example file can look like
+ * @code
+ * @RELATION name
+ *
+ * @ATTRIBUTE feature_0   numeric
+ * @ATTRIBUTE feature_1   numeric
+ * @ATTRIBUTE feature_2   numeric
+ * @ATTRIBUTE feature_3   numeric
+ * @ATTRIBUTE class       {-1,1}
+ *
+ * @DATA
+ * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1
+ * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1
+ * 0.0,0.60276937379453293,-0.13086851759108944,0.0,-1
+ * 0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1
+ * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
+ * @endcode
+ * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
+ * @tparam real_type the floating point type
+ * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
+ * @param[in] filename the filename to write the data to
+ * @param[in] data the data points to write to the file
+ * @param[in] label the labels to write to the file
+ * @note The resulting order of the data points in the ARFF file is unspecified!
+ * @note The features are written using zero-based indices!
+ */
 template <typename real_type, typename label_type>
 inline void write_arff_data(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
     write_arff_data_impl<real_type, label_type, true>(filename, data, label);
 }
 
+/**
+ * @brief Write the provided @p data to the ARFF file @p filename.
+ * @details An example file can look like
+ * @code
+ * @RELATION name
+ *
+ * @ATTRIBUTE feature_0   numeric
+ * @ATTRIBUTE feature_1   numeric
+ * @ATTRIBUTE feature_2   numeric
+ * @ATTRIBUTE feature_3   numeric
+ *
+ * @DATA
+ * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288
+ * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026
+ * 0.0,0.60276937379453293,-0.13086851759108944,0.0
+ * 0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387
+ * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514
+ * @endcode
+ * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
+ * @tparam real_type the floating point type
+ * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
+ * @param[in] filename the filename to write the data to
+ * @param[in] data the data points to write to the file
+ * @note The resulting order of the data points in the ARFF file is unspecified!
+ * @note The features are written using zero-based indices!
+ */
 template <typename real_type>
 inline void write_arff_data(const std::string &filename, const std::vector<std::vector<real_type>> &data) {
     write_arff_data_impl<real_type, real_type, false>(filename, data, {});
 }
 
 }  // namespace plssvm::detail::io
+
+#endif  // PLSSVM_DETAIL_IO_ARFF_PARSING_HPP_

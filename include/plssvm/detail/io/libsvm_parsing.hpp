@@ -34,7 +34,7 @@
 namespace plssvm::detail::io {
 
 /**
- * @brief The maximum number of features per data point given in @p lines, where the first @p skipped_lines are skipped.
+ * @brief Parse the maximum number of features per data point given in @p lines, where the first @p skipped_lines are skipped.
  * @details The maximum number of features equals the biggest found feature index. Since LIBSVM mandates that the features are ordered
  *          strictly increasing, it is sufficient to only look at the last feature index of each data point.
  * @param[in] lines the LIBSVM data to parse for the number of features
@@ -92,7 +92,7 @@ namespace plssvm::detail::io {
 }
 
 /**
- * @brief Parse all data points and potential using the file @p reader, ignoring all empty lines and lines starting with an `#`.
+ * @brief Parse all data points and potential label using the file @p reader, ignoring all empty lines and lines starting with an `#`.
  *        If no labels are found, returns an empty vector.
  * @details An example file can look like
  * @code
