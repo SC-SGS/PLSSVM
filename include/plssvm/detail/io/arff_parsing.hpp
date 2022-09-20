@@ -29,62 +29,128 @@
 
 namespace plssvm::detail::io {
 
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool> read_arff_header(file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool> parse_arff_header(file_reader &reader) {
     std::size_t num_features = 0;
     bool has_label = false;
+
+    const auto check_for_name = [](std::string_view line, const std::size_t prefix, const std::size_t suffix) {
+        std::string_view sv{ line };
+        sv.remove_prefix(prefix);
+        sv.remove_suffix(suffix);
+        sv = detail::trim(sv);
+
+        // remaining string may not be empty
+        if (sv.empty()) {
+            throw invalid_file_format_exception{ fmt::format("The \"{}\" field must contain a name!", line) };
+        }
+        // check if string contains whitespaces -> must be quoted
+        if (detail::contains(sv, ' ') && !detail::starts_with(sv, '"') && !detail::ends_with(sv, '"')) {
+            throw invalid_file_format_exception{ fmt::format("A \"{}\" name that contains a whitespace must be quoted!", line) };
+        }
+
+        // return name part of line
+        return sv;
+    };
 
     // parse arff header
     std::size_t header_line = 0;
     for (; header_line < reader.num_lines(); ++header_line) {
-        std::string line{ reader.line(header_line) };
-        detail::to_upper_case(line);
-        if (detail::starts_with(line, "@RELATION")) {
-            // ignore relation
+        // get next line and convert content to all upper case
+        const std::string_view line{ reader.line(header_line) };
+        const std::string upper_case_line = detail::as_upper_case(line);
+        // relation fields are ignored
+        if (detail::starts_with(upper_case_line, "@RELATION")) {
+            // if a relation is given, it must be given in the first line
+            if (header_line != 0) {
+                throw invalid_file_format_exception{ "The @RELATION attribute must be set before any other @ATTRIBUTE!" };
+            }
+            // the relation field must contain a name
+            check_for_name(line, 9, 0);  // @RELATION is 9 chars long
+            // parse next line
             continue;
-        } else if (detail::starts_with(line, "@ATTRIBUTE")) {
-            if (line.find("CLASS") != std::string::npos) {
+        }
+        // check for attribute fields
+        if (detail::starts_with(upper_case_line, "@ATTRIBUTE")) {
+            // check if a "normal" numeric feature has been found
+            if (upper_case_line.find("NUMERIC") != std::string::npos) {
+                // a numeric field must also contain a name
+                const std::string_view name = check_for_name(line, 10, 7);  // @ATTRIBUTE is 10 chars long, NUMERIC 7 chars
+                // the attribute name "CLASS" is reserved!
+                if (detail::as_upper_case(name) == "CLASS") {
+                    throw invalid_file_format_exception{ "May not use the combination of the reserved name \"class\" and attribute type NUMERIC!" };
+                }
+                // add a feature to the running count
+                ++num_features;
+                continue;
+            }
+
+            // only other valid line may be (nominal attribute with the name CLASS)
+            // @ATTRIBUTE CLASS {cat,dog}
+
+            // remove attribute from string
+            std::string_view sv{ line };
+            sv.remove_prefix(10); // @ATTRIBUTE is 10 chars long
+            sv = trim_left(sv);
+
+            // if the line is valid, it must now start with CLASS
+            if (detail::starts_with(detail::as_upper_case(sv), "CLASS")) {
+                // only one class attribute is allowed
                 if (has_label) {
-                    // only one class attribute is allowed
-                    throw invalid_file_format_exception{ "Only the last ATTRIBUTE may be CLASS!" };
+                    throw invalid_file_format_exception{ "A nominal attribute with the name CLASS may only be provided once!" };
+                }
+                // check if the nominal attribute ist enclosed in curly braces
+                sv.remove_prefix(5); // CLASS is 5 chars long
+                sv = detail::trim(sv);
+                // the class labels must be given
+                if (sv.empty()) {
+                    throw invalid_file_format_exception{ fmt::format("The \"{}\" field must contain class labels!", line) };
+                }
+                // check if string contains whitespaces -> must be quoted
+                if (!detail::starts_with(sv, '{') && !detail::ends_with(sv, '}')) {
+                    throw invalid_file_format_exception{ fmt::format("The \"{}\" nominal attribute must be enclosed with {{}}!", line) };
                 }
                 // found a class
                 has_label = true;
                 continue;  // don't increment num_features
-            } else if (line.find("NUMERIC") == std::string::npos) {
-                throw invalid_file_format_exception{ fmt::format("Can only use NUMERIC features, but '{}' was given!", reader.line(header_line)) };
             }
-            // add a feature
-            ++num_features;
-        } else if (detail::starts_with(line, "@DATA")) {
+        }
+        // check for the data field
+        if (detail::starts_with(upper_case_line, "@DATA")) {
             // finished reading header -> start parsing data
             break;
         }
+        // check if the line starts with an @ but is not a valid attribute
+        if (detail::starts_with(upper_case_line, "@")) {
+            // an invalid or unsupported header entry has been read!
+            throw invalid_file_format_exception{ fmt::format("Read an invalid header entry: \"{}\"!", line) };
+        }
     }
 
-    // perform additional checks
+    // perform some additional checks
     if (num_features == 0) {
         // no @ATTRIBUTE fields
-        throw invalid_file_format_exception{ "Can't parse file: no ATTRIBUTES are defined!" };
-    } else if (header_line + 1 >= reader.num_lines()) {
+        throw invalid_file_format_exception{ "Can't parse file: no feature ATTRIBUTES are defined!" };
+    }
+    if (header_line + 1 >= reader.num_lines()) {
         // no data points provided
-        throw invalid_file_format_exception{ "Can't parse file: no data points are given or @DATA is missing!" };
+        throw invalid_file_format_exception{ "Can't parse file: @DATA is missing!" };
     }
 
-    return std::make_tuple(header_line, num_features, has_label);
+    return std::make_tuple(num_features, header_line + 1,has_label);
 }
 
 template <typename real_type, typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_arff_data(file_reader &reader) {
     std::exception_ptr parallel_exception;
 
-    // parse arff header, structured binding
+    // parse arff header, structured bindings can't be used because of the OpenMP parallel section
     std::size_t header = 0;
     std::size_t max_size = 0;
     bool has_label = false;
-    std::tie(header, max_size, has_label) = detail::io::read_arff_header(reader);
+    std::tie(max_size, header, has_label) = detail::io::parse_arff_header(reader);
 
     // calculate data set sizes
-    const std::size_t num_data_points = reader.num_lines() - (header + 1);
+    const std::size_t num_data_points = reader.num_lines() - (header);
     const std::size_t num_features = has_label ? max_size - 1 : max_size;
 
     // create data and label vectors
@@ -97,7 +163,7 @@ template <typename real_type, typename label_type>
         for (std::size_t i = 0; i < data.size(); ++i) {
 #pragma omp cancellation point for
             try {
-                std::string_view line = reader.line(i + header + 1);
+                std::string_view line = reader.line(i + header);
                 //
                 if (detail::starts_with(line, '@')) {
                     // read @ inside data section

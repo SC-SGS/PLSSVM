@@ -101,6 +101,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parameter_scale.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parameter_train.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp

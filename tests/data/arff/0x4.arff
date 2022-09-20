@@ -1,9 +1,0 @@
-@RELATION name
-
-@ATTRIBUTE first    NUMERIC
-@ATTRIBUTE second   numeric
-@ATTRIBUTE third    Numeric
-@ATTRIBUTE fourth   NUMERIC
-@ATTRIBUTE class    NUMERIC
-
-@DATA
