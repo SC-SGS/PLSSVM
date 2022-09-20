@@ -20,7 +20,7 @@
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to
-#include "fmt/os.h"       // fmt::ostream
+#include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
 #include <algorithm>    // std::max, std::min
 #include <cstddef>      // std::size_t
