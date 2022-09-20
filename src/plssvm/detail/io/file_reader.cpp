@@ -26,6 +26,9 @@
                           // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
 #endif
 
+#include <algorithm>    // std::min
+#include <climits>      // INT32_MAX
+#include <cmath>        // std::ceil
 #include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
@@ -323,9 +326,11 @@ void file_reader::open_file(const char *filename) {
     if (num_bytes_ > 0) {
         // allocate the necessary buffer
         file_content_ = new char[num_bytes_];
-        // read the whole file in one go
-        if (!f.read(file_content_, num_bytes_)) {
-            throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
+        for (std::streamsize i = 0; i < static_cast<std::streamsize>(std::ceil(static_cast<double>(num_bytes_) / INT32_MAX)); ++i) {
+            // read the whole file in chunks of up to INT32_MAX byte at once
+            if (!f.read(file_content_ + i * INT32_MAX, std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
+                throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
+            }
         }
     }
 }
