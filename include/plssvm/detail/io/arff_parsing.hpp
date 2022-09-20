@@ -224,11 +224,11 @@ template <typename real_type, typename label_type>
 
     std::exception_ptr parallel_exception;
 
-#pragma omp parallel default(none) shared(reader, data, label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
+    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
     {
-#pragma omp for
+        #pragma omp for
         for (std::size_t i = 0; i < data.size(); ++i) {
-#pragma omp cancellation point for
+            #pragma omp cancellation point for
             try {
                 std::string_view line = reader.line(i + num_header_lines);
                 // there must not be any @ inside the data section
@@ -309,15 +309,15 @@ template <typename real_type, typename label_type>
                     }
                 }
             } catch (const std::exception &) {
-// catch first exception and store it
-#pragma omp critical
+                // catch first exception and store it
+                #pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-// cancel parallel execution, needs env variable OMP_CANCELLATION=true
-#pragma omp cancel for
+                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
+                #pragma omp cancel for
             }
         }
     }
@@ -391,11 +391,11 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
     out.print("@DATA\n");
 
     // write arff data
-#pragma omp parallel default(none) shared(out, data, label) firstprivate(num_data_points)
+    #pragma omp parallel default(none) shared(out, data, label) firstprivate(num_data_points)
     {
         // all support vectors
         std::string out_string;
-#pragma omp for schedule(dynamic) nowait
+        #pragma omp for schedule(dynamic) nowait
         for (std::size_t i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format("{:.10e},{}\n", fmt::join(data[i], ","), label[i]));
@@ -404,7 +404,7 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
             }
         }
 
-#pragma omp critical
+        #pragma omp critical
         out.print("{}", out_string);
     }
 }
