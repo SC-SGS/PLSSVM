@@ -89,7 +89,7 @@ namespace plssvm::detail::io {
 
             // remove attribute from string
             std::string_view sv{ line };
-            sv.remove_prefix(10); // @ATTRIBUTE is 10 chars long
+            sv.remove_prefix(10);  // @ATTRIBUTE is 10 chars long
             sv = trim_left(sv);
 
             // if the line is valid, it must now start with CLASS
@@ -99,7 +99,7 @@ namespace plssvm::detail::io {
                     throw invalid_file_format_exception{ "A nominal attribute with the name CLASS may only be provided once!" };
                 }
                 // check if the nominal attribute ist enclosed in curly braces
-                sv.remove_prefix(5); // CLASS is 5 chars long
+                sv.remove_prefix(5);  // CLASS is 5 chars long
                 sv = detail::trim(sv);
                 // the class labels must be given
                 if (sv.empty()) {
@@ -136,7 +136,7 @@ namespace plssvm::detail::io {
         throw invalid_file_format_exception{ "Can't parse file: @DATA is missing!" };
     }
 
-    return std::make_tuple(num_features, header_line + 1,has_label);
+    return std::make_tuple(num_features, header_line + 1, has_label);
 }
 
 template <typename real_type, typename label_type>

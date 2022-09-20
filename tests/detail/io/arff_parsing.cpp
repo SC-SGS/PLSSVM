@@ -165,3 +165,127 @@ TEST(ARFFParseHeader, empty) {
     reader.read_lines('%');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header(reader)), plssvm::invalid_file_format_exception, "Can't parse file: no feature ATTRIBUTES are defined!");
 }
+
+template <typename T>
+class ARFFParse : public ::testing::Test {};
+TYPED_TEST_SUITE(ARFFParse, type_combinations_types);
+
+template <typename T>
+class ARFFParseDense : public ARFFParse<T> {
+  protected:
+    void SetUp() override {
+        // fill label vector based on the label_type
+        if constexpr (std::is_same_v<label_type, int>) {
+            correct_label = std::vector<int>{ 1, 1, -1, -1, -1 };
+            filename = PLSSVM_TEST_PATH "/data/arff/5x4_int.arff";
+        } else if constexpr (std::is_same_v<label_type, std::string>) {
+            correct_label = std::vector<std::string>{ "cat", "cat", "dog", "dog", "dog" };
+            filename = PLSSVM_TEST_PATH "/data/arff/5x4_string.arff";
+        }
+    }
+
+    using real_type = typename T::real_type;
+    using label_type = typename T::label_type;
+
+    std::string filename{};
+
+    const std::vector<std::vector<real_type>> correct_data{
+        { real_type{ -1.117827500607882 }, real_type{ -2.9087188881250993 }, real_type{ 0.66638344270039144 }, real_type{ 1.0978832703949288 } },
+        { real_type{ -0.5282118298909262 }, real_type{ -0.335880984968183973 }, real_type{ 0.51687296029754564 }, real_type{ 0.54604461446026 } },
+        { real_type{ 0.57650218263054642 }, real_type{ 1.01405596624706053 }, real_type{ 0.13009428079760464 }, real_type{ 0.7261913886869387 } },
+        { real_type{ -0.20981208921241892 }, real_type{ 0.60276937379453293 }, real_type{ -0.13086851759108944 }, real_type{ 0.10805254527169827 } },
+        { real_type{ 1.88494043717792 }, real_type{ 1.00518564317278263 }, real_type{ 0.298499933047586044 }, real_type{ 1.6464627048813514 } }
+    };
+    std::vector<label_type> correct_label{};
+};
+TYPED_TEST_SUITE(ARFFParseDense, type_combinations_types);
+
+template <typename T>
+class ARFFParseSparse : public ARFFParse<T> {
+  protected:
+    void SetUp() override {
+        // fill label vector based on the label_type
+        if constexpr (std::is_same_v<label_type, int>) {
+            correct_label = std::vector<int>{ 1, 1, -1, -1, -1 };
+            filename = PLSSVM_TEST_PATH "/data/arff/5x4_sparse_int.arff";
+        } else if constexpr (std::is_same_v<label_type, std::string>) {
+            correct_label = std::vector<std::string>{ "cat", "cat", "dog", "dog", "dog" };
+            filename = PLSSVM_TEST_PATH "/data/arff/5x4_sparse_string.arff";
+        }
+    }
+
+    using real_type = typename T::real_type;
+    using label_type = typename T::label_type;
+
+    std::string filename{};
+
+    const std::vector<std::vector<real_type>> correct_data{
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ 0.51687296029754564 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 1.01405596624706053 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 0.60276937379453293 }, real_type{ 0.0 }, real_type{ -0.13086851759108944 }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.298499933047586044 } }
+    };
+    std::vector<label_type> correct_label{};
+};
+TYPED_TEST_SUITE(ARFFParseSparse, type_combinations_types);
+
+
+TYPED_TEST(ARFFParseDense, read) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('%');
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader);
+
+    // check for correct sizes
+    ASSERT_EQ(num_data_points, 5);
+    ASSERT_EQ(num_features, 4);
+
+    // check for correct data
+    EXPECT_EQ(data, this->correct_data);
+    EXPECT_EQ(label, this->correct_label);
+}
+TYPED_TEST(ARFFParseSparse, read) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('%');
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader);
+
+    // check for correct sizes
+    ASSERT_EQ(num_data_points, 5);
+    ASSERT_EQ(num_features, 4);
+
+    // check for correct data
+    EXPECT_EQ(data, this->correct_data);
+    EXPECT_EQ(label, this->correct_label);
+}
+
+TYPED_TEST(ARFFParse, read_without_label) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/3x2_without_label.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader);
+
+    // check for correct sizes
+    ASSERT_EQ(num_data_points, 3);
+    ASSERT_EQ(num_features, 2);
+
+    // check for correct data
+    const std::vector<std::vector<current_real_type>> correct_data{
+        { current_real_type{ 1.5 }, current_real_type{ -2.9 } },
+        { current_real_type{ 0.0 }, current_real_type{ -0.3 } },
+        { current_real_type{ 5.5 }, current_real_type{ 0.0 } }
+    };
+    EXPECT_EQ(data, correct_data);
+    EXPECT_TRUE(label.empty());
+}
