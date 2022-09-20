@@ -4,9 +4,9 @@
 
 @ATTRIBUTE first    NUMERIC
 @ATTRIBUTE second   numeric
+@ATTRIBUTE class    {cat,dog}
 @ATTRIBUTE third    Numeric
 @ATTRIBUTE fourth   NUMERIC
-@ATTRIBUTE class    {cat,dog}
 
 @DATA
 {3 1.0978832703949288,4 cat}

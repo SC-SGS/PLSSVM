@@ -43,28 +43,29 @@ using type_combinations_types = ::testing::Types<
     type_combinations<double, std::string>>;
 
 class ARFFParseHeader : public ::testing::Test {};
-class ARFFParseHeaderValid : public ::testing::TestWithParam<std::tuple<std::string, std::size_t, std::size_t, bool>> {};
+class ARFFParseHeaderValid : public ::testing::TestWithParam<std::tuple<std::string, std::size_t, std::size_t, bool, std::size_t>> {};
 TEST_P(ARFFParseHeaderValid, header) {
-    const auto &[filename_part, num_features, header_skip, has_label] = GetParam();
+    const auto &[filename_part, num_features, header_skip, has_label,label_idx] = GetParam();
 
     // parse the ARFF file
     const std::string filename = fmt::format("{}{}", PLSSVM_TEST_PATH, filename_part);
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    const auto& [parsed_num_features, parsed_header_skip, parsed_has_label] = plssvm::detail::io::parse_arff_header(reader);
+    const auto& [parsed_num_features, parsed_header_skip, parsed_has_label, parsed_label_idx] = plssvm::detail::io::parse_arff_header(reader);
 
     // check for correctness
     EXPECT_EQ(parsed_num_features, num_features);
     EXPECT_EQ(parsed_header_skip, header_skip);
     EXPECT_EQ(parsed_has_label, has_label);
+    EXPECT_EQ(parsed_label_idx, label_idx);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ARFFParse, ARFFParseHeaderValid, ::testing::Values(
-                                                     std::make_tuple("/data/arff/5x4_int.arff", 4, 7, true),
-                                                     std::make_tuple("/data/arff/5x4_string.arff", 4, 7, true),
-                                                     std::make_tuple("/data/arff/5x4_sparse_int.arff", 4, 7, true),
-                                                     std::make_tuple("/data/arff/5x4_sparse_string.arff", 4, 7, true),
-                                                     std::make_tuple("/data/arff/3x2_without_label.arff", 2, 4, false)));
+                                                     std::make_tuple("/data/arff/5x4_int.arff", 4, 7, true, 4),
+                                                     std::make_tuple("/data/arff/5x4_string.arff", 4, 7, true, 2),
+                                                     std::make_tuple("/data/arff/5x4_sparse_int.arff", 4, 7, true, 4),
+                                                     std::make_tuple("/data/arff/5x4_sparse_string.arff", 4, 7, true, 2),
+                                                     std::make_tuple("/data/arff/3x2_without_label.arff", 2, 4, false, 0)));
 // clang-format on
 
 TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {
@@ -270,7 +271,7 @@ TYPED_TEST(ARFFParse, read_without_label) {
     using current_real_type = typename TypeParam::real_type;
     using current_label_type = typename TypeParam::label_type;
 
-    // parse the LIBSVM file
+    // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/3x2_without_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
@@ -289,3 +290,77 @@ TYPED_TEST(ARFFParse, read_without_label) {
     EXPECT_EQ(data, correct_data);
     EXPECT_TRUE(label.empty());
 }
+
+TYPED_TEST(ARFFParse, at_inside_data_section) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/@_inside_data_section.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Read @ inside data section!: \"@ATTRIBUTE invalid numeric\"!");
+}
+TYPED_TEST(ARFFParse, sparse_missing_closing_brace) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_closing_brace.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing closing '}' for sparse data point \"{2 0.51687296029754564,3 0.54604461446026,4 1\" description!");
+}
+TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_opening_brace.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing opening '{' for sparse data point \"1 0.60276937379453293,2 -0.13086851759108944,4 -1}\" description!");
+}
+TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_invalid_feature_index.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Trying to add feature/label at index 5 but the maximum index is 4!");
+}
+TYPED_TEST(ARFFParse, sparse_missing_label) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_label.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing label for data point \"{0 1.88494043717792,1 1.00518564317278263,2 0.298499933047586044,3 1.6464627048813514}\"!");
+}
+
+TYPED_TEST(ARFFParse, dense_missing_value) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/dense_missing_value.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Invalid number of features and labels! Found 3 but should be 5!");
+}
+TYPED_TEST(ARFFParse, dense_too_many_values) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/dense_too_many_values.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Invalid number of features and labels! Found 6 but should be 5!");
+}
+
+

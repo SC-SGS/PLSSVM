@@ -29,8 +29,9 @@
 
 namespace plssvm::detail::io {
 
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool> parse_arff_header(file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::size_t> parse_arff_header(file_reader &reader) {
     std::size_t num_features = 0;
+    std::size_t label_idx = 0;
     bool has_label = false;
 
     const auto check_for_name = [](std::string_view line, const std::size_t prefix, const std::size_t suffix) {
@@ -81,6 +82,10 @@ namespace plssvm::detail::io {
                 }
                 // add a feature to the running count
                 ++num_features;
+                // increment class index as long as no class labels have been read
+                if (!has_label) {
+                    ++label_idx;
+                }
                 continue;
             }
 
@@ -136,7 +141,7 @@ namespace plssvm::detail::io {
         throw invalid_file_format_exception{ "Can't parse file: @DATA is missing!" };
     }
 
-    return std::make_tuple(num_features, header_line + 1, has_label);
+    return std::make_tuple(num_features, header_line + 1, has_label, has_label ? label_idx : 0);
 }
 
 template <typename real_type, typename label_type>
@@ -144,39 +149,40 @@ template <typename real_type, typename label_type>
     std::exception_ptr parallel_exception;
 
     // parse arff header, structured bindings can't be used because of the OpenMP parallel section
-    std::size_t header = 0;
-    std::size_t max_size = 0;
+    std::size_t num_header_lines = 0;
+    std::size_t num_features = 0;
     bool has_label = false;
-    std::tie(max_size, header, has_label) = detail::io::parse_arff_header(reader);
+    std::size_t label_idx = 0;
+    std::tie(num_features, num_header_lines, has_label, label_idx) = detail::io::parse_arff_header(reader);
 
     // calculate data set sizes
-    const std::size_t num_data_points = reader.num_lines() - (header);
-    const std::size_t num_features = has_label ? max_size - 1 : max_size;
+    const std::size_t num_data_points = reader.num_lines() - num_header_lines;
+    const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label); //has_label ? num_attributes - 1 : num_attributes;
 
     // create data and label vectors
     std::vector<std::vector<real_type>> data(num_data_points, std::vector<real_type>(num_features));
     std::vector<label_type> label(num_data_points);
 
-#pragma omp parallel default(none) shared(reader, data, label, parallel_exception) firstprivate(header, num_features, max_size, has_label)
+#pragma omp parallel default(none) shared(reader, data, label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
     {
 #pragma omp for
         for (std::size_t i = 0; i < data.size(); ++i) {
 #pragma omp cancellation point for
             try {
-                std::string_view line = reader.line(i + header);
-                //
+                std::string_view line = reader.line(i + num_header_lines);
+                // there must not be any @ inside the data section
                 if (detail::starts_with(line, '@')) {
-                    // read @ inside data section
-                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: '{}'", line) };
+                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: \"{}\"!", line) };
                 }
 
                 // parse sparse or dense data point definition
+                // a sparse data point must start with a opening curly brace
                 if (detail::starts_with(line, '{')) {
-                    // missing closing }
+                    // -> sparse data point given, but the closing brace is missing
                     if (!detail::ends_with(line, '}')) {
-                        throw invalid_file_format_exception{ fmt::format("Missing closing '}}' for sparse data point {} description!", i) };
+                        throw invalid_file_format_exception{ fmt::format("Missing closing '}}' for sparse data point \"{}\" description!", line) };
                     }
-                    // sparse line
+                    // parse the sparse line
                     bool is_class_set = false;
                     std::string_view::size_type pos = 1;
                     while (true) {
@@ -188,20 +194,22 @@ template <typename real_type, typename label_type>
 
                         // get index
                         const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-                        if (index >= max_size) {
+                        if (index >= num_attributes) {
                             // index too big for specified number of features
-                            throw invalid_file_format_exception{ fmt::format("Too many features given! Trying to add feature at position {} but max position is {}!", index, num_features - 1) };
+                            throw invalid_file_format_exception{ fmt::format("Trying to add feature/label at index {} but the maximum index is {}!", index, num_attributes - 1) };
                         }
                         pos = next_pos + 1;
 
-                        // get value
+                        // get position of next value
                         next_pos = line.find_first_of(",}", pos);
 
                         // write parsed value depending on the index
-                        if (index == max_size - 1 && has_label) {
+                        if (has_label && index == label_idx) {
+                            // write label value
                             is_class_set = true;
                             label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
                         } else {
+                            // write feature value
                             data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
@@ -210,32 +218,29 @@ template <typename real_type, typename label_type>
                         line = detail::trim_left(line);
                         pos = 0;
                     }
-                    // no class label found
-                    if (!is_class_set && has_label) {
-                        throw invalid_file_format_exception{ fmt::format("Missing label for data point {}!", i) };
+                    // there should be a class label but none has been found
+                    if (has_label && !is_class_set) {
+                        throw invalid_file_format_exception{ fmt::format("Missing label for data point \"{}\"!", reader.line(i + num_header_lines)) };
                     }
                 } else {
-                    // dense line
-                    std::string_view::size_type pos = 0;
-                    std::string_view::size_type next_pos = 0;
-                    for (std::size_t j = 0; j < max_size - 1; ++j) {
-                        next_pos = line.find_first_of(',', pos);
-                        if (next_pos == std::string_view::npos) {
-                            throw invalid_file_format_exception{ fmt::format("Invalid number of features/labels! Found {} but should be {}!", j, max_size - 1) };
+                    // check if the last character is a closing brace
+                    if (detail::ends_with(line, '}')) {
+                        // no dense line given but a sparse line with a missing opening brace
+                        throw invalid_file_format_exception{ fmt::format("Missing opening '{{' for sparse data point \"{}\" description!", line) };
+                    }
+                    // dense line given
+                    const std::vector<std::string_view> line_split = detail::split(line, ',');
+                    if (line_split.size() != num_attributes) {
+                        throw invalid_file_format_exception{ fmt::format("Invalid number of features and labels! Found {} but should be {}!", line_split.size(), num_attributes) };
+                    }
+                    for (std::size_t j = 0; j < num_attributes; ++j) {
+                        if (has_label && label_idx == j) {
+                            // found a label
+                            label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
+                        } else {
+                            // found data point
+                            data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line_split[j]);
                         }
-                        data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
-                        pos = next_pos + 1;
-                    }
-                    // write last number to the correct vector (based on the fact whether labels are present or not)
-                    if (has_label) {
-                        label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos));
-                    } else {
-                        data[i][num_features - 1] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos));
-                    }
-                    // check whether superfluous data points are left
-                    next_pos = line.find_first_of(',', pos);
-                    if (next_pos != std::string_view::npos) {
-                        throw invalid_file_format_exception{ fmt::format("Too many features! Superfluous '{}' for data point {}!", line.substr(next_pos), i) };
                     }
                 }
             } catch (const std::exception &) {
