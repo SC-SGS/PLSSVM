@@ -117,7 +117,6 @@ class LIBSVMParseSparse : public ::testing::Test {
     using label_type = typename T::label_type;
 
     std::string filename{};
-    std::string filename_without_label{};
 
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
@@ -147,8 +146,8 @@ TYPED_TEST(LIBSVMParseDense, read) {
     ASSERT_EQ(num_data_points, 5);
     ASSERT_EQ(num_features, 4);
 
+    // check for correct data
     EXPECT_EQ(data, this->correct_data);
-
     EXPECT_EQ(label, this->correct_label);
 }
 TYPED_TEST(LIBSVMParseDense, read_skip_lines) {
@@ -166,10 +165,10 @@ TYPED_TEST(LIBSVMParseDense, read_skip_lines) {
     ASSERT_EQ(num_data_points, reader.num_lines() - skipped);
     ASSERT_EQ(num_features, 4);
 
+    // check for correct data
     for (std::size_t i = 0; i < num_data_points; ++i) {
         EXPECT_EQ(data[i], this->correct_data[skipped + i]);
     }
-
     for (std::size_t i = 0; i < num_data_points; ++i) {
         EXPECT_EQ(label[i], this->correct_label[skipped + i]);
     }
@@ -188,8 +187,8 @@ TYPED_TEST(LIBSVMParseSparse, read) {
     ASSERT_EQ(num_data_points, 5);
     ASSERT_EQ(num_features, 4);
 
+    // check for correct data
     EXPECT_EQ(data, this->correct_data);
-
     EXPECT_EQ(label, this->correct_label);
 }
 TYPED_TEST(LIBSVMParseSparse, read_skip_lines) {
@@ -207,10 +206,10 @@ TYPED_TEST(LIBSVMParseSparse, read_skip_lines) {
     ASSERT_EQ(num_data_points, reader.num_lines() - skipped);
     ASSERT_EQ(num_features, 4);
 
+    // check for correct data
     for (std::size_t i = 0; i < num_data_points; ++i) {
         EXPECT_EQ(data[i], this->correct_data[i + skipped]);
     }
-
     for (std::size_t i = 0; i < num_data_points; ++i) {
         EXPECT_EQ(label[i], this->correct_label[i + skipped]);
     }
@@ -230,13 +229,13 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
     ASSERT_EQ(num_data_points, 3);
     ASSERT_EQ(num_features, 2);
 
+    // check for correct data
     const std::vector<std::vector<current_real_type>> correct_data{
         { current_real_type{ 1.5 }, current_real_type{ -2.9 } },
         { current_real_type{ 0.0 }, current_real_type{ -0.3 } },
         { current_real_type{ 5.5 }, current_real_type{ 0.0 } }
     };
     EXPECT_EQ(data, correct_data);
-
     EXPECT_TRUE(label.empty());
 }
 
