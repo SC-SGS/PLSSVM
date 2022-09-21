@@ -223,7 +223,7 @@ template <typename real_type, typename label_type, typename size_type>
 }
 
 template <typename real_type, typename label_type>
-inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
+[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
     // save model file header
     std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel);
     // save the SVM parameter information based on the used kernel_type
@@ -271,10 +271,16 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
 }
 
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data, const std::vector<label_type> &label_order) {
+inline void write_libsvm_model_data(const std::string &filename, const parameter<real_type> &params, const real_type rho, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data) {
     const std::vector<std::vector<real_type>> &support_vectors = data.data();
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
+
+    // create file
+    fmt::ostream out = fmt::output_file(filename);
+
+    // write header information
+    const std::vector<label_type> label_order = write_libsvm_model_header(out, params, rho, data);
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars

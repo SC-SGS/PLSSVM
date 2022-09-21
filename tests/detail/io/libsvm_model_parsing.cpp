@@ -665,9 +665,6 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
 
-    // create the output file
-    fmt::ostream out = fmt::output_file(this->filename);
-
     // define data to write
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
@@ -682,6 +679,8 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     }
 
     // create necessary parameter
+    const plssvm::parameter<real_type> params{};
+    const real_type rho = 3.1415;
     const std::vector<real_type> alpha{ -0.1, -0.2, -0.3 };
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
     std::vector<label_type> label_order{};
@@ -692,17 +691,28 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     }
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_data(out, alpha, data_set, label_order);
-    out.close();
+    plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set);
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('#');
 
     // check the written data
-    ASSERT_EQ(reader.num_lines(), data.size());
+    ASSERT_EQ(reader.num_lines(), 8 + data.size());  // header lines + data
+    EXPECT_EQ(reader.line(0), "svm_type c_svc");
+    EXPECT_EQ(reader.line(1), "kernel_type linear");
+    EXPECT_EQ(reader.line(2), "nr_class 2");
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(reader.line(3), "label -1 1");
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(reader.line(3), "label cat dog");
+    }
+    EXPECT_EQ(reader.line(4), "total_sv 3");
+    EXPECT_EQ(reader.line(5), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(6), fmt::format("rho {}", rho));
+    EXPECT_EQ(reader.line(7), "SV");
     // at first the two lines with the first label must have been written, the internal order may be random
-    for (const std::size_t i : { 0, 2 }) {
+    for (const std::size_t i : { 8, 10 }) {
         const std::string line = fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[i], data[i][0], data[i][1], data[i][2]);
         bool line_found = false;
         for (std::size_t j = 0; j < 2; ++j) {
@@ -716,5 +726,5 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     }
 
     // then the lines with the second label
-    ASSERT_EQ(reader.line(2), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
+    ASSERT_EQ(reader.line(9), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
 }

@@ -117,13 +117,8 @@ template <typename T, typename U>
 void model<T, U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    fmt::ostream out = fmt::output_file(filename);
-
-    // save model file header
-    const std::vector<label_type> label_order = detail::io::write_libsvm_model_header(out, params_, rho_, data_);
-
-    // save model file support vectors
-    detail::io::write_libsvm_model_data(out,  *alpha_ptr_, data_, label_order);
+    // save model file header and support vectors
+    detail::io::write_libsvm_model_data(filename, params_, rho_, *alpha_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
