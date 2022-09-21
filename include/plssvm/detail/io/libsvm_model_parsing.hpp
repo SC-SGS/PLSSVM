@@ -1,19 +1,32 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Implements parsing functions for the LIBSVM model file.
+ */
+
+#ifndef PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
+#define PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
 #pragma once
 
 #include "plssvm/data_set.hpp"   // plssvm::data_set
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
-#include "fmt/compile.h" // FMT_COMPILE
-#include "fmt/format.h"  // fmt::format, fmt::format_to
-#include "fmt/os.h"      // fmt::ostream
+#include "fmt/compile.h"  // FMT_COMPILE
+#include "fmt/format.h"   // fmt::format, fmt::format_to
+#include "fmt/os.h"       // fmt::ostream
 #ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads
 #endif
 
 #include <algorithm>    // std::min
 #include <cstddef>      // std::size_t
-#include <numeric>      // std::accumulate
 #include <memory>       // std::unique_ptr
+#include <numeric>      // std::accumulate
 #include <sstream>      // std::stringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -23,18 +36,30 @@
 namespace plssvm::detail::io {
 
 template <typename real_type, typename label_type, typename size_type>
-inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(file_reader &reader, parameter<real_type> &params, real_type &rho, size_type &num_support_vectors) {
-    // read libsvm header
+[[nodiscard]] inline std::tuple<parameter<real_type>, real_type, std::vector<label_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+    // data to read
+    plssvm::parameter<real_type> params;
+    real_type rho = 0.0;
+    size_type num_support_vectors;
+
     // helper variables
+    bool svm_type_set{ false };
+    bool kernel_type_set{ false };
+    bool nr_class_set{ false };
+    bool total_sv_set{ false };
     bool rho_set{ false };
+    bool label_set{ false };
+    bool nr_sv_set{ false };
+    size_type nr_class{};
     std::vector<label_type> labels{};
     std::vector<size_type> num_support_vectors_per_class{};
 
     // parse libsvm model file header
-    std::size_t header = 0;
+    std::size_t header_line = 0;
     {
-        for (; header < reader.num_lines(); ++header) {
-            std::string line{ detail::trim(reader.line(header)) };
+        for (; header_line < lines.size(); ++header_line) {
+            // get the current line and convert it to lower case
+            std::string line{ detail::trim(lines[header_line]) };
             detail::to_lower_case(line);
 
             // separate value from model header entry
@@ -47,6 +72,8 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
                 if (value != "c_svc") {
                     throw invalid_file_format_exception{ fmt::format("Can only use c_svc as svm_type, but '{}' was given!", value) };
                 }
+                // read the svm_type
+                svm_type_set = true;
             } else if (detail::starts_with(line, "kernel_type")) {
                 // parse kernel_type, must be linear, polynomial or rbf
                 std::istringstream iss{ std::string{ value } };
@@ -54,6 +81,8 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
                 if (iss.fail()) {
                     throw invalid_file_format_exception{ fmt::format("Unrecognized kernel type '{}'!", value) };
                 }
+                // read the kernel_type
+                kernel_type_set = true;
             } else if (detail::starts_with(line, "gamma")) {
                 // parse gamma
                 params.gamma = detail::convert_to<typename decltype(params.gamma)::value_type>(value);
@@ -65,66 +94,112 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
                 params.coef0 = detail::convert_to<typename decltype(params.coef0)::value_type>(value);
             } else if (detail::starts_with(line, "nr_class")) {
                 // number of classes must be 2
-                const auto nr_class = detail::convert_to<unsigned long long>(value);
-                if (nr_class != 2) {
-                    throw invalid_file_format_exception{ fmt::format("Currently only binary classification is supported, but {} different label where given!", nr_class) };
-                }
+                nr_class = detail::convert_to<unsigned long long>(value);
+                // read the number of classes (number of different labels)
+                nr_class_set = true;
             } else if (detail::starts_with(line, "total_sv")) {
                 // the total number of support vectors must be greater than 0
                 num_support_vectors = detail::convert_to<size_type>(value);
                 if (num_support_vectors == 0) {
-                    throw invalid_file_format_exception{ fmt::format("The number of support vectors must be greater than 0, but is {}!", num_support_vectors) };
+                    throw invalid_file_format_exception{ "The number of support vectors must be greater than 0!" };
                 }
+                // read the number of support vectors
+                total_sv_set = true;
             } else if (detail::starts_with(line, "rho")) {
                 // parse rho, required
                 rho = detail::convert_to<real_type>(value);
+                // read the rho value
                 rho_set = true;
             } else if (detail::starts_with(line, "label")) {
-                // parse label
-                labels = detail::split_as<label_type>(value, ' ');
-
+                // parse available label, note: we can't use value here since we want to preserve the case of the labels
+                std::string_view original_line = detail::trim(lines[header_line]);
+                original_line.remove_prefix(std::min(original_line.find_first_of(' ') + 1, original_line.size()));
+                original_line = detail::trim_left(original_line);
+                labels = detail::split_as<label_type>(original_line, ' ');
                 if (labels.size() < 2) {
-                    throw invalid_file_format_exception{ fmt::format("At least two labels must be set, but only {} label was given!", labels.size()) };
-                } else if (labels.size() > 2) {
-                    throw invalid_file_format_exception{ fmt::format("Currently only binary classification is supported, but {} label where given!", labels.size()) };
+                    throw invalid_file_format_exception{ fmt::format("At least two labels must be set, but only {} label ([{}]) was given!", labels.size(), fmt::join(labels, ", ")) };
                 }
+                // read the labels
+                label_set = true;
             } else if (detail::starts_with(line, "nr_sv")) {
                 // parse number of support vectors per class
                 num_support_vectors_per_class = detail::split_as<size_type>(value, ' ');
-
-                const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
-
                 if (num_support_vectors_per_class.size() < 2) {
-                    throw invalid_file_format_exception{ fmt::format("At least two nr_sv must be set, but only {} was given!", num_support_vectors_per_class.size()) };
-                } else if (num_support_vectors_per_class.size() > 2) {
-                    throw invalid_file_format_exception{ fmt::format("Currently only binary classification is supported, but {} nr_sv where given!", num_support_vectors_per_class.size()) };
-                } else if (nr_sv_sum != num_support_vectors) {
-                    throw invalid_file_format_exception{ fmt::format("The total number of support vectors is {}, but the sum of nr_sv is {}!", num_support_vectors, nr_sv_sum) };
+                    throw invalid_file_format_exception{ fmt::format("At least two nr_sv must be set, but only {} ([{}]) was given!", num_support_vectors_per_class.size(), fmt::join(num_support_vectors_per_class, ", ")) };
                 }
+                // read the number of support vectors per class
+                nr_sv_set = true;
             } else if (line == "sv") {
                 // start parsing support vectors, required
                 break;
             } else {
-                throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'! Maybe SV is missing?", reader.line(header)) };
+                throw invalid_file_format_exception{ fmt::format("Unrecognized header entry '{}'! Maybe SV is missing?", lines[header_line]) };
             }
         }
     }
 
     // additional sanity checks
-    if (num_support_vectors == 0) {
-        // no total number of support vectors given
-        throw invalid_file_format_exception{ "Missing total number of support vectors!" };
-    } else if (labels.empty()) {
-        // no labels given
-        throw invalid_file_format_exception{ "Missing labels!" };
-    } else if (num_support_vectors_per_class.empty()) {
-        // no count for support vectors per class given
-        throw invalid_file_format_exception{ "Missing number of support vectors per class!" };
-    } else if (!rho_set) {
-        // no rho set
+    if (!svm_type_set) {
+        throw invalid_file_format_exception{ "Missing svm_type!" };
+    }
+    if (!kernel_type_set) {
+        throw invalid_file_format_exception{ "Missing kernel_type!" };
+    }
+    // check provided values based on kernel_type
+    switch (params.kernel) {
+        case plssvm::kernel_type::linear:
+            if (!params.degree.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the linear kernel!" };
+            }
+            if (!params.gamma.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the gamma parameter which is not used in the linear kernel!" };
+            }
+            if (!params.coef0.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the coef0 parameter which is not used in the linear kernel!" };
+            }
+            break;
+        case plssvm::kernel_type::polynomial:
+            break;
+        case plssvm::kernel_type::rbf:
+
+            if (!params.degree.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the radial basis function kernel!" };
+            }
+            if (!params.coef0.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the coef0 parameter which is not used in the radial basis function kernel!" };
+            }
+            break;
+    }
+    if (!nr_class_set) {
+        throw invalid_file_format_exception{ "Missing number of different classes nr_class!" };
+    }
+    if (!total_sv_set) {
+        throw invalid_file_format_exception{ "Missing total number of support vectors total_sv!" };
+    }
+    if (!rho_set) {
         throw invalid_file_format_exception{ "Missing rho value!" };
-    } else if (header + 1 >= reader.num_lines()) {
-        // no support vectors given
+    }
+    if (!label_set) {
+        throw invalid_file_format_exception{ "Missing class label specification!" };
+    }
+    // number of different labels must match the number of classes
+    if (nr_class != labels.size()) {
+        throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (label)!", nr_class, labels.size()) };
+    }
+    if (!nr_sv_set) {
+        throw invalid_file_format_exception{ "Missing number of support vectors per class nr_sv!" };
+    }
+    // number of different label numbers must match the number of classes
+    if (nr_class != num_support_vectors_per_class.size()) {
+        throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (nr_sv)!", nr_class, num_support_vectors_per_class.size()) };
+    }
+    // calculate the number of support as sum of the support vectors per class
+    const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
+    if (nr_sv_sum != num_support_vectors) {
+        throw invalid_file_format_exception{ fmt::format("The total number of support vectors is {}, but the sum of nr_sv is {}!", num_support_vectors, nr_sv_sum) };
+    }
+    // check if no support vectors are given
+    if (header_line + 1 >= lines.size()) {
         throw invalid_file_format_exception{ "Can't parse file: no support vectors are given or SV is missing!" };
     }
 
@@ -136,7 +211,12 @@ inline std::pair<std::size_t, std::vector<label_type>> read_libsvm_model_header(
         pos += num_support_vectors_per_class[i];
     }
 
-    return std::make_pair(header, std::move(data_labels));
+    // current limitation
+    if (nr_class != 2) {
+        throw invalid_file_format_exception{ fmt::format("Currently only binary classification is supported, but {} different label where given!", nr_class) };
+    }
+
+    return std::make_tuple(params, rho, std::move(data_labels), header_line + 1);
 }
 
 template <typename real_type, typename label_type>
@@ -169,7 +249,11 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
     }
 
     out_string += fmt::format("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {}\nSV\n",
-                              data.num_labels(), fmt::join(label_values, " "), data.num_data_points(), fmt::join(label_counts, " "), rho);
+                              data.num_labels(),
+                              fmt::join(label_values, " "),
+                              data.num_data_points(),
+                              fmt::join(label_counts, " "),
+                              rho);
 
     // print model header
     fmt::print("\n{}\n", out_string);
@@ -180,7 +264,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
 }
 
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<label_type> &labels, const std::vector<label_type> &label_order, const std::size_t num_features) {
+inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<label_type> &labels, const std::vector<label_type> &label_order, const std::size_t num_features) {
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
     // scientific notation: 3 chars (number in front of decimal separator including a sign + decimal separator) + 10 chars (part after the decimal separator, specified during formatting) +
@@ -198,7 +282,7 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
     auto format_libsvm_line = [=](std::string &output, const real_type a, const std::vector<real_type> &d) {
         static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static char buffer[STACK_BUFFER_SIZE];
-        #pragma omp threadprivate(buffer)
+#pragma omp threadprivate(buffer)
 
         output.append(fmt::format(FMT_COMPILE("{:.10e} "), a));
         for (typename std::vector<real_type>::size_type j = 0; j < d.size(); j += BLOCK_SIZE) {
@@ -215,25 +299,25 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
     };
 
     // initialize volatile array
-    volatile int* counts = new volatile int[label_order.size()]{};
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
+    volatile int *counts = new volatile int[label_order.size()]{};
+#pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
         out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
 
-        // support vectors with the first class
-        #pragma omp for nowait
+// support vectors with the first class
+#pragma omp for nowait
         for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
             if (labels[i] == label_order[0]) {
                 format_libsvm_line(out_string, alpha[i], support_vectors[i]);
 
                 // if the buffer is full, write it to the file
                 if (out_string.size() > STRING_BUFFER_SIZE) {
-                    #pragma omp critical
+#pragma omp critical
                     {
                         out.print(out_string);
-                        #pragma omp flush(out)
+#pragma omp flush(out)
                     }
                     // clear buffer
                     out_string.clear();
@@ -241,30 +325,30 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
             }
         }
 
-        #pragma omp critical
+#pragma omp critical
         {
             if (!out_string.empty()) {
                 out.print(out_string);
                 out_string.clear();
             }
             counts[0]++;
-            #pragma omp flush(counts, out)
+#pragma omp flush(counts, out)
         }
 
         for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
             // the support vectors with the i-th class
 
-            #pragma omp for nowait
+#pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
                 if (labels[i] == label_order[l]) {
                     format_libsvm_line(out_string, alpha[i], support_vectors[i]);
 
                     // if the buffer is full, write it to the file
                     if (out_string.size() > STRING_BUFFER_SIZE) {
-                        #pragma omp critical
+#pragma omp critical
                         {
                             out.print(out_string);
-                            #pragma omp flush(out)
+#pragma omp flush(out)
                         }
                         // clear buffer
                         out_string.clear();
@@ -276,21 +360,23 @@ inline void write_libsvm_model_data(fmt::ostream& out, const std::vector<std::ve
             while (counts[l - 1] < omp_get_num_threads()) {
             }
 #else
-            #pragma omp barrier
+    #pragma omp barrier
 #endif
 
-            #pragma omp critical
+#pragma omp critical
             {
                 if (!out_string.empty()) {
                     out.print(out_string);
                     out_string.clear();
                 }
                 counts[l]++;
-                #pragma omp flush(counts, out)
+#pragma omp flush(counts, out)
             }
         }
     }
     delete[] counts;
 }
 
-}
+}  // namespace plssvm::detail::io
+
+#endif  // PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_

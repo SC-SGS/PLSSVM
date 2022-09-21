@@ -1,4 +1,3 @@
-# this is a comment
 svm_type c_svc
 kernel_type linear
 nr_class 2

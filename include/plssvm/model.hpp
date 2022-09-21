@@ -77,21 +77,23 @@ template <typename T, typename U>
 model<T, U>::model(const std::string &filename) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    detail::io::file_reader f{ filename };
-    f.read_lines('#');
+    detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
 
     // parse libsvm header
-    auto [header, data_labels] = detail::io::read_libsvm_model_header<real_type, label_type, size_type>(f, params_, rho_, num_support_vectors_);
+    std::vector<label_type> labels;
+    std::size_t num_header_lines;
+    std::tie(params_, rho_, labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // create support vectors and alpha vector
-    std::vector<std::vector<real_type>> support_vectors(num_support_vectors_);
-    std::vector<real_type> alphas(num_support_vectors_);
+    std::vector<std::vector<real_type>> support_vectors;
+    std::vector<real_type> alphas;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, alphas) = detail::io::parse_libsvm_data<real_type, real_type>(f, header + 1);
+    std::tie(num_support_vectors_, num_features_, support_vectors, alphas) = detail::io::parse_libsvm_data<real_type, real_type>(reader, num_header_lines);
 
     // create data set
-    data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(data_labels) };
+    data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(labels) };
     alpha_ptr_ = std::make_shared<decltype(alphas)>(std::move(alphas));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();

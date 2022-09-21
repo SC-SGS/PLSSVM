@@ -1,8 +1,9 @@
+# this is a comment
 svm_type c_svc
 kernel_type polynomial
 degree 2
 gamma 0.25
-coef0 1
+coef0 1.5
 nr_class 2
 total_sv 5
 rho 0.37330625882191915

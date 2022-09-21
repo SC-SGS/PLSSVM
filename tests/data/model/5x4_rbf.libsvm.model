@@ -1,6 +1,7 @@
+# this is a comment
 svm_type c_svc
 kernel_type rbf
-gamma 0.25
+gamma 0.025
 nr_class 2
 total_sv 5
 rho 0.37330625882191915
