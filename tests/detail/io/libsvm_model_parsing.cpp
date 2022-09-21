@@ -16,9 +16,9 @@
 
 #include "../../utility.hpp"  // util::create_temp_file, EXPECT_THROW_WHAT
 
-#include "fmt/core.h"              // fmt::format
-#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
-                                   // ::testing::{Test, Types, Values}
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
+                          // ::testing::{Test, Types, Values}
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
@@ -507,8 +507,15 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
     out.close();
+
+    // check returned label order
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(label_order, (std::vector<int>{ -1, 1 }));
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(label_order, (std::vector<std::string>{ "cat", "dog" }));
+    }
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -559,8 +566,15 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
     out.close();
+
+    // check returned label order
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(label_order, (std::vector<int>{ 1, 2 }));
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(label_order, (std::vector<std::string>{ "Cat", "Dog" }));
+    }
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -612,8 +626,15 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    const std::vector<label_type>& label_order = plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
     out.close();
+
+    // check returned label order
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(label_order, (std::vector<int>{ -1, 1 }));
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(label_order, (std::vector<std::string>{ "A", "B" }));
+    }
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
