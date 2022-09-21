@@ -714,10 +714,10 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     EXPECT_EQ(reader.line(6), fmt::format("rho {}", rho));
     EXPECT_EQ(reader.line(7), "SV");
     // at first the two lines with the first label must have been written, the internal order may be random
-    for (const std::size_t i : { 8, 10 }) {
+    for (const std::size_t i : { 0, 2 }) {
         const std::string line = fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[i], data[i][0], data[i][1], data[i][2]);
         bool line_found = false;
-        for (std::size_t j = 0; j < 2; ++j) {
+        for (std::size_t j = 8; j < 10; ++j) {
             if (reader.line(j) == line) {
                 line_found = true;
             }
@@ -728,7 +728,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     }
 
     // then the lines with the second label
-    ASSERT_EQ(reader.line(9), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
+    ASSERT_EQ(reader.line(10), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
 }
 
 template <typename T>
