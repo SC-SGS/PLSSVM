@@ -390,7 +390,7 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
     auto format_libsvm_line = [=](std::string &output, const real_type a, const std::vector<real_type> &d) {
         static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static char buffer[STACK_BUFFER_SIZE];
-#pragma omp threadprivate(buffer)
+        #pragma omp threadprivate(buffer)
 
         output.append(fmt::format(FMT_COMPILE("{:.10e} "), a));
         for (typename std::vector<real_type>::size_type j = 0; j < d.size(); j += BLOCK_SIZE) {
@@ -407,26 +407,25 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
     };
 
     // initialize volatile array
-//    auto counts = std::make_unique<volatile int[]>(label_order.size());
-    volatile int *counts = new volatile int[label_order.size()]{};
-#pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
+    auto counts = std::make_unique<volatile int[]>(label_order.size());
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
         out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
 
-// support vectors with the first class
-#pragma omp for nowait
+        // support vectors with the first class
+        #pragma omp for nowait
         for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
             if (labels[i] == label_order[0]) {
                 format_libsvm_line(out_string, alpha[i], support_vectors[i]);
 
                 // if the buffer is full, write it to the file
                 if (out_string.size() > STRING_BUFFER_SIZE) {
-#pragma omp critical
+                    #pragma omp critical
                     {
                         out.print(out_string);
-#pragma omp flush(out)
+                        #pragma omp flush(out)
                     }
                     // clear buffer
                     out_string.clear();
@@ -434,30 +433,30 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
             }
         }
 
-#pragma omp critical
+        #pragma omp critical
         {
             if (!out_string.empty()) {
                 out.print(out_string);
                 out_string.clear();
             }
             counts[0]++;
-#pragma omp flush(counts, out)
+            #pragma omp flush(counts, out)
         }
 
         for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
             // the support vectors with the i-th class
 
-#pragma omp for nowait
+            #pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
                 if (labels[i] == label_order[l]) {
                     format_libsvm_line(out_string, alpha[i], support_vectors[i]);
 
                     // if the buffer is full, write it to the file
                     if (out_string.size() > STRING_BUFFER_SIZE) {
-#pragma omp critical
+                        #pragma omp critical
                         {
                             out.print(out_string);
-#pragma omp flush(out)
+                            #pragma omp flush(out)
                         }
                         // clear buffer
                         out_string.clear();
@@ -472,18 +471,17 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
     #pragma omp barrier
 #endif
 
-#pragma omp critical
+            #pragma omp critical
             {
                 if (!out_string.empty()) {
                     out.print(out_string);
                     out_string.clear();
                 }
                 counts[l]++;
-#pragma omp flush(counts, out)
+                #pragma omp flush(counts, out)
             }
         }
     }
-    delete[] counts;
 }
 
 }  // namespace plssvm::detail::io
