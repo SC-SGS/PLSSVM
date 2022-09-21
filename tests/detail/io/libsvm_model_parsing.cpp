@@ -10,22 +10,24 @@
 
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"
 
+#include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
 #include "../../utility.hpp"  // util::create_temp_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
-                                   // ::testing::{Test, Types, TestWithParam, Values}
+#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
+                                   // ::testing::{Test, Types, Values}
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
+#include <iostream>     // std::cout
+#include <sstream>      // std::stringstream
+#include <streambuf>    // std::streambuf
 #include <string>       // std::string
 #include <tuple>        // std::ignore
 #include <type_traits>  // std::is_same_v
-#include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
 
 // struct for the used type combinations

@@ -18,19 +18,21 @@
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to
-#include "fmt/os.h"       // fmt::ostream
+#include "fmt/os.h"       // fmt::ostream, fmt::output_file
 #ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads
 #endif
 
-#include <algorithm>    // std::min
+#include <algorithm>    // std::min, std::fill
 #include <cstddef>      // std::size_t
 #include <iostream>     // std::cout
+#include <map>          // std::map
 #include <memory>       // std::unique_ptr
 #include <numeric>      // std::accumulate
 #include <sstream>      // std::stringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
 #include <utility>      // std::move, std::pair
 #include <vector>       // std::vector
 
@@ -270,8 +272,8 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
 
 template <typename real_type, typename label_type>
 inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data, const std::vector<label_type> &label_order) {
-    const std::vector<std::vector<real_type>>& support_vectors = data.data();
-    const std::vector<label_type>& labels = data.labels().value();
+    const std::vector<std::vector<real_type>> &support_vectors = data.data();
+    const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
@@ -308,7 +310,8 @@ inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<real_ty
     };
 
     // initialize volatile array
-    volatile int *counts = new volatile int[label_order.size()]{};
+    auto counts = std::make_unique<volatile int[]>(label_order.size());
+//    volatile int *counts = new volatile int[label_order.size()]{};
 #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
     {
         // preallocate string buffer, only ONE allocation
@@ -383,7 +386,6 @@ inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<real_ty
             }
         }
     }
-    delete[] counts;
 }
 
 }  // namespace plssvm::detail::io
