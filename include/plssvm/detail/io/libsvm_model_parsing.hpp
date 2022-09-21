@@ -13,8 +13,9 @@
 #define PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
 #pragma once
 
-#include "plssvm/data_set.hpp"   // plssvm::data_set
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/data_set.hpp"       // plssvm::data_set
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+#include "plssvm/parameter.hpp"      // plssvm::parameter
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to
@@ -38,6 +39,44 @@
 
 namespace plssvm::detail::io {
 
+/**
+ * @brief Parse the LIBSVM model file header.
+ * @details An example LIBSVM model file header for the linear kernel and two labels could look like
+ * @code
+ * svm_type c_svc
+ * kernel_type linear
+ * nr_class 2
+ * rho 0.37330625882191915
+ * label 1 -1
+ * total_sv 5
+ * nr_sv 2 3
+ * SV
+ * @endcode
+ * @tparam real_type the floating point type
+ * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam size_type the size type
+ * @param[in] lines the LIBSVM model file header to parse>
+ * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_csc'
+ * @throws plssvm::invalid_file_format_exception if an invalid 'kernel_type has been provided
+ * @throws plssvm::invalid_file_format_exception if the number of support vectors ('total_sv') is zero
+ * @throws plssvm::invalid_file_format_exception if less than two labels have been provided
+ * @throws plssvm::invalid_file_format_exception if less than two number of support vectors per label have been provided
+ * @throws plssvm::invalid_file_format_exception if an invalid header entry has been read
+ * @throws plssvm::invalid_file_format_exception if the 'svm_type' is missing
+ * @throws plssvm::invalid_file_format_exception if the 'kernel_type' is missing
+ * @throws plssvm::invalid_file_format_exception if SVM parameter are explicitly provided that are not used in the give kernel (e.g., 'gamma' is provided for the 'linear' kernel)
+ * @throws plssvm::invalid_file_format_exception if the number of classes ('nr_class') is missing
+ * @throws plssvm::invalid_file_format_exception if the total number of support vectors ('total_sv') is missing
+ * @throws plssvm::invalid_file_format_exception if the value for rho is missing
+ * @throws plssvm::invalid_file_format_exception if the labels are missing
+ * @throws plssvm::invalid_file_format_exception if the number of provided labels is not the same as the value of 'nr_class'
+ * @throws plssvm::invalid_file_format_exception if the number of support vectors per class ('nr_sv') is missing
+ * @throws plssvm::invalid_file_format_exception if the number of provided number of support vectors per class is not the same as the value of 'nr_class'
+ * @throws plssvm::invalid_file_format_exception if the number of sum of all number of support vectors per class is not the same as the value of 'total_sv'
+ * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
+ * @throws plssvm::invalid_file_format_exception if the number of labels is not two
+ * @return the necessary header information: [the SVM parameter, the value of rho, the labels of the data points, num_header_lines] (`[[nodiscard]]`)
+ */
 template <typename real_type, typename label_type, typename size_type>
 [[nodiscard]] inline std::tuple<parameter<real_type>, real_type, std::vector<label_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
@@ -222,8 +261,31 @@ template <typename real_type, typename label_type, typename size_type>
     return std::make_tuple(params, rho, std::move(data_labels), header_line + 1);
 }
 
+/**
+ * @brief Write the LIBSVM model file header to @p out.
+ * @details An example LIBSVM model file header for the linear kernel and two labels could look like
+ * @code
+ * svm_type c_svc
+ * kernel_type linear
+ * nr_class 2
+ * rho 0.37330625882191915
+ * label 1 -1
+ * total_sv 5
+ * nr_sv 2 3
+ * SV
+ * @endcode
+ * @tparam real_type the floating point type
+ * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @param[in,out] out the output-stream to write the header information to
+ * @param[in] params the SVM parameters
+ * @param[in] rho the rho value resulting from the hyperplane learning
+ * @param[in] data the data used to create the model
+ * @return the order of the labels; necessary to write the data points in the correct order (`[[nodiscard]]`)
+ */
 template <typename real_type, typename label_type>
 [[nodiscard]] inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
+    PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
+
     // save model file header
     std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel);
     // save the SVM parameter information based on the used kernel_type
@@ -270,8 +332,37 @@ template <typename real_type, typename label_type>
     return label_values;
 }
 
+/**
+ * @brief Write the LIBSVM model to the file @p filename.
+ * @details An example LIBSVM model file for the linear kernel and two labels could look like
+ * @code
+ * svm_type c_svc
+ * kernel_type linear
+ * nr_class 2
+ * rho 0.37330625882191915
+ * label 1 -1
+ * total_sv 5
+ * nr_sv 2 3
+ * SV
+ * -0.17609610490769723 1:-1.117828e+00 2:-2.908719e+00 3:6.663834e-01 4:1.097883e+00
+ * 0.8838187731213127 1:-5.282118e-01 2:-3.358810e-01 3:5.168730e-01 4:5.460446e-01
+ * -0.47971257671001616 1:-2.098121e-01 2:6.027694e-01 3:-1.308685e-01 4:1.080525e-01
+ * 0.0034556484621847128 1:1.884940e+00 2:1.005186e+00 3:2.984999e-01 4:1.646463e+00
+ * -0.23146573996578407 1:5.765022e-01 2:1.014056e+00 3:1.300943e-01 4:7.261914e-01
+ * @endcode
+ * @tparam real_type the floating point type
+ * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @param[in] filename the file to write the LIBSVM model to
+ * @param[in] params the SVM parameters
+ * @param[in] rho the rho value resulting from the hyperplane learning
+ * @param[in] alpha the weights learned by the SVM
+ * @param[in] data the data used to create the model
+ */
 template <typename real_type, typename label_type>
 inline void write_libsvm_model_data(const std::string &filename, const parameter<real_type> &params, const real_type rho, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data) {
+    PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
+    PLSSVM_ASSERT(alpha.size() == data.num_data_points(), "The number of weights ({}) doesn't match the number of data points ({})!", alpha.size(), data.num_data_points());
+
     const std::vector<std::vector<real_type>> &support_vectors = data.data();
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
@@ -316,8 +407,8 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
     };
 
     // initialize volatile array
-    auto counts = std::make_unique<volatile int[]>(label_order.size());
-//    volatile int *counts = new volatile int[label_order.size()]{};
+//    auto counts = std::make_unique<volatile int[]>(label_order.size());
+    volatile int *counts = new volatile int[label_order.size()]{};
 #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
     {
         // preallocate string buffer, only ONE allocation
@@ -392,6 +483,7 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
             }
         }
     }
+    delete[] counts;
 }
 
 }  // namespace plssvm::detail::io

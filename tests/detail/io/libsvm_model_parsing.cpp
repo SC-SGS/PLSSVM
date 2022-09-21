@@ -10,15 +10,17 @@
 
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"
 
-#include "plssvm/data_set.hpp"               // plssvm::data_set
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/data_set.hpp"                  // plssvm::data_set
+#include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
+#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
 #include "../../utility.hpp"  // util::create_temp_file, EXPECT_THROW_WHAT
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
-                          // ::testing::{Test, Types, Values}
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
+                                   // ::testing::{Test, Types, Values}
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
@@ -626,7 +628,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
-    const std::vector<label_type>& label_order = plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -727,4 +729,50 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
 
     // then the lines with the second label
     ASSERT_EQ(reader.line(9), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
+}
+
+template <typename T>
+class LIBSVMModelWriteDeathTest : public LIBSVMModelWriteBase<T> {};
+TYPED_TEST_SUITE(LIBSVMModelWriteDeathTest, type_combinations_types);
+
+TYPED_TEST(LIBSVMModelWriteDeathTest, write_header_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create necessary parameter
+    const plssvm::parameter<real_type> params{};
+    const real_type rho{};
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } } } };
+
+    // create file
+    fmt::ostream out = fmt::output_file(this->filename);
+
+    // try writing the LIBSVM model header
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set)), "Cannot write a model file that does not include labels!");
+}
+TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create necessary parameter
+    const plssvm::parameter<real_type> params{};
+    const real_type rho{};
+    const std::vector<real_type> alpha{ real_type{ 0.1 } };
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } } } };
+
+    // try writing the LIBSVM model header
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)), "Cannot write a model file that does not include labels!");
+}
+TYPED_TEST(LIBSVMModelWriteDeathTest, num_alphas_and_num_data_points_mismatch) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create necessary parameter
+    const plssvm::parameter<real_type> params{};
+    const real_type rho{};
+    const std::vector<real_type> alpha{ real_type{ 0.1 } };
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } }, { real_type{ 1.0 } } }, std::vector<label_type>{ plssvm::detail::convert_to<label_type>("1"), plssvm::detail::convert_to<label_type>("2") } };
+
+    // try writing the LIBSVM model header
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)), ::testing::HasSubstr("The number of weights (1) doesn't match the number of data points (2)!"));
 }
