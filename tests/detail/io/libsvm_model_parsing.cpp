@@ -447,3 +447,189 @@ TYPED_TEST(LIBSVMModelHeaderParse, empty) {
                       plssvm::invalid_file_format_exception,
                       "Missing svm_type!");
 }
+
+template <typename T>
+class LIBSVMModelWriteBase : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        // capture std::cout
+        sbuf_ = std::cout.rdbuf();
+        std::cout.rdbuf(buffer_.rdbuf());
+
+        // create a temporary file containing the scaling factors
+        filename = util::create_temp_file();
+    }
+    void TearDown() override {
+        // remove the temporary file at the end
+        std::filesystem::remove(filename);
+
+        // end capturing std::cout
+        std::cout.rdbuf(sbuf_);
+        sbuf_ = nullptr;
+    }
+
+    std::string filename;
+
+  private:
+    std::stringstream buffer_{};
+    std::streambuf *sbuf_{ nullptr };
+};
+
+template <typename T>
+class LIBSVMModelHeaderWrite : public LIBSVMModelWriteBase<T> {};
+TYPED_TEST_SUITE(LIBSVMModelHeaderWrite, type_combinations_types);
+
+TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create the output file
+    fmt::ostream out = fmt::output_file(this->filename);
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> label{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label = std::vector<int>{ -1, 1, -1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label = std::vector<std::string>{ "cat", "dog", "cat" };
+    }
+
+    // create necessary parameter
+    const plssvm::parameter<real_type> params{};
+    const real_type rho = 3.14159265359;
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
+
+    // write the LIBSVM model file
+    plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    out.close();
+
+    // read the written file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // check the written data
+    ASSERT_EQ(reader.num_lines(), 8);  // the LIBSVM header
+    EXPECT_EQ(reader.line(0), "svm_type c_svc");
+    EXPECT_EQ(reader.line(1), "kernel_type linear");
+    EXPECT_EQ(reader.line(2), "nr_class 2");
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(reader.line(3), "label -1 1");
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(reader.line(3), "label cat dog");
+    }
+    EXPECT_EQ(reader.line(4), "total_sv 3");
+    EXPECT_EQ(reader.line(5), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(6), fmt::format("rho {}", rho));
+    EXPECT_EQ(reader.line(7), "SV");
+}
+TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create the output file
+    fmt::ostream out = fmt::output_file(this->filename);
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> label{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label = std::vector<int>{ 1, 2, 2 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label = std::vector<std::string>{ "Cat", "Dog", "Dog" };
+    }
+
+    // create necessary parameter
+    plssvm::parameter<real_type> params{};
+    params.kernel = plssvm::kernel_type::polynomial;
+    params.degree = 3;
+    params.gamma = real_type{ 2.2 };
+    params.coef0 = real_type{ 4.4 };
+    const real_type rho = 2.71828;
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
+
+    // write the LIBSVM model file
+    plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    out.close();
+
+    // read the written file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // check the written data
+    ASSERT_EQ(reader.num_lines(), 11);  // the LIBSVM header
+    EXPECT_EQ(reader.line(0), "svm_type c_svc");
+    EXPECT_EQ(reader.line(1), "kernel_type polynomial");
+    EXPECT_EQ(reader.line(2), "degree 3");
+    EXPECT_EQ(reader.line(3), "gamma 2.2");
+    EXPECT_EQ(reader.line(4), "coef0 4.4");
+    EXPECT_EQ(reader.line(5), "nr_class 2");
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(reader.line(6), "label 1 2");
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(reader.line(6), "label Cat Dog");
+    }
+    EXPECT_EQ(reader.line(7), "total_sv 3");
+    EXPECT_EQ(reader.line(8), "nr_sv 1 2");
+    EXPECT_EQ(reader.line(9), fmt::format("rho {}", rho));
+    EXPECT_EQ(reader.line(10), "SV");
+}
+TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create the output file
+    fmt::ostream out = fmt::output_file(this->filename);
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> label{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label = std::vector<int>{ 1, -1, -1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label = std::vector<std::string>{ "B", "A", "A" };
+    }
+
+    // create necessary parameter
+    plssvm::parameter<real_type> params{};
+    params.kernel = plssvm::kernel_type::rbf;
+    params.gamma = real_type{ 0.4 };
+    const real_type rho = 1.41421;
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
+
+    // write the LIBSVM model file
+    plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set);
+    out.close();
+
+    // read the written file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // check the written data
+    ASSERT_EQ(reader.num_lines(), 9);  // the LIBSVM header
+    EXPECT_EQ(reader.line(0), "svm_type c_svc");
+    EXPECT_EQ(reader.line(1), "kernel_type rbf");
+    EXPECT_EQ(reader.line(2), "gamma 0.4");
+    EXPECT_EQ(reader.line(3), "nr_class 2");
+    if constexpr (std::is_same_v<label_type, int>) {
+        EXPECT_EQ(reader.line(4), "label -1 1");
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        EXPECT_EQ(reader.line(4), "label A B");
+    }
+    EXPECT_EQ(reader.line(5), "total_sv 3");
+    EXPECT_EQ(reader.line(6), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(7), fmt::format("rho {}", rho));
+    EXPECT_EQ(reader.line(8), "SV");
+}

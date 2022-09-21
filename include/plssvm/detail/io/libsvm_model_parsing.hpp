@@ -25,6 +25,7 @@
 
 #include <algorithm>    // std::min
 #include <cstddef>      // std::size_t
+#include <iostream>     // std::cout
 #include <memory>       // std::unique_ptr
 #include <numeric>      // std::accumulate
 #include <sstream>      // std::stringstream
@@ -223,6 +224,7 @@ template <typename real_type, typename label_type>
 inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
     // save model file header
     std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel);
+    // save the SVM parameter information based on the used kernel_type
     switch (params.kernel) {
         case kernel_type::linear:
             break;
@@ -235,11 +237,13 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
     }
 
     // get the original labels (not the mapped once)
-    const std::vector<label_type> label_values = data.mapping().value().get().labels();
+    const typename plssvm::data_set<real_type, label_type>::label_mapper mapper = data.mapping().value();
+    const std::vector<label_type> label_values = mapper.labels();
 
     // count the occurrence of each label
     std::map<label_type, std::size_t> label_counts_map;
-    for (const label_type &l : data.labels().value().get()) {
+    const std::vector<label_type> labels = data.labels().value();
+    for (const label_type &l : labels) {
         ++label_counts_map[l];
     }
     // fill vector with number of occurrences in correct order
@@ -256,7 +260,8 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
                               rho);
 
     // print model header
-    fmt::print("\n{}\n", out_string);
+    std::cout << '\n'
+              << out_string << '\n';
     // write model header to file
     out.print(out_string);
 
