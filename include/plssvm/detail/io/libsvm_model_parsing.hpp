@@ -269,7 +269,11 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
 }
 
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const std::vector<label_type> &labels, const std::vector<label_type> &label_order, const std::size_t num_features) {
+inline void write_libsvm_model_data(fmt::ostream &out, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data, const std::vector<label_type> &label_order) {
+    const std::vector<std::vector<real_type>>& support_vectors = data.data();
+    const std::vector<label_type>& labels = data.labels().value();
+    const std::size_t num_features = data.num_features();
+
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
     // scientific notation: 3 chars (number in front of decimal separator including a sign + decimal separator) + 10 chars (part after the decimal separator, specified during formatting) +

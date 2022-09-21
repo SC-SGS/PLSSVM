@@ -633,3 +633,65 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     EXPECT_EQ(reader.line(7), fmt::format("rho {}", rho));
     EXPECT_EQ(reader.line(8), "SV");
 }
+
+template <typename T>
+class LIBSVMModelDataWrite : public LIBSVMModelWriteBase<T> {};
+TYPED_TEST_SUITE(LIBSVMModelDataWrite, type_combinations_types);
+
+TYPED_TEST(LIBSVMModelDataWrite, write) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create the output file
+    fmt::ostream out = fmt::output_file(this->filename);
+
+    // define data to write
+    const std::vector<std::vector<real_type>> data{
+        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> label{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label = std::vector<int>{ -1, 1, -1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label = std::vector<std::string>{ "cat", "dog", "cat" };
+    }
+
+    // create necessary parameter
+    const std::vector<real_type> alpha{ -0.1, -0.2, -0.3 };
+    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
+    std::vector<label_type> label_order{};
+    if constexpr (std::is_same_v<label_type, int>) {
+        label_order = std::vector<int>{ -1, 1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        label_order = std::vector<std::string>{ "cat", "dog" };
+    }
+
+    // write the LIBSVM model file
+    plssvm::detail::io::write_libsvm_model_data(out, alpha, data_set, label_order);
+    out.close();
+
+    // read the written file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // check the written data
+    ASSERT_EQ(reader.num_lines(), data.size());
+    // at first the two lines with the first label must have been written, the internal order may be random
+    for (const std::size_t i : { 0, 2 }) {
+        const std::string line = fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[i], data[i][0], data[i][1], data[i][2]);
+        bool line_found = false;
+        for (std::size_t j = 0; j < 2; ++j) {
+            if (reader.line(j) == line) {
+                line_found = true;
+            }
+        }
+        if (!line_found) {
+            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+        }
+    }
+
+    // then the lines with the second label
+    ASSERT_EQ(reader.line(2), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
+}
