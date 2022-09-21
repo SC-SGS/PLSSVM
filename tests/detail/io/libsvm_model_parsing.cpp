@@ -421,6 +421,19 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_sv) {
                       plssvm::invalid_file_format_exception,
                       "Unrecognized header entry '-0.17609610490769723 1:-1.117828e+00 2:-2.908719e+00 3:6.663834e-01 4:1.097883e+00'! Maybe SV is missing?");
 }
+TYPED_TEST(LIBSVMModelHeaderParse, missing_support_vectors) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::real_type;
+    using size_type = std::size_t;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_support_vectors.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Can't parse file: no support vectors are given or SV is missing!");
+}
 TYPED_TEST(LIBSVMModelHeaderParse, empty) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
