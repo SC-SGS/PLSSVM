@@ -132,7 +132,7 @@ set(PLSSVM_BASE_TEST_SOURCES
 )
 
 # create test executable
-add_executable(${PLSSVM_BASE_TEST_NAME} ${PLSSVM_BASE_TEST_SOURCES})
+add_executable(${PLSSVM_BASE_TEST_NAME} main.cpp ${PLSSVM_BASE_TEST_SOURCES})
 
 # link against base library
 target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
