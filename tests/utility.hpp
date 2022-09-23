@@ -31,13 +31,42 @@
 #include <algorithm>    // std::min, std::max
 #include <cmath>        // std::abs
 #include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists
+#include <iostream>     // std::cout
 #include <limits>       // std::numeric_limits
-#include <sstream>      // std::ostringstream, std::istringstream
+#include <sstream>      // std::ostringstream, std::istringstream, std::stringstream
+#include <streambuf>    // std::streambuf
 #include <string>       // std::string, std::to_string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v
 
 namespace util {
+
+/**
+ * @brief Class used to redirect the standard output inside test cases.
+ */
+class redirect_output {
+  public:
+    /**
+     * @brief Redirect the output and store the original standard output location.
+     */
+    redirect_output() {
+        // capture std::cout
+        sbuf_ = std::cout.rdbuf();
+        std::cout.rdbuf(buffer_.rdbuf());
+    }
+    /**
+     * @brief Restore the original standard output location.
+     */
+    ~redirect_output() {
+        // end capturing std::cout
+        std::cout.rdbuf(sbuf_);
+        sbuf_ = nullptr;
+    }
+
+  private:
+    std::stringstream buffer_{};
+    std::streambuf *sbuf_{ nullptr };
+};
 
 /**
  * @brief Create a unique temporary file return the file's name.
@@ -201,7 +230,6 @@ inline void gtest_expect_correct_csvm_factory(const plssvm::parameter<T> &params
     EXPECT_NE(res, nullptr);
 }
 
-
 /*
  * Convert the parameter to a std::string using a std::ostringstream.
  */
@@ -231,8 +259,6 @@ inline T convert_from_string(const std::string &str) {
     }();
     return param;
 }
-
-
 
 /**
  * @brief Defines a macro like

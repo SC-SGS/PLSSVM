@@ -13,17 +13,14 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "utility.hpp"  // util::create_temp_file
+#include "utility.hpp"  // util::create_temp_file, util::redirect_output
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
-#include <iostream>     // std::cout
 #include <regex>        // std::regex, std::regex_match, std::regex::extended
-#include <sstream>      // std::stringstream
-#include <streambuf>    // std::streambuf
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
@@ -43,22 +40,7 @@ using type_combinations_types = ::testing::Types<
     type_combinations<double, std::string>>;
 
 template <typename T>
-class Model : public ::testing::Test {
-    void SetUp() override {
-        // capture std::cout
-        sbuf_ = std::cout.rdbuf();
-        std::cout.rdbuf(buffer_.rdbuf());
-    }
-    void TearDown() override {
-        // end capturing std::cout
-        std::cout.rdbuf(sbuf_);
-        sbuf_ = nullptr;
-    }
-
-  private:
-    std::stringstream buffer_{};
-    std::streambuf *sbuf_{ nullptr };
-};
+class Model : public ::testing::Test, private util::redirect_output {};
 TYPED_TEST_SUITE(Model, type_combinations_types);
 
 TYPED_TEST(Model, construct) {
@@ -158,22 +140,7 @@ TYPED_TEST(Model, rho) {
     EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
 }
 
-class ModelSave : public ::testing::TestWithParam<std::string> {
-    void SetUp() override {
-        // capture std::cout
-        sbuf_ = std::cout.rdbuf();
-        std::cout.rdbuf(buffer_.rdbuf());
-    }
-    void TearDown() override {
-        // end capturing std::cout
-        std::cout.rdbuf(sbuf_);
-        sbuf_ = nullptr;
-    }
-
-  private:
-    std::stringstream buffer_{};
-    std::streambuf *sbuf_{ nullptr };
-};
+class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output {};
 TEST_P(ModelSave, save) {
     // create a model using an existing LIBSVM model file
     plssvm::model<double, int> model{ fmt::format("{}{}", PLSSVM_TEST_PATH, GetParam()) };

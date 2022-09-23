@@ -15,12 +15,12 @@
 
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 
+#include "../../utility.hpp"  // util::redirect_output
+
 #include "gtest/gtest.h"  // ASSERT_FALSE, ::testing::Test
 
 #include <cstring>      // std::strcpy
-#include <iostream>     // std::cout
-#include <sstream>      // std::stringstream, std::ostringstream, std::istringstream
-#include <streambuf>    // std::streambuf
+#include <sstream>      // std::ostringstream, std::istringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
@@ -30,7 +30,7 @@ namespace util {
 /*
  * Fixture class for testing the parameter_* classes' implementation.
  */
-class ParameterBase : public ::testing::Test {
+class ParameterBase : public ::testing::Test, private redirect_output {
   protected:
     /*
      * Create artificial argc and argv from the given string.
@@ -46,14 +46,6 @@ class ParameterBase : public ::testing::Test {
         }
     }
     /*
-     * Start capturing std::cout. Automatically called at the beginning of a test.
-     */
-    void SetUp() override {
-        // capture std::cout
-        sbuf_ = std::cout.rdbuf();
-        std::cout.rdbuf(buffer_.rdbuf());
-    }
-    /*
      * Free memory used for argv and end capturing std::cout. Automatically called at the end of a test.
      */
     void TearDown() override {
@@ -62,20 +54,12 @@ class ParameterBase : public ::testing::Test {
             delete[] argv[i];
         }
         delete[] argv;
-
-        // end capturing std::cout
-        std::cout.rdbuf(sbuf_);
-        sbuf_ = nullptr;
     }
 
     // The number of the artificial command line arguments.
     int argc{ 0 };
     // The artificial command line arguments.
     char **argv{ nullptr };
-
-  private:
-    std::stringstream buffer_{};
-    std::streambuf *sbuf_{ nullptr };
 };
 
 }  // namespace util

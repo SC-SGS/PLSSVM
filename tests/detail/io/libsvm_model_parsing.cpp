@@ -15,7 +15,7 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "../../utility.hpp"  // util::create_temp_file, EXPECT_THROW_WHAT
+#include "../../utility.hpp"  // util::create_temp_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -24,9 +24,6 @@
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
-#include <iostream>     // std::cout
-#include <sstream>      // std::stringstream
-#include <streambuf>    // std::streambuf
 #include <string>       // std::string
 #include <tuple>        // std::ignore
 #include <type_traits>  // std::is_same_v
@@ -453,30 +450,18 @@ TYPED_TEST(LIBSVMModelHeaderParse, empty) {
 }
 
 template <typename T>
-class LIBSVMModelWriteBase : public ::testing::Test {
+class LIBSVMModelWriteBase : public ::testing::Test, private util::redirect_output {
   protected:
     void SetUp() override {
-        // capture std::cout
-        sbuf_ = std::cout.rdbuf();
-        std::cout.rdbuf(buffer_.rdbuf());
-
         // create a temporary file containing the scaling factors
         filename = util::create_temp_file();
     }
     void TearDown() override {
         // remove the temporary file at the end
         std::filesystem::remove(filename);
-
-        // end capturing std::cout
-        std::cout.rdbuf(sbuf_);
-        sbuf_ = nullptr;
     }
 
     std::string filename;
-
-  private:
-    std::stringstream buffer_{};
-    std::streambuf *sbuf_{ nullptr };
 };
 
 template <typename T>
