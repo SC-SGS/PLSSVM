@@ -18,6 +18,21 @@
 #include <regex>
 #include <vector>
 
+// struct for the used type combinations
+template <typename T, typename U>
+struct type_combinations {
+    using real_type = T;
+    using label_type = U;
+};
+
+// the floating point and label types combinations to test
+using type_combinations_types = ::testing::Types<
+    type_combinations<float, int>,
+    type_combinations<float, std::string>,
+    type_combinations<double, int>,
+    type_combinations<double, std::string>>;
+
+template <typename T>
 class Model : public ::testing::Test {
     void SetUp() override {
         // capture std::cout
@@ -34,10 +49,11 @@ class Model : public ::testing::Test {
     std::stringstream buffer_{};
     std::streambuf *sbuf_{ nullptr };
 };
+TYPED_TEST_SUITE(Model, type_combinations_types);
 
-TEST_F(Model, construct) {
-    using real_type = double;
-    using label_type = int;
+TYPED_TEST(Model, construct) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
     plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
@@ -58,17 +74,96 @@ TEST_F(Model, construct) {
     EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
 }
 
-TEST_F(Model, typedefs) {
+TYPED_TEST(Model, typedefs) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
     // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
 
     // test internal typedefs
-    ::testing::StaticAssertTypeEq<double, typename decltype(model)::real_type>();
-    ::testing::StaticAssertTypeEq<int, typename decltype(model)::label_type>();
+    ::testing::StaticAssertTypeEq<real_type, typename decltype(model)::real_type>();
+    ::testing::StaticAssertTypeEq<label_type, typename decltype(model)::label_type>();
 }
 
-class ModelSave : public Model, public ::testing::WithParamInterface<std::string> {};
+TYPED_TEST(Model, num_support_vectors) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
 
+    // create a model using an existing LIBSVM model file
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    // test for the correct number of support vectors
+    EXPECT_EQ(model.num_support_vectors(), 5);
+}
+TYPED_TEST(Model, num_features) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a model using an existing LIBSVM model file
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    // test for the correct number of features
+    EXPECT_EQ(model.num_features(), 4);
+}
+TYPED_TEST(Model, svm_parameter) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a model using an existing LIBSVM model file
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    // test for the correct number of features
+    EXPECT_EQ(model.svm_parameter(), plssvm::parameter<real_type>{});
+}
+TYPED_TEST(Model, support_vectors) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a model using an existing LIBSVM model file
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    // test for the correct support vectors
+    const std::vector<std::vector<real_type>> support_vectors{
+        plssvm::detail::split_as<real_type>("-1.117828e+00 -2.908719e+00 6.663834e-01 1.097883e+00"),
+        plssvm::detail::split_as<real_type>("-5.282118e-01 -3.358810e-01 5.168730e-01 5.460446e-01"),
+        plssvm::detail::split_as<real_type>("-2.098121e-01 6.027694e-01 -1.308685e-01 1.080525e-01"),
+        plssvm::detail::split_as<real_type>("1.884940e+00 1.005186e+00 2.984999e-01 1.646463e+00"),
+        plssvm::detail::split_as<real_type>("5.765022e-01 1.014056e+00 1.300943e-01 7.261914e-01")
+    };
+    EXPECT_EQ(model.support_vectors(), support_vectors);
+}
+TYPED_TEST(Model, weights) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a model using an existing LIBSVM model file
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    // test for the correct weights
+    EXPECT_EQ(model.weights(), plssvm::detail::split_as<real_type>("-0.17609610490769723 0.8838187731213127 -0.47971257671001616 0.0034556484621847128 -0.23146573996578407"));
+}
+TYPED_TEST(Model, rho) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a model using an existing LIBSVM model file
+    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    // test for the correct rho (bias) value
+    EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+}
+
+class ModelSave : public ::testing::TestWithParam<std::string> {
+    void SetUp() override {
+        // capture std::cout
+        sbuf_ = std::cout.rdbuf();
+        std::cout.rdbuf(buffer_.rdbuf());
+    }
+    void TearDown() override {
+        // end capturing std::cout
+        std::cout.rdbuf(sbuf_);
+        sbuf_ = nullptr;
+    }
+
+  private:
+    std::stringstream buffer_{};
+    std::streambuf *sbuf_{ nullptr };
+};
 TEST_P(ModelSave, save) {
     // create a model using an existing LIBSVM model file
     plssvm::model<double, int> model{ fmt::format("{}{}", PLSSVM_TEST_PATH, GetParam()) };
@@ -144,47 +239,3 @@ TEST_P(ModelSave, save) {
     std::filesystem::remove(filename);
 }
 INSTANTIATE_TEST_SUITE_P(Model, ModelSave, ::testing::Values("/data/model/5x4_linear.libsvm.model", "/data/model/5x4_polynomial.libsvm.model", "/data/model/5x4_rbf.libsvm.model"));
-
-TEST_F(Model, num_support_vectors) {
-    // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-    // test for the correct number of support vectors
-    EXPECT_EQ(model.num_support_vectors(), 5);
-}
-TEST_F(Model, num_features) {
-    // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-    // test for the correct number of features
-    EXPECT_EQ(model.num_features(), 4);
-}
-TEST_F(Model, svm_parameter) {
-    // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-    // test for the correct number of features
-    EXPECT_EQ(model.svm_parameter(), plssvm::parameter<double>{});
-}
-TEST_F(Model, support_vectors) {
-    // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-    // test for the correct support vectors
-    const std::vector<std::vector<double>> support_vectors{
-        plssvm::detail::split_as<double>("-1.117828e+00 -2.908719e+00 6.663834e-01 1.097883e+00"),
-        plssvm::detail::split_as<double>("-5.282118e-01 -3.358810e-01 5.168730e-01 5.460446e-01"),
-        plssvm::detail::split_as<double>("-2.098121e-01 6.027694e-01 -1.308685e-01 1.080525e-01"),
-        plssvm::detail::split_as<double>("1.884940e+00 1.005186e+00 2.984999e-01 1.646463e+00"),
-        plssvm::detail::split_as<double>("5.765022e-01 1.014056e+00 1.300943e-01 7.261914e-01")
-    };
-    EXPECT_EQ(model.support_vectors(), support_vectors);
-}
-TEST_F(Model, weights) {
-    // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-    // test for the correct weights
-    EXPECT_EQ(model.weights(), plssvm::detail::split_as<double>("-0.17609610490769723 0.8838187731213127 -0.47971257671001616 0.0034556484621847128 -0.23146573996578407"));
-}
-TEST_F(Model, rho) {
-    // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-    // test for the correct rho (bias) value
-    EXPECT_EQ(model.rho(), plssvm::detail::convert_to<double>("0.37330625882191915"));
-}
