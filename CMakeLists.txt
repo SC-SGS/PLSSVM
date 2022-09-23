@@ -25,6 +25,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/layout.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp

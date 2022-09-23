@@ -20,6 +20,7 @@
 #include <iterator>       // std::distance
 #include <map>            // std::map
 #include <set>            // std::set
+#include <string>         // std::string
 #include <tuple>          // std::forward_as_tuple, std::get
 #include <type_traits>    // std::remove_cv_t, std::remove_reference_t, std::underlying_type_t, std::is_enum_v
 #include <unordered_map>  // std::unordered_map
@@ -252,6 +253,12 @@ template <typename T, typename Allocator>
 [[nodiscard]] inline bool contains(const std::vector<T, Allocator> &vec, const T val) {
     return std::find(vec.cbegin(), vec.cend(), val) != vec.cend();
 }
+
+/**
+ * @brief Return the current date time in the format "YYYY-MM-DD hh:mm:ss".
+ * @return the current date time (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string current_date_time();
 
 }  // namespace plssvm::detail
 

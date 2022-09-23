@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
 #include <map>            // std::map
+#include <regex>          // std::regex, std::regex_match
 #include <set>            // std::set
 #include <type_traits>    // std::is_same_v
 #include <unordered_map>  // std::unordered_map
@@ -152,7 +153,6 @@ TYPED_TEST(UtilitySetContainer, contains) {
     EXPECT_FALSE(plssvm::detail::contains(this->set, -1));
 }
 
-
 template <typename T>
 class UtilityVectorContainer : public ::testing::Test {
   protected:
@@ -184,4 +184,11 @@ TYPED_TEST(UtilityVectorContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->vec, 1));
     EXPECT_FALSE(plssvm::detail::contains(this->vec, 2));
     EXPECT_FALSE(plssvm::detail::contains(this->vec, -1));
+}
+
+TEST(Utility, current_date_time) {
+    // create regex pattern
+    std::regex reg{ "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", std::regex::extended };
+    // test if the  current date time matches the pattern
+    EXPECT_TRUE(std::regex_match(plssvm::detail::current_date_time(), reg));
 }
