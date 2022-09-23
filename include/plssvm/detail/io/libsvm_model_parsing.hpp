@@ -13,9 +13,10 @@
 #define PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
 #pragma once
 
-#include "plssvm/data_set.hpp"       // plssvm::data_set
-#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
-#include "plssvm/parameter.hpp"      // plssvm::parameter
+#include "plssvm/data_set.hpp"        // plssvm::data_set
+#include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::current_date_time
+#include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to
@@ -369,6 +370,8 @@ inline void write_libsvm_model_data(const std::string &filename, const parameter
 
     // create file
     fmt::ostream out = fmt::output_file(filename);
+    // write timestamp for current date time
+    out.print("# This model file has been created at {}\n", detail::current_date_time());
 
     // write header information
     const std::vector<label_type> label_order = write_libsvm_model_header(out, params, rho, data);

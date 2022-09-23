@@ -421,7 +421,7 @@ TYPED_TEST(ARFFWrite, write_with_label) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('%');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), 6 + data.size());  // 6 header lines: @RELATION + 3 features + class + @DATA
@@ -466,7 +466,7 @@ TYPED_TEST(ARFFWrite, write_without_label) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('%');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), 5 + data.size());  // 6 header lines: @RELATION + 3 features + @DATA
@@ -504,7 +504,7 @@ TYPED_TEST(ARFFWrite, empty_data) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('%');
 
     EXPECT_EQ(reader.num_lines(), 0);
     EXPECT_TRUE(reader.lines().empty());

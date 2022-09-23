@@ -429,7 +429,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('#');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), data.size());
@@ -462,7 +462,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('#');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), data.size());
@@ -503,7 +503,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('#');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), data.size());
@@ -543,7 +543,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('#');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), data.size());
@@ -582,7 +582,7 @@ TYPED_TEST(LIBSVMWrite, empty_data) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('#');
 
     EXPECT_EQ(reader.num_lines(), 0);
     EXPECT_TRUE(reader.lines().empty());

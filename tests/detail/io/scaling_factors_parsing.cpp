@@ -199,7 +199,7 @@ TYPED_TEST(ScalingFactorsWrite, write) {
 
     // read the previously written file to check for correctness
     plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines();
+    reader.read_lines('#');
 
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), scaling_factors.size() + 2);

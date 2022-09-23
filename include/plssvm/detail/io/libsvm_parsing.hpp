@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
+#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
@@ -250,6 +251,16 @@ inline void write_libsvm_data_impl(const std::string &filename, const std::vecto
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);
+    // write timestamp as current date time
+    out.print("# This data set has been created at {}\n", detail::current_date_time());
+
+    const std::size_t num_data_points = data.size();
+    if (num_data_points == 0) {
+        // nothing to output
+        return;
+    }
+    const std::size_t num_features = data.front().size();
+    out.print("# {}x{}\n", num_data_points, num_features);
 
     // format one output-line
     auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &data_point) {

@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
+#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
@@ -141,6 +142,8 @@ inline void write_scaling_factors(const std::string &filename, const std::pair<r
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);
+    // write timestamp as current date time
+    out.print("# These scaling factors have been created at {}\n", detail::current_date_time());
 
     // x must always be outputted
     out.print("x\n");

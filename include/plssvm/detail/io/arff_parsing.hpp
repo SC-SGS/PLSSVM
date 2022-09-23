@@ -17,14 +17,13 @@
 #include "plssvm/detail/operators.hpp"          // plssvm::operator::sign
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
+#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 
-#include "fmt/chrono.h"  // fmt::localtime
 #include "fmt/format.h"  // fmt::format, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
 #include <cstddef>      // std::size_t
-#include <ctime>        // std::time
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -370,6 +369,8 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
 
     // create file
     fmt::ostream out = fmt::output_file(filename);
+    // write arff header with current time stamp
+    out.print("% This data set has been created at {}\n", detail::current_date_time());
 
     const std::size_t num_data_points = data.size();
     if (num_data_points == 0) {
@@ -377,8 +378,9 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
         return;
     }
     const std::size_t num_features = data.front().size();
-    // write arff header with current time stamp
-    out.print("@RELATION {:%Y-%m-%d %H:%M:%S}\n", fmt::localtime(std::time(nullptr)));
+    out.print("% {}x{}\n", num_data_points, num_features);
+
+    out.print("@RELATION data_set\n");
     // write arff header for features
     for (std::size_t i = 0; i < num_features; ++i) {
         out.print("@ATTRIBUTE feature_{} NUMERIC\n", i);
