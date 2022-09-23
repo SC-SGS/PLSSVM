@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--output", help="the output file to write the samples to (without extension)")
 parser.add_argument(
-    "--format", help="the file format; either arff, libsvm, or csv", required=True)
+    "--format", help="the file format; either arff, libsvm, or csv", default="libsvm")
 parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
                     default="blobs")
 parser.add_argument(
