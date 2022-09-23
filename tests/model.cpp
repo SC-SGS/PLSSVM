@@ -9,14 +9,24 @@
  */
 
 #include "plssvm/model.hpp"
+
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "utility.hpp"
+#include "utility.hpp"  // util::create_temp_file
 
-#include "gtest/gtest.h"
+#include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
+                          // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
 
-#include <regex>
-#include <vector>
+#include <cstddef>      // std::size_t
+#include <filesystem>   // std::filesystem::remove
+#include <iostream>     // std::cout
+#include <regex>        // std::regex, std::regex_match, std::regex::extended
+#include <sstream>      // std::stringstream
+#include <streambuf>    // std::streambuf
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 // struct for the used type combinations
 template <typename T, typename U>
