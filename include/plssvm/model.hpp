@@ -21,10 +21,11 @@
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
 #include "fmt/chrono.h"  // format std::chrono types using fmt
-#include "fmt/core.h"    // fmt::print
+#include "fmt/core.h"    // fmt::format
 
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>      // std::size_t
+#include <iostream>     // std::cout, std::endl
 #include <memory>       // std::shared_ptr, std::make_shared
 #include <string>       // std::string
 #include <tuple>        // std::tie
@@ -92,7 +93,7 @@ class model {
      * @brief The support vectors representing the learned model.
      * @return the support vectors (`[[nodiscard]]`)
      */
-    [[nodiscard]] const data_set<real_type, label_type> &support_vectors() const noexcept { return data_; }
+    [[nodiscard]] const std::vector<std::vector<real_type>> &support_vectors() const noexcept { return data_.data(); }
     /**
      * The learned weights for the support vectors.
      * @return the weights (`[[nodiscard]]`)
@@ -137,9 +138,6 @@ class model {
     std::shared_ptr<std::vector<real_type>> w_{ std::make_shared<std::vector<real_type>>() };  // TODO: really necessary?
 };
 
-/******************************************************************************
- *                                Constructors                                *
- ******************************************************************************/
 template <typename T, typename U>
 model<T, U>::model(const std::string &filename) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
@@ -166,11 +164,12 @@ model<T, U>::model(const std::string &filename) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
-                   num_support_vectors_,
-                   num_features_,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                   filename);
+        std::cout << fmt::format("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n",
+                                 num_support_vectors_,
+                                 num_features_,
+                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                                 filename)
+                  << std::endl;
     }
 }
 
@@ -178,9 +177,6 @@ template <typename T, typename U>
 model<T, U>::model(parameter<real_type> params, data_set<real_type, label_type> data) :
     params_{ std::move(params) }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() }, alpha_ptr_{ std::make_shared<std::vector<real_type>>(data_.num_data_points()) } {}
 
-/******************************************************************************
- *                                 Save Model                                 *
- ******************************************************************************/
 template <typename T, typename U>
 void model<T, U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
@@ -190,11 +186,12 @@ void model<T, U>::save(const std::string &filename) const {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Write {} support vectors with {} features in {} to the libsvm model file '{}'.\n",
-                   num_support_vectors_,
-                   num_features_,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                   filename);
+        std::cout << fmt::format("Write {} support vectors with {} features in {} to the libsvm model file '{}'.",
+                                 num_support_vectors_,
+                                 num_features_,
+                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                                 filename)
+                  << std::endl;
     }
 }
 
