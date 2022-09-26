@@ -120,6 +120,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
