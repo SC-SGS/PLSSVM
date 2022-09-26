@@ -43,6 +43,9 @@ invalid_parameter_exception::invalid_parameter_exception(const std::string &msg,
 file_reader_exception::file_reader_exception(const std::string &msg, source_location loc) :
     exception{ msg, "file_reader_exception", loc } {}
 
+data_set_exception::data_set_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "data_set_exception", loc } {}
+
 file_not_found_exception::file_not_found_exception(const std::string &msg, source_location loc) :
     exception{ msg, "file_not_found_exception", loc } {}
 
