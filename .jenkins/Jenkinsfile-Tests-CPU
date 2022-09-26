@@ -144,7 +144,6 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                    rm -rf $HIPSYCL_PATH
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL
@@ -171,7 +170,6 @@ pipeline {
         stage('spack and pocl') {
             steps{
                 sh '''
-                rm -rf spack
                     if [ ! -d "spack" ]; then
                         git clone --branch v0.18.1 https://github.com/spack/spack.git || true
                         cd spack
@@ -362,20 +360,20 @@ pipeline {
             }
         }
         // SYCL backend: hipSYCL
-        stage('Build PLSSVM Debug - hipSYCL') {
-            steps {
-                dir('plssvm') {
-                    sh '''
+        // stage('Build PLSSVM Debug - hipSYCL') {
+        //     steps {
+        //         dir('plssvm') {
+        //             sh '''
 
-                        mkdir -p build/Debug_hipSYCL
-                        cd build/Debug_hipSYCL
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
+        //                 mkdir -p build/Debug_hipSYCL
+        //                 cd build/Debug_hipSYCL
+        //                 rm -rf *
+        //                 cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+        //                 make -j4
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Run Tests Debug - hipSYCL') {
             steps {
                 dir('plssvm/build/Debug_hipSYCL') {
