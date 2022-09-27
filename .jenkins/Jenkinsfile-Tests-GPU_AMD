@@ -41,6 +41,22 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        WORKSPACE = "${env.WORKSPACE}"
+
+
+        PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906" // TODO: remove when no longer needed
+
+        // ROCM / HIP
+        ROCM_PATH = "/opt/rocm-5.2.0"
+
+
+        // DPCPP
+        DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
+
+
+        // hipSYCL
+        HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
+
     }
 
     stages {
@@ -82,35 +98,116 @@ pipeline {
                 '''
             }
         }
+
+        stage('set ROCm PATHs') {
+            steps{
+                script{
+                    env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/LD_LIBRARY_PATHhip/lib:${env.LD_LIBRARY_PATH}"
+                    env.CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
+                    env.CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
+                }
+            }
+        }
+        stage('install ninja and cmake') {
+            steps{
+                sh '''
+                    if [ ! -f ninja ]; then
+                        wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+                        unzip ninja-linux.zip
+                        rm ninja-linux.zip*
+                    fi
+
+
+                    if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
+                        wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
+                        tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
+                        rm cmake-3.24.1-linux-x86_64.tar.gz*
+                    fi
+
+
+                    '''
+                    script{
+                        env.PATH="$WORKSPACE:$PATH"
+                        env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        env.LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/LD_LIBRARY_PATHhip/lib:${env.LD_LIBRARY_PATH}"
+                        env.CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
+                        env.CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}"
+                    }
+
+            }
+        }
+
+
+
+        stage('Build DPCPP') {
+            steps{
+                sh '''
+		            if [ ! -d "llvm/build" ]; then
+                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm
+                        cd llvm
+                        python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                        python buildbot/compile.py
+                        cmake --build build -- omp
+                        cmake --build build -- install
+                    fi
+
+                '''
+                script{
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
+                    env.PATH="$DPCPP_PATH/bin:$PATH"
+                    env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:$CPLUS_INCLUDE_PATH"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                }
+
+            }
+        }
+
+
+        stage('Build HipSYCL') {
+            steps{
+                sh '''
+		            if [ ! -d "$HIPSYCL_PATH" ]; then
+                        mkdir $HIPSYCL_PATH
+                        git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL
+                        cd hipSYCL
+                        mkdir build
+                        cd build
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+                        make -j
+                        make install
+                        cd $WORKSPACE
+                        rm -rf hipSYCL
+                    fi
+                    '''
+
+                script{
+                    env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
+                    env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
+                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR = "${HIPSYCL_PATH}/include"
+                }
+            }
+        }
         // Release
         // HIP backend
         stage('Build PLSSVM Release - HIP') {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
-                        make -j4
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DCLANGRT_BUILTINS:FILEPATH=$DPCPP_PATH/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu/libclang_rt.builtins.a ../../
+                        make -j
                     '''
                 }
             }
         }
         stage('Run Tests Release - HIP') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Release_HIP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
-                            cd build/Release_HIP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -122,14 +219,10 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
                         mkdir -p build/Release_OpenCL
                         cd build/Release_OpenCL
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=$DPCPP_PATH/include/sycl -DOpenCL_LIBRARY=$DPCPP_PATH/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON ../../
                         make -j4
                     '''
                 }
@@ -137,14 +230,9 @@ pipeline {
         }
         stage('Run Tests Release - OpenCL') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
-                            cd build/Release_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -156,10 +244,6 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/hipsycl
                         mkdir -p build/Release_hipSYCL
                         cd build/Release_hipSYCL
                         rm -rf *
@@ -171,14 +255,9 @@ pipeline {
         }
         stage('Run Tests Release - hipSYCL') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Release_hipSYCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/hipsycl
-                            cd build/Release_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -190,14 +269,10 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
                         mkdir -p build/Release_DPCPP
                         cd build/Release_DPCPP
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_ASSERTS=ON ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp ../../
                         make -j4
                     '''
                 }
@@ -205,13 +280,9 @@ pipeline {
         }
         stage('Run Tests Release - DPC++') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Release_DPCPP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/dpcpp
-                            cd build/Release_DPCPP
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -223,14 +294,11 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/dpcpp plssvm/pcsgs09/hipsycl
 
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
+                        PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR=$HIPSYCL_PATH/include cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=$DPCPP_PATH/include/sycl -DOpenCL_LIBRARY=$DPCPP_PATH/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
                         make -j4
                     '''
                 }
@@ -238,14 +306,9 @@ pipeline {
         }
         stage('Run Tests Release - All Available') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Release') {
                     warnError('Release tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/dpcpp plssvm/pcsgs09/hipsycl
-
-                            cd build/Release
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -254,52 +317,39 @@ pipeline {
         }
         // Debug
         // HIP backend
-        stage('Build PLSSVM Debug - HIP') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
-                        mkdir -p build/Debug_HIP
-                        cd build/Debug_HIP
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Debug - HIP') {
-            steps {
-                dir('plssvm') {
-                    warnError('Debug tests failed!') {
-                        sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
-                            cd build/Debug_HIP
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('Build PLSSVM Debug - HIP') {
+        //     steps {
+        //         dir('plssvm') {
+        //             sh '''
+        //                 mkdir -p build/Debug_HIP
+        //                 cd build/Debug_HIP
+        //                 rm -rf *
+        //                 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+        //                 make -j4
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('Run Tests Debug - HIP') {
+        //     steps {
+        //         dir('plssvm/build/Debug_HIP') {
+        //             warnError('Debug tests failed!') {
+        //                 sh '''
+        //                     ctest -j4 --no-compress-output -T Test
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
         // OpenCL backend
         stage('Build PLSSVM Debug - OpenCL') {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/dpcpp
                         mkdir -p build/Debug_OpenCL
                         cd build/Debug_OpenCL
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/include/sycl -DOpenCL_LIBRARY=/data/scratch/breyerml/Programs/dpcpp_2022_03_04/build/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=$DPCPP_PATH/include/sycl -DOpenCL_LIBRARY=$DPCPP_PATH/lib -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
                     '''
                 }
@@ -307,14 +357,9 @@ pipeline {
         }
         stage('Run Tests Debug - OpenCL') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Debug_OpenCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/dpcpp
-                            cd build/Debug_OpenCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -326,14 +371,10 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                        module use /home/breyerml/.modulefiles/
-                        module load plssvm/pcsgs09/hip
-                        module load plssvm/pcsgs09/hipsycl
                         mkdir -p build/Debug_hipSYCL
                         cd build/Debug_hipSYCL
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR=$HIPSYCL_PATH/include cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
                     '''
                 }
@@ -341,14 +382,9 @@ pipeline {
         }
         stage('Run Tests Debug - hipSYCL') {
             steps {
-                dir('plssvm') {
+                dir('plssvm/build/Debug_hipSYCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh
-                            module use /home/breyerml/.modulefiles/
-                            module load plssvm/pcsgs09/hip
-                            module load plssvm/pcsgs09/hipsycl
-                            cd build/Debug_hipSYCL
                             ctest -j4 --no-compress-output -T Test
                         '''
                     }
@@ -408,6 +444,10 @@ pipeline {
                     stopProcessingIfError: true
                 )]
             )
+            // cleanup
+            sh '''
+
+            '''
 
         }
         success {

@@ -40,6 +40,12 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+
+                // DPCPP
+        DPCPP_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/llvm/build"
+
+        // hipSYCL
+        HIPSYCL_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/hipsycl-install"
     }
 
     stages {
@@ -95,11 +101,92 @@ pipeline {
                 dir('plssvm'){
                     sh '''
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                        python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000"
+                            python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000"
                     '''
                 }
             }
         }
+
+        stage('install ninja and cmake') {
+            steps{
+                sh '''
+                    if [ ! -f ninja ]; then
+                        wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+                        unzip ninja-linux.zip
+                        rm ninja-linux.zip*
+                    fi
+
+
+                    if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
+                        wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
+                        tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
+                        rm cmake-3.24.1-linux-x86_64.tar.gz*
+                    fi
+
+
+                    '''
+                    script{
+                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:$PATH"
+                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                    }
+
+            }
+        }
+
+
+
+        stage('Build DPCPP') {
+            steps{
+                sh '''
+                    srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
+                    module load cuda/11.2.2 &&\
+                    git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm  || true; \
+                    cd llvm &&\
+                    python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
+                    python buildbot/compile.py &&\
+                    cmake --build build -- omp &&\
+                    cmake --build build -- install "
+                '''
+                script{
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
+                    env.PATH="$DPCPP_PATH/bin:$PATH"
+                    env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                }
+
+            }
+        }
+
+
+        stage('Build HipSYCL') {
+            steps{
+                sh '''
+
+		            if [ ! -d "$HIPSYCL_PATH" ]; then
+                        srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
+                            module load cuda/11.2.2; \
+                            mkdir $HIPSYCL_PATH; \
+                            git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL  || true; \
+                            cd hipSYCL && \
+                            mkdir build && \
+                            cd build && \
+                            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \
+                            make -j && \
+                            make install && \
+                            cd $WORKSPACE; \
+                            rm -rf hipSYCL"
+                    fi
+                    '''
+
+                script{
+                    env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
+                    env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
+                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR = "${HIPSYCL_PATH}/include"
+                }
+            }
+        }
+
         stage('Build and Test'){
             parallel {
                 // CUDA backend
@@ -110,8 +197,6 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
-                                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2 &&\
                                         module load cuda/11.2.2 &&\
                                         mkdir -p build/Release_cuda &&\
                                         cd build/Release_cuda &&\
@@ -149,8 +234,6 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
-                                        module load cmake-3.22.2-gcc-9.3.0-wi6mnc2 &&\
                                         module load cuda/11.2.2 &&\
                                         mkdir -p build/Release_opencl &&\
                                         cd build/Release_opencl &&\
@@ -188,10 +271,7 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                         module load cuda/11.2.2 &&\
-                                        module use /home/breyerml/.modulefiles/ &&\
-                                        module load plssvm/argon-gtx/hipsycl &&\
                                         mkdir -p build/Release_hipsycl &&\
                                         cd build/Release_hipsycl &&\
                                         rm -rf * &&\
@@ -207,10 +287,7 @@ pipeline {
                                     warnError('hipSYCL Release tests failed!') {
                                         sh '''
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
-                                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                             module load cuda/11.2.2 &&\
-                                            module use /home/breyerml/.modulefiles/ &&\
-                                            module load plssvm/argon-gtx/hipsycl &&\
                                             cd build/Release_hipsycl &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
@@ -230,14 +307,11 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
-                                        source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                         module load cuda/11.2.2 &&\
-                                        module use /home/breyerml/.modulefiles/ &&\
-                                        module load plssvm/argon-gtx/dpcpp &&\
                                         mkdir -p build/Release_dpcpp &&\
                                         cd build/Release_dpcpp &&\
                                         rm -rf * &&\
-                                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_LTO=OFF -S ../../ &&\
+                                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON  -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_LTO=OFF -S ../../ &&\
                                         make -j4 "
                                     '''
                                 }
@@ -249,10 +323,7 @@ pipeline {
                                     warnError('DPC++ Release tests failed!') {
                                         sh '''
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
-                                            source /import/sgs.local/scratch/breyerml/spack/share/spack/setup-env.sh &&\
                                             module load cuda/11.2.2 &&\
-                                            module use /home/breyerml/.modulefiles/ &&\
-                                            module load plssvm/argon-gtx/dpcpp &&\
                                             cd build/Release_dpcpp &&\
                                             ctest -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
