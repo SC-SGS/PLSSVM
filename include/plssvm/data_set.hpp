@@ -73,7 +73,7 @@ class data_set {
     // plssvm::model needs the default constructor
     template <typename, typename>
     friend class model;
-
+    // plssvm::csvm needs the label mapping
     template <typename>
     friend class csvm;
 
@@ -120,28 +120,95 @@ class data_set {
      */
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
 
-    explicit data_set(std::vector<std::vector<real_type>> X);
-    data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y);
-    data_set(std::vector<std::vector<real_type>> X, scaling scale_parameter);
-    data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y, scaling scale_parameter);
+    /**
+     * @brief Create a new data set using the the provided @p data_points.
+     * @param[in] data_points the data points used in this data set
+     */
+    explicit data_set(std::vector<std::vector<real_type>> data_points);
+    /**
+     * @brief Create a new data set using the provided @p data_points and @p labels.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     */
+    data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels);
+    /**
+     * @brief Create a new data set using the the provided @p data_points and scale them using the provided @p scale_parameter.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     */
+    data_set(std::vector<std::vector<real_type>> data_points, scaling scale_parameter);
+    /**
+     * @brief Create a new data set using the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     */
+    data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels, scaling scale_parameter);
 
-    // save the data set in the given format
+    /**
+     * @brief Save the data points and potential labels of this data set to the file @p filename using the file @p format type.
+     * @param[in] filename the file to save the data points and labels to
+     * @param[in] format the file format
+     */
     void save(const std::string &filename, file_format_type format) const;
 
+    /**
+     * @brief Return the data points in this data set.
+     * @return the data points (`[[nodiscard]]`)
+     */
     [[nodiscard]] const std::vector<std::vector<real_type>> &data() const noexcept { return *X_ptr_; }
+    /**
+     * @brief Returns whether this data set contains labels or not.
+     * @return `true` if this data set contains labels, `false` otherwise (`[[nodiscard]]`)
+     */
     [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
+    /**
+     * @brief Returns an optional reference to the labels in this data set.
+     * @return if this data set contains labels, returns a reference to them, otherwise returns a `std::nullopt` (`[[nodiscard]]`)
+     */
     [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept;
+    /**
+     * @brief Returns an optional reference to the **different** labels in this data set.
+     * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `std::vector<int>{ -1, 1 }`.
+     * @return if this data set contains labels, returns a reference to all **different** labels, otherwise returns a `std::nullopt` (`[[nodiscard]]`)
+     */
     [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const noexcept;
 
+    /**
+     * @brief Returns the number of data points in this data set.
+     * @return the number of data points (`[[nodiscard]]`)
+     */
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
+    /**
+     * @brief Returns the number of features in this data set.
+     * @return the number of features (`[[nodiscard]]`)
+     */
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
+    /**
+     * @brief Returns the number of **different** labels in this data set.
+     * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
+     * @return the number of **different** labels (`[[nodiscard]]`)
+     */
     [[nodiscard]] size_type num_different_labels() const noexcept { return mapping_ != nullptr ? mapping_->num_mappings() : 0; }
 
+    /**
+     * @brief Returns whether this data set has been scaled or not.
+     * @details The used scaling factors can be retrieved using `plssvm::scaling_factors()`.
+     * @return `true` if this data set has been scaled, `false` otherwise (`[[nodiscard]]`)
+     */
     [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
+    /**
+     * @brief Returns the scaling factors used to scale the data points in this data set.
+     * @details Can be used to scale another data set in the same way (e.g., a test data set).
+     * @return the scaling factors (`[[nodiscard]]`)
+     */
     [[nodiscard]] optional_ref<const scaling> scaling_factors() const noexcept;
 
   private:
-    data_set();
+    /**
+     * @brief Default construct an empty data set.
+     */
+    data_set();  // TODO: necessary?
 
     /**
      * @brief Create the mapping between the provided labels and the internally used mapped values, i.e., { -1, 1 }.
@@ -152,21 +219,48 @@ class data_set {
      */
     void scale();
 
+    /**
+     * @brief Write an LIBSVM file.
+     * @param[in] filename the filename to write the data to
+     */
     void write_libsvm_file(const std::string &filename) const;
+    /**
+     * @brief Write an ARFF file.
+     * @param[in] filename the filename to write the data to
+     */
     void write_arff_file(const std::string &filename) const;
+    /**
+     * @brief Read the data points and potential labels from the file @p filename assuming the file_format_type @p format.
+     * @param[in] filename the filename to read the data from
+     * @param[in] format the assumed file format type
+     */
     void read_file(const std::string &filename, file_format_type format);
+    /**
+     * @brief Read the data points and potential labels from the LIBSVM file @p filename.
+     * @param[in] filename the filename to read the data from
+     */
     void read_libsvm_file(const std::string &filename);
+    /**
+     * @brief Read the data points and potential labels from the ARFF file @p filename.
+     * @param[in] filename the filename to read the data from
+     */
     void read_arff_file(const std::string &filename);
 
+    /// A pointer to the two-dimensional data points.
     std::shared_ptr<std::vector<std::vector<real_type>>> X_ptr_{ nullptr };
-    std::shared_ptr<std::vector<real_type>> y_ptr_{ nullptr };
+    /// A pointer to the original labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<std::vector<label_type>> labels_ptr_{ nullptr };
+    /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
+    std::shared_ptr<std::vector<real_type>> y_ptr_{ nullptr };
 
+    /// The number of data points in this data set.
     size_type num_data_points_{ 0 };
+    /// The number of features in this data set.
     size_type num_features_{ 0 };
 
+    /// The mapping used to convert from the original label to its mapped value and vice versa; may be `nullptr` if no labels have been provided.
     std::shared_ptr<const label_mapper> mapping_{ nullptr };
-
+    /// The scaling parameters used to scale the data points in this data set; may be `nullptr` if no data point scaling was requested.
     std::shared_ptr<scaling> scale_parameters_{ nullptr };
 };
 
@@ -702,21 +796,46 @@ void data_set<T, U>::read_arff_file(const std::string &filename) {
     }
 }
 
+// TODO: move to another header?
 namespace detail {
 
 // two possible types: real_type + int and real_type + std::string
+/**
+ * @brief Four different type combinations are allowed in the command line invocation: `float` + `int`, `float` + `std::string`, `double` + `int`, and `double` + `std::string`.
+ */
 using data_set_variants = std::variant<plssvm::data_set<float>, plssvm::data_set<float, std::string>, plssvm::data_set<double>, plssvm::data_set<double, std::string>>;
 
+/**
+ * @brief Return the correct data set type based on the `plssvm::detail::cmd::parameter_train` command line options.
+ * @tparam real_type the type of the data points
+ * @tparam label_type the type of the labels
+ * @param[in] params the provided command line parameters
+ * @return the data set type based on the provided command line parameter (`[[nodiscard]]`)
+ */
 template <typename real_type, typename label_type = typename data_set<real_type>::label_type>
-inline data_set_variants data_set_factory_impl(const cmd::parameter_train &params) {
+[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parameter_train &params) {
     return data_set_variants{ plssvm::data_set<real_type, label_type>{ params.input_filename } };
 }
+/**
+ * @brief Return the correct data set type based on the `plssvm::detail::cmd::parameter_predict` command line options.
+ * @tparam real_type the type of the data points
+ * @tparam label_type the type of the labels
+ * @param[in] params the provided command line parameters
+ * @return the data set type based on the provided command line parameter (`[[nodiscard]]`)
+ */
 template <typename real_type, typename label_type = typename data_set<real_type>::label_type>
-inline data_set_variants data_set_factory_impl(const cmd::parameter_predict &params) {
+[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parameter_predict &params) {
     return data_set_variants{ plssvm::data_set<real_type, label_type>{ params.input_filename } };
 }
+/**
+ * @brief Return the correct data set type based on the `plssvm::detail::cmd::parameter_scale` command line options.
+ * @tparam real_type the type of the data points
+ * @tparam label_type the type of the labels
+ * @param[in] params the provided command line parameters
+ * @return the data set type based on the provided command line parameter (`[[nodiscard]]`)
+ */
 template <typename real_type, typename label_type = typename data_set<real_type>::label_type>
-inline data_set_variants data_set_factory_impl(const cmd::parameter_scale &params) {
+[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parameter_scale &params) {
     if (!params.restore_filename.empty()) {
         return data_set_variants{ plssvm::data_set<real_type, label_type>{ params.input_filename, { params.restore_filename } } };
     } else {
@@ -724,8 +843,14 @@ inline data_set_variants data_set_factory_impl(const cmd::parameter_scale &param
     }
 }
 
+/**
+ * @brief Based on the provided command line @p params, return the correct data set type.
+ * @tparam cmd_parameter the type of the command line parameter (train, predict, or scale)
+ * @param[in] params the provided command line parameters
+ * @return the data set type based on the provided command line parameter (`[[nodiscard]]`)
+ */
 template <typename cmd_parameter>
-inline data_set_variants data_set_factory(const cmd_parameter &params) {
+[[nodiscard]] inline data_set_variants data_set_factory(const cmd_parameter &params) {
     if (params.float_as_real_type && params.strings_as_labels) {
         return data_set_factory_impl<float, std::string>(params);
     } else if (params.float_as_real_type && !params.strings_as_labels) {
