@@ -49,18 +49,6 @@
 
 namespace plssvm {
 
-// forward declare data_set class
-template <typename, typename>
-class data_set;
-
-namespace detail::io {
-
-// forward declare function which needs the mapping_ member
-template <typename A, typename B>
-inline std::vector<B> write_libsvm_model_header(fmt::ostream &, const plssvm::parameter<A> &, const A, const plssvm::data_set<A, B> &);
-
-}  // namespace detail::io
-
 /**
  * @brief Type alias for an optional reference (since `std::optional<T&>` is not allowed.
  * @tparam T the type to wrap as a reference
@@ -88,9 +76,6 @@ class data_set {
 
     template <typename>
     friend class csvm;
-
-    template <typename A, typename B>
-    friend std::vector<B> plssvm::detail::io::write_libsvm_model_header(fmt::ostream &, const plssvm::parameter<A> &, const A, const plssvm::data_set<A, B> &);
 
   public:
     /// The type of the data points: either `float` or `double`.

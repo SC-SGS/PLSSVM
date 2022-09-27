@@ -302,8 +302,7 @@ template <typename real_type, typename label_type>
     }
 
     // get the original labels (not the mapped once)
-    const typename plssvm::data_set<real_type, label_type>::label_mapper mapper = *data.mapping_;
-    const std::vector<label_type> label_values = mapper.labels();
+    const std::vector<label_type> label_values = data.different_labels().value();
 
     // count the occurrence of each label
     std::map<label_type, std::size_t> label_counts_map;
