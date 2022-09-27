@@ -71,6 +71,9 @@ template <typename real_type, typename factors_type>
     if (scale_to_interval.size() != 2) {
         throw invalid_file_format_exception{ fmt::format("The interval to which the data points should be scaled must exactly have two values, but {} were given!", scale_to_interval.size()) };
     }
+    if (scale_to_interval[0] >= scale_to_interval[1]) {
+        throw invalid_file_format_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", scale_to_interval[0], scale_to_interval[1]) };
+    }
 
     // parse scaling factors
     std::exception_ptr parallel_exception;

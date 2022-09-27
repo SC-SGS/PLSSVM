@@ -97,6 +97,14 @@ TYPED_TEST(ScalingFactorsRead, too_few_scaling_interval_values) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 1 were given!");
 }
+TYPED_TEST(ScalingFactorsRead, inconsistent_scaling_interval_values) {
+    using real_type = TypeParam;
+
+    // parse scaling factors!
+    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/inconsistent_scaling_interval_values.txt" };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), plssvm::invalid_file_format_exception, "Inconsistent scaling interval specification: lower (1.4) must be less than upper (-2.6)!");
+}
 TYPED_TEST(ScalingFactorsRead, no_header) {
     using real_type = TypeParam;
 

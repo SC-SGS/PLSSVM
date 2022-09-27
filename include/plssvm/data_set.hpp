@@ -166,6 +166,7 @@ class data_set<T, U>::scaling {
      * @brief Create a new scaling class that can be used to scale all features of a data set to the interval [lower, upper].
      * @param[in] lower the lower bound of all features
      * @param[in] upper the upper bound of all features
+     * @throws plssvm::data_set_exception if lower is greater or equal than upper
      */
     scaling(real_type lower, real_type upper);
     /**
@@ -189,7 +190,11 @@ class data_set<T, U>::scaling {
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const real_type lower, const real_type upper) :
-    scaling_interval{ std::make_pair(lower, upper) } {} // TODO: test lower upper?
+    scaling_interval{ std::make_pair(lower, upper) } {
+    if (lower >= upper) {
+        throw data_set_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", lower, upper) };
+    }
+}
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const std::string &filename) {
@@ -516,7 +521,7 @@ void data_set<T, U>::scale() {
     // unpack scaling interval pair
     const real_type lower = scale_parameters_->scaling_interval.first;
     const real_type upper = scale_parameters_->scaling_interval.second;
-    if (lower >= upper) {
+    if (lower >= upper) { // TODO: remove here?!
         throw plssvm::exception(fmt::format("Illegal interval specification: lower ({}) < upper ({}).", lower, upper));
     }
 

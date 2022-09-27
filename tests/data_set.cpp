@@ -89,6 +89,14 @@ TYPED_TEST(DataSetScaling, construct_interval) {
     EXPECT_EQ(scale.scaling_interval.second, real_type{ 1.0 });
     EXPECT_TRUE(scale.scaling_factors.empty());
 }
+TYPED_TEST(DataSetScaling, construct_invalid_interval) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+
+    // create scaling class with an invalid interval
+    EXPECT_THROW_WHAT((scaling_type{ real_type{ 1.0 }, real_type{ -1.0 } }), plssvm::data_set_exception, "Inconsistent scaling interval specification: lower (1) must be less than upper (-1)!");
+}
 TYPED_TEST(DataSetScaling, construct_from_file) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
