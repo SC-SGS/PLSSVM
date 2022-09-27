@@ -273,15 +273,14 @@ pipeline {
            steps {
                dir('plssvm') {
                    sh '''
-                       source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                       module use /home/breyerml/.modulefiles/
-                       spack load pocl
-                       module load network_hipsycl_cpu_pocl
-                       mkdir -p build/Release
-                       cd build/Release
-                       rm -rf *
-                       cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
-                       make -j4
+                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
+                        spack load pocl
+                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
+                        make -j4
                    '''
                }
            }
