@@ -135,10 +135,10 @@ class data_set {
      */
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
 
-    explicit data_set(std::vector<std::vector<real_type>> &&X);
-    data_set(std::vector<std::vector<real_type>> &&X, std::vector<label_type> &&y);
-    data_set(std::vector<std::vector<real_type>> &&X, scaling scale_parameter);
-    data_set(std::vector<std::vector<real_type>> &&X, std::vector<label_type> &&y, scaling scale_parameter);
+    explicit data_set(std::vector<std::vector<real_type>> X);
+    data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y);
+    data_set(std::vector<std::vector<real_type>> X, scaling scale_parameter);
+    data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y, scaling scale_parameter);
 
     // save the data set in the given format
     void save(const std::string &filename, file_format_type format) const;
@@ -422,7 +422,7 @@ data_set<T, U>::data_set(const std::string &filename, file_format_type format, s
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X) :
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> X) :
     X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>(std::move(X)) } {
     if (X_ptr_->empty()) {
         throw exception("Data vector is empty!");
@@ -437,7 +437,7 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X) :
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X, std::vector<label_type> &&y) :
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y) :
     X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>(std::move(X)) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(y)) } {
     if (X_ptr_->empty()) {
         throw exception("Data vector is empty!");
@@ -457,7 +457,7 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X, std::vector<la
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X, scaling scale_parameter) :
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, scaling scale_parameter) :
     data_set{ std::move(X) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -466,7 +466,7 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X, scaling scale_
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> &&X, std::vector<label_type> &&y, scaling scale_parameter) :
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y, scaling scale_parameter) :
     data_set{ std::move(X), std::move(y) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
