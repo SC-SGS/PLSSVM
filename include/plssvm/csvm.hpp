@@ -293,7 +293,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args&&... named_a
     model<real_type, label_type> csvm_model{ params, data };
 
     // solve the minimization problem
-    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(params, data.data(), data.mapped_labels().value().get(), epsilon_val.value(), max_iter_val.value());
+    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(params, data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
 
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
@@ -321,7 +321,7 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
     std::vector<label_type> predicted_labels(predicted_values.size());
     #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-        predicted_labels[i] = model.data_.label_from_mapped_value(plssvm::operators::sign(predicted_values[i]));
+        predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
     }
     return predicted_labels;
 }

@@ -302,7 +302,7 @@ template <typename real_type, typename label_type>
     }
 
     // get the original labels (not the mapped once)
-    const typename plssvm::data_set<real_type, label_type>::label_mapper mapper = data.mapping().value();
+    const typename plssvm::data_set<real_type, label_type>::label_mapper mapper = *data.mapping_;
     const std::vector<label_type> label_values = mapper.labels();
 
     // count the occurrence of each label
@@ -312,13 +312,13 @@ template <typename real_type, typename label_type>
         ++label_counts_map[l];
     }
     // fill vector with number of occurrences in correct order
-    std::vector<std::size_t> label_counts(data.num_labels());
-    for (typename data_set<real_type, label_type>::size_type i = 0; i < data.num_labels(); ++i) {
+    std::vector<std::size_t> label_counts(data.num_different_labels());
+    for (typename data_set<real_type, label_type>::size_type i = 0; i < data.num_different_labels(); ++i) {
         label_counts[i] = label_counts_map[label_values[i]];
     }
 
     out_string += fmt::format("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {}\nSV\n",
-                              data.num_labels(),
+                              data.num_different_labels(),
                               fmt::join(label_values, " "),
                               data.num_data_points(),
                               fmt::join(label_counts, " "),

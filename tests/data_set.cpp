@@ -11,9 +11,10 @@
 #include "plssvm/data_set.hpp"
 
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/exceptions/exceptions.hpp"
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
-#include "utility.hpp"  // util::create_temp_file, util::redirect_output
+#include "utility.hpp"  // util::create_temp_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
@@ -335,4 +336,376 @@ TYPED_TEST(DataSetLabelMapper, labels) {
 
     // test the number of mappings
     EXPECT_EQ(mapper.labels(), different_labels);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////                             data_set class                             ////
+////////////////////////////////////////////////////////////////////////////////
+
+// the floating point and label types combinations to test
+using extended_type_combinations_types = ::testing::Types<
+    type_combinations<float, int>,
+    type_combinations<float, std::string>,
+    type_combinations<float, bool>,
+    type_combinations<double, int>,
+    type_combinations<double, std::string>,
+    type_combinations<double, bool>>;
+
+template <typename T>
+const std::vector<std::vector<T>> correct_data_points_arff = {
+    plssvm::detail::split_as<T>("-1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288", ','),
+    plssvm::detail::split_as<T>("-0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026", ','),
+    plssvm::detail::split_as<T>("0.0,0.60276937379453293,-0.13086851759108944,0.0", ','),
+    plssvm::detail::split_as<T>("0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387", ','),
+    plssvm::detail::split_as<T>("1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514", ',')
+};
+template <typename T>
+const std::vector<std::vector<T>> correct_data_points_libsvm = {
+    plssvm::detail::split_as<T>("-1.117827500607882 -2.9087188881250993 0.66638344270039144 1.0978832703949288", ' '),
+    plssvm::detail::split_as<T>("-0.5282118298909262 -0.335880984968183973 0.51687296029754564 0.54604461446026", ' '),
+    plssvm::detail::split_as<T>("0.57650218263054642 1.01405596624706053 0.13009428079760464 0.7261913886869387", ' '),
+    plssvm::detail::split_as<T>("-0.20981208921241892 0.60276937379453293 -0.13086851759108944 0.10805254527169827", ' '),
+    plssvm::detail::split_as<T>("1.88494043717792 1.00518564317278263 0.298499933047586044 1.6464627048813514", ' ')
+};
+template <typename T>
+std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
+    std::vector<std::tuple<std::size_t, T, T>> factors(data.front().size(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
+    for (std::size_t i = 0; i < factors.size(); ++i) {
+        std::get<0>(factors[i]) = i;
+        for (std::size_t j = 0; j < data.size(); ++j) {
+            std::get<1>(factors[i]) = std::min(std::get<1>(factors[i]), data[j][i]);
+            std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data[j][i]);
+        }
+    }
+    std::vector<std::vector<T>> ret = data;
+    for (std::size_t i = 0; i < ret.size(); ++i) {
+        for (std::size_t j = 0; j < ret.front().size(); ++j) {
+            ret[i][j] = lower + (upper - lower) * (data[i][j] - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));
+        }
+    }
+    return std::make_pair(std::move(ret), std::move(factors));
+}
+template <typename T>
+std::vector<T> correct_labels() {
+    if constexpr (std::is_same_v<T, int>) {
+        return std::vector<int>{ 1, 1, -1, -1, -1 };
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        return std::vector<std::string>{ "cat", "cat", "dog", "dog", "dog" };
+    }
+}
+template <typename T>
+const std::vector<T> correct_mapped_values = { T{ 1.0 }, T{ 1.0 }, T{ -1.0 }, T{ -1.0 }, T{ -1.0 } };
+template <typename T>
+std::vector<T> correct_different_labels() {
+    if constexpr (std::is_same_v<T, int>) {
+        return std::vector<int>{ -1, 1 };
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        return std::vector<std::string>{ "cat", "dog" };
+    }
+}
+
+template <typename T>
+class DataSet : public ::testing::Test, private util::redirect_output {};
+TYPED_TEST_SUITE(DataSet, type_combinations_types);
+
+TYPED_TEST(DataSet, construct_arff_from_file_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_arff<real_type>);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_arff<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_arff<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSet, construct_arff_from_file_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/arff/5x4_{}_without_label.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_arff<real_type>);
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.different_labels().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_arff<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_arff<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 0);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+
+TYPED_TEST(DataSet, construct_libsvm_from_file_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_libsvm<real_type>);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_libsvm<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_libsvm<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSet, construct_libsvm_from_file_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}_without_label.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_libsvm<real_type>);
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.different_labels().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_libsvm<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_libsvm<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 0);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+
+TYPED_TEST(DataSet, construct_explicit_arff_from_file) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::arff };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_arff<real_type>);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_arff<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_arff<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSet, construct_explicit_libsvm_from_file) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::libsvm };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_libsvm<real_type>);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_libsvm<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_libsvm<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+
+TYPED_TEST(DataSet, construct_scaled_arff_from_file) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename, { real_type{ -1.0 }, real_type{ 1.0 } } };
+
+    // check values
+    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_arff<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
+    EXPECT_EQ(data.data(), scaled_data_points);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_arff<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_arff<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+TYPED_TEST(DataSet, construct_scaled_libsvm_from_file) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename, { real_type{ -2.5 }, real_type{ 2.5 } } };
+
+    // check values
+    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_libsvm<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
+    EXPECT_EQ(data.data(), scaled_data_points);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_libsvm<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_libsvm<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+
+TYPED_TEST(DataSet, construct_scaled_explicit_arff_from_file) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::arff, { real_type{ -1.0 }, real_type{ 1.0 } } };
+
+    // check values
+    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_arff<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
+    EXPECT_EQ(data.data(), scaled_data_points);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_arff<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_arff<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+TYPED_TEST(DataSet, construct_scaled_explicit_libsvm_from_file) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::libsvm, { real_type{ -2.5 }, real_type{ 2.5 } } };
+
+    // check values
+    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_libsvm<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
+    EXPECT_EQ(data.data(), scaled_data_points);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), correct_different_labels<label_type>());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_libsvm<real_type>.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_libsvm<real_type>.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+
+TYPED_TEST(DataSet, scale_too_many_factors) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+    using factors_type = typename scaling_type::factors;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    // create (invalid) scaling factors
+    scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
+    scaling.scaling_factors = std::vector<factors_type>{
+        factors_type{ 0, 0.0, 0.1 },
+        factors_type{ 1, 1.0, 1.1 },
+        factors_type{ 2, 2.0, 2.1 },
+        factors_type{ 3, 3.0, 3.1 },
+        factors_type{ 4, 4.0, 4.1 }
+    };
+
+    // try creating a data set with invalid scaling factors
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ filename, scaling }), plssvm::data_set_exception, "Need at most as much scaling factors as features in the data set are present (4), but 5 were given!");
+}
+TYPED_TEST(DataSet, scale_invalid_feature_index) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+    using factors_type = typename scaling_type::factors;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    // create (invalid) scaling factors
+    scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
+    scaling.scaling_factors = std::vector<factors_type>{
+        factors_type{ 4, 4.0, 4.1 }
+    };
+
+    // try creating a data set with invalid scaling factors
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ filename, scaling }), plssvm::data_set_exception, "The maximum scaling feature index most not be greater than 3, but is 4!");
 }

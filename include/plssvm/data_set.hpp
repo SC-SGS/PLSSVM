@@ -49,11 +49,34 @@
 
 namespace plssvm {
 
+// forward declare data_set class
+template <typename, typename>
+class data_set;
+
+namespace detail::io {
+
+// forward declare function which needs the mapping_ member
+template <typename A, typename B>
+inline std::vector<B> write_libsvm_model_header(fmt::ostream &, const plssvm::parameter<A> &, const A, const plssvm::data_set<A, B> &);
+
+}  // namespace detail::io
+
+/**
+ * @brief Type alias for an optional reference (since `std::optional<T&>` is not allowed.
+ * @tparam T the type to wrap as a reference
+ */
 template <typename T>
 using optional_ref = std::optional<std::reference_wrapper<T>>;
 
+/**
+ * @brief Encapsulate all necessary data that is needed for training or predicting using an SVM.
+ * @details May or may not contain labels!
+ * @tparam T the floating point type of the data (either `float` or `double`)
+ * @tparam U the label type of the data (any arithmetic type (except bool) or `std::string`)
+ */
 template <typename T, typename U = int>
 class data_set {
+    // make sure only valid template types are used
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
     static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
     // because std::vector<bool> is evil
@@ -63,18 +86,53 @@ class data_set {
     template <typename, typename>
     friend class model;
 
+    template <typename>
+    friend class csvm;
+
+    template <typename A, typename B>
+    friend std::vector<B> plssvm::detail::io::write_libsvm_model_header(fmt::ostream &, const plssvm::parameter<A> &, const A, const plssvm::data_set<A, B> &);
+
   public:
+    /// The type of the data points: either `float` or `double`.
     using real_type = T;
+    /// The type of the labels: any arithmetic type (except bool) or `std::string`.
     using label_type = U;
+    /// An unsigned integer type.
     using size_type = std::size_t;
 
+    // forward declare the scaling class
     class scaling;
-
+    // forward declare the label_mapper class
     class label_mapper;
 
+    /**
+     * @brief Read the data points from the file @p filename.
+     *        Automatically determines the @p plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] filename the file to read the data points from
+     */
     explicit data_set(const std::string &filename);
+    /**
+     * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     */
     data_set(const std::string &filename, file_format_type format);
+    /**
+     * @brief Read the data points from the file @p filename and scale it using the provided @p scale_parameter.
+     *        Automatically determines the @p plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] filename the file to read the data points from
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     */
     data_set(const std::string &filename, scaling scale_parameter);
+    /**
+     * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type and
+     *        scale it using the provided @p scale_parameter.
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     */
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
 
     explicit data_set(std::vector<std::vector<real_type>> &&X);
@@ -87,16 +145,12 @@ class data_set {
 
     [[nodiscard]] const std::vector<std::vector<real_type>> &data() const noexcept { return *X_ptr_; }
     [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
-    [[nodiscard]] optional_ref<const std::vector<real_type>> mapped_labels() const noexcept;
     [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept;
+    [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const noexcept;
 
-    [[nodiscard]] label_type label_from_mapped_value(real_type val) const;
-
-    [[nodiscard]] size_type num_labels() const noexcept { return mapping_ != nullptr ? mapping_->num_mappings() : 0; }
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
-
-    [[nodiscard]] optional_ref<const label_mapper> mapping() const noexcept;
+    [[nodiscard]] size_type num_different_labels() const noexcept { return mapping_ != nullptr ? mapping_->num_mappings() : 0; }
 
     [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
     [[nodiscard]] optional_ref<const scaling> scaling_factors() const noexcept;
@@ -104,7 +158,13 @@ class data_set {
   private:
     data_set();
 
+    /**
+     * @brief Create the mapping between the provided labels and the internally used mapped values, i.e., { -1, 1 }.
+     */
     void create_mapping();
+    /**
+     * @brief Scale the feature values of the data set to the provided range.
+     */
     void scale();
 
     void write_libsvm_file(const std::string &filename) const;
@@ -331,12 +391,9 @@ auto data_set<T, U>::label_mapper::labels() const -> std::vector<label_type> {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename U>
-data_set<T, U>::data_set() :
-    X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}
-
-template <typename T, typename U>
 data_set<T, U>::data_set(const std::string &filename) {
     // read data set from file
+    // if the file doesn't end with .arff, assume a LIBSVM file
     this->read_file(filename, detail::ends_with(filename, ".arff") ? file_format_type::arff : file_format_type::libsvm);
 }
 
@@ -436,26 +493,19 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Write {} data points with {} features in {} to the {} file '{}'.\n",
-                   num_data_points_,
-                   num_features_,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                   format,
-                   filename);
+        std::cout << fmt::format("Write {} data points with {} features in {} to the {} file '{}'.",
+                                 num_data_points_,
+                                 num_features_,
+                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                                 format,
+                                 filename)
+                  << std::endl;
     }
 }
 
 /******************************************************************************
  *                                   Getter                                   *
  ******************************************************************************/
-template <typename T, typename U>
-auto data_set<T, U>::mapped_labels() const noexcept -> optional_ref<const std::vector<real_type>> {
-    if (this->has_labels()) {
-        return std::make_optional(std::cref(*y_ptr_));
-    } else {
-        return std::nullopt;
-    }
-}
 
 template <typename T, typename U>
 auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<label_type>> {
@@ -467,9 +517,9 @@ auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<l
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::mapping() const noexcept -> optional_ref<const label_mapper> {
+auto data_set<T, U>::different_labels() const noexcept -> std::optional<std::vector<label_type>> {
     if (this->has_labels()) {
-        return std::make_optional(std::cref(*mapping_));
+        return std::make_optional(mapping_->labels());
     } else {
         return std::nullopt;
     }
@@ -484,17 +534,13 @@ auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scal
     }
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::label_from_mapped_value(const real_type val) const -> label_type {
-    if (mapping_ == nullptr) {
-        throw exception{ "No mapping exists!" };
-    }
-    return mapping_->get_label_by_mapped_value(val);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 ////                        PRIVATE MEMBER FUNCTIONS                        ////
 ////////////////////////////////////////////////////////////////////////////////
+
+template <typename T, typename U>
+data_set<T, U>::data_set() :
+    X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}
 
 template <typename T, typename U>
 void data_set<T, U>::create_mapping() {
@@ -521,9 +567,6 @@ void data_set<T, U>::scale() {
     // unpack scaling interval pair
     const real_type lower = scale_parameters_->scaling_interval.first;
     const real_type upper = scale_parameters_->scaling_interval.second;
-    if (lower >= upper) { // TODO: remove here?!
-        throw plssvm::exception(fmt::format("Illegal interval specification: lower ({}) < upper ({}).", lower, upper));
-    }
 
     // calculate scaling factors if necessary, use provided once otherwise
     if (scale_parameters_->scaling_factors.empty()) {
@@ -542,14 +585,17 @@ void data_set<T, U>::scale() {
             }
 
             // add scaling factor only if min_value != 0.0 AND max_value != 0.0
-            if (min_value != real_type{ 0.0 } && max_value != real_type{ 0.0 }) {
+            if (!(min_value == real_type{ 0.0 } && max_value == real_type{ 0.0 })) {
                 scale_parameters_->scaling_factors.emplace_back(feature, min_value, max_value);
             }
         }
-    } else if (scale_parameters_->scaling_factors.size() > num_features_) {
-        throw invalid_file_format_exception{ fmt::format("Need at most as much scaling factors as features in the data set are present ({}), but {} were given!", num_features_, scale_parameters_->scaling_factors.size()) };
-    } else if (scale_parameters_->scaling_factors.back().feature >= num_features_) {
-        throw invalid_file_format_exception{ fmt::format("The maximum scaling feature index most not be greater than {}, but is {}!", scale_parameters_->scaling_factors.back().feature, num_features_) };
+    } else {
+        if (scale_parameters_->scaling_factors.size() > num_features_) {
+            throw data_set_exception{ fmt::format("Need at most as much scaling factors as features in the data set are present ({}), but {} were given!", num_features_, scale_parameters_->scaling_factors.size()) };
+        }
+        if (scale_parameters_->scaling_factors.back().feature >= num_features_) {
+            throw data_set_exception{ fmt::format("The maximum scaling feature index most not be greater than {}, but is {}!", num_features_ - 1, scale_parameters_->scaling_factors.back().feature) };
+        }
     }
 
 // scale values
@@ -559,13 +605,17 @@ void data_set<T, U>::scale() {
         const typename scaling::factors factor = scale_parameters_->scaling_factors[i];
         // scale data values
         for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
-            (*X_ptr_)[data_point][factor.feature] = (upper - lower) / (factor.upper - factor.lower) * ((*X_ptr_)[data_point][factor.feature] - factor.upper) + upper;
+            (*X_ptr_)[data_point][factor.feature] = lower + (upper - lower) * ((*X_ptr_)[data_point][factor.feature] - factor.lower) / (factor.upper - factor.lower);
         }
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Scaled the data set to the range [{}, {}] in {}.\n", lower, upper, std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+        std::cout << fmt::format("Scaled the data set to the range [{}, {}] in {}.",
+                                 lower,
+                                 upper,
+                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time))
+                  << std::endl;
     }
 }
 
@@ -616,12 +666,13 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Read {} data points with {} features in {} using the {} parser from file '{}'.\n\n",
-                   num_data_points_,
-                   num_features_,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                   format,
-                   filename);
+        std::cout << fmt::format("Read {} data points with {} features in {} using the {} parser from file '{}'.\n\n",
+                                 num_data_points_,
+                                 num_features_,
+                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                                 format,
+                                 filename)
+                  << std::endl;
     }
 }
 
