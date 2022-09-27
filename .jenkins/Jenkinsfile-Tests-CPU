@@ -185,180 +185,180 @@ pipeline {
 
 
 
-        // TODO: enable DPC++ on CPUs (missing OpenCL CPU runtime)
-        // Release
-        // OpenMP backend
-        stage('Build PLSSVM Release - OpenMP') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        mkdir -p build/Release_OpenMP
-                        cd build/Release_OpenMP
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Release - OpenMP') {
-            steps {
-                dir('plssvm/build/Release_OpenMP') {
-                    warnError('Release tests failed!') {
-                        sh '''
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
-        // OpenCL backend
-        stage('Build PLSSVM Release - OpenCL') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                        spack load pocl
-                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-                        mkdir -p build/Release_OpenCL
-                        cd build/Release_OpenCL
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Release - OpenCL') {
-            steps {
-                dir('plssvm/build/Release_OpenCL') {
-                    warnError('Release tests failed!') {
-                        sh '''
-                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                            spack load pocl
-                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
-        // SYCL backend: hipSYCL
-        stage('Build PLSSVM Release - hipSYCL') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        mkdir -p build/Release_hipSYCL
-                        cd build/Release_hipSYCL
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Release - hipSYCL') {
-            steps {
-                dir('plssvm/build/Release_hipSYCL') {
-                    warnError('Release tests failed!') {
-                        sh '''
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
-//        // OpenMP + OpenCL + hipSYCL backends simultaneously
-//        stage('Build PLSSVM Release - All Available') {
-//            steps {
-//                dir('plssvm') {
-//                    sh '''
-//                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
-//                        module use /home/breyerml/.modulefiles/
-//                        spack load pocl
-//                        module load network_hipsycl_cpu_pocl
-//                        mkdir -p build/Release
-//                        cd build/Release
-//                        rm -rf *
-//                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
-//                        make -j4
-//                    '''
-//                }
-//            }
-//        }
-//        stage('Run Tests Release - All Available') {
-//            steps {
-//                dir('plssvm') {
-//                    warnError('Release tests failed!') {
-//                        sh '''
-//                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
-//                            module use /home/breyerml/.modulefiles/
-//                            spack load pocl
-//                            module load network_hipsycl_cpu_pocl
-//                            cd build/Release
-//                            ctest -j4 --no-compress-output -T Test
-//                        '''
-//                    }
-//                }
-//            }
-//        }
-        // Debug
-        // OpenMP backend
-        stage('Build PLSSVM Debug - OpenMP') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        mkdir -p build/Debug_OpenMP
-                        cd build/Debug_OpenMP
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Debug - OpenMP') {
-            steps {
-                dir('plssvm/build/Debug_OpenMP') {
-                    warnError('Debug tests failed!') {
-                        sh '''
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
-        // OpenCL backend
-        stage('Build PLSSVM Debug - OpenCL') {
-            steps {
-                dir('plssvm') {
-                    sh '''
-                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                        spack load pocl
-                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-                        mkdir -p build/Debug_OpenCL
-                        cd build/Debug_OpenCL
-                        rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make -j4
-                    '''
-                }
-            }
-        }
-        stage('Run Tests Debug - OpenCL') {
-            steps {
-                dir('plssvm/build/Debug_OpenCL') {
-                    warnError('Debug tests failed!') {
-                        sh '''
-                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                            spack load pocl
-                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-                            ctest -j4 --no-compress-output -T Test
-                        '''
-                    }
-                }
-            }
-        }
+//         // TODO: enable DPC++ on CPUs (missing OpenCL CPU runtime)
+//         // Release
+//         // OpenMP backend
+//         stage('Build PLSSVM Release - OpenMP') {
+//             steps {
+//                 dir('plssvm') {
+//                     sh '''
+//                         mkdir -p build/Release_OpenMP
+//                         cd build/Release_OpenMP
+//                         rm -rf *
+//                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+//                         make -j4
+//                     '''
+//                 }
+//             }
+//         }
+//         stage('Run Tests Release - OpenMP') {
+//             steps {
+//                 dir('plssvm/build/Release_OpenMP') {
+//                     warnError('Release tests failed!') {
+//                         sh '''
+//                             ctest -j4 --no-compress-output -T Test
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
+//         // OpenCL backend
+//         stage('Build PLSSVM Release - OpenCL') {
+//             steps {
+//                 dir('plssvm') {
+//                     sh '''
+//                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
+//                         spack load pocl
+//                         export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+//                         mkdir -p build/Release_OpenCL
+//                         cd build/Release_OpenCL
+//                         rm -rf *
+//                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+//                         make -j4
+//                     '''
+//                 }
+//             }
+//         }
+//         stage('Run Tests Release - OpenCL') {
+//             steps {
+//                 dir('plssvm/build/Release_OpenCL') {
+//                     warnError('Release tests failed!') {
+//                         sh '''
+//                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
+//                             spack load pocl
+//                             export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+//                             ctest -j4 --no-compress-output -T Test
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
+//         // SYCL backend: hipSYCL
+//         stage('Build PLSSVM Release - hipSYCL') {
+//             steps {
+//                 dir('plssvm') {
+//                     sh '''
+//                         mkdir -p build/Release_hipSYCL
+//                         cd build/Release_hipSYCL
+//                         rm -rf *
+//                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+//                         make -j4
+//                     '''
+//                 }
+//             }
+//         }
+//         stage('Run Tests Release - hipSYCL') {
+//             steps {
+//                 dir('plssvm/build/Release_hipSYCL') {
+//                     warnError('Release tests failed!') {
+//                         sh '''
+//                             ctest -j4 --no-compress-output -T Test
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
+// //        // OpenMP + OpenCL + hipSYCL backends simultaneously
+// //        stage('Build PLSSVM Release - All Available') {
+// //            steps {
+// //                dir('plssvm') {
+// //                    sh '''
+// //                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
+// //                        module use /home/breyerml/.modulefiles/
+// //                        spack load pocl
+// //                        module load network_hipsycl_cpu_pocl
+// //                        mkdir -p build/Release
+// //                        cd build/Release
+// //                        rm -rf *
+// //                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
+// //                        make -j4
+// //                    '''
+// //                }
+// //            }
+// //        }
+// //        stage('Run Tests Release - All Available') {
+// //            steps {
+// //                dir('plssvm') {
+// //                    warnError('Release tests failed!') {
+// //                        sh '''
+// //                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
+// //                            module use /home/breyerml/.modulefiles/
+// //                            spack load pocl
+// //                            module load network_hipsycl_cpu_pocl
+// //                            cd build/Release
+// //                            ctest -j4 --no-compress-output -T Test
+// //                        '''
+// //                    }
+// //                }
+// //            }
+// //        }
+//         // Debug
+//         // OpenMP backend
+//         stage('Build PLSSVM Debug - OpenMP') {
+//             steps {
+//                 dir('plssvm') {
+//                     sh '''
+//                         mkdir -p build/Debug_OpenMP
+//                         cd build/Debug_OpenMP
+//                         rm -rf *
+//                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+//                         make -j4
+//                     '''
+//                 }
+//             }
+//         }
+//         stage('Run Tests Debug - OpenMP') {
+//             steps {
+//                 dir('plssvm/build/Debug_OpenMP') {
+//                     warnError('Debug tests failed!') {
+//                         sh '''
+//                             ctest -j4 --no-compress-output -T Test
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
+//         // OpenCL backend
+//         stage('Build PLSSVM Debug - OpenCL') {
+//             steps {
+//                 dir('plssvm') {
+//                     sh '''
+//                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
+//                         spack load pocl
+//                         export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+//                         mkdir -p build/Debug_OpenCL
+//                         cd build/Debug_OpenCL
+//                         rm -rf *
+//                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+//                         make -j4
+//                     '''
+//                 }
+//             }
+//         }
+//         stage('Run Tests Debug - OpenCL') {
+//             steps {
+//                 dir('plssvm/build/Debug_OpenCL') {
+//                     warnError('Debug tests failed!') {
+//                         sh '''
+//                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
+//                             spack load pocl
+//                             export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+//                             ctest -j4 --no-compress-output -T Test
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
         // SYCL backend: hipSYCL TODO: fix
         // stage('Build PLSSVM Debug - hipSYCL') {
         //     steps {
@@ -396,7 +396,7 @@ pipeline {
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_SYCL_BACKEND=OFF ../../
                         make -j4 coverage
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
