@@ -212,6 +212,26 @@ TYPED_TEST(ScalingFactorsWrite, write) {
         EXPECT_EQ(reader.line(i + 2), fmt::format("{} {} {}", scaling_factors[i].feature + 1, scaling_factors[i].lower, scaling_factors[i].upper));
     }
 }
+TYPED_TEST(ScalingFactorsWrite, write_empty_scaling_factors) {
+    using real_type = TypeParam;
+    // define data to write
+    const std::pair<real_type, real_type> interval{ -1.5, 1.5 };
+    std::vector<factors<real_type>> scaling_factors{};  // write no scaling factors to the file (allowed, but nonsensical)
+
+    // try to write the necessary data to the file
+    plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors);
+
+    // read the previously written file to check for correctness
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // check if the correct number of lines have been read
+    ASSERT_EQ(reader.num_lines(), 2);  // only the header information are saved (x + scaling interval)
+    // first line is always the single character x
+    EXPECT_EQ(reader.line(0), "x");
+    // second line contains the scaling interval
+    EXPECT_EQ(reader.line(1), fmt::format("{} {}", -1.5, 1.5));
+}
 
 TYPED_TEST(ScalingFactorsWriteDeathTest, write_illegal_interval) {
     using real_type = TypeParam;
@@ -221,13 +241,4 @@ TYPED_TEST(ScalingFactorsWriteDeathTest, write_illegal_interval) {
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors), ::testing::HasSubstr("Illegal interval specification: lower (1) < upper (-1)"));
-}
-TYPED_TEST(ScalingFactorsWriteDeathTest, write_empty_scaling_factors) {
-    using real_type = TypeParam;
-    // define data to write
-    const std::pair<real_type, real_type> interval{ -1.5, 1.5 };
-    std::vector<factors<real_type>> scaling_factors{};  // at least one scaling factor must be given!
-
-    // try to write the necessary data to the file
-    EXPECT_DEATH(plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors), "No scaling factors provided!");
 }

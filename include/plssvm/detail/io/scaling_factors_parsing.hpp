@@ -138,7 +138,6 @@ template <typename real_type, typename factors_type>
 template <typename real_type, typename factors_type>
 inline void write_scaling_factors(const std::string &filename, const std::pair<real_type, real_type> &scaling_interval, const std::vector<factors_type> &scaling_factors) {
     PLSSVM_ASSERT(scaling_interval.first < scaling_interval.second, "Illegal interval specification: lower ({}) < upper ({}).", scaling_interval.first, scaling_interval.second);
-    PLSSVM_ASSERT(!scaling_factors.empty(), "No scaling factors provided!");
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);
