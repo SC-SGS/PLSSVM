@@ -142,11 +142,11 @@ TYPED_TEST(DataSetScaling, save) {
 
         // check the content
         ASSERT_GE(reader.num_lines(), 2);
-        std::regex reg{ regex_patterns[0], std::regex::extended }; // check the line only containing an x
+        std::regex reg{ regex_patterns[0], std::regex::extended };  // check the line only containing an x
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(0) }, reg));
-        reg = std::regex{ regex_patterns[1], std::regex::extended }; // check the scaling interval line
+        reg = std::regex{ regex_patterns[1], std::regex::extended };  // check the scaling interval line
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
-        reg = std::regex{ regex_patterns[2], std::regex::extended }; // check the remaining lines
+        reg = std::regex{ regex_patterns[2], std::regex::extended };  // check the remaining lines
         for (std::size_t i = 2; i < reader.num_lines(); ++i) {
             EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
         }
@@ -178,10 +178,153 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
 
         // check the content
         ASSERT_EQ(reader.num_lines(), 2);
-        std::regex reg{ regex_patterns[0], std::regex::extended }; // check the line only containing an x
+        std::regex reg{ regex_patterns[0], std::regex::extended };  // check the line only containing an x
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(0) }, reg));
-        reg = std::regex{ regex_patterns[1], std::regex::extended }; // check the scaling interval line
+        reg = std::regex{ regex_patterns[1], std::regex::extended };  // check the scaling interval line
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
     }
     std::filesystem::remove(filename);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////                       label mapper nested-class                        ////
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+class DataSetLabelMapper : public ::testing::Test {};
+TYPED_TEST_SUITE(DataSetLabelMapper, type_combinations_types);
+
+TYPED_TEST(DataSetLabelMapper, construct) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    std::vector<label_type> different_labels;
+    if constexpr (std::is_same_v<label_type, int>) {
+        different_labels = std::vector<int>{ -64, 32 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        different_labels = std::vector<std::string>{ "cat", "dog" };
+    }
+
+    // create label mapper
+    const std::vector<label_type> labels = {
+        different_labels[0],
+        different_labels[1],
+        different_labels[1],
+        different_labels[0],
+        different_labels[1]
+    };
+    const label_mapper_type mapper{ labels };
+
+    // test values
+    EXPECT_EQ(mapper.num_mappings(), 2);
+    EXPECT_EQ(mapper.labels(), different_labels);
+    // test mapping
+    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ -1 }), different_labels[0]);
+    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ 1 }), different_labels[1]);
+    EXPECT_EQ(mapper.get_mapped_value_by_label(different_labels[0]), real_type{ -1 });
+    EXPECT_EQ(mapper.get_mapped_value_by_label(different_labels[1]), real_type{ 1 });
+}
+TYPED_TEST(DataSetLabelMapper, construct_too_many_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    std::vector<label_type> different_labels;
+    if constexpr (std::is_same_v<label_type, int>) {
+        different_labels = std::vector<int>{ -64, 32, 128 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        different_labels = std::vector<std::string>{ "cat", "dog", "mouse" };
+    }
+
+    // too many labels provided!
+    EXPECT_THROW_WHAT(label_mapper_type{ different_labels }, plssvm::data_set_exception, "Currently only binary classification is supported, but 3 different labels were given!");
+}
+TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> different_labels = { plssvm::detail::convert_to<label_type>("-10"), plssvm::detail::convert_to<label_type>("10") };
+
+    // create label mapper
+    const label_mapper_type mapper{ different_labels };
+
+    // test the number of mappings
+    EXPECT_EQ(mapper.get_mapped_value_by_label(plssvm::detail::convert_to<label_type>("-10")), real_type{ -1 });
+    EXPECT_EQ(mapper.get_mapped_value_by_label(plssvm::detail::convert_to<label_type>("10")), real_type{ 1 });
+}
+TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_invalid_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> different_labels = { plssvm::detail::convert_to<label_type>("-10"), plssvm::detail::convert_to<label_type>("10") };
+
+    // create label mapper
+    const label_mapper_type mapper{ different_labels };
+
+    // test the number of mappings
+    EXPECT_THROW_WHAT(std::ignore = mapper.get_mapped_value_by_label(plssvm::detail::convert_to<label_type>("42")), plssvm::data_set_exception, "Label \"42\" unknown in this label mapping!");
+}
+TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_value) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> different_labels = { plssvm::detail::convert_to<label_type>("-10"), plssvm::detail::convert_to<label_type>("10") };
+
+    // create label mapper
+    const label_mapper_type mapper{ different_labels };
+
+    // test the number of mappings
+    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ -1 }), plssvm::detail::convert_to<label_type>("-10"));
+    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ 1 }), plssvm::detail::convert_to<label_type>("10"));
+}
+TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_value) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> different_labels = { plssvm::detail::convert_to<label_type>("-10"), plssvm::detail::convert_to<label_type>("10") };
+
+    // create label mapper
+    const label_mapper_type mapper{ different_labels };
+
+    // test the number of mappings
+    EXPECT_THROW_WHAT(std::ignore = mapper.get_label_by_mapped_value(real_type{ 0.0 }), plssvm::data_set_exception, "Mapped value \"0\" unknown in this label mapping!");
+}
+TYPED_TEST(DataSetLabelMapper, num_mappings) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> different_labels = { plssvm::detail::convert_to<label_type>("-1"), plssvm::detail::convert_to<label_type>("1") };
+
+    // create label mapper
+    const label_mapper_type mapper{ different_labels };
+
+    // test the number of mappings
+    EXPECT_EQ(mapper.num_mappings(), 2);
+}
+TYPED_TEST(DataSetLabelMapper, labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> different_labels = { plssvm::detail::convert_to<label_type>("-1"), plssvm::detail::convert_to<label_type>("1") };
+
+    // create label mapper
+    const label_mapper_type mapper{ different_labels };
+
+    // test the number of mappings
+    EXPECT_EQ(mapper.labels(), different_labels);
 }

@@ -189,7 +189,7 @@ class data_set<T, U>::scaling {
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const real_type lower, const real_type upper) :
-    scaling_interval{ std::make_pair(lower, upper) } {}
+    scaling_interval{ std::make_pair(lower, upper) } {} // TODO: test lower upper?
 
 template <typename T, typename U>
 data_set<T, U>::scaling::scaling(const std::string &filename) {
@@ -307,7 +307,7 @@ auto data_set<T, U>::label_mapper::get_label_by_mapped_value(const real_type &ma
 
 template <typename T, typename U>
 auto data_set<T, U>::label_mapper::num_mappings() const noexcept -> size_type {
-    PLSSVM_ASSERT(label_to_mapped_.size() == 2 && mapped_to_label_.size() == 2, "Both maps must contain exactly two values, but {} and {} were given!", label_to_mapped_.size(), mapped_to_label_.size());
+    PLSSVM_ASSERT(label_to_mapped_.size() == mapped_to_label_.size(), "Both maps must contain the same number of values, but {} and {} were given!", label_to_mapped_.size(), mapped_to_label_.size());
     return label_to_mapped_.size();
 }
 
