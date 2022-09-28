@@ -669,11 +669,22 @@ void data_set<T, U>::scale() {
             }
         }
     } else {
+        // the number of scaling factors may not exceed the number of features
         if (scale_parameters_->scaling_factors.size() > num_features_) {
             throw data_set_exception{ fmt::format("Need at most as much scaling factors as features in the data set are present ({}), but {} were given!", num_features_, scale_parameters_->scaling_factors.size()) };
         }
+        // sort vector
+        const auto scaling_factors_comp_less = [](const typename scaling::factors &lhs, const typename scaling::factors &rhs) { return lhs.feature < rhs.feature; };
+        std::sort(scale_parameters_->scaling_factors.begin(), scale_parameters_->scaling_factors.end(), scaling_factors_comp_less);
+        // check whether the biggest feature index is smaller than the number of features
         if (scale_parameters_->scaling_factors.back().feature >= num_features_) {
             throw data_set_exception{ fmt::format("The maximum scaling feature index most not be greater than {}, but is {}!", num_features_ - 1, scale_parameters_->scaling_factors.back().feature) };
+        }
+        // check that there are no duplicate entries
+        const auto scaling_factors_comp_eq = [](const typename scaling::factors &lhs, const typename scaling::factors &rhs) { return lhs.feature == rhs.feature; };
+        const auto iter = std::adjacent_find(scale_parameters_->scaling_factors.begin(), scale_parameters_->scaling_factors.end(), scaling_factors_comp_eq);
+        if (iter != scale_parameters_->scaling_factors.end()) {
+            throw data_set_exception{ fmt::format("Found more than one scaling factor for the feature index {}!", iter->feature) };
         }
     }
 

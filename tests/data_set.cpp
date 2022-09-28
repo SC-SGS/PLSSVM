@@ -703,9 +703,30 @@ TYPED_TEST(DataSet, scale_invalid_feature_index) {
     // create (invalid) scaling factors
     scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 4, 4.0, 4.1 }
+        factors_type{ 4, 4.0, 4.1 },
+        factors_type{ 2, 2.0, 2.1 }
     };
 
     // try creating a data set with invalid scaling factors
     EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ filename, scaling }), plssvm::data_set_exception, "The maximum scaling feature index most not be greater than 3, but is 4!");
+}
+TYPED_TEST(DataSet, scale_duplicate_feature_index) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+    using factors_type = typename scaling_type::factors;
+
+    // create data set
+    const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
+    // create (invalid) scaling factors
+    scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
+    scaling.scaling_factors = std::vector<factors_type>{
+        factors_type{ 1, 1.0, 1.1 },
+        factors_type{ 2, 2.0, 2.1 },
+        factors_type{ 3, 3.0, 3.1 },
+        factors_type{ 2, 2.0, 2.1 }
+    };
+
+    // try creating a data set with invalid scaling factors
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ filename, scaling }), plssvm::data_set_exception, "Found more than one scaling factor for the feature index 2!");
 }
