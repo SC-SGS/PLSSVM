@@ -13,14 +13,15 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
 #include "backends/compare.hpp"  // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
-#include "utility.hpp"           // util::{convert_to_string, convert_from_string, gtest_assert_floating_point_near}, EXPECT_THROW_WHAT
+#include "utility.hpp"           // util::{convert_to_string, convert_from_string, util::generate_random_vector, gtest_assert_floating_point_near}, EXPECT_THROW_WHAT
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
 
 #include <algorithm>  // std::generate
+#include <array>      // std::array
 #include <cstddef>    // std::size_t
-#include <random>     // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <sstream>    // std::istringstream
+#include <tuple>      // std::ignore
 #include <vector>     // std::vector
 
 // check whether the plssvm::kernel_type -> std::string conversions are correct
@@ -50,12 +51,13 @@ TEST(KernelType, from_string) {
 }
 TEST(KernelType, from_string_unknown) {
     // foo isn't a valid kernel_type
-    std::istringstream ss{ "foo" };
-    plssvm::kernel_type k;
-    ss >> k;
-    EXPECT_TRUE(ss.fail());
+    std::istringstream input{ "foo" };
+    plssvm::kernel_type kernel;
+    input >> kernel;
+    EXPECT_TRUE(input.fail());
 }
 
+// check whether the plssvm::kernel_type -> math string conversions are correct
 TEST(KernelType, kernel_to_math_string) {
     // check conversion from plssvm::kernel_type to the respective math function string
     EXPECT_EQ(plssvm::kernel_type_to_math_string(plssvm::kernel_type::linear), "u'*v");
@@ -67,167 +69,133 @@ TEST(KernelType, kernel_to_math_string_unkown) {
     EXPECT_EQ(plssvm::kernel_type_to_math_string(static_cast<plssvm::kernel_type>(3)), "unknown");
 }
 
-template <typename T>
-std::vector<T> generate_random_vector(const std::size_t size) {
-    std::vector<T> vec(size);
-
-    // fill vectors with random values
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::uniform_real_distribution<T> dist(-1.0, 1.0);
-    std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
-
-    return vec;
-}
-
 // the floating point types to test
 using floating_point_types = ::testing::Types<float, double>;
-const std::vector<std::size_t> kernel_vector_sizes_to_test = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 
+// the vector sizes used in the kernel function tests
+constexpr std::array kernel_vector_sizes_to_test{ 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+// the kernel type parameter used in the kernel function tests
 template <typename T, plssvm::kernel_type kernel>
-struct parameter_set {
-    std::vector<plssvm::parameter<T>> params = {
-        plssvm::parameter<T>{ kernel, 3, 0.05, 1.0, 1.0 },
-        plssvm::parameter<T>{ kernel, 1, 0.0, 0.0, 1.0 },
-        plssvm::parameter<T>{ kernel, 4, -0.05, 1.5, 1.0 },
-        plssvm::parameter<T>{ kernel, 2, 0.025, -1.0, 1.0 }
-    };
-};
+constexpr std::array parameter_set{ plssvm::parameter<T>{ kernel, 3, 0.05, 1.0, 1.0 },
+                                    plssvm::parameter<T>{ kernel, 1, 0.0, 0.0, 1.0 },
+                                    plssvm::parameter<T>{ kernel, 4, -0.05, 1.5, 1.0 },
+                                    plssvm::parameter<T>{ kernel, 2, 0.025, -1.0, 1.0 } };
 
 template <typename T>
-class KernelTypeBase : public ::testing::Test {};
-TYPED_TEST_SUITE(KernelTypeBase, floating_point_types);
+class KernelFunction : public ::testing::Test {};
+TYPED_TEST_SUITE(KernelFunction, floating_point_types);
 
-TYPED_TEST(KernelTypeBase, linear_kernel_function_variadic) {
+TYPED_TEST(KernelFunction, linear_kernel_function_variadic) {
     using real_type = TypeParam;
-
-    // create parameter set to test
-    parameter_set<real_type, plssvm::kernel_type::linear> params_set;
 
     for (const std::size_t size : kernel_vector_sizes_to_test) {
         // create random vector with the specified size
-        const std::vector<real_type> x1 = generate_random_vector<real_type>(size);
-        const std::vector<real_type> x2 = generate_random_vector<real_type>(size);
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test the linear kernel function using different parameter sets
-        for ([[maybe_unused]] const plssvm::parameter<real_type> &p : params_set.params) {
+        for ([[maybe_unused]] const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_type::linear>) {
             util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::linear>(x1, x2), compare::detail::linear_kernel(x1, x2));
         }
     }
 }
 
-TYPED_TEST(KernelTypeBase, linear_kernel_function_parameter) {
+TYPED_TEST(KernelFunction, linear_kernel_function_parameter) {
     using real_type = TypeParam;
-
-    // create parameter set to test
-    parameter_set<real_type, plssvm::kernel_type::linear> params_set;
 
     for (const std::size_t size : kernel_vector_sizes_to_test) {
         // create random vector with the specified size
-        const std::vector<real_type> x1 = generate_random_vector<real_type>(size);
-        const std::vector<real_type> x2 = generate_random_vector<real_type>(size);
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test the linear kernel function using different parameter sets
-        for (const plssvm::parameter<real_type> &p : params_set.params) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, p), compare::detail::linear_kernel(x1, x2));
+        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_type::linear>) {
+            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, params), compare::detail::linear_kernel(x1, x2));
         }
     }
 }
-
-TYPED_TEST(KernelTypeBase, polynomial_kernel_function_variadic) {
+TYPED_TEST(KernelFunction, polynomial_kernel_function_variadic) {
     using real_type = TypeParam;
-
-    // create parameter set to test
-    parameter_set<real_type, plssvm::kernel_type::polynomial> params_set;
 
     for (const std::size_t size : kernel_vector_sizes_to_test) {
         // create random vector with the specified size
-        const std::vector<real_type> x1 = generate_random_vector<real_type>(size);
-        const std::vector<real_type> x2 = generate_random_vector<real_type>(size);
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test polynomial kernel function
-        for (const plssvm::parameter<real_type> &p : params_set.params) {
-            const int degree = p.degree.value();
-            const real_type gamma = p.gamma.value();
-            const real_type coef0 = p.coef0.value();
+        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_type::polynomial>) {
+            const int degree = params.degree;
+            const real_type gamma = params.gamma;
+            const real_type coef0 = params.coef0;
             util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, degree, gamma, coef0), compare::detail::poly_kernel(x1, x2, degree, gamma, coef0));
         }
     }
 }
-
-TYPED_TEST(KernelTypeBase, polynomial_kernel_function_parameter) {
+TYPED_TEST(KernelFunction, polynomial_kernel_function_parameter) {
     using real_type = TypeParam;
-
-    // create parameter set to test
-    parameter_set<real_type, plssvm::kernel_type::polynomial> params_set;
 
     for (const std::size_t size : kernel_vector_sizes_to_test) {
         // create random vector with the specified size
-        const std::vector<real_type> x1 = generate_random_vector<real_type>(size);
-        const std::vector<real_type> x2 = generate_random_vector<real_type>(size);
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test polynomial kernel function
-        for (const plssvm::parameter<real_type> &p : params_set.params) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, p), compare::detail::poly_kernel(x1, x2, p.degree.value(), p.gamma.value(), p.coef0.value()));
+        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_type::polynomial>) {
+            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, params),
+                                                   compare::detail::poly_kernel(x1, x2, params.degree.value(), params.gamma.value(), params.coef0.value()));
         }
     }
 }
 
-TYPED_TEST(KernelTypeBase, radial_basis_function_kernel_function_variadic) {
+TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_variadic) {
     using real_type = TypeParam;
-
-    // create parameter set to test
-    parameter_set<real_type, plssvm::kernel_type::rbf> params_set;
 
     for (const std::size_t size : kernel_vector_sizes_to_test) {
         // create random vector with the specified size
-        const std::vector<real_type> x1 = generate_random_vector<real_type>(size);
-        const std::vector<real_type> x2 = generate_random_vector<real_type>(size);
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test rbf kernel function
-        for (const plssvm::parameter<real_type> &p : params_set.params) {
-            const real_type gamma = p.gamma.value();
+        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_type::rbf>) {
+            const real_type gamma = params.gamma;
             util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_type::rbf>(x1, x2, gamma), compare::detail::radial_kernel(x1, x2, gamma));
         }
     }
 }
-
-TYPED_TEST(KernelTypeBase, radial_basis_function_kernel_function_parameter) {
+TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_parameter) {
     using real_type = TypeParam;
-
-    // create parameter set to test
-    parameter_set<real_type, plssvm::kernel_type::rbf> params_set;
 
     for (const std::size_t size : kernel_vector_sizes_to_test) {
         // create random vector with the specified size
-        const std::vector<real_type> x1 = generate_random_vector<real_type>(size);
-        const std::vector<real_type> x2 = generate_random_vector<real_type>(size);
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test rbf kernel function
-        for (const plssvm::parameter<real_type> &p : params_set.params) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, p), compare::detail::radial_kernel(x1, x2, p.gamma.value()));
+        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_type::rbf>) {
+            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, params), compare::detail::radial_kernel(x1, x2, params.gamma.value()));
         }
     }
 }
 
-TYPED_TEST(KernelTypeBase, unknown_kernel_function_parameter) {
+TYPED_TEST(KernelFunction, unknown_kernel_function_parameter) {
     using real_type = TypeParam;
 
     // create two vectors
     const std::vector<real_type> x1 = { real_type{ 1.0 } };
     const std::vector<real_type> x2 = { real_type{ 1.0 } };
-    plssvm::parameter<real_type> p{};
-    p.kernel = static_cast<plssvm::kernel_type>(3);
+    // create a parameter object with an unknown kernel type
+    plssvm::parameter<real_type> params{};
+    params.kernel = static_cast<plssvm::kernel_type>(3);
 
-    [[maybe_unused]] real_type res;
-    EXPECT_THROW_WHAT(res = plssvm::kernel_function(x1, x2, p), plssvm::unsupported_kernel_type_exception, "Unknown kernel type (value: 3)!");
+    // using an unknown kernel type must throw
+    EXPECT_THROW_WHAT(std::ignore = plssvm::kernel_function(x1, x2, params), plssvm::unsupported_kernel_type_exception, "Unknown kernel type (value: 3)!");
 }
 
 template <typename T>
-class KernelTypeBaseDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(KernelTypeBaseDeathTest, floating_point_types);
+class KernelFunctionDeathTest : public ::testing::Test {};
+TYPED_TEST_SUITE(KernelFunctionDeathTest, floating_point_types);
 
-TYPED_TEST(KernelTypeBaseDeathTest, size_mismatch_kernel_function_variadic) {
+TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_variadic) {
     using real_type = TypeParam;
 
     // create random vector with the specified size
@@ -235,13 +203,11 @@ TYPED_TEST(KernelTypeBaseDeathTest, size_mismatch_kernel_function_variadic) {
     const std::vector<real_type> x2{ real_type{ 1.0 }, real_type{ 2.0 } };
 
     // test mismatched vector sizes
-    [[maybe_unused]] real_type res;
-    EXPECT_DEATH(res = plssvm::kernel_function<plssvm::kernel_type::linear>(x1, x2), "Sizes mismatch!: 1 != 2");
-    EXPECT_DEATH(res = plssvm::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, 0, real_type{ 0.0 }, real_type{ 0.0 }), "Sizes mismatch!: 1 != 2");
-    EXPECT_DEATH(res = plssvm::kernel_function<plssvm::kernel_type::rbf>(x1, x2, real_type{ 0.0 }), "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_type::linear>(x1, x2), "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_type::polynomial>(x1, x2, 0, real_type{ 0.0 }, real_type{ 0.0 }), "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_type::rbf>(x1, x2, real_type{ 0.0 }), "Sizes mismatch!: 1 != 2");
 }
-
-TYPED_TEST(KernelTypeBaseDeathTest, size_mismatch_kernel_function_parameter) {
+TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_parameter) {
     using real_type = TypeParam;
 
     // create random vector with the specified size
@@ -249,6 +215,5 @@ TYPED_TEST(KernelTypeBaseDeathTest, size_mismatch_kernel_function_parameter) {
     const std::vector<real_type> x2{ real_type{ 1.0 }, real_type{ 2.0 } };
 
     // test mismatched vector sizes
-    [[maybe_unused]] real_type res;
-    EXPECT_DEATH(res = plssvm::kernel_function(x1, x2, plssvm::parameter<real_type>{}), "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function(x1, x2, plssvm::parameter<real_type>{}), "Sizes mismatch!: 1 != 2");
 }

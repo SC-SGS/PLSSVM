@@ -11,9 +11,10 @@
 #include "plssvm/target_platforms.hpp"
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "utility.hpp"                // util::{convert_to_string, convert_from_string}
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "utility.hpp"  // util::{convert_to_string, convert_from_string}
+
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE
 
 #include <sstream>  // std::istringstream
 #include <vector>   // std::vector
@@ -48,16 +49,17 @@ TEST(TargetPlatform, from_string) {
 }
 TEST(TargetPlatform, from_string_unknown) {
     // foo isn't a valid target_platform
-    std::istringstream ss{ "foo" };
-    plssvm::target_platform t;
-    ss >> t;
-    EXPECT_TRUE(ss.fail());
+    std::istringstream input{ "foo" };
+    plssvm::target_platform platform;
+    input >> platform;
+    EXPECT_TRUE(input.fail());
 }
 
 TEST(TargetPlatform, minimal_available_target_platform) {
+    // get the available target platforms
     const std::vector<plssvm::target_platform> platform = plssvm::list_available_target_platforms();
 
-    // at least two target platforms must be available!
+    // at least two target platforms must be available (automatic + one user provided)!
     EXPECT_GE(platform.size(), 2);
 
     // the automatic backend must always be present

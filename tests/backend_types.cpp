@@ -11,11 +11,13 @@
 #include "plssvm/backend_types.hpp"
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "utility.hpp"                // util::{convert_to_string, convert_from_string}
+#include "utility.hpp"                // util::{convert_to_string, convert_from_string}, EXPECT_THROW_WHAT
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
 
 #include <sstream>  // std::istringstream
+#include <tuple>    // std::tuple, std::ignore
+#include <utility>  // std::pair
 #include <vector>   // std::vector
 
 // check whether the plssvm::backend_type -> std::string conversions are correct
@@ -51,16 +53,16 @@ TEST(BackendType, from_string) {
 }
 TEST(BackendType, from_string_unknown) {
     // foo isn't a valid backend_type
-    std::istringstream ss{ "foo" };
-    plssvm::backend_type b;
-    ss >> b;
-    EXPECT_TRUE(ss.fail());
+    std::istringstream input{ "foo" };
+    plssvm::backend_type backend;
+    input >> backend;
+    EXPECT_TRUE(input.fail());
 }
 
 TEST(BackendType, minimal_available_backend) {
     const std::vector<plssvm::backend_type> backends = plssvm::list_available_backends();
 
-    // at least two backends must be available!
+    // at least two backends must be available (automatic + one user provided)!
     EXPECT_GE(backends.size(), 2);
 
     // the automatic backend must always be present
@@ -72,11 +74,10 @@ class BackendTypeUnsupportedCombination : public ::testing::TestWithParam<unsupp
 
 TEST_P(BackendTypeUnsupportedCombination, unsupported_backend_target_platform_combinations) {
     const auto &[available_backends, available_target_platforms] = GetParam();
-    EXPECT_THROW_WHAT([[maybe_unused]] auto res = plssvm::determine_default_backend(available_backends, available_target_platforms),
+    EXPECT_THROW_WHAT(std::ignore = plssvm::determine_default_backend(available_backends, available_target_platforms),
                       plssvm::unsupported_backend_exception,
                       fmt::format("Error: unsupported backend and target platform combination: [{}]x[{}]!", fmt::join(available_backends, ", "), fmt::join(available_target_platforms, ", ")));
 }
-
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeUnsupportedCombination, ::testing::Values(
          unsupported_combination_type{ { plssvm::backend_type::cuda, plssvm::backend_type::hip }, { plssvm::target_platform::cpu } },
@@ -92,7 +93,6 @@ TEST_P(BackendTypeSupportedCombination, supported_backend_target_platform_combin
     const auto &[available_backends, available_target_platforms, result_backend] = GetParam();
     EXPECT_EQ(plssvm::determine_default_backend(available_backends, available_target_platforms), result_backend);
 }
-
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing::Values(
          supported_combination_type{ { plssvm::backend_type::openmp }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::openmp },

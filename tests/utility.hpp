@@ -33,6 +33,7 @@
 #include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists
 #include <iostream>     // std::cout
 #include <limits>       // std::numeric_limits
+#include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <sstream>      // std::ostringstream, std::istringstream, std::stringstream
 #include <streambuf>    // std::streambuf
 #include <string>       // std::string, std::to_string
@@ -258,6 +259,27 @@ inline T convert_from_string(const std::string &str) {
         ASSERT_FALSE(is.fail());
     }();
     return param;
+}
+
+/**
+ * @brief Generate vector of @p size filled with random values in the range [@p lower, @p upper].
+ * @tparam T the type of the elements in the vector
+ * @param[in] size the size of the vector
+ * @param[in] lower the lower bound of the random values in the vector
+ * @param[in] upper the upper bound of the random values in the vector
+ * @return the randomly generated vector (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const T lower = T{ -1.0 }, const T upper = T{ 1.0 }) {
+    std::vector<T> vec(size);
+
+    // fill vectors with random values
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_real_distribution<T> dist(lower, upper);
+    std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
+
+    return vec;
 }
 
 /**
