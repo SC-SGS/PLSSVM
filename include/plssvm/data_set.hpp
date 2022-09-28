@@ -501,14 +501,19 @@ data_set<T, U>::data_set(const std::string &filename, file_format_type format, s
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> X) :
-    X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>(std::move(X)) } {
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
+    X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>(std::move(data_points)) } {
+    // the provided data points vector may not be empty
     if (X_ptr_->empty()) {
-        throw exception("Data vector is empty!");
-    } else if (!std::all_of(X_ptr_->begin(), X_ptr_->end(), [&](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
-        throw exception{ "All points in the data vector must have the same number of features!" };
-    } else if (X_ptr_->front().size() == 0) {
-        throw exception{ "No features provided for the data points!" };
+        throw data_set_exception{ "Data vector is empty!" };
+    }
+    // check that all data points have the same number of features
+    if (!std::all_of(X_ptr_->cbegin(), X_ptr_->cend(), [&](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
+        throw data_set_exception{ "All points in the data vector must have the same number of features!" };
+    }
+    // check that the data points have at least one feature
+    if (X_ptr_->front().size() == 0) {
+        throw data_set_exception{ "No features provided for the data points!" };
     }
 
     num_data_points_ = X_ptr_->size();
@@ -516,28 +521,22 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> X) :
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y) :
-    X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>(std::move(X)) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(y)) } {
-    if (X_ptr_->empty()) {
-        throw exception("Data vector is empty!");
-    } else if (!std::all_of(X_ptr_->begin(), X_ptr_->end(), [&](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
-        throw exception{ "All points in the data vector must have the same number of features!" };
-    } else if (X_ptr_->front().size() == 0) {
-        throw exception{ "No features provided for the data points!" };
-    } else if (X_ptr_->size() != labels_ptr_->size()) {
-        throw exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), X_ptr_->size()) };
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels) :
+    data_set{ std::move(data_points) } {
+    // initialize labels
+    labels_ptr_ = std::make_shared<std::vector<label_type>>(std::move(labels));
+    // the number of labels must be equal to the number of data points!
+    if (X_ptr_->size() != labels_ptr_->size()) {
+        throw data_set_exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), X_ptr_->size()) };
     }
 
     // create mapping from labels
     this->create_mapping();
-
-    num_data_points_ = X_ptr_->size();
-    num_features_ = X_ptr_->front().size();
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, scaling scale_parameter) :
-    data_set{ std::move(X) } {
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, scaling scale_parameter) :
+    data_set{ std::move(data_points) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -545,8 +544,8 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, scaling scale_pa
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> X, std::vector<label_type> y, scaling scale_parameter) :
-    data_set{ std::move(X), std::move(y) } {
+data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    data_set{ std::move(data_points), std::move(labels) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set

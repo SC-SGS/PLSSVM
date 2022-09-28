@@ -730,3 +730,211 @@ TYPED_TEST(DataSet, scale_duplicate_feature_index) {
     // try creating a data set with invalid scaling factors
     EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ filename, scaling }), plssvm::data_set_exception, "Found more than one scaling factor for the feature index 2!");
 }
+
+TYPED_TEST(DataSet, construct_from_vector_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points
+    const std::vector<std::vector<real_type>> correct_data_points = {
+        { real_type{ 0.0 }, real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 } },
+        { real_type{ 1.0 }, real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.0 }, real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.0 }, real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ correct_data_points };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points);
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.different_labels().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points.size());
+    EXPECT_EQ(data.num_features(), correct_data_points.front().size());
+    EXPECT_EQ(data.num_different_labels(), 0);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSet, construct_from_empty_vector) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points
+    const std::vector<std::vector<real_type>> correct_data_points;
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }), plssvm::data_set_exception, "Data vector is empty!");
+}
+TYPED_TEST(DataSet, construct_from_vector_with_differing_num_features) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points
+    const std::vector<std::vector<real_type>> correct_data_points = {
+        { real_type{ 0.0 }, real_type{ 0.1 } },
+        { real_type{ 1.0 }, real_type{ 1.1 }, real_type{ 1.2 } }
+    };
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }), plssvm::data_set_exception, "All points in the data vector must have the same number of features!");
+}
+TYPED_TEST(DataSet, construct_from_vector_with_no_features) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points
+    const std::vector<std::vector<real_type>> correct_data_points = { {}, {} };
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }), plssvm::data_set_exception, "No features provided for the data points!");
+}
+
+TYPED_TEST(DataSet, construct_from_vector_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points and labels
+    const std::vector<std::vector<real_type>> correct_data_points = {
+        { real_type{ 0.0 }, real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 } },
+        { real_type{ 1.0 }, real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.0 }, real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.0 }, real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> labels;
+    std::vector<label_type> different_labels;
+    if constexpr (std::is_same_v<label_type, int>) {
+        labels = std::vector<label_type>{ -1, 1, -1, 1 };
+        different_labels = std::vector<label_type>{ -1, 1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        labels = std::vector<label_type>{ "cat", "dog", "cat", "dog" };
+        different_labels = std::vector<label_type>{ "cat", "dog" };
+    }
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ correct_data_points, labels };
+
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), different_labels);
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points.size());
+    EXPECT_EQ(data.num_features(), correct_data_points.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSet, construct_from_vector_mismatching_num_data_points_and_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points and labels
+    const std::vector<std::vector<real_type>> correct_data_points = {
+        { real_type{ 0.0 }, real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 } },
+        { real_type{ 1.0 }, real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.0 }, real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.0 }, real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> labels;
+    if constexpr (std::is_same_v<label_type, int>) {
+        labels = std::vector<label_type>{ -1, 1, -1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        labels = std::vector<label_type>{ "cat", "dog", "cat" };
+    }
+
+    // create data set
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points, labels }), plssvm::data_set_exception, "Number of labels (3) must match the number of data points (4)!");
+}
+
+TYPED_TEST(DataSet, construct_scaled_from_vector_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+
+    // create data points
+    const std::vector<std::vector<real_type>> correct_data_points = {
+        { real_type{ 0.0 }, real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 } },
+        { real_type{ 1.0 }, real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.0 }, real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.0 }, real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ correct_data_points, scaling_type{ real_type{ -1.0 }, real_type{ 1.0 } } };
+
+    const auto [correct_data_points_scaled, scaling_factors] = scale(correct_data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_scaled);
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.different_labels().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_scaled.front().size());
+    EXPECT_EQ(data.num_different_labels(), 0);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data points and labels
+    const std::vector<std::vector<real_type>> correct_data_points = {
+        { real_type{ 0.0 }, real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 } },
+        { real_type{ 1.0 }, real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
+        { real_type{ 2.0 }, real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
+        { real_type{ 3.0 }, real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+    };
+    std::vector<label_type> labels;
+    std::vector<label_type> different_labels;
+    if constexpr (std::is_same_v<label_type, int>) {
+        labels = std::vector<label_type>{ -1, 1, -1, 1 };
+        different_labels = std::vector<label_type>{ -1, 1 };
+    } else if constexpr (std::is_same_v<label_type, std::string>) {
+        labels = std::vector<label_type>{ "cat", "dog", "cat", "dog" };
+        different_labels = std::vector<label_type>{ "cat", "dog" };
+    }
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ correct_data_points, labels, { -1.0, 1.0 } };
+
+    const auto [correct_data_points_scaled, scaling_factors] = scale(correct_data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    // check values
+    EXPECT_EQ(data.data(), correct_data_points_scaled);
+    EXPECT_TRUE(data.has_labels());
+    EXPECT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_TRUE(data.different_labels().has_value());
+    EXPECT_EQ(data.different_labels().value(), different_labels);
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.size());
+    EXPECT_EQ(data.num_features(), correct_data_points_scaled.front().size());
+    EXPECT_EQ(data.num_different_labels(), 2);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
+        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
