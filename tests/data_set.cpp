@@ -10,21 +10,26 @@
 
 #include "plssvm/data_set.hpp"
 
+#include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
-#include "plssvm/exceptions/exceptions.hpp"
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::as_lowercase
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
+#include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include "utility.hpp"  // util::create_temp_file, util::redirect_output, EXPECT_THROW_WHAT
 
-#include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
-                          // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
+#include "gmock/gmock-matchers.h"  // ::testing::{ContainsRegex, StartsWith}
+#include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, ASSERT_EQ, ASSERT_GT, TEST, TYPED_TEST, TYPED_TEST_SUITE
+                                   // ::testing::{Types, Test}
 
-#include <cstddef>     // std::size_t
-#include <filesystem>  // std::filesystem::remove
-#include <gmock/gmock-matchers.h>
-#include <regex>        // std::regex, std::regex_match, std::regex::extended
+#include <cstddef>      // std::size_t
+#include <filesystem>   // std::filesystem::remove
+#include <limits>       // std::numeric_limits::{lowest, max}
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple, std::get
+#include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
 // struct for the used type combinations
@@ -56,7 +61,7 @@ TYPED_TEST(DataSetScaling, default_construct_factor) {
     using factor_type = typename scaling_type::factors;
 
     // create factor
-    factor_type factor{};
+    const factor_type factor{};
 
     // test values
     EXPECT_EQ(factor.feature, std::size_t{});
@@ -70,7 +75,7 @@ TYPED_TEST(DataSetScaling, construct_factor) {
     using factor_type = typename scaling_type::factors;
 
     // create factor
-    factor_type factor{ 1, real_type{ -2.5 }, real_type{ 2.5 } };
+    const factor_type factor{ 1, real_type{ -2.5 }, real_type{ 2.5 } };
 
     // test values
     EXPECT_EQ(factor.feature, 1);
@@ -84,7 +89,7 @@ TYPED_TEST(DataSetScaling, construct_interval) {
     using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
 
     // create scaling class
-    scaling_type scale{ real_type{ -1.0 }, real_type{ 1.0 } };
+    const scaling_type scale{ real_type{ -1.0 }, real_type{ 1.0 } };
 
     // test whether the values have been correctly set
     EXPECT_EQ(scale.scaling_interval.first, real_type{ -1.0 });
@@ -111,7 +116,7 @@ TYPED_TEST(DataSetScaling, construct_from_file) {
     // test whether the values have been correctly set
     EXPECT_EQ(scale.scaling_interval.first, plssvm::detail::convert_to<real_type>("-1.4"));
     EXPECT_EQ(scale.scaling_interval.second, plssvm::detail::convert_to<real_type>("2.6"));
-    std::vector<factors_type> correct_factors = {
+    const std::vector<factors_type> correct_factors = {
         factors_type{ 0, real_type{ 0.0 }, real_type{ 1.0 } },
         factors_type{ 1, real_type{ 1.1 }, real_type{ 2.1 } },
         factors_type{ 3, real_type{ 3.3 }, real_type{ 4.3 } },
@@ -131,7 +136,7 @@ TYPED_TEST(DataSetScaling, save) {
     using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
 
     // create scaling class
-    scaling_type scale{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
+    const scaling_type scale{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
     // create temporary file
     const std::string filename = util::create_temp_file();
@@ -143,22 +148,12 @@ TYPED_TEST(DataSetScaling, save) {
         plssvm::detail::io::file_reader reader{ filename };
         reader.read_lines('#');
 
-        std::vector<std::string> regex_patterns;
-        // header
-        regex_patterns.emplace_back("x");
-        regex_patterns.emplace_back("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-        // the remaining values
-        regex_patterns.emplace_back("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-
-        // check the content
+        // check file content
         ASSERT_GE(reader.num_lines(), 2);
-        std::regex reg{ regex_patterns[0], std::regex::extended };  // check the line only containing an x
-        EXPECT_TRUE(std::regex_match(std::string{ reader.line(0) }, reg));
-        reg = std::regex{ regex_patterns[1], std::regex::extended };  // check the scaling interval line
-        EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
-        reg = std::regex{ regex_patterns[2], std::regex::extended };  // check the remaining lines
+        EXPECT_EQ(reader.line(0), "x");
+        EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
         for (std::size_t i = 2; i < reader.num_lines(); ++i) {
-            EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
+            EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
         }
     }
     std::filesystem::remove(filename);
@@ -169,7 +164,7 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
 
     // create scaling class
-    scaling_type scale{ real_type{ -1.0 }, real_type{ 1.0 } };
+    const scaling_type scale{ real_type{ -1.0 }, real_type{ 1.0 } };
 
     // create temporary file
     const std::string filename = util::create_temp_file();
@@ -188,10 +183,8 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
 
         // check the content
         ASSERT_EQ(reader.num_lines(), 2);
-        std::regex reg{ regex_patterns[0], std::regex::extended };  // check the line only containing an x
-        EXPECT_TRUE(std::regex_match(std::string{ reader.line(0) }, reg));
-        reg = std::regex{ regex_patterns[1], std::regex::extended };  // check the scaling interval line
-        EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
+        EXPECT_EQ(reader.line(0), "x");
+        EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     }
     std::filesystem::remove(filename);
 }
@@ -415,7 +408,7 @@ TYPED_TEST(DataSet, construct_arff_from_file_with_label) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename };
+    const plssvm::data_set<real_type, label_type> data{ filename };
 
     // check values
     EXPECT_EQ(data.data(), correct_data_points_arff<real_type>);
@@ -438,7 +431,7 @@ TYPED_TEST(DataSet, construct_arff_from_file_without_label) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/arff/5x4_{}_without_label.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename };
+    const plssvm::data_set<real_type, label_type> data{ filename };
 
     // check values
     EXPECT_EQ(data.data(), correct_data_points_arff<real_type>);
@@ -460,7 +453,7 @@ TYPED_TEST(DataSet, construct_libsvm_from_file_with_label) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename };
+    const plssvm::data_set<real_type, label_type> data{ filename };
 
     // check values
     EXPECT_EQ(data.data(), correct_data_points_libsvm<real_type>);
@@ -483,7 +476,7 @@ TYPED_TEST(DataSet, construct_libsvm_from_file_without_label) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/libsvm/5x4_{}_without_label.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename };
+    const plssvm::data_set<real_type, label_type> data{ filename };
 
     // check values
     EXPECT_EQ(data.data(), correct_data_points_libsvm<real_type>);
@@ -505,7 +498,7 @@ TYPED_TEST(DataSet, construct_explicit_arff_from_file) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::arff };
+    const plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::arff };
 
     // check values
     EXPECT_EQ(data.data(), correct_data_points_arff<real_type>);
@@ -528,7 +521,7 @@ TYPED_TEST(DataSet, construct_explicit_libsvm_from_file) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::libsvm };
+    const plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::libsvm };
 
     // check values
     EXPECT_EQ(data.data(), correct_data_points_libsvm<real_type>);
@@ -552,7 +545,7 @@ TYPED_TEST(DataSet, construct_scaled_arff_from_file) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename, { real_type{ -1.0 }, real_type{ 1.0 } } };
+    const plssvm::data_set<real_type, label_type> data{ filename, { real_type{ -1.0 }, real_type{ 1.0 } } };
 
     // check values
     const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_arff<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
@@ -583,7 +576,7 @@ TYPED_TEST(DataSet, construct_scaled_libsvm_from_file) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename, { real_type{ -2.5 }, real_type{ 2.5 } } };
+    const plssvm::data_set<real_type, label_type> data{ filename, { real_type{ -2.5 }, real_type{ 2.5 } } };
 
     // check values
     const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_libsvm<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
@@ -615,7 +608,7 @@ TYPED_TEST(DataSet, construct_scaled_explicit_arff_from_file) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/arff/5x4_{}.arff", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::arff, { real_type{ -1.0 }, real_type{ 1.0 } } };
+    const plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::arff, { real_type{ -1.0 }, real_type{ 1.0 } } };
 
     // check values
     const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_arff<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
@@ -646,7 +639,7 @@ TYPED_TEST(DataSet, construct_scaled_explicit_libsvm_from_file) {
 
     // create data set
     const std::string filename = fmt::format("{}/data/libsvm/5x4_{}.libsvm", PLSSVM_TEST_PATH, std::is_same_v<label_type, int> ? "int" : "string");
-    plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::libsvm, { real_type{ -2.5 }, real_type{ 2.5 } } };
+    const plssvm::data_set<real_type, label_type> data{ filename, plssvm::file_format_type::libsvm, { real_type{ -2.5 }, real_type{ 2.5 } } };
 
     // check values
     const auto [scaled_data_points, scaling_factors] = scale(correct_data_points_libsvm<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
@@ -955,10 +948,10 @@ class DataSetSave : public ::testing::Test, private util::redirect_output {
 
     std::string filename;
     const std::vector<std::vector<T>> data_points = {
-        { T{1.1}, T{1.2}, T{1.3}, T{1.4} },
-        { T{2.1}, T{2.2}, T{2.3}, T{2.4} },
-        { T{3.1}, T{3.2}, T{3.3}, T{3.4} },
-        { T{4.1}, T{4.2}, T{4.3}, T{4.4} }
+        { T{ 1.1 }, T{ 1.2 }, T{ 1.3 }, T{ 1.4 } },
+        { T{ 2.1 }, T{ 2.2 }, T{ 2.3 }, T{ 2.4 } },
+        { T{ 3.1 }, T{ 3.2 }, T{ 3.3 }, T{ 3.4 } },
+        { T{ 4.1 }, T{ 4.2 }, T{ 4.3 }, T{ 4.4 } }
     };
     const std::vector<U> label = {
         { plssvm::detail::convert_to<U>("-1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("-1") }
@@ -1071,10 +1064,10 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output {
 
     std::string filename;
     const std::vector<std::vector<T>> data_points = {
-        { T{1.1}, T{1.2}, T{1.3}, T{1.4} },
-        { T{2.1}, T{2.2}, T{2.3}, T{2.4} },
-        { T{3.1}, T{3.2}, T{3.3}, T{3.4} },
-        { T{4.1}, T{4.2}, T{4.3}, T{4.4} }
+        { T{ 1.1 }, T{ 1.2 }, T{ 1.3 }, T{ 1.4 } },
+        { T{ 2.1 }, T{ 2.2 }, T{ 2.3 }, T{ 2.4 } },
+        { T{ 3.1 }, T{ 3.2 }, T{ 3.3 }, T{ 3.4 } },
+        { T{ 4.1 }, T{ 4.2 }, T{ 4.3 }, T{ 4.4 } }
     };
     const std::vector<U> label = {
         plssvm::detail::convert_to<U>("-1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("-1")
@@ -1196,8 +1189,8 @@ TYPED_TEST(DataSetGetter, scaling_factors) {
     const plssvm::data_set<real_type, label_type> data_scaled{ this->data_points, scaling_type{ real_type{ -1.0 }, real_type{ 1.0 } } };
     // check scaling_factors getter
     EXPECT_TRUE(data_scaled.scaling_factors().has_value());
-    const auto& [ignored, correct_scaling_factors] = scale(this->data_points, real_type{ -1.0 }, real_type{ 1.0 });
-    const scaling_type& scaling_factors = data_scaled.scaling_factors().value();
+    const auto &[ignored, correct_scaling_factors] = scale(this->data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    const scaling_type &scaling_factors = data_scaled.scaling_factors().value();
     EXPECT_EQ(scaling_factors.scaling_interval.first, real_type{ -1.0 });
     EXPECT_EQ(scaling_factors.scaling_interval.second, real_type{ 1.0 });
     ASSERT_EQ(scaling_factors.scaling_factors.size(), correct_scaling_factors.size());
