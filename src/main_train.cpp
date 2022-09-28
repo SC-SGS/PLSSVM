@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
             // save model to file
             model.save(params.model_filename);
 
-        }, plssvm::detail::data_set_factory(params));
+        }, plssvm::detail::cmd::data_set_factory(params));
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

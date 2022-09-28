@@ -27,6 +27,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
+#include "plssvm/detail/cmd/data_set_variants.hpp"
 #include "plssvm/detail/cmd/parameter_train.hpp"
 #include "plssvm/detail/cmd/parameter_predict.hpp"
 #include "plssvm/detail/cmd/parameter_scale.hpp"
