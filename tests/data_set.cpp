@@ -19,8 +19,9 @@
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
 
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::remove
+#include <cstddef>     // std::size_t
+#include <filesystem>  // std::filesystem::remove
+#include <gmock/gmock-matchers.h>
 #include <regex>        // std::regex, std::regex_match, std::regex::extended
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -936,5 +937,128 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
         util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+
+template <typename TypeParam>
+class DataSetSave : public ::testing::Test, private util::redirect_output {
+  protected:
+    void SetUp() override {
+        filename = util::create_temp_file();
+    }
+    void TearDown() override {
+        std::filesystem::remove(filename);
+    }
+
+    using T = typename TypeParam::real_type;
+    using U = typename TypeParam::label_type;
+
+    std::string filename;
+    const std::vector<std::vector<T>> data_points = {
+        { T{1.1}, T{1.2}, T{1.3}, T{1.4} },
+        { T{2.1}, T{2.2}, T{2.3}, T{2.4} },
+        { T{3.1}, T{3.2}, T{3.3}, T{3.4} },
+        { T{4.1}, T{4.2}, T{4.3}, T{4.4} }
+    };
+    const std::vector<U> label = {
+        { plssvm::detail::convert_to<U>("-1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("-1") }
+    };
+};
+TYPED_TEST_SUITE(DataSetSave, type_combinations_types);
+
+TYPED_TEST(DataSetSave, save_libsvm_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
+    // save to temporary file
+    data.save(this->filename, plssvm::file_format_type::libsvm);
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // create regex to check for the correct output
+    ASSERT_EQ(reader.num_lines(), this->data_points.size());
+    for (const std::string_view line : reader.lines()) {
+        EXPECT_THAT(line, ::testing::ContainsRegex("[+-]?[0-9]+ ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
+    }
+}
+TYPED_TEST(DataSetSave, save_libsvm_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set without labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // save to temporary file
+    data.save(this->filename, plssvm::file_format_type::libsvm);
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // create regex to check for the correct output
+    ASSERT_EQ(reader.num_lines(), this->data_points.size());
+    for (const std::string_view line : reader.lines()) {
+        EXPECT_THAT(line, ::testing::ContainsRegex("([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
+    }
+}
+
+TYPED_TEST(DataSetSave, save_arff_with_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
+    // save to temporary file
+    data.save(this->filename, plssvm::file_format_type::arff);
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('%');
+
+    // create regex to check for the correct output
+    const std::size_t num_features = this->data_points.front().size();
+    const std::size_t expected_header_size = num_features + 3;  // num_features + @RELATION + class + @DATA
+    ASSERT_EQ(reader.num_lines(), expected_header_size + this->data_points.size());
+    // check header
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(0)), ::testing::StartsWith("@relation"));
+    for (std::size_t i = 0; i < num_features; ++i) {
+        EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(i + 1)), ::testing::ContainsRegex("@attribute .* numeric"));
+    }
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::ContainsRegex("@attribute class \\{.*,.*\\}"));
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features + 1)), ::testing::StartsWith("@data"));
+    // check data points
+    for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
+        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){4}[+-]?[0-9]+"));
+    }
+}
+TYPED_TEST(DataSetSave, save_arff_without_label) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // save to temporary file
+    data.save(this->filename, plssvm::file_format_type::arff);
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('%');
+
+    // create regex to check for the correct output
+    const std::size_t num_features = this->data_points.front().size();
+    const std::size_t expected_header_size = num_features + 2;  // num_features + @RELATION + @DATA
+    ASSERT_EQ(reader.num_lines(), expected_header_size + this->data_points.size());
+    // check header
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(0)), ::testing::StartsWith("@relation"));
+    for (std::size_t i = 0; i < num_features; ++i) {
+        EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(i + 1)), ::testing::ContainsRegex("@attribute .* numeric"));
+    }
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::StartsWith("@data"));
+    // check data points
+    for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
+        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     }
 }
