@@ -218,33 +218,12 @@ class data_set {
      * @brief Scale the feature values of the data set to the provided range.
      */
     void scale();
-
-    /**
-     * @brief Write an LIBSVM file.
-     * @param[in] filename the filename to write the data to
-     */
-    void write_libsvm_file(const std::string &filename) const;
-    /**
-     * @brief Write an ARFF file.
-     * @param[in] filename the filename to write the data to
-     */
-    void write_arff_file(const std::string &filename) const;
     /**
      * @brief Read the data points and potential labels from the file @p filename assuming the file_format_type @p format.
      * @param[in] filename the filename to read the data from
      * @param[in] format the assumed file format type
      */
     void read_file(const std::string &filename, file_format_type format);
-    /**
-     * @brief Read the data points and potential labels from the LIBSVM file @p filename.
-     * @param[in] filename the filename to read the data from
-     */
-    void read_libsvm_file(const std::string &filename);
-    /**
-     * @brief Read the data points and potential labels from the ARFF file @p filename.
-     * @param[in] filename the filename to read the data from
-     */
-    void read_arff_file(const std::string &filename);
 
     /// A pointer to the two-dimensional data points.
     std::shared_ptr<std::vector<std::vector<real_type>>> X_ptr_{ nullptr };
@@ -552,21 +531,31 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::v
     this->scale();
 }
 
-/******************************************************************************
- *                                Save Data Set                               *
- ******************************************************************************/
 template <typename T, typename U>
 void data_set<T, U>::save(const std::string &filename, const file_format_type format) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save the data set
-    switch (format) {
-        case file_format_type::libsvm:
-            this->write_libsvm_file(filename);
-            break;
-        case file_format_type::arff:
-            this->write_arff_file(filename);
-            break;
+    if (this->has_labels()) {
+        // save data with labels
+        switch (format) {
+            case file_format_type::libsvm:
+                detail::io::write_libsvm_data(filename, *X_ptr_, *labels_ptr_);
+                break;
+            case file_format_type::arff:
+                detail::io::write_arff_data(filename, *X_ptr_, *labels_ptr_);
+                break;
+        }
+    } else {
+        // save data without labels
+        switch (format) {
+            case file_format_type::libsvm:
+                detail::io::write_libsvm_data(filename, *X_ptr_);
+                break;
+            case file_format_type::arff:
+                detail::io::write_arff_data(filename, *X_ptr_);
+                break;
+        }
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
@@ -581,35 +570,28 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
     }
 }
 
-/******************************************************************************
- *                                   Getter                                   *
- ******************************************************************************/
-
 template <typename T, typename U>
 auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(std::cref(*labels_ptr_));
-    } else {
-        return std::nullopt;
     }
+    return std::nullopt;
 }
 
 template <typename T, typename U>
 auto data_set<T, U>::different_labels() const noexcept -> std::optional<std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(mapping_->labels());
-    } else {
-        return std::nullopt;
     }
+    return std::nullopt;
 }
 
 template <typename T, typename U>
 auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scaling> {
     if (this->is_scaled()) {
         return std::make_optional(std::cref(*scale_parameters_));
-    } else {
-        return std::nullopt;
     }
+    return std::nullopt;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -708,44 +690,45 @@ void data_set<T, U>::scale() {
     }
 }
 
-/******************************************************************************
- *                                 Write Files                                *
- ******************************************************************************/
-template <typename T, typename U>
-void data_set<T, U>::write_libsvm_file(const std::string &filename) const {
-    // write data
-    if (this->has_labels()) {
-        detail::io::write_libsvm_data(filename, *X_ptr_, *labels_ptr_);
-    } else {
-        detail::io::write_libsvm_data(filename, *X_ptr_);
-    }
-}
-
-template <typename T, typename U>
-void data_set<T, U>::write_arff_file(const std::string &filename) const {
-    // write file
-    if (this->has_labels()) {
-        detail::io::write_arff_data(filename, *X_ptr_, *labels_ptr_);
-    } else {
-        detail::io::write_arff_data(filename, *X_ptr_);
-    }
-}
-
-/******************************************************************************
- *                                 Read Files                                 *
- ******************************************************************************/
 template <typename T, typename U>
 void data_set<T, U>::read_file(const std::string &filename, file_format_type format) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
+    // get the comment character based on the file_format_type
+    char comment{ ' ' };
+    switch (format) {
+        case file_format_type::libsvm:
+            comment = '#';
+            break;
+        case file_format_type::arff:
+            comment = '%';
+            break;
+    }
+
+    // open the file
+    detail::io::file_reader reader{ filename };
+    reader.read_lines(comment);
+
+    // create the empty placeholders
+    std::vector<std::vector<real_type>> data{};
+    std::vector<label_type> label{};
+
     // parse the given file
     switch (format) {
         case file_format_type::libsvm:
-            read_libsvm_file(filename);
+            std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_libsvm_data<real_type, label_type>(reader);
             break;
         case file_format_type::arff:
-            read_arff_file(filename);
+            std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_arff_data<real_type, label_type>(reader);
             break;
+    }
+
+    // update shared pointer
+    X_ptr_ = std::make_shared<decltype(data)>(std::move(data));
+    if (label.empty()) {
+        labels_ptr_ = nullptr;
+    } else {
+        labels_ptr_ = std::make_shared<decltype(label)>(std::move(label));
     }
 
     // create label mapping
@@ -762,47 +745,6 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
                                  format,
                                  filename)
                   << std::endl;
-    }
-}
-
-// TODO: condense some functions since they are completely moved to the utility header
-
-template <typename T, typename U>
-void data_set<T, U>::read_libsvm_file(const std::string &filename) {
-    detail::io::file_reader reader{ filename };
-    reader.read_lines('#');
-
-    std::vector<std::vector<real_type>> data{};
-    std::vector<label_type> label{};
-
-    std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_libsvm_data<real_type, label_type>(reader);
-
-    // update shared pointer
-    X_ptr_ = std::make_shared<decltype(data)>(std::move(data));
-    if (label.empty()) {
-        labels_ptr_ = nullptr;
-    } else {
-        labels_ptr_ = std::make_shared<decltype(label)>(std::move(label));
-    }
-}
-
-template <typename T, typename U>
-void data_set<T, U>::read_arff_file(const std::string &filename) {
-    detail::io::file_reader reader{ filename };
-    reader.read_lines('%');
-
-    std::vector<std::vector<real_type>> data{};
-    std::vector<label_type> label{};
-
-    // parse file
-    std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_arff_data<real_type, label_type>(reader);
-
-    // update shared pointer
-    X_ptr_ = std::make_shared<decltype(data)>(std::move(data));
-    if (label.empty()) {
-        labels_ptr_ = nullptr;
-    } else {
-        labels_ptr_ = std::make_shared<decltype(label)>(std::move(label));
     }
 }
 
