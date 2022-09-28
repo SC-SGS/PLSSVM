@@ -270,16 +270,16 @@ inline T convert_from_string(const std::string &str) {
  * @param[in] expected_exception the type of the exception which should get thrown
  * @param[in] msg the expected exception's [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) message
  */
-#define EXPECT_THROW_WHAT(statement, expected_exception, msg)                     \
-    do {                                                                          \
-        try {                                                                     \
-            statement;                                                            \
-            FAIL() << "Expected " #expected_exception;                            \
-        } catch (const expected_exception &e) {                                   \
-            EXPECT_EQ(std::string_view(e.what()), std::string_view(msg));         \
-        } catch (...) {                                                           \
-            FAIL() << "Expected " #expected_exception " with message: " << (msg); \
-        }                                                                         \
+#define EXPECT_THROW_WHAT(statement, expected_exception, msg)                                                \
+    do {                                                                                                     \
+        try {                                                                                                \
+            statement;                                                                                       \
+            FAIL() << "Expected " #expected_exception;                                                       \
+        } catch (const expected_exception &e) {                                                              \
+            EXPECT_EQ(std::string_view(e.what()), std::string_view(msg));                                    \
+        } catch (...) {                                                                                      \
+            FAIL() << "The expected exception type (" #expected_exception ") doesn't match the caught one!"; \
+        }                                                                                                    \
     } while (false)
 
 namespace google_test {
