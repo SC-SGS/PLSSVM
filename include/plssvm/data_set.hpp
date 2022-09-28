@@ -16,23 +16,24 @@
 #include "plssvm/constants.hpp"                          // plssvm::verbose
 #include "plssvm/detail/io/arff_parsing.hpp"             // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
 #include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_header, read_arff_data, write_arff_header, write_arff_data}
-#include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{read_scaling_factors}
+#include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
+#include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
-#include "plssvm/exceptions/exceptions.hpp"              // plssvm::exception
+#include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
+#include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
 
 #include "fmt/chrono.h"   // directly output std::chrono times via fmt
 #include "fmt/core.h"     // fmt::format, fmt::print
-#include "fmt/os.h"       // fmt::ostream
+#include "fmt/os.h"       // fmt::ostream, fmt::output_file
 #include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
 
-#include <algorithm>    // std::all_of, std::max, std::min
+#include <algorithm>    // std::all_of, std::max, std::min, std::sort, std::adjacent_find
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
 #include <cstddef>      // std::size_t
 #include <functional>   // std::reference_wrapper, std::cref
 #include <iostream>     // std::cout, std::endl
-#include <limits>       // std::numeric_limits
+#include <limits>       // std::numeric_limits::{max, lowest}
 #include <map>          // std::map
 #include <memory>       // std::shared_ptr, std::make_shared
 #include <optional>     // std::optional, std::make_optional, std::nullopt
@@ -603,7 +604,7 @@ void data_set<T, U>::create_mapping() {
 
     // convert input labels to now mapped values
     std::vector<real_type> tmp(labels_ptr_->size());
-#pragma omp parallel for default(none) shared(tmp, labels_ptr_, mapper)
+    #pragma omp parallel for default(none) shared(tmp, labels_ptr_, mapper)
     for (typename std::vector<real_type>::size_type i = 0; i < tmp.size(); ++i) {
         tmp[i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
     }
@@ -628,10 +629,8 @@ void data_set<T, U>::scale() {
             real_type min_value = std::numeric_limits<real_type>::max();
             real_type max_value = std::numeric_limits<real_type>::lowest();
 
-// calculate min/max values of all data points at the specific feature
-#pragma omp parallel for default(none) shared(X_ptr_) firstprivate(num_features_, feature) reduction(min                        \
-                                                                                                     : min_value) reduction(max \
-                                                                                                                            : max_value)
+            // calculate min/max values of all data points at the specific feature
+            #pragma omp parallel for default(none) shared(X_ptr_) firstprivate(num_features_, feature) reduction(min : min_value) reduction(max : max_value)
             for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
                 min_value = std::min(min_value, (*X_ptr_)[data_point][feature]);
                 max_value = std::max(max_value, (*X_ptr_)[data_point][feature]);
@@ -662,8 +661,8 @@ void data_set<T, U>::scale() {
         }
     }
 
-// scale values
-#pragma omp parallel for default(none) shared(scale_parameters_, X_ptr_) firstprivate(lower, upper, num_data_points_)
+    // scale values
+    #pragma omp parallel for default(none) shared(scale_parameters_, X_ptr_) firstprivate(lower, upper, num_data_points_)
     for (size_type i = 0; i < scale_parameters_->scaling_factors.size(); ++i) {
         // extract feature-wise min and max values
         const typename scaling::factors factor = scale_parameters_->scaling_factors[i];
