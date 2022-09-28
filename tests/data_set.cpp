@@ -1062,3 +1062,148 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
         EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     }
 }
+
+template <typename TypeParam>
+class DataSetGetter : public ::testing::Test, private util::redirect_output {
+  protected:
+    using T = typename TypeParam::real_type;
+    using U = typename TypeParam::label_type;
+
+    std::string filename;
+    const std::vector<std::vector<T>> data_points = {
+        { T{1.1}, T{1.2}, T{1.3}, T{1.4} },
+        { T{2.1}, T{2.2}, T{2.3}, T{2.4} },
+        { T{3.1}, T{3.2}, T{3.3}, T{3.4} },
+        { T{4.1}, T{4.2}, T{4.3}, T{4.4} }
+    };
+    const std::vector<U> label = {
+        plssvm::detail::convert_to<U>("-1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("1"), plssvm::detail::convert_to<U>("-1")
+    };
+    const std::vector<U> different_label = {
+        plssvm::detail::convert_to<U>("-1"), plssvm::detail::convert_to<U>("1")
+    };
+};
+TYPED_TEST_SUITE(DataSetGetter, type_combinations_types);
+
+TYPED_TEST(DataSetGetter, data) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set without labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // check data getter
+    EXPECT_EQ(data.data(), this->data_points);
+}
+TYPED_TEST(DataSetGetter, has_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set without labels
+    const plssvm::data_set<real_type, label_type> data_without_labels{ this->data_points };
+    // check has_labels getter
+    EXPECT_FALSE(data_without_labels.has_labels());
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data_with_labels{ this->data_points, this->label };
+    // check has_labels getter
+    EXPECT_TRUE(data_with_labels.has_labels());
+}
+TYPED_TEST(DataSetGetter, labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set without labels
+    const plssvm::data_set<real_type, label_type> data_without_labels{ this->data_points };
+    // check labels getter
+    EXPECT_FALSE(data_without_labels.labels().has_value());
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data_with_labels{ this->data_points, this->label };
+    // check labels getter
+    EXPECT_TRUE(data_with_labels.labels().has_value());
+    EXPECT_EQ(data_with_labels.labels().value().get(), this->label);
+}
+TYPED_TEST(DataSetGetter, different_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set without labels
+    const plssvm::data_set<real_type, label_type> data_without_labels{ this->data_points };
+    // check different_labels getter
+    EXPECT_FALSE(data_without_labels.different_labels().has_value());
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data_with_labels{ this->data_points, this->label };
+    // check different_labels getter
+    EXPECT_TRUE(data_with_labels.different_labels().has_value());
+    EXPECT_EQ(data_with_labels.different_labels().value(), this->different_label);
+}
+TYPED_TEST(DataSetGetter, num_data_points) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // check num_data_points getter
+    EXPECT_EQ(data.num_data_points(), this->data_points.size());
+}
+TYPED_TEST(DataSetGetter, num_features) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // check num_features getter
+    EXPECT_EQ(data.num_features(), this->data_points.front().size());
+}
+TYPED_TEST(DataSetGetter, num_different_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set without labels
+    const plssvm::data_set<real_type, label_type> data_without_label{ this->data_points };
+    // check num_different_labels getter
+    EXPECT_EQ(data_without_label.num_different_labels(), 0);
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data_with_label{ this->data_points, this->label };
+    // check num_different_labels getter
+    EXPECT_EQ(data_with_label.num_different_labels(), this->different_label.size());
+}
+TYPED_TEST(DataSetGetter, is_scaled) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // check is_scaled getter
+    EXPECT_FALSE(data.is_scaled());
+
+    // create scaled data set
+    const plssvm::data_set<real_type, label_type> data_scaled{ this->data_points, scaling_type{ real_type{ -1.0 }, real_type{ 1.0 } } };
+    // check is_scaled getter
+    EXPECT_TRUE(data_scaled.is_scaled());
+}
+TYPED_TEST(DataSetGetter, scaling_factors) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
+
+    // create data set
+    const plssvm::data_set<real_type, label_type> data{ this->data_points };
+    // check scaling_factors getter
+    EXPECT_FALSE(data.scaling_factors().has_value());
+
+    // create scaled data set
+    const plssvm::data_set<real_type, label_type> data_scaled{ this->data_points, scaling_type{ real_type{ -1.0 }, real_type{ 1.0 } } };
+    // check scaling_factors getter
+    EXPECT_TRUE(data_scaled.scaling_factors().has_value());
+    const auto& [ignored, correct_scaling_factors] = scale(this->data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    const scaling_type& scaling_factors = data_scaled.scaling_factors().value();
+    EXPECT_EQ(scaling_factors.scaling_interval.first, real_type{ -1.0 });
+    EXPECT_EQ(scaling_factors.scaling_interval.second, real_type{ 1.0 });
+    ASSERT_EQ(scaling_factors.scaling_factors.size(), correct_scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.scaling_factors.size(); ++i) {
+        EXPECT_EQ(scaling_factors.scaling_factors[i].feature, std::get<0>(correct_scaling_factors[i]));
+        EXPECT_EQ(scaling_factors.scaling_factors[i].lower, std::get<1>(correct_scaling_factors[i]));
+        EXPECT_EQ(scaling_factors.scaling_factors[i].upper, std::get<2>(correct_scaling_factors[i]));
+    }
+}

@@ -208,7 +208,7 @@ class data_set {
     /**
      * @brief Default construct an empty data set.
      */
-    data_set();  // TODO: necessary?
+    data_set() : X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}  // TODO: necessary to init X_ptr_ to empty vector?
 
     /**
      * @brief Create the mapping between the provided labels and the internally used mapped values, i.e., { -1, 1 }.
@@ -597,10 +597,6 @@ auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scal
 ////////////////////////////////////////////////////////////////////////////////
 ////                        PRIVATE MEMBER FUNCTIONS                        ////
 ////////////////////////////////////////////////////////////////////////////////
-
-template <typename T, typename U>
-data_set<T, U>::data_set() :
-    X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}
 
 template <typename T, typename U>
 void data_set<T, U>::create_mapping() {
