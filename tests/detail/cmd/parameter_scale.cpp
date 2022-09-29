@@ -51,7 +51,17 @@ TEST_F(ParameterScale, minimal_output) {
     const plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
 
     // test output string
-    EXPECT_EQ(util::convert_to_string(params), "lower: -1\nupper: 1\nlabel_type: int (default)\nreal_type: double (default)\noutput file format: libsvm\ninput file: 'data.libsvm'\nscaled file: 'data.libsvm.scaled'\nsave file (scaling factors): ''\nrestore file (scaling factors): ''\n");
+    const std::string correct =
+        "lower: -1\n"
+        "upper: 1\n"
+        "label_type: int (default)\n"
+        "real_type: double (default)\n"
+        "output file format: libsvm\n"
+        "input file: 'data.libsvm'\n"
+        "scaled file: 'data.libsvm.scaled'\n"
+        "save file (scaling factors): ''\n"
+        "restore file (scaling factors): ''\n";
+    EXPECT_EQ(util::convert_to_string(params), correct);
 }
 
 TEST_F(ParameterScale, all_arguments) {
@@ -80,7 +90,17 @@ TEST_F(ParameterScale, all_arguments_output) {
     const plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
 
     // test output string
-    EXPECT_EQ(util::convert_to_string(params), "lower: -2\nupper: 2.5\nlabel_type: std::string\nreal_type: float\noutput file format: arff\ninput file: 'data.libsvm'\nscaled file: 'data.libsvm.scaled'\nsave file (scaling factors): 'data.libsvm.save'\nrestore file (scaling factors): ''\n");
+    const std::string correct =
+        "lower: -2\n"
+        "upper: 2.5\n"
+        "label_type: std::string\n"
+        "real_type: float\n"
+        "output file format: arff\n"
+        "input file: 'data.libsvm'\n"
+        "scaled file: 'data.libsvm.scaled'\n"
+        "save file (scaling factors): 'data.libsvm.save'\n"
+        "restore file (scaling factors): ''\n";
+    EXPECT_EQ(util::convert_to_string(params), correct);
 }
 
 // test all command line parameter separately
@@ -97,7 +117,8 @@ TEST_P(ParameterScaleLower, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleLower, ::testing::Combine(
                 ::testing::Values("-l", "--lower"),
-                ::testing::Values(-2.5, -1.0, -0.01, 0.0)));
+                ::testing::Values(-2.5, -1.0, -0.01, 0.0)),
+                util::pretty_print_flag_and_value<ParameterScaleLower>);
 // clang-format on
 
 class ParameterScaleUpper : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
@@ -113,7 +134,8 @@ TEST_P(ParameterScaleUpper, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUpper,
                 ::testing::Combine(::testing::Values("-u", "--upper"),
-                ::testing::Values(0.0, 0.01, 1.0, 2.5)));
+                ::testing::Values(0.0, 0.01, 1.0, 2.5)),
+                util::pretty_print_flag_and_value<ParameterScaleUpper>);
 // clang-format on
 
 class ParameterScaleFileFormat : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -131,7 +153,8 @@ TEST_P(ParameterScaleFileFormat, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleFileFormat, ::testing::Combine(
                 ::testing::Values("-f", "--format"),
-                ::testing::Values("libsvm", "LIBSVM", "arff", "ARFF")));
+                ::testing::Values("libsvm", "LIBSVM", "arff", "ARFF")),
+                util::pretty_print_flag_and_value<ParameterScaleFileFormat>);
 // clang-format on
 
 class ParameterScaleSaveFilename : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -147,7 +170,8 @@ TEST_P(ParameterScaleSaveFilename, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleSaveFilename, ::testing::Combine(
                 ::testing::Values("-s", "--save_filename"),
-                ::testing::Values("data.libsvm.scaled", "output.txt")));
+                ::testing::Values("data.libsvm.scaled", "output.txt")),
+                util::pretty_print_flag_and_value<ParameterScaleSaveFilename>);
 // clang-format on
 
 class ParameterScaleRestoreFilename : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -163,32 +187,43 @@ TEST_P(ParameterScaleRestoreFilename, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleRestoreFilename, ::testing::Combine(
                 ::testing::Values("-r", "--restore_filename"),
-                ::testing::Values("data.libsvm.weights", "output.txt")));
+                ::testing::Values("data.libsvm.weights", "output.txt")),
+                util::pretty_print_flag_and_value<ParameterScaleRestoreFilename>);
 // clang-format on
 
-class ParameterScaleUseStringsAsLabels : public ParameterScale, public ::testing::WithParamInterface<bool> {};
+class ParameterScaleUseStringsAsLabels : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
 TEST_P(ParameterScaleUseStringsAsLabels, parsing) {
-    const bool value = GetParam();
+    const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-scale --use_strings_as_labels={} data.libsvm", value));
+    this->CreateCMDArgs(fmt::format("./plssvm-scale {}={} data.libsvm", flag, value));
     // create parameter object
     const plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
     // test for correctness
     EXPECT_EQ(params.strings_as_labels, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseStringsAsLabels, ::testing::Bool());
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseStringsAsLabels, ::testing::Combine(
+                ::testing::Values("--use_strings_as_labels"),
+                ::testing::Bool()),
+                util::pretty_print_flag_and_value<ParameterScaleUseStringsAsLabels>);
+// clang-format on
 
-class ParameterScaleUseFloatAsRealType : public ParameterScale, public ::testing::WithParamInterface<bool> {};
+class ParameterScaleUseFloatAsRealType : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
 TEST_P(ParameterScaleUseFloatAsRealType, parsing) {
-    const bool value = GetParam();
+    const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-scale --use_float_as_real_type={} data.libsvm", value));
+    this->CreateCMDArgs(fmt::format("./plssvm-scale {}={} data.libsvm", flag, value));
     // create parameter object
     const plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
     // test for correctness
     EXPECT_EQ(params.float_as_real_type, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseFloatAsRealType, ::testing::Bool());
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseFloatAsRealType, ::testing::Combine(
+                ::testing::Values("--use_float_as_real_type"),
+                ::testing::Bool()),
+                util::pretty_print_flag_and_value<ParameterScaleUseFloatAsRealType>);
+// clang-format on
 
 class ParameterScaleQuiet : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterScaleQuiet, parsing) {
@@ -200,7 +235,7 @@ TEST_P(ParameterScaleQuiet, parsing) {
     // test for correctness
     EXPECT_EQ(plssvm::verbose, flag.empty());
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleQuiet, ::testing::Values("-q", "--quiet", ""));
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterScaleQuiet>);
 
 TEST_F(ParameterScale, help) {
     this->CreateCMDArgs("./plssvm-scale --help");

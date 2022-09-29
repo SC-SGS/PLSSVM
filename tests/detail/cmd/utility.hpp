@@ -14,12 +14,17 @@
 #pragma once
 
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::replace_all
 
 #include "../../utility.hpp"  // util::redirect_output
+
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // :testing::TestParamInfo
 
 #include <cstring>      // std::strcpy
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::get
 #include <vector>       // std::vector
 
 namespace util {
@@ -58,6 +63,40 @@ class ParameterBase : public ::testing::Test, private redirect_output {
     int argc{ 0 };
     /// The artificial command line arguments.
     char **argv{ nullptr };
+};
+
+// pretty printer
+/**
+ * @brief Pretty print a flag and value combination.
+ * @details Replaces all "-" in a flag with "", all "-" in a value with "m" (for minus), and all "." in a value with "p" (for point).
+ * @tparam T the parameter type used in the test fixture
+ * @param[in] param_info the parameter info used for pretty printing the test case name
+ * @return the test case name
+ */
+template <typename T>
+const auto pretty_print_flag_and_value = [](const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    // sanitize flags for Google Test names
+    std::string flag = std::get<0>(param_info.param);
+    plssvm::detail::replace_all(flag, "-", "");
+    // sanitize values for Google Test names
+    std::string value = fmt::format("{}", std::get<1>(param_info.param));
+    plssvm::detail::replace_all(value, "-", "m");
+    plssvm::detail::replace_all(value, ".", "p");
+    return fmt::format("{}_{}", flag, value);
+};
+/**
+ * @brief Pretty print a flag.
+ * @details Replaces all "-" in a flag with "".
+ * @tparam T the parameter type used in the test fixture
+ * @param[in] param_info the parameter info used for pretty printing the test case name
+ * @return the test case name
+ */
+template <typename T>
+const auto pretty_print_flag = [](const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    // sanitize flags for Google Test names
+    std::string flag = param_info.param;
+    plssvm::detail::replace_all(flag, "-", "");
+    return fmt::format("{}", flag.empty() ? "EMPTY_FLAG" : flag);
 };
 
 }  // namespace util

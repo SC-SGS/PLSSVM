@@ -13,7 +13,7 @@
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
 #include "../../utility.hpp"  // util::{convert_to_string, convert_from_string}
-#include "utility.hpp"        // util::ParameterBase
+#include "utility.hpp"        // util::{ParameterBase, pretty_print_flag_and_value, pretty_print_flag}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
@@ -49,8 +49,15 @@ TEST_F(ParameterPredict, minimal_output) {
 
     // create parameter object
     const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+
     // test output string
-    EXPECT_EQ(util::convert_to_string(params), "label_type: int (default)\nreal_type: double (default)\ninput file (data set): 'data.libsvm'\ninput file (model): 'data.libsvm.model'\noutput file (prediction): 'data.libsvm.predict'\n");
+    const std::string correct =
+        "label_type: int (default)\n"
+        "real_type: double (default)\n"
+        "input file (data set): 'data.libsvm'\n"
+        "input file (model): 'data.libsvm.model'\n"
+        "output file (prediction): 'data.libsvm.predict'\n";
+    EXPECT_EQ(util::convert_to_string(params), correct);
 }
 
 TEST_F(ParameterPredict, all_arguments) {
@@ -88,8 +95,15 @@ TEST_F(ParameterPredict, all_arguments_output) {
 
     // create parameter object
     const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+
     // test output string
-    EXPECT_EQ(util::convert_to_string(params), "label_type: std::string\nreal_type: float\ninput file (data set): 'data.libsvm'\ninput file (model): 'data.libsvm.model'\noutput file (prediction): 'data.libsvm.predict'\n");
+    const std::string correct =
+        "label_type: std::string\n"
+        "real_type: float\n"
+        "input file (data set): 'data.libsvm'\n"
+        "input file (model): 'data.libsvm.model'\n"
+        "output file (prediction): 'data.libsvm.predict'\n";
+    EXPECT_EQ(util::convert_to_string(params), correct);
 }
 
 // test all command line parameter separately
@@ -108,7 +122,8 @@ TEST_P(ParameterPredictBackend, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
-                ::testing::Values("automatic", "OpenMP", "CUDA", "HIP", "OpenCL", "SYCL")));
+                ::testing::Values("automatic", "OpenMP", "CUDA", "HIP", "OpenCL", "SYCL")),
+                util::pretty_print_flag_and_value<ParameterPredictBackend>);
 // clang-format on
 
 class ParameterPredictTargetPlatform : public ParameterPredict, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -126,50 +141,67 @@ TEST_P(ParameterPredictTargetPlatform, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictTargetPlatform, ::testing::Combine(
                 ::testing::Values("-p", "--target_platform"),
-                ::testing::Values("automatic", "cpu", "gpu_nvidia", "gpu_amd", "gpu_intel")));
+                ::testing::Values("automatic", "cpu", "gpu_nvidia", "gpu_amd", "gpu_intel")),
+                util::pretty_print_flag_and_value<ParameterPredictTargetPlatform>);
 // clang-format on
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 
-class ParameterPredictSYCLImplementation : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
+class ParameterPredictSYCLImplementation : public ParameterPredict, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
 TEST_P(ParameterPredictSYCLImplementation, parsing) {
-    const std::string &value = GetParam();
+    const auto &[flag, value] = GetParam();
     // convert string to sycl::implementation_type
     const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl_generic::implementation_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-predict --sycl_implementation_type={} data.libsvm data.libsvm.model", value));
+    this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
     const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
     // test for correctness
     EXPECT_EQ(params.sycl_implementation_type, sycl_implementation_type);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictSYCLImplementation, ::testing::Values("automatic", "hipSYCL", "DPCPP", "DPC++"));
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictSYCLImplementation, ::testing::Combine(
+                ::testing::Values("--sycl_implementation_type"),
+                ::testing::Values("automatic", "hipSYCL", "DPCPP", "DPC++")),
+                util::pretty_print_flag_and_value<ParameterPredictSYCLImplementation>);
+// clang-format on
 
 #endif  // PLSSVM_HAS_SYCL_BACKEND
 
-class ParameterPredictUseStringsAsLabels : public ParameterPredict, public ::testing::WithParamInterface<bool> {};
+class ParameterPredictUseStringsAsLabels : public ParameterPredict, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
 TEST_P(ParameterPredictUseStringsAsLabels, parsing) {
-    const bool value = GetParam();
+    const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-predict --use_strings_as_labels={} data.libsvm data.libsvm.model", value));
+    fmt::print("./plssvm-predict {} {} data.libsvm data.libsvm.model", flag, value);
+    this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
     const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
     // test for correctness
     EXPECT_EQ(params.strings_as_labels, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseStringsAsLabels, ::testing::Bool());
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseStringsAsLabels, ::testing::Combine(
+                ::testing::Values("--use_strings_as_labels"),
+                ::testing::Bool()),
+                util::pretty_print_flag_and_value<ParameterPredictUseStringsAsLabels>);
+// clang-format on
 
-class ParameterPredictUseFloatAsRealType : public ParameterPredict, public ::testing::WithParamInterface<bool> {};
+class ParameterPredictUseFloatAsRealType : public ParameterPredict, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
 TEST_P(ParameterPredictUseFloatAsRealType, parsing) {
-    const bool value = GetParam();
+    const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs(fmt::format("./plssvm-predict --use_float_as_real_type={} data.libsvm data.libsvm.model", value));
+    this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
     const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
     // test for correctness
     EXPECT_EQ(params.float_as_real_type, value);
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseFloatAsRealType, ::testing::Bool());
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseFloatAsRealType, ::testing::Combine(
+                ::testing::Values("--use_float_as_real_type"),
+                ::testing::Bool()),
+                util::pretty_print_flag_and_value<ParameterPredictUseFloatAsRealType>);
+// clang-format on
 
 class ParameterPredictQuiet : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterPredictQuiet, parsing) {
@@ -181,7 +213,7 @@ TEST_P(ParameterPredictQuiet, parsing) {
     // test for correctness
     EXPECT_EQ(plssvm::verbose, flag.empty());
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictQuiet, ::testing::Values("-q", "--quiet", ""));
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterPredictQuiet>);
 
 TEST_F(ParameterPredict, help) {
     this->CreateCMDArgs("./plssvm-predict --help");
