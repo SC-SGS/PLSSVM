@@ -71,7 +71,7 @@ TEST(GitMetadata, commit_subject) {
 
 TEST(GitMetadata, commit_body) {
     if (!git_metadata::is_populated()) {
-        // if we are outside a Git repository, the commit subject must be empty
+        // if we are outside a Git repository, the commit body must be empty
         EXPECT_TRUE(git_metadata::commit_subject().empty());
     }
 }
