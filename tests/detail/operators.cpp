@@ -8,15 +8,20 @@
  * @brief Tests for the std::vector arithmetic operator overloads.
  */
 
-#include "plssvm/detail/operators.hpp"  // plssvm::operators::{*}
+#include "plssvm/detail/operators.hpp"
 
-#include "gtest/gtest.h"  // ::testing::Types, ::testing::Test, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_DEATH
+#include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
 
+#include <tuple>   // std::ignore
 #include <vector>  // std::vector
 
 // make all operator overloads available in all tests
 using namespace plssvm::operators;
 
+// the floating point types to test
+using floating_point_types = ::testing::Types<float, double>;
+
+// testsuite for "normal" tests
 template <typename T>
 class Operators : public ::testing::Test {
   protected:
@@ -33,7 +38,9 @@ class Operators : public ::testing::Test {
     std::vector<real_type> empty{};
     real_type scalar{};
 };
+TYPED_TEST_SUITE(Operators, floating_point_types);
 
+// testsuite for death tests
 template <typename T>
 class OperatorsDeathTest : public ::testing::Test {
   protected:
@@ -47,13 +54,6 @@ class OperatorsDeathTest : public ::testing::Test {
     std::vector<real_type> a{};
     std::vector<real_type> b{};
 };
-
-// the floating point types to test
-using floating_point_types = ::testing::Types<float, double>;
-
-// testsuite for "normal" tests
-TYPED_TEST_SUITE(Operators, floating_point_types);
-// testsuite for death tests
 TYPED_TEST_SUITE(OperatorsDeathTest, floating_point_types);
 
 TYPED_TEST(Operators, operator_add_binary) {
@@ -239,7 +239,7 @@ TYPED_TEST(Operators, operator_divide_scalar_binary) {
         EXPECT_EQ(this->a / this->scalar, c);
     }
     {
-        const std::vector<typename TestFixture::real_type> c = { 1.5, 1.5/2.0, 0.5, 1.5/4.0, 1.5/5.0 };
+        const std::vector<typename TestFixture::real_type> c = { 1.5, 1.5 / 2.0, 0.5, 1.5 / 4.0, 1.5 / 5.0 };
         EXPECT_EQ(this->scalar / this->a, c);
     }
 }
@@ -288,13 +288,13 @@ TYPED_TEST(Operators, operator_dot_transposed) {
 }
 TYPED_TEST(OperatorsDeathTest, operator_dot_function) {
     // try to calculate the dot product with vectors of different sizes
-    EXPECT_DEATH([[maybe_unused]] auto ret = dot(this->a, this->b), "Sizes mismatch!: 4 != 2");
-    EXPECT_DEATH([[maybe_unused]] auto ret = dot(this->b, this->a), "Sizes mismatch!: 2 != 4");
+    EXPECT_DEATH(std::ignore = dot(this->a, this->b), "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(std::ignore = dot(this->b, this->a), "Sizes mismatch!: 2 != 4");
 }
 TYPED_TEST(OperatorsDeathTest, operator_dot_transposed) {
     // try to calculate the dot product with vectors of different sizes
-    EXPECT_DEATH([[maybe_unused]] auto ret = transposed{ this->a } * this->b, "Sizes mismatch!: 4 != 2");
-    EXPECT_DEATH([[maybe_unused]] auto ret = transposed{ this->b } * this->a, "Sizes mismatch!: 2 != 4");
+    EXPECT_DEATH(std::ignore = transposed{ this->a } * this->b, "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(std::ignore = transposed{ this->b } * this->a, "Sizes mismatch!: 2 != 4");
 }
 
 TYPED_TEST(Operators, operator_sum) {
@@ -309,8 +309,8 @@ TYPED_TEST(Operators, operator_squared_euclidean_dist) {
 }
 TYPED_TEST(OperatorsDeathTest, operator_squared_euclidean_dist) {
     // try to calculate the squared euclidean distance between two vectors with different distance
-    EXPECT_DEATH([[maybe_unused]] auto ret = squared_euclidean_dist(this->a, this->b), "Sizes mismatch!: 4 != 2");
-    EXPECT_DEATH([[maybe_unused]] auto ret = squared_euclidean_dist(this->b, this->a), "Sizes mismatch!: 2 != 4");
+    EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->a, this->b), "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->b, this->a), "Sizes mismatch!: 2 != 4");
 }
 
 TYPED_TEST(Operators, operator_sign_positive) {

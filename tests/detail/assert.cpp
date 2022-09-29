@@ -8,9 +8,10 @@
  * @brief Tests for the custom PLSSVM_ASSERT implementation.
  */
 
-#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+#include "plssvm/detail/assert.hpp"
 
-#include "gtest/gtest.h"  // TEST, ASSERT_DEATH
+#include "gmock/gmock-matchers.h"  // ::testing::ContainsRegex
+#include "gtest/gtest.h"           // TEST, ASSERT_DEATH, EXPECT_DEATH
 
 // only test if assertions are enabled
 #if defined(PLSSVM_ASSERT_ENABLED)
@@ -19,10 +20,8 @@ TEST(PLSSVMAssert, assert_true) {
     // must not trigger an assertion
     PLSSVM_ASSERT(true, "TRUE");
 }
-
 TEST(PLSSVMAssert, assert_false) {
-    // can't use a regex matcher due to the used emphasis and color specification in the assertion message
-    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), "FALSE");
+    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!.*FALSE.*"));
 }
 
 #endif

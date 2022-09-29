@@ -8,7 +8,7 @@
  * @brief Tests for the implementation converting arithmetic types to their name as string.
  */
 
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/arithmetic_type_name.hpp"
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ
 

@@ -12,7 +12,7 @@
 
 #include "../utility.hpp"  // util::convert_to_string
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_DEATH
 
 #include <array>             // std::array
 #include <cstddef>           // std::size_t
@@ -41,7 +41,6 @@ TEST(ExecutionRange, initializer_list) {
     check_execution_range(execution_range{ { 31, 32, 33 }, { 21, 22 } }, std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 21, 22, 1 });
     check_execution_range(execution_range{ { 31, 32, 33 }, { 31, 32, 33 } }, std::array<std::size_t, 3>{ 31, 32, 33 }, std::array<std::size_t, 3>{ 31, 32, 33 });
 }
-
 TEST(ExecutionRangeDeathTest, initializer_list_too_few_dimensions) {
     using plssvm::detail::execution_range;
 
@@ -50,7 +49,6 @@ TEST(ExecutionRangeDeathTest, initializer_list_too_few_dimensions) {
     EXPECT_DEATH((execution_range{ {}, { 11 } }), "The number of grid sizes specified must be between 1 and 3, but is 0!");
     EXPECT_DEATH((execution_range{ { 11 }, {} }), "The number of block sizes specified must be between 1 and 3, but is 0!");
 }
-
 TEST(ExecutionRangeDeathTest, initializer_list_too_many_dimensions) {
     using plssvm::detail::execution_range;
 
