@@ -175,10 +175,10 @@ inline typename std::unordered_set<Key, Hash, KeyEqual, Allocator>::size_type er
  */
 template <typename T, typename Allocator, typename Pred>
 inline typename std::vector<T, Allocator>::size_type erase_if(std::vector<T, Allocator> &vec, Pred pred) {
-    auto it = std::remove_if(vec.begin(), vec.end(), pred);
-    auto r = std::distance(it, vec.end());
-    vec.erase(it, vec.end());
-    return r;
+    auto iter = std::remove_if(vec.begin(), vec.end(), pred);
+    auto dist = std::distance(iter, vec.end());
+    vec.erase(iter, vec.end());
+    return dist;
 }
 
 /**

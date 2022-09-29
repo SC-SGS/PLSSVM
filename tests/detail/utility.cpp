@@ -11,14 +11,15 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::{always_false, remove_cvref_t, get, to_underlying, erase_if, contains_key}
 #include "plssvm/default_value.hpp"   // plssvm::default_value
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
+#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
 #include <map>            // std::map
-#include <regex>          // std::regex, std::regex_match
 #include <set>            // std::set
 #include <type_traits>    // std::is_same_v
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
+#include <vector>         // std::vector
 
 TEST(Utility, always_false) {
     EXPECT_FALSE(plssvm::detail::always_false_v<void>);
@@ -46,9 +47,9 @@ TEST(Utility, get) {
 }
 
 TEST(Utility, to_underlying_int) {
-    enum class int_enum { a,
-                          b,
-                          c = 10 };
+    // clang-format off
+    enum class int_enum { a, b, c = 10 };
+    // clang-format on
 
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::a), 0);
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::b), 1);
@@ -56,9 +57,9 @@ TEST(Utility, to_underlying_int) {
 }
 
 TEST(Utility, to_underlying_char) {
-    enum class char_enum : char { a = 'a',
-                                  b = 'b',
-                                  c = 'c' };
+    // clang-format off
+    enum class char_enum : char { a = 'a', b = 'b', c = 'c' };
+    // clang-format on
 
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::a), 'a');
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::b), 'b');
@@ -66,9 +67,9 @@ TEST(Utility, to_underlying_char) {
 }
 
 TEST(Utility, to_underlying_default_value_int) {
-    enum class int_enum { a,
-                          b,
-                          c = 10 };
+    // clang-format off
+    enum class int_enum { a, b, c = 10 };
+    // clang-format on
 
     plssvm::default_value<int_enum> int_default;
     EXPECT_EQ(plssvm::detail::to_underlying(int_default = int_enum::a), 0);
@@ -77,9 +78,9 @@ TEST(Utility, to_underlying_default_value_int) {
 }
 
 TEST(Utility, to_underlying_default_value_char) {
-    enum class char_enum : char { a = 'a',
-                                  b = 'b',
-                                  c = 'c' };
+    // clang-format off
+    enum class char_enum : char { a = 'a', b = 'b', c = 'c' };
+    // clang-format on
 
     plssvm::default_value<char_enum> char_default;
     EXPECT_EQ(plssvm::detail::to_underlying(char_default = char_enum::a), 'a');
@@ -87,6 +88,7 @@ TEST(Utility, to_underlying_default_value_char) {
     EXPECT_EQ(plssvm::detail::to_underlying(char_default = char_enum::c), 'c');
 }
 
+// test fixture for map like classes
 template <typename T>
 class UtilityMapContainer : public ::testing::Test {
   protected:
@@ -101,18 +103,16 @@ class UtilityMapContainer : public ::testing::Test {
 
 // the map container types to test
 using map_types = ::testing::Types<std::map<int, int>, std::unordered_map<int, int>>;
-
 TYPED_TEST_SUITE(UtilityMapContainer, map_types);
 
 TYPED_TEST(UtilityMapContainer, erase_if) {
-    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type p) { return p.second % 2 == 0; }), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 0; }), 1);
     EXPECT_EQ(this->map.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type p) { return p.second % 2 == 0; }), 0);
+    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 0; }), 0);
     EXPECT_EQ(this->map.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type p) { return p.second % 2 == 1; }), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 1; }), 1);
     EXPECT_TRUE(this->map.empty());
 }
-
 TYPED_TEST(UtilityMapContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->map, 0));
     EXPECT_TRUE(plssvm::detail::contains(this->map, 1));
@@ -120,6 +120,7 @@ TYPED_TEST(UtilityMapContainer, contains) {
     EXPECT_FALSE(plssvm::detail::contains(this->map, -1));
 }
 
+// test fixture for set like classes
 template <typename T>
 class UtilitySetContainer : public ::testing::Test {
   protected:
@@ -134,18 +135,16 @@ class UtilitySetContainer : public ::testing::Test {
 
 // the set container types to test
 using set_types = ::testing::Types<std::set<int>, std::unordered_set<int>>;
-
 TYPED_TEST_SUITE(UtilitySetContainer, set_types);
 
 TYPED_TEST(UtilitySetContainer, erase_if) {
-    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type p) { return p % 2 == 0; }), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type value) { return value % 2 == 0; }), 1);
     EXPECT_EQ(this->set.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type p) { return p % 2 == 0; }), 0);
+    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type value) { return value % 2 == 0; }), 0);
     EXPECT_EQ(this->set.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type p) { return p % 2 == 1; }), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type value) { return value % 2 == 1; }), 1);
     EXPECT_TRUE(this->set.empty());
 }
-
 TYPED_TEST(UtilitySetContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->set, 0));
     EXPECT_TRUE(plssvm::detail::contains(this->set, 1));
@@ -153,6 +152,7 @@ TYPED_TEST(UtilitySetContainer, contains) {
     EXPECT_FALSE(plssvm::detail::contains(this->set, -1));
 }
 
+// test fixture for vector like classes
 template <typename T>
 class UtilityVectorContainer : public ::testing::Test {
   protected:
@@ -167,18 +167,16 @@ class UtilityVectorContainer : public ::testing::Test {
 
 // the vector container types to test
 using vector_types = ::testing::Types<std::vector<int>>;
-
 TYPED_TEST_SUITE(UtilityVectorContainer, vector_types);
 
 TYPED_TEST(UtilityVectorContainer, erase_if) {
-    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type p) { return p % 2 == 0; }), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 0; }), 1);
     EXPECT_EQ(this->vec.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type p) { return p % 2 == 0; }), 0);
+    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 0; }), 0);
     EXPECT_EQ(this->vec.size(), 1);
-    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type p) { return p % 2 == 1; }), 1);
+    EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 1; }), 1);
     EXPECT_TRUE(this->vec.empty());
 }
-
 TYPED_TEST(UtilityVectorContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->vec, 0));
     EXPECT_TRUE(plssvm::detail::contains(this->vec, 1));
@@ -187,8 +185,6 @@ TYPED_TEST(UtilityVectorContainer, contains) {
 }
 
 TEST(Utility, current_date_time) {
-    // create regex pattern
-    std::regex reg{ "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", std::regex::extended };
-    // test if the  current date time matches the pattern
-    EXPECT_TRUE(std::regex_match(plssvm::detail::current_date_time(), reg));
+    // test if the current date time matches the pattern
+    EXPECT_THAT(plssvm::detail::current_date_time(), ::testing::ContainsRegex("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"));
 }
