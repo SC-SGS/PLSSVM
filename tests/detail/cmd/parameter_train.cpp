@@ -416,14 +416,25 @@ TEST_P(ParameterTrainQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterTrainQuiet>);
 
-TEST_F(ParameterTrain, help) {
-    this->CreateCMDArgs("./plssvm-train --help");
+class ParameterTrainHelp : public ParameterTrain, public ::testing::WithParamInterface<std::string> {};
+TEST_P(ParameterTrainHelp, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(fmt::format("./plssvm-train {}", flag));
+    // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_train{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-TEST_F(ParameterTrain, version) {
-    this->CreateCMDArgs("./plssvm-train --version");
+INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainHelp, ::testing::Values("-h", "--help"), util::pretty_print_flag<ParameterTrainHelp>);
+
+class ParameterTrainVersion : public ParameterTrain, public ::testing::WithParamInterface<std::string> {};
+TEST_P(ParameterTrainVersion, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(fmt::format("./plssvm-train {}", flag));
+    // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_train{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
+INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainVersion, ::testing::Values("-v", "--version"), util::pretty_print_flag<ParameterTrainVersion>);
 
 TEST_F(ParameterTrain, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-train");

@@ -237,14 +237,25 @@ TEST_P(ParameterScaleQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterScaleQuiet>);
 
-TEST_F(ParameterScale, help) {
-    this->CreateCMDArgs("./plssvm-scale --help");
+class ParameterScaleHelp : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
+TEST_P(ParameterScaleHelp, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(fmt::format("./plssvm-scale {}", flag));
+    // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-TEST_F(ParameterScale, version) {
-    this->CreateCMDArgs("./plssvm-scale --version");
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleHelp, ::testing::Values("-h", "--help"), util::pretty_print_flag<ParameterScaleHelp>);
+
+class ParameterScaleVersion : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
+TEST_P(ParameterScaleVersion, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(fmt::format("./plssvm-scale {}", flag));
+    // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleVersion, ::testing::Values("-v", "--version"), util::pretty_print_flag<ParameterScaleVersion>);
 
 TEST_F(ParameterScaleDeathTest, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-scale");

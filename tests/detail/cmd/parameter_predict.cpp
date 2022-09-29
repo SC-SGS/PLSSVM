@@ -215,14 +215,25 @@ TEST_P(ParameterPredictQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterPredictQuiet>);
 
-TEST_F(ParameterPredict, help) {
-    this->CreateCMDArgs("./plssvm-predict --help");
+class ParameterPredictHelp : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
+TEST_P(ParameterPredictHelp, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(fmt::format("./plssvm-predict {}", flag));
+    // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-TEST_F(ParameterPredict, version) {
-    this->CreateCMDArgs("./plssvm-predict --version");
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictHelp, ::testing::Values("-h", "--help"), util::pretty_print_flag<ParameterPredictHelp>);
+
+class ParameterPredictVersion : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
+TEST_P(ParameterPredictVersion, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(fmt::format("./plssvm-predict {}", flag));
+    // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictVersion, ::testing::Values("-v", "--version"), util::pretty_print_flag<ParameterPredictHelp>);
 
 TEST_F(ParameterPredict, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-predict");
