@@ -10,6 +10,8 @@
 
 #include "plssvm/detail/operators.hpp"
 
+#include "../utility.hpp"  // util::floating_point_types_to_name
+
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
 
 #include <tuple>   // std::ignore
@@ -38,7 +40,7 @@ class Operators : public ::testing::Test {
     std::vector<real_type> empty{};
     real_type scalar{};
 };
-TYPED_TEST_SUITE(Operators, floating_point_types);
+TYPED_TEST_SUITE(Operators, floating_point_types, util::floating_point_types_to_name);
 
 // testsuite for death tests
 template <typename T>
@@ -54,7 +56,7 @@ class OperatorsDeathTest : public ::testing::Test {
     std::vector<real_type> a{};
     std::vector<real_type> b{};
 };
-TYPED_TEST_SUITE(OperatorsDeathTest, floating_point_types);
+TYPED_TEST_SUITE(OperatorsDeathTest, floating_point_types, util::floating_point_types_to_name);
 
 TYPED_TEST(Operators, operator_add_binary) {
     // binary addition using two vectors
