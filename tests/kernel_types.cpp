@@ -192,7 +192,7 @@ TYPED_TEST(KernelFunction, unknown_kernel_function_parameter) {
 }
 
 template <typename T>
-class KernelFunctionDeathTest : public ::testing::Test {};
+using KernelFunctionDeathTest = KernelFunction<T>;
 TYPED_TEST_SUITE(KernelFunctionDeathTest, floating_point_types);
 
 TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_variadic) {
