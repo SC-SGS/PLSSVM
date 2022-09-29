@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions and classes (fixtures) for testing the exception classes' functionality.
+ * @brief Utility functions for testing the exception classes' functionality.
  */
 
 #ifndef PLSSVM_TESTS_EXCEPTIONS_UTILITY_HPP_
@@ -14,8 +14,6 @@
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
-
-#include "fmt/core.h"  // fmt::format
 
 #include <string_view>  // std::string_view
 
@@ -35,8 +33,8 @@ using namespace plssvm;
 /**
  * @brief Tries to convert the given exception to its name as string representation.
  * @details The definition is marked as **deleted** if `T` isn't one of the custom PLSSVM exception types.
- * @tparam T the type to convert to a string
- * @return the name of `T` (`[[nodiscard]]`)
+ * @tparam T the exception type to convert to a string
+ * @return the name of the exception type `T` (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] constexpr inline std::string_view exception_type_name() = delete;
