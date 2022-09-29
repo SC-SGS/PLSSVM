@@ -5,21 +5,32 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for the sha256 implementation.
+ * @brief Tests for the functions in the string conversion header.
  */
 
-#include "plssvm/detail/string_conversion.hpp"     // plssvm::detail::convert_to
+#include "plssvm/detail/string_conversion.hpp"
+
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
 #include "../utility.hpp"  // EXPECT_THROW_WHAT
 
 #include "fmt/format.h"   // fmt::format
-#include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE
+#include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
+                          // ::testing::{Test, TestWithParam, Types, Values}
 
-#include <stdexcept>  // std::invalid_argument
-#include <string>     // std::string
-#include <vector>     // std::vector
+#include <stdexcept>    // std::invalid_argument, std::runtime_error
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::ignore
+#include <utility>      // std::pair, std::make_pair
+#include <vector>       // std::vector
 
+/**
+ * @brief Checks the plssvm::detail::convert_to function.
+ * @tparam T the type to convert the input values to
+ * @param[in] input the input values to convert
+ * @param[in] correct_output the correct output values
+ */
 template <typename T>
 void check_convert_to(const std::vector<std::string_view> &input, const std::vector<T> &correct_output) {
     ASSERT_EQ(input.size(), correct_output.size());
@@ -33,9 +44,9 @@ void check_convert_to(const std::vector<std::string_view> &input, const std::vec
 TEST(StringConversion, string_conversion) {
     using namespace plssvm::detail;
 
-    std::vector<std::string_view> input = { "-3", "-1.5", "0.0", "1.5", "3", "   5", "  6 ", "7  " };
-    std::vector<std::string_view> input_unsigned = { "0.0", "1.5", "3", "   5", "  6 ", "7  " };
-    std::vector<std::string_view> input_char = { "0", "48", "65.2", "66", "122", "   119", "  120 ", "121  " };
+    const std::vector<std::string_view> input = { "-3", "-1.5", "0.0", "1.5", "3", "   5", "  6 ", "7  " };
+    const std::vector<std::string_view> input_unsigned = { "0.0", "1.5", "3", "   5", "  6 ", "7  " };
+    const std::vector<std::string_view> input_char = { "0", "48", "65.2", "66", "122", "   119", "  120 ", "121  " };
 
     // boolean
     // std::from_chars seems to not support bool
@@ -78,10 +89,9 @@ TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types);
 TYPED_TEST(StringConversionException, string_conversion_exception) {
     using namespace plssvm::detail;
 
-    [[maybe_unused]] TypeParam res;
-    EXPECT_THROW_WHAT(res = convert_to<TypeParam>("a"), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
-    EXPECT_THROW_WHAT(res = convert_to<TypeParam>("  abc 1"), std::runtime_error, fmt::format("Can't convert '  abc 1' to a value of type {}!", arithmetic_type_name<TypeParam>()));
-    EXPECT_THROW_WHAT((res = convert_to<TypeParam, std::invalid_argument>("a")), std::invalid_argument, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
+    EXPECT_THROW_WHAT(std::ignore = convert_to<TypeParam>("a"), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
+    EXPECT_THROW_WHAT(std::ignore = convert_to<TypeParam>("  abc 1"), std::runtime_error, fmt::format("Can't convert '  abc 1' to a value of type {}!", arithmetic_type_name<TypeParam>()));
+    EXPECT_THROW_WHAT((std::ignore = convert_to<TypeParam, std::invalid_argument>("a")), std::invalid_argument, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
 }
 
 class StringConversionExtract : public ::testing::TestWithParam<std::pair<std::string_view, int>> {};
@@ -89,12 +99,18 @@ TEST_P(StringConversionExtract, extract_first_integer_from_string) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::extract_first_integer_from_string<int>(input), output);
 }
-INSTANTIATE_TEST_SUITE_P(StringUtility, StringConversionExtract, ::testing::Values(std::make_pair("111", 111), std::make_pair("111 222", 111), std::make_pair("-111 222", 111), std::make_pair(" 111 222 333", 111), std::make_pair("abcd 111", 111), std::make_pair("abcd111 222", 111), std::make_pair("111_222", 111), std::make_pair("111 abcd 222", 111), std::make_pair("abc123def456", 123)));
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(StringUtility, StringConversionExtract, ::testing::Values(
+                std::make_pair("111", 111), std::make_pair("111 222", 111),
+                std::make_pair("-111 222", 111), std::make_pair(" 111 222 333", 111),
+                std::make_pair("abcd 111", 111), std::make_pair("abcd111 222", 111),
+                std::make_pair("111_222", 111), std::make_pair("111 abcd 222", 111),
+                std::make_pair("abc123def456", 123)));
+// clang-format on
 
 TEST(StringConversion, extract_first_integer_from_string_exception) {
-    [[maybe_unused]] int res;
-    EXPECT_THROW_WHAT(res = plssvm::detail::extract_first_integer_from_string<int>("abc"), std::runtime_error, "String \"abc\" doesn't contain any integer!");
-    EXPECT_THROW_WHAT(res = plssvm::detail::extract_first_integer_from_string<int>(""), std::runtime_error, "String \"\" doesn't contain any integer!");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::extract_first_integer_from_string<int>("abc"), std::runtime_error, R"(String "abc" doesn't contain any integer!)");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::extract_first_integer_from_string<int>(""), std::runtime_error, R"(String "" doesn't contain any integer!)");
 }
 
 template <typename T>
@@ -113,7 +129,6 @@ TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
-
 TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
     // split string using a custom delimiter
     const std::string string_to_split = "1.5,2.0,-3.5,4.0,5.0,-6.0,7.5";
@@ -125,14 +140,12 @@ TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
-
 TYPED_TEST(StringConversionSplitAs, split_single_value) {
     // split string containing a single value
     const std::vector<TypeParam> split = plssvm::detail::split_as<TypeParam>("42");
     ASSERT_EQ(split.size(), 1);
     EXPECT_EQ(split.front(), static_cast<TypeParam>(42)) << fmt::format("split: {}, correct: {}", split.front(), static_cast<TypeParam>(42));
 }
-
 TYPED_TEST(StringConversionSplitAs, split_empty_string) {
     // split the empty string
     const std::vector<TypeParam> split = plssvm::detail::split_as<TypeParam>("");
