@@ -17,23 +17,21 @@
 
 #include "../../utility.hpp"  // util::redirect_output
 
-#include "gtest/gtest.h"  // ASSERT_FALSE, ::testing::Test
-
 #include <cstring>      // std::strcpy
-#include <sstream>      // std::ostringstream, std::istringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
 namespace util {
 
-/*
+/**
  * Fixture class for testing the parameter_* classes' implementation.
  */
 class ParameterBase : public ::testing::Test, private redirect_output {
   protected:
-    /*
-     * Create artificial argc and argv from the given string.
+    /**
+     * @brief Create artificial argc and argv from the given string.
+     * @param[in] cmd_line the command line argument to create the argc and argv from.
      */
     virtual void CreateCMDArgs(const std::string_view cmd_line) {
         // create argc and argv from a std::string
@@ -45,7 +43,7 @@ class ParameterBase : public ::testing::Test, private redirect_output {
             std::strcpy(argv[i], cmd_line_split[i].c_str());
         }
     }
-    /*
+    /**
      * Free memory used for argv and end capturing std::cout. Automatically called at the end of a test.
      */
     void TearDown() override {
@@ -56,9 +54,9 @@ class ParameterBase : public ::testing::Test, private redirect_output {
         delete[] argv;
     }
 
-    // The number of the artificial command line arguments.
+    /// The number of the artificial command line arguments.
     int argc{ 0 };
-    // The artificial command line arguments.
+    /// The artificial command line arguments.
     char **argv{ nullptr };
 };
 
