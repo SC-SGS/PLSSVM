@@ -65,7 +65,7 @@ TEST_P(DefaultInitString, explicit_construct) {
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
-INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitString, ::testing::Values("", "foo", "bar", "baz", "Hello, World!"), naming::pretty_print_escaped_string<DefaultInitString>);
+INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitString, ::testing::Values("", "foo", "bar", "baz", "Hello World"), naming::pretty_print_escaped_string<DefaultInitString>);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////                              default_value                             ////
@@ -341,7 +341,7 @@ TEST(DefaultValue, to_string) {
     EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ 1 } }), "1");
     EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ 3.1415 } }), "3.1415");
     EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ -4 } }), "-4");
-    EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ "Hello, World!" } }), "Hello, World!");
+    EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ "Hello World" } }), "Hello World");
 }
 TEST(DefaultValue, from_string) {
     // check conversion from std::string
