@@ -12,8 +12,9 @@
 
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
+#include "../../naming.hpp"   // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "../../utility.hpp"  // util::{convert_to_string, convert_from_string}
-#include "utility.hpp"        // util::{ParameterBase, pretty_print_flag_and_value, pretty_print_flag}
+#include "utility.hpp"        // util::ParameterBase
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
@@ -123,7 +124,7 @@ TEST_P(ParameterPredictBackend, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
                 ::testing::Values("automatic", "OpenMP", "CUDA", "HIP", "OpenCL", "SYCL")),
-                util::pretty_print_flag_and_value<ParameterPredictBackend>);
+                naming::pretty_print_parameter_flag_and_value<ParameterPredictBackend>);
 // clang-format on
 
 class ParameterPredictTargetPlatform : public ParameterPredict, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -142,7 +143,7 @@ TEST_P(ParameterPredictTargetPlatform, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictTargetPlatform, ::testing::Combine(
                 ::testing::Values("-p", "--target_platform"),
                 ::testing::Values("automatic", "cpu", "gpu_nvidia", "gpu_amd", "gpu_intel")),
-                util::pretty_print_flag_and_value<ParameterPredictTargetPlatform>);
+                naming::pretty_print_parameter_flag_and_value<ParameterPredictTargetPlatform>);
 // clang-format on
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -163,7 +164,7 @@ TEST_P(ParameterPredictSYCLImplementation, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictSYCLImplementation, ::testing::Combine(
                 ::testing::Values("--sycl_implementation_type"),
                 ::testing::Values("automatic", "hipSYCL", "DPCPP", "DPC++")),
-                util::pretty_print_flag_and_value<ParameterPredictSYCLImplementation>);
+                naming::pretty_print_parameter_flag_and_value<ParameterPredictSYCLImplementation>);
 // clang-format on
 
 #endif  // PLSSVM_HAS_SYCL_BACKEND
@@ -183,7 +184,7 @@ TEST_P(ParameterPredictUseStringsAsLabels, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseStringsAsLabels, ::testing::Combine(
                 ::testing::Values("--use_strings_as_labels"),
                 ::testing::Bool()),
-                util::pretty_print_flag_and_value<ParameterPredictUseStringsAsLabels>);
+                naming::pretty_print_parameter_flag_and_value<ParameterPredictUseStringsAsLabels>);
 // clang-format on
 
 class ParameterPredictUseFloatAsRealType : public ParameterPredict, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
@@ -200,7 +201,7 @@ TEST_P(ParameterPredictUseFloatAsRealType, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseFloatAsRealType, ::testing::Combine(
                 ::testing::Values("--use_float_as_real_type"),
                 ::testing::Bool()),
-                util::pretty_print_flag_and_value<ParameterPredictUseFloatAsRealType>);
+                naming::pretty_print_parameter_flag_and_value<ParameterPredictUseFloatAsRealType>);
 // clang-format on
 
 class ParameterPredictQuiet : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
@@ -213,7 +214,7 @@ TEST_P(ParameterPredictQuiet, parsing) {
     // test for correctness
     EXPECT_EQ(plssvm::verbose, flag.empty());
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterPredictQuiet>);
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParameterPredictQuiet>);
 
 class ParameterPredictHelp : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterPredictHelp, parsing) {
@@ -223,7 +224,7 @@ TEST_P(ParameterPredictHelp, parsing) {
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictHelp, ::testing::Values("-h", "--help"), util::pretty_print_flag<ParameterPredictHelp>);
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParameterPredictHelp>);
 
 class ParameterPredictVersion : public ParameterPredict, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterPredictVersion, parsing) {
@@ -233,7 +234,7 @@ TEST_P(ParameterPredictVersion, parsing) {
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictVersion, ::testing::Values("-v", "--version"), util::pretty_print_flag<ParameterPredictHelp>);
+INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParameterPredictHelp>);
 
 TEST_F(ParameterPredict, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-predict");

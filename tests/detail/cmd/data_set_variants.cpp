@@ -14,7 +14,8 @@
 #include "plssvm/detail/cmd/parameter_scale.hpp"    // plssvm::detail::cmd::parameter_scale
 #include "plssvm/detail/cmd/parameter_train.hpp"    // plssvm::detail::cmd::parameter_train
 
-#include "utility.hpp"  // util::ParameterBase
+#include "../../naming.hpp"  // naming::pretty_print_data_set_factory
+#include "utility.hpp"       // util::ParameterBase
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
@@ -89,7 +90,7 @@ TEST_P(DataSetFactory, data_set_factory_train) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(DataSetFactory, DataSetFactory, ::testing::Values(
-    std::make_tuple(false, false, 2), std::make_tuple(false, true, 3),
-    std::make_tuple(true, false, 0), std::make_tuple(true, true, 1)
-));
+                std::make_tuple(false, false, 2), std::make_tuple(false, true, 3),
+                std::make_tuple(true, false, 0), std::make_tuple(true, true, 1)),
+                naming::pretty_print_data_set_factory<DataSetFactory>);
 // clang-format on

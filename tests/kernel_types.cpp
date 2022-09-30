@@ -13,6 +13,7 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
 #include "backends/compare.hpp"  // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
+#include "naming.hpp"            // naming::arithmetic_types_to_name
 #include "utility.hpp"           // util::{convert_to_string, convert_from_string, util::generate_random_vector, gtest_assert_floating_point_near}, EXPECT_THROW_WHAT
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
@@ -83,7 +84,7 @@ constexpr std::array parameter_set{ plssvm::parameter<T>{ kernel, 3, 0.05, 1.0, 
 
 template <typename T>
 class KernelFunction : public ::testing::Test {};
-TYPED_TEST_SUITE(KernelFunction, floating_point_types);
+TYPED_TEST_SUITE(KernelFunction, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(KernelFunction, linear_kernel_function_variadic) {
     using real_type = TypeParam;
@@ -193,7 +194,7 @@ TYPED_TEST(KernelFunction, unknown_kernel_function_parameter) {
 
 template <typename T>
 using KernelFunctionDeathTest = KernelFunction<T>;
-TYPED_TEST_SUITE(KernelFunctionDeathTest, floating_point_types);
+TYPED_TEST_SUITE(KernelFunctionDeathTest, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_variadic) {
     using real_type = TypeParam;

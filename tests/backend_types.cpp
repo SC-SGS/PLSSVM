@@ -11,7 +11,9 @@
 #include "plssvm/backend_types.hpp"
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "utility.hpp"                // util::{convert_to_string, convert_from_string}, EXPECT_THROW_WHAT
+
+#include "naming.hpp"   // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
+#include "utility.hpp"  // util::{convert_to_string, convert_from_string}, EXPECT_THROW_WHAT
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
 
@@ -83,7 +85,8 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeUnsupportedCombination, ::testi
          unsupported_combination_type{ { plssvm::backend_type::cuda, plssvm::backend_type::hip }, { plssvm::target_platform::cpu } },
          unsupported_combination_type{ { plssvm::backend_type::openmp }, { plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel } },
          unsupported_combination_type{ { plssvm::backend_type::cuda }, { plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel } },
-         unsupported_combination_type{ { plssvm::backend_type::hip }, { plssvm::target_platform::gpu_intel } }));
+         unsupported_combination_type{ { plssvm::backend_type::hip }, { plssvm::target_platform::gpu_intel } }),
+         naming::pretty_print_unsupported_backend_combination<BackendTypeUnsupportedCombination>);
 // clang-format on
 
 using supported_combination_type = std::tuple<std::vector<plssvm::backend_type>, std::vector<plssvm::target_platform>, plssvm::backend_type>;
@@ -103,6 +106,6 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::cpu }, plssvm::backend_type::sycl },
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_nvidia }, plssvm::backend_type::cuda },
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_amd }, plssvm::backend_type::hip },
-         supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_intel }, plssvm::backend_type::sycl }
-));
+         supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_intel }, plssvm::backend_type::sycl }),
+         naming::pretty_print_supported_backend_combination<BackendTypeSupportedCombination>);
 // clang-format on

@@ -10,6 +10,8 @@
 
 #include "plssvm/detail/sha256.hpp"
 
+#include "../naming.hpp"  // naming::pretty_print_sha256
+
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, ASSERT_EQ, EXPECT_EQ, ::testing::{TestWithParam, Values}
 
@@ -40,5 +42,6 @@ INSTANTIATE_TEST_SUITE_P(Sha256, Sha256, ::testing::Values(
         std::make_pair("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", "cf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1"),
         std::make_pair(std::string(1000000, 'a'), "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"),
         std::make_pair("test", "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
-        std::make_pair("#include <iostream>\nint main() {\n  std::cout << \"Hello, World\" << std::endl;\n  return 0;\n}", "3a88d6a9c65fdb1a2c742bca7d5160728fd7da74d9f319527bc8d6c1e1739de0")));
+        std::make_pair("#include <iostream>\nint main() {\n  std::cout << \"Hello, World\" << std::endl;\n  return 0;\n}", "3a88d6a9c65fdb1a2c742bca7d5160728fd7da74d9f319527bc8d6c1e1739de0")),
+        naming::pretty_print_sha256<Sha256>);
 // clang-format on

@@ -24,6 +24,7 @@
 #include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast}
 #include <cstddef>    // std::size_t
 #include <iosfwd>     // forward declare std::ostream and std::istream
+#include <iostream>   // std::cout, std::endl
 #include <vector>     // std::vector
 
 namespace plssvm::detail {
@@ -139,7 +140,7 @@ template <typename real_type>
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("Transformed dataset from 2D to 1D {} in {}.\n", layout, std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
+        std::cout << fmt::format("Transformed dataset from 2D to 1D {} in {}.", layout, std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time)) << std::endl;
     }
 
     return ret;

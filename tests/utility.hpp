@@ -334,12 +334,4 @@ class parameter_definition_to_name {
 
 }  // namespace google_test
 
-class floating_point_types_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return std::string{ plssvm::detail::arithmetic_type_name<T>() };
-    }
-};
-
 }  // namespace util

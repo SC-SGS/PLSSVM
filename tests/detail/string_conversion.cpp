@@ -12,6 +12,7 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
+#include "../naming.hpp"   // naming::{arithmetic_types_to_name, pretty_print_escaped_string}
 #include "../utility.hpp"  // EXPECT_THROW_WHAT
 
 #include "fmt/format.h"   // fmt::format
@@ -84,7 +85,7 @@ TEST(StringConversion, string_conversion) {
 template <typename T>
 class StringConversionException : public ::testing::Test {};
 using string_conversion_exception_types = ::testing::Types<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double>;
-TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types);
+TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(StringConversionException, string_conversion_exception) {
     using namespace plssvm::detail;
@@ -94,18 +95,19 @@ TYPED_TEST(StringConversionException, string_conversion_exception) {
     EXPECT_THROW_WHAT((std::ignore = convert_to<TypeParam, std::invalid_argument>("a")), std::invalid_argument, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
 }
 
-class StringConversionExtract : public ::testing::TestWithParam<std::pair<std::string_view, int>> {};
+class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> {};
 TEST_P(StringConversionExtract, extract_first_integer_from_string) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::extract_first_integer_from_string<int>(input), output);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringConversionExtract, ::testing::Values(
-                std::make_pair("111", 111), std::make_pair("111 222", 111),
-                std::make_pair("-111 222", 111), std::make_pair(" 111 222 333", 111),
-                std::make_pair("abcd 111", 111), std::make_pair("abcd111 222", 111),
-                std::make_pair("111_222", 111), std::make_pair("111 abcd 222", 111),
-                std::make_pair("abc123def456", 123)));
+                std::make_tuple("111", 111), std::make_tuple("111 222", 111),
+                std::make_tuple("-111 222", 111), std::make_tuple(" 111 222 333", 111),
+                std::make_tuple("abcd 111", 111), std::make_tuple("abcd111 222", 111),
+                std::make_tuple("111_222", 111), std::make_tuple("111 abcd 222", 111),
+                std::make_tuple("abc123def456", 123)),
+                naming::pretty_print_escaped_string<StringConversionExtract>);
 // clang-format on
 
 TEST(StringConversion, extract_first_integer_from_string_exception) {
@@ -116,7 +118,7 @@ TEST(StringConversion, extract_first_integer_from_string_exception) {
 template <typename T>
 class StringConversionSplitAs : public ::testing::Test {};
 using split_as_types = ::testing::Types<short, int, long, long long, float, double>;
-TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types);
+TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
     // split string using the default delimiter

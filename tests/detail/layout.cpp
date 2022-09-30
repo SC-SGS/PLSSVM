@@ -10,7 +10,8 @@
 
 #include "plssvm/detail/layout.hpp"
 
-#include "utility.hpp"  // util::{convert_to_string, convert_from_string, redirect_output}
+#include "../naming.hpp"  // util::{arithmetic_types_to_name}
+#include "utility.hpp"    // util::{convert_to_string, convert_from_string, redirect_output}
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
@@ -71,7 +72,7 @@ class Layout : public ::testing::Test, private util::redirect_output {
 
 // the floating point types to test
 using floating_point_types = ::testing::Types<float, double>;
-TYPED_TEST_SUITE(Layout, floating_point_types);
+TYPED_TEST_SUITE(Layout, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(Layout, array_of_structs) {
     // correctly transformed matrix in AoS layout without boundary
@@ -149,7 +150,7 @@ TYPED_TEST(Layout, struct_of_arrays_fewer_data_points) {
 
 template <typename T>
 class LayoutDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(LayoutDeathTest, floating_point_types);
+TYPED_TEST_SUITE(LayoutDeathTest, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(LayoutDeathTest, empty_matrix) {
     // matrix must not be empty

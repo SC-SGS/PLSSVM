@@ -11,6 +11,7 @@
 #include "plssvm/detail/cmd/parameter_scale.hpp"
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
+#include "../../naming.hpp"   // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "../../utility.hpp"  // util::{convert_to_string, convert_from_string}
 #include "utility.hpp"        // util::ParameterBase
 
@@ -118,7 +119,7 @@ TEST_P(ParameterScaleLower, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleLower, ::testing::Combine(
                 ::testing::Values("-l", "--lower"),
                 ::testing::Values(-2.5, -1.0, -0.01, 0.0)),
-                util::pretty_print_flag_and_value<ParameterScaleLower>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleLower>);
 // clang-format on
 
 class ParameterScaleUpper : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
@@ -135,7 +136,7 @@ TEST_P(ParameterScaleUpper, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUpper,
                 ::testing::Combine(::testing::Values("-u", "--upper"),
                 ::testing::Values(0.0, 0.01, 1.0, 2.5)),
-                util::pretty_print_flag_and_value<ParameterScaleUpper>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleUpper>);
 // clang-format on
 
 class ParameterScaleFileFormat : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -154,7 +155,7 @@ TEST_P(ParameterScaleFileFormat, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleFileFormat, ::testing::Combine(
                 ::testing::Values("-f", "--format"),
                 ::testing::Values("libsvm", "LIBSVM", "arff", "ARFF")),
-                util::pretty_print_flag_and_value<ParameterScaleFileFormat>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleFileFormat>);
 // clang-format on
 
 class ParameterScaleSaveFilename : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -171,7 +172,7 @@ TEST_P(ParameterScaleSaveFilename, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleSaveFilename, ::testing::Combine(
                 ::testing::Values("-s", "--save_filename"),
                 ::testing::Values("data.libsvm.scaled", "output.txt")),
-                util::pretty_print_flag_and_value<ParameterScaleSaveFilename>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleSaveFilename>);
 // clang-format on
 
 class ParameterScaleRestoreFilename : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
@@ -188,7 +189,7 @@ TEST_P(ParameterScaleRestoreFilename, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleRestoreFilename, ::testing::Combine(
                 ::testing::Values("-r", "--restore_filename"),
                 ::testing::Values("data.libsvm.weights", "output.txt")),
-                util::pretty_print_flag_and_value<ParameterScaleRestoreFilename>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleRestoreFilename>);
 // clang-format on
 
 class ParameterScaleUseStringsAsLabels : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
@@ -205,7 +206,7 @@ TEST_P(ParameterScaleUseStringsAsLabels, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseStringsAsLabels, ::testing::Combine(
                 ::testing::Values("--use_strings_as_labels"),
                 ::testing::Bool()),
-                util::pretty_print_flag_and_value<ParameterScaleUseStringsAsLabels>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleUseStringsAsLabels>);
 // clang-format on
 
 class ParameterScaleUseFloatAsRealType : public ParameterScale, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
@@ -222,7 +223,7 @@ TEST_P(ParameterScaleUseFloatAsRealType, parsing) {
 INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleUseFloatAsRealType, ::testing::Combine(
                 ::testing::Values("--use_float_as_real_type"),
                 ::testing::Bool()),
-                util::pretty_print_flag_and_value<ParameterScaleUseFloatAsRealType>);
+                naming::pretty_print_parameter_flag_and_value<ParameterScaleUseFloatAsRealType>);
 // clang-format on
 
 class ParameterScaleQuiet : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
@@ -235,7 +236,7 @@ TEST_P(ParameterScaleQuiet, parsing) {
     // test for correctness
     EXPECT_EQ(plssvm::verbose, flag.empty());
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleQuiet, ::testing::Values("-q", "--quiet", ""), util::pretty_print_flag<ParameterScaleQuiet>);
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParameterScaleQuiet>);
 
 class ParameterScaleHelp : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterScaleHelp, parsing) {
@@ -245,7 +246,7 @@ TEST_P(ParameterScaleHelp, parsing) {
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleHelp, ::testing::Values("-h", "--help"), util::pretty_print_flag<ParameterScaleHelp>);
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParameterScaleHelp>);
 
 class ParameterScaleVersion : public ParameterScale, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParameterScaleVersion, parsing) {
@@ -255,7 +256,7 @@ TEST_P(ParameterScaleVersion, parsing) {
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
-INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleVersion, ::testing::Values("-v", "--version"), util::pretty_print_flag<ParameterScaleVersion>);
+INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParameterScaleVersion>);
 
 TEST_F(ParameterScaleDeathTest, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-scale");

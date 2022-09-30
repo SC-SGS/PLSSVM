@@ -8,8 +8,12 @@
  * @brief Tests for the functions in the utility header.
  */
 
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::{always_false, remove_cvref_t, get, to_underlying, erase_if, contains_key}
-#include "plssvm/default_value.hpp"   // plssvm::default_value
+#include "plssvm/detail/utility.hpp"
+
+#include "plssvm/default_value.hpp"  // plssvm::default_value
+
+#include "../naming.hpp"   // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
+#include "../utility.hpp"  // util::{is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
@@ -103,7 +107,7 @@ class UtilityMapContainer : public ::testing::Test {
 
 // the map container types to test
 using map_types = ::testing::Types<std::map<int, int>, std::unordered_map<int, int>>;
-TYPED_TEST_SUITE(UtilityMapContainer, map_types);
+TYPED_TEST_SUITE(UtilityMapContainer, map_types, naming::map_types_to_name);
 
 TYPED_TEST(UtilityMapContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->map, [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 0; }), 1);
@@ -135,7 +139,7 @@ class UtilitySetContainer : public ::testing::Test {
 
 // the set container types to test
 using set_types = ::testing::Types<std::set<int>, std::unordered_set<int>>;
-TYPED_TEST_SUITE(UtilitySetContainer, set_types);
+TYPED_TEST_SUITE(UtilitySetContainer, set_types, naming::set_types_to_name);
 
 TYPED_TEST(UtilitySetContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->set, [](const typename TestFixture::set_type::value_type value) { return value % 2 == 0; }), 1);
@@ -167,7 +171,7 @@ class UtilityVectorContainer : public ::testing::Test {
 
 // the vector container types to test
 using vector_types = ::testing::Types<std::vector<int>>;
-TYPED_TEST_SUITE(UtilityVectorContainer, vector_types);
+TYPED_TEST_SUITE(UtilityVectorContainer, vector_types, naming::vector_types_to_name);
 
 TYPED_TEST(UtilityVectorContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->vec, [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 0; }), 1);

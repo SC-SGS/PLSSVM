@@ -8,7 +8,9 @@
  * @brief Tests for the functions in the string utility header.
  */
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::sha256
+#include "plssvm/detail/string_utility.hpp"
+
+#include "../naming.hpp"  // naming::pretty_print_escaped_string
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
@@ -54,7 +56,6 @@ TEST(StringUtility, contains_char) {
 
 class StringUtilityBase : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> {};
 
-
 // test trim left only
 class StringUtilityTrimLeft : public StringUtilityBase {};
 TEST_P(StringUtilityTrimLeft, trim_left) {
@@ -65,7 +66,8 @@ TEST_P(StringUtilityTrimLeft, trim_left) {
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimLeft, ::testing::Values(
                 std::make_pair("", ""), std::make_pair("abc", "abc"),
                 std::make_pair("  abc", "abc"), std::make_pair("abc   ", "abc   "),
-                std::make_pair(" abc  ", "abc  "), std::make_pair(" a b c ", "a b c ")));
+                std::make_pair(" abc  ", "abc  "), std::make_pair(" a b c ", "a b c ")),
+                naming::pretty_print_escaped_string<StringUtilityTrimLeft>);
 // clang-format on
 
 // test trim right only
@@ -78,7 +80,8 @@ TEST_P(StringUtilityTrimRight, trim_right) {
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimRight, ::testing::Values(
                 std::make_pair("", ""), std::make_pair("abc", "abc"),
                 std::make_pair("  abc", "  abc"), std::make_pair("abc   ", "abc"),
-                std::make_pair(" abc  ", " abc"), std::make_pair(" a b c ", " a b c")));
+                std::make_pair(" abc  ", " abc"), std::make_pair(" a b c ", " a b c")),
+                naming::pretty_print_escaped_string<StringUtilityTrimRight>);
 // clang-format on
 
 // test trim
@@ -91,7 +94,8 @@ TEST_P(StringUtilityTrim, trim) {
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrim, ::testing::Values(
                 std::make_pair("", ""), std::make_pair("abc", "abc"),
                 std::make_pair("  abc", "abc"), std::make_pair("abc   ", "abc"),
-                std::make_pair(" abc  ", "abc"), std::make_pair(" a b c ", "a b c")));
+                std::make_pair(" abc  ", "abc"), std::make_pair(" a b c ", "a b c")),
+                naming::pretty_print_escaped_string<StringUtilityTrim>);
 // clang-format on
 
 // test conversion to lower case
@@ -107,7 +111,8 @@ TEST_P(StringUtilityConvertLowerCase, as_lower_case) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertLowerCase, ::testing::Values(
                 std::make_pair("", ""), std::make_pair("abc", "abc"),
-                std::make_pair("ABC", "abc"), std::make_pair(" AbC 1", " abc 1")));
+                std::make_pair("ABC", "abc"), std::make_pair(" AbC 1", " abc 1")),
+                naming::pretty_print_escaped_string<StringUtilityConvertLowerCase>);
 // clang-format on
 
 // test conversion to upper case
@@ -123,7 +128,8 @@ TEST_P(StringUtilityConvertUpperCase, as_upper_case) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertUpperCase, ::testing::Values(
                 std::make_pair("", ""), std::make_pair("abc", "ABC"),
-                std::make_pair("ABC", "ABC"), std::make_pair(" AbC 1", " ABC 1")));
+                std::make_pair("ABC", "ABC"), std::make_pair(" AbC 1", " ABC 1")),
+                naming::pretty_print_escaped_string<StringUtilityConvertUpperCase>);
 // clang-format on
 
 // test replace_all
@@ -137,7 +143,8 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityReplace, ::testing::Values(
                 std::make_tuple("", "", "", ""), std::make_tuple("aaa", "a", "b", "bbb"),
                 std::make_tuple("aaa", "", "b", "aaa"), std::make_tuple("aaa", "b", "c", "aaa"),
                 std::make_tuple("aaa", "aa", "b", "ba"), std::make_tuple("a a b c d aa", "a", "", "  b c d "),
-                std::make_tuple("a", "aa", "b", "a")));
+                std::make_tuple("a", "aa", "b", "a")),
+                naming::pretty_print_replace<StringUtilityReplace>);
 // clang-format on
 
 TEST(StringUtility, split_default_delimiter) {

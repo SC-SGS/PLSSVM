@@ -65,40 +65,6 @@ class ParameterBase : public ::testing::Test, private redirect_output {
     char **argv{ nullptr };
 };
 
-// pretty printer
-/**
- * @brief Pretty print a flag and value combination.
- * @details Replaces all "-" in a flag with "", all "-" in a value with "m" (for minus), and all "." in a value with "p" (for point).
- * @tparam T the parameter type used in the test fixture
- * @param[in] param_info the parameter info used for pretty printing the test case name
- * @return the test case name
- */
-template <typename T>
-const auto pretty_print_flag_and_value = [](const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
-    // sanitize flags for Google Test names
-    std::string flag = std::get<0>(param_info.param);
-    plssvm::detail::replace_all(flag, "-", "");
-    // sanitize values for Google Test names
-    std::string value = fmt::format("{}", std::get<1>(param_info.param));
-    plssvm::detail::replace_all(value, "-", "m");
-    plssvm::detail::replace_all(value, ".", "p");
-    return fmt::format("{}_{}", flag, value);
-};
-/**
- * @brief Pretty print a flag.
- * @details Replaces all "-" in a flag with "".
- * @tparam T the parameter type used in the test fixture
- * @param[in] param_info the parameter info used for pretty printing the test case name
- * @return the test case name
- */
-template <typename T>
-const auto pretty_print_flag = [](const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
-    // sanitize flags for Google Test names
-    std::string flag = param_info.param;
-    plssvm::detail::replace_all(flag, "-", "");
-    return fmt::format("{}", flag.empty() ? "EMPTY_FLAG" : flag);
-};
-
 }  // namespace util
 
 #endif  // PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_

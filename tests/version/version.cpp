@@ -11,6 +11,8 @@
 #include "plssvm/version/version.hpp"
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::is_populated
 
+#include "../naming.hpp"  // naming::pretty_print_version_info
+
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubStr
 #include "gtest/gtest.h"           // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_THAT, ASSERT_TRUE, ASSERT_FALSE, ::testing::TestWithParam
@@ -64,4 +66,9 @@ TEST_P(VersionGetVersionInfo, get_version_info_not_empty) {
     ASSERT_FALSE(version_info.empty());
     EXPECT_THAT(version_info, ::testing::HasSubstr(exe_name));
 }
-INSTANTIATE_TEST_SUITE_P(Version, VersionGetVersionInfo, ::testing::Combine(::testing::Values("plssvm-train", "plssvm-predict", "plssvm-scale"), ::testing::Bool()));
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(Version, VersionGetVersionInfo, ::testing::Combine(
+                ::testing::Values("plssvm-train", "plssvm-predict", "plssvm-scale"),
+                ::testing::Bool()),
+                naming::pretty_print_version_info<VersionGetVersionInfo>);
+// clang-format on
