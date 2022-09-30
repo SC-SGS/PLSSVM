@@ -10,26 +10,27 @@
 
 #include "plssvm/default_value.hpp"
 
+#include "naming.hpp"   // naming::arithmetic_types_or_string_to_name
 #include "utility.hpp"  // util::{convert_to_string, convert_from_string}
 
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
                           // ::testing::{Test, Types, WithParamInterface, Values, TestParamInfo}
 
-#include <functional>   // std::hashistringstream
+#include <functional>   // std::hash
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::make_tuple, std::get
 #include <utility>      // std::move, std::swap
 #include <vector>       // std::vector
 
-//*************************************************************************************************************************************//
-//                                                            default_init                                                             //
-//*************************************************************************************************************************************//
+////////////////////////////////////////////////////////////////////////////////
+////                              default_init                              ////
+////////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
 class DefaultInitDefault : public ::testing::Test {};
 using default_init_default_types = ::testing::Types<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, std::string>;
-TYPED_TEST_SUITE(DefaultInitDefault, default_init_default_types);
+TYPED_TEST_SUITE(DefaultInitDefault, default_init_default_types, naming::arithmetic_types_or_string_to_name);
 
 TYPED_TEST(DefaultInitDefault, default_construct) {
     using type = TypeParam;
@@ -46,7 +47,7 @@ TEST_P(DefaultInitIntegral, explicit_construct) {
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
-INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitIntegral, ::testing::Values(0, 1, 2, 3, 42, -1, -5));
+INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitIntegral, ::testing::Values(0, 1, 2, 3, 42, -1, -5), naming::pretty_print_escaped_string<DefaultInitIntegral>);
 
 class DefaultInitFloatingPoint : public DefaultInitExplicit, public ::testing::WithParamInterface<double> {};
 TEST_P(DefaultInitFloatingPoint, explicit_construct) {
@@ -55,7 +56,7 @@ TEST_P(DefaultInitFloatingPoint, explicit_construct) {
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
-INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitFloatingPoint, ::testing::Values(0.0, 1.2, 2.5, 3.38748, 42.1, -1, -5.22));
+INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitFloatingPoint, ::testing::Values(0.0, 1.2, 2.5, 3.38748, 42.1, -1, -5.22), naming::pretty_print_escaped_string<DefaultInitFloatingPoint>);
 
 class DefaultInitString : public DefaultInitExplicit, public ::testing::WithParamInterface<std::string> {};
 TEST_P(DefaultInitString, explicit_construct) {
@@ -64,15 +65,15 @@ TEST_P(DefaultInitString, explicit_construct) {
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
-INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitString, ::testing::Values("", "foo", "bar", "baz", "Hello, World!"));
+INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitString, ::testing::Values("", "foo", "bar", "baz", "Hello, World!"), naming::pretty_print_escaped_string<DefaultInitString>);
 
-//*************************************************************************************************************************************//
-//                                                            default_value                                                            //
-//*************************************************************************************************************************************//
+////////////////////////////////////////////////////////////////////////////////
+////                              default_value                             ////
+////////////////////////////////////////////////////////////////////////////////
 
 TEST(DefaultValue, default_init) {
     // create default_value
-    plssvm::default_value val{ plssvm::default_init{ 42 } };
+    const plssvm::default_value val{ plssvm::default_init{ 42 } };
 
     // a default value has been assigned
     EXPECT_TRUE(val.is_default());
@@ -428,17 +429,15 @@ INSTANTIATE_TEST_SUITE_P(DefaultValue, DefaultValueRelational, ::testing::Values
                 std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator>, "Greater", { true, false, false, false, false, false }),
                 std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator<=, "LessOrEqual", { false, true, true, true, true, true }),
                 std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator>=, "GreaterOrEqual", { true, true, false, true, true, true })),
-                [](const testing::TestParamInfo<DefaultValueRelational::ParamType> &param_info) {
-                    return std::string{ std::get<1>(param_info.param) };
-                });
+                naming::pretty_print_default_value_relational<DefaultValueRelational>);
 // clang-format on
 
 TEST(DefaultValue, hash) {
     // create default_value and hash it
-    plssvm::default_value val1{ plssvm::default_init{ 42 } };
+    const plssvm::default_value val1{ plssvm::default_init{ 42 } };
     EXPECT_EQ(std::hash<plssvm::default_value<int>>{}(val1), std::hash<int>{}(42));
 
-    plssvm::default_value val2{ plssvm::default_init<std::string>{ "Hello, World!" } };
+    const plssvm::default_value val2{ plssvm::default_init<std::string>{ "Hello, World!" } };
     EXPECT_EQ(std::hash<plssvm::default_value<std::string>>{}(val2), std::hash<std::string>{}("Hello, World!"));
 
     plssvm::default_value val3{ plssvm::default_init{ 3.1415 } };

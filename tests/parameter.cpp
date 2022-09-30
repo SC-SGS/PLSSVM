@@ -10,6 +10,7 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "naming.hpp"   // naming::arithmetic_types_to_name
 #include "utility.hpp"  // util::convert_to_string
 
 #include "fmt/core.h"  // fmt::format
@@ -23,7 +24,7 @@ class Parameter : public ::testing::Test {};
 using floating_point_types = ::testing::Types<float, double>;
 
 // testsuite for "normal" tests
-TYPED_TEST_SUITE(Parameter, floating_point_types);
+TYPED_TEST_SUITE(Parameter, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(Parameter, default_construct) {
     using real_type = TypeParam;
@@ -224,7 +225,7 @@ TYPED_TEST(Parameter, equivalent_free_function_default_constructed) {
 TYPED_TEST(Parameter, to_string) {
     using real_type = TypeParam;
     // check conversions to std::string
-    plssvm::parameter<real_type> param{ plssvm::kernel_type::linear, 3, 0.0, 0.0, 1.0 };
+    const plssvm::parameter<real_type> param{ plssvm::kernel_type::linear, 3, 0.0, 0.0, 1.0 };
     EXPECT_EQ(util::convert_to_string(param), fmt::format("kernel_type                 linear\n"
                                                           "degree                      3\n"
                                                           "gamma                       0\n"

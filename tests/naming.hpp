@@ -97,6 +97,18 @@ struct is_vector<std::vector<T>> {
 template <typename T>
 constexpr bool is_vector_v = is_vector<T>::value;
 
+// type_trait to check whether the given type is a std::tuple
+template <typename T>
+struct is_tuple {
+    static constexpr bool value = false;
+};
+template <typename... Args>
+struct is_tuple<std::tuple<Args...>> {
+    static constexpr bool value = true;
+};
+template <typename T>
+constexpr bool is_tuple_v = is_tuple<T>::value;
+
 }  // namespace detail
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +170,17 @@ class arithmetic_types_to_name {
         return std::string{ plssvm::detail::arithmetic_type_name<T>() };
     }
 };
+class arithmetic_types_or_string_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        if constexpr (std::is_same_v<T, std::string>) {
+            return "string";
+        } else {
+            return std::string{ plssvm::detail::arithmetic_type_name<T>() };
+        }
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 ////                   PRETTY PRINT PARAMETERIZED TESTS                     ////
@@ -186,7 +209,7 @@ namespace detail {
 
 // general
 /**
- * @brief Escape the first string in the parameter info @p param_info. Assumes an `std::tuple`.
+ * @brief Either escape the first string in the parameter info @p param_info if it is an `std::tuple` or directly escapes the value in @p param_info.
  * @details Default escapes the string using the `naming::detail::escape_string()` function.
  * @tparam T the test suite type
  * @param[in] param_info the parameters to scape
@@ -194,7 +217,11 @@ namespace detail {
  */
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_escaped_string(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
-    return detail::escape_string(std::string{ std::get<0>(param_info.param) });
+    if constexpr (detail::is_tuple_v<decltype(param_info.param)>) {
+        return detail::escape_string(fmt::format("{}", std::get<0>(param_info.param)));
+    } else {
+        return detail::escape_string(fmt::format("{}", param_info.param));
+    }
 }
 
 // detail/string_utility.cpp -> replace
@@ -310,6 +337,18 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_supported_backend_combination(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
     return fmt::format("{}__AND__{}__RESULT__{}", fmt::join(std::get<0>(param_info.param), "__"), fmt::join(std::get<1>(param_info.param), "__"), std::get<2>(param_info.param));
+}
+
+// default_value.cpp -> DefaultValueRelational
+/**
+ * @brief Generate a test case name for the tests for the relational operations in the `plssvm::default_value` class.
+ * @tparam T the test suite type
+ * @param param_info the parameters to aggregate
+ * @return the test case name (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::string pretty_print_default_value_relational(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    return std::string{ std::get<1>(param_info.param) };
 }
 
 }  // namespace naming
