@@ -28,6 +28,7 @@
 #include <string>         // std::string
 #include <string_view>    // std::string_view
 #include <tuple>          // std::get
+#include <type_traits>    // std::is_same_v, std::true_type, std::false_type
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
@@ -39,73 +40,49 @@ namespace detail {
 
 // type_trait to check whether the given type is a std::map
 template <typename T>
-struct is_map {
-    static constexpr bool value = false;
-};
+struct is_map : std::false_type {};
 template <typename Key, typename Value>
-struct is_map<std::map<Key, Value>> {
-    static constexpr bool value = true;
-};
+struct is_map<std::map<Key, Value>> : std::true_type {};
 template <typename T>
 constexpr bool is_map_v = is_map<T>::value;
 
 // type_trait to check whether the given type is a std::unordered_map
 template <typename T>
-struct is_unordered_map {
-    static constexpr bool value = false;
-};
+struct is_unordered_map : std::false_type {};
 template <typename Key, typename Value>
-struct is_unordered_map<std::unordered_map<Key, Value>> {
-    static constexpr bool value = true;
-};
+struct is_unordered_map<std::unordered_map<Key, Value>> : std::true_type {};
 template <typename T>
 constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 
 // type_trait to check whether the given type is a std::set
 template <typename T>
-struct is_set {
-    static constexpr bool value = false;
-};
+struct is_set : std::false_type {};
 template <typename Key>
-struct is_set<std::set<Key>> {
-    static constexpr bool value = true;
-};
+struct is_set<std::set<Key>> : std::true_type {};
 template <typename T>
 constexpr bool is_set_v = is_set<T>::value;
 
 // type_trait to check whether the given type is a std::unordered_set
 template <typename T>
-struct is_unordered_set {
-    static constexpr bool value = false;
-};
+struct is_unordered_set : std::false_type {};
 template <typename Key>
-struct is_unordered_set<std::unordered_set<Key>> {
-    static constexpr bool value = true;
-};
+struct is_unordered_set<std::unordered_set<Key>> : std::true_type {};
 template <typename T>
 constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 
 // type_trait to check whether the given type is a std::vector
 template <typename T>
-struct is_vector {
-    static constexpr bool value = false;
-};
+struct is_vector : std::false_type {};
 template <typename T>
-struct is_vector<std::vector<T>> {
-    static constexpr bool value = true;
-};
+struct is_vector<std::vector<T>> : std::true_type {};
 template <typename T>
 constexpr bool is_vector_v = is_vector<T>::value;
 
 // type_trait to check whether the given type is a std::tuple
 template <typename T>
-struct is_tuple {
-    static constexpr bool value = false;
-};
+struct is_tuple : std::false_type {};
 template <typename... Args>
-struct is_tuple<std::tuple<Args...>> {
-    static constexpr bool value = true;
-};
+struct is_tuple<std::tuple<Args...>> : std::true_type {};
 template <typename T>
 constexpr bool is_tuple_v = is_tuple<T>::value;
 
