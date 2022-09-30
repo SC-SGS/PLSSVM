@@ -17,7 +17,7 @@
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "utility.hpp"  // util::create_temp_file, util::redirect_output, EXPECT_THROW_WHAT
+#include "utility.hpp"  // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "gmock/gmock-matchers.h"  // ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, ASSERT_EQ, ASSERT_GT, TEST, TYPED_TEST, TYPED_TEST_SUITE
@@ -139,24 +139,21 @@ TYPED_TEST(DataSetScaling, save) {
     const scaling_type scale{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
     // create temporary file
-    const std::string filename = util::create_temp_file();
-    {
-        // save scaling factors
-        scale.save(filename);
+    const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
+    // save scaling factors
+    scale.save(tmp_file.filename);
 
-        // read file and check its content
-        plssvm::detail::io::file_reader reader{ filename };
-        reader.read_lines('#');
+    // read file and check its content
+    plssvm::detail::io::file_reader reader{ tmp_file.filename };
+    reader.read_lines('#');
 
-        // check file content
-        ASSERT_GE(reader.num_lines(), 2);
-        EXPECT_EQ(reader.line(0), "x");
-        EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
-        for (std::size_t i = 2; i < reader.num_lines(); ++i) {
-            EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
-        }
+    // check file content
+    ASSERT_GE(reader.num_lines(), 2);
+    EXPECT_EQ(reader.line(0), "x");
+    EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+    for (std::size_t i = 2; i < reader.num_lines(); ++i) {
+        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     }
-    std::filesystem::remove(filename);
 }
 TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     using real_type = typename TypeParam::real_type;
@@ -167,26 +164,23 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     const scaling_type scale{ real_type{ -1.0 }, real_type{ 1.0 } };
 
     // create temporary file
-    const std::string filename = util::create_temp_file();
-    {
-        // save scaling factors
-        scale.save(filename);
+    const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
+    // save scaling factors
+    scale.save(tmp_file.filename);
 
-        // read file and check its content
-        plssvm::detail::io::file_reader reader{ filename };
-        reader.read_lines('#');
+    // read file and check its content
+    plssvm::detail::io::file_reader reader{ tmp_file.filename };
+    reader.read_lines('#');
 
-        std::vector<std::string> regex_patterns;
-        // header
-        regex_patterns.emplace_back("x");
-        regex_patterns.emplace_back("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+    std::vector<std::string> regex_patterns;
+    // header
+    regex_patterns.emplace_back("x");
+    regex_patterns.emplace_back("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
 
-        // check the content
-        ASSERT_EQ(reader.num_lines(), 2);
-        EXPECT_EQ(reader.line(0), "x");
-        EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
-    }
-    std::filesystem::remove(filename);
+    // check the content
+    ASSERT_EQ(reader.num_lines(), 2);
+    EXPECT_EQ(reader.line(0), "x");
+    EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -934,19 +928,11 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
 }
 
 template <typename TypeParam>
-class DataSetSave : public ::testing::Test, private util::redirect_output {
+class DataSetSave : public ::testing::Test, private util::redirect_output, protected util::temporary_file {
   protected:
-    void SetUp() override {
-        filename = util::create_temp_file();
-    }
-    void TearDown() override {
-        std::filesystem::remove(filename);
-    }
-
     using T = typename TypeParam::real_type;
     using U = typename TypeParam::label_type;
 
-    std::string filename;
     const std::vector<std::vector<T>> data_points = {
         { T{ 1.1 }, T{ 1.2 }, T{ 1.3 }, T{ 1.4 } },
         { T{ 2.1 }, T{ 2.2 }, T{ 2.3 }, T{ 2.4 } },

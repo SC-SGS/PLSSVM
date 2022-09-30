@@ -30,7 +30,7 @@
 
 #include <algorithm>    // std::min, std::max
 #include <cmath>        // std::abs
-#include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists
+#include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists, std::filesystem::remove
 #include <iostream>     // std::cout
 #include <limits>       // std::numeric_limits
 #include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution
@@ -70,33 +70,46 @@ class redirect_output {
 };
 
 /**
- * @brief Create a unique temporary file return the file's name.
+ * @brief A class encapsulating unique temporary file's name.
  * @details On UNIX systems use `mkstemp` to create a unique file in the temporary directory. On non-UNIX system create
  *          a file in the current directory using a random `unsigned long long` number.
- * @return the name of the temporary file
  */
-inline std::string create_temp_file() {
+class temporary_file {
+  public:
+    /**
+     * @brief Create a new unique temporary file.
+     */
+    temporary_file() {
 #ifdef __unix__
-    std::string file = std::filesystem::temp_directory_path().string();
-    file += "/tmpfile_XXXXXX";
-    // create unique temporary file
-    int fd = mkstemp(file.data());
-    // immediately close file if possible
-    if (fd >= 0) {
-        close(fd);
-    }
-    return file;
+        filename = std::filesystem::temp_directory_path().string();
+        filename += "/tmpfile_XXXXXX";
+        // create unique temporary file
+        const int file_descriptor = mkstemp(filename.data());
+        // immediately close file if possible
+        if (file_descriptor >= 0) {
+            close(file_descriptor);
+        }
 #else
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned long long> dist;
-    std::string file{ std::to_string(dist(gen)) };
-    while (std::filesystem::exists(std::filesystem::current_path() / file)) {
-        file = std::to_string(dist(gen));
-    }
-    return file;
+        std::random_device device;
+        std::mt19937 gen(device());
+        std::uniform_int_distribution<unsigned long long> dist;
+        filename{ std::to_string(dist(gen)) };
+        while (std::filesystem::exists(std::filesystem::temp_directory_path() / filename)) {
+            filename = std::to_string(dist(gen));
+        }
+        // create file
+        std::ofstream{ std::filesystem::temp_directory_path() / filename) };
 #endif
-}
+    }
+    /**
+     * @brief Remove the temporary file if it exists.
+     */
+    ~temporary_file() {
+        std::filesystem::remove(filename);
+    }
+
+    std::string filename;
+};
 
 /**
  * @brief Compares the two floating point values @p val1 and @p val2.
@@ -178,45 +191,6 @@ inline void gtest_assert_floating_point_near(const T val1, const T val2, const s
 }
 
 /**
- * @brief Check whether converting the enum @p e to a std::string results in the string representation @p str.
- * @tparam Enum the type of the enum to convert
- * @param[in] e the enum to convert to a std::string
- * @param[in] str the expected string representation of the enum @p e
- */
-template <typename Enum>
-inline void gtest_expect_enum_to_string_string_conversion(const Enum e, const std::string_view str) {
-    std::ostringstream ss;
-    ss << e;
-    EXPECT_FALSE(ss.fail());
-    EXPECT_EQ(ss.str(), str);
-}
-/**
- * @brief Check whether converting the string @p str to the enum type @p Enum yields @p e.
- * @tparam Enum the type of the enum
- * @param[in] str the string representation of @p e
- * @param[in] e the expected enum value
- */
-template <typename Enum>
-inline void gtest_expect_string_to_enum_conversion(const std::string &str, const Enum e) {
-    std::istringstream ss{ str };
-    Enum parsed{};
-    ss >> parsed;
-    EXPECT_FALSE(ss.fail());
-    EXPECT_EQ(parsed, e);
-}
-/**
- * @brief Check whether converting the illegal string @p str to the enum type @p Enum results in setting the failbit in the stream object.
- * @tparam Enum the type of the enum
- * @param[in] str the illegal string representation of an enum value of type @p Enum
- */
-template <typename Enum>
-inline void gtest_expect_string_to_enum_conversion(const std::string &str) {
-    std::istringstream ss{ str };
-    Enum parsed{};
-    ss >> parsed;
-    EXPECT_TRUE(ss.fail());
-}
-/**
  * @brief Check whether the C-SVM returned by a call to `plssvm::make_csvm` with the parameters @p params returns a C-SVM of type @p Derived
  * @tparam Derived the expected C-SVM type, based on the backend_type of @þ params
  * @tparam T the type of the data
@@ -231,34 +205,34 @@ inline void gtest_expect_correct_csvm_factory(const plssvm::parameter<T> &params
     EXPECT_NE(res, nullptr);
 }
 
-/*
- * Convert the parameter to a std::string using a std::ostringstream.
+/**
+ * @brief Convert the parameter @p value to a std::string using a std::ostringstream.
  */
 template <typename T>
-inline std::string convert_to_string(const T &param) {
-    std::ostringstream os;
-    os << param;
+inline std::string convert_to_string(const T &value) {
+    std::ostringstream output;
+    output << value;
     // test if output was successful
     [&]() {
         // need immediate invoked lambda because of void return in ASSERT_FALSE
-        ASSERT_FALSE(os.fail());
+        ASSERT_FALSE(output.fail());
     }();
-    return os.str();
+    return output.str();
 }
-/*
- * Convert the std::string to a value of type T using a std::istringstream.
+/**
+ * @brief Convert the std::string @p str to a value of type T using a std::istringstream.
  */
 template <typename T>
 inline T convert_from_string(const std::string &str) {
-    std::istringstream is{ str };
-    T param{};
-    is >> param;
+    std::istringstream input{ str };
+    T value{};
+    input >> value;
     // test if input was successful
     [&]() {
         // need immediate invoked lambda because of void return in ASSERT_FALSE
-        ASSERT_FALSE(is.fail());
+        ASSERT_FALSE(input.fail());
     }();
-    return param;
+    return value;
 }
 
 /**
@@ -303,35 +277,5 @@ template <typename T>
             FAIL() << "The expected exception type (" #expected_exception ") doesn't match the caught one!"; \
         }                                                                                                    \
     } while (false)
-
-namespace google_test {
-/**
- * @brief Save the data type and kernel function in a single struct used by GoogleTest's TYPED_TEST_SUITE.
- * @tparam T the type of the data
- * @tparam Kernel the kernel function to use
- */
-template <typename T, plssvm::kernel_type Kernel>
-struct parameter_definition {
-    using real_type = T;
-    static constexpr plssvm::kernel_type kernel = Kernel;
-};
-
-/**
- * @brief Class used to pretty print a `util::google_test::parameter_definition` in a test case name.
- */
-class parameter_definition_to_name {
-  public:
-    /**
-     * @brief Convert a `util::google_test::parameter_definition` to a string representation.
-     * @tparam T `util::google_test::parameter_definition`
-     * @return the string representation
-     */
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}.{}", plssvm::detail::arithmetic_type_name<typename T::real_type>(), T::kernel);
-    }
-};
-
-}  // namespace google_test
 
 }  // namespace util

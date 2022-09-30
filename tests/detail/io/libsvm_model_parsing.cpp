@@ -15,7 +15,7 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "../../utility.hpp"  // util::create_temp_file, util::redirect_output, EXPECT_THROW_WHAT
+#include "../../utility.hpp"  // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -450,19 +450,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, empty) {
 }
 
 template <typename T>
-class LIBSVMModelWriteBase : public ::testing::Test, private util::redirect_output {
-  protected:
-    void SetUp() override {
-        // create a temporary file containing the scaling factors
-        filename = util::create_temp_file();
-    }
-    void TearDown() override {
-        // remove the temporary file at the end
-        std::filesystem::remove(filename);
-    }
-
-    std::string filename;
-};
+class LIBSVMModelWriteBase : public ::testing::Test, private util::redirect_output, protected util::temporary_file {};
 
 template <typename T>
 class LIBSVMModelHeaderWrite : public LIBSVMModelWriteBase<T> {};

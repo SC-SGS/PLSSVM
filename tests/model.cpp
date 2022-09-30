@@ -13,7 +13,7 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "utility.hpp"  // util::create_temp_file, util::redirect_output
+#include "utility.hpp"  // util::temporary_file, util::redirect_output
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
@@ -140,79 +140,71 @@ TYPED_TEST(Model, rho) {
     EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
 }
 
-class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output {};
+class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output, protected util::temporary_file {};
 TEST_P(ModelSave, save) {
     // create a model using an existing LIBSVM model file
-    plssvm::model<double, int> model{ fmt::format("{}{}", PLSSVM_TEST_PATH, GetParam()) };
+    const plssvm::model<double, int> model{ fmt::format("{}{}", PLSSVM_TEST_PATH, GetParam()) };
 
-    // create temporary file
-    const std::string filename = util::create_temp_file();
+    // write model to file
+    model.save(filename);
 
-    {
-        // write model to file
-        model.save(filename);
+    // read previously written file
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    // copy read lines
+    std::vector<std::string_view> lines{ reader.lines() };
 
-        // read previously written file
-        plssvm::detail::io::file_reader reader{ filename };
-        reader.read_lines('#');
-        // copy read lines
-        std::vector<std::string_view> lines{ reader.lines() };
+    // create vector containing correct regex expressions for the LIBSVM model file header
+    std::vector<std::string> regex_patterns;
+    regex_patterns.emplace_back("svm_type c_svc");
+    regex_patterns.emplace_back(fmt::format("kernel_type {}", model.svm_parameter().kernel));
+    switch (model.svm_parameter().kernel) {
+        case plssvm::kernel_type::linear:
+            break;
+        case plssvm::kernel_type::polynomial:
+            regex_patterns.emplace_back("degree [0-9]+");
+            regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+            regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+            break;
+        case plssvm::kernel_type::rbf:
+            regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+            break;
+    }
+    regex_patterns.emplace_back("nr_class [0-9]+");
+    regex_patterns.emplace_back("total_sv [0-9]+");
+    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+    regex_patterns.emplace_back("label (.+ ?)+");
+    regex_patterns.emplace_back("nr_sv ([0-9]+ ?)+");
+    regex_patterns.emplace_back("SV");
 
-        // create vector containing correct regex expressions for the LIBSVM model file header
-        std::vector<std::string> regex_patterns;
-        regex_patterns.emplace_back("svm_type c_svc");
-        regex_patterns.emplace_back(fmt::format("kernel_type {}", model.svm_parameter().kernel));
-        switch (model.svm_parameter().kernel) {
-            case plssvm::kernel_type::linear:
+    // at least number of header entries lines must be present
+    ASSERT_GT(reader.num_lines(), regex_patterns.size());
+
+    // check if the model header is valid
+    for (const std::string &pattern : regex_patterns) {
+        const std::regex reg{ pattern, std::regex::extended };
+
+        // check each line if one matches the regex pattern
+        bool found_matching_line{ false };
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            // check if ANY line matches the current regex pattern
+            if (std::regex_match(std::string{ lines[i] }, reg)) {
+                found_matching_line = true;
+                // remove this line since it already matched a regex pattern
+                lines.erase(lines.begin() + static_cast<std::vector<std::string_view>::iterator::difference_type>(i));
                 break;
-            case plssvm::kernel_type::polynomial:
-                regex_patterns.emplace_back("degree [0-9]+");
-                regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-                regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-                break;
-            case plssvm::kernel_type::rbf:
-                regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-                break;
-        }
-        regex_patterns.emplace_back("nr_class [0-9]+");
-        regex_patterns.emplace_back("total_sv [0-9]+");
-        regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-        regex_patterns.emplace_back("label (.+ ?)+");
-        regex_patterns.emplace_back("nr_sv ([0-9]+ ?)+");
-        regex_patterns.emplace_back("SV");
-
-        // at least number of header entries lines must be present
-        ASSERT_GT(reader.num_lines(), regex_patterns.size());
-
-        // check if the model header is valid
-        for (const std::string &pattern : regex_patterns) {
-            const std::regex reg{ pattern, std::regex::extended };
-
-            // check each line if one matches the regex pattern
-            bool found_matching_line{ false };
-            for (std::size_t i = 0; i < lines.size(); ++i) {
-                // check if ANY line matches the current regex pattern
-                if (std::regex_match(std::string{ lines[i] }, reg)) {
-                    found_matching_line = true;
-                    // remove this line since it already matched a regex pattern
-                    lines.erase(lines.begin() + static_cast<std::vector<std::string_view>::iterator::difference_type>(i));
-                    break;
-                }
-            }
-            // NO line matches the pattern -> test failed
-            if (!found_matching_line) {
-                GTEST_FAIL() << fmt::format("Can't find a line matching the regex pattern: \"{}\"", pattern);
             }
         }
-        // only support vectors should be left -> check the remaining lines if they match the correct pattern
-        const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
-        for (const std::string_view line : lines) {
-            std::regex reg(support_vector_pattern, std::regex::extended);
-            EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format("Line \"{}\" doesn't match the regex pattern \"{}\"", line, support_vector_pattern);
+        // NO line matches the pattern -> test failed
+        if (!found_matching_line) {
+            GTEST_FAIL() << fmt::format("Can't find a line matching the regex pattern: \"{}\"", pattern);
         }
     }
-
-    // remove temporary file
-    std::filesystem::remove(filename);
+    // only support vectors should be left -> check the remaining lines if they match the correct pattern
+    const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
+    for (const std::string_view line : lines) {
+        std::regex reg(support_vector_pattern, std::regex::extended);
+        EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format("Line \"{}\" doesn't match the regex pattern \"{}\"", line, support_vector_pattern);
+    }
 }
 INSTANTIATE_TEST_SUITE_P(Model, ModelSave, ::testing::Values("/data/model/5x4_linear.libsvm.model", "/data/model/5x4_polynomial.libsvm.model", "/data/model/5x4_rbf.libsvm.model"));

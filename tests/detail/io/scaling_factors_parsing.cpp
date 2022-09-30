@@ -13,7 +13,7 @@
 #include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
-#include "../../utility.hpp"  // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
+#include "../../utility.hpp"  // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT, util::temporary_file
 
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ
@@ -174,19 +174,7 @@ TYPED_TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
 }
 
 template <typename T>
-class ScalingFactorsWriteBase : public ::testing::Test {
-  protected:
-    void SetUp() override {
-        // create a temporary file containing the scaling factors
-        filename = util::create_temp_file();
-    }
-    void TearDown() override {
-        // remove the temporary file at the end
-        std::filesystem::remove(filename);
-    }
-
-    std::string filename;
-};
+class ScalingFactorsWriteBase : public ::testing::Test, protected util::temporary_file {};
 
 template <typename T>
 class ScalingFactorsWrite : public ScalingFactorsWriteBase<T> {};

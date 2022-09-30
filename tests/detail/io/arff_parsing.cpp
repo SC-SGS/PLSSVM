@@ -13,7 +13,7 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../utility.hpp"  // util::create_temp_file, EXPECT_THROW_WHAT
+#include "../../utility.hpp"  // util::temporary_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -377,19 +377,7 @@ TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
 }
 
 template <typename T>
-class ARFFWriteBase : public ::testing::Test {
-  protected:
-    void SetUp() override {
-        // create a temporary file containing the scaling factors
-        filename = util::create_temp_file();
-    }
-    void TearDown() override {
-        // remove the temporary file at the end
-        std::filesystem::remove(filename);
-    }
-
-    std::string filename;
-};
+class ARFFWriteBase : public ::testing::Test, protected util::temporary_file {};
 
 template <typename T>
 class ARFFWrite : public ARFFWriteBase<T> {};
