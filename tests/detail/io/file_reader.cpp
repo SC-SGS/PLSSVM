@@ -13,6 +13,7 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::file_reader_exception
 
+#include "../../naming.hpp"   // naming::{open_parameter_types_to_name, pretty_print_escaped_string}
 #include "../../utility.hpp"  // EXPECT_THROW_WHAT
 
 #include "fmt/core.h"     // fmt::format
@@ -29,7 +30,7 @@
 
 TEST(FileReader, default_construct) {
     // default construct file_reader
-    plssvm::detail::io::file_reader reader{};
+    const plssvm::detail::io::file_reader reader{};
 
     // file reader must not be associated to a file, i.e., is_open must return false
     EXPECT_FALSE(reader.is_open());
@@ -45,7 +46,7 @@ TEST(FileReader, move_construct) {
     reader1.read_lines('#');
 
     // move-construct second file_reader
-    plssvm::detail::io::file_reader reader2{ std::move(reader1) };
+    const plssvm::detail::io::file_reader reader2{ std::move(reader1) };
 
     // test content of the second file_reader
     EXPECT_TRUE(reader2.is_open());
@@ -82,19 +83,18 @@ TEST(FileReader, move_assign) {
     EXPECT_EQ(reader1.buffer(), nullptr);
 }
 
-
 template <typename T>
 class FileReaderConstructWithOpen : public ::testing::Test {};
 
 // the input filename types to test
 using open_paramete_types = ::testing::Types<const char *, std::string, std::filesystem::path>;
-TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_paramete_types);
+TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_paramete_types, naming::open_parameter_types_to_name);
 
 TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
     // create file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     // construct a file_reader
-    plssvm::detail::io::file_reader reader{ filename };
+    const plssvm::detail::io::file_reader reader{ filename };
 
     EXPECT_TRUE(reader.is_open());  // since we associated a file with reader, a file must be open!
     // since we did not call .read_lines() no PARSED content is available!
@@ -104,9 +104,9 @@ TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
 }
 TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
     // create file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
     // construct a file_reader using a c-string literal
-    plssvm::detail::io::file_reader reader{ filename };
+    const plssvm::detail::io::file_reader reader{ filename };
 
     EXPECT_TRUE(reader.is_open());  // since we associated a file with reader, a file must be open!
     // since we did not call .read_lines() no PARSED content is available!
@@ -116,17 +116,17 @@ TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
 }
 TYPED_TEST(FileReaderConstructWithOpen, file_not_found) {
     // create file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
     EXPECT_THROW_WHAT(plssvm::detail::io::file_reader{ filename }, plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", PLSSVM_TEST_PATH "/data/file_not_found"));
 }
 
 template <typename T>
 class FileReaderOpen : public ::testing::Test {};
-TYPED_TEST_SUITE(FileReaderOpen, open_paramete_types);
+TYPED_TEST_SUITE(FileReaderOpen, open_paramete_types, naming::open_parameter_types_to_name);
 
 TYPED_TEST(FileReaderOpen, non_empty_file) {
     // create default constructed file reader and open it using the file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);
@@ -139,7 +139,7 @@ TYPED_TEST(FileReaderOpen, non_empty_file) {
 }
 TYPED_TEST(FileReaderOpen, empty_file) {
     // create default constructed file reader and open it using the file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);
@@ -152,14 +152,14 @@ TYPED_TEST(FileReaderOpen, empty_file) {
 }
 TYPED_TEST(FileReaderOpen, file_not_found) {
     // create default constructed file reader and open it using the file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     EXPECT_THROW_WHAT(reader.open(filename), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", PLSSVM_TEST_PATH "/data/file_not_found"));
 }
 TYPED_TEST(FileReaderOpen, multiple_open) {
     // create default constructed file reader and open it using the file name depending on the current test type
-    TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    const TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);
@@ -234,7 +234,7 @@ TEST(FileReader, swap_member_function) {
 }
 
 // clang-format off
-const std::vector<std::tuple<std::string, char, std::vector<std::string_view>>> file_lines{
+const std::array<std::tuple<std::string, char, std::vector<std::string_view>>, 3> file_lines{
     std::make_tuple(PLSSVM_TEST_PATH "/data/arff/5x4_int.arff", '%', std::vector<std::string_view>{
                                  "% Title",
                                  "% comments",
@@ -261,11 +261,14 @@ const std::vector<std::tuple<std::string, char, std::vector<std::string_view>>> 
 };
 // clang-format on
 
+/**
+ * @brief Filter @p lines that start with @p filter.
+ */
 template <typename T>
-std::vector<std::string_view> filter_lines(const std::vector<std::string_view> &lines, const T f) {
+std::vector<std::string_view> filter_lines(const std::vector<std::string_view> &lines, const T filter) {
     std::vector<std::string_view> filtered_lines;
     for (const std::string_view line : lines) {
-        if (!plssvm::detail::starts_with(line, f)) {
+        if (!plssvm::detail::starts_with(line, filter)) {
             filtered_lines.push_back(line);
         }
     }
@@ -351,7 +354,7 @@ TEST_P(FileReaderLines, buffer_valid) {
         EXPECT_NE(reader.buffer(), nullptr);
     }
 }
-INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLines, ::testing::ValuesIn(file_lines));
+INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLines, ::testing::ValuesIn(file_lines), naming::pretty_print_escaped_string<FileReaderLines>);
 
 class FileReaderLinesDeathTest : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> {};
 TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
@@ -364,7 +367,7 @@ TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
     ASSERT_EQ(reader.lines().size(), filter_lines(lines, comment).size());
     EXPECT_DEATH(std::ignore = reader.line(reader.num_lines()), fmt::format("Out-of-bounce access!: {} >= {}", reader.num_lines(), reader.num_lines()));
 }
-INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLinesDeathTest, ::testing::ValuesIn(file_lines));
+INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLinesDeathTest, ::testing::ValuesIn(file_lines), naming::pretty_print_escaped_string<FileReaderLinesDeathTest>);
 
 TEST(FileReader, swap_free_function) {
     // create two file readers

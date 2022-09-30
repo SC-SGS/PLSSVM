@@ -32,6 +32,7 @@
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
+#include <filesystem> // std::filesystem::path
 
 namespace naming {
 
@@ -139,6 +140,23 @@ class exception_types_to_name {
     }
 };
 
+// detail/io/file_reader.cpp
+class open_parameter_types_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        if constexpr (std::is_same_v<T, const char *>) {
+            return "const_char_ptr";
+        } else if constexpr (std::is_same_v<T, std::filesystem::path>) {
+            return "std_filesystem_path";
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            return "std_string";
+        } else {
+            plssvm::detail::always_false_v<T>;
+        }
+    }
+};
+
 // general
 class arithmetic_types_to_name {
   public:
@@ -176,6 +194,7 @@ namespace detail {
     plssvm::detail::replace_all(str, "-", "_M_");
     plssvm::detail::replace_all(str, " ", "_W_");
     plssvm::detail::replace_all(str, ".", "_D_");
+    plssvm::detail::replace_all(str, "/", "_");
     if (str.empty()) {
         str = "EMPTY";
     }
