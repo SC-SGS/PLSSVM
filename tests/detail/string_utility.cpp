@@ -15,8 +15,10 @@
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
 
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
+#include <vector>       // std::vector
 
 TEST(StringUtility, starts_with_string) {
     EXPECT_TRUE(plssvm::detail::starts_with("abc", "abc"));
@@ -54,7 +56,7 @@ TEST(StringUtility, contains_char) {
     EXPECT_FALSE(plssvm::detail::contains("abc", 'd'));
 }
 
-class StringUtilityBase : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> {};
+class StringUtilityBase : public ::testing::TestWithParam<std::tuple<std::string, std::string_view>> {};
 
 // test trim left only
 class StringUtilityTrimLeft : public StringUtilityBase {};
@@ -64,9 +66,9 @@ TEST_P(StringUtilityTrimLeft, trim_left) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimLeft, ::testing::Values(
-                std::make_pair("", ""), std::make_pair("abc", "abc"),
-                std::make_pair("  abc", "abc"), std::make_pair("abc   ", "abc   "),
-                std::make_pair(" abc  ", "abc  "), std::make_pair(" a b c ", "a b c ")),
+                std::make_tuple("", ""), std::make_tuple("abc", "abc"),
+                std::make_tuple("  abc", "abc"), std::make_tuple("abc   ", "abc   "),
+                std::make_tuple(" abc  ", "abc  "), std::make_tuple(" a b c ", "a b c ")),
                 naming::pretty_print_escaped_string<StringUtilityTrimLeft>);
 // clang-format on
 
@@ -78,9 +80,9 @@ TEST_P(StringUtilityTrimRight, trim_right) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimRight, ::testing::Values(
-                std::make_pair("", ""), std::make_pair("abc", "abc"),
-                std::make_pair("  abc", "  abc"), std::make_pair("abc   ", "abc"),
-                std::make_pair(" abc  ", " abc"), std::make_pair(" a b c ", " a b c")),
+                std::make_tuple("", ""), std::make_tuple("abc", "abc"),
+                std::make_tuple("  abc", "  abc"), std::make_tuple("abc   ", "abc"),
+                std::make_tuple(" abc  ", " abc"), std::make_tuple(" a b c ", " a b c")),
                 naming::pretty_print_escaped_string<StringUtilityTrimRight>);
 // clang-format on
 
@@ -92,9 +94,9 @@ TEST_P(StringUtilityTrim, trim) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrim, ::testing::Values(
-                std::make_pair("", ""), std::make_pair("abc", "abc"),
-                std::make_pair("  abc", "abc"), std::make_pair("abc   ", "abc"),
-                std::make_pair(" abc  ", "abc"), std::make_pair(" a b c ", "a b c")),
+                std::make_tuple("", ""), std::make_tuple("abc", "abc"),
+                std::make_tuple("  abc", "abc"), std::make_tuple("abc   ", "abc"),
+                std::make_tuple(" abc  ", "abc"), std::make_tuple(" a b c ", "a b c")),
                 naming::pretty_print_escaped_string<StringUtilityTrim>);
 // clang-format on
 
@@ -110,8 +112,8 @@ TEST_P(StringUtilityConvertLowerCase, as_lower_case) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertLowerCase, ::testing::Values(
-                std::make_pair("", ""), std::make_pair("abc", "abc"),
-                std::make_pair("ABC", "abc"), std::make_pair(" AbC 1", " abc 1")),
+                std::make_tuple("", ""), std::make_tuple("abc", "abc"),
+                std::make_tuple("ABC", "abc"), std::make_tuple(" AbC 1", " abc 1")),
                 naming::pretty_print_escaped_string<StringUtilityConvertLowerCase>);
 // clang-format on
 
@@ -127,8 +129,8 @@ TEST_P(StringUtilityConvertUpperCase, as_upper_case) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertUpperCase, ::testing::Values(
-                std::make_pair("", ""), std::make_pair("abc", "ABC"),
-                std::make_pair("ABC", "ABC"), std::make_pair(" AbC 1", " ABC 1")),
+                std::make_tuple("", ""), std::make_tuple("abc", "ABC"),
+                std::make_tuple("ABC", "ABC"), std::make_tuple(" AbC 1", " ABC 1")),
                 naming::pretty_print_escaped_string<StringUtilityConvertUpperCase>);
 // clang-format on
 
