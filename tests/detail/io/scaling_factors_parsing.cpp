@@ -13,6 +13,7 @@
 #include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
+#include "../../naming.hpp"   // naming::arithmetic_types_to_name
 #include "../../utility.hpp"  // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT, util::temporary_file
 
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -38,10 +39,10 @@ class ScalingFactorsReadBase : public ::testing::Test {};
 
 template <typename T>
 class ScalingFactorsRead : public ScalingFactorsReadBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsRead, floating_point_types);
+TYPED_TEST_SUITE(ScalingFactorsRead, floating_point_types, naming::arithmetic_types_to_name);
 template <typename T>
 class ScalingFactorsReadDeathTest : public ScalingFactorsReadBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsReadDeathTest, floating_point_types);
+TYPED_TEST_SUITE(ScalingFactorsReadDeathTest, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(ScalingFactorsRead, read) {
     using real_type = TypeParam;
@@ -165,11 +166,11 @@ TYPED_TEST(ScalingFactorsRead, invalid_number) {
 TYPED_TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
     using real_type = TypeParam;
     // define data to write
-    std::pair<real_type, real_type> interval{ -1.5, 1.5 };
-    std::vector<factors<real_type>> scaling_factors{ factors<real_type>{} };  // at least one scaling factor must be given!
+    const std::pair<real_type, real_type> interval{ -1.5, 1.5 };
+    const std::vector<factors<real_type>> scaling_factors{ factors<real_type>{} };  // at least one scaling factor must be given!
 
     // create temporary file containing the scaling factors
-    plssvm::detail::io::file_reader reader{};
+    const plssvm::detail::io::file_reader reader{};
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors<real_type>>(reader)), "The file_reader is currently not associated with a file!");
 }
 
@@ -178,11 +179,11 @@ class ScalingFactorsWriteBase : public ::testing::Test, protected util::temporar
 
 template <typename T>
 class ScalingFactorsWrite : public ScalingFactorsWriteBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsWrite, floating_point_types);
+TYPED_TEST_SUITE(ScalingFactorsWrite, floating_point_types, naming::arithmetic_types_to_name);
 
 template <typename T>
 class ScalingFactorsWriteDeathTest : public ScalingFactorsWriteBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsWriteDeathTest, floating_point_types);
+TYPED_TEST_SUITE(ScalingFactorsWriteDeathTest, floating_point_types, naming::arithmetic_types_to_name);
 
 TYPED_TEST(ScalingFactorsWrite, write) {
     using real_type = TypeParam;
@@ -212,7 +213,7 @@ TYPED_TEST(ScalingFactorsWrite, write_empty_scaling_factors) {
     using real_type = TypeParam;
     // define data to write
     const std::pair<real_type, real_type> interval{ -1.5, 1.5 };
-    std::vector<factors<real_type>> scaling_factors{};  // write no scaling factors to the file (allowed, but nonsensical)
+    const std::vector<factors<real_type>> scaling_factors{};  // write no scaling factors to the file (allowed, but nonsensical)
 
     // try to write the necessary data to the file
     plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors);
@@ -233,7 +234,7 @@ TYPED_TEST(ScalingFactorsWriteDeathTest, write_illegal_interval) {
     using real_type = TypeParam;
     // define data to write
     const std::pair<real_type, real_type> interval{ 1, -1 };  // illegal interval!
-    std::vector<factors<real_type>> scaling_factors(1);
+    const std::vector<factors<real_type>> scaling_factors(1);
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors), ::testing::HasSubstr("Illegal interval specification: lower (1) < upper (-1)"));
