@@ -151,11 +151,17 @@ template <typename real_type, typename label_type>
 
                 // check if class labels are present (not necessarily the case for test files)
                 std::string_view::size_type pos = line.find_first_of(" \n");
-                std::string_view::size_type first_colon = line.find_first_of(":\n");
+                const std::string_view::size_type first_colon = line.find_first_of(":\n");
                 if (first_colon >= pos) {
                     // get class or alpha
                     has_label = true;
-                    label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
+                    if constexpr (std::is_same_v<label_type, bool>) {
+                        // the std::vector<bool> template specialization is per C++ standard NOT thread safe
+                        #pragma omp critical
+                        label[i] = detail::convert_to<bool, invalid_file_format_exception>(line.substr(0, pos));
+                    } else {
+                        label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
+                    }
                 } else {
                     has_no_label = true;
                     pos = 0;
