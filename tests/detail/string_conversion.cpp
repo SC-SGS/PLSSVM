@@ -48,10 +48,12 @@ TEST(StringConversion, string_conversion) {
     const std::vector<std::string_view> input = { "-3", "-1.5", "0.0", "1.5", "3", "   5", "  6 ", "7  " };
     const std::vector<std::string_view> input_unsigned = { "0.0", "1.5", "3", "   5", "  6 ", "7  " };
     const std::vector<std::string_view> input_char = { "0", "48", "65.2", "66", "122", "   119", "  120 ", "121  " };
+    const std::vector<std::string_view> input_bool = { "true", "false", "True", "False", "TRUE", "FALSE"};
 
     // boolean
     // std::from_chars seems to not support bool
-    //    check_convert_to(input, std::vector<bool>{ true, true, false, true, true, true, true, true });
+    check_convert_to(input, std::vector<bool>{ true, true, false, true, true, true, true, true });
+    check_convert_to(input_bool, std::vector<bool>{ true, false, true, false, true, false });
 
     // character types
     check_convert_to(input_char, std::vector<char>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });

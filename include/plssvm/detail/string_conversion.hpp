@@ -48,6 +48,18 @@ template <typename T, typename Exception = std::runtime_error, std::enable_if_t<
     if constexpr (std::is_same_v<remove_cvref_t<T>, std::string>) {
         // convert string_view to string
         return std::string{ trim(str) };
+    } else if constexpr (std::is_same_v<remove_cvref_t<T>, bool>) {
+        const std::string lower_case_str = as_lower_case(trim(str));
+        // the string true
+        if (lower_case_str == "true") {
+            return true;
+        }
+        // the string false
+        if (lower_case_str == "false") {
+            return false;
+        }
+        // convert a number to its "long long" value and convert it to a bool: 0 -> false, otherwise true
+        return static_cast<bool>(convert_to<long long>(str));
     } else {
         // select conversion function depending on the provided type
         const auto convert_from_chars = [](const std::string_view sv, auto &val) {
