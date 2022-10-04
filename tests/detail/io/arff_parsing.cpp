@@ -22,6 +22,7 @@
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
+#include <fstream>      // std::ifstream, std::ofstream
 #include <string>       // std::string
 #include <tuple>        // std::ignore
 #include <tuple>        // std::tuple, std::make_tuple
@@ -37,9 +38,31 @@ struct type_combinations {
 
 // the floating point and label types combinations to test
 using type_combinations_types = ::testing::Types<
+    type_combinations<float, bool>,
+    type_combinations<float, char>,
+    type_combinations<float, signed char>,
+    type_combinations<float, unsigned char>,
+    type_combinations<float, short>,
+    type_combinations<float, unsigned short>,
     type_combinations<float, int>,
+    type_combinations<float, unsigned int>,
+    type_combinations<float, long>,
+    type_combinations<float, unsigned long>,
+    type_combinations<float, long long>,
+    type_combinations<float, unsigned long long>,
     type_combinations<float, std::string>,
+    type_combinations<double, bool>,
+    type_combinations<double, char>,
+    type_combinations<double, signed char>,
+    type_combinations<double, unsigned char>,
+    type_combinations<double, short>,
+    type_combinations<double, unsigned short>,
     type_combinations<double, int>,
+    type_combinations<double, unsigned int>,
+    type_combinations<double, long>,
+    type_combinations<double, unsigned long>,
+    type_combinations<double, long long>,
+    type_combinations<double, unsigned long long>,
     type_combinations<double, std::string>>;
 
 class ARFFParseHeader : public ::testing::Test {};
@@ -73,7 +96,7 @@ TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_unquoted_nominal_attribute.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header(reader.lines())), plssvm::invalid_file_format_exception, "The \"@ATTRIBUTE class    -1,1\" nominal attribute must be enclosed with {}!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header(reader.lines())), plssvm::invalid_file_format_exception, "The \"@ATTRIBUTE class    0,1\" nominal attribute must be enclosed with {}!");
 }
 TEST(ARFFParseHeader, class_with_wrong_label) {
     // parse the ARFF file
@@ -115,7 +138,7 @@ TEST(ARFFParseHeader, nominal_attribute_with_wrong_name) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/nominal_attribute_with_wrong_name.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header(reader.lines())), plssvm::invalid_file_format_exception, "Read an invalid header entry: \"@ATTRIBUTE foo    {-1,1}\"!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header(reader.lines())), plssvm::invalid_file_format_exception, "Read an invalid header entry: \"@ATTRIBUTE foo    {0,1}\"!");
 }
 TEST(ARFFParseHeader, numeric_unquoted) {
     // parse the ARFF file
@@ -168,27 +191,48 @@ TEST(ARFFParseHeader, empty) {
 }
 
 template <typename T>
+std::pair<T, T> get_distinct_label() {
+    if constexpr (std::is_same_v<T, bool>) {
+        return std::make_pair(true, false);
+    } else if constexpr (sizeof(T) == sizeof(char)) {
+        return std::make_pair('a', 'b');
+    } else if constexpr (std::is_signed_v<T>) {
+        return std::make_pair(-1, 1);
+    } else if constexpr (std::is_unsigned_v<T>) {
+        return std::make_pair(1, 2);
+    } else if constexpr (std::is_floating_point_v<T>) {
+        return std::make_pair(-1.5, 1.5);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        return std::make_pair("cat", "dog");
+    } else {
+        plssvm::detail::always_false_v<T>;
+    }
+}
+
+template <typename T>
 class ARFFParse : public ::testing::Test {};
 TYPED_TEST_SUITE(ARFFParse, type_combinations_types);
 
 template <typename T>
-class ARFFParseDense : public ARFFParse<T> {
+class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
   protected:
     void SetUp() override {
-        // fill label vector based on the label_type
-        if constexpr (std::is_same_v<label_type, int>) {
-            correct_label = std::vector<int>{ 1, 1, -1, -1, -1 };
-            filename = PLSSVM_TEST_PATH "/data/arff/5x4_int.arff";
-        } else if constexpr (std::is_same_v<label_type, std::string>) {
-            correct_label = std::vector<std::string>{ "cat", "cat", "dog", "dog", "dog" };
-            filename = PLSSVM_TEST_PATH "/data/arff/5x4_string.arff";
-        }
+        // get a label pair based on the current label type
+        const auto [first_label, second_label] = get_distinct_label<label_type>();
+        // read the data set template and replace the label placeholder with the correct labels
+        std::ifstream input{ PLSSVM_TEST_PATH "/data/arff/5x4_TEMPLATE.arff" };
+        std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+        plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
+        plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
+        // write the data set with the correct labels to the temporary file
+        std::ofstream out{ this->filename };
+        out << str;
+        // create a vector with the correct labels
+        correct_label = std::vector<label_type>{ second_label, second_label, first_label, first_label, first_label };
     }
 
     using real_type = typename T::real_type;
     using label_type = typename T::label_type;
-
-    std::string filename{};
 
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ -1.117827500607882 }, real_type{ -2.9087188881250993 }, real_type{ 0.66638344270039144 }, real_type{ 1.0978832703949288 } },
@@ -202,23 +246,25 @@ class ARFFParseDense : public ARFFParse<T> {
 TYPED_TEST_SUITE(ARFFParseDense, type_combinations_types);
 
 template <typename T>
-class ARFFParseSparse : public ARFFParse<T> {
+class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
   protected:
     void SetUp() override {
-        // fill label vector based on the label_type
-        if constexpr (std::is_same_v<label_type, int>) {
-            correct_label = std::vector<int>{ 1, 1, -1, -1, -1 };
-            filename = PLSSVM_TEST_PATH "/data/arff/5x4_sparse_int.arff";
-        } else if constexpr (std::is_same_v<label_type, std::string>) {
-            correct_label = std::vector<std::string>{ "cat", "cat", "dog", "dog", "dog" };
-            filename = PLSSVM_TEST_PATH "/data/arff/5x4_sparse_string.arff";
-        }
+        // get a label pair based on the current label type
+        const auto [first_label, second_label] = get_distinct_label<label_type>();
+        // read the data set template and replace the label placeholder with the correct labels
+        std::ifstream input{ PLSSVM_TEST_PATH "/data/arff/5x4_sparse_TEMPLATE.arff" };
+        std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+        plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
+        plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
+        // write the data set with the correct labels to the temporary file
+        std::ofstream out{ this->filename };
+        out << str;
+        // create a vector with the correct labels
+        correct_label = std::vector<label_type>{ second_label, second_label, first_label, first_label, first_label };
     }
 
     using real_type = typename T::real_type;
     using label_type = typename T::label_type;
-
-    std::string filename{};
 
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
@@ -319,7 +365,7 @@ TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_opening_brace.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing opening '{' for sparse data point \"1 0.60276937379453293,2 -0.13086851759108944,4 -1}\" description!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing opening '{' for sparse data point \"1 0.60276937379453293,2 -0.13086851759108944,4 0}\" description!");
 }
 TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
     using current_real_type = typename TypeParam::real_type;
@@ -372,7 +418,7 @@ TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
     using current_label_type = typename TypeParam::label_type;
 
     // open file_reader without associating it to a file
-    plssvm::detail::io::file_reader reader{};
+    const plssvm::detail::io::file_reader reader{};
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), "The file_reader is currently not associated with a file!");
 }
 
@@ -397,12 +443,8 @@ TYPED_TEST(ARFFWrite, write_with_label) {
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
         { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
     };
-    std::vector<label_type> label{};
-    if constexpr (std::is_same_v<label_type, int>) {
-        label = std::vector<int>{ -1, 1, -1 };
-    } else if constexpr (std::is_same_v<label_type, std::string>) {
-        label = std::vector<std::string>{ "cat", "dog", "cat" };
-    }
+    const auto [first_label, second_label] = get_distinct_label<label_type>();
+    std::vector<label_type> label = { first_label, second_label, first_label };
 
     // write the necessary data to the file
     plssvm::detail::io::write_arff_data(this->filename, data, label);
@@ -515,7 +557,7 @@ TYPED_TEST(ARFFWriteDeathTest, data_and_label_size_mismatch) {
 
     // define data to write
     const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
-    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("42") };
+    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("0") };
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_arff_data(this->filename, data, label), ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
@@ -526,7 +568,7 @@ TYPED_TEST(ARFFWriteDeathTest, labels_provided_but_not_written) {
 
     // define data to write
     const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
-    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("42") };
+    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("0") };
 
     // try to write the necessary data to the file
     EXPECT_DEATH((plssvm::detail::io::write_arff_data_impl<real_type, label_type, false>(this->filename, data, label)), "has_label is 'false' but labels were provided!");

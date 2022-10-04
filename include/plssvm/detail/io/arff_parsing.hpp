@@ -267,7 +267,13 @@ template <typename real_type, typename label_type>
                         if (has_label && index == label_idx) {
                             // write label value
                             is_class_set = true;
-                            label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            if constexpr (std::is_same_v<label_type, bool>) {
+                                // the std::vector<bool> template specialization is per C++ standard NOT thread safe
+                                #pragma omp critical
+                                label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            } else {
+                                label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            }
                         } else {
                             // write feature value
                             // if the feature index is larger than the label index, the index must be reduced in order to write the feature to the correct data index
@@ -300,7 +306,14 @@ template <typename real_type, typename label_type>
                     for (std::size_t j = 0; j < num_attributes; ++j) {
                         if (has_label && label_idx == j) {
                             // found a label
-                            label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
+
+                            if constexpr (std::is_same_v<label_type, bool>) {
+                                // the std::vector<bool> template specialization is per C++ standard NOT thread safe
+                                #pragma omp critical
+                                label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
+                            } else {
+                                label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
+                            }
                         } else {
                             // found data point
                             data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line_split[j]);
