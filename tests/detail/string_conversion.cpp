@@ -47,18 +47,23 @@ TEST(StringConversion, string_conversion) {
 
     const std::vector<std::string_view> input = { "-3", "-1.5", "0.0", "1.5", "3", "   5", "  6 ", "7  " };
     const std::vector<std::string_view> input_unsigned = { "0.0", "1.5", "3", "   5", "  6 ", "7  " };
-    const std::vector<std::string_view> input_char = { "0", "48", "65.2", "66", "122", "   119", "  120 ", "121  " };
-    const std::vector<std::string_view> input_bool = { "true", "false", "True", "False", "TRUE", "FALSE"};
+    const std::vector<std::string_view> input_signed_unsigned_char = { "0", "48", "65.2", "66", "122", "   119", "  120 ", "121  " };
+    const std::vector<std::string_view> input_char = { "0", "a", "A", "z", "w", "   x", "  Y ", "9  " };
+    const std::vector<std::string_view> input_bool = { "true", "false", "True", "False", "TRUE", "FALSE" };
 
     // boolean
     // std::from_chars seems to not support bool
     check_convert_to(input, std::vector<bool>{ true, true, false, true, true, true, true, true });
     check_convert_to(input_bool, std::vector<bool>{ true, false, true, false, true, false });
 
+    // boolean
+    check_convert_to(input, std::vector<bool>{ true, true, false, true, true, true, true, true });
+    check_convert_to(input_bool, std::vector<bool>{ true, false, true, false, true, false });
+
     // character types
-    check_convert_to(input_char, std::vector<char>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
-    check_convert_to(input_char, std::vector<signed char>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
-    check_convert_to(input_char, std::vector<unsigned char>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
+    check_convert_to(input_char, std::vector<char>{ '0', 'a', 'A', 'z', 'w', 'x', 'Y', '9' });
+    check_convert_to(input_signed_unsigned_char, std::vector<signed char>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
+    check_convert_to(input_signed_unsigned_char, std::vector<unsigned char>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
     // std::from_chars seems to not support char16_t, char32_t, and wchar_t
     //    check_convert_to(input_char, std::vector<char16_t>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
     //    check_convert_to(input_char, std::vector<char32_t>{ '\0', '0', 'A', 'B', 'z', 'w', 'x', 'y' });
@@ -95,6 +100,20 @@ TYPED_TEST(StringConversionException, string_conversion_exception) {
     EXPECT_THROW_WHAT(std::ignore = convert_to<TypeParam>("a"), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
     EXPECT_THROW_WHAT(std::ignore = convert_to<TypeParam>("  abc 1"), std::runtime_error, fmt::format("Can't convert '  abc 1' to a value of type {}!", arithmetic_type_name<TypeParam>()));
     EXPECT_THROW_WHAT((std::ignore = convert_to<TypeParam, std::invalid_argument>("a")), std::invalid_argument, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
+}
+TEST(StringConversionException, string_conversion_exception_bool) {
+    using namespace plssvm::detail;
+
+    EXPECT_THROW_WHAT(std::ignore = convert_to<bool>("a"), std::runtime_error, "Can't convert 'a' to a value of type long long!");
+    EXPECT_THROW_WHAT(std::ignore = convert_to<bool>("  abc 1"), std::runtime_error, "Can't convert '  abc 1' to a value of type long long!");
+    EXPECT_THROW_WHAT((std::ignore = convert_to<bool, std::invalid_argument>("a")), std::invalid_argument, "Can't convert 'a' to a value of type long long!");
+}
+TEST(StringConversionException, string_conversion_exception_char) {
+    using namespace plssvm::detail;
+
+    EXPECT_THROW_WHAT(std::ignore = convert_to<char>("42"), std::runtime_error, "Can't convert '42' to a value of type char!");
+    EXPECT_THROW_WHAT(std::ignore = convert_to<char>("  abc 1"), std::runtime_error, "Can't convert '  abc 1' to a value of type char!");
+    EXPECT_THROW_WHAT((std::ignore = convert_to<char, std::invalid_argument>("")), std::invalid_argument, "Can't convert '' to a value of type char!");
 }
 
 class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> {};

@@ -59,7 +59,13 @@ template <typename T, typename Exception = std::runtime_error, std::enable_if_t<
             return false;
         }
         // convert a number to its "long long" value and convert it to a bool: 0 -> false, otherwise true
-        return static_cast<bool>(convert_to<long long>(str));
+        return static_cast<bool>(convert_to<long long, Exception>(str));
+    } else if constexpr (std::is_same_v<remove_cvref_t<T>, char>) {
+        const std::string_view trimmed = trim(str);
+        if (trimmed.size() != 1) {
+            throw Exception{ fmt::format("Can't convert '{}' to a value of type char!", str) };
+        }
+        return trimmed.front();
     } else {
         // select conversion function depending on the provided type
         const auto convert_from_chars = [](const std::string_view sv, auto &val) {
