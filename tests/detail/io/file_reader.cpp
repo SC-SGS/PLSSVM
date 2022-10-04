@@ -291,7 +291,7 @@ TEST_P(FileReaderLines, parse_lines_without_char_comments) {
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines(comment);
 
-    // no comments have been filtered (but newlines)
+    // comments have been filtered
     EXPECT_EQ(reader.lines(), filter_lines(lines, comment));
 }
 TEST_P(FileReaderLines, parse_lines_without_string_comments) {
@@ -300,15 +300,8 @@ TEST_P(FileReaderLines, parse_lines_without_string_comments) {
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines("@ATTRIBUTE");
 
-    // no comments have been filtered (but newlines)
+    // the arff header attributes have been filtered
     EXPECT_EQ(reader.lines(), filter_lines(lines, "@ATTRIBUTE"));
-}
-TEST(FileReaderLines, parse_lines_without_associated_file) {
-    // create file_reader without associating it to a file
-    plssvm::detail::io::file_reader reader{};
-
-    // reading lines while no file is associated is impossible!
-    EXPECT_THROW_WHAT(reader.read_lines(), plssvm::file_reader_exception, "This file_reader is currently not associated to a file!");
 }
 TEST_P(FileReaderLines, num_lines) {
     const auto &[filename, comment, lines] = GetParam();
@@ -355,6 +348,14 @@ TEST_P(FileReaderLines, buffer_valid) {
     }
 }
 INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLines, ::testing::ValuesIn(file_lines), naming::pretty_print_escaped_string<FileReaderLines>);
+
+TEST(FileReaderLines, parse_lines_without_associated_file) {
+    // create file_reader without associating it to a file
+    plssvm::detail::io::file_reader reader{};
+
+    // reading lines while no file is associated is impossible!
+    EXPECT_THROW_WHAT(reader.read_lines(), plssvm::file_reader_exception, "This file_reader is currently not associated to a file!");
+}
 
 class FileReaderLinesDeathTest : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> {};
 TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
