@@ -13,7 +13,8 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../utility.hpp"  // util::temporary_file, EXPECT_THROW_WHAT
+#include "../../types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file}
+#include "../../utility.hpp"        // util::temporary_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -28,42 +29,6 @@
 #include <type_traits>  // std::is_same_v
 #include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
-
-// struct for the used type combinations
-template <typename T, typename U>
-struct type_combinations {
-    using real_type = T;
-    using label_type = U;
-};
-
-// the floating point and label types combinations to test
-using type_combinations_types = ::testing::Types<
-    type_combinations<float, bool>,
-    type_combinations<float, char>,
-    type_combinations<float, signed char>,
-    type_combinations<float, unsigned char>,
-    type_combinations<float, short>,
-    type_combinations<float, unsigned short>,
-    type_combinations<float, int>,
-    type_combinations<float, unsigned int>,
-    type_combinations<float, long>,
-    type_combinations<float, unsigned long>,
-    type_combinations<float, long long>,
-    type_combinations<float, unsigned long long>,
-    type_combinations<float, std::string>,
-    type_combinations<double, bool>,
-    type_combinations<double, char>,
-    type_combinations<double, signed char>,
-    type_combinations<double, unsigned char>,
-    type_combinations<double, short>,
-    type_combinations<double, unsigned short>,
-    type_combinations<double, int>,
-    type_combinations<double, unsigned int>,
-    type_combinations<double, long>,
-    type_combinations<double, unsigned long>,
-    type_combinations<double, long long>,
-    type_combinations<double, unsigned long long>,
-    type_combinations<double, std::string>>;
 
 class LIBSVMParseNumFeatures : public ::testing::TestWithParam<std::pair<std::string, std::size_t>> {};
 TEST_P(LIBSVMParseNumFeatures, num_features) {
@@ -93,39 +58,13 @@ TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
 }
 
 template <typename T>
-std::pair<T, T> get_distinct_label() {
-    if constexpr (std::is_same_v<T, bool>) {
-        return std::make_pair(true, false);
-    } else if constexpr (sizeof(T) == sizeof(char)) {
-        return std::make_pair('a', 'b');
-    } else if constexpr (std::is_signed_v<T>) {
-        return std::make_pair(-1, 1);
-    } else if constexpr (std::is_unsigned_v<T>) {
-        return std::make_pair(1, 2);
-    } else if constexpr (std::is_floating_point_v<T>) {
-        return std::make_pair(-1.5, 1.5);
-    } else if constexpr (std::is_same_v<T, std::string>) {
-        return std::make_pair("cat", "dog");
-    } else {
-        plssvm::detail::always_false_v<T>;
-    }
-}
-
-template <typename T>
 class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file {
   protected:
     void SetUp() override {
-        // get a label pair based on the current label type
-        const auto [first_label, second_label] = get_distinct_label<label_type>();
-        // read the data set template and replace the label placeholder with the correct labels
-        std::ifstream input{ PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm" };
-        std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-        plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
-        plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
-        // write the data set with the correct labels to the temporary file
-        std::ofstream out{ this->filename };
-        out << str;
+        // create file used in this test fixture by instantiating the template file
+        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
         // create a vector with the correct labels
+        const auto [first_label, second_label] = util::get_distinct_label<label_type>();
         correct_label = std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label };
     }
 
@@ -141,23 +80,16 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(LIBSVMParseDense, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseDense, util::type_combinations_types);
 
 template <typename TypeParam>
 class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file {
   protected:
     void SetUp() override {
-        // get a label pair based on the current label type
-        const auto [first_label, second_label] = get_distinct_label<label_type>();
-        // read the data set template and replace the label placeholder with the correct labels
-        std::ifstream input{ PLSSVM_TEST_PATH "/data/libsvm/5x4_sparse_TEMPLATE.libsvm" };
-        std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-        plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
-        plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
-        // write the data set with the correct labels to the temporary file
-        std::ofstream out{ this->filename };
-        out << str;
+        // create file used in this test fixture by instantiating the template file
+        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_sparse_TEMPLATE.libsvm", this->filename);
         // create a vector with the correct labels
+        const auto [first_label, second_label] = util::get_distinct_label<label_type>();
         correct_label = std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label };
     }
 
@@ -173,11 +105,11 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(LIBSVMParseSparse, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseSparse, util::type_combinations_types);
 
 template <typename T>
 class LIBSVMParse : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMParse, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParse, util::type_combinations_types);
 
 TYPED_TEST(LIBSVMParseDense, read) {
     using current_real_type = typename TypeParam::real_type;
@@ -408,7 +340,7 @@ TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
 
 template <typename T>
 class LIBSVMParseDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMParseDeathTest, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseDeathTest, util::type_combinations_types);
 
 TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
     using current_real_type = typename TypeParam::real_type;
@@ -435,11 +367,11 @@ class LIBSVMWriteBase : public ::testing::Test, protected util::temporary_file {
 
 template <typename T>
 class LIBSVMWrite : public LIBSVMWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMWrite, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMWrite, util::type_combinations_types);
 
 template <typename T>
 class LIBSVMWriteDeathTest : public LIBSVMWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMWriteDeathTest, type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMWriteDeathTest, util::type_combinations_types);
 
 TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
     using real_type = typename TypeParam::real_type;
@@ -451,7 +383,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
         { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
     };
-    const auto [first_label, second_label] = get_distinct_label<label_type>();
+    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
     std::vector<label_type> label = { first_label, second_label, first_label };
 
     // write the necessary data to the file
@@ -521,7 +453,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
         { real_type{ 2.1 }, real_type{ 0.0 }, real_type{ 0.0 } },
         { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 0.0 } }
     };
-    const auto [first_label, second_label] = get_distinct_label<label_type>();
+    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
     std::vector<label_type> label = { first_label, second_label, first_label };
 
     // write the necessary data to the file
