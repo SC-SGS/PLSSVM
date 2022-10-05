@@ -15,7 +15,7 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "../../types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file}
+#include "../../types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file, get_distinct_label}
 #include "../../utility.hpp"        // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
@@ -30,15 +30,24 @@
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
-// TODO: typed test with template?
+template <typename T>
+class LIBSVMModelHeaderParse : public ::testing::Test {};
 
-TEST(LIBSVMModelHeaderParseValid, read_linear) {
-    using real_type = double;
-    using label_type = int;
+template <typename T>
+class LIBSVMModelHeaderParseValid : public LIBSVMModelHeaderParse<T> {};
+TYPED_TEST_SUITE(LIBSVMModelHeaderParseValid, util::type_combinations_types);
+
+TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
     using size_type = std::size_t;
 
+    // create temporary file
+    util::temporary_file template_file{};
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", template_file.filename);
+
     // parse the LIBSVM model file header
-    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
     const auto &[params, rho, label, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
@@ -52,16 +61,21 @@ TEST(LIBSVMModelHeaderParseValid, read_linear) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-    EXPECT_EQ(label, (std::vector<label_type>{ 0, 0, 1, 1, 1 }));
+    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
+    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
     EXPECT_EQ(header_lines, 8);
 }
-TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
-    using real_type = double;
-    using label_type = int;
+TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
     using size_type = std::size_t;
 
+    // create temporary file
+    util::temporary_file template_file{};
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_polynomial_TEMPLATE.libsvm.model", template_file.filename);
+
     // parse the LIBSVM model file header
-    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/model/5x4_polynomial.libsvm.model" };
+    plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
     const auto &[params, rho, label, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
@@ -78,16 +92,21 @@ TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-    EXPECT_EQ(label, (std::vector<label_type>{ 0, 0, 1, 1, 1 }));
+    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
+    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
     EXPECT_EQ(header_lines, 11);
 }
-TEST(LIBSVMModelHeaderParseValid, read_rbf) {
-    using real_type = double;
-    using label_type = int;
+TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
     using size_type = std::size_t;
 
+    // create temporary file
+    util::temporary_file template_file{};
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_rbf_TEMPLATE.libsvm.model", template_file.filename);
+
     // parse the LIBSVM model file header
-    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/model/5x4_rbf.libsvm.model" };
+    plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
     const auto &[params, rho, label, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
@@ -97,20 +116,21 @@ TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     EXPECT_EQ(params.kernel.value(), plssvm::kernel_type::rbf);
     EXPECT_TRUE(params.degree.is_default());
     EXPECT_FALSE(params.gamma.is_default());
-    EXPECT_EQ(params.gamma.value(), 0.025);
+    EXPECT_EQ(params.gamma.value(), plssvm::detail::convert_to<real_type>("0.025"));
     EXPECT_TRUE(params.coef0.is_default());
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-    EXPECT_EQ(label, (std::vector<label_type>{ 0, 0, 1, 1, 1 }));
+    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
+    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
     EXPECT_EQ(header_lines, 9);
 }
 
 template <typename T>
-class LIBSVMModelHeaderParse : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderParse, util::type_combinations_types);
+class LIBSVMModelHeaderParseInvalid : public LIBSVMModelHeaderParse<T> {};
+TYPED_TEST_SUITE(LIBSVMModelHeaderParseInvalid, util::type_combinations_types);
 
-TYPED_TEST(LIBSVMModelHeaderParse, wrong_svm_type) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, wrong_svm_type) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -123,7 +143,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, wrong_svm_type) {
                       plssvm::invalid_file_format_exception,
                       "Can only use c_svc as svm_type, but 'nu_svc' was given!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, wrong_kernel_type) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, wrong_kernel_type) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -136,7 +156,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, wrong_kernel_type) {
                       plssvm::invalid_file_format_exception,
                       "Unrecognized kernel type 'foo'!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, wrong_total_sv) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, wrong_total_sv) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -149,7 +169,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, wrong_total_sv) {
                       plssvm::invalid_file_format_exception,
                       "The number of support vectors must be greater than 0!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, too_few_label) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, too_few_label) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -162,7 +182,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, too_few_label) {
                       plssvm::invalid_file_format_exception,
                       "At least two labels must be set, but only 1 label ([1]) was given!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, too_few_nr_sv) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, too_few_nr_sv) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -175,7 +195,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, too_few_nr_sv) {
                       plssvm::invalid_file_format_exception,
                       "At least two nr_sv must be set, but only 1 ([5]) was given!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, unrecognized_header_entry) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, unrecognized_header_entry) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -188,7 +208,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, unrecognized_header_entry) {
                       plssvm::invalid_file_format_exception,
                       "Unrecognized header entry 'invalid entry'! Maybe SV is missing?");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_svm_type) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_svm_type) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -201,7 +221,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_svm_type) {
                       plssvm::invalid_file_format_exception,
                       "Missing svm_type!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_kernel_type) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_kernel_type) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -215,7 +235,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_kernel_type) {
                       "Missing kernel_type!");
 }
 
-TYPED_TEST(LIBSVMModelHeaderParse, explicit_degree_in_linear_kernel) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_degree_in_linear_kernel) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -228,7 +248,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, explicit_degree_in_linear_kernel) {
                       plssvm::invalid_file_format_exception,
                       "Explicitly provided a value for the degree parameter which is not used in the linear kernel!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, explicit_gamma_in_linear_kernel) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_gamma_in_linear_kernel) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -241,7 +261,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, explicit_gamma_in_linear_kernel) {
                       plssvm::invalid_file_format_exception,
                       "Explicitly provided a value for the gamma parameter which is not used in the linear kernel!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, explicit_coef0_in_linear_kernel) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_coef0_in_linear_kernel) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -254,7 +274,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, explicit_coef0_in_linear_kernel) {
                       plssvm::invalid_file_format_exception,
                       "Explicitly provided a value for the coef0 parameter which is not used in the linear kernel!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, explicit_degree_in_rbf_kernel) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_degree_in_rbf_kernel) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -267,7 +287,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, explicit_degree_in_rbf_kernel) {
                       plssvm::invalid_file_format_exception,
                       "Explicitly provided a value for the degree parameter which is not used in the radial basis function kernel!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, explicit_coef0_in_rbf_kernel) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_coef0_in_rbf_kernel) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -281,7 +301,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, explicit_coef0_in_rbf_kernel) {
                       "Explicitly provided a value for the coef0 parameter which is not used in the radial basis function kernel!");
 }
 
-TYPED_TEST(LIBSVMModelHeaderParse, missing_nr_class) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_nr_class) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -294,7 +314,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_nr_class) {
                       plssvm::invalid_file_format_exception,
                       "Missing number of different classes nr_class!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_total_sv) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_total_sv) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -307,7 +327,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_total_sv) {
                       plssvm::invalid_file_format_exception,
                       "Missing total number of support vectors total_sv!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_rho) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_rho) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -320,7 +340,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_rho) {
                       plssvm::invalid_file_format_exception,
                       "Missing rho value!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_label) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_label) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -333,7 +353,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_label) {
                       plssvm::invalid_file_format_exception,
                       "Missing class label specification!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, nr_class_and_label_mismatch) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, nr_class_and_label_mismatch) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -346,7 +366,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, nr_class_and_label_mismatch) {
                       plssvm::invalid_file_format_exception,
                       "The number of classes (nr_class) is 2, but the provided number of different labels is 3 (label)!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_nr_sv) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_nr_sv) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -359,7 +379,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_nr_sv) {
                       plssvm::invalid_file_format_exception,
                       "Missing number of support vectors per class nr_sv!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, nr_class_and_nr_sv_mismatch) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, nr_class_and_nr_sv_mismatch) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -372,7 +392,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, nr_class_and_nr_sv_mismatch) {
                       plssvm::invalid_file_format_exception,
                       "The number of classes (nr_class) is 2, but the provided number of different labels is 3 (nr_sv)!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, total_sv_and_nr_sv_mismatch) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, total_sv_and_nr_sv_mismatch) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -385,7 +405,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, total_sv_and_nr_sv_mismatch) {
                       plssvm::invalid_file_format_exception,
                       "The total number of support vectors is 5, but the sum of nr_sv is 6!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, too_many_classes) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, too_many_classes) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -398,7 +418,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, too_many_classes) {
                       plssvm::invalid_file_format_exception,
                       "Currently only binary classification is supported, but 3 different label where given!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_sv) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_sv) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -411,7 +431,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_sv) {
                       plssvm::invalid_file_format_exception,
                       "Unrecognized header entry '-0.17609610490769723 1:-1.117828e+00 2:-2.908719e+00 3:6.663834e-01 4:1.097883e+00'! Maybe SV is missing?");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, missing_support_vectors) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_support_vectors) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
@@ -424,7 +444,7 @@ TYPED_TEST(LIBSVMModelHeaderParse, missing_support_vectors) {
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: no support vectors are given or SV is missing!");
 }
-TYPED_TEST(LIBSVMModelHeaderParse, empty) {
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, empty) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
     using size_type = std::size_t;
