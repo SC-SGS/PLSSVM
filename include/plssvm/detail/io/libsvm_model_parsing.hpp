@@ -81,9 +81,9 @@ namespace plssvm::detail::io {
 template <typename real_type, typename label_type, typename size_type>
 [[nodiscard]] inline std::tuple<parameter<real_type>, real_type, std::vector<label_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
-    plssvm::parameter<real_type> params;
-    real_type rho = 0.0;
-    size_type num_support_vectors;
+    plssvm::parameter<real_type> params{};
+    real_type rho{};
+    size_type num_support_vectors{};
 
     // helper variables
     bool svm_type_set{ false };
