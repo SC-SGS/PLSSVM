@@ -47,10 +47,8 @@ TEST_P(ARFFParseHeaderValid, header) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ARFFParse, ARFFParseHeaderValid, ::testing::Values(
-                                                     std::make_tuple("/data/arff/5x4_int.arff", 4, 7, true, 4),
-                                                     std::make_tuple("/data/arff/5x4_string.arff", 4, 7, true, 4),
-                                                     std::make_tuple("/data/arff/5x4_sparse_int.arff", 4, 7, true, 2),
-                                                     std::make_tuple("/data/arff/5x4_sparse_string.arff", 4, 7, true, 2),
+                                                     std::make_tuple("/data/arff/5x4.arff", 4, 7, true, 4),
+                                                     std::make_tuple("/data/arff/5x4_sparse.arff", 4, 7, true, 2),
                                                      std::make_tuple("/data/arff/3x2_without_label.arff", 2, 4, false, 0)));
 // clang-format on
 
@@ -167,7 +165,7 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/5x4_TEMPLATE.arff", this->filename);
         // create a vector with the correct labels
         const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-        correct_label = std::vector<label_type>{ second_label, second_label, first_label, first_label, first_label };
+        correct_label = std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label };
     }
 
     using real_type = typename T::real_type;
@@ -176,8 +174,8 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ -1.117827500607882 }, real_type{ -2.9087188881250993 }, real_type{ 0.66638344270039144 }, real_type{ 1.0978832703949288 } },
         { real_type{ -0.5282118298909262 }, real_type{ -0.335880984968183973 }, real_type{ 0.51687296029754564 }, real_type{ 0.54604461446026 } },
-        { real_type{ 0.0 }, real_type{ 0.60276937379453293 }, real_type{ -0.13086851759108944 }, real_type{ 0.0 } },
         { real_type{ 0.57650218263054642 }, real_type{ 1.01405596624706053 }, real_type{ 0.13009428079760464 }, real_type{ 0.7261913886869387 } },
+        { real_type{ -0.20981208921241892 }, real_type{ 0.60276937379453293 }, real_type{ -0.13086851759108944 }, real_type{ 0.10805254527169827 } },
         { real_type{ 1.88494043717792 }, real_type{ 1.00518564317278263 }, real_type{ 0.298499933047586044 }, real_type{ 1.6464627048813514 } }
     };
     std::vector<label_type> correct_label{};
@@ -192,7 +190,7 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/5x4_sparse_TEMPLATE.arff", this->filename);
         // create a vector with the correct labels
         const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-        correct_label = std::vector<label_type>{ second_label, second_label, first_label, first_label, first_label };
+        correct_label = std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label };
     }
 
     using real_type = typename T::real_type;
@@ -200,10 +198,10 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
 
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.51687296029754564 }, real_type{ 0.54604461446026 } },
-        { real_type{ 0.0 }, real_type{ 0.60276937379453293 }, real_type{ -0.13086851759108944 }, real_type{ 0.0 } },
-        { real_type{ 0.57650218263054642 }, real_type{ 1.01405596624706053 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 1.88494043717792 }, real_type{ 1.00518564317278263 }, real_type{ 0.298499933047586044 }, real_type{ 1.6464627048813514 } }
+        { real_type{ 0.0 }, real_type{ 0.51687296029754564 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 1.01405596624706053 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 0.60276937379453293 }, real_type{ 0.0 }, real_type{ -0.13086851759108944 }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.298499933047586044 } }
     };
     std::vector<label_type> correct_label{};
 };
@@ -339,6 +337,16 @@ TYPED_TEST(ARFFParse, dense_too_many_values) {
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Invalid number of features and labels! Found 6 but should be 5!");
+}
+TYPED_TEST(ARFFParse, libsvm_file) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception);
 }
 
 template <typename T>

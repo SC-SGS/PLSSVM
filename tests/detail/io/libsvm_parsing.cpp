@@ -23,7 +23,6 @@
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::remove
-#include <fstream>      // std::ifstream, std::ofstream
 #include <string>       // std::string
 #include <tuple>        // std::ignore
 #include <type_traits>  // std::is_same_v
@@ -42,8 +41,8 @@ TEST_P(LIBSVMParseNumFeatures, num_features) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
-                                                      std::make_pair("/data/libsvm/5x4_int.libsvm", 4),
-                                                      std::make_pair("/data/libsvm/5x4_sparse_string.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/5x4.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/5x4_sparse.libsvm", 4),
                                                       std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
                                                       std::make_pair("/data/libsvm/500x200.libsvm", 200),
                                                       std::make_pair("/data/empty.txt", 0)));
@@ -232,7 +231,7 @@ TYPED_TEST(LIBSVMParse, arff_file) {
     using current_label_type = typename TypeParam::label_type;
 
     // parse the ARFF file
-    const std::string filename = PLSSVM_TEST_PATH "/data/arff/5x4_int.arff";
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/5x4.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception);
@@ -355,7 +354,7 @@ TYPED_TEST(LIBSVMParseDeathTest, skip_too_many_lines) {
     using current_label_type = typename TypeParam::label_type;
 
     // parse LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4_int.libsvm";
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     // try to skip more lines than are present in the data file
