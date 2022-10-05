@@ -29,7 +29,7 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::make_tuple, std::get
-#include <type_traits>  // std::is_same_v
+#include <type_traits>  // std::is_same_v, std::is_integral_v
 #include <vector>       // std::vector
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ TYPED_TEST(DataSetLabelMapper, construct_too_many_label) {
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
 
     // the different labels
-    std::vector<label_type> different_labels = {
+    const std::vector<label_type> different_labels = {
         plssvm::detail::convert_to<label_type>("0"),
         plssvm::detail::convert_to<label_type>("1"),
         plssvm::detail::convert_to<label_type>("2")
@@ -360,6 +360,20 @@ std::vector<T> correct_different_labels() {
 template <typename T>
 class DataSet : public ::testing::Test, private util::redirect_output, protected util::temporary_file {};
 TYPED_TEST_SUITE(DataSet, util::type_combinations_types);
+
+TYPED_TEST(DataSet, typedefs) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a data_set using an existing LIBSVM data set file
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+    const plssvm::data_set<real_type, label_type> data{ this->filename };
+
+    // test internal typedefs
+    ::testing::StaticAssertTypeEq<real_type, typename decltype(data)::real_type>();
+    ::testing::StaticAssertTypeEq<label_type, typename decltype(data)::label_type>();
+    EXPECT_TRUE(std::is_integral_v<typename decltype(data)::size_type>);
+}
 
 TYPED_TEST(DataSet, construct_arff_from_file_with_label) {
     using real_type = typename TypeParam::real_type;

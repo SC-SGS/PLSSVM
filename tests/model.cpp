@@ -19,8 +19,7 @@
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
 
-#include <cstddef>     // std::size_t
-#include <filesystem>  // std::filesystem::remove
+#include <cstddef>      // std::size_t
 #include <regex>        // std::regex, std::regex_match, std::regex::extended
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -29,6 +28,18 @@
 template <typename T>
 class Model : public ::testing::Test, private util::redirect_output {};
 TYPED_TEST_SUITE(Model, util::type_combinations_types);
+
+TYPED_TEST(Model, typedefs) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create a model using an existing LIBSVM model file
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+
+    // test internal typedefs
+    ::testing::StaticAssertTypeEq<real_type, typename decltype(model)::real_type>();
+    ::testing::StaticAssertTypeEq<label_type, typename decltype(model)::label_type>();
+}
 
 TYPED_TEST(Model, construct) {
     using real_type = typename TypeParam::real_type;
@@ -51,18 +62,6 @@ TYPED_TEST(Model, construct) {
     EXPECT_EQ(model.support_vectors(), support_vectors);
     EXPECT_EQ(model.weights(), plssvm::detail::split_as<real_type>("-0.17609610490769723 0.8838187731213127 -0.47971257671001616 0.0034556484621847128 -0.23146573996578407"));
     EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-}
-
-TYPED_TEST(Model, typedefs) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
-
-    // create a model using an existing LIBSVM model file
-    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
-
-    // test internal typedefs
-    ::testing::StaticAssertTypeEq<real_type, typename decltype(model)::real_type>();
-    ::testing::StaticAssertTypeEq<label_type, typename decltype(model)::label_type>();
 }
 
 TYPED_TEST(Model, num_support_vectors) {
