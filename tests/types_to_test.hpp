@@ -63,13 +63,14 @@ using type_combinations_types = ::testing::Types<
 
 /**
  * @brief Get two distinct labels based on the provided label type.
+ * @details The distinct label values must be provided in increasing order (for a defined order in `std::map`).
  * @tparam T the label type
  * @return two distinct label (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline std::pair<T, T> get_distinct_label() {
     if constexpr (std::is_same_v<T, bool>) {
-        return std::make_pair(true, false);
+        return std::make_pair(false, true);
     } else if constexpr (sizeof(T) == sizeof(char)) {
         return std::make_pair('a', 'b');
     } else if constexpr (std::is_signed_v<T>) {
