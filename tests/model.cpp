@@ -35,7 +35,7 @@ TYPED_TEST(Model, construct) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
 
     // test for correct construction
     EXPECT_EQ(model.num_support_vectors(), 5);
@@ -58,7 +58,7 @@ TYPED_TEST(Model, typedefs) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
 
     // test internal typedefs
     ::testing::StaticAssertTypeEq<real_type, typename decltype(model)::real_type>();
@@ -70,7 +70,7 @@ TYPED_TEST(Model, num_support_vectors) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct number of support vectors
     EXPECT_EQ(model.num_support_vectors(), 5);
 }
@@ -79,7 +79,7 @@ TYPED_TEST(Model, num_features) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct number of features
     EXPECT_EQ(model.num_features(), 4);
 }
@@ -88,7 +88,7 @@ TYPED_TEST(Model, svm_parameter) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct number of features
     EXPECT_EQ(model.svm_parameter(), plssvm::parameter<real_type>{});
 }
@@ -97,7 +97,7 @@ TYPED_TEST(Model, support_vectors) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct support vectors
     const std::vector<std::vector<real_type>> support_vectors{
         plssvm::detail::split_as<real_type>("-1.117828e+00 -2.908719e+00 6.663834e-01 1.097883e+00"),
@@ -113,7 +113,7 @@ TYPED_TEST(Model, weights) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct weights
     EXPECT_EQ(model.weights(), plssvm::detail::split_as<real_type>("-0.17609610490769723 0.8838187731213127 -0.47971257671001616 0.0034556484621847128 -0.23146573996578407"));
 }
@@ -122,7 +122,7 @@ TYPED_TEST(Model, rho) {
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
-    plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
+    const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct rho (bias) value
     EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
 }
@@ -190,7 +190,7 @@ TEST_P(ModelSave, save) {
     // only support vectors should be left -> check the remaining lines if they match the correct pattern
     const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
     for (const std::string_view line : lines) {
-        std::regex reg(support_vector_pattern, std::regex::extended);
+        const std::regex reg(support_vector_pattern, std::regex::extended);
         EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format("Line \"{}\" doesn't match the regex pattern \"{}\"", line, support_vector_pattern);
     }
 }
