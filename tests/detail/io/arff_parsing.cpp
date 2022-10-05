@@ -25,8 +25,7 @@
 #include <filesystem>   // std::filesystem::remove
 #include <fstream>      // std::ifstream, std::ofstream
 #include <string>       // std::string
-#include <tuple>        // std::ignore
-#include <tuple>        // std::tuple, std::make_tuple
+#include <tuple>        // std::tuple, std::make_tuple, std::ignore
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
@@ -394,11 +393,7 @@ TYPED_TEST(ARFFWrite, write_with_label) {
     for (std::size_t i = 0; i < data.front().size(); ++i) {
         EXPECT_EQ(reader.line(i + 1), fmt::format("@ATTRIBUTE feature_{} NUMERIC", i));
     }
-    if constexpr (std::is_same_v<label_type, int>) {
-        EXPECT_EQ(reader.line(4), "@ATTRIBUTE class {-1,1}");
-    } else if constexpr (std::is_same_v<label_type, std::string>) {
-        EXPECT_EQ(reader.line(4), "@ATTRIBUTE class {cat,dog}");
-    }
+    EXPECT_EQ(reader.line(4), fmt::format("@ATTRIBUTE class {{{},{}}}", first_label, second_label));
     EXPECT_EQ(reader.line(5), "@DATA");
     // check the lines
     for (std::size_t i = 0; i < data.size(); ++i) {
