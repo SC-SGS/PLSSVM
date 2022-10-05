@@ -47,7 +47,7 @@ class model {
     // the label_type may be any arithmetic type (except bool) or a string.
     static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
     // because std::vector<bool> is evil
-    static_assert(!std::is_same_v<U, bool>, "The second template type must NOT be 'bool'!");
+//    static_assert(!std::is_same_v<U, bool>, "The second template type must NOT be 'bool'!");
 
     // plssvm::csvm needs the constructor
     template <typename>

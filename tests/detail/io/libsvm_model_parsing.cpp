@@ -30,6 +30,8 @@
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
+// TODO: typed test with template?
+
 TEST(LIBSVMModelHeaderParseValid, read_linear) {
     using real_type = double;
     using label_type = int;
@@ -50,7 +52,7 @@ TEST(LIBSVMModelHeaderParseValid, read_linear) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-    EXPECT_EQ(label, (std::vector<label_type>{ 1, 1, -1, -1, -1 }));
+    EXPECT_EQ(label, (std::vector<label_type>{ 0, 0, 1, 1, 1 }));
     EXPECT_EQ(header_lines, 8);
 }
 TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
@@ -76,7 +78,7 @@ TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-    EXPECT_EQ(label, (std::vector<label_type>{ 1, 1, -1, -1, -1 }));
+    EXPECT_EQ(label, (std::vector<label_type>{ 0, 0, 1, 1, 1 }));
     EXPECT_EQ(header_lines, 11);
 }
 TEST(LIBSVMModelHeaderParseValid, read_rbf) {
@@ -100,7 +102,7 @@ TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
-    EXPECT_EQ(label, (std::vector<label_type>{ 1, 1, -1, -1, -1 }));
+    EXPECT_EQ(label, (std::vector<label_type>{ 0, 0, 1, 1, 1 }));
     EXPECT_EQ(header_lines, 9);
 }
 
