@@ -115,7 +115,7 @@ using real_type_list = std::tuple<float, double>;
 using real_type_gtest = detail::tuple_to_gtest_types_t<real_type_list>;
 
 /// A type list of all supported label types (currently arithmetic types and `std::string`) as `std::tuple`.
-using label_type_list = std::tuple<bool, char, signed char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, std::string>;
+using label_type_list = std::tuple<bool, char, signed char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, long double, std::string>;
 /// A type list of all supported label types (currently arithmetic types and `std::string`) usable in google tests.
 using label_type_gtest = detail::tuple_to_gtest_types_t<label_type_list>;
 

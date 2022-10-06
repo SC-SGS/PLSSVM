@@ -22,7 +22,7 @@
 
 #include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error
-#include <string>        // std::string
+#include <string>        // std::string, std::stold
 #include <string_view>   // std::string_view
 #include <system_error>  // std:errc
 #include <type_traits>   // std::enable_if_t, std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
@@ -66,6 +66,8 @@ template <typename T, typename Exception = std::runtime_error, std::enable_if_t<
             throw Exception{ fmt::format("Can't convert '{}' to a value of type char!", str) };
         }
         return trimmed.front();
+    } else if constexpr (std::is_same_v<remove_cvref_t<T>, long double>) {
+        return std::stold(std::string{ str });
     } else {
         // select conversion function depending on the provided type
         const auto convert_from_chars = [](const std::string_view sv, auto &val) {
