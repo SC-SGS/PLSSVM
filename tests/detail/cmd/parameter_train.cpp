@@ -439,19 +439,25 @@ INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainVersion, ::testing::Value
 
 TEST_F(ParameterTrain, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-train");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_train{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::StartsWith("Error missing input file!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_train{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::StartsWith("Error missing input file!"));
 }
 TEST_F(ParameterTrain, too_many_positional_arguments) {
     this->CreateCMDArgs("./plssvm-train p1 p2 p3 p4");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_train{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::HasSubstr("Only up to two positional options may be given, but 2 (\"p3 p4\") additional option(s) where provided!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_train{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::HasSubstr(R"(Only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParameterTrainDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_train{ 0, nullptr }), ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_train{ 0, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 TEST_F(ParameterTrainDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_train{ 1, nullptr }), ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_train{ 1, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
 TEST_F(ParameterTrainDeathTest, unrecognized_option) {
     this->CreateCMDArgs("./plssvm-train --foo bar");

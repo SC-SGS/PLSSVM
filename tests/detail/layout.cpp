@@ -165,8 +165,10 @@ TYPED_TEST(LayoutDeathTest, too_many_data_points_to_transform) {
         { 11, 12, 13 },
         { 21, 22, 23 }
     };
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 3), "Number of data points to transform can not exceed matrix size!");
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 3), "Number of data points to transform can not exceed matrix size!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 3),
+                 "Number of data points to transform can not exceed matrix size!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 3),
+                 "Number of data points to transform can not exceed matrix size!");
 }
 
 TYPED_TEST(LayoutDeathTest, different_number_of_features) {
@@ -175,8 +177,10 @@ TYPED_TEST(LayoutDeathTest, different_number_of_features) {
         { 11, 12, 13 },
         { 21, 22 }
     };
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 2), "Feature sizes mismatch! All features should have size 3.");
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 2), "Feature sizes mismatch! All features should have size 3.");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 2),
+                 "Feature sizes mismatch! All features should have size 3.");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 2),
+                 "Feature sizes mismatch! All features should have size 3.");
 }
 
 TYPED_TEST(LayoutDeathTest, empty_features) {

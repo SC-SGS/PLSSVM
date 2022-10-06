@@ -238,23 +238,31 @@ INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictVersion, ::testing::V
 
 TEST_F(ParameterPredict, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-predict");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::StartsWith("Error missing test file!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::StartsWith("Error missing test file!"));
 }
 TEST_F(ParameterPredict, single_positional_argument) {
     this->CreateCMDArgs("./plssvm-predict data.libsvm");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::StartsWith("Error missing model file!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::StartsWith("Error missing model file!"));
 }
 TEST_F(ParameterPredict, too_many_positional_arguments) {
     this->CreateCMDArgs("./plssvm-predict p1 p2 p3 p4");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::HasSubstr(R"(Only up to three positional options may be given, but 1 ("p4") additional option(s) where provided!)"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::HasSubstr(R"(Only up to three positional options may be given, but 1 ("p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParameterPredictDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ 0, nullptr }), ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ 0, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 TEST_F(ParameterPredictDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ 1, nullptr }), ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ 1, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
 TEST_F(ParameterPredictDeathTest, unrecognized_option) {
     this->CreateCMDArgs("./plssvm-predict --foo bar");

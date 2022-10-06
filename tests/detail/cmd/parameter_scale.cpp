@@ -260,29 +260,38 @@ INSTANTIATE_TEST_SUITE_P(ParameterScale, ParameterScaleVersion, ::testing::Value
 
 TEST_F(ParameterScaleDeathTest, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-scale");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::StartsWith("Error missing input file!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::StartsWith("Error missing input file!"));
 }
 TEST_F(ParameterScaleDeathTest, save_and_restore) {
     this->CreateCMDArgs("./plssvm-scale -s data.libsvm.save -r data.libsvm.restore data.libsvm");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::StartsWith("Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::StartsWith("Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!"));
 }
 
 TEST_F(ParameterScaleDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs("./plssvm-scale p1 p2 p3 p4");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_FAILURE), ::testing::HasSubstr("Only up to two positional options may be given, but 2 (\"p3 p4\") additional option(s) where provided!"));
+    EXPECT_EXIT((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::HasSubstr(R"(Only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParameterScaleDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_scale{ 0, nullptr }), ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_scale{ 0, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 TEST_F(ParameterScaleDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_scale{ 1, nullptr }), ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_scale{ 1, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
 TEST_F(ParameterScaleDeathTest, illegal_scaling_range) {
     // illegal [lower, upper] bound range
     this->CreateCMDArgs("./plssvm-scale -l 1.0 -u -1.0 data.libsvm");
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }), ::testing::HasSubstr("Error invalid scaling range [lower, upper] with [1, -1]!"));
+    EXPECT_DEATH((plssvm::detail::cmd::parameter_scale{ this->argc, this->argv }),
+                 ::testing::HasSubstr("Error invalid scaling range [lower, upper] with [1, -1]!"));
 }
 TEST_F(ParameterScaleDeathTest, unrecognized_option) {
     this->CreateCMDArgs("./plssvm-scale --foo bar");
