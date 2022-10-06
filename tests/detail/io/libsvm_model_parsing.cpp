@@ -43,7 +43,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     using size_type = std::size_t;
 
     // create temporary file
-    util::temporary_file template_file{};
+    const util::temporary_file template_file{};
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", template_file.filename);
 
     // parse the LIBSVM model file header
@@ -71,7 +71,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     using size_type = std::size_t;
 
     // create temporary file
-    util::temporary_file template_file{};
+    const util::temporary_file template_file{};
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_polynomial_TEMPLATE.libsvm.model", template_file.filename);
 
     // parse the LIBSVM model file header
@@ -102,7 +102,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     using size_type = std::size_t;
 
     // create temporary file
-    util::temporary_file template_file{};
+    const util::temporary_file template_file{};
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_rbf_TEMPLATE.libsvm.model", template_file.filename);
 
     // parse the LIBSVM model file header
@@ -693,7 +693,8 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_header_without_label) {
     fmt::ostream out = fmt::output_file(this->filename);
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set)), "Cannot write a model file that does not include labels!");
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set)),
+                 "Cannot write a model file that does not include labels!");
 }
 TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_without_label) {
     using real_type = typename TypeParam::real_type;
@@ -706,7 +707,8 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_without_label) {
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } } } };
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)), "Cannot write a model file that does not include labels!");
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
+                 "Cannot write a model file that does not include labels!");
 }
 TYPED_TEST(LIBSVMModelWriteDeathTest, num_alphas_and_num_data_points_mismatch) {
     using real_type = typename TypeParam::real_type;
@@ -717,8 +719,12 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, num_alphas_and_num_data_points_mismatch) {
     const real_type rho{};
     const std::vector<real_type> alpha{ real_type{ 0.1 } };
     const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } }, { real_type{ 1.0 } } }, std::vector<label_type>{ first_label, second_label } };
+    const plssvm::data_set<real_type, label_type> data_set{
+        std::vector<std::vector<real_type>>{ { real_type{ 0.0 } }, { real_type{ 1.0 } } },
+        std::vector<label_type>{ first_label, second_label }
+    };
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)), ::testing::HasSubstr("The number of weights (1) doesn't match the number of data points (2)!"));
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
+                 ::testing::HasSubstr("The number of weights (1) doesn't match the number of data points (2)!"));
 }

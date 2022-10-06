@@ -117,7 +117,9 @@ TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
 TYPED_TEST(FileReaderConstructWithOpen, file_not_found) {
     // create file name depending on the current test type
     const TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
-    EXPECT_THROW_WHAT(plssvm::detail::io::file_reader{ filename }, plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", PLSSVM_TEST_PATH "/data/file_not_found"));
+    EXPECT_THROW_WHAT(plssvm::detail::io::file_reader{ filename },
+                      plssvm::file_not_found_exception,
+                      "Couldn't find file: '" PLSSVM_TEST_PATH "/data/file_not_found'!");
 }
 
 template <typename T>
@@ -155,7 +157,9 @@ TYPED_TEST(FileReaderOpen, file_not_found) {
     const TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
-    EXPECT_THROW_WHAT(reader.open(filename), plssvm::file_not_found_exception, fmt::format("Couldn't find file: '{}'!", PLSSVM_TEST_PATH "/data/file_not_found"));
+    EXPECT_THROW_WHAT(reader.open(filename),
+                      plssvm::file_not_found_exception,
+                      "Couldn't find file: '" PLSSVM_TEST_PATH "/data/file_not_found'!");
 }
 TYPED_TEST(FileReaderOpen, multiple_open) {
     // create default constructed file reader and open it using the file name depending on the current test type
@@ -166,7 +170,9 @@ TYPED_TEST(FileReaderOpen, multiple_open) {
     // a file must be open
     ASSERT_TRUE(reader.is_open());
     // trying to open another file must throw
-    EXPECT_THROW_WHAT(reader.open(filename), plssvm::file_reader_exception, "This file_reader is already associated to a file!");
+    EXPECT_THROW_WHAT(reader.open(filename),
+                      plssvm::file_reader_exception,
+                      "This file_reader is already associated to a file!");
 }
 
 TEST(FileReader, is_open) {
@@ -354,7 +360,9 @@ TEST(FileReaderLines, parse_lines_without_associated_file) {
     plssvm::detail::io::file_reader reader{};
 
     // reading lines while no file is associated is impossible!
-    EXPECT_THROW_WHAT(reader.read_lines(), plssvm::file_reader_exception, "This file_reader is currently not associated to a file!");
+    EXPECT_THROW_WHAT(reader.read_lines(),
+                      plssvm::file_reader_exception,
+                      "This file_reader is currently not associated to a file!");
 }
 
 class FileReaderLinesDeathTest : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> {};

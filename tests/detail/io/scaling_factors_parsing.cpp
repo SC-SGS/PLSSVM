@@ -88,7 +88,9 @@ TYPED_TEST(ScalingFactorsRead, too_many_scaling_interval_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_interval_values.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 3 were given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "The interval to which the data points should be scaled must exactly have two values, but 3 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, too_few_scaling_interval_values) {
     using real_type = TypeParam;
@@ -96,7 +98,9 @@ TYPED_TEST(ScalingFactorsRead, too_few_scaling_interval_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_interval_values.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "The interval to which the data points should be scaled must exactly have two values, but 1 were given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "The interval to which the data points should be scaled must exactly have two values, but 1 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, inconsistent_scaling_interval_values) {
     using real_type = TypeParam;
@@ -104,7 +108,9 @@ TYPED_TEST(ScalingFactorsRead, inconsistent_scaling_interval_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/inconsistent_scaling_interval_values.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "Inconsistent scaling interval specification: lower (1.4) must be less than upper (-2.6)!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Inconsistent scaling interval specification: lower (1.4) must be less than upper (-2.6)!");
 }
 TYPED_TEST(ScalingFactorsRead, no_header) {
     using real_type = TypeParam;
@@ -112,7 +118,9 @@ TYPED_TEST(ScalingFactorsRead, no_header) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/no_header.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "The first line must only contain an 'x', but is \"-1.4 2.6\"!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      R"(The first line must only contain an 'x', but is "-1.4 2.6"!)");
 }
 TYPED_TEST(ScalingFactorsRead, too_few_lines) {
     using real_type = TypeParam;
@@ -120,7 +128,9 @@ TYPED_TEST(ScalingFactorsRead, too_few_lines) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_lines.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "At least two lines must be present, but only 1 were given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "At least two lines must be present, but only 1 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, empty) {
     using real_type = TypeParam;
@@ -128,7 +138,9 @@ TYPED_TEST(ScalingFactorsRead, empty) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/empty.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "At least two lines must be present, but only 0 were given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "At least two lines must be present, but only 0 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, too_few_scaling_factor_values) {
     using real_type = TypeParam;
@@ -136,7 +148,9 @@ TYPED_TEST(ScalingFactorsRead, too_few_scaling_factor_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_factor_values.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "Each line must contain exactly three values, but 2 were given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Each line must contain exactly three values, but 2 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, too_many_scaling_factor_values) {
     using real_type = TypeParam;
@@ -144,7 +158,9 @@ TYPED_TEST(ScalingFactorsRead, too_many_scaling_factor_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_factor_values.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "Each line must contain exactly three values, but 4 were given!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Each line must contain exactly three values, but 4 were given!");
 }
 TYPED_TEST(ScalingFactorsRead, zero_based_scaling_factors) {
     using real_type = TypeParam;
@@ -152,7 +168,9 @@ TYPED_TEST(ScalingFactorsRead, zero_based_scaling_factors) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/zero_based_scaling_factors.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), plssvm::invalid_file_format_exception, "The scaling factors must be provided one-based, but are zero-based!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "The scaling factors must be provided one-based, but are zero-based!");
 }
 TYPED_TEST(ScalingFactorsRead, invalid_number) {
     using real_type = TypeParam;
@@ -160,7 +178,9 @@ TYPED_TEST(ScalingFactorsRead, invalid_number) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/invalid_number.txt" };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<real_type>()));
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                      std::runtime_error,
+                      fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<real_type>()));
 }
 
 TYPED_TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
@@ -171,7 +191,8 @@ TYPED_TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
 
     // create temporary file containing the scaling factors
     const plssvm::detail::io::file_reader reader{};
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)), "The file_reader is currently not associated with a file!");
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_scaling_factors<real_type, factors_type<real_type>>(reader)),
+                 "The file_reader is currently not associated with a file!");
 }
 
 template <typename T>
@@ -189,7 +210,11 @@ TYPED_TEST(ScalingFactorsWrite, write) {
     using real_type = TypeParam;
     // define data to write
     const std::pair<real_type, real_type> interval{ -2.0, 2.0 };
-    std::vector<factors_type<real_type>> scaling_factors{ factors_type<real_type>{ 0, 1.2, 1.2 }, factors_type<real_type>{ 1, 0.5, -1.4 }, factors_type<real_type>{ 2, -1.2, 4.4 } };
+    std::vector<factors_type<real_type>> scaling_factors{
+        factors_type<real_type>{ 0, 1.2, 1.2 },
+        factors_type<real_type>{ 1, 0.5, -1.4 },
+        factors_type<real_type>{ 2, -1.2, 4.4 }
+    };
 
     // write the necessary data to the file
     plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors);
@@ -237,5 +262,6 @@ TYPED_TEST(ScalingFactorsWriteDeathTest, write_illegal_interval) {
     const std::vector<factors_type<real_type>> scaling_factors(1);
 
     // try to write the necessary data to the file
-    EXPECT_DEATH(plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors), ::testing::HasSubstr("Illegal interval specification: lower (1) < upper (-1)"));
+    EXPECT_DEATH(plssvm::detail::io::write_scaling_factors(this->filename, interval, scaling_factors),
+                 ::testing::HasSubstr("Illegal interval specification: lower (1) < upper (-1)"));
 }

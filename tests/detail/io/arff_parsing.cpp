@@ -60,98 +60,126 @@ TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_unquoted_nominal_attribute.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "The \"@ATTRIBUTE class    0,1\" nominal attribute must be enclosed with {}!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(The "@ATTRIBUTE class    0,1" nominal attribute must be enclosed with {}!)");
 }
 TEST(ARFFParseHeader, class_with_wrong_label) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_with_wrong_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "May not use the combination of the reserved name \"class\" and attribute type NUMERIC!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(May not use the combination of the reserved name "class" and attribute type NUMERIC!)");
 }
 TEST(ARFFParseHeader, class_without_label) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_without_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "The \"@ATTRIBUTE class\" field must contain class labels!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(The "@ATTRIBUTE class" field must contain class labels!)");
 }
 TEST(ARFFParseHeader, multiple_classes) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/multiple_classes.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "A nominal attribute with the name CLASS may only be provided once!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "A nominal attribute with the name CLASS may only be provided once!");
 }
 TEST(ARFFParseHeader, no_features) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/no_features.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "Can't parse file: no feature ATTRIBUTES are defined!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Can't parse file: no feature ATTRIBUTES are defined!");
 }
 TEST(ARFFParseHeader, no_data_attribute) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/no_data_attribute.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "Can't parse file: @DATA is missing!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Can't parse file: @DATA is missing!");
 }
 TEST(ARFFParseHeader, nominal_attribute_with_wrong_name) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/nominal_attribute_with_wrong_name.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "Read an invalid header entry: \"@ATTRIBUTE foo    {0,1}\"!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(Read an invalid header entry: "@ATTRIBUTE foo    {0,1}"!)");
 }
 TEST(ARFFParseHeader, numeric_unquoted) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/numeric_unquoted.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "A \"@ATTRIBUTE second entry   numeric\" name that contains a whitespace must be quoted!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(A "@ATTRIBUTE second entry   numeric" name that contains a whitespace must be quoted!)");
 }
 TEST(ARFFParseHeader, numeric_without_name) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/numeric_without_name.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "The \"@ATTRIBUTE   numeric\" field must contain a name!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(The "@ATTRIBUTE   numeric" field must contain a name!)");
 }
 TEST(ARFFParseHeader, relation_not_at_beginning) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/relation_not_at_beginning.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "The @RELATION attribute must be set before any other @ATTRIBUTE!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "The @RELATION attribute must be set before any other @ATTRIBUTE!");
 }
 TEST(ARFFParseHeader, relation_unquoted) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/relation_unquoted.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "A \"@RELATION  name with whitespaces\" name that contains a whitespace must be quoted!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(A "@RELATION  name with whitespaces" name that contains a whitespace must be quoted!)");
 }
 TEST(ARFFParseHeader, relation_without_name) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/relation_without_name.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "The \"@RELATION\" field must contain a name!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(The "@RELATION" field must contain a name!)");
 }
 TEST(ARFFParseHeader, wrong_line) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/wrong_line.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "Read an invalid header entry: \"@THIS IS NOT A CORRECT LINE!\"!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      R"(Read an invalid header entry: "@THIS IS NOT A CORRECT LINE!"!)");
 }
 TEST(ARFFParseHeader, empty) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/empty.txt";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())), plssvm::invalid_file_format_exception, "Can't parse file: no feature ATTRIBUTES are defined!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Can't parse file: no feature ATTRIBUTES are defined!");
 }
 
 template <typename T>
@@ -276,7 +304,9 @@ TYPED_TEST(ARFFParse, at_inside_data_section) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/@_inside_data_section.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Read @ inside data section!: \"@ATTRIBUTE invalid numeric\"!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      R"(Read @ inside data section!: "@ATTRIBUTE invalid numeric"!)");
 }
 TYPED_TEST(ARFFParse, sparse_missing_closing_brace) {
     using current_real_type = typename TypeParam::real_type;
@@ -286,7 +316,9 @@ TYPED_TEST(ARFFParse, sparse_missing_closing_brace) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_closing_brace.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing closing '}' for sparse data point \"{2 0.51687296029754564,3 0.54604461446026,4 1\" description!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      R"(Missing closing '}' for sparse data point "{2 0.51687296029754564,3 0.54604461446026,4 1" description!)");
 }
 TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
     using current_real_type = typename TypeParam::real_type;
@@ -296,7 +328,9 @@ TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_opening_brace.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing opening '{' for sparse data point \"1 0.60276937379453293,2 -0.13086851759108944,4 0}\" description!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      R"(Missing opening '{' for sparse data point "1 0.60276937379453293,2 -0.13086851759108944,4 0}" description!)");
 }
 TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
     using current_real_type = typename TypeParam::real_type;
@@ -306,7 +340,9 @@ TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_invalid_feature_index.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Trying to add feature/label at index 5 but the maximum index is 4!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Trying to add feature/label at index 5 but the maximum index is 4!");
 }
 TYPED_TEST(ARFFParse, sparse_missing_label) {
     using current_real_type = typename TypeParam::real_type;
@@ -316,7 +352,9 @@ TYPED_TEST(ARFFParse, sparse_missing_label) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Missing label for data point \"{0 1.88494043717792,1 1.00518564317278263,2 0.298499933047586044,3 1.6464627048813514}\"!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      R"(Missing label for data point "{0 1.88494043717792,1 1.00518564317278263,2 0.298499933047586044,3 1.6464627048813514}"!)");
 }
 
 TYPED_TEST(ARFFParse, dense_missing_value) {
@@ -327,7 +365,9 @@ TYPED_TEST(ARFFParse, dense_missing_value) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/dense_missing_value.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Invalid number of features and labels! Found 3 but should be 5!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Invalid number of features and labels! Found 3 but should be 5!");
 }
 TYPED_TEST(ARFFParse, dense_too_many_values) {
     using current_real_type = typename TypeParam::real_type;
@@ -337,7 +377,9 @@ TYPED_TEST(ARFFParse, dense_too_many_values) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/dense_too_many_values.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Invalid number of features and labels! Found 6 but should be 5!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Invalid number of features and labels! Found 6 but should be 5!");
 }
 TYPED_TEST(ARFFParse, class_same_label_multiple_times) {
     using current_real_type = typename TypeParam::real_type;
@@ -347,7 +389,9 @@ TYPED_TEST(ARFFParse, class_same_label_multiple_times) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_same_label_multiple_times.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Provided 2 labels but only 1 of them was/where unique!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Provided 2 labels but only 1 of them was/where unique!");
 }
 TYPED_TEST(ARFFParse, class_with_only_one_label) {
     using current_real_type = typename TypeParam::real_type;
@@ -357,7 +401,9 @@ TYPED_TEST(ARFFParse, class_with_only_one_label) {
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_with_only_one_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Only a single label has been provided!");
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                      plssvm::invalid_file_format_exception,
+                      "Only a single label has been provided!");
 }
 TYPED_TEST(ARFFParse, usage_of_undefined_label) {
     using current_real_type = typename TypeParam::real_type;
@@ -369,7 +415,9 @@ TYPED_TEST(ARFFParse, usage_of_undefined_label) {
     reader.read_lines('%');
     if constexpr (!std::is_same_v<current_label_type, bool>) {
         // it is not possible to have two boolean label and use a third undefined one
-        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Found the label \"2\" which was not specified in the header ({0,1})!");
+        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                          plssvm::invalid_file_format_exception,
+                          R"#(Found the label "2" which was not specified in the header ({0,1})!)#");
     } else {
         SUCCEED() << "By definition boolean labels do only support two different labels and, therefore, no third undefined one can be used.";
     }
@@ -384,7 +432,9 @@ TYPED_TEST(ARFFParse, string_label_with_whitespace) {
     reader.read_lines('%');
     if constexpr (std::is_same_v<current_label_type, std::string>) {
         // it is not possible to have two boolean label and use a third undefined one
-        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "String labels may not contain whitespaces, but \"Hello World\" has at least one!");
+        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                          plssvm::invalid_file_format_exception,
+                          R"(String labels may not contain whitespaces, but "Hello World" has at least one!)");
     } else {
         SUCCEED() << "By definition non-string labels cannot contain a whitespace.";
     }
@@ -410,7 +460,8 @@ TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
 
     // open file_reader without associating it to a file
     const plssvm::detail::io::file_reader reader{};
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), "The file_reader is currently not associated with a file!");
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+                 "The file_reader is currently not associated with a file!");
 }
 
 template <typename T>
@@ -547,7 +598,8 @@ TYPED_TEST(ARFFWriteDeathTest, data_and_label_size_mismatch) {
     const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("0") };
 
     // try to write the necessary data to the file
-    EXPECT_DEATH(plssvm::detail::io::write_arff_data(this->filename, data, label), ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
+    EXPECT_DEATH(plssvm::detail::io::write_arff_data(this->filename, data, label),
+                 ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
 }
 TYPED_TEST(ARFFWriteDeathTest, labels_provided_but_not_written) {
     using real_type = typename TypeParam::real_type;
@@ -558,5 +610,6 @@ TYPED_TEST(ARFFWriteDeathTest, labels_provided_but_not_written) {
     const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("0") };
 
     // try to write the necessary data to the file
-    EXPECT_DEATH((plssvm::detail::io::write_arff_data_impl<real_type, label_type, false>(this->filename, data, label)), "has_label is 'false' but labels were provided!");
+    EXPECT_DEATH((plssvm::detail::io::write_arff_data_impl<real_type, label_type, false>(this->filename, data, label)),
+                 "has_label is 'false' but labels were provided!");
 }
