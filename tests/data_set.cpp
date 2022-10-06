@@ -88,7 +88,9 @@ TYPED_TEST(DataSetScaling, construct_invalid_interval) {
     using scaling_type = typename plssvm::data_set<real_type, label_type>::scaling;
 
     // create scaling class with an invalid interval
-    EXPECT_THROW_WHAT((scaling_type{ real_type{ 1.0 }, real_type{ -1.0 } }), plssvm::data_set_exception, "Inconsistent scaling interval specification: lower (1) must be less than upper (-1)!");
+    EXPECT_THROW_WHAT((scaling_type{ real_type{ 1.0 }, real_type{ -1.0 } }),
+                      plssvm::data_set_exception,
+                      "Inconsistent scaling interval specification: lower (1) must be less than upper (-1)!");
 }
 TYPED_TEST(DataSetScaling, construct_from_file) {
     using real_type = typename TypeParam::real_type;
@@ -213,7 +215,9 @@ TYPED_TEST(DataSetLabelMapper, construct_too_many_label) {
     // too many labels provided!
     if constexpr (!std::is_same_v<label_type, bool>) {
         // only test for types other than bool since boolean labels can only be binary by definition
-        EXPECT_THROW_WHAT(label_mapper_type{ different_labels }, plssvm::data_set_exception, "Currently only binary classification is supported, but 3 different labels were given!");
+        EXPECT_THROW_WHAT(label_mapper_type{ different_labels },
+                          plssvm::data_set_exception,
+                          "Currently only binary classification is supported, but 3 different labels were given!");
     } else {
         SUCCEED() << "By definition boolean labels do only support two different labels.";
     }
@@ -249,7 +253,9 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_invalid_label) {
     // test the number of mappings
     if constexpr (!std::is_same_v<label_type, bool>) {
         // can't have an unknown labels for bool
-        EXPECT_THROW_WHAT(std::ignore = mapper.get_mapped_value_by_label(plssvm::detail::convert_to<label_type>("9")), plssvm::data_set_exception, "Label \"9\" unknown in this label mapping!");
+        EXPECT_THROW_WHAT(std::ignore = mapper.get_mapped_value_by_label(plssvm::detail::convert_to<label_type>("9")),
+                          plssvm::data_set_exception,
+                          R"(Label "9" unknown in this label mapping!)");
     } else {
         SUCCEED() << "By definition there can't be unknown labels for the boolean label type.";
     }
@@ -283,7 +289,9 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_value) {
     const label_mapper_type mapper{ different_labels };
 
     // test the number of mappings
-    EXPECT_THROW_WHAT(std::ignore = mapper.get_label_by_mapped_value(real_type{ 0.0 }), plssvm::data_set_exception, "Mapped value \"0\" unknown in this label mapping!");
+    EXPECT_THROW_WHAT(std::ignore = mapper.get_label_by_mapped_value(real_type{ 0.0 }),
+                      plssvm::data_set_exception,
+                      R"(Mapped value "0" unknown in this label mapping!)");
 }
 TYPED_TEST(DataSetLabelMapper, num_mappings) {
     using real_type = typename TypeParam::real_type;
@@ -671,7 +679,9 @@ TYPED_TEST(DataSet, scale_too_many_factors) {
     };
 
     // try creating a data set with invalid scaling factors
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ this->filename, scaling }), plssvm::data_set_exception, "Need at most as much scaling factors as features in the data set are present (4), but 5 were given!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ this->filename, scaling }),
+                      plssvm::data_set_exception,
+                      "Need at most as much scaling factors as features in the data set are present (4), but 5 were given!");
 }
 TYPED_TEST(DataSet, scale_invalid_feature_index) {
     using real_type = typename TypeParam::real_type;
@@ -689,7 +699,9 @@ TYPED_TEST(DataSet, scale_invalid_feature_index) {
     };
 
     // try creating a data set with invalid scaling factors
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ this->filename, scaling }), plssvm::data_set_exception, "The maximum scaling feature index most not be greater than 3, but is 4!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ this->filename, scaling }),
+                      plssvm::data_set_exception,
+                      "The maximum scaling feature index most not be greater than 3, but is 4!");
 }
 TYPED_TEST(DataSet, scale_duplicate_feature_index) {
     using real_type = typename TypeParam::real_type;
@@ -709,7 +721,9 @@ TYPED_TEST(DataSet, scale_duplicate_feature_index) {
     };
 
     // try creating a data set with invalid scaling factors
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ this->filename, scaling }), plssvm::data_set_exception, "Found more than one scaling factor for the feature index 2!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ this->filename, scaling }),
+                      plssvm::data_set_exception,
+                      "Found more than one scaling factor for the feature index 2!");
 }
 
 TYPED_TEST(DataSet, construct_from_vector_without_label) {
@@ -748,7 +762,9 @@ TYPED_TEST(DataSet, construct_from_empty_vector) {
     const std::vector<std::vector<real_type>> correct_data_points;
 
     // creating a data set from an empty vector is illegal
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }), plssvm::data_set_exception, "Data vector is empty!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }),
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
 }
 TYPED_TEST(DataSet, construct_from_vector_with_differing_num_features) {
     using real_type = typename TypeParam::real_type;
@@ -761,7 +777,9 @@ TYPED_TEST(DataSet, construct_from_vector_with_differing_num_features) {
     };
 
     // creating a data set from an empty vector is illegal
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }), plssvm::data_set_exception, "All points in the data vector must have the same number of features!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }),
+                      plssvm::data_set_exception,
+                      "All points in the data vector must have the same number of features!");
 }
 TYPED_TEST(DataSet, construct_from_vector_with_no_features) {
     using real_type = typename TypeParam::real_type;
@@ -771,7 +789,9 @@ TYPED_TEST(DataSet, construct_from_vector_with_no_features) {
     const std::vector<std::vector<real_type>> correct_data_points = { {}, {} };
 
     // creating a data set from an empty vector is illegal
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }), plssvm::data_set_exception, "No features provided for the data points!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points }),
+                      plssvm::data_set_exception,
+                      "No features provided for the data points!");
 }
 
 TYPED_TEST(DataSet, construct_from_vector_with_label) {
@@ -822,7 +842,9 @@ TYPED_TEST(DataSet, construct_from_vector_mismatching_num_data_points_and_labels
     const std::vector<label_type> labels = { first_label, second_label, first_label };
 
     // create data set
-    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points, labels }), plssvm::data_set_exception, "Number of labels (3) must match the number of data points (4)!");
+    EXPECT_THROW_WHAT((plssvm::data_set<real_type, label_type>{ correct_data_points, labels }),
+                      plssvm::data_set_exception,
+                      "Number of labels (3) must match the number of data points (4)!");
 }
 
 TYPED_TEST(DataSet, construct_scaled_from_vector_without_label) {

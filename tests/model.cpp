@@ -183,14 +183,19 @@ TEST_P(ModelSave, save) {
         }
         // NO line matches the pattern -> test failed
         if (!found_matching_line) {
-            GTEST_FAIL() << fmt::format("Can't find a line matching the regex pattern: \"{}\"", pattern);
+            GTEST_FAIL() << fmt::format(R"(Can't find a line matching the regex pattern: "{}".)", pattern);
         }
     }
     // only support vectors should be left -> check the remaining lines if they match the correct pattern
     const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
     for (const std::string_view line : lines) {
         const std::regex reg(support_vector_pattern, std::regex::extended);
-        EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format("Line \"{}\" doesn't match the regex pattern \"{}\"", line, support_vector_pattern);
+        EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format(R"(Line "{}" doesn't match the regex pattern "{}".)", line, support_vector_pattern);
     }
 }
-INSTANTIATE_TEST_SUITE_P(Model, ModelSave, ::testing::Values("/data/model/5x4_linear.libsvm.model", "/data/model/5x4_polynomial.libsvm.model", "/data/model/5x4_rbf.libsvm.model"));
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(Model, ModelSave, ::testing::Values(
+                "/data/model/5x4_linear.libsvm.model",
+                "/data/model/5x4_polynomial.libsvm.model",
+                "/data/model/5x4_rbf.libsvm.model"));
+// clang-format on
