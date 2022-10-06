@@ -104,7 +104,7 @@ namespace plssvm::detail::io {
  * -1 1:1.88494043717792 2:1.00518564317278263 3:0.298499933047586044 4:1.6464627048813514
  * @endcode
  * @tparam real_type the floating point type
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] reader the file_reader used to read the LIBSVM data
  * @param[in] skipped_lines the number of lines that should be skipped at the beginning
  * @note The features must be provided with one-based indices!
@@ -238,7 +238,7 @@ template <typename real_type, typename label_type>
  * @endcode
  * Note that the output may be sparse, i.e., all features with a value of `0.0` are omitted in the resulting file.
  * @tparam real_type the floating point type
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
@@ -317,7 +317,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const std::vecto
  * @endcode
  * Note that the output may be sparse, i.e., all features with a value of `0.0` are omitted in the resulting file.
  * @tparam real_type the floating point type
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
  * @param[in] label the labels to write to the file

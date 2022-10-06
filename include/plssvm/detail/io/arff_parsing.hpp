@@ -25,6 +25,7 @@
 
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <set>          // std::set
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::make_tuple
@@ -36,6 +37,7 @@ namespace plssvm::detail::io {
 /**
  * @brief Parse the ARFF file header, i.e., determine the number of features, the length of the ARRF header, whether the data set is annotated with labels
  *        and at which position the label is written in the data set.
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] lines the ARFF header to parse
  * @throws plssvm::invalid_file_format_exception if the \@RELATION field does not come before any other \@ATTRIBUTE
  * @throws plssvm::invalid_file_format_exception if the \@RELATION field does not have a name
@@ -46,15 +48,19 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if multiple \@ATTRIBUTES with the name CLASS are provided
  * @throws plssvm::invalid_file_format_exception if the class field does not provide any labels
  * @throws plssvm::invalid_file_format_exception if the class field provides labels that are no enclosed in {} (ARFF nominal attributes)
+ * @throws plssvm::invalid_file_format_exception if only a single label has been provided
+ * @throws plssvm::invalid_file_format_exception if a label has been provided multiple times
  * @throws plssvm::invalid_file_format_exception if a header entry starts with an @ but is none of \@RELATION, \@ATTRIBUTE, or \@DATA
  * @throws plssvm::invalid_file_format_exception if no feature attributes are provided
  * @throws plssvm::invalid_file_format_exception if the \@DATA attribute is missing
- * @return the necessary header information: [num_features, num_header_lines, has_label, label_idx] (`[[nodiscard]]`)
+ * @return the necessary header information: [num_features, num_header_lines, unique_labels, label_idx] (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::size_t> parse_arff_header(const std::vector<std::string_view> &lines) {
+template <typename label_type>
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::set<label_type>, std::size_t> parse_arff_header(const std::vector<std::string_view> &lines) {
     std::size_t num_features = 0;
     std::size_t label_idx = 0;
     bool has_label = false;
+    std::set<label_type> labels{};
 
     const auto check_for_name = [](std::string_view line, const std::size_t prefix, const std::size_t suffix) {
         std::string_view sv{ line };
@@ -136,6 +142,20 @@ namespace plssvm::detail::io {
                 if (!detail::starts_with(sv, '{') && !detail::ends_with(sv, '}')) {
                     throw invalid_file_format_exception{ fmt::format("The \"{}\" nominal attribute must be enclosed with {{}}!", line) };
                 }
+                // remove curly braces
+                sv = sv.substr(1, sv.size() - 2);
+                // split string with delimiter ',' to check the number of provided classes
+                const std::vector<std::string_view> labels_split = detail::split(sv, ',');
+                if (labels_split.size() == 1) {
+                    throw invalid_file_format_exception{ "Only a single label has been provided!" };
+                }
+                // check whether only unique labels have been provided
+                for (const std::string_view label : labels_split) {
+                    labels.insert(detail::convert_to<label_type, invalid_file_format_exception>(detail::trim(label)));
+                }
+                if (labels_split.size() != labels.size()) {
+                    throw invalid_file_format_exception{ fmt::format("Provided {} labels but only {} of them was/where unique!", labels_split.size(), labels.size()) };
+                }
                 // found a class
                 has_label = true;
                 continue;  // don't increment num_features
@@ -163,7 +183,7 @@ namespace plssvm::detail::io {
         throw invalid_file_format_exception{ "Can't parse file: @DATA is missing!" };
     }
 
-    return std::make_tuple(num_features, header_line + 1, has_label, has_label ? label_idx : 0);
+    return std::make_tuple(num_features, header_line + 1, labels, has_label ? label_idx : 0);
 }
 
 /**
@@ -187,7 +207,7 @@ namespace plssvm::detail::io {
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
  * @tparam real_type the floating point type
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] reader the file_reader used to read the ARFF data
  * @note The features must be provided with zero-based indices!
  * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
@@ -200,6 +220,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if a index is out-of-bounce with respect to the provided ARFF header information
  * @throws plssvm::invalid_file_format_exception if the ARFF header specifies labels but any data point misses a label
  * @throws plssvm::invalid_file_format_exception if the number of found features and labels mismatches the numbers provided in the ARFF header
+ * @throws plssvm::invalid_file_format_exception if a label in the data section has been found, that did not appear in the header
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type>
@@ -209,9 +230,10 @@ template <typename real_type, typename label_type>
     // parse arff header, structured bindings can't be used because of the OpenMP parallel section
     std::size_t num_header_lines = 0;
     std::size_t num_features = 0;
-    bool has_label = false;
+    std::set<label_type> unique_label{};
     std::size_t label_idx = 0;
-    std::tie(num_features, num_header_lines, has_label, label_idx) = detail::io::parse_arff_header(reader.lines());
+    std::tie(num_features, num_header_lines, unique_label, label_idx) = detail::io::parse_arff_header<label_type>(reader.lines());
+    const bool has_label = !unique_label.empty();
 
     // calculate data set sizes
     const std::size_t num_data_points = reader.num_lines() - num_header_lines;
@@ -223,7 +245,7 @@ template <typename real_type, typename label_type>
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
+    #pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
     {
         #pragma omp for
         for (std::size_t i = 0; i < data.size(); ++i) {
@@ -320,6 +342,11 @@ template <typename real_type, typename label_type>
                         }
                     }
                 }
+
+                // check if the parsed label is one of the labels specified in the ARFF file header
+                if (has_label && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
+                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})", label[i], fmt::join(unique_label, ",")) };
+                }
             } catch (const std::exception &) {
                 // catch first exception and store it
                 #pragma omp critical
@@ -363,7 +390,7 @@ template <typename real_type, typename label_type>
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
  * @tparam real_type the floating point type
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
@@ -445,7 +472,7 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
  * @tparam real_type the floating point type
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
+ * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
