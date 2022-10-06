@@ -64,8 +64,6 @@ class data_set {
     // make sure only valid template types are used
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
     static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
-    // because std::vector<bool> is evil
-//    static_assert(!std::is_same_v<U, bool>, "The second template type must NOT be 'bool'!");
 
     // plssvm::model needs the default constructor
     template <typename, typename>
