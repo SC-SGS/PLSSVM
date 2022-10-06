@@ -369,9 +369,24 @@ TYPED_TEST(ARFFParse, usage_of_undefined_label) {
     reader.read_lines('%');
     if constexpr (!std::is_same_v<current_label_type, bool>) {
         // it is not possible to have two boolean label and use a third undefined one
-        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Found the label \"2\" which was not specified in the header ({0,1})");
+        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "Found the label \"2\" which was not specified in the header ({0,1})!");
     } else {
         SUCCEED() << "By definition boolean labels do only support two different labels and, therefore, no third undefined one can be used.";
+    }
+}
+TYPED_TEST(ARFFParse, string_label_with_whitespace) {
+    using current_real_type = typename TypeParam::real_type;
+    using current_label_type = typename TypeParam::label_type;
+
+    // parse the ARFF file
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/string_label_with_whitespace.arff";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('%');
+    if constexpr (std::is_same_v<current_label_type, std::string>) {
+        // it is not possible to have two boolean label and use a third undefined one
+        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception, "String labels may not contain whitespaces, but \"Hello World\" has at least one!");
+    } else {
+        SUCCEED() << "By definition non-string labels cannot contain a whitespace.";
     }
 }
 TYPED_TEST(ARFFParse, libsvm_file) {

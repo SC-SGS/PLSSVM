@@ -50,6 +50,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the class field provides labels that are no enclosed in {} (ARFF nominal attributes)
  * @throws plssvm::invalid_file_format_exception if only a single label has been provided
  * @throws plssvm::invalid_file_format_exception if a label has been provided multiple times
+ * @throws plssvm::invalid_file_format_exception if a string label contains a whitespace
  * @throws plssvm::invalid_file_format_exception if a header entry starts with an @ but is none of \@RELATION, \@ATTRIBUTE, or \@DATA
  * @throws plssvm::invalid_file_format_exception if no feature attributes are provided
  * @throws plssvm::invalid_file_format_exception if the \@DATA attribute is missing
@@ -155,6 +156,14 @@ template <typename label_type>
                 }
                 if (labels_split.size() != labels.size()) {
                     throw invalid_file_format_exception{ fmt::format("Provided {} labels but only {} of them was/where unique!", labels_split.size(), labels.size()) };
+                }
+                // check whether a string label contains a whitespace
+                if constexpr (std::is_same_v<label_type, std::string>) {
+                    for (const std::string_view label : labels_split) {
+                        if (detail::contains(detail::trim(label), ' ')) {
+                            throw invalid_file_format_exception{ fmt::format("String labels may not contain whitespaces, but \"{}\" has at least one!", detail::trim(label)) };
+                        }
+                    }
                 }
                 // found a class
                 has_label = true;
@@ -297,7 +306,7 @@ template <typename real_type, typename label_type>
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                             }
                         } else {
-                            // write feature value
+                            // write feature valuehas a whitespace!
                             // if the feature index is larger than the label index, the index must be reduced in order to write the feature to the correct data index
                             if (has_label && index > label_idx) {
                                 --index;
@@ -345,7 +354,7 @@ template <typename real_type, typename label_type>
 
                 // check if the parsed label is one of the labels specified in the ARFF file header
                 if (has_label && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
-                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})", label[i], fmt::join(unique_label, ",")) };
+                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", label[i], fmt::join(unique_label, ",")) };
                 }
             } catch (const std::exception &) {
                 // catch first exception and store it
