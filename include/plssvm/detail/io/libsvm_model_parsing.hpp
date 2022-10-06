@@ -31,6 +31,7 @@
 #include <map>          // std::map
 #include <memory>       // std::unique_ptr
 #include <numeric>      // std::accumulate
+#include <set>          // std::set
 #include <sstream>      // std::stringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -161,6 +162,14 @@ template <typename real_type, typename label_type, typename size_type>
                 labels = detail::split_as<label_type>(original_line, ' ');
                 if (labels.size() < 2) {
                     throw invalid_file_format_exception{ fmt::format("At least two labels must be set, but only {} label ([{}]) was given!", labels.size(), fmt::join(labels, ", ")) };
+                }
+                // check if all labels are unique
+                std::set<label_type> unique_labels{};
+                for (const label_type &label : labels) {
+                    unique_labels.insert(label);
+                }
+                if (labels.size() != unique_labels.size()) {
+                    throw invalid_file_format_exception{ fmt::format("Provided {} labels but only {} of them was/where unique!", labels.size(), unique_labels.size()) };
                 }
                 // read the labels
                 label_set = true;

@@ -444,6 +444,19 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_support_vectors) {
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: no support vectors are given or SV is missing!");
 }
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, same_class_multiple_times) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::real_type;
+    using size_type = std::size_t;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/same_class_multiple_times.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Provided 2 labels but only 1 of them was/where unique!");
+}
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, empty) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
