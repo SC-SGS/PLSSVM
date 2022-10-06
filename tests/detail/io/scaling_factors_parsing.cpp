@@ -13,8 +13,9 @@
 #include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
-#include "../../naming.hpp"   // naming::arithmetic_types_to_name
-#include "../../utility.hpp"  // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT, util::temporary_file
+#include "../../naming.hpp"         // naming::arithmetic_types_to_name
+#include "../../types_to_test.hpp"  // util::real_type_gtest
+#include "../../utility.hpp"        // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT, util::temporary_file
 
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ
@@ -31,18 +32,15 @@
 template <typename T>
 using factors_type = typename plssvm::data_set<T>::scaling::factors;
 
-// the floating point types to test
-using floating_point_types = ::testing::Types<float, double>;
-
 template <typename T>
 class ScalingFactorsReadBase : public ::testing::Test {};
 
 template <typename T>
 class ScalingFactorsRead : public ScalingFactorsReadBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsRead, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(ScalingFactorsRead, util::real_type_gtest, naming::real_type_to_name);
 template <typename T>
 class ScalingFactorsReadDeathTest : public ScalingFactorsReadBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsReadDeathTest, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(ScalingFactorsReadDeathTest, util::real_type_gtest, naming::real_type_to_name);
 
 TYPED_TEST(ScalingFactorsRead, read) {
     using real_type = TypeParam;
@@ -200,11 +198,11 @@ class ScalingFactorsWriteBase : public ::testing::Test, protected util::temporar
 
 template <typename T>
 class ScalingFactorsWrite : public ScalingFactorsWriteBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsWrite, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(ScalingFactorsWrite, util::real_type_gtest, naming::real_type_to_name);
 
 template <typename T>
 class ScalingFactorsWriteDeathTest : public ScalingFactorsWriteBase<T> {};
-TYPED_TEST_SUITE(ScalingFactorsWriteDeathTest, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(ScalingFactorsWriteDeathTest, util::real_type_gtest, naming::real_type_to_name);
 
 TYPED_TEST(ScalingFactorsWrite, write) {
     using real_type = TypeParam;

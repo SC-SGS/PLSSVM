@@ -10,7 +10,8 @@
 
 #include "plssvm/detail/operators.hpp"
 
-#include "../naming.hpp"  // naming::arithmetic_types_to_name
+#include "../naming.hpp"         // naming::arithmetic_types_to_name
+#include "../types_to_test.hpp"  // util::real_type_gtest
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
 
@@ -19,9 +20,6 @@
 
 // make all operator overloads available in all tests
 using namespace plssvm::operators;
-
-// the floating point types to test
-using floating_point_types = ::testing::Types<float, double>;
 
 // testsuite for "normal" tests
 template <typename T>
@@ -40,7 +38,7 @@ class Operators : public ::testing::Test {
     std::vector<real_type> empty{};
     real_type scalar{};
 };
-TYPED_TEST_SUITE(Operators, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(Operators, util::real_type_gtest, naming::real_type_to_name);
 
 // testsuite for death tests
 template <typename T>
@@ -56,7 +54,7 @@ class OperatorsDeathTest : public ::testing::Test {
     std::vector<real_type> a{};
     std::vector<real_type> b{};
 };
-TYPED_TEST_SUITE(OperatorsDeathTest, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(OperatorsDeathTest, util::real_type_gtest, naming::real_type_to_name);
 
 TYPED_TEST(Operators, operator_add_binary) {
     // binary addition using two vectors

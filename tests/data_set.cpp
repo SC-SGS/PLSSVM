@@ -17,7 +17,8 @@
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file}
+#include "naming.hpp"         // naming::real_type_label_type_combination_to_name
+#include "types_to_test.hpp"  // util::{real_type_label_type_combination_gtest, instantiate_template_file}
 #include "utility.hpp"        // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "gmock/gmock-matchers.h"  // ::testing::{ContainsRegex, StartsWith}
@@ -38,7 +39,7 @@
 
 template <typename T>
 class DataSetScaling : public ::testing::Test, private util::redirect_output {};
-TYPED_TEST_SUITE(DataSetScaling, util::type_combinations_types);
+TYPED_TEST_SUITE(DataSetScaling, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSetScaling, default_construct_factor) {
     using real_type = typename TypeParam::real_type;
@@ -177,7 +178,7 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
 
 template <typename T>
 class DataSetLabelMapper : public ::testing::Test {};
-TYPED_TEST_SUITE(DataSetLabelMapper, util::type_combinations_types);
+TYPED_TEST_SUITE(DataSetLabelMapper, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSetLabelMapper, construct) {
     using real_type = typename TypeParam::real_type;
@@ -367,7 +368,7 @@ std::vector<T> correct_different_labels() {
 
 template <typename T>
 class DataSet : public ::testing::Test, private util::redirect_output, protected util::temporary_file {};
-TYPED_TEST_SUITE(DataSet, util::type_combinations_types);
+TYPED_TEST_SUITE(DataSet, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSet, typedefs) {
     using real_type = typename TypeParam::real_type;
@@ -945,7 +946,7 @@ class DataSetSave : public ::testing::Test, private util::redirect_output, prote
     };
     std::vector<U> label;
 };
-TYPED_TEST_SUITE(DataSetSave, util::type_combinations_types);
+TYPED_TEST_SUITE(DataSetSave, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSetSave, save_libsvm_with_label) {
     using real_type = typename TypeParam::real_type;
@@ -1066,7 +1067,7 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output {
     std::vector<U> label;
     std::vector<U> different_label;
 };
-TYPED_TEST_SUITE(DataSetGetter, util::type_combinations_types);
+TYPED_TEST_SUITE(DataSetGetter, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSetGetter, data) {
     using real_type = typename TypeParam::real_type;

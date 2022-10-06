@@ -17,49 +17,112 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::always_false_v
 
 #include "gtest/gtest.h"  // ::testing::Types
+#include "fmt/core.h"     // fmt::format
 
 #include <fstream>      // std::ifstream, std::ofstream
 #include <string>       // std::string
+#include <tuple>        // std::tuple
 #include <type_traits>  // std::is_same_v, std::is_signed_v, std::is_unsigned_v, std::is_floating_point_v
 #include <utility>      // std::pair, std::make_pair
 
 namespace util {
 
-// struct for the used type combinations
+/**
+ * @brief Encapsulates a combination of a used `real_type` (`float` or `double`) and `label_type` (an arithmetic type or `std::string`).
+ * @tparam T the used `real_type`
+ * @tparam U the used `label_type`
+ */
 template <typename T, typename U>
-struct type_combinations {
+struct real_type_label_type_combination {
     using real_type = T;
     using label_type = U;
 };
 
-// the floating point and label types combinations to test
-using type_combinations_types = ::testing::Types<
-    type_combinations<float, bool>,
-    type_combinations<float, char>,
-    type_combinations<float, signed char>,
-    type_combinations<float, unsigned char>,
-    type_combinations<float, short>,
-    type_combinations<float, unsigned short>,
-    type_combinations<float, int>,
-    type_combinations<float, unsigned int>,
-    type_combinations<float, long>,
-    type_combinations<float, unsigned long>,
-    type_combinations<float, long long>,
-    type_combinations<float, unsigned long long>,
-    type_combinations<float, std::string>,
-    type_combinations<double, bool>,
-    type_combinations<double, char>,
-    type_combinations<double, signed char>,
-    type_combinations<double, unsigned char>,
-    type_combinations<double, short>,
-    type_combinations<double, unsigned short>,
-    type_combinations<double, int>,
-    type_combinations<double, unsigned int>,
-    type_combinations<double, long>,
-    type_combinations<double, unsigned long>,
-    type_combinations<double, long long>,
-    type_combinations<double, unsigned long long>,
-    type_combinations<double, std::string>>;
+namespace detail {
+
+// concatenate the types of two tuples in a new tuple
+template <typename S, typename T>
+struct concat_tuple_types;
+/**
+ * @brief Concatenate the types of the two tuples to a new tuple type.
+ * @tparam FirstTupleTypes the first tuple
+ * @tparam SecondTupleTypes the second tuple
+ */
+template <typename... FirstTupleTypes, typename... SecondTupleTypes>
+struct concat_tuple_types<std::tuple<FirstTupleTypes...>, std::tuple<SecondTupleTypes...>> {
+    using type = std::tuple<FirstTupleTypes..., SecondTupleTypes...>;
+};
+/**
+ * @brief Shorthand for the `typename concat_tuple_types<...>::type` type.
+ */
+template <typename... T>
+using concat_tuple_types_t = typename concat_tuple_types<T...>::type;
+
+// calculate the cartesian product of the types in two tuples and return a new tuple with the corresponding real_type_label_type_combination types.
+template <typename S, typename T>
+struct cartesian_type_product;
+/**
+ * @brief Calculate the cartesian product of the types in two tuples and return a new tuple with the corresponding real_type_label_type_combination types.
+ * @tparam FirstTupleType the first type in the first tuple (used to iterate all tuple types recursively)
+ * @tparam FirstTupleRemainingTypes  the remaining types in the first tuple
+ * @tparam SecondTupleTypes all types in the second tuple
+ */
+template <typename FirstTupleType, typename... FirstTupleRemainingTypes, typename... SecondTupleTypes>
+struct cartesian_type_product<std::tuple<FirstTupleType, FirstTupleRemainingTypes...>, std::tuple<SecondTupleTypes...>> {
+    // the cartesian product of {FirstTupleType} and {SecondTupleTypes...} is a list of real_type_label_type_combination
+    using FirstTupleType_cross_SecondTupleTypes = std::tuple<real_type_label_type_combination<FirstTupleType, SecondTupleTypes>...>;
+
+    // the cartesian product of {FirstTupleRemainingTypes...} and {Ts...} (computed recursively)
+    using FirstTupleRemainingTypes_cross_SecondTupleTypes = typename cartesian_type_product<std::tuple<FirstTupleRemainingTypes...>, std::tuple<SecondTupleTypes...>>::type;
+
+    // concatenate both products
+    using type = concat_tuple_types_t<FirstTupleType_cross_SecondTupleTypes, FirstTupleRemainingTypes_cross_SecondTupleTypes>;
+};
+// end the recursion if the first tuple does not have any types left
+template <typename... SecondTupleTypes>
+struct cartesian_type_product<std::tuple<>, std::tuple<SecondTupleTypes...>> {
+    using type = std::tuple<>;  // the cartesian product of {}x{...} is {}
+};
+/**
+ * @brief Shorthand for the `typename cartesian_type_product<...>::type` type.
+ */
+template <typename... T>
+using cartesian_type_product_t = typename cartesian_type_product<T...>::type;
+
+// convert the types in a tuple to GoogleTests ::testing::Type
+template <typename Ts>
+struct tuple_to_gtest_types;
+/**
+ * @brief Convert the types in a tuple to GoogleTests ::testing::Types.
+ * @details For example: converts `std::tuple<int, long, float>` to `::testing::Types<int, long, float>`.
+ * @tparam T the types in the tuple
+ */
+template <typename... T>
+struct tuple_to_gtest_types<std::tuple<T...>> {
+    using type = ::testing::Types<T...>;
+};
+/**
+ * @brief Shorthand for the `typename tuple_to_gtest_types<...>::type` type.
+ */
+template <typename T>
+using tuple_to_gtest_types_t = typename tuple_to_gtest_types<T>::type;
+
+}  // namespace detail
+
+/// A type list of all supported real types as `std::tuple`.
+using real_type_list = std::tuple<float, double>;
+/// A type list of all supported real types usable in google tests.
+using real_type_gtest = detail::tuple_to_gtest_types_t<real_type_list>;
+
+/// A type list of all supported label types (currently arithmetic types and `std::string`) as `std::tuple`.
+using label_type_list = std::tuple<bool, char, signed char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, std::string>;
+/// A type list of all supported label types (currently arithmetic types and `std::string`) usable in google tests.
+using label_type_gtest = detail::tuple_to_gtest_types_t<label_type_list>;
+
+/// The cartesian product of all real types and label types as `std::tuple`.
+using real_type_label_type_combination_list = detail::cartesian_type_product_t<real_type_list, label_type_list>;
+/// The cartesian product of all real types and label types usable in google test
+using real_type_label_type_combination_gtest = detail::tuple_to_gtest_types_t<real_type_label_type_combination_list>;
 
 /**
  * @brief Get two distinct labels based on the provided label type.

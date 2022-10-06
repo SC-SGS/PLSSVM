@@ -13,7 +13,8 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file}
+#include "naming.hpp"         // naming::real_type_label_type_combination_to_name
+#include "types_to_test.hpp"  // util::{real_type_label_type_combination_gtest, instantiate_template_file}
 #include "utility.hpp"        // util::temporary_file, util::redirect_output
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
@@ -27,7 +28,7 @@
 
 template <typename T>
 class Model : public ::testing::Test, private util::redirect_output {};
-TYPED_TEST_SUITE(Model, util::type_combinations_types);
+TYPED_TEST_SUITE(Model, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(Model, typedefs) {
     using real_type = typename TypeParam::real_type;

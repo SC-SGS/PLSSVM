@@ -10,8 +10,9 @@
 
 #include "plssvm/default_value.hpp"
 
-#include "naming.hpp"   // naming::arithmetic_types_or_string_to_name
-#include "utility.hpp"  // util::{convert_to_string, convert_from_string}
+#include "naming.hpp"         // naming::label_type_to_name
+#include "types_to_test.hpp"  // util::label_type_gtest
+#include "utility.hpp"        // util::{convert_to_string, convert_from_string}
 
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
                           // ::testing::{Test, Types, WithParamInterface, Values, TestParamInfo}
@@ -29,8 +30,7 @@
 
 template <typename T>
 class DefaultInitDefault : public ::testing::Test {};
-using default_init_default_types = ::testing::Types<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, std::string>;
-TYPED_TEST_SUITE(DefaultInitDefault, default_init_default_types, naming::arithmetic_types_or_string_to_name);
+TYPED_TEST_SUITE(DefaultInitDefault, util::label_type_gtest, naming::label_type_to_name);
 
 TYPED_TEST(DefaultInitDefault, default_construct) {
     using type = TypeParam;

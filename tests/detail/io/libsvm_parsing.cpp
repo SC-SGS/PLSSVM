@@ -13,7 +13,8 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file}
+#include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
+#include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
 #include "../../utility.hpp"        // util::temporary_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
@@ -81,7 +82,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(LIBSVMParseDense, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseDense, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 template <typename TypeParam>
 class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file {
@@ -106,11 +107,11 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(LIBSVMParseSparse, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseSparse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 template <typename T>
 class LIBSVMParse : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMParse, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMParseDense, read) {
     using current_real_type = typename TypeParam::real_type;
@@ -363,7 +364,7 @@ TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
 
 template <typename T>
 class LIBSVMParseDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMParseDeathTest, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMParseDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
     using current_real_type = typename TypeParam::real_type;
@@ -392,11 +393,11 @@ class LIBSVMWriteBase : public ::testing::Test, protected util::temporary_file {
 
 template <typename T>
 class LIBSVMWrite : public LIBSVMWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMWrite, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMWrite, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 template <typename T>
 class LIBSVMWriteDeathTest : public LIBSVMWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMWriteDeathTest, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMWriteDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
     using real_type = typename TypeParam::real_type;

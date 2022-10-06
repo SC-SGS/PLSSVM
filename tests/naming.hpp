@@ -18,6 +18,7 @@
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
 
 #include "exceptions/utility.hpp"  // util::exception_type_name
+#include "types_to_test.hpp"       // util::real_type_label_type_combination
 
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
@@ -174,6 +175,34 @@ class arithmetic_types_or_string_to_name {
         } else {
             return std::string{ plssvm::detail::arithmetic_type_name<T>() };
         }
+    }
+};
+
+// types_to_test.hpp
+class real_type_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        return std::string{ plssvm::detail::arithmetic_type_name<T>() };
+    }
+};
+class label_type_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        if constexpr (std::is_same_v<T, std::string>) {
+            return "string";
+        } else {
+            return std::string{ plssvm::detail::arithmetic_type_name<T>() };
+        }
+    }
+};
+class real_type_label_type_combination_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        //static_assert(std::is_same_v<T, real_type_label_type_combination_to_name>, "T must be of type 'real_type_label_type_combination_to_name'.");
+        return fmt::format("{}__x__{}", real_type_to_name::GetName<typename T::real_type>(0), label_type_to_name::GetName<typename T::label_type>(0));
     }
 };
 

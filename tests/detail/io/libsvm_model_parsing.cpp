@@ -15,7 +15,8 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "../../types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file, get_distinct_label}
+#include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
+#include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
 #include "../../utility.hpp"        // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
@@ -35,7 +36,7 @@ class LIBSVMModelHeaderParse : public ::testing::Test {};
 
 template <typename T>
 class LIBSVMModelHeaderParseValid : public LIBSVMModelHeaderParse<T> {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderParseValid, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMModelHeaderParseValid, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     using real_type = typename TypeParam::real_type;
@@ -128,7 +129,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
 
 template <typename T>
 class LIBSVMModelHeaderParseInvalid : public LIBSVMModelHeaderParse<T> {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderParseInvalid, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMModelHeaderParseInvalid, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, wrong_svm_type) {
     using real_type = typename TypeParam::real_type;
@@ -476,7 +477,7 @@ class LIBSVMModelWriteBase : public ::testing::Test, private util::redirect_outp
 
 template <typename T>
 class LIBSVMModelHeaderWrite : public LIBSVMModelWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderWrite, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMModelHeaderWrite, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     using real_type = typename TypeParam::real_type;
@@ -620,7 +621,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
 
 template <typename T>
 class LIBSVMModelDataWrite : public LIBSVMModelWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMModelDataWrite, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMModelDataWrite, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMModelDataWrite, write) {
     using real_type = typename TypeParam::real_type;
@@ -678,7 +679,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
 
 template <typename T>
 class LIBSVMModelWriteDeathTest : public LIBSVMModelWriteBase<T> {};
-TYPED_TEST_SUITE(LIBSVMModelWriteDeathTest, util::type_combinations_types);
+TYPED_TEST_SUITE(LIBSVMModelWriteDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(LIBSVMModelWriteDeathTest, write_header_without_label) {
     using real_type = typename TypeParam::real_type;

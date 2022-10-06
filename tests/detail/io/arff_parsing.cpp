@@ -13,7 +13,8 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../types_to_test.hpp"  // util::{type_combinations_types, instantiate_template_file}
+#include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
+#include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
 #include "../../utility.hpp"        // util::temporary_file, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
@@ -184,7 +185,7 @@ TEST(ARFFParseHeader, empty) {
 
 template <typename T>
 class ARFFParse : public ::testing::Test {};
-TYPED_TEST_SUITE(ARFFParse, util::type_combinations_types);
+TYPED_TEST_SUITE(ARFFParse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 template <typename T>
 class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
@@ -209,7 +210,7 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(ARFFParseDense, util::type_combinations_types);
+TYPED_TEST_SUITE(ARFFParseDense, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 template <typename T>
 class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
@@ -234,7 +235,7 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
     };
     std::vector<label_type> correct_label{};
 };
-TYPED_TEST_SUITE(ARFFParseSparse, util::type_combinations_types);
+TYPED_TEST_SUITE(ARFFParseSparse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(ARFFParseDense, read) {
     using current_real_type = typename TypeParam::real_type;
@@ -452,7 +453,7 @@ TYPED_TEST(ARFFParse, libsvm_file) {
 
 template <typename T>
 class ARFFParseDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(ARFFParseDeathTest, util::type_combinations_types);
+TYPED_TEST_SUITE(ARFFParseDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
     using current_real_type = typename TypeParam::real_type;
@@ -469,11 +470,11 @@ class ARFFWriteBase : public ::testing::Test, protected util::temporary_file {};
 
 template <typename T>
 class ARFFWrite : public ARFFWriteBase<T> {};
-TYPED_TEST_SUITE(ARFFWrite, util::type_combinations_types);
+TYPED_TEST_SUITE(ARFFWrite, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 template <typename T>
 class ARFFWriteDeathTest : public ARFFWriteBase<T> {};
-TYPED_TEST_SUITE(ARFFWriteDeathTest, util::type_combinations_types);
+TYPED_TEST_SUITE(ARFFWriteDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(ARFFWrite, write_with_label) {
     using real_type = typename TypeParam::real_type;
