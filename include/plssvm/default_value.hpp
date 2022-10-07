@@ -18,7 +18,7 @@
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream
 #include <type_traits>  // std::is_nothrow_default_constructible_v, std::is_nothrow_move_constructible_v, std::is_nothrow_move_assignable_v, std::is_nothrow_swappable_v,
-                        // std::enable_if_t, std::is_convertible_v
+                        // std::enable_if_t, std::is_convertible_v, std::true_type, std::false_type
 #include <utility>      // std::move_if_noexcept, std::swap
 
 namespace plssvm {
@@ -295,6 +295,35 @@ template <typename T>
 [[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs < rhs);
 }
+
+/**
+ * @brief Test whether the given type @p T is of type `plssvm::default_value` (represents the `false` case).
+ * @details Inherits from `std::false_type`.
+ * @tparam T the type to check whether it is a `plssvm::default_value`
+ */
+template <typename T>
+struct is_default_value : std::false_type {};
+/**
+ * @brief Test whether the given type @p T is of type `plssvm::default_value` (represents the `true` case).
+ * @details Inherits from `std::true_type`.
+ * @tparam T the type to check whether it is a `plssvm::default_value`
+ */
+template <typename T>
+struct is_default_value<default_value<T>> : std::true_type {};
+/**
+ * @brief Test whether the given type @p T is of type `const plssvm::default_value` (represents the `true` case).
+ * @details Inherits from `std::true_type`.
+ * @tparam T the type to check whether it is a `plssvm::default_value`
+ */
+template <typename T>
+struct is_default_value<const default_value<T>> : std::true_type {};
+/**
+ * @brief Test whether the given type @p T is of type `plssvm::default_value`.
+ * @details A shorthand for `plssvm::default_value<T>::value`.
+ * @tparam T the type to check whether it is a `plssvm::default_value`
+ */
+template <typename T>
+constexpr bool is_default_value_v = is_default_value<T>::value;
 
 }  // namespace plssvm
 

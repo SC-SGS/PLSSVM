@@ -432,6 +432,17 @@ INSTANTIATE_TEST_SUITE_P(DefaultValue, DefaultValueRelational, ::testing::Values
                 naming::pretty_print_default_value_relational<DefaultValueRelational>);
 // clang-format on
 
+TEST(DefaultValue, is_default_value_trait) {
+    // create a default_value
+    const plssvm::default_value val{ plssvm::default_init{ 42 } };
+
+    // test if the type_trait is correct
+    EXPECT_TRUE(plssvm::is_default_value<decltype(val)>::value);
+    EXPECT_TRUE(plssvm::is_default_value_v<decltype(val)>);
+    EXPECT_FALSE(plssvm::is_default_value<typename decltype(val)::value_type>::value);
+    EXPECT_FALSE(plssvm::is_default_value_v<typename decltype(val)::value_type>);
+}
+
 TEST(DefaultValue, hash) {
     // create default_value and hash it
     const plssvm::default_value val1{ plssvm::default_init{ 42 } };
