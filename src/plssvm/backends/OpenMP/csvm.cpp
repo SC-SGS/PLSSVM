@@ -221,8 +221,8 @@ auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const st
 }
 
 template <typename T>
-auto csvm<T>::predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha,
-                                  const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const -> std::vector<real_type> {
+auto csvm<T>::predict_values(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha,
+                             const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     std::vector<real_type> out(predict_points.size(), -rho);

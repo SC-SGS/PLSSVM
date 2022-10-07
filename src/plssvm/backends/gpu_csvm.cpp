@@ -297,7 +297,7 @@ auto gpu_csvm<T, device_ptr_t, queue_t>::calculate_w(const std::vector<device_pt
 }
 
 template <typename T, typename device_ptr_t, typename queue_t>
-auto gpu_csvm<T, device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const -> std::vector<real_type> {
+auto gpu_csvm<T, device_ptr_t, queue_t>::predict_values(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const -> std::vector<real_type> {
     using namespace plssvm::operators;
 
     const size_type num_support_vectors = support_vectors.size();
