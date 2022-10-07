@@ -145,7 +145,7 @@ template <typename T>
     } else if constexpr (std::is_same_v<T, std::string>) {
         return std::make_pair("cat", "dog");
     } else {
-        plssvm::detail::always_false_v<T>;
+        static_assert(plssvm::detail::always_false_v<T>, "Unknown label type provided!");
     }
 }
 

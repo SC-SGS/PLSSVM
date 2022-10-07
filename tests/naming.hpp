@@ -103,7 +103,7 @@ class map_types_to_name {
         } else if constexpr (detail::is_unordered_map_v<T>) {
             return "unordered_map";
         } else {
-            plssvm::detail::always_false_v<T>;
+            static_assert(plssvm::detail::always_false_v<T>, "Invalid type for name mapping provided!");
         }
     }
 };
@@ -116,7 +116,7 @@ class set_types_to_name {
         } else if constexpr (detail::is_unordered_set_v<T>) {
             return "unordered_set";
         } else {
-            plssvm::detail::always_false_v<T>;
+            static_assert(plssvm::detail::always_false_v<T>, "Invalid type for name mapping provided!");
         }
     }
 };
@@ -127,7 +127,7 @@ class vector_types_to_name {
         if constexpr (detail::is_vector_v<T>) {
             return "vector";
         } else {
-            plssvm::detail::always_false_v<T>;
+            static_assert(plssvm::detail::always_false_v<T>, "Invalid type for name mapping provided!");
         }
     }
 };
@@ -153,7 +153,7 @@ class open_parameter_types_to_name {
         } else if constexpr (std::is_same_v<T, std::string>) {
             return "std_string";
         } else {
-            plssvm::detail::always_false_v<T>;
+            static_assert(plssvm::detail::always_false_v<T>, "Invalid type for name mapping provided!");
         }
     }
 };
