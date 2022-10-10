@@ -16,9 +16,10 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"         // plssvm::always_false_v
 
-#include "gtest/gtest.h"  // ::testing::Types
 #include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // ::testing::Types, FAIL()
 
+#include <filesystem>   // std::filesystem::exists
 #include <fstream>      // std::ifstream, std::ofstream
 #include <string>       // std::string
 #include <tuple>        // std::tuple
@@ -149,8 +150,19 @@ template <typename T>
     }
 }
 
+/**
+ * @brief Replace the label placeholders in @p template_filename with the labels based on the template type @p T and
+ *        write the instantiated template file to @p output_filename.
+ * @tparam T the type of the labels to instantiate the file for
+ * @param[in] template_filename the file used as template
+ * @param[in] output_filename the file to save the instantiate template to
+ */
 template <typename T>
 inline void instantiate_template_file(const std::string &template_filename, const std::string &output_filename) {
+    // check whether the template_file exists
+    if (!std::filesystem::exists(template_filename)) {
+        FAIL() << fmt::format("The template file {} does not exist!", template_filename);
+    }
     // get a label pair based on the current label type
     const auto [first_label, second_label] = util::get_distinct_label<T>();
     // read the data set template and replace the label placeholder with the correct labels
