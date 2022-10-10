@@ -8,21 +8,23 @@
  * @brief Tests for the base C-SVM functions through its mock class.
  */
 
-#include "plssvm/csvm.hpp"       // plssvm::csvm // TODO: necessary?
-#include "mock_csvm.hpp"         // mock_csvm
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "mock_csvm.hpp"                     // mock_csvm
+#include "plssvm/data_set.hpp"               // plssvm::data_set
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type
+#include "plssvm/model.hpp"                  // plssvm::model
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
+#include "naming.hpp"         // naming::{real_type_to_name, real_type_label_type_combination_to_name}
+#include "types_to_test.hpp"  // util::{real_type_gtest, real_type_label_type_combination_gtest}
+#include "utility.hpp"        // util::{redirect_output, temporary_file, instantiate_template_file}, EXPECT_THROW_WHAT
 
-#include "naming.hpp"   // naming::arithmetic_types_to_name
-#include "utility.hpp"  // util::{convert_to_string, convert_from_string, util::generate_random_vector, gtest_assert_floating_point_near}, EXPECT_THROW_WHAT
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_CALL
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
-
-#include <algorithm>  // std::generate
-#include <array>      // std::array
-#include <cstddef>    // std::size_t
-#include <sstream>    // std::istringstream
+#include <iostream>   // std::clog
+#include <sstream>    // std::stringstream
+#include <streambuf>  // std::streambuf
+#include <string>     // std::string
 #include <tuple>      // std::ignore
 #include <vector>     // std::vector
 
