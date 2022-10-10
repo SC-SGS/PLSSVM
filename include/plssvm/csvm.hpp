@@ -110,7 +110,7 @@ class csvm {
      * @return the predicted labels (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data);
+    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
     /**
      * @brief Calculate the accuracy of the @p model.
@@ -119,7 +119,7 @@ class csvm {
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model);
+    [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
@@ -128,7 +128,7 @@ class csvm {
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type> &data);
+    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
   protected:
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,10 +162,10 @@ class csvm {
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.
      */
-    void sanity_check_parameter();
+    void sanity_check_parameter() const;
 
     template <typename ExpectedType, typename IgorParser, typename ProvidedType>
-    ExpectedType get_value_from_named_parameter(const IgorParser &parser, const ProvidedType &named_arg);
+    [[nodiscard]] ExpectedType get_value_from_named_parameter(const IgorParser &parser, const ProvidedType &named_arg) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter<real_type> params_{};
@@ -268,7 +268,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args &&...named_a
     // start fitting the data set using a C-SVM
 
     if (!data.has_labels()) {
-        throw exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
+        throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
 
     // copy parameter and set gamma if necessary
@@ -296,9 +296,9 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args &&...named_a
 
 template <typename T>
 template <typename label_type>
-auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) -> std::vector<label_type> {
+auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> std::vector<label_type> {
     if (model.num_features() != data.num_features()) {
-        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
+        throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
 
     // predict values
@@ -307,7 +307,7 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(predicted_values.size());
 
-#pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v <label_type, bool>)
+    #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v <label_type, bool>)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
     }
@@ -317,28 +317,30 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
 
 template <typename T>
 template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model) -> real_type {
+auto csvm<T>::score(const model<real_type, label_type> &model) const -> real_type {
     return this->score(model, model.data_);
 }
 
 template <typename T>
 template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type> &data) -> real_type {
+auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> real_type {
+    // the data set must contain labels in order to score the learned model
     if (!data.has_labels()) {
-        throw exception{ "the data set to score must have labels set!" };
-    } else if (model.num_features() != data.num_features()) {
-        throw exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", model.num_features(), data.num_features()) };
+        throw invalid_parameter_exception{ "The data set to score must have labels!" };
+    }
+    // the number of features must be equal
+    if (model.num_features() != data.num_features()) {
+        throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
 
     // predict labels
     const std::vector<label_type> predicted_labels = predict(model, data);
     // correct labels
-    const std::vector<label_type> &correct_labels = model.labels().value();
+    const std::vector<label_type> &correct_labels = data.labels().value();
 
     // calculate the accuracy
     size_type correct{ 0 };
-#pragma omp parallel for reduction(+ \
-                                   : correct) default(none) shared(predicted_labels, correct_labels)
+#pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
             ++correct;
@@ -348,7 +350,7 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
 }
 
 template <typename T>
-void csvm<T>::sanity_check_parameter() {
+void csvm<T>::sanity_check_parameter() const {
     // kernel: valid kernel function
     if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
@@ -364,7 +366,7 @@ void csvm<T>::sanity_check_parameter() {
 }
 
 template <typename T> template <typename ExpectedType, typename IgorParser, typename NamedArgType>
-ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) {
+ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) const {
     using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
     // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
     if constexpr (is_default_value_v<parsed_named_arg_type>) {
