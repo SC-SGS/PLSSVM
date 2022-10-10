@@ -36,6 +36,20 @@ template <typename>
 constexpr bool always_false_v = false;
 
 /**
+ * @brief Invokes undefined behavior. Used to mark code paths that may never be reachable.
+ */
+[[noreturn]] inline void unreachable() {
+    // Uses compiler specific extensions if possible.
+    // Even if no extension is used, undefined behavior is still raised by
+    // an empty function body and the noreturn attribute.
+#if defined(__GNUC__)  // GCC, Clang, ICC
+    __builtin_unreachable();
+#elif defined(_MSC_VER)  // MSVC
+    __assume(false);
+#endif
+}
+
+/**
  * @brief Remove the topmost reference- and cv-qualifiers.
  * @details For more information see [`std::remove_cvref_t`](https://en.cppreference.com/w/cpp/types/remove_cvref).
  */

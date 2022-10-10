@@ -381,7 +381,7 @@ ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, c
         static_assert(plssvm::detail::always_false_v<T>, "The named parameter must be of type plssvm::default_value or a built-in type!");
     }
     // may never been reached
-    return ExpectedType{};
+    detail::unreachable();
 }
 
 }  // namespace plssvm
