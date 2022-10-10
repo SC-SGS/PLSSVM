@@ -9,6 +9,8 @@
  * @brief Utility functions for testing.
  */
 
+#ifndef PLSSVM_TESTS_UTILITY_HPP_
+#define PLSSVM_TESTS_UTILITY_HPP_
 #pragma once
 
 #include "plssvm/csvm_factory.hpp"                 // plssvm::make_csvm
@@ -279,3 +281,5 @@ template <typename T>
     } while (false)
 
 }  // namespace util
+
+#endif  // PLSSVM_TESTS_UTILITY_HPP_

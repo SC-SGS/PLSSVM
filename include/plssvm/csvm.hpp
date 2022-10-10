@@ -9,24 +9,28 @@
  * @brief Defines the base class for all C-SVM backends and implements the functionality shared by all of them.
  */
 
+#ifndef PLSSVM_CSVM_HPP_
+#define PLSSVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"       // plssvm::verbose
-#include "plssvm/data_set.hpp"        // plssvm::data_set
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::to_underlying, plssvm::detail::remove_cvref_t
-#include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
-#include "plssvm/model.hpp"           // plssvm::model
-#include "plssvm/parameter.hpp"       // plssvm::parameter
+#include "plssvm/constants.hpp"              // plssvm::verbose
+#include "plssvm/data_set.hpp"               // plssvm::data_set
+#include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init, plssvm::is_default_value_v
+#include "plssvm/detail/operators.hpp"       // plssvm::operators::sign
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, remove_cvref_t, always_false_v, unreachable}
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
+#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type, plssvm::kernel_type_to_math_string
+#include "plssvm/model.hpp"                  // plssvm::model
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format, fmt::print
 #include "igor/igor.hpp"  // igor::parser
 
-#include <chrono>       // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>      // std::size_t
-#include <cstdio>       // stderr
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
+#include <cstddef>      // std::size_tstderr
 #include <iostream>     // std::clog, std::endl
-#include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::tie
 #include <type_traits>  // std::is_same_v, std::is_convertible_v
 #include <utility>      // std::move, std::forward
 #include <vector>       // std::vector
@@ -307,7 +311,7 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(predicted_values.size());
 
-    #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v <label_type, bool>)
+    #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
     }
@@ -340,7 +344,7 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
 
     // calculate the accuracy
     size_type correct{ 0 };
-#pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
+    #pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
             ++correct;
@@ -365,7 +369,8 @@ void csvm<T>::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-template <typename T> template <typename ExpectedType, typename IgorParser, typename NamedArgType>
+template <typename T>
+template <typename ExpectedType, typename IgorParser, typename NamedArgType>
 ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) const {
     using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
     // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
@@ -387,3 +392,5 @@ ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, c
 }
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_CSVM_HPP_
