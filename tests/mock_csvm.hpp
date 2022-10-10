@@ -27,7 +27,7 @@
  * @tparam T the type of the data points
  */
 template <typename T>
-class mock_csvm : public plssvm::csvm<T> {
+class mock_csvm final : public plssvm::csvm<T> {
     using base_type = plssvm::csvm<T>;
 
   public:

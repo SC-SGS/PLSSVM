@@ -60,7 +60,7 @@ class redirect_output {
     /**
      * @brief Restore the original standard output location.
      */
-    ~redirect_output() {
+    virtual ~redirect_output() {
         // end capturing std::cout
         std::cout.rdbuf(sbuf_);
         sbuf_ = nullptr;
@@ -106,7 +106,7 @@ class temporary_file {
     /**
      * @brief Remove the temporary file if it exists.
      */
-    ~temporary_file() {
+    virtual ~temporary_file() {
         std::filesystem::remove(filename);
     }
 
