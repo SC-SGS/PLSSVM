@@ -30,7 +30,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                "coef0                       {}\n"
                "cost                        {}\n"
                "real_type                   {}\n",
-               params.kernel,
+               params.kernel_type,
                params.degree,
                params.gamma,
                params.coef0,

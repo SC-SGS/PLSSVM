@@ -16,7 +16,7 @@
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
-#include "plssvm/kernel_types.hpp"                       // plssvm::kernel_type_to_math_string
+#include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_type_to_math_string
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
@@ -45,7 +45,7 @@ parameter_train::parameter_train(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
        .add_options()
-           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<typename decltype(csvm_params.kernel)::value_type>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel))))
+           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<typename decltype(csvm_params.kernel_type)::value_type>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
            ("d,degree", "set degree in kernel function", cxxopts::value<typename decltype(csvm_params.degree)::value_type>()->default_value(fmt::format("{}", csvm_params.degree)))
            ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<typename decltype(csvm_params.gamma)::value_type>())
            ("r,coef0", "set coef0 in kernel function", cxxopts::value<typename decltype(csvm_params.coef0)::value_type>()->default_value(fmt::format("{}", csvm_params.coef0)))
@@ -99,7 +99,7 @@ parameter_train::parameter_train(int argc, char **argv) {
 
     // parse kernel_type and cast the value to the respective enum
     if (result.count("kernel_type")) {
-        csvm_params.kernel = result["kernel_type"].as<typename decltype(csvm_params.kernel)::value_type>();
+        csvm_params.kernel_type = result["kernel_type"].as<typename decltype(csvm_params.kernel_type)::value_type>();
     }
 
     // parse degree
@@ -109,7 +109,7 @@ parameter_train::parameter_train(int argc, char **argv) {
 
     // parse gamma
     if (result.count("gamma")) {
-        typename decltype(csvm_params.gamma)::value_type gamma_input = result["gamma"].as<typename decltype(csvm_params.gamma)::value_type>();
+        const typename decltype(csvm_params.gamma)::value_type gamma_input = result["gamma"].as<typename decltype(csvm_params.gamma)::value_type>();
         // check if the provided gamma is legal
         if (gamma_input <= decltype(gamma_input){ 0.0 }) {
             std::cerr << fmt::format("gamma must be greater than 0.0, but is {}!", gamma_input) << std::endl;
@@ -189,11 +189,11 @@ parameter_train::parameter_train(int argc, char **argv) {
 }
 
 std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
-    out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel, kernel_type_to_math_string(params.csvm_params.kernel));
-    switch (params.csvm_params.kernel) {
-        case kernel_type::linear:
+    out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel_type, kernel_function_type_to_math_string(params.csvm_params.kernel_type));
+    switch (params.csvm_params.kernel_type) {
+        case kernel_function_type::linear:
             break;
-        case kernel_type::polynomial: {
+        case kernel_function_type::polynomial: {
             if (params.csvm_params.gamma.is_default()) {
                 out << "gamma: 1 / num_features (default)\n";
             } else {
@@ -202,7 +202,7 @@ std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
             out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
             out << fmt::format("degree: {}{}\n", params.csvm_params.degree.value(), params.csvm_params.degree.is_default() ? " (default)" : "");
         } break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             out << fmt::format("gamma: {}\n", params.csvm_params.gamma);
             break;
     }

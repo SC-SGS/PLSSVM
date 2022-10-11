@@ -81,7 +81,7 @@ TEST_F(ParameterTrain, all_arguments) {
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
 
     // check parsed values
-    EXPECT_EQ(params.csvm_params.kernel, plssvm::kernel_type::polynomial);
+    EXPECT_EQ(params.csvm_params.kernel_type, plssvm::kernel_function_type::polynomial);
     EXPECT_EQ(params.csvm_params.degree, 2);
     EXPECT_EQ(params.csvm_params.gamma, 1.5);
     EXPECT_EQ(params.csvm_params.coef0, -1.5);
@@ -137,14 +137,14 @@ class ParameterTrainKernel : public ParameterTrain, public ::testing::WithParamI
 TEST_P(ParameterTrainKernel, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to kernel_type
-    const auto kernel_type = util::convert_from_string<plssvm::kernel_type>(value);
+    const auto kernel_type = util::convert_from_string<plssvm::kernel_function_type>(value);
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-train {} {} data.libsvm", flag, value));
     // create parameter object
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
     // test for correctness
-    EXPECT_FALSE(params.csvm_params.kernel.is_default());
-    EXPECT_EQ(params.csvm_params.kernel, kernel_type);
+    EXPECT_FALSE(params.csvm_params.kernel_type.is_default());
+    EXPECT_EQ(params.csvm_params.kernel_type, kernel_type);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainKernel, ::testing::Combine(

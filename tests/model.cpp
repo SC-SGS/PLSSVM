@@ -144,16 +144,16 @@ TEST_P(ModelSave, save) {
     // create vector containing correct regex expressions for the LIBSVM model file header
     std::vector<std::string> regex_patterns;
     regex_patterns.emplace_back("svm_type c_svc");
-    regex_patterns.emplace_back(fmt::format("kernel_type {}", model.svm_parameter().kernel));
-    switch (model.svm_parameter().kernel) {
-        case plssvm::kernel_type::linear:
+    regex_patterns.emplace_back(fmt::format("kernel_type {}", model.svm_parameter().kernel_type));
+    switch (model.svm_parameter().kernel_type) {
+        case plssvm::kernel_function_type::linear:
             break;
-        case plssvm::kernel_type::polynomial:
+        case plssvm::kernel_function_type::polynomial:
             regex_patterns.emplace_back("degree [0-9]+");
             regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
             regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
             break;
-        case plssvm::kernel_type::rbf:
+        case plssvm::kernel_function_type::rbf:
             regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
             break;
     }

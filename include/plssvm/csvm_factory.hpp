@@ -66,7 +66,7 @@ namespace plssvm {
  */
 template <typename T, typename... Args>
 [[nodiscard]] inline std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, const parameter<T> params, Args &&...args) {
-    return make_csvm<T>(backend, target, params.kernel, plssvm::degree = params.degree, plssvm::gamma = params.gamma, plssvm::coef0 = params.coef0, plssvm::cost = params.cost, std::forward<Args>(args)...);
+    return make_csvm<T>(backend, target, params.kernel_type, plssvm::degree = params.degree, plssvm::gamma = params.gamma, plssvm::coef0 = params.coef0, plssvm::cost = params.cost, std::forward<Args>(args)...);
 }
 
 /**
@@ -78,7 +78,7 @@ template <typename T, typename... Args>
  */
 template <typename T>
 [[nodiscard]] inline std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target) {
-    return make_csvm<T>(backend, target, parameter<T>{}.kernel);
+    return make_csvm<T>(backend, target, parameter<T>{}.kernel_type);
 }
 
 /**
@@ -92,7 +92,7 @@ template <typename T>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename T, typename... Args>
-[[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, const kernel_type kernel, Args &&...args) {
+[[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, const kernel_function_type kernel, Args &&...args) {
     switch (backend) {
         case backend_type::automatic:
             return make_csvm<T>(determine_default_backend(), target, kernel, std::forward<Args>(args)...);

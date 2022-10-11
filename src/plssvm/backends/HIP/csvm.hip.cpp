@@ -18,7 +18,7 @@
 #include "plssvm/detail/assert.hpp"                       // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"              // plssvm::detail::execution_range
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::exception
-#include "plssvm/kernel_types.hpp"                        // plssvm::kernel_type
+#include "plssvm/kernel_function_types.hpp"               // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
@@ -102,17 +102,17 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 template <typename T>
 void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points_padded, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
-    
+
     detail::set_device(device);
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             hip::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features));
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
             hip::device_kernel_q_poly<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
             hip::device_kernel_q_radial<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
@@ -125,15 +125,15 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(device);
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             hip::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
             hip::device_kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
             hip::device_kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value());
             break;
@@ -155,13 +155,13 @@ void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range,
     auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(0);
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             hip::device_kernel_predict_poly<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             hip::device_kernel_predict_radial<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }

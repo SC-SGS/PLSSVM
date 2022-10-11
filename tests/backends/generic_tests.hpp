@@ -16,12 +16,12 @@
 #include "utility.hpp"           // util::gtest_assert_floating_point_near, util::gtest_assert_floating_point_eq, util::gtest_expect_correct_csvm_factory, util::create_temp_file
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 
 #include "fmt/format.h"   // fmt::format

@@ -180,17 +180,17 @@ std::string get_device_name(const command_queue &queue) {
     return device_name;
 }
 
-std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(const kernel_type kernel) {
+std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(const kernel_function_type kernel) {
     switch (kernel) {
-        case kernel_type::linear:
+        case kernel_function_type::linear:
             return { std::make_pair(compute_kernel_name::q_kernel, "device_kernel_q_linear"),
                      std::make_pair(compute_kernel_name::svm_kernel, "device_kernel_linear"),
                      std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear") };
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             return { std::make_pair(compute_kernel_name::q_kernel, "device_kernel_q_poly"),
                      std::make_pair(compute_kernel_name::svm_kernel, "device_kernel_poly"),
                      std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_poly") };
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             return { std::make_pair(compute_kernel_name::q_kernel, "device_kernel_q_radial"),
                      std::make_pair(compute_kernel_name::svm_kernel, "device_kernel_radial"),
                      std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_radial") };

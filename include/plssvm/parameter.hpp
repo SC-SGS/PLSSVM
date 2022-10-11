@@ -13,8 +13,8 @@
 #define PLSSVM_PARAMETER_HPP_
 #pragma once
 
-#include "plssvm/default_value.hpp"  // plssvm::default_value
-#include "plssvm/kernel_types.hpp"   // plssvm::kernel_type
+#include "plssvm/default_value.hpp"          // plssvm::default_value
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT
 
@@ -25,6 +25,8 @@
 namespace plssvm {
 
 // create named arguments
+/// Create a named argument for the `kernel` SVM parameter.
+IGOR_MAKE_NAMED_ARGUMENT(kernel_type);
 /// Create a named argument for the `gamma` SVM parameter.
 IGOR_MAKE_NAMED_ARGUMENT(gamma);
 /// Create a named argument for the `degree` SVM parameter.
@@ -66,9 +68,9 @@ struct parameter {
      * @param[in] coef0_p the coef0 used in the polynomial kernel function
      * @param[in] cost_p the cost used in all kernel functions
      */
-    constexpr parameter(const kernel_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept {
+    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept {
         // not in member initializer list since we want to override the default value
-        kernel = kernel_p;
+        kernel_type = kernel_p;
         degree = degree_p;
         gamma = gamma_p;
         coef0 = coef0_p;
@@ -76,7 +78,7 @@ struct parameter {
     }
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
-    default_value<kernel_type> kernel{ default_init<kernel_type>{ kernel_type::linear } };
+    default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::linear } };
     /// The degree parameter used in the polynomial kernel function.
     default_value<int> degree{ default_init<int>{ 3 } };
     /// The gamma parameter used in the polynomial and rbf kernel functions.
@@ -98,7 +100,7 @@ struct parameter {
             return parameter<real_type>{ *this };
         } else {
             // convert between parameter<float> <-> parameter<double>
-            return parameter<U>{ kernel, degree, default_value<U>{ gamma }, default_value<U>{ coef0 }, default_value<U>{ cost } };
+            return parameter<U>{ kernel_type, degree, default_value<U>{ gamma }, default_value<U>{ coef0 }, default_value<U>{ cost } };
         }
     }
 
@@ -113,16 +115,16 @@ struct parameter {
     constexpr bool equivalent(const parameter &other) const noexcept {
         // equality check, but only the member variables that a necessary for the current kernel type are compared!
         // cannot be equal if both parameters have different kernel types
-        if (kernel != other.kernel) {
+        if (kernel_type != other.kernel_type) {
             return false;
         }
         // check member variables based on kernel type
-        switch (kernel.value()) {
-            case kernel_type::linear:
+        switch (kernel_type.value()) {
+            case kernel_function_type::linear:
                 return cost == other.cost;
-            case kernel_type::polynomial:
+            case kernel_function_type::polynomial:
                 return degree == other.degree && gamma == other.gamma && coef0 == other.coef0 && cost == other.cost;
-            case kernel_type::rbf:
+            case kernel_function_type::rbf:
                 return gamma == other.gamma && cost == other.cost;
         }
         return false;
@@ -142,7 +144,7 @@ extern template struct parameter<double>;
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator==(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
-    return lhs.kernel == rhs.kernel && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
+    return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
 /**
  * @brief Compares the two parameter sets @p lhs and @p rhs for inequality.

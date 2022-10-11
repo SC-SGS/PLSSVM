@@ -28,7 +28,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_types.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
@@ -536,15 +536,15 @@ endif()
 ########################################################################################################################
 ##                                               configure version file                                               ##
 ########################################################################################################################
-message(STATUS "Configuring version and git metadata.")
-set(PRE_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp.in")
-set(POST_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp")
-include(cmake/git_watcher.cmake)
-configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp
-        @ONLY
-)
+#message(STATUS "Configuring version and git metadata.")
+#set(PRE_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp.in")
+#set(POST_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp")
+#include(cmake/git_watcher.cmake)
+#configure_file(
+#        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp.in
+#        ${CMAKE_CURRENT_SOURCE_DIR}/include/plssvm/version/version.hpp
+#        @ONLY
+#)
 
 
 ########################################################################################################################

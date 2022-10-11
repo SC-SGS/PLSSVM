@@ -13,7 +13,7 @@
 
 #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
-#include "plssvm/kernel_types.hpp"    // plssvm::kernel_type
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include <vector>  // std::vector
 
@@ -75,15 +75,15 @@ template <typename real_type>
  * @param[in] csvm the SVM encapsulating all necessary parameters
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
-template <plssvm::kernel_type kernel, typename real_type, typename SVM>
+template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
 [[nodiscard]] real_type kernel_function(const std::vector<real_type> &x, const std::vector<real_type> &y, [[maybe_unused]] const SVM &csvm) {
     PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
-    if constexpr (kernel == plssvm::kernel_type::linear) {
+    if constexpr (kernel == plssvm::kernel_function_type::linear) {
         return detail::linear_kernel(x, y);
-    } else if constexpr (kernel == plssvm::kernel_type::polynomial) {
+    } else if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         return detail::poly_kernel(x, y, csvm.get_degree(), csvm.get_gamma(), csvm.get_coef0());
-    } else if constexpr (kernel == plssvm::kernel_type::rbf) {
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
         return detail::radial_kernel(x, y, csvm.get_gamma());
     } else {
         static_assert(plssvm::detail::always_false_v<real_type>, "Unknown kernel type!");
@@ -100,13 +100,13 @@ template <plssvm::kernel_type kernel, typename real_type, typename SVM>
  * @param[in] csvm the SVM encapsulating all necessary parameters
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
-template <plssvm::kernel_type kernel, typename real_type, typename SVM>
+template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
 [[nodiscard]] std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const std::size_t num_devices, const SVM &csvm) {
     std::vector<real_type> result;
     result.reserve(data.size() - 1);
 
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
-        if constexpr (kernel == plssvm::kernel_type::linear) {
+        if constexpr (kernel == plssvm::kernel_function_type::linear) {
             result.emplace_back(detail::linear_kernel(data.back(), data[i], num_devices));
         } else {
             result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
@@ -129,7 +129,7 @@ template <plssvm::kernel_type kernel, typename real_type, typename SVM>
  * @param[in] csvm the SVM encapsulating all necessary parameters
  * @return the result vector (`[[nodiscard]]`)
  */
-template <plssvm::kernel_type kernel, typename real_type, typename SVM>
+template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
 [[nodiscard]] std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const real_type add, const SVM &csvm) {
     PLSSVM_ASSERT(x.size() == q.size(), "Sizes mismatch!: {} != {}", x.size(), q.size());
     PLSSVM_ASSERT(x.size() == data.size() - 1, "Sizes mismatch!: {} != {}", x.size(), data.size() - 1);

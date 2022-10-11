@@ -14,6 +14,7 @@
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
+#include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 
 #include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
 #include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
@@ -54,8 +55,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
 
     // check for correctness
     // check parameter
-    EXPECT_FALSE(params.kernel.is_default());
-    EXPECT_EQ(params.kernel.value(), plssvm::kernel_type::linear);
+    EXPECT_FALSE(params.kernel_type.is_default());
+    EXPECT_EQ(params.kernel_type.value(), plssvm::kernel_function_type::linear);
     EXPECT_TRUE(params.degree.is_default());
     EXPECT_TRUE(params.gamma.is_default());
     EXPECT_TRUE(params.coef0.is_default());
@@ -82,8 +83,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
 
     // check for correctness
     // check parameter
-    EXPECT_FALSE(params.kernel.is_default());
-    EXPECT_EQ(params.kernel.value(), plssvm::kernel_type::polynomial);
+    EXPECT_FALSE(params.kernel_type.is_default());
+    EXPECT_EQ(params.kernel_type.value(), plssvm::kernel_function_type::polynomial);
     EXPECT_FALSE(params.degree.is_default());
     EXPECT_EQ(params.degree.value(), 2);
     EXPECT_FALSE(params.gamma.is_default());
@@ -113,8 +114,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
 
     // check for correctness
     // check parameter
-    EXPECT_FALSE(params.kernel.is_default());
-    EXPECT_EQ(params.kernel.value(), plssvm::kernel_type::rbf);
+    EXPECT_FALSE(params.kernel_type.is_default());
+    EXPECT_EQ(params.kernel_type.value(), plssvm::kernel_function_type::rbf);
     EXPECT_TRUE(params.degree.is_default());
     EXPECT_FALSE(params.gamma.is_default());
     EXPECT_EQ(params.gamma.value(), plssvm::detail::convert_to<real_type>("0.025"));
@@ -540,7 +541,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
 
     // create necessary parameter
     plssvm::parameter<real_type> params{};
-    params.kernel = plssvm::kernel_type::polynomial;
+    params.kernel_type = plssvm::kernel_function_type::polynomial;
     params.degree = 3;
     params.gamma = real_type{ 2.2 };
     params.coef0 = real_type{ 4.4 };
@@ -590,7 +591,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
 
     // create necessary parameter
     plssvm::parameter<real_type> params{};
-    params.kernel = plssvm::kernel_type::rbf;
+    params.kernel_type = plssvm::kernel_function_type::rbf;
     params.gamma = real_type{ 0.4 };
     const real_type rho = 1.41421;
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };

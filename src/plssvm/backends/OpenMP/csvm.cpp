@@ -15,7 +15,7 @@
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
-#include "plssvm/kernel_types.hpp"                // plssvm::kernel_type
+#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
@@ -61,14 +61,14 @@ void csvm<T>::init(const target_platform target) {
 template <typename T>
 auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const -> std::vector<real_type> {
     std::vector<real_type> q(data.size() - 1);
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             device_kernel_q_linear(q, data);
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             device_kernel_q_poly(q, data, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             device_kernel_q_radial(q, data, params.gamma.value());
             break;
     }
@@ -77,14 +77,14 @@ auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<s
 
 template <typename T>
 void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
             break;
     }
@@ -228,18 +228,18 @@ auto csvm<T>::predict_values(const parameter<real_type> &params, const std::vect
     std::vector<real_type> out(predict_points.size(), -rho);
 
     // use faster methode in case of the linear kernel function
-    if (params.kernel == kernel_type::linear && w.empty()) {
+    if (params.kernel_type == kernel_function_type::linear && w.empty()) {
         w = calculate_w(support_vectors, alpha);
     }
 
     #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
-        switch (params.kernel) {
-            case kernel_type::linear:
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
                 out[point_index] += transposed{ w } * predict_points[point_index];
                 break;
-            case kernel_type::polynomial:
-            case kernel_type::rbf:
+            case kernel_function_type::polynomial:
+            case kernel_function_type::rbf:
                 {
                     real_type temp{ 0.0 };
                     #pragma omp simd reduction(+: temp)

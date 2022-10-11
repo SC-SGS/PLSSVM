@@ -11,13 +11,13 @@
 
 #pragma once
 
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <utility>  // std::forward
 #include <vector>   // std::vector
@@ -62,7 +62,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::opencl::detail::devi
     explicit csvm(target_platform target, parameter<real_type> params = {});
 
     template <typename... Args>
-    csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+    csvm(target_platform target, kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
         this->init(target, kernel);
     }
 

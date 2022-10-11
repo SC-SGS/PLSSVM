@@ -19,7 +19,7 @@
 #include "plssvm/detail/operators.hpp"       // plssvm::operators::sign
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, remove_cvref_t, always_false_v, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_types.hpp"           // plssvm::kernel_type, plssvm::kernel_type_to_math_string
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
@@ -27,7 +27,7 @@
 #include "igor/igor.hpp"  // igor::parser
 
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
-#include <cstddef>      // std::size_tstderr
+#include <cstddef>      // std::size_t
 #include <iostream>     // std::clog, std::endl
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tie
@@ -38,6 +38,7 @@
 namespace plssvm {
 
 // TODO: remove T ??!??
+// TODO: exception docu
 
 /**
  * @brief Base class for all C-SVM backends.
@@ -67,7 +68,7 @@ class csvm {
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args>
-    explicit csvm(kernel_type kernel, Args &&...named_args);
+    explicit csvm(kernel_function_type kernel, Args &&...named_args);
 
     /**
      * @brief Default copy-constructor since a virtual destructor has been declared.
@@ -87,7 +88,19 @@ class csvm {
      * @return the SVM parameter (`[[nodiscard]]`)
      */
     [[nodiscard]] parameter<real_type> get_params() const noexcept { return params_; }
-    // TODO: set_params?
+
+    /**
+     * @brief Override the old SVM parameter with the new @p params.
+     * @param[in] params the new SVM parameter to use
+     */
+    void set_params(parameter<real_type> params) noexcept { params_ = std::move(params); }
+    /**
+     * @brief Override the old SVM parameter with the new ones given as named parameters in @ named_args.
+     * @tparam Args the type of the named-parameters
+     * @param[in] named_args the potential named-parameters
+     */
+    template <typename... Args>
+    void set_params(Args &&...named_args);
 
     ////////////////////////////////////////////////////////////////////////////////
     ////                               fit model                                ////
@@ -183,47 +196,54 @@ csvm<T>::csvm(parameter<real_type> params) :
 
 template <typename T>
 template <typename... Args>
-csvm<T>::csvm(kernel_type kernel, Args &&...named_args) {
-    igor::parser parser{ std::forward<Args>(named_args)... };
+csvm<T>::csvm(kernel_function_type kernel, Args &&...named_args) {
+    this->set_params(kernel_type = kernel, std::forward<Args>(named_args)...);
+}
 
-    // set kernel type
-    params_.kernel = kernel;
+template <typename T>
+template <typename... Args>
+void csvm<T>::set_params(Args &&...named_args) {
+    igor::parser parser{ std::forward<Args>(named_args)... };
 
     // compile time check: only named parameter are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
-    // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
+    // compile time check: only some named parameters are allowed // TODO: SYCL
+    static_assert(!parser.has_other_than(kernel_type, gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
 
     // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
-    [[maybe_unused]] const auto print_warning = [kernel](const std::string_view param_name) {
-        std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_type_to_math_string(kernel)) << std::endl;
+    [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
+        std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_function_type_to_math_string(kernel)) << std::endl;
     };
 
     // compile time/runtime check: the values must have the correct types
+    if constexpr (parser.has(kernel_type)) {
+        // get the value of the provided named parameter
+        params_.kernel_type = get_value_from_named_parameter<typename decltype(params_.kernel_type)::value_type>(parser, kernel_type);
+    }
     if constexpr (parser.has(gamma)) {
         // get the value of the provided named parameter
         params_.gamma = get_value_from_named_parameter<typename decltype(params_.gamma)::value_type>(parser, gamma);
         // runtime check: the value may only be used with a specific kernel type
-        if (kernel == kernel_type::linear) {
-            print_warning("gamma");
+        if (params_.kernel_type == kernel_function_type::linear) {
+            print_warning("gamma", params_.kernel_type);
         }
     }
     if constexpr (parser.has(degree)) {
         // get the value of the provided named parameter
         params_.degree = get_value_from_named_parameter<typename decltype(params_.degree)::value_type>(parser, degree);
         // runtime check: the value may only be used with a specific kernel type
-        if (kernel == kernel_type::linear || kernel == kernel_type::rbf) {
-            print_warning("degree");
+        if (params_.kernel_type == kernel_function_type::linear || params_.kernel_type == kernel_function_type::rbf) {
+            print_warning("degree", params_.kernel_type);
         }
     }
     if constexpr (parser.has(coef0)) {
         // get the value of the provided named parameter
         params_.coef0 = get_value_from_named_parameter<typename decltype(params_.coef0)::value_type>(parser, coef0);
         // runtime check: the value may only be used with a specific kernel type
-        if (kernel == kernel_type::linear || kernel == kernel_type::rbf) {
-            print_warning("coef0");
+        if (params_.kernel_type == kernel_function_type::linear || params_.kernel_type == kernel_function_type::rbf) {
+            print_warning("coef0", params_.kernel_type);
         }
     }
     if constexpr (parser.has(cost)) {
@@ -356,12 +376,13 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
 template <typename T>
 void csvm<T>::sanity_check_parameter() const {
     // kernel: valid kernel function
-    if (params_.kernel != kernel_type::linear && params_.kernel != kernel_type::polynomial && params_.kernel != kernel_type::rbf) {
-        throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel)) };
+    if (params_.kernel_type != kernel_function_type::linear && params_.kernel_type != kernel_function_type::polynomial && params_.kernel_type != kernel_function_type::rbf) {
+        throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel_type)) };
     }
 
     // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
-    if ((params_.kernel == kernel_type::polynomial || params_.kernel == kernel_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
+    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) &&
+        !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
     }
     // degree: all allowed

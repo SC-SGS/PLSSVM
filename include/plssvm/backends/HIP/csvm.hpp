@@ -11,11 +11,11 @@
 
 #pragma once
 
-#include "plssvm/kernel_types.hpp"                        // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
-#include "plssvm/parameter.hpp"                           // plssvm::parameter
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
+#include "plssvm/kernel_function_types.hpp"               // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>  // std::size_t
 
@@ -60,7 +60,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<T, ::plssvm::hip::detail::device_
     explicit csvm(target_platform target, parameter<real_type> params = {});
 
     template <typename... Args>
-    csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+    csvm(target_platform target, kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
         this->init(target);
     }
 

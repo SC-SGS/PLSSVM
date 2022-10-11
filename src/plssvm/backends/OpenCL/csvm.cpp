@@ -19,7 +19,7 @@
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"                // plssvm::detail::execution_range
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -43,7 +43,7 @@ csvm<T>::csvm(const target_platform target, parameter<real_type> params) : base_
 }
 
 template <typename T>
-void csvm<T>::init(const target_platform target, const kernel_type kernel) {
+void csvm<T>::init(const target_platform target, const kernel_function_type kernel) {
     // check whether the requested target platform has been enabled
     switch (target) {
         case target_platform::automatic:
@@ -123,7 +123,7 @@ void csvm<T>::init(const target_platform target, const kernel_type kernel) {
                   "The q_kernel device kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::svm_kernel) == 1; }),
                   "The q_kernel device kernel is missing!");
-    if (kernel == kernel_type::linear) {
+    if (kernel == kernel_function_type::linear) {
         PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
                       "The w_kernel device kernel is missing!");
     } else {
@@ -163,15 +163,15 @@ template <typename T>
 void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points_padded, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::q_kernel), grid, block, q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features));
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
             detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::q_kernel), grid, block, q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree, params.gamma, params.coef0);
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
             detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::q_kernel), grid, block, q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma);
             break;
@@ -182,15 +182,15 @@ template <typename T>
 void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const real_type QA_cost, const real_type add, const size_type num_data_points_padded, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::svm_kernel), grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
             detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::svm_kernel), grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree, params.gamma, params.coef0);
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
             detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::svm_kernel), grid, block, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma);
             break;
@@ -208,13 +208,13 @@ template <typename T>
 void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_support_vectors, const size_type num_predict_points, const size_type num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             detail::run_kernel(devices_[0], devices_[0].kernels.at(detail::compute_kernel_name::predict_kernel), grid, block, out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree, params.gamma, params.coef0);
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             detail::run_kernel(devices_[0], devices_[0].kernels.at(detail::compute_kernel_name::predict_kernel), grid, block, out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma);
             break;
     }

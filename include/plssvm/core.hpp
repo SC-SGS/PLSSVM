@@ -18,7 +18,7 @@
 #include "plssvm/parameter.hpp"
 
 #include "plssvm/backend_types.hpp"
-#include "plssvm/kernel_types.hpp"
+#include "plssvm/kernel_function_types.hpp"
 #include "plssvm/target_platforms.hpp"
 
 #include "plssvm/exceptions/exceptions.hpp"

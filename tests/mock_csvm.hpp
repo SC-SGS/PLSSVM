@@ -13,9 +13,9 @@
 #define PLSSVM_TESTS_MOCK_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"          // plssvm::csvm
-#include "plssvm/kernel_types.hpp"  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/csvm.hpp"                   // plssvm::csvm
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "gmock/gmock.h"  // MOCK_METHOD
 
@@ -37,7 +37,7 @@ class mock_csvm final : public plssvm::csvm<T> {
     explicit mock_csvm(plssvm::parameter<T> params = {}) :
         base_type{ std::move(params) } {}
     template <typename... Args>
-    explicit mock_csvm(const plssvm::kernel_type kernel, Args &&...args) :
+    explicit mock_csvm(const plssvm::kernel_function_type kernel, Args &&...args) :
         base_type{ kernel, std::forward<Args>(args)... } {}
 
     // mock pure virtual functions

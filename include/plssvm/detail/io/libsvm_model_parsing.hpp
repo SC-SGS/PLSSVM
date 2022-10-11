@@ -121,7 +121,7 @@ template <typename real_type, typename label_type, typename size_type>
             } else if (detail::starts_with(line, "kernel_type")) {
                 // parse kernel_type, must be linear, polynomial or rbf
                 std::istringstream iss{ std::string{ value } };
-                iss >> params.kernel;
+                iss >> params.kernel_type;
                 if (iss.fail()) {
                     throw invalid_file_format_exception{ fmt::format("Unrecognized kernel type '{}'!", value) };
                 }
@@ -198,8 +198,8 @@ template <typename real_type, typename label_type, typename size_type>
         throw invalid_file_format_exception{ "Missing kernel_type!" };
     }
     // check provided values based on kernel_type
-    switch (params.kernel) {
-        case plssvm::kernel_type::linear:
+    switch (params.kernel_type) {
+        case plssvm::kernel_function_type::linear:
             if (!params.degree.is_default()) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the linear kernel!" };
             }
@@ -210,9 +210,9 @@ template <typename real_type, typename label_type, typename size_type>
                 throw invalid_file_format_exception{ "Explicitly provided a value for the coef0 parameter which is not used in the linear kernel!" };
             }
             break;
-        case plssvm::kernel_type::polynomial:
+        case plssvm::kernel_function_type::polynomial:
             break;
-        case plssvm::kernel_type::rbf:
+        case plssvm::kernel_function_type::rbf:
 
             if (!params.degree.is_default()) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the radial basis function kernel!" };
@@ -297,15 +297,15 @@ template <typename real_type, typename label_type>
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
 
     // save model file header
-    std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel);
+    std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel_type);
     // save the SVM parameter information based on the used kernel_type
-    switch (params.kernel) {
-        case kernel_type::linear:
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
             break;
-        case kernel_type::polynomial:
+        case kernel_function_type::polynomial:
             out_string += fmt::format("degree {}\ngamma {}\ncoef0 {}\n", params.degree, params.gamma, params.coef0);
             break;
-        case kernel_type::rbf:
+        case kernel_function_type::rbf:
             out_string += fmt::format("gamma {}\n", params.gamma);
             break;
     }

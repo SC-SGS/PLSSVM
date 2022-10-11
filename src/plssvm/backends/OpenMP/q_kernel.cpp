@@ -9,7 +9,7 @@
 #include "plssvm/backends/OpenMP/q_kernel.hpp"
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
-#include "plssvm/kernel_types.hpp"   // plssvm::kernel_function
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function
 
 #include <vector>  // std::vector
 
@@ -21,7 +21,7 @@ void device_kernel_q_linear(std::vector<real_type> &q, const std::vector<std::ve
 
     #pragma omp parallel for
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
-        q[i] = kernel_function<kernel_type::linear>(data[i], data.back());
+        q[i] = kernel_function<kernel_function_type::linear>(data[i], data.back());
     }
 }
 template void device_kernel_q_linear(std::vector<float> &, const std::vector<std::vector<float>> &);
@@ -33,7 +33,7 @@ void device_kernel_q_poly(std::vector<real_type> &q, const std::vector<std::vect
 
     #pragma omp parallel for
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
-        q[i] = kernel_function<kernel_type::polynomial>(data[i], data.back(), degree, gamma, coef0);
+        q[i] = kernel_function<kernel_function_type::polynomial>(data[i], data.back(), degree, gamma, coef0);
     }
 }
 template void device_kernel_q_poly(std::vector<float> &, const std::vector<std::vector<float>> &, const int, const float, const float);
@@ -45,7 +45,7 @@ void device_kernel_q_radial(std::vector<real_type> &q, const std::vector<std::ve
 
     #pragma omp parallel for
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
-        q[i] = kernel_function<kernel_type::rbf>(data[i], data.back(), gamma);
+        q[i] = kernel_function<kernel_function_type::rbf>(data[i], data.back(), gamma);
     }
 }
 template void device_kernel_q_radial(std::vector<float> &, const std::vector<std::vector<float>> &, const float);

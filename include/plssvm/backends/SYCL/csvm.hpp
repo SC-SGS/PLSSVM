@@ -68,7 +68,7 @@ template <typename T>
     explicit csvm(target_platform target, parameter<real_type> params);
 
     template <typename... Args>
-    csvm(target_platform target, kernel_type kernel, Args&&... named_args) : base_type{ kernel, named_args... } {
+    csvm(target_platform target, kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, named_args... } {
         // set kernel invocation type
         igor::parser p{ std::forward<Args>(named_args)... };
 

@@ -27,7 +27,7 @@ namespace plssvm {
 /**
  * @brief Enum class for all implemented kernel functions.
  */
-enum class kernel_type {
+enum class kernel_function_type {
     /** Linear kernel function: \f$\vec{u}^T \cdot \vec{v}\f$. */
     linear = 0,
     /** Polynomial kernel function: \f$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\f$. */
@@ -42,7 +42,7 @@ enum class kernel_type {
  * @param[in] kernel the kernel type
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, kernel_type kernel);
+std::ostream &operator<<(std::ostream &out, kernel_function_type kernel);
 
 /**
  * @brief Return the mathematical representation of the kernel_type @p kernel.
@@ -50,7 +50,7 @@ std::ostream &operator<<(std::ostream &out, kernel_type kernel);
  * @param[in] kernel the kernel type
  * @return the mathematical representation of @p kernel
  */
-std::string_view kernel_type_to_math_string(kernel_type kernel) noexcept;
+std::string_view kernel_function_type_to_math_string(kernel_function_type kernel) noexcept;
 
 /**
  * @brief Use the input-stream @p in to initialize the @p kernel type.
@@ -59,7 +59,7 @@ std::string_view kernel_type_to_math_string(kernel_type kernel) noexcept;
  * @param[in] kernel the kernel type
  * @return the input-stream
  */
-std::istream &operator>>(std::istream &in, kernel_type &kernel);
+std::istream &operator>>(std::istream &in, kernel_function_type &kernel);
 
 /**
  * @brief Computes the value of the two vectors @p xi and @p xj using the @p kernel function determined at compile-time.
@@ -71,22 +71,22 @@ std::istream &operator>>(std::istream &in, kernel_type &kernel);
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_type kernel, typename real_type, typename... Args>
+template <kernel_function_type kernel, typename real_type, typename... Args>
 [[nodiscard]] inline real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, Args &&...args) {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
-    if constexpr (kernel == kernel_type::linear) {
+    if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         return transposed{ xi } * xj;
-    } else if constexpr (kernel == kernel_type::polynomial) {
+    } else if constexpr (kernel == kernel_function_type::polynomial) {
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
         const auto degree = static_cast<real_type>(detail::get<0>(args...));
         const auto gamma = static_cast<real_type>(detail::get<1>(args...));
         const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
         return std::pow(std::fma(gamma, (transposed<real_type>{ xi } * xj), coef0), degree);
-    } else if constexpr (kernel == kernel_type::rbf) {
+    } else if constexpr (kernel == kernel_function_type::rbf) {
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma = static_cast<real_type>(detail::get<0>(args...));
         return std::exp(-gamma * squared_euclidean_dist(xi, xj));
