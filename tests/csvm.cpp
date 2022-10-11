@@ -216,6 +216,41 @@ TYPED_TEST(BaseCSVM, get_params) {
     EXPECT_TRUE(csvm_params.equivalent(params));
 }
 
+TYPED_TEST(BaseCSVM, set_params_from_parameter) {
+    using real_type = TypeParam;
+
+    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    mock_csvm<real_type> csvm{ };
+
+    // create parameter class
+    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
+
+    // set csvm parameter to new values
+    csvm.set_params(params);
+
+    // check whether the parameters have been set correctly
+    EXPECT_EQ(csvm.get_params(), params);
+}
+TYPED_TEST(BaseCSVM, set_params_from_named_parameters) {
+    using real_type = TypeParam;
+
+    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    mock_csvm<real_type> csvm{ };
+
+    // create parameter class
+    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
+
+    // set csvm parameter to new values
+    csvm.set_params(plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
+                    plssvm::degree = 4,
+                    plssvm::gamma = 0.2,
+                    plssvm::coef0 = 0.1,
+                    plssvm::cost = 0.01);
+
+    // check whether the parameters have been set correctly
+    EXPECT_EQ(csvm.get_params(), params);
+}
+
 template <typename T>
 class BaseCSVMFit : public BaseCSVM<T>, private util::redirect_output, protected util::temporary_file {};
 TYPED_TEST_SUITE(BaseCSVMFit, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
