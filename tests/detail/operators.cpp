@@ -315,13 +315,11 @@ TYPED_TEST(OperatorsDeathTest, operator_squared_euclidean_dist) {
 }
 
 TYPED_TEST(Operators, operator_sign_positive) {
-    using real_type = TypeParam;
-    EXPECT_FLOATING_POINT_EQ(sign(real_type{ 1.6 }), real_type{ 1 });
-    EXPECT_FLOATING_POINT_EQ(sign(real_type{ 3 }), real_type{ 1 });
+    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ 1.6 }), TypeParam{ 1 });
+    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ 3 }), TypeParam{ 1 });
 }
 TYPED_TEST(Operators, operator_sign_negative) {
-    using real_type = TypeParam;
-    EXPECT_FLOATING_POINT_EQ(sign(real_type{ -2.4 }), real_type{ -1 });
-    EXPECT_FLOATING_POINT_EQ(sign(real_type{ -4 }), real_type{ -1 });
-    EXPECT_FLOATING_POINT_EQ(sign(real_type{ 0 }), real_type{ -1 });
+    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ -2.4 }), TypeParam{ -1 });
+    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ -4 }), TypeParam{ -1 });
+    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ 0 }), TypeParam{ -1 });
 }

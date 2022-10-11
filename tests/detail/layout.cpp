@@ -10,9 +10,10 @@
 
 #include "plssvm/detail/layout.hpp"
 
+#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "../naming.hpp"         // util::{arithmetic_types_to_name}
 #include "../types_to_test.hpp"  // util::real_type_gtest
-#include "utility.hpp"           // util::{convert_to_string, convert_from_string, redirect_output}
+#include "../utility.hpp"        // util::{convert_to_string, convert_from_string, redirect_output}
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
@@ -78,11 +79,11 @@ TYPED_TEST(Layout, array_of_structs) {
 
     // convert to AoS using the direct function call
     const std::vector<typename TestFixture::real_type> aos_direct = plssvm::detail::transform_to_aos_layout(this->matrix, 0, this->num_points, this->num_features);
-    EXPECT_EQ(aos_direct, correct_aos) << fmt::format("result: [{}], correct: [{}]", fmt::join(aos_direct, ", "), fmt::join(correct_aos, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(aos_direct, correct_aos);
 
     // convert to AoS using the indirect function call
     const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, this->matrix, 0, this->num_points);
-    EXPECT_EQ(aos_indirect, correct_aos) << fmt::format("result: [{}], correct: [{}]", fmt::join(aos_indirect, ", "), fmt::join(correct_aos, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(aos_indirect, correct_aos);
 }
 TYPED_TEST(Layout, array_of_structs_boundary) {
     // correctly transformed matrix in AoS layout with a boundary of size 2
@@ -90,11 +91,11 @@ TYPED_TEST(Layout, array_of_structs_boundary) {
 
     // convert to AoS using the direct function call
     const std::vector<typename TestFixture::real_type> aos_direct = plssvm::detail::transform_to_aos_layout(this->matrix, 2, this->num_points, this->num_features);
-    EXPECT_EQ(aos_direct, correct_aos) << fmt::format("result: [{}], correct: [{}]", fmt::join(aos_direct, ", "), fmt::join(correct_aos, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(aos_direct, correct_aos);
 
     // convert to AoS using the indirect function call
     const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, this->matrix, 2, this->num_points);
-    EXPECT_EQ(aos_indirect, correct_aos) << fmt::format("result: [{}], correct: [{}]", fmt::join(aos_indirect, ", "), fmt::join(correct_aos, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(aos_indirect, correct_aos);
 }
 TYPED_TEST(Layout, array_of_structs_fewer_data_points) {
     // correctly transformed matrix in AoS layout with fewer data points and without boundary
@@ -102,11 +103,11 @@ TYPED_TEST(Layout, array_of_structs_fewer_data_points) {
 
     // convert to AoS using the direct function call
     const std::vector<typename TestFixture::real_type> aos_direct = plssvm::detail::transform_to_aos_layout(this->matrix, 2, 3, this->num_features);
-    EXPECT_EQ(aos_direct, correct_aos) << fmt::format("result: [{}], correct: [{}]", fmt::join(aos_direct, ", "), fmt::join(correct_aos, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(aos_direct, correct_aos);
 
     // convert to AoS using the indirect function call
     const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, this->matrix, 2, 3);
-    EXPECT_EQ(aos_indirect, correct_aos) << fmt::format("result: [{}], correct: [{}]", fmt::join(aos_indirect, ", "), fmt::join(correct_aos, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(aos_indirect, correct_aos);
 }
 
 TYPED_TEST(Layout, struct_of_arrays) {
@@ -115,11 +116,11 @@ TYPED_TEST(Layout, struct_of_arrays) {
 
     // convert to SoA using the direct function call
     const std::vector<typename TestFixture::real_type> soa_direct = plssvm::detail::transform_to_soa_layout(this->matrix, 0, this->num_points, this->num_features);
-    EXPECT_EQ(soa_direct, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_direct, ", "), fmt::join(correct_soa, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(soa_direct, correct_soa);
 
     // convert to SoA using the indirect function call
     const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, this->matrix, 0, this->num_points);
-    EXPECT_EQ(soa_indirect, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_indirect, ", "), fmt::join(correct_soa, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(soa_indirect, correct_soa);
 }
 TYPED_TEST(Layout, struct_of_arrays_boundary) {
     // correctly transformed matrix in SoA layout with a boundary of size 2
@@ -127,11 +128,11 @@ TYPED_TEST(Layout, struct_of_arrays_boundary) {
 
     // convert to SoA using the direct function call
     const std::vector<typename TestFixture::real_type> soa_direct = plssvm::detail::transform_to_soa_layout(this->matrix, 2, this->num_points, this->num_features);
-    EXPECT_EQ(soa_direct, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_direct, ", "), fmt::join(correct_soa, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(soa_direct, correct_soa);
 
     // convert to SoA using the indirect function call
     const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, this->matrix, 2, this->num_points);
-    EXPECT_EQ(soa_indirect, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_indirect, ", "), fmt::join(correct_soa, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(soa_indirect, correct_soa);
 }
 TYPED_TEST(Layout, struct_of_arrays_fewer_data_points) {
     // correctly transformed matrix in SoA layout with fewer data points and without boundary
@@ -139,11 +140,11 @@ TYPED_TEST(Layout, struct_of_arrays_fewer_data_points) {
 
     // convert to SoA using the direct function call
     const std::vector<typename TestFixture::real_type> soa_direct = plssvm::detail::transform_to_soa_layout(this->matrix, 2, 3, this->num_features);
-    EXPECT_EQ(soa_direct, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_direct, ", "), fmt::join(correct_soa, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(soa_direct, correct_soa);
 
     // convert to SoA using the indirect function call
     const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, this->matrix, 2, 3);
-    EXPECT_EQ(soa_indirect, correct_soa) << fmt::format("result: [{}], correct: [{}]", fmt::join(soa_indirect, ", "), fmt::join(correct_soa, ", "));
+    EXPECT_FLOATING_POINT_VECTOR_EQ(soa_indirect, correct_soa);
 }
 
 template <typename T>

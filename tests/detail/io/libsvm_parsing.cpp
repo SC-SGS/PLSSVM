@@ -13,9 +13,10 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
-#include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
-#include "../../utility.hpp"        // util::temporary_file, EXPECT_THROW_WHAT
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
+#include "../../naming.hpp"              // naming::real_type_label_type_combination_to_name
+#include "../../types_to_test.hpp"       // util::{instantiate_template_file, real_type_label_type_combination_gtest}
+#include "../../utility.hpp"             // util::temporary_file
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -127,7 +128,7 @@ TYPED_TEST(LIBSVMParseDense, read) {
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_EQ(data, this->correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
     EXPECT_EQ(label, this->correct_label);
 }
 TYPED_TEST(LIBSVMParseDense, read_skip_lines) {
@@ -147,7 +148,7 @@ TYPED_TEST(LIBSVMParseDense, read_skip_lines) {
 
     // check for correct data
     for (std::size_t i = 0; i < num_data_points; ++i) {
-        EXPECT_EQ(data[i], this->correct_data[skipped + i]);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR(data[i], this->correct_data[skipped + i]);
     }
     for (std::size_t i = 0; i < num_data_points; ++i) {
         EXPECT_EQ(label[i], this->correct_label[skipped + i]);
@@ -168,7 +169,7 @@ TYPED_TEST(LIBSVMParseSparse, read) {
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_EQ(data, this->correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
     EXPECT_EQ(label, this->correct_label);
 }
 TYPED_TEST(LIBSVMParseSparse, read_skip_lines) {
@@ -188,7 +189,7 @@ TYPED_TEST(LIBSVMParseSparse, read_skip_lines) {
 
     // check for correct data
     for (std::size_t i = 0; i < num_data_points; ++i) {
-        EXPECT_EQ(data[i], this->correct_data[i + skipped]);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR(data[i], this->correct_data[i + skipped]);
     }
     for (std::size_t i = 0; i < num_data_points; ++i) {
         EXPECT_EQ(label[i], this->correct_label[i + skipped]);
@@ -215,7 +216,7 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
         { current_real_type{ 0.0 }, current_real_type{ -0.3 } },
         { current_real_type{ 5.5 }, current_real_type{ 0.0 } }
     };
-    EXPECT_EQ(data, correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, correct_data);
     EXPECT_TRUE(label.empty());
 }
 

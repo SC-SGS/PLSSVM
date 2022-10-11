@@ -12,8 +12,9 @@
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
-#include "naming.hpp"   // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
-#include "utility.hpp"  // util::{convert_to_string, convert_from_string}, EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
+#include "utility.hpp"             // util::{convert_to_string, convert_from_string}
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
 

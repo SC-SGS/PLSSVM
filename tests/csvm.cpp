@@ -15,9 +15,10 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "naming.hpp"         // naming::{real_type_to_name, real_type_label_type_combination_to_name}
-#include "types_to_test.hpp"  // util::{real_type_gtest, real_type_label_type_combination_gtest}
-#include "utility.hpp"        // util::{redirect_output, temporary_file, instantiate_template_file}, EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::{real_type_to_name, real_type_label_type_combination_to_name}
+#include "types_to_test.hpp"       // util::{real_type_gtest, real_type_label_type_combination_gtest}
+#include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file}
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_CALL
 
@@ -73,7 +74,9 @@ TYPED_TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
     params.gamma = -1.0;
 
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
-    EXPECT_THROW_WHAT(mock_csvm<real_type>{ params }, plssvm::invalid_parameter_exception, "gamma must be greater than 0.0, but is -1!");
+    EXPECT_THROW_WHAT(mock_csvm<real_type>{ params },
+                      plssvm::invalid_parameter_exception,
+                      "gamma must be greater than 0.0, but is -1!");
 }
 
 TYPED_TEST(BaseCSVM, construct_linear_from_named_parameters) {
@@ -220,7 +223,7 @@ TYPED_TEST(BaseCSVM, set_params_from_parameter) {
     using real_type = TypeParam;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    mock_csvm<real_type> csvm{ };
+    mock_csvm<real_type> csvm{};
 
     // create parameter class
     const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
@@ -235,7 +238,7 @@ TYPED_TEST(BaseCSVM, set_params_from_named_parameters) {
     using real_type = TypeParam;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    mock_csvm<real_type> csvm{ };
+    mock_csvm<real_type> csvm{};
 
     // create parameter class
     const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
@@ -304,7 +307,9 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
     // calling the function with an invalid epsilon should throw
-    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::epsilon = 0.0)), plssvm::invalid_parameter_exception, "epsilon must be less than 0.0, but is 0!");
+    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::epsilon = 0.0)),
+                      plssvm::invalid_parameter_exception,
+                      "epsilon must be less than 0.0, but is 0!");
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     using real_type = typename TypeParam::real_type;
@@ -321,7 +326,9 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
     // calling the function with an invalid max_iter should throw
-    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::max_iter = 0)), plssvm::invalid_parameter_exception, "max_iter must be greater than 0, but is 0!");
+    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::max_iter = 0)),
+                      plssvm::invalid_parameter_exception,
+                      "max_iter must be greater than 0, but is 0!");
 }
 TYPED_TEST(BaseCSVMFit, fit_no_label) {
     using real_type = typename TypeParam::real_type;
@@ -337,7 +344,9 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     const plssvm::data_set<real_type, label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
 
     // in order to call fit, the provided data set must contain labels
-    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data)), plssvm::invalid_parameter_exception, "No labels given for training! Maybe the data is only usable for prediction?");
+    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data)),
+                      plssvm::invalid_parameter_exception,
+                      "No labels given for training! Maybe the data is only usable for prediction?");
 }
 
 template <typename T>
@@ -386,7 +395,9 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // calling the function with mismatching number of features should throw
-    EXPECT_THROW_WHAT(std::ignore = csvm.predict(learned_model, data_to_predict), plssvm::invalid_parameter_exception, "Number of features per data point (2) must match the number of features per support vector of the provided model (4)!");
+    EXPECT_THROW_WHAT(std::ignore = csvm.predict(learned_model, data_to_predict),
+                      plssvm::invalid_parameter_exception,
+                      "Number of features per data point (2) must match the number of features per support vector of the provided model (4)!");
 }
 
 template <typename T>
@@ -478,5 +489,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // calling the function with mismatching number of features should throw
-    EXPECT_THROW_WHAT(std::ignore = csvm.score(learned_model, data_to_score), plssvm::invalid_parameter_exception, "Number of features per data point (2) must match the number of features per support vector of the provided model (4)!");
+    EXPECT_THROW_WHAT(std::ignore = csvm.score(learned_model, data_to_score),
+                      plssvm::invalid_parameter_exception,
+                      "Number of features per data point (2) must match the number of features per support vector of the provided model (4)!");
 }

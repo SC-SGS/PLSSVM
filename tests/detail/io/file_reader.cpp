@@ -13,8 +13,8 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::file_reader_exception
 
-#include "../../naming.hpp"   // naming::{open_parameter_types_to_name, pretty_print_escaped_string}
-#include "../../utility.hpp"  // EXPECT_THROW_WHAT
+#include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../../naming.hpp"              // naming::{open_parameter_types_to_name, pretty_print_escaped_string}
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P

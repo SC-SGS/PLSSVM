@@ -13,9 +13,10 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
-#include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
-#include "../../utility.hpp"        // util::temporary_file, EXPECT_THROW_WHAT
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_THROW_WHAT
+#include "../../naming.hpp"              // naming::real_type_label_type_combination_to_name
+#include "../../types_to_test.hpp"       // util::{instantiate_template_file, real_type_label_type_combination_gtest}
+#include "../../utility.hpp"             // util::temporary_file
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -252,7 +253,7 @@ TYPED_TEST(ARFFParseDense, read) {
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_EQ(data, this->correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
     EXPECT_EQ(label, this->correct_label);
 }
 TYPED_TEST(ARFFParseSparse, read) {
@@ -269,7 +270,7 @@ TYPED_TEST(ARFFParseSparse, read) {
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_EQ(data, this->correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
     EXPECT_EQ(label, this->correct_label);
 }
 
@@ -293,7 +294,7 @@ TYPED_TEST(ARFFParse, read_without_label) {
         { current_real_type{ 0.0 }, current_real_type{ -0.3 } },
         { current_real_type{ 5.5 }, current_real_type{ 0.0 } }
     };
-    EXPECT_EQ(data, correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, correct_data);
     EXPECT_TRUE(label.empty());
 }
 

@@ -13,9 +13,10 @@
 #include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
-#include "../../naming.hpp"         // naming::arithmetic_types_to_name
-#include "../../types_to_test.hpp"  // util::real_type_gtest
-#include "../../utility.hpp"        // util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT, util::temporary_file
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
+#include "../../naming.hpp"              // naming::arithmetic_types_to_name
+#include "../../types_to_test.hpp"       // util::real_type_gtest
+#include "../../utility.hpp"             // util::temporary_file
 
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ
@@ -51,8 +52,8 @@ TYPED_TEST(ScalingFactorsRead, read) {
 
     // check for correctness
     // scaling interval
-    util::gtest_assert_floating_point_near(scaling_interval.first, real_type{ -1.4 });
-    util::gtest_assert_floating_point_near(scaling_interval.second, real_type{ 2.6 });
+    EXPECT_FLOATING_POINT_EQ(scaling_interval.first, real_type{ -1.4 });
+    EXPECT_FLOATING_POINT_EQ(scaling_interval.second, real_type{ 2.6 });
     // scaling factors
     // note that the parsed scaling factors are zero-based!
     const std::vector<factors_type<real_type>> correct_scaling_factors{
@@ -61,8 +62,8 @@ TYPED_TEST(ScalingFactorsRead, read) {
     ASSERT_EQ(scaling_factors.size(), correct_scaling_factors.size());
     for (std::size_t i = 0; i < correct_scaling_factors.size(); ++i) {
         EXPECT_EQ(scaling_factors[i].feature, correct_scaling_factors[i].feature);
-        util::gtest_assert_floating_point_near(scaling_factors[i].lower, correct_scaling_factors[i].lower, "Wrong lower scaling factor!");
-        util::gtest_assert_floating_point_near(scaling_factors[i].upper, correct_scaling_factors[i].upper, "Wrong upper scaling factor!");
+        EXPECT_FLOATING_POINT_EQ(scaling_factors[i].lower, correct_scaling_factors[i].lower);
+        EXPECT_FLOATING_POINT_EQ(scaling_factors[i].upper, correct_scaling_factors[i].upper);
     }
 }
 TYPED_TEST(ScalingFactorsRead, read_no_scaling_factors) {
@@ -75,8 +76,8 @@ TYPED_TEST(ScalingFactorsRead, read_no_scaling_factors) {
 
     // check for correctness
     // scaling interval
-    util::gtest_assert_floating_point_near(scaling_interval.first, real_type{ -1.4 });
-    util::gtest_assert_floating_point_near(scaling_interval.second, real_type{ 2.6 });
+    EXPECT_FLOATING_POINT_EQ(scaling_interval.first, real_type{ -1.4 });
+    EXPECT_FLOATING_POINT_EQ(scaling_interval.second, real_type{ 2.6 });
     // scaling factors -> are empty!
     EXPECT_TRUE(scaling_factors.empty());
 }

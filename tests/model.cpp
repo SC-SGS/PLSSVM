@@ -13,9 +13,10 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "naming.hpp"         // naming::real_type_label_type_combination_to_name
-#include "types_to_test.hpp"  // util::{real_type_label_type_combination_gtest, instantiate_template_file}
-#include "utility.hpp"        // util::temporary_file, util::redirect_output
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
+#include "naming.hpp"              // naming::real_type_label_type_combination_to_name
+#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, instantiate_template_file}
+#include "utility.hpp"             // util::temporary_file, util::redirect_output
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
@@ -54,15 +55,18 @@ TYPED_TEST(Model, construct) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.svm_parameter(), plssvm::parameter<real_type>{});
     const std::vector<std::vector<real_type>> support_vectors{
-        plssvm::detail::split_as<real_type>("-1.117828e+00 -2.908719e+00 6.663834e-01 1.097883e+00"),
-        plssvm::detail::split_as<real_type>("-5.282118e-01 -3.358810e-01 5.168730e-01 5.460446e-01"),
-        plssvm::detail::split_as<real_type>("-2.098121e-01 6.027694e-01 -1.308685e-01 1.080525e-01"),
-        plssvm::detail::split_as<real_type>("1.884940e+00 1.005186e+00 2.984999e-01 1.646463e+00"),
-        plssvm::detail::split_as<real_type>("5.765022e-01 1.014056e+00 1.300943e-01 7.261914e-01")
+        { real_type{ -1.117828 }, real_type{ -2.908719 }, real_type{ 0.6663834 }, real_type{ 1.097883 } },
+        { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
+        { real_type{ -0.2098121 }, real_type{ 0.6027694 }, real_type{ -0.1308685 }, real_type{ 0.1080525 } },
+        { real_type{ 1.884940 }, real_type{ 1.005186 }, real_type{ 0.2984999 }, real_type{ 1.646463 } },
+        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } }
     };
-    EXPECT_EQ(model.support_vectors(), support_vectors);
-    EXPECT_EQ(model.weights(), plssvm::detail::split_as<real_type>("-0.17609610490769723 0.8838187731213127 -0.47971257671001616 0.0034556484621847128 -0.23146573996578407"));
-    EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), support_vectors);
+    const std::vector<real_type> weights{
+        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 }, real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }
+    };
+    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), weights);
+    EXPECT_FLOATING_POINT_EQ(model.rho(), real_type{ 0.37330625882191915 });
 }
 
 TYPED_TEST(Model, num_support_vectors) {
@@ -100,13 +104,13 @@ TYPED_TEST(Model, support_vectors) {
     const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct support vectors
     const std::vector<std::vector<real_type>> support_vectors{
-        plssvm::detail::split_as<real_type>("-1.117828e+00 -2.908719e+00 6.663834e-01 1.097883e+00"),
-        plssvm::detail::split_as<real_type>("-5.282118e-01 -3.358810e-01 5.168730e-01 5.460446e-01"),
-        plssvm::detail::split_as<real_type>("-2.098121e-01 6.027694e-01 -1.308685e-01 1.080525e-01"),
-        plssvm::detail::split_as<real_type>("1.884940e+00 1.005186e+00 2.984999e-01 1.646463e+00"),
-        plssvm::detail::split_as<real_type>("5.765022e-01 1.014056e+00 1.300943e-01 7.261914e-01")
+        { real_type{ -1.117828 }, real_type{ -2.908719 }, real_type{ 0.6663834 }, real_type{ 1.097883 } },
+        { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
+        { real_type{ -0.2098121 }, real_type{ 0.6027694 }, real_type{ -0.1308685 }, real_type{ 0.1080525 } },
+        { real_type{ 1.884940 }, real_type{ 1.005186 }, real_type{ 0.2984999 }, real_type{ 1.646463 } },
+        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } }
     };
-    EXPECT_EQ(model.support_vectors(), support_vectors);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), support_vectors);
 }
 TYPED_TEST(Model, weights) {
     using real_type = typename TypeParam::real_type;
@@ -115,7 +119,10 @@ TYPED_TEST(Model, weights) {
     // create a model using an existing LIBSVM model file
     const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct weights
-    EXPECT_EQ(model.weights(), plssvm::detail::split_as<real_type>("-0.17609610490769723 0.8838187731213127 -0.47971257671001616 0.0034556484621847128 -0.23146573996578407"));
+    const std::vector<real_type> weights{
+        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 }, real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }
+    };
+    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), weights);
 }
 TYPED_TEST(Model, rho) {
     using real_type = typename TypeParam::real_type;
@@ -124,7 +131,7 @@ TYPED_TEST(Model, rho) {
     // create a model using an existing LIBSVM model file
     const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct rho (bias) value
-    EXPECT_EQ(model.rho(), plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+    EXPECT_FLOATING_POINT_EQ(model.rho(), real_type{ 0.37330625882191915 });
 }
 
 class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output, protected util::temporary_file {};

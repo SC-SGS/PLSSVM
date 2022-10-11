@@ -114,85 +114,6 @@ class temporary_file {
 };
 
 /**
- * @brief Compares the two floating point values @p val1 and @p val2.
- * @details Wrapper around GoogleTest's `EXPECT_FLOAT_EQ` and `EXPECT_DOUBLE_EQ`.
- * @tparam T the floating point type
- * @param[in] val1 first value to compare
- * @param[in] val2 second value to compare
- * @param[in] msg an optional message
- */
-template <typename T>
-inline void gtest_expect_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
-    if constexpr (std::is_same_v<T, float>) {
-        EXPECT_FLOAT_EQ(val1, val2) << msg;
-    } else if constexpr (std::is_same_v<T, double>) {
-        EXPECT_DOUBLE_EQ(val1, val2) << msg;
-    } else {
-        static_assert(plssvm::detail::always_false_v<T>, "T must be either float or double!");
-    }
-}
-
-/**
- * @brief Compares the two floating point values @p val1 and @p val2.
- * @details Wrapper around GoogleTest's `ASSERT_FLOAT_EQ` and `ASSERT_DOUBLE_EQ`.
- * @tparam T the floating point type
- * @param[in] val1 first value to compare
- * @param[in] val2 second value to compare
- * @param[in] msg an optional message
- */
-template <typename T>
-inline void gtest_assert_floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
-    if constexpr (std::is_same_v<T, float>) {
-        ASSERT_FLOAT_EQ(val1, val2) << msg;
-    } else if constexpr (std::is_same_v<T, double>) {
-        ASSERT_DOUBLE_EQ(val1, val2) << msg;
-    } else {
-        static_assert(plssvm::detail::always_false_v<T>, "T must be either float or double!");
-    }
-}
-
-/**
- * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
- * @tparam T the floating point type
- * @param[in] val1 first value to compare
- * @param[in] val2 second value to compare
- * @param[in] scale scale the epsilon value by the provided value
- * @param[in] msg an optional message
- */
-template <typename T>
-inline void gtest_assert_floating_point_near(const T val1, const T val2, const T scale, const std::string &msg = "") {
-    // based on: https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
-
-    // set epsilon
-    const T eps = 128 * scale * std::numeric_limits<T>::epsilon();
-
-    // sanity checks for picked epsilon value
-    PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon());
-    PLSSVM_ASSERT(eps < T{ 1.0 }, "Chosen epsilon too large!: {} >= 1.0", eps);
-
-    if (val1 == val2) {
-        SUCCEED();
-    }
-
-    const T diff = std::abs(val1 - val2);
-    const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
-
-    EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
-}
-
-/**
- * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
- * @tparam T the floating point type
- * @param[in] val1 first value to compare
- * @param[in] val2 second value to compare
- * @param[in] msg an optional message
- */
-template <typename T>
-inline void gtest_assert_floating_point_near(const T val1, const T val2, const std::string &msg = "") {
-    gtest_assert_floating_point_near(val1, val2, T{ 1 }, msg);
-}
-
-/**
  * @brief Check whether the C-SVM returned by a call to `plssvm::make_csvm` with the parameters @p params returns a C-SVM of type @p Derived
  * @tparam Derived the expected C-SVM type, based on the backend_type of @þ params
  * @tparam T the type of the data
@@ -258,27 +179,24 @@ template <typename T>
     return vec;
 }
 
-/**
- * @brief Defines a macro like
- *        <a href="https://chromium.googlesource.com/external/github.com/google/googletest/+/HEAD/googletest/docs/advanced.md">googletest</a>'s
- *        `EXPECT_THROW`, but also allows to test for the correct exception's
- *        [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) message.
- *
- * @param[in] statement the statement which should throw (a specific exception)
- * @param[in] expected_exception the type of the exception which should get thrown
- * @param[in] msg the expected exception's [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) message
- */
-#define EXPECT_THROW_WHAT(statement, expected_exception, msg)                                                \
-    do {                                                                                                     \
-        try {                                                                                                \
-            statement;                                                                                       \
-            FAIL() << "Expected " #expected_exception;                                                       \
-        } catch (const expected_exception &e) {                                                              \
-            EXPECT_EQ(std::string_view(e.what()), std::string_view(msg));                                    \
-        } catch (...) {                                                                                      \
-            FAIL() << "The expected exception type (" #expected_exception ") doesn't match the caught one!"; \
-        }                                                                                                    \
-    } while (false)
+template <typename T>
+std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
+    std::vector<std::tuple<std::size_t, T, T>> factors(data.front().size(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
+    for (std::size_t i = 0; i < factors.size(); ++i) {
+        std::get<0>(factors[i]) = i;
+        for (std::size_t j = 0; j < data.size(); ++j) {
+            std::get<1>(factors[i]) = std::min(std::get<1>(factors[i]), data[j][i]);
+            std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data[j][i]);
+        }
+    }
+    std::vector<std::vector<T>> ret = data;
+    for (std::size_t i = 0; i < ret.size(); ++i) {
+        for (std::size_t j = 0; j < ret.front().size(); ++j) {
+            ret[i][j] = lower + (upper - lower) * (data[i][j] - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));
+        }
+    }
+    return std::make_pair(std::move(ret), std::move(factors));
+}
 
 }  // namespace util
 

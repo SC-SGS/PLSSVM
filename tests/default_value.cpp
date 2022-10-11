@@ -92,8 +92,8 @@ TEST(DefaultValue, assign_non_default) {
     val = 3.1415;
     // value must now be a non-default value
     EXPECT_FALSE(val.is_default());
-    EXPECT_EQ(val.value(), 3.1415);
-    EXPECT_EQ(val.get_default(), 0.0);
+    EXPECT_DOUBLE_EQ(val.value(), 3.1415);
+    EXPECT_DOUBLE_EQ(val.get_default(), 0.0);
 }
 
 TEST(DefaultValue, copy_construct_default) {
@@ -126,8 +126,8 @@ TEST(DefaultValue, copy_construct_non_default) {
     EXPECT_EQ(val2.get_default(), 0);
     // val1 must not have changed
     EXPECT_FALSE(val1.is_default());
-    EXPECT_EQ(val1.value(), 3.1415);
-    EXPECT_EQ(val1.get_default(), 0.0);
+    EXPECT_DOUBLE_EQ(val1.value(), 3.1415);
+    EXPECT_DOUBLE_EQ(val1.get_default(), 0.0);
 }
 
 TEST(DefaultValue, move_construct_default) {
@@ -170,8 +170,8 @@ TEST(DefaultValue, copy_assign_default) {
     EXPECT_EQ(val2.get_default(), 3);
     // val1 must not have changed!
     EXPECT_TRUE(val1.is_default());
-    EXPECT_EQ(val1.value(), 3.1415);
-    EXPECT_EQ(val1.get_default(), 3.1415);
+    EXPECT_DOUBLE_EQ(val1.value(), 3.1415);
+    EXPECT_DOUBLE_EQ(val1.get_default(), 3.1415);
 }
 TEST(DefaultValue, copy_assign_non_default) {
     // create two default_values
@@ -188,8 +188,8 @@ TEST(DefaultValue, copy_assign_non_default) {
     EXPECT_EQ(val2.get_default(), 3);
     // val1 must not have changed!
     EXPECT_FALSE(val1.is_default());
-    EXPECT_EQ(val1.value(), 2.7182);
-    EXPECT_EQ(val1.get_default(), 3.1415);
+    EXPECT_DOUBLE_EQ(val1.value(), 2.7182);
+    EXPECT_DOUBLE_EQ(val1.get_default(), 3.1415);
 }
 
 TEST(DefaultValue, move_assign_default) {
@@ -355,7 +355,7 @@ TEST(DefaultValue, from_string) {
     val2 = 3.1415;
     EXPECT_EQ(util::convert_from_string<plssvm::default_value<double>>("3.1415"), val2);
     EXPECT_FALSE(val2.is_default());
-    EXPECT_EQ(val2.get_default(), 0);
+    EXPECT_DOUBLE_EQ(val2.get_default(), 0.0);
 
     plssvm::default_value<int> val3{ plssvm::default_init{ 42 } };
     val3 = -4;

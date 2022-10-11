@@ -17,9 +17,10 @@
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
-#include "naming.hpp"         // naming::real_type_label_type_combination_to_name
-#include "types_to_test.hpp"  // util::{real_type_label_type_combination_gtest, instantiate_template_file}
-#include "utility.hpp"        // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_2D_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_NEAR
+#include "naming.hpp"              // naming::real_type_label_type_combination_to_name
+#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, instantiate_template_file}
+#include "utility.hpp"             // util::{temporary_file, redirect_output, gtest_expect_floating_point_vector_near}
 
 #include "gmock/gmock-matchers.h"  // ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, ASSERT_EQ, ASSERT_GT, TEST, TYPED_TEST, TYPED_TEST_SUITE
@@ -52,8 +53,8 @@ TYPED_TEST(DataSetScaling, default_construct_factor) {
 
     // test values
     EXPECT_EQ(factor.feature, std::size_t{});
-    EXPECT_EQ(factor.lower, real_type{});
-    EXPECT_EQ(factor.upper, real_type{});
+    EXPECT_FLOATING_POINT_EQ(factor.lower, real_type{});
+    EXPECT_FLOATING_POINT_EQ(factor.upper, real_type{});
 }
 TYPED_TEST(DataSetScaling, construct_factor) {
     using real_type = typename TypeParam::real_type;
@@ -66,8 +67,8 @@ TYPED_TEST(DataSetScaling, construct_factor) {
 
     // test values
     EXPECT_EQ(factor.feature, 1);
-    EXPECT_EQ(factor.lower, -2.5);
-    EXPECT_EQ(factor.upper, 2.5);
+    EXPECT_FLOATING_POINT_EQ(factor.lower, real_type{ -2.5 });
+    EXPECT_FLOATING_POINT_EQ(factor.upper, real_type{ 2.5 });
 }
 
 TYPED_TEST(DataSetScaling, construct_interval) {
@@ -79,8 +80,8 @@ TYPED_TEST(DataSetScaling, construct_interval) {
     const scaling_type scale{ real_type{ -1.0 }, real_type{ 1.0 } };
 
     // test whether the values have been correctly set
-    EXPECT_EQ(scale.scaling_interval.first, real_type{ -1.0 });
-    EXPECT_EQ(scale.scaling_interval.second, real_type{ 1.0 });
+    EXPECT_FLOATING_POINT_EQ(scale.scaling_interval.first, real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(scale.scaling_interval.second, real_type{ 1.0 });
     EXPECT_TRUE(scale.scaling_factors.empty());
 }
 TYPED_TEST(DataSetScaling, construct_invalid_interval) {
@@ -114,8 +115,8 @@ TYPED_TEST(DataSetScaling, construct_from_file) {
     ASSERT_EQ(scale.scaling_factors.size(), correct_factors.size());
     for (std::size_t i = 0; i < correct_factors.size(); ++i) {
         EXPECT_EQ(scale.scaling_factors[i].feature, correct_factors[i].feature);
-        EXPECT_EQ(scale.scaling_factors[i].lower, correct_factors[i].lower);
-        EXPECT_EQ(scale.scaling_factors[i].upper, correct_factors[i].upper);
+        EXPECT_FLOATING_POINT_EQ(scale.scaling_factors[i].lower, correct_factors[i].lower);
+        EXPECT_FLOATING_POINT_EQ(scale.scaling_factors[i].upper, correct_factors[i].upper);
     }
 }
 
@@ -161,11 +162,6 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     plssvm::detail::io::file_reader reader{ tmp_file.filename };
     reader.read_lines('#');
 
-    std::vector<std::string> regex_patterns;
-    // header
-    regex_patterns.emplace_back("x");
-    regex_patterns.emplace_back("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-
     // check the content
     ASSERT_EQ(reader.num_lines(), 2);
     EXPECT_EQ(reader.line(0), "x");
@@ -198,8 +194,8 @@ TYPED_TEST(DataSetLabelMapper, construct) {
     // test mapping
     EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ -1 }), first_label);
     EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ 1 }), second_label);
-    EXPECT_EQ(mapper.get_mapped_value_by_label(first_label), real_type{ -1 });
-    EXPECT_EQ(mapper.get_mapped_value_by_label(second_label), real_type{ 1 });
+    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(first_label), real_type{ -1 });
+    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(second_label), real_type{ 1 });
 }
 TYPED_TEST(DataSetLabelMapper, construct_too_many_label) {
     using real_type = typename TypeParam::real_type;
@@ -236,8 +232,8 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_label) {
     const label_mapper_type mapper{ different_labels };
 
     // test the number of mappings
-    EXPECT_EQ(mapper.get_mapped_value_by_label(first_label), real_type{ -1 });
-    EXPECT_EQ(mapper.get_mapped_value_by_label(second_label), real_type{ 1 });
+    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(first_label), real_type{ -1 });
+    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(second_label), real_type{ 1 });
 }
 TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_invalid_label) {
     using real_type = typename TypeParam::real_type;
@@ -331,30 +327,12 @@ TYPED_TEST(DataSetLabelMapper, labels) {
 
 template <typename T>
 const std::vector<std::vector<T>> correct_data_points = {
-    plssvm::detail::split_as<T>("-1.117827500607882 -2.9087188881250993 0.66638344270039144 1.0978832703949288", ' '),
-    plssvm::detail::split_as<T>("-0.5282118298909262 -0.335880984968183973 0.51687296029754564 0.54604461446026", ' '),
-    plssvm::detail::split_as<T>("0.57650218263054642 1.01405596624706053 0.13009428079760464 0.7261913886869387", ' '),
-    plssvm::detail::split_as<T>("-0.20981208921241892 0.60276937379453293 -0.13086851759108944 0.10805254527169827", ' '),
-    plssvm::detail::split_as<T>("1.88494043717792 1.00518564317278263 0.298499933047586044 1.6464627048813514", ' ')
+    { T{ -1.117827500607882 }, T{ -2.9087188881250993 }, T{ 0.66638344270039144 }, T{ 1.0978832703949288 } },
+    { T{ -0.5282118298909262 }, T{ -0.335880984968183973 }, T{ 0.51687296029754564 }, T{ 0.54604461446026 } },
+    { T{ 0.57650218263054642 }, T{ 1.01405596624706053 }, T{ 0.13009428079760464 }, T{ 0.7261913886869387 } },
+    { T{ -0.20981208921241892 }, T{ 0.60276937379453293 }, T{ -0.13086851759108944 }, T{ 0.10805254527169827 } },
+    { T{ 1.88494043717792 }, T{ 1.00518564317278263 }, T{ 0.298499933047586044 }, T{ 1.6464627048813514 } }
 };
-template <typename T>
-std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
-    std::vector<std::tuple<std::size_t, T, T>> factors(data.front().size(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
-    for (std::size_t i = 0; i < factors.size(); ++i) {
-        std::get<0>(factors[i]) = i;
-        for (std::size_t j = 0; j < data.size(); ++j) {
-            std::get<1>(factors[i]) = std::min(std::get<1>(factors[i]), data[j][i]);
-            std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data[j][i]);
-        }
-    }
-    std::vector<std::vector<T>> ret = data;
-    for (std::size_t i = 0; i < ret.size(); ++i) {
-        for (std::size_t j = 0; j < ret.front().size(); ++j) {
-            ret[i][j] = lower + (upper - lower) * (data[i][j] - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));
-        }
-    }
-    return std::make_pair(std::move(ret), std::move(factors));
-}
 template <typename T>
 std::vector<T> correct_labels() {
     const auto [first_label, second_label] = util::get_distinct_label<T>();
@@ -396,7 +374,7 @@ TYPED_TEST(DataSet, construct_arff_from_file_with_label) {
     const plssvm::data_set<real_type, label_type> data{ this->filename };
 
     // check values
-    EXPECT_EQ(data.data(), correct_data_points<real_type>);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data_points<real_type>);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -423,7 +401,7 @@ TYPED_TEST(DataSet, construct_arff_from_file_without_label) {
         { real_type{ 0.0 }, real_type{ -0.3 } },
         { real_type{ 5.5 }, real_type{ 0.0 } }
     };
-    EXPECT_EQ(data.data(), correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data);
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.different_labels().has_value());
@@ -445,7 +423,7 @@ TYPED_TEST(DataSet, construct_libsvm_from_file_with_label) {
     const plssvm::data_set<real_type, label_type> data{ this->filename };
 
     // check values
-    EXPECT_EQ(data.data(), correct_data_points<real_type>);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data_points<real_type>);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -472,7 +450,7 @@ TYPED_TEST(DataSet, construct_libsvm_from_file_without_label) {
         { real_type{ 0.0 }, real_type{ -0.3 } },
         { real_type{ 5.5 }, real_type{ 0.0 } }
     };
-    EXPECT_EQ(data.data(), correct_data);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data);
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.different_labels().has_value());
@@ -494,7 +472,7 @@ TYPED_TEST(DataSet, construct_explicit_arff_from_file) {
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::arff };
 
     // check values
-    EXPECT_EQ(data.data(), correct_data_points<real_type>);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data_points<real_type>);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -517,7 +495,7 @@ TYPED_TEST(DataSet, construct_explicit_libsvm_from_file) {
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::libsvm };
 
     // check values
-    EXPECT_EQ(data.data(), correct_data_points<real_type>);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data_points<real_type>);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -544,8 +522,8 @@ TYPED_TEST(DataSet, construct_scaled_arff_from_file) {
     const plssvm::data_set<real_type, label_type> data{ this->filename, { real_type{ -1.0 }, real_type{ 1.0 } } };
 
     // check values
-    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
-    EXPECT_EQ(data.data(), scaled_data_points);
+    const auto [scaled_data_points, scaling_factors] = util::scale(correct_data_points<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data.data(), scaled_data_points);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -562,8 +540,8 @@ TYPED_TEST(DataSet, construct_scaled_arff_from_file) {
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
         auto factors = data.scaling_factors().value().get().scaling_factors[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
 TYPED_TEST(DataSet, construct_scaled_libsvm_from_file) {
@@ -575,8 +553,8 @@ TYPED_TEST(DataSet, construct_scaled_libsvm_from_file) {
     const plssvm::data_set<real_type, label_type> data{ this->filename, { real_type{ -2.5 }, real_type{ 2.5 } } };
 
     // check values
-    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
-    EXPECT_EQ(data.data(), scaled_data_points);
+    const auto [scaled_data_points, scaling_factors] = util::scale(correct_data_points<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data.data(), scaled_data_points);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -593,8 +571,8 @@ TYPED_TEST(DataSet, construct_scaled_libsvm_from_file) {
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
         auto factors = data.scaling_factors().value().get().scaling_factors[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
 
@@ -607,8 +585,8 @@ TYPED_TEST(DataSet, construct_scaled_explicit_arff_from_file) {
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::arff, { real_type{ -1.0 }, real_type{ 1.0 } } };
 
     // check values
-    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
-    EXPECT_EQ(data.data(), scaled_data_points);
+    const auto [scaled_data_points, scaling_factors] = util::scale(correct_data_points<real_type>, real_type{ -1.0 }, real_type{ 1.0 });
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data.data(), scaled_data_points);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -625,8 +603,8 @@ TYPED_TEST(DataSet, construct_scaled_explicit_arff_from_file) {
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
         auto factors = data.scaling_factors().value().get().scaling_factors[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
 TYPED_TEST(DataSet, construct_scaled_explicit_libsvm_from_file) {
@@ -638,8 +616,8 @@ TYPED_TEST(DataSet, construct_scaled_explicit_libsvm_from_file) {
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::libsvm, { real_type{ -2.5 }, real_type{ 2.5 } } };
 
     // check values
-    const auto [scaled_data_points, scaling_factors] = scale(correct_data_points<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
-    EXPECT_EQ(data.data(), scaled_data_points);
+    const auto [scaled_data_points, scaling_factors] = util::scale(correct_data_points<real_type>, real_type{ -2.5 }, real_type{ 2.5 });
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data.data(), scaled_data_points);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels<label_type>());
@@ -656,8 +634,8 @@ TYPED_TEST(DataSet, construct_scaled_explicit_libsvm_from_file) {
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
         auto factors = data.scaling_factors().value().get().scaling_factors[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
 
@@ -743,7 +721,7 @@ TYPED_TEST(DataSet, construct_from_vector_without_label) {
     const plssvm::data_set<real_type, label_type> data{ correct_data_points };
 
     // check values
-    EXPECT_EQ(data.data(), correct_data_points);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data_points);
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.different_labels().has_value());
@@ -814,7 +792,7 @@ TYPED_TEST(DataSet, construct_from_vector_with_label) {
     const plssvm::data_set<real_type, label_type> data{ correct_data_points, labels };
 
     // check values
-    EXPECT_EQ(data.data(), correct_data_points);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), correct_data_points);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), labels);
@@ -864,9 +842,9 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_without_label) {
     // create data set
     const plssvm::data_set<real_type, label_type> data{ correct_data_points, scaling_type{ real_type{ -1.0 }, real_type{ 1.0 } } };
 
-    const auto [correct_data_points_scaled, scaling_factors] = scale(correct_data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, real_type{ -1.0 }, real_type{ 1.0 });
     // check values
-    EXPECT_EQ(data.data(), correct_data_points_scaled);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data.data(), correct_data_points_scaled);
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.different_labels().has_value());
@@ -881,8 +859,8 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_without_label) {
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
         auto factors = data.scaling_factors().value().get().scaling_factors[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
 TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
@@ -903,9 +881,9 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
     // create data set
     const plssvm::data_set<real_type, label_type> data{ correct_data_points, labels, { -1.0, 1.0 } };
 
-    const auto [correct_data_points_scaled, scaling_factors] = scale(correct_data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, real_type{ -1.0 }, real_type{ 1.0 });
     // check values
-    EXPECT_EQ(data.data(), correct_data_points_scaled);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data.data(), correct_data_points_scaled);
     EXPECT_TRUE(data.has_labels());
     EXPECT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), labels);
@@ -922,8 +900,8 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
         auto factors = data.scaling_factors().value().get().scaling_factors[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.lower, std::get<1>(scaling_factors[i]));
-        util::gtest_assert_floating_point_near(factors.upper, std::get<2>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
 
@@ -1076,7 +1054,7 @@ TYPED_TEST(DataSetGetter, data) {
     // create data set without labels
     const plssvm::data_set<real_type, label_type> data{ this->data_points };
     // check data getter
-    EXPECT_EQ(data.data(), this->data_points);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(data.data(), this->data_points);
 }
 TYPED_TEST(DataSetGetter, has_labels) {
     using real_type = typename TypeParam::real_type;
@@ -1180,14 +1158,14 @@ TYPED_TEST(DataSetGetter, scaling_factors) {
     const plssvm::data_set<real_type, label_type> data_scaled{ this->data_points, scaling_type{ real_type{ -1.0 }, real_type{ 1.0 } } };
     // check scaling_factors getter
     EXPECT_TRUE(data_scaled.scaling_factors().has_value());
-    const auto &[ignored, correct_scaling_factors] = scale(this->data_points, real_type{ -1.0 }, real_type{ 1.0 });
+    const auto &[ignored, correct_scaling_factors] = util::scale(this->data_points, real_type{ -1.0 }, real_type{ 1.0 });
     const scaling_type &scaling_factors = data_scaled.scaling_factors().value();
-    EXPECT_EQ(scaling_factors.scaling_interval.first, real_type{ -1.0 });
-    EXPECT_EQ(scaling_factors.scaling_interval.second, real_type{ 1.0 });
+    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval.first, real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval.second, real_type{ 1.0 });
     ASSERT_EQ(scaling_factors.scaling_factors.size(), correct_scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.scaling_factors.size(); ++i) {
         EXPECT_EQ(scaling_factors.scaling_factors[i].feature, std::get<0>(correct_scaling_factors[i]));
-        EXPECT_EQ(scaling_factors.scaling_factors[i].lower, std::get<1>(correct_scaling_factors[i]));
-        EXPECT_EQ(scaling_factors.scaling_factors[i].upper, std::get<2>(correct_scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors[i].lower, std::get<1>(correct_scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors[i].upper, std::get<2>(correct_scaling_factors[i]));
     }
 }

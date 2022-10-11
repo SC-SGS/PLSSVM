@@ -12,8 +12,8 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
-#include "../naming.hpp"   // naming::{arithmetic_types_to_name, pretty_print_escaped_string}
-#include "../utility.hpp"  // EXPECT_THROW_WHAT
+#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../naming.hpp"              // naming::{arithmetic_types_to_name, pretty_print_escaped_string}
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P

@@ -158,7 +158,7 @@ class open_parameter_types_to_name {
     }
 };
 
-// general
+// general TODO: remove?
 class arithmetic_types_to_name {
   public:
     template <typename T>

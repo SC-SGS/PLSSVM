@@ -10,21 +10,20 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "naming.hpp"   // naming::arithmetic_types_to_name
-#include "utility.hpp"  // util::convert_to_string
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ
+#include "naming.hpp"              // naming::arithmetic_types_to_name
+#include "utility.hpp"             // util::convert_to_string
 
 #include "fmt/core.h"  // fmt::format
 
-#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, TEST, EXPECT_EQ, EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, EXPECT_TRUE, EXPECT_FALSE
                           // ::testing::{Test, Types}
 
 template <typename T>
 class Parameter : public ::testing::Test {};
-// the floating point types to test
-using floating_point_types = ::testing::Types<float, double>;
 
 // testsuite for "normal" tests
-TYPED_TEST_SUITE(Parameter, floating_point_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(Parameter, util::real_type_gtest, naming::real_type_to_name);
 
 TYPED_TEST(Parameter, default_construct) {
     using real_type = TypeParam;
@@ -37,11 +36,11 @@ TYPED_TEST(Parameter, default_construct) {
     EXPECT_TRUE(param.degree.is_default());
     EXPECT_EQ(param.degree.value(), 3);
     EXPECT_TRUE(param.gamma.is_default());
-    EXPECT_EQ(param.gamma.value(), real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), real_type{ 0.0 });
     EXPECT_TRUE(param.coef0.is_default());
-    EXPECT_EQ(param.coef0.value(), real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), real_type{ 0.0 });
     EXPECT_TRUE(param.cost.is_default());
-    EXPECT_EQ(param.cost.value(), real_type{ 1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.cost.value(), real_type{ 1.0 });
 }
 TYPED_TEST(Parameter, construct) {
     using real_type = TypeParam;
@@ -58,16 +57,16 @@ TYPED_TEST(Parameter, construct) {
     EXPECT_EQ(param.degree.get_default(), 3);
 
     EXPECT_FALSE(param.gamma.is_default());
-    EXPECT_EQ(param.gamma.value(), real_type{ -1.0 });
-    EXPECT_EQ(param.gamma.get_default(), real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.gamma.get_default(), real_type{ 0.0 });
 
     EXPECT_FALSE(param.coef0.is_default());
-    EXPECT_EQ(param.coef0.value(), real_type{ 2.5 });
-    EXPECT_EQ(param.coef0.get_default(), real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), real_type{ 2.5 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0.get_default(), real_type{ 0.0 });
 
     EXPECT_FALSE(param.cost.is_default());
-    EXPECT_EQ(param.cost.value(), real_type{ 0.05 });
-    EXPECT_EQ(param.cost.get_default(), real_type{ 1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.cost.value(), real_type{ 0.05 });
+    EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), real_type{ 1.0 });
 }
 
 TEST(Parameter, conversion_double_to_float) {
@@ -78,9 +77,9 @@ TEST(Parameter, conversion_double_to_float) {
     // nothing should have changed
     EXPECT_EQ(from.kernel_type, to.kernel_type);
     EXPECT_EQ(from.degree, to.degree);
-    EXPECT_EQ(static_cast<float>(from.gamma.value()), to.gamma.value());
-    EXPECT_EQ(static_cast<float>(from.coef0.value()), to.coef0.value());
-    EXPECT_EQ(static_cast<float>(from.cost.value()), to.cost.value());
+    EXPECT_FLOAT_EQ(static_cast<float>(from.gamma.value()), to.gamma.value());
+    EXPECT_FLOAT_EQ(static_cast<float>(from.coef0.value()), to.coef0.value());
+    EXPECT_FLOAT_EQ(static_cast<float>(from.cost.value()), to.cost.value());
 }
 TEST(Parameter, conversion_float_to_double) {
     const plssvm::parameter<float> from{};
@@ -90,9 +89,9 @@ TEST(Parameter, conversion_float_to_double) {
     // nothing should have changed
     EXPECT_EQ(from.kernel_type, to.kernel_type);
     EXPECT_EQ(from.degree, to.degree);
-    EXPECT_EQ(static_cast<double>(from.gamma.value()), to.gamma.value());
-    EXPECT_EQ(static_cast<double>(from.coef0.value()), to.coef0.value());
-    EXPECT_EQ(static_cast<double>(from.cost.value()), to.cost.value());
+    EXPECT_DOUBLE_EQ(static_cast<double>(from.gamma.value()), to.gamma.value());
+    EXPECT_DOUBLE_EQ(static_cast<double>(from.coef0.value()), to.coef0.value());
+    EXPECT_DOUBLE_EQ(static_cast<double>(from.cost.value()), to.cost.value());
 }
 TYPED_TEST(Parameter, conversion_same_type) {
     using real_type = TypeParam;
@@ -103,9 +102,9 @@ TYPED_TEST(Parameter, conversion_same_type) {
     // nothing should have changed
     EXPECT_EQ(from.kernel_type, to.kernel_type);
     EXPECT_EQ(from.degree, to.degree);
-    EXPECT_EQ(from.gamma, to.gamma);
-    EXPECT_EQ(from.coef0, to.coef0);
-    EXPECT_EQ(from.cost, to.cost);
+    EXPECT_FLOATING_POINT_EQ(from.gamma.value(), to.gamma.value());
+    EXPECT_FLOATING_POINT_EQ(from.coef0.value(), to.coef0.value());
+    EXPECT_FLOATING_POINT_EQ(from.cost.value(), to.cost.value());
 }
 
 TYPED_TEST(Parameter, equal) {

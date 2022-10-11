@@ -10,9 +10,9 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include "../naming.hpp"   // naming::exception_types_to_name
-#include "../utility.hpp"  // EXPECT_THROW_WHAT
-#include "utility.hpp"     // util::{exception_type_name, exception_definition, exception_definition_to_name}
+#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../naming.hpp"              // naming::exception_types_to_name
+#include "utility.hpp"                // util::{exception_type_name, exception_definition, exception_definition_to_name}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex}

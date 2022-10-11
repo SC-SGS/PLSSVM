@@ -37,7 +37,7 @@ TEST_F(ParameterTrain, minimal) {
     // check parsed values
     EXPECT_EQ(params.csvm_params, plssvm::parameter<double>{});
     EXPECT_TRUE(params.epsilon.is_default());
-    EXPECT_EQ(params.epsilon.value(), 0.001);
+    EXPECT_DOUBLE_EQ(params.epsilon.value(), 0.001);
     EXPECT_TRUE(params.max_iter.is_default());
     EXPECT_EQ(params.max_iter.value(), 0);
     EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
@@ -83,12 +83,12 @@ TEST_F(ParameterTrain, all_arguments) {
     // check parsed values
     EXPECT_EQ(params.csvm_params.kernel_type, plssvm::kernel_function_type::polynomial);
     EXPECT_EQ(params.csvm_params.degree, 2);
-    EXPECT_EQ(params.csvm_params.gamma, 1.5);
-    EXPECT_EQ(params.csvm_params.coef0, -1.5);
-    EXPECT_EQ(params.csvm_params.cost, 2);
+    EXPECT_DOUBLE_EQ(params.csvm_params.gamma, 1.5);
+    EXPECT_DOUBLE_EQ(params.csvm_params.coef0, -1.5);
+    EXPECT_DOUBLE_EQ(params.csvm_params.cost, 2.0);
 
     EXPECT_FALSE(params.epsilon.is_default());
-    EXPECT_EQ(params.epsilon.value(), 1e-10);
+    EXPECT_DOUBLE_EQ(params.epsilon.value(), 1e-10);
     EXPECT_FALSE(params.max_iter.is_default());
     EXPECT_EQ(params.max_iter.value(), 100);
     EXPECT_EQ(params.backend, plssvm::backend_type::cuda);
@@ -180,7 +180,7 @@ TEST_P(ParameterTrainGamma, parsing) {
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
     // test for correctness
     EXPECT_FALSE(params.csvm_params.gamma.is_default());
-    EXPECT_EQ(params.csvm_params.gamma, gamma);
+    EXPECT_DOUBLE_EQ(params.csvm_params.gamma, gamma);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainGamma,
@@ -213,7 +213,7 @@ TEST_P(ParameterTrainCoef0, parsing) {
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
     // test for correctness
     EXPECT_FALSE(params.csvm_params.coef0.is_default());
-    EXPECT_EQ(params.csvm_params.coef0, coef0);
+    EXPECT_DOUBLE_EQ(params.csvm_params.coef0, coef0);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainCoef0, ::testing::Combine(
@@ -231,7 +231,7 @@ TEST_P(ParameterTrainCost, parsing) {
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
     // test for correctness
     EXPECT_FALSE(params.csvm_params.cost.is_default());
-    EXPECT_EQ(params.csvm_params.cost, cost);
+    EXPECT_DOUBLE_EQ(params.csvm_params.cost, cost);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainCost, ::testing::Combine(
@@ -249,7 +249,7 @@ TEST_P(ParameterTrainEpsilon, parsing) {
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
     // test for correctness
     EXPECT_FALSE(params.epsilon.is_default());
-    EXPECT_EQ(params.epsilon, eps);
+    EXPECT_DOUBLE_EQ(params.epsilon, eps);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterTrain, ParameterTrainEpsilon, ::testing::Combine(

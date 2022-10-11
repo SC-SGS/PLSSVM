@@ -12,8 +12,7 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
-#include "../naming.hpp"   // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
-#include "../utility.hpp"  // util::{is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_}
+#include "../naming.hpp"  // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE

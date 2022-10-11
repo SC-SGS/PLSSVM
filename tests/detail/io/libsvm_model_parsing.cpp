@@ -16,9 +16,10 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 
-#include "../../naming.hpp"         // naming::real_type_label_type_combination_to_name
-#include "../../types_to_test.hpp"  // util::{instantiate_template_file, real_type_label_type_combination_gtest}
-#include "../../utility.hpp"        // util::temporary_file, util::redirect_output, EXPECT_THROW_WHAT
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
+#include "../../naming.hpp"              // naming::real_type_label_type_combination_to_name
+#include "../../types_to_test.hpp"       // util::{instantiate_template_file, real_type_label_type_combination_gtest}
+#include "../../utility.hpp"             // util::temporary_file, util::redirect_output
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -62,7 +63,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     EXPECT_TRUE(params.coef0.is_default());
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
-    EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+    EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });
     const auto [first_label, second_label] = util::get_distinct_label<label_type>();
     EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
     EXPECT_EQ(header_lines, 8);
@@ -88,12 +89,12 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     EXPECT_FALSE(params.degree.is_default());
     EXPECT_EQ(params.degree.value(), 2);
     EXPECT_FALSE(params.gamma.is_default());
-    EXPECT_EQ(params.gamma.value(), 0.25);
+    EXPECT_FLOATING_POINT_EQ(params.gamma.value(), real_type{ 0.25 });
     EXPECT_FALSE(params.coef0.is_default());
-    EXPECT_EQ(params.coef0.value(), 1.5);
+    EXPECT_FLOATING_POINT_EQ(params.coef0.value(), real_type{ 1.5 });
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
-    EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+    EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });
     const auto [first_label, second_label] = util::get_distinct_label<label_type>();
     EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
     EXPECT_EQ(header_lines, 11);
@@ -118,11 +119,11 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     EXPECT_EQ(params.kernel_type.value(), plssvm::kernel_function_type::rbf);
     EXPECT_TRUE(params.degree.is_default());
     EXPECT_FALSE(params.gamma.is_default());
-    EXPECT_EQ(params.gamma.value(), plssvm::detail::convert_to<real_type>("0.025"));
+    EXPECT_FLOATING_POINT_EQ(params.gamma.value(), real_type{ 0.025 });
     EXPECT_TRUE(params.coef0.is_default());
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
-    EXPECT_EQ(rho, plssvm::detail::convert_to<real_type>("0.37330625882191915"));
+    EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });
     const auto [first_label, second_label] = util::get_distinct_label<label_type>();
     EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
     EXPECT_EQ(header_lines, 9);

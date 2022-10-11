@@ -12,9 +12,10 @@
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
-#include "backends/compare.hpp"  // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
-#include "naming.hpp"            // naming::arithmetic_types_to_name
-#include "utility.hpp"           // util::{convert_to_string, convert_from_string, util::generate_random_vector, gtest_assert_floating_point_near}, EXPECT_THROW_WHAT
+#include "backends/compare.hpp"    // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR
+#include "naming.hpp"              // naming::arithmetic_types_to_name
+#include "utility.hpp"             // util::{convert_to_string, convert_from_string, util::generate_random_vector, gtest_assert_floating_point_near}
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
 
@@ -96,7 +97,7 @@ TYPED_TEST(KernelFunction, linear_kernel_function_variadic) {
 
         // test the linear kernel function using different parameter sets
         for ([[maybe_unused]] const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::linear>) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2), compare::detail::linear_kernel(x1, x2));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2), compare::detail::linear_kernel(x1, x2));
         }
     }
 }
@@ -111,7 +112,7 @@ TYPED_TEST(KernelFunction, linear_kernel_function_parameter) {
 
         // test the linear kernel function using different parameter sets
         for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::linear>) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, params), compare::detail::linear_kernel(x1, x2));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), compare::detail::linear_kernel(x1, x2));
         }
     }
 }
@@ -128,7 +129,7 @@ TYPED_TEST(KernelFunction, polynomial_kernel_function_variadic) {
             const int degree = params.degree;
             const real_type gamma = params.gamma;
             const real_type coef0 = params.coef0;
-            util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, degree, gamma, coef0), compare::detail::poly_kernel(x1, x2, degree, gamma, coef0));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, degree, gamma, coef0), compare::detail::poly_kernel(x1, x2, degree, gamma, coef0));
         }
     }
 }
@@ -142,8 +143,8 @@ TYPED_TEST(KernelFunction, polynomial_kernel_function_parameter) {
 
         // test polynomial kernel function
         for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::polynomial>) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, params),
-                                                   compare::detail::poly_kernel(x1, x2, params.degree.value(), params.gamma.value(), params.coef0.value()));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params),
+                                       compare::detail::poly_kernel(x1, x2, params.degree.value(), params.gamma.value(), params.coef0.value()));
         }
     }
 }
@@ -159,7 +160,7 @@ TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_variadic) {
         // test rbf kernel function
         for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
             const real_type gamma = params.gamma;
-            util::gtest_assert_floating_point_near(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma), compare::detail::radial_kernel(x1, x2, gamma));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma), compare::detail::radial_kernel(x1, x2, gamma));
         }
     }
 }
@@ -173,7 +174,7 @@ TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_parameter) {
 
         // test rbf kernel function
         for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
-            util::gtest_assert_floating_point_near(plssvm::kernel_function(x1, x2, params), compare::detail::radial_kernel(x1, x2, params.gamma.value()));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), compare::detail::radial_kernel(x1, x2, params.gamma.value()));
         }
     }
 }
@@ -189,7 +190,9 @@ TYPED_TEST(KernelFunction, unknown_kernel_function_parameter) {
     params.kernel_type = static_cast<plssvm::kernel_function_type>(3);
 
     // using an unknown kernel type must throw
-    EXPECT_THROW_WHAT(std::ignore = plssvm::kernel_function(x1, x2, params), plssvm::unsupported_kernel_type_exception, "Unknown kernel type (value: 3)!");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::kernel_function(x1, x2, params),
+                      plssvm::unsupported_kernel_type_exception,
+                      "Unknown kernel type (value: 3)!");
 }
 
 template <typename T>
@@ -204,9 +207,12 @@ TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_variadic) {
     const std::vector<real_type> x2{ real_type{ 1.0 }, real_type{ 2.0 } };
 
     // test mismatched vector sizes
-    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2), "Sizes mismatch!: 1 != 2");
-    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, 0, real_type{ 0.0 }, real_type{ 0.0 }), "Sizes mismatch!: 1 != 2");
-    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, real_type{ 0.0 }), "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, 0, real_type{ 0.0 }, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
 }
 TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_parameter) {
     using real_type = TypeParam;
