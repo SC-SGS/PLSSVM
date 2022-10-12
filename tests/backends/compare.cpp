@@ -11,6 +11,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
+#include <cstddef>    // std::size_t
 #include <algorithm>  // std::min
 #include <cmath>      // std::pow, std::exp, std::fma
 #include <vector>     // std::vector
@@ -35,7 +36,7 @@ real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_
     PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
     PLSSVM_ASSERT(num_devices > 0, "At least one device must be available!");
 
-    std::size_t block_size = x.size() / num_devices;
+    const std::size_t block_size = x.size() / num_devices;
     real_type result{ 0.0 };
     for (std::size_t d = 0; d < num_devices; ++d) {
         real_type tmp{ 0.0 };

@@ -9,15 +9,18 @@
  * @brief Functions used for testing the correctness of the PLSSVM implementation.
  */
 
+#ifndef PLSSVM_TESTS_COMPARE_HPP_
+#define PLSSVM_TESTS_COMPARE_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include <vector>  // std::vector
 
 namespace compare {
+
 namespace detail {
 
 /**
@@ -156,3 +159,5 @@ template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
 }
 
 }  // namespace compare
+
+#endif  // PLSSVM_TESTS_COMPARE_HPP_
