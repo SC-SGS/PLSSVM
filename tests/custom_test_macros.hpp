@@ -9,8 +9,8 @@
  * @brief Header defining custom assertion macros.
  */
 
-#ifndef PLSSVM_CUSTOM_TEST_MACROS_HPP_
-#define PLSSVM_CUSTOM_TEST_MACROS_HPP_
+#ifndef PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
+#define PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
 
 #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
@@ -290,4 +290,4 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
         }                                                                                                    \
         } while (false)
 
-#endif  // PLSSVM_CUSTOM_TEST_MACROS_HPP_
+#endif  // PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
