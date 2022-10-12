@@ -10,43 +10,30 @@
  */
 
 #ifndef PLSSVM_CUSTOM_TEST_MACROS_HPP_
-    #define PLSSVM_CUSTOM_TEST_MACROS_HPP_
+#define PLSSVM_CUSTOM_TEST_MACROS_HPP_
 
-    #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
-    #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 
-    #include "fmt/core.h"     // fmt::format
-    #include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, SUCCESS, FAIL, EXPECT_LT, ASSERT_LT
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, SUCCESS, FAIL, EXPECT_LT, ASSERT_LT
 
-    #include <algorithm>    // std::max
-    #include <cmath>        // std::abs
-    #include <limits>       // std::numeric_limits::{epsilon, max, min}
-    #include <type_traits>  // std::is_same_v
+#include <algorithm>    // std::max
+#include <cmath>        // std::abs
+#include <limits>       // std::numeric_limits::{epsilon, max, min}
+#include <type_traits>  // std::is_same_v
 
-namespace impl {
+namespace detail {
 
-/**
- * @brief Get the `value_type` of a `std::vector<T>`, `std::vector<std::vector<T>>`, etc.
- * @details Terminates the recursion.
- * @tparam T the `value_type` of the vector cascade
- */
+// type_trait to get the `value_type` of a `std::vector<T>`, `std::vector<std::vector<T>>`, etc.
 template <typename T>
 struct get_value_type {
     using type = T;
 };
-/**
- * @brief Get the `value_type` of a `std::vector<T>`, `std::vector<std::vector<T>>`, etc.
- * @tparam T the `value_type` of the current vector
- */
 template <typename T>
 struct get_value_type<std::vector<T>> {
     using type = typename get_value_type<T>::type;
 };
-/**
- * @brief Get the `value_type` of a `std::vector<T>`, `std::vector<std::vector<T>>`, etc.
- * @details A shorthand for `typename impl::get_value_type_t<T>::type`.
- * @tparam T the `value_type` of the current vector
- */
 template <typename T>
 using get_value_type_t = typename get_value_type<T>::type;
 
@@ -180,44 +167,117 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     }
 }
 
-}  // namespace impl
+}  // namespace detail
 
+/**
+ * @brief Check whether the two floating point values @p val1 and @p val2 are "equal".
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define EXPECT_FLOATING_POINT_EQ(val1, val2) \
-    impl::floating_point_eq<decltype(val1), true>(val1, val2)
-
+    detail::floating_point_eq<decltype(val1), true>(val1, val2)
+/**
+ * @brief Check whether the two floating point values @p val1 and @p val2 are "equal".
+ * @details Other tests in the test case are aborted even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define ASSERT_FLOATING_POINT_EQ(val1, val2) \
-    impl::floating_point_eq<decltype(val1), false>(val1, val2)
+    detail::floating_point_eq<decltype(val1), false>(val1, val2)
 
+/**
+ * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal".
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define EXPECT_FLOATING_POINT_VECTOR_EQ(val1, val2) \
-    impl::floating_point_vector_eq<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
-
+    detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+/**
+ * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal".
+ * @details Other tests in the test case are aborted even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define ASSERT_FLOATING_POINT_VECTOR_EQ(val1, val2, msg) \
-    impl::floating_point_vector_eq<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
+/**
+ * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal".
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define EXPECT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2) \
-    impl::floating_point_2d_vector_eq<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
-
+    detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+/**
+ * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal".
+ * @details Other tests in the test case are aborted even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2, msg) \
-    impl::floating_point_2d_vector_eq<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
+/**
+ * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define EXPECT_FLOATING_POINT_NEAR(val1, val2) \
-    impl::floating_point_near<decltype(val1), true>(val1, val2)
-
+    detail::floating_point_near<decltype(val1), true>(val1, val2)
+/**
+ * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are aborted even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define ASSERT_FLOATING_POINT_NEAR(val1, val2, msg) \
-    impl::floating_point_near<decltype(val1), false>(val1, val2, msg)
+    detail::floating_point_near<decltype(val1), false>(val1, val2, msg)
 
+/**
+ * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define EXPECT_FLOATING_POINT_VECTOR_NEAR(val1, val2) \
-    impl::floating_point_vector_near<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
-
+    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+/**
+ * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are aborted even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define ASSERT_FLOATING_POINT_VECTOR_NEAR(val1, val2, msg) \
-    impl::floating_point_vector_near<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
+/**
+ * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2) \
-    impl::floating_point_2d_vector_near<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
-
+    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+/**
+ * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are aborted even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2, msg) \
-    impl::floating_point_2d_vector_near<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
+/**
+ * @brief Check whether @p statement throws an exception of type @p expected_exception with the exception's what message @p msg.
+ * @details Succeeds only if the exception type **and** message match.
+ * @param[in] statement the statement that should throw an exception
+ * @param[in] expected_exception the type of the exception that should be thrown
+ * @param[in] msg the expected exception's `what()` message
+ */
 #define EXPECT_THROW_WHAT(statement, expected_exception, msg)                                                \
     do {                                                                                                     \
         try {                                                                                                \
@@ -228,8 +288,6 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
         } catch (...) {                                                                                      \
             FAIL() << "The expected exception type (" #expected_exception ") doesn't match the caught one!"; \
         }                                                                                                    \
-    } while (false)
+        } while (false)
 
 #endif  // PLSSVM_CUSTOM_TEST_MACROS_HPP_
-
-// TODO: comments?!?

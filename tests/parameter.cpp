@@ -11,7 +11,7 @@
 #include "plssvm/parameter.hpp"
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ
-#include "naming.hpp"              // naming::arithmetic_types_to_name
+#include "naming.hpp"              // naming::real_type_to_name
 #include "utility.hpp"             // util::convert_to_string
 
 #include "fmt/core.h"  // fmt::format

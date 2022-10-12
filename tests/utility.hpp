@@ -13,34 +13,28 @@
 #define PLSSVM_TESTS_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/csvm_factory.hpp"                 // plssvm::make_csvm
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
-#include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                    // plssvm::parameter
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // make custom type formattable using operator>> overload
-#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_FALSE, EXPECT_TRUE, EXPECT_LT, SUCCESS, FAIL
+#include "gtest/gtest.h"  // EXPECT_NE, ASSERT_FALSE
 
 #ifdef __unix__
     #include <cstdlib>  // mkstemp
-#else
-    #include <random>  // std::random_device, std::mt19937, std::uniform_int_distribution
 #endif
 
-#include <algorithm>    // std::min, std::max
-#include <cmath>        // std::abs
+#include <algorithm>    // std::generate
+#include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists, std::filesystem::remove
 #include <iostream>     // std::cout
-#include <limits>       // std::numeric_limits
+#include <limits>       // std::numeric_limits{max, lowest}
 #include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <sstream>      // std::ostringstream, std::istringstream, std::stringstream
+#include <sstream>      // std:stringstream, std::ostringstream, std::istringstream
 #include <streambuf>    // std::streambuf
-#include <string>       // std::string, std::to_string
-#include <string_view>  // std::string_view
-#include <type_traits>  // std::is_same_v
+#include <string>       // std::string
+#include <tuple>        // std::tuple, std::make_tuple, std::get
+#include <type_traits>  // std::is_floating_point_v
+#include <utility>      // std::pair, std::make_pair
+#include <vector>       // std::vector
 
 namespace util {
 
@@ -95,9 +89,9 @@ class temporary_file {
         std::random_device device;
         std::mt19937 gen(device());
         std::uniform_int_distribution<unsigned long long> dist;
-        filename{ std::to_string(dist(gen)) };
+        filename{ fmt::format("tmpfile_{}", dist(gen)) };
         while (std::filesystem::exists(std::filesystem::temp_directory_path() / filename)) {
-            filename = std::to_string(dist(gen));
+            filename = fmt::format("tmpfile_{}", dist(gen));
         }
         // create file
         std::ofstream{ std::filesystem::temp_directory_path() / filename) };
@@ -114,25 +108,14 @@ class temporary_file {
 };
 
 /**
- * @brief Check whether the C-SVM returned by a call to `plssvm::make_csvm` with the parameters @p params returns a C-SVM of type @p Derived
- * @tparam Derived the expected C-SVM type, based on the backend_type of @þ params
- * @tparam T the type of the data
- * @param[in] params the parameter to initialize the C-SVM with
- */
-template <template <typename> typename Derived, typename T>
-inline void gtest_expect_correct_csvm_factory(const plssvm::parameter<T> &params) {
-    // create csvm
-    auto csvm = plssvm::make_csvm(params);
-    // check if correct csvm has been instantiated
-    auto *res = dynamic_cast<Derived<T> *>(csvm.get());
-    EXPECT_NE(res, nullptr);
-}
-
-/**
  * @brief Convert the parameter @p value to a std::string using a std::ostringstream.
+ * @details Calls `ASSERT_FALSE` if the @p value couldn't be converted to its std::string representation.
+ * @tparam T the type of the value that should be converted to a std::string
+ * @param[in] value the value to convert
+ * @return the std::string representation of @p value (`[[nodiscard]]`)
  */
 template <typename T>
-inline std::string convert_to_string(const T &value) {
+[[nodiscard]] inline std::string convert_to_string(const T &value) {
     std::ostringstream output;
     output << value;
     // test if output was successful
@@ -144,9 +127,13 @@ inline std::string convert_to_string(const T &value) {
 }
 /**
  * @brief Convert the std::string @p str to a value of type T using a std::istringstream.
+ * @details Calls `ASSERT_FALSE` if the @p str couldn't be converted to a value of type @p T.
+ * @tparam T the type of the value to which the std::string should be converted
+ * @param[in] str the std::string to convert
+ * @return the value represented by @p value (`[[nodiscard]]`)
  */
 template <typename T>
-inline T convert_from_string(const std::string &str) {
+[[nodiscard]] inline T convert_from_string(const std::string &str) {
     std::istringstream input{ str };
     T value{};
     input >> value;
@@ -159,8 +146,8 @@ inline T convert_from_string(const std::string &str) {
 }
 
 /**
- * @brief Generate vector of @p size filled with random values in the range [@p lower, @p upper].
- * @tparam T the type of the elements in the vector
+ * @brief Generate vector of @p size filled with random floating point values in the range [@p lower, @p upper].
+ * @tparam T the type of the elements in the vector (must be a floating point type)
  * @param[in] size the size of the vector
  * @param[in] lower the lower bound of the random values in the vector
  * @param[in] upper the upper bound of the random values in the vector
@@ -168,6 +155,8 @@ inline T convert_from_string(const std::string &str) {
  */
 template <typename T>
 [[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const T lower = T{ -1.0 }, const T upper = T{ 1.0 }) {
+    static_assert(std::is_floating_point_v<T>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
+
     std::vector<T> vec(size);
 
     // fill vectors with random values
@@ -179,9 +168,20 @@ template <typename T>
     return vec;
 }
 
+/**
+ * @brief Scale the @p data set to the range [@p lower, @p upper].
+ * @tparam T the type of the data that should be scaled (must be a floating point type)
+ * @param[in] data the data to scale
+ * @param[in] lower the lower bound to which the data should be scaled
+ * @param[in] upper the upper bound to which the data should be scaled
+ * @return a pair consisting of: [the data set scaled to [@p lower, @p upper], the scaling factors used to scale the data] (`[[nodiscard]]`)
+ */
 template <typename T>
-std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
+[[nodiscard]] inline std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
+    static_assert(std::is_floating_point_v<T>, "Scaling a data set only makes sense for values with a floating point type!");
+
     std::vector<std::tuple<std::size_t, T, T>> factors(data.front().size(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
+    // calculate the scaling factors
     for (std::size_t i = 0; i < factors.size(); ++i) {
         std::get<0>(factors[i]) = i;
         for (std::size_t j = 0; j < data.size(); ++j) {
@@ -189,6 +189,7 @@ std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>
             std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data[j][i]);
         }
     }
+    // scale the data set
     std::vector<std::vector<T>> ret = data;
     for (std::size_t i = 0; i < ret.size(); ++i) {
         for (std::size_t j = 0; j < ret.front().size(); ++j) {

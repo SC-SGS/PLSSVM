@@ -11,7 +11,7 @@
 #include "plssvm/detail/operators.hpp"
 
 #include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "../naming.hpp"              // naming::arithmetic_types_to_name
+#include "../naming.hpp"              // naming::real_type_to_name
 #include "../types_to_test.hpp"       // util::real_type_gtest
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}

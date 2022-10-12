@@ -11,9 +11,9 @@
 #include "plssvm/detail/layout.hpp"
 
 #include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
-#include "../naming.hpp"         // util::{arithmetic_types_to_name}
-#include "../types_to_test.hpp"  // util::real_type_gtest
-#include "../utility.hpp"        // util::{convert_to_string, convert_from_string, redirect_output}
+#include "../naming.hpp"              // util::real_type_to_name
+#include "../types_to_test.hpp"       // util::real_type_gtest
+#include "../utility.hpp"             // util::{convert_to_string, convert_from_string, redirect_output}
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}

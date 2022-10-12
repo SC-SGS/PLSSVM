@@ -24,6 +24,7 @@
 #include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
 #include "gtest/gtest.h"  // ::testing::TestParamInfo
 
+#include <filesystem>     // std::filesystem::path
 #include <map>            // std::map
 #include <set>            // std::set
 #include <string>         // std::string
@@ -33,7 +34,6 @@
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
-#include <filesystem> // std::filesystem::path
 
 namespace naming {
 
@@ -94,6 +94,9 @@ constexpr bool is_tuple_v = is_tuple<T>::value;
 ////                     PRETTY PRINT TYPED_TEST TYPES                      ////
 ////////////////////////////////////////////////////////////////////////////////
 // detail/utility.cpp
+/**
+ * @brief A class used to map a std::map or std::unordered_map to a readable name in the GTest test case name.
+ */
 class map_types_to_name {
   public:
     template <typename T>
@@ -107,6 +110,9 @@ class map_types_to_name {
         }
     }
 };
+/**
+ * @brief A class used to map a std::set or std::unordered_set to a readable name in the GTest test case name.
+ */
 class set_types_to_name {
   public:
     template <typename T>
@@ -120,6 +126,9 @@ class set_types_to_name {
         }
     }
 };
+/**
+ * @brief A class used to map a std::vector to a readable name in the GTest test case name.
+ */
 class vector_types_to_name {
   public:
     template <typename T>
@@ -133,6 +142,9 @@ class vector_types_to_name {
 };
 
 // exceptions/exceptions.cpp
+/**
+ * @brief A class used to map a plssvm::exception (and derived classes) to a readable name in the GTest test case name.
+ */
 class exception_types_to_name {
   public:
     template <typename T>
@@ -142,6 +154,9 @@ class exception_types_to_name {
 };
 
 // detail/io/file_reader.cpp
+/**
+ * @brief A class used to map the types that can be used to open a file to a readable name in the GTest test case name.
+ */
 class open_parameter_types_to_name {
   public:
     template <typename T>
@@ -158,27 +173,10 @@ class open_parameter_types_to_name {
     }
 };
 
-// general TODO: remove?
-class arithmetic_types_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return std::string{ plssvm::detail::arithmetic_type_name<T>() };
-    }
-};
-class arithmetic_types_or_string_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        if constexpr (std::is_same_v<T, std::string>) {
-            return "string";
-        } else {
-            return std::string{ plssvm::detail::arithmetic_type_name<T>() };
-        }
-    }
-};
-
 // types_to_test.hpp
+/**
+ * @brief A class used to map all real types to a readable name in the GTest test case name.
+ */
 class real_type_to_name {
   public:
     template <typename T>
@@ -186,6 +184,9 @@ class real_type_to_name {
         return std::string{ plssvm::detail::arithmetic_type_name<T>() };
     }
 };
+/**
+ * @brief A class used to map all label types to a readable name in the GTest test case name.
+ */
 class label_type_to_name {
   public:
     template <typename T>
@@ -197,11 +198,13 @@ class label_type_to_name {
         }
     }
 };
+/**
+ * @brief A class used to map all real and label type-combinations to a readable name in the GTest test case name.
+ */
 class real_type_label_type_combination_to_name {
   public:
     template <typename T>
     static std::string GetName(int) {
-        //static_assert(std::is_same_v<T, real_type_label_type_combination_to_name>, "T must be of type 'real_type_label_type_combination_to_name'.");
         return fmt::format("{}__x__{}", real_type_to_name::GetName<typename T::real_type>(0), label_type_to_name::GetName<typename T::label_type>(0));
     }
 };
@@ -214,11 +217,11 @@ namespace detail {
 /**
  * @brief Escape some characters of the string such that GTest accepts it as test case name.
  * @details Replaces all "-" with "_M_" (for Minus), all " " with "_W_" (for Whitespace), and "." with "_D_" (for dot).
- *          If the resulting string would be emty, returns a string containing "EMPTY".
+ *          If the resulting string would be empty, returns a string containing "EMPTY".
  * @param[in] sv the string to escape for GTest
  * @return the escaped test case name (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::string escape_string(std::string_view sv) {
+[[nodiscard]] inline std::string escape_string(const std::string_view sv) {
     std::string str{ sv };
     plssvm::detail::replace_all(str, "-", "_M_");
     plssvm::detail::replace_all(str, " ", "_W_");
@@ -278,9 +281,7 @@ template <typename T>
     // sanitize flags for Google Test names
     std::string flag = std::get<0>(param_info.param);
     plssvm::detail::replace_all(flag, "-", "");
-    // sanitize values for Google Test names
-    std::string value = detail::escape_string(fmt::format("{}", std::get<1>(param_info.param)));
-    return fmt::format("{}__{}", flag, value);
+    return fmt::format("{}__{}", flag, detail::escape_string(fmt::format("{}", std::get<1>(param_info.param))));
 }
 /**
  * @brief Generate a test case name using a command line flag.

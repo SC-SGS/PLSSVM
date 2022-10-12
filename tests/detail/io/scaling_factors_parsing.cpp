@@ -14,7 +14,7 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
 #include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
-#include "../../naming.hpp"              // naming::arithmetic_types_to_name
+#include "../../naming.hpp"              // naming::real_type_to_name
 #include "../../types_to_test.hpp"       // util::real_type_gtest
 #include "../../utility.hpp"             // util::temporary_file
 

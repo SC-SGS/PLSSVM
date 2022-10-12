@@ -13,7 +13,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
 #include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../naming.hpp"              // naming::{arithmetic_types_to_name, pretty_print_escaped_string}
+#include "../naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
@@ -92,7 +92,7 @@ TEST(StringConversion, string_conversion) {
 template <typename T>
 class StringConversionException : public ::testing::Test {};
 using string_conversion_exception_types = ::testing::Types<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double>;
-TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types, naming::label_type_to_name);
 
 TYPED_TEST(StringConversionException, string_conversion_exception) {
     using namespace plssvm::detail;
@@ -139,7 +139,7 @@ TEST(StringConversion, extract_first_integer_from_string_exception) {
 template <typename T>
 class StringConversionSplitAs : public ::testing::Test {};
 using split_as_types = ::testing::Types<short, int, long, long long, float, double>;
-TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types, naming::arithmetic_types_to_name);
+TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types, naming::label_type_to_name);
 
 TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
     // split string using the default delimiter
