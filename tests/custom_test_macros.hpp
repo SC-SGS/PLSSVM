@@ -10,18 +10,18 @@
  */
 
 #ifndef PLSSVM_CUSTOM_TEST_MACROS_HPP_
-#define PLSSVM_CUSTOM_TEST_MACROS_HPP_
+    #define PLSSVM_CUSTOM_TEST_MACROS_HPP_
 
-#include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
+    #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
+    #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 
-#include "fmt/core.h"
-#include "gtest/gtest.h"
+    #include "fmt/core.h"     // fmt::format
+    #include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, SUCCESS, FAIL, EXPECT_LT, ASSERT_LT
 
-#include <algorithm>    // std::max
-#include <cmath>        // std::abs
-#include <limits>       // std::numeric_limits::{epsilon, max, min}
-#include <type_traits>  // std::is_same_v
+    #include <algorithm>    // std::max
+    #include <cmath>        // std::abs
+    #include <limits>       // std::numeric_limits::{epsilon, max, min}
+    #include <type_traits>  // std::is_same_v
 
 namespace impl {
 
@@ -63,15 +63,15 @@ template <typename T, bool expect>
 inline void floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
     if constexpr (std::is_same_v<plssvm::detail::remove_cvref_t<T>, float>) {
         if constexpr (expect) {
-            EXPECT_FLOAT_EQ(val1, val2) << msg;
+            EXPECT_FLOAT_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
         } else {
-            ASSERT_FLOAT_EQ(val1, val2) << msg;
+            ASSERT_FLOAT_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
         }
     } else if constexpr (std::is_same_v<plssvm::detail::remove_cvref_t<T>, double>) {
         if constexpr (expect) {
-            EXPECT_DOUBLE_EQ(val1, val2) << msg;
+            EXPECT_DOUBLE_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
         } else {
-            ASSERT_DOUBLE_EQ(val1, val2) << msg;
+            ASSERT_DOUBLE_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
         }
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "T must be either float or double!");
@@ -179,6 +179,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
         }
     }
 }
+
 }  // namespace impl
 
 #define EXPECT_FLOATING_POINT_EQ(val1, val2) \
@@ -198,7 +199,6 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
 
 #define ASSERT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2, msg) \
     impl::floating_point_2d_vector_eq<impl::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
-
 
 #define EXPECT_FLOATING_POINT_NEAR(val1, val2) \
     impl::floating_point_near<decltype(val1), true>(val1, val2)
@@ -232,4 +232,4 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
 
 #endif  // PLSSVM_CUSTOM_TEST_MACROS_HPP_
 
-// TODO: comments?!?: message in function!
+// TODO: comments?!?
