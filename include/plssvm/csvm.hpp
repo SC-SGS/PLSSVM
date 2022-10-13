@@ -37,7 +37,6 @@
 
 namespace plssvm {
 
-// TODO: remove T ??!??
 // TODO: exception docu
 
 /**

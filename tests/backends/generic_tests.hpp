@@ -95,6 +95,26 @@ inline void test_csvm_factory_target_and_parameter(const plssvm::backend_type ba
     EXPECT_NE(res, nullptr);
 }
 
+template <typename csvm_type>
+inline void test_csvm_factory_kernel_type(const plssvm::backend_type backend, const plssvm::kernel_function_type kernel_type) {
+    // create the csvm using the plssvm::make_csvm function
+    auto csvm = plssvm::make_csvm(backend, kernel_type, plssvm::gamma = 0.1);
+
+    // check whether the created csvm has the same type as the expected one
+    auto *res = dynamic_cast<csvm_type*>(csvm.get());
+    EXPECT_NE(res, nullptr);
+}
+
+template <typename csvm_type>
+inline void test_csvm_factory_target_and_kernel_type(const plssvm::backend_type backend, const plssvm::target_platform target, const plssvm::kernel_function_type kernel_type) {
+    // create the csvm using the plssvm::make_csvm function
+    auto csvm = plssvm::make_csvm(backend, target, kernel_type, plssvm::gamma = 0.1);
+
+    // check whether the created csvm has the same type as the expected one
+    auto *res = dynamic_cast<csvm_type*>(csvm.get());
+    EXPECT_NE(res, nullptr);
+}
+
 //template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
 //inline void write_model_test() {
 //    // create parameter object

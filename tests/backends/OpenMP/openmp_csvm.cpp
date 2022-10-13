@@ -54,26 +54,33 @@ using parameter_types = ::testing::Types<
 
  // TODO: kernel??!??!?
 
-template <typename T>
 class OpenMPCSVM : public ::testing::Test, private util::redirect_output {};
 //TYPED_TEST_SUITE(OpenMPCSVM, parameter_types, parameter_definition_to_name);
 
 // check whether the csvm factory function correctly creates an openmp::csvm
-TEST(OpenMPCSVM, csvm_factory_default) {
+TEST_F(OpenMPCSVM, csvm_factory_default) {
     generic::test_csvm_factory_default<plssvm::openmp::csvm>(plssvm::backend_type::openmp);
 }
-TEST(OpenMPCSVM, csvm_factory_parameter) {
+TEST_F(OpenMPCSVM, csvm_factory_parameter) {
     generic::test_csvm_factory_parameter<plssvm::openmp::csvm>(plssvm::backend_type::openmp);
 }
-TEST(OpenMPCSVM, csvm_factory_target) {
+TEST_F(OpenMPCSVM, csvm_factory_target) {
     generic::test_csvm_factory_target<plssvm::openmp::csvm>(plssvm::backend_type::openmp, plssvm::target_platform::cpu);
 }
-TEST(OpenMPCSVM, csvm_factory_target_and_parameter) {
+TEST_F(OpenMPCSVM, csvm_factory_target_and_parameter) {
     generic::test_csvm_factory_target_and_parameter<plssvm::openmp::csvm>(plssvm::backend_type::openmp, plssvm::target_platform::cpu);
 }
+TEST_F(OpenMPCSVM, csvm_factory_kernel_type) {
+    generic::test_csvm_factory_kernel_type<plssvm::openmp::csvm>(plssvm::backend_type::openmp, plssvm::kernel_function_type::polynomial);
+}
+TEST_F(OpenMPCSVM, csvm_factory_target_and_kernel_type) {
+    generic::test_csvm_factory_target_and_kernel_type<plssvm::openmp::csvm>(plssvm::backend_type::openmp, plssvm::target_platform::cpu, plssvm::kernel_function_type::rbf);
+}
+
+
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TEST(OpenMPCSVM, construct_parameter_invalid_target_platform) {
+TEST_F(OpenMPCSVM, construct_parameter_invalid_target_platform) {
     // only automatic or cpu are allowed as target platform for the OpenMP backend
     EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::automatic });
     EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::cpu });
