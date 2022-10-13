@@ -50,10 +50,8 @@ int main(int argc, char *argv[]) {
             using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
-            // convert base params to correct type
-            const auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
             // create SVM
-            const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);//, //TODO
+            const auto svm = plssvm::make_csvm(params.backend, params.target, params.csvm_params);//, //TODO
                                                           //plssvm::sycl_implementation_type = params.sycl_implementation_type,
                                                           //plssvm::sycl_kernel_invocation_type = params.sycl_kernel_invocation_type);
             // learn model

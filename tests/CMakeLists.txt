@@ -175,4 +175,4 @@ endif()
 
 
 # add tests for the available backends
-#add_subdirectory(backends)
+add_subdirectory(backends)

@@ -78,10 +78,10 @@ using floating_point_types = ::testing::Types<float, double>;
 constexpr std::array kernel_vector_sizes_to_test{ 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
 // the kernel type parameter used in the kernel function tests
 template <typename T, plssvm::kernel_function_type kernel>
-constexpr std::array parameter_set{ plssvm::parameter<T>{ kernel, 3, 0.05, 1.0, 1.0 },
-                                    plssvm::parameter<T>{ kernel, 1, 0.0, 0.0, 1.0 },
-                                    plssvm::parameter<T>{ kernel, 4, -0.05, 1.5, 1.0 },
-                                    plssvm::parameter<T>{ kernel, 2, 0.025, -1.0, 1.0 } };
+constexpr std::array parameter_set{ plssvm::detail::parameter<T>{ kernel, 3, 0.05, 1.0, 1.0 },
+                                    plssvm::detail::parameter<T>{ kernel, 1, 0.0, 0.0, 1.0 },
+                                    plssvm::detail::parameter<T>{ kernel, 4, -0.05, 1.5, 1.0 },
+                                    plssvm::detail::parameter<T>{ kernel, 2, 0.025, -1.0, 1.0 } };
 
 template <typename T>
 class KernelFunction : public ::testing::Test {};
@@ -96,7 +96,7 @@ TYPED_TEST(KernelFunction, linear_kernel_function_variadic) {
         const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test the linear kernel function using different parameter sets
-        for ([[maybe_unused]] const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::linear>) {
+        for ([[maybe_unused]] const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::linear>) {
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2), compare::detail::linear_kernel(x1, x2));
         }
     }
@@ -111,7 +111,7 @@ TYPED_TEST(KernelFunction, linear_kernel_function_parameter) {
         const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test the linear kernel function using different parameter sets
-        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::linear>) {
+        for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::linear>) {
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), compare::detail::linear_kernel(x1, x2));
         }
     }
@@ -125,7 +125,7 @@ TYPED_TEST(KernelFunction, polynomial_kernel_function_variadic) {
         const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test polynomial kernel function
-        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::polynomial>) {
+        for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::polynomial>) {
             const int degree = params.degree;
             const real_type gamma = params.gamma;
             const real_type coef0 = params.coef0;
@@ -142,7 +142,7 @@ TYPED_TEST(KernelFunction, polynomial_kernel_function_parameter) {
         const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test polynomial kernel function
-        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::polynomial>) {
+        for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::polynomial>) {
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params),
                                        compare::detail::poly_kernel(x1, x2, params.degree.value(), params.gamma.value(), params.coef0.value()));
         }
@@ -158,7 +158,7 @@ TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_variadic) {
         const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test rbf kernel function
-        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
+        for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
             const real_type gamma = params.gamma;
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma), compare::detail::radial_kernel(x1, x2, gamma));
         }
@@ -173,7 +173,7 @@ TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_parameter) {
         const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
 
         // test rbf kernel function
-        for (const plssvm::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
+        for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), compare::detail::radial_kernel(x1, x2, params.gamma.value()));
         }
     }
@@ -186,7 +186,7 @@ TYPED_TEST(KernelFunction, unknown_kernel_function_parameter) {
     const std::vector<real_type> x1 = { real_type{ 1.0 } };
     const std::vector<real_type> x2 = { real_type{ 1.0 } };
     // create a parameter object with an unknown kernel type
-    plssvm::parameter<real_type> params{};
+    plssvm::detail::parameter<real_type> params{};
     params.kernel_type = static_cast<plssvm::kernel_function_type>(3);
 
     // using an unknown kernel type must throw
@@ -222,5 +222,5 @@ TYPED_TEST(KernelFunctionDeathTest, size_mismatch_kernel_function_parameter) {
     const std::vector<real_type> x2{ real_type{ 1.0 }, real_type{ 2.0 } };
 
     // test mismatched vector sizes
-    EXPECT_DEATH(std::ignore = plssvm::kernel_function(x1, x2, plssvm::parameter<real_type>{}), "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function(x1, x2, plssvm::detail::parameter<real_type>{}), "Sizes mismatch!: 1 != 2");
 }

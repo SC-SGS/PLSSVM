@@ -43,7 +43,7 @@ class parameter_train {
     parameter_train(int argc, char **argv);
 
     /// Other base C-SVM parameters
-    parameter<double> csvm_params{};
+    plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
     default_value<double> epsilon{ default_init<double>{ 0.001 } };

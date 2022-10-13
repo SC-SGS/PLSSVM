@@ -53,42 +53,6 @@ namespace plssvm {
 
 // TODO: what if csvm<double> and data_set<float> is given?
 
-/**
- * @brief Create a new C-SVM using the @p backend type and @p target platform. For the remaining C-SVM parameters, the default values are used.
- * @tparam T the floating point type used in the C-SVM
- * @param[in] backend the backend to use
- * @param[in] target the target platform to target
- * @return the C-SVM (`[[nodiscard]]`)
- */
-
-template <typename T>
-[[nodiscard]] inline std::unique_ptr<csvm<T>> make_csvm(const backend_type backend) {
-    return make_csvm<T>(backend, target_platform::automatic, parameter<T>{});
-}
-template <typename T>
-[[nodiscard]] inline std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, plssvm::parameter<T> params) {
-    return make_csvm<T>(backend, target_platform::automatic, params);
-}
-template <typename T>
-[[nodiscard]] inline std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target) {
-    return make_csvm<T>(backend, target, parameter<T>{});
-}
-
-/**
- * @brief Create a new C-SVM using the @p backend type, @p target platform, and @p params. Additional parameters (e.g., SYCL specific parameters) are provided via @p args.
- * @details Converts the @p params value to the respective named-parameter calls.
- * @tparam T the floating point type used in the C-SVM
- * @tparam Args the type of the potential additional parameters
- * @param[in] backend the backend to use
- * @param[in] target the target platform to target
- * @param[in] params the SVM parameters to use
- * @param[in] args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] inline std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, const parameter<T> params) {
-    return make_csvm<T>(backend, target, params.kernel_type, plssvm::degree = params.degree, plssvm::gamma = params.gamma, plssvm::coef0 = params.coef0, plssvm::cost = params.cost);
-} // TODO: führt zu warnungen in base csvm Konstruktor führen
 
 /**
  * @brief Create a new C-SVM using the @p backend type, @p target platform, @p kernel type, and potential additional named-parameter @p args.
@@ -100,14 +64,14 @@ template <typename T>
  * @param[in] args possible additional parameters (e.g., degree parameter for the polynomial kernel)
  * @return the C-SVM (`[[nodiscard]]`)
  */
-template <typename T, typename... Args>
-[[nodiscard]] std::unique_ptr<csvm<T>> make_csvm(const backend_type backend, const target_platform target, const kernel_function_type kernel, Args &&...args) {
+template <typename... Args>
+[[nodiscard]] std::unique_ptr<csvm> make_csvm(const backend_type backend, const target_platform target, const kernel_function_type kernel, Args &&...args) {
     switch (backend) {
         case backend_type::automatic:
-            return make_csvm<T>(determine_default_backend(), target, kernel, std::forward<Args>(args)...);
+            return make_csvm(determine_default_backend(), target, kernel, std::forward<Args>(args)...);
         case backend_type::openmp:
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-            return std::make_unique<openmp::csvm<T>>(target, kernel, std::forward<Args>(args)...);
+            return std::make_unique<openmp::csvm>(target, kernel, std::forward<Args>(args)...);
 #else
             throw unsupported_backend_exception{ "No OpenMP backend available!" };
 #endif
@@ -168,6 +132,41 @@ template <typename T, typename... Args>
 #endif
     }
     throw unsupported_backend_exception{ "Can't recognize backend !" };
+}
+
+
+
+/**
+ * @brief Create a new C-SVM using the @p backend type and @p target platform. For the remaining C-SVM parameters, the default values are used.
+ * @tparam T the floating point type used in the C-SVM
+ * @param[in] backend the backend to use
+ * @param[in] target the target platform to target
+ * @return the C-SVM (`[[nodiscard]]`)
+ */
+
+/**
+ * @brief Create a new C-SVM using the @p backend type, @p target platform, and @p params. Additional parameters (e.g., SYCL specific parameters) are provided via @p args.
+ * @details Converts the @p params value to the respective named-parameter calls.
+ * @tparam T the floating point type used in the C-SVM
+ * @tparam Args the type of the potential additional parameters
+ * @param[in] backend the backend to use
+ * @param[in] target the target platform to target
+ * @param[in] params the SVM parameters to use
+ * @param[in] args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
+ * @return the C-SVM (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, const target_platform target, parameter params) {
+    return make_csvm(backend, target, params.kernel_type, plssvm::degree = params.degree, plssvm::gamma = params.gamma, plssvm::coef0 = params.coef0, plssvm::cost = params.cost);
+}  // TODO: führt zu warnungen in base csvm Konstruktor führen
+
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend) {
+    return make_csvm(backend, target_platform::automatic, parameter{});
+}
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, parameter params) {
+    return make_csvm(backend, target_platform::automatic, params);
+}
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, const target_platform target) {
+    return make_csvm(backend, target, parameter{});
 }
 
 }  // namespace plssvm

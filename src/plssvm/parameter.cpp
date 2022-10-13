@@ -15,7 +15,7 @@
 
 #include <ostream>  // std::ostream
 
-namespace plssvm {
+namespace plssvm::detail {
 
 // explicitly instantiate template class
 template struct parameter<float>;

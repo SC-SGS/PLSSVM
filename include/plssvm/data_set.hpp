@@ -69,7 +69,6 @@ class data_set {
     template <typename, typename>
     friend class model;
     // plssvm::csvm needs the label mapping
-    template <typename>
     friend class csvm;
 
   public:

@@ -29,105 +29,90 @@
 #include <tuple>      // std::ignore
 #include <vector>     // std::vector
 
-template <typename T>
 class BaseCSVM : public ::testing::Test {};
-TYPED_TEST_SUITE(BaseCSVM, util::real_type_gtest, naming::real_type_to_name);
 
-TYPED_TEST(BaseCSVM, default_construct_from_parameter) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, default_construct_from_parameter) {
     // create mock_csvm using the default parameter (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // check whether the parameters have been set correctly
-    EXPECT_EQ(csvm.get_params(), plssvm::parameter<real_type>{});
+    EXPECT_EQ(csvm.get_params(), plssvm::parameter{});
 }
-TYPED_TEST(BaseCSVM, construct_from_parameter) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_from_parameter) {
     // create parameter class
-    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{ params };
+    const mock_csvm csvm{ params };
 
     // check whether the parameters have been set correctly
     EXPECT_EQ(csvm.get_params(), params);
 }
 
-TYPED_TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
     // create parameter class
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     params.kernel_type = static_cast<plssvm::kernel_function_type>(3);
 
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid kernel type must throw
-    EXPECT_THROW_WHAT(mock_csvm<real_type>{ params }, plssvm::invalid_parameter_exception, "Invalid kernel function 3 given!");
+    EXPECT_THROW_WHAT(mock_csvm{ params },
+                      plssvm::invalid_parameter_exception,
+                      "Invalid kernel function 3 given!");
 }
-TYPED_TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
     // create parameter class
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     params.kernel_type = plssvm::kernel_function_type::polynomial;
     params.gamma = -1.0;
 
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
-    EXPECT_THROW_WHAT(mock_csvm<real_type>{ params },
+    EXPECT_THROW_WHAT(mock_csvm{ params },
                       plssvm::invalid_parameter_exception,
                       "gamma must be greater than 0.0, but is -1!");
 }
 
-TYPED_TEST(BaseCSVM, construct_linear_from_named_parameters) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_linear_from_named_parameters) {
     // correct parameters
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     params.cost = 2.0;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{ plssvm::kernel_function_type::linear, plssvm::cost = params.cost };
+    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::cost = params.cost };
 
     // check whether the parameters have been set correctly
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
-TYPED_TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
     // correct parameters
-    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, 0.1, 1.2, 0.001 };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.1, 1.2, 0.001 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{ plssvm::kernel_function_type::polynomial,
-                                     plssvm::degree = params.degree,
-                                     plssvm::gamma = params.gamma,
-                                     plssvm::coef0 = params.coef0,
-                                     plssvm::cost = params.cost };
+    const mock_csvm csvm{ plssvm::kernel_function_type::polynomial,
+                          plssvm::degree = params.degree,
+                          plssvm::gamma = params.gamma,
+                          plssvm::coef0 = params.coef0,
+                          plssvm::cost = params.cost };
 
     // check whether the parameters have been set correctly
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
-TYPED_TEST(BaseCSVM, construct_rbf_from_named_parameters) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_rbf_from_named_parameters) {
     // correct parameters
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     params.kernel_type = plssvm::kernel_function_type::rbf;
     params.gamma = 0.00001;
     params.cost = 10.0;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{ plssvm::kernel_function_type::rbf,
-                                     plssvm::gamma = params.gamma,
-                                     plssvm::cost = params.cost };
+    const mock_csvm csvm{ plssvm::kernel_function_type::rbf,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
 
     // check whether the parameters have been set correctly
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
 
-template <typename T>
-class BaseCSVMWarning : public BaseCSVM<T> {
+class BaseCSVMWarning : public BaseCSVM {
   public:
     void start_capturing() {
         sbuf = std::clog.rdbuf();
@@ -145,41 +130,34 @@ class BaseCSVMWarning : public BaseCSVM<T> {
     std::stringstream buffer{};
     std::streambuf *sbuf{};
 };
-TYPED_TEST_SUITE(BaseCSVMWarning, util::real_type_gtest, naming::real_type_to_name);
 
-TYPED_TEST(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
-    using real_type = TypeParam;
-
+TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     // start capture of std::clog
     this->start_capturing();
 
-    const mock_csvm<real_type> csvm{ plssvm::kernel_function_type::linear, plssvm::degree = 2 };
+    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::degree = 2 };
 
     // end capture of std::clog
     this->end_capturing();
 
     EXPECT_EQ(this->get_capture(), "degree parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
-TYPED_TEST(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
-    using real_type = TypeParam;
-
+TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     // start capture of std::clog
     this->start_capturing();
 
-    const mock_csvm<real_type> csvm{ plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
+    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
 
     // end capture of std::clog
     this->end_capturing();
 
     EXPECT_EQ(this->get_capture(), "gamma parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
-TYPED_TEST(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
-    using real_type = TypeParam;
-
+TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     // start capture of std::clog
     this->start_capturing();
 
-    const mock_csvm<real_type> csvm{ plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
+    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
 
     // end capture of std::clog
     this->end_capturing();
@@ -187,46 +165,38 @@ TYPED_TEST(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     EXPECT_EQ(this->get_capture(), "coef0 parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
 
-TYPED_TEST(BaseCSVM, construct_from_named_parameters_invalid_kernel_type) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_from_named_parameters_invalid_kernel_type) {
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid kernel type must throw
-    EXPECT_THROW_WHAT(mock_csvm<real_type>{ static_cast<plssvm::kernel_function_type>(3) },
+    EXPECT_THROW_WHAT(mock_csvm{ static_cast<plssvm::kernel_function_type>(3) },
                       plssvm::invalid_parameter_exception,
                       "Invalid kernel function 3 given!");
 }
-TYPED_TEST(BaseCSVM, construct_from_named_parameters_invalid_gamma) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, construct_from_named_parameters_invalid_gamma) {
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
-    EXPECT_THROW_WHAT((mock_csvm<real_type>{ plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 }),
+    EXPECT_THROW_WHAT((mock_csvm{ plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 }),
                       plssvm::invalid_parameter_exception,
                       "gamma must be greater than 0.0, but is -1!");
 }
 
-TYPED_TEST(BaseCSVM, get_params) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, get_params) {
     // create parameter class
-    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{ params };
+    const mock_csvm csvm{ params };
 
     // check whether the parameters have been set correctly
-    const plssvm::parameter<real_type> csvm_params = csvm.get_params();
+    const plssvm::parameter csvm_params = csvm.get_params();
     EXPECT_EQ(csvm_params, params);
     EXPECT_TRUE(csvm_params.equivalent(params));
 }
 
-TYPED_TEST(BaseCSVM, set_params_from_parameter) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, set_params_from_parameter) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    mock_csvm<real_type> csvm{};
+    mock_csvm csvm{};
 
     // create parameter class
-    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
 
     // set csvm parameter to new values
     csvm.set_params(params);
@@ -234,14 +204,12 @@ TYPED_TEST(BaseCSVM, set_params_from_parameter) {
     // check whether the parameters have been set correctly
     EXPECT_EQ(csvm.get_params(), params);
 }
-TYPED_TEST(BaseCSVM, set_params_from_named_parameters) {
-    using real_type = TypeParam;
-
+TEST(BaseCSVM, set_params_from_named_parameters) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    mock_csvm<real_type> csvm{};
+    mock_csvm csvm{};
 
     // create parameter class
-    const plssvm::parameter<real_type> params{ plssvm::kernel_function_type::polynomial, 4, real_type{ 0.2 }, real_type{ 0.1 }, real_type{ 0.01 } };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
 
     // set csvm parameter to new values
     csvm.set_params(plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
@@ -255,7 +223,7 @@ TYPED_TEST(BaseCSVM, set_params_from_named_parameters) {
 }
 
 template <typename T>
-class BaseCSVMFit : public BaseCSVM<T>, private util::redirect_output, protected util::temporary_file {};
+class BaseCSVMFit : public BaseCSVM, private util::redirect_output, protected util::temporary_file {};
 TYPED_TEST_SUITE(BaseCSVMFit, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(BaseCSVMFit, fit) {
@@ -263,10 +231,17 @@ TYPED_TEST(BaseCSVMFit, fit) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the solve_system_of_linear_equations function
-    EXPECT_CALL(csvm, solve_system_of_linear_equations).Times(1);
+    // clang-format off
+    EXPECT_CALL(csvm, solve_system_of_linear_equations(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<std::vector<real_type>>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<typename mock_csvm::size_type>())).Times(1);
+    // clang-format on
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
@@ -280,12 +255,19 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the solve_system_of_linear_equations function
-    EXPECT_CALL(csvm, solve_system_of_linear_equations).Times(1);
+    // clang-format off
+    EXPECT_CALL(csvm, solve_system_of_linear_equations(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<std::vector<real_type>>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<typename mock_csvm::size_type>())).Times(1);
+    // clang-format on
 
-    // create data set
+// create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
@@ -297,10 +279,17 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
-    EXPECT_CALL(csvm, solve_system_of_linear_equations).Times(0);
+    // clang-format off
+    EXPECT_CALL(csvm, solve_system_of_linear_equations(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<std::vector<real_type>>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<typename mock_csvm::size_type>())).Times(0);
+    // clang-format on
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
@@ -316,10 +305,17 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
-    EXPECT_CALL(csvm, solve_system_of_linear_equations).Times(0);
+    // clang-format off
+    EXPECT_CALL(csvm, solve_system_of_linear_equations(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<std::vector<real_type>>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<typename mock_csvm::size_type>())).Times(0);
+    // clang-format on
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
@@ -335,10 +331,17 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
-    EXPECT_CALL(csvm, solve_system_of_linear_equations).Times(0);
+    // clang-format off
+    EXPECT_CALL(csvm, solve_system_of_linear_equations(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<std::vector<real_type>>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<typename mock_csvm::size_type>())).Times(0);
+    // clang-format on
 
     // create data set without labels
     const plssvm::data_set<real_type, label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
@@ -350,7 +353,7 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
 }
 
 template <typename T>
-class BaseCSVMPredict : public BaseCSVM<T>, private util::redirect_output {};
+class BaseCSVMPredict : public BaseCSVM, private util::redirect_output {};
 TYPED_TEST_SUITE(BaseCSVMPredict, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(BaseCSVMPredict, predict) {
@@ -358,10 +361,18 @@ TYPED_TEST(BaseCSVMPredict, predict) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the predict_values function
-    EXPECT_CALL(csvm, predict_values).Times(1);
+    // clang-format off
+    EXPECT_CALL(csvm, predict_values(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<real_type> &>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(1);
+    // clang-format on
 
     // create data set
     const util::temporary_file data_set_file;
@@ -381,10 +392,18 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
-    EXPECT_CALL(csvm, predict_values).Times(0);
+    // clang-format off
+    EXPECT_CALL(csvm, predict_values(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<real_type> &>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(0);
+    // clang-format on
 
     // create data set
     const plssvm::data_set<real_type, label_type> data_to_predict{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
@@ -401,7 +420,7 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
 }
 
 template <typename T>
-class BaseCSVMScore : public BaseCSVM<T>, private util::redirect_output {};
+class BaseCSVMScore : public BaseCSVM, private util::redirect_output {};
 TYPED_TEST_SUITE(BaseCSVMScore, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(BaseCSVMScore, score_model) {
@@ -409,10 +428,18 @@ TYPED_TEST(BaseCSVMScore, score_model) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
-    // mock the predict_values function
-    EXPECT_CALL(csvm, predict_values).Times(1);
+    // mock the predict_values functions
+    // clang-format off
+    EXPECT_CALL(csvm, predict_values(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<real_type> &>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(1);
+    // clang-format on
 
     // read a previously learned from a model file
     const util::temporary_file model_file;
@@ -427,10 +454,18 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the predict_values function
-    EXPECT_CALL(csvm, predict_values).Times(1);
+    // clang-format off
+    EXPECT_CALL(csvm, predict_values(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<real_type> &>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(1);
+    // clang-format on
 
     // create data set
     const util::temporary_file data_set_file;
@@ -451,10 +486,18 @@ TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
-    EXPECT_CALL(csvm, predict_values).Times(0);
+    // clang-format off
+    EXPECT_CALL(csvm, predict_values(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<real_type> &>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(0);
+    // clang-format on
 
     // create data set
     const plssvm::data_set<real_type, label_type> data_to_score{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
@@ -472,10 +515,18 @@ TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
     using label_type = typename TypeParam::label_type;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm<real_type> csvm{};
+    const mock_csvm csvm{};
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
-    EXPECT_CALL(csvm, predict_values).Times(0);
+    // clang-format off
+    EXPECT_CALL(csvm, predict_values(
+                          ::testing::An<const plssvm::detail::parameter<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<real_type> &>(),
+                          ::testing::An<real_type>(),
+                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(0);
+    // clang-format on
 
     // create data set
     const plssvm::data_set<real_type, label_type> data_to_score{

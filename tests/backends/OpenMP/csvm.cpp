@@ -56,37 +56,35 @@ using parameter_types = ::testing::Types<
 
 template <typename T>
 class OpenMPCSVM : public ::testing::Test, private util::redirect_output {};
-TYPED_TEST_SUITE(OpenMPCSVM, parameter_types, parameter_definition_to_name);
+//TYPED_TEST_SUITE(OpenMPCSVM, parameter_types, parameter_definition_to_name);
 
 // check whether the csvm factory function correctly creates an openmp::csvm
-TYPED_TEST(OpenMPCSVM, csvm_factory_default) {
-    generic::test_csvm_factory_default<plssvm::openmp::csvm, typename TypeParam::real_type>(plssvm::backend_type::openmp);
+TEST(OpenMPCSVM, csvm_factory_default) {
+    generic::test_csvm_factory_default<plssvm::openmp::csvm>(plssvm::backend_type::openmp);
 }
-TYPED_TEST(OpenMPCSVM, csvm_factory_parameter) {
-    generic::test_csvm_factory_parameter<plssvm::openmp::csvm, typename TypeParam::real_type>(plssvm::backend_type::openmp);
+TEST(OpenMPCSVM, csvm_factory_parameter) {
+    generic::test_csvm_factory_parameter<plssvm::openmp::csvm>(plssvm::backend_type::openmp);
 }
-TYPED_TEST(OpenMPCSVM, csvm_factory_target) {
-    generic::test_csvm_factory_target<plssvm::openmp::csvm, typename TypeParam::real_type>(plssvm::backend_type::openmp, plssvm::target_platform::cpu);
+TEST(OpenMPCSVM, csvm_factory_target) {
+    generic::test_csvm_factory_target<plssvm::openmp::csvm>(plssvm::backend_type::openmp, plssvm::target_platform::cpu);
 }
-TYPED_TEST(OpenMPCSVM, csvm_factory_target_and_parameter) {
-    generic::test_csvm_factory_target_and_parameter<plssvm::openmp::csvm, typename TypeParam::real_type>(plssvm::backend_type::openmp, plssvm::target_platform::cpu);
+TEST(OpenMPCSVM, csvm_factory_target_and_parameter) {
+    generic::test_csvm_factory_target_and_parameter<plssvm::openmp::csvm>(plssvm::backend_type::openmp, plssvm::target_platform::cpu);
 }
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(OpenMPCSVM, construct_parameter_invalid_target_platform) {
-    using real_type = typename TypeParam::real_type;
-
+TEST(OpenMPCSVM, construct_parameter_invalid_target_platform) {
     // only automatic or cpu are allowed as target platform for the OpenMP backend
-    EXPECT_NO_THROW(mock_openmp_csvm<real_type>{ plssvm::target_platform::automatic });
-    EXPECT_NO_THROW(mock_openmp_csvm<real_type>{ plssvm::target_platform::cpu });
+    EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::automatic });
+    EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::cpu });
 
-    EXPECT_THROW_WHAT(mock_openmp_csvm<real_type>{ plssvm::target_platform::gpu_nvidia },
+    EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_nvidia },
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_nvidia' for the OpenMP backend!");
-    EXPECT_THROW_WHAT(mock_openmp_csvm<real_type>{ plssvm::target_platform::gpu_amd },
+    EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_amd },
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_amd' for the OpenMP backend!");
-    EXPECT_THROW_WHAT(mock_openmp_csvm<real_type>{ plssvm::target_platform::gpu_intel },
+    EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_intel },
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }

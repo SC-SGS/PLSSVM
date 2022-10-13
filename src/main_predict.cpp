@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
             // create model
             plssvm::model<real_type, label_type> model{ params.model_filename };
             // create default csvm
-            auto svm = plssvm::make_csvm<real_type>(params.backend, params.target);
+            auto svm = plssvm::make_csvm(params.backend, params.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 

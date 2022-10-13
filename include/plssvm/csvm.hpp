@@ -44,15 +44,8 @@ namespace plssvm {
  * @brief Base class for all C-SVM backends.
  * @tparam T the floating point type of the data
  */
-template <typename T>
 class csvm {
-    // only float and doubles are allowed
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
-
   public:
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = T;
-    /// The unsigned size type.
     using size_type = std::size_t;
 
     /**
@@ -60,7 +53,7 @@ class csvm {
      * @details Uses the default SVM parameter if none are provided.
      * @param[in] params the SVM parameter
      */
-    explicit csvm(parameter<real_type> params = {});
+    explicit csvm(parameter params = {});
     /**
      * @brief Construct a C-SVM using named-parameters with the @p kernel type.
      * @tparam Args the type of the named-parameters
@@ -87,13 +80,13 @@ class csvm {
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] parameter<real_type> get_params() const noexcept { return params_; }
+    [[nodiscard]] parameter get_params() const noexcept { return params_; } // static_assert
 
     /**
      * @brief Override the old SVM parameter with the new @p params.
      * @param[in] params the new SVM parameter to use
      */
-    void set_params(parameter<real_type> params) noexcept { params_ = std::move(params); }
+    void set_params(parameter params) noexcept { params_ = params; }
     /**
      * @brief Override the old SVM parameter with the new ones given as named parameters in @ named_args.
      * @tparam Args the type of the named-parameters
@@ -113,7 +106,7 @@ class csvm {
      * @param[in] named_args the potential additional parameters (`epsilon` and/or `max_iter`)
      * @return the learned model (`[[nodiscard]]`)
      */
-    template <typename label_type, typename... Args>
+    template <typename real_type, typename label_type, typename... Args>
     [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args) const;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +119,7 @@ class csvm {
      * @param[in] data the data to predict the labels for
      * @return the predicted labels (`[[nodiscard]]`)
      */
-    template <typename label_type>
+    template <typename real_type, typename label_type>
     [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
     /**
@@ -135,7 +128,7 @@ class csvm {
      * @param[in] model a previously learnt model
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
-    template <typename label_type>
+    template <typename real_type, typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
@@ -144,7 +137,7 @@ class csvm {
      * @param data the labeled data set to score
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
-    template <typename label_type>
+    template <typename real_type, typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
   protected:
@@ -162,7 +155,8 @@ class csvm {
      * @param[in] max_iter the maximum number of CG iterations
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, size_type max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, size_type max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, size_type max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @param[in] params the SVM parameters used in the respective kernel functions
@@ -173,7 +167,8 @@ class csvm {
      * @param[in] predict_points the points to predict
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<real_type> predict_values(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const = 0;
+    [[nodiscard]] virtual std::vector<float> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const = 0;
+    [[nodiscard]] virtual std::vector<double> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const = 0;
 
   private:
     /**
@@ -185,24 +180,21 @@ class csvm {
     [[nodiscard]] ExpectedType get_value_from_named_parameter(const IgorParser &parser, const ProvidedType &named_arg) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
-    parameter<real_type> params_{};
+    parameter params_{};
 };
 
-template <typename T>
-csvm<T>::csvm(parameter<real_type> params) :
-    params_{ std::move(params) } {
+inline csvm::csvm(parameter params) :
+    params_{ params } {
     this->sanity_check_parameter();
 }
 
-template <typename T>
 template <typename... Args>
-csvm<T>::csvm(kernel_function_type kernel, Args &&...named_args) {
+csvm::csvm(kernel_function_type kernel, Args &&...named_args) {
     this->set_params(kernel_type = kernel, std::forward<Args>(named_args)...);
 }
 
-template <typename T>
 template <typename... Args>
-void csvm<T>::set_params(Args &&...named_args) {
+void csvm::set_params(Args &&...named_args) {
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // compile time check: only named parameter are permitted
@@ -255,9 +247,8 @@ void csvm<T>::set_params(Args &&...named_args) {
     this->sanity_check_parameter();
 }
 
-template <typename T>
-template <typename label_type, typename... Args>
-auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args &&...named_args) const -> model<real_type, label_type> {
+template <typename real_type, typename label_type, typename... Args>
+model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) const {
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
@@ -296,10 +287,10 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args &&...named_a
     }
 
     // copy parameter and set gamma if necessary
-    parameter<real_type> params{ static_cast<parameter<real_type>>(params_) };
+    parameter params{ params_ };
     if (params.gamma.is_default()) {
         // no gamma provided -> use default value which depends on the number of features of the data set
-        params.gamma = real_type{ 1.0 } / data.num_features();
+        params.gamma = 1.0 / data.num_features();
     }
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
@@ -308,7 +299,7 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args &&...named_a
     model<real_type, label_type> csvm_model{ params, data };
 
     // solve the minimization problem
-    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(params, data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+    std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
@@ -318,15 +309,14 @@ auto csvm<T>::fit(const data_set<real_type, label_type> &data, Args &&...named_a
     return csvm_model;
 }
 
-template <typename T>
-template <typename label_type>
-auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> std::vector<label_type> {
+template <typename real_type, typename label_type>
+std::vector<label_type> csvm::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
 
     // predict values
-    const std::vector<real_type> predicted_values = predict_values(model.params_, model.data_.data(), *model.alpha_ptr_, model.rho_, *model.w_, data.data());
+    const std::vector<real_type> predicted_values = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, model.rho_, *model.w_, data.data());
 
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(predicted_values.size());
@@ -339,15 +329,13 @@ auto csvm<T>::predict(const model<real_type, label_type> &model, const data_set<
     return predicted_labels;
 }
 
-template <typename T>
-template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model) const -> real_type {
+template <typename real_type, typename label_type>
+real_type csvm::score(const model<real_type, label_type> &model) const {
     return this->score(model, model.data_);
 }
 
-template <typename T>
-template <typename label_type>
-auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const -> real_type {
+template <typename real_type, typename label_type>
+real_type csvm::score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
     // the data set must contain labels in order to score the learned model
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "The data set to score must have labels!" };
@@ -373,8 +361,7 @@ auto csvm<T>::score(const model<real_type, label_type> &model, const data_set<re
     return static_cast<real_type>(correct) / static_cast<real_type>(predicted_labels.size());
 }
 
-template <typename T>
-void csvm<T>::sanity_check_parameter() const {
+inline void csvm::sanity_check_parameter() const {
     // kernel: valid kernel function
     if (params_.kernel_type != kernel_function_type::linear && params_.kernel_type != kernel_function_type::polynomial && params_.kernel_type != kernel_function_type::rbf) {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel_type)) };
@@ -382,7 +369,7 @@ void csvm<T>::sanity_check_parameter() const {
 
     // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
     if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) &&
-        !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
+        !params_.gamma.is_default() && params_.gamma.value() <= 0.0) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
     }
     // degree: all allowed
@@ -390,9 +377,8 @@ void csvm<T>::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-template <typename T>
 template <typename ExpectedType, typename IgorParser, typename NamedArgType>
-ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) const {
+ExpectedType csvm::get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) const {
     using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
     // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
     if constexpr (is_default_value_v<parsed_named_arg_type>) {
@@ -403,7 +389,7 @@ ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, c
         // an unwrapped value has been provided (e.g., double)
         return static_cast<ExpectedType>(parser(named_arg));
     } else {
-        static_assert(plssvm::detail::always_false_v<T>, "The named parameter must be of type plssvm::default_value or a built-in type!");
+        static_assert(plssvm::detail::always_false_v<ExpectedType>, "The named parameter must be of type plssvm::default_value or a built-in type!");
     }
     // may never been reached
     detail::unreachable();

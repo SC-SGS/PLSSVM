@@ -44,6 +44,8 @@ IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type (nd_range or hierarchical).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
 
+namespace detail {
+
 /**
  * @brief Base class for encapsulating all important C-SVM parameters.
  * @tparam T the used real_type, must either be `float` or `double`
@@ -56,7 +58,7 @@ struct parameter {
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
-    /**
+    /**double
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
     constexpr parameter() noexcept = default;
@@ -182,6 +184,10 @@ template <typename T>
  */
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
+
+}
+
+using parameter = detail::parameter<double>;
 
 }  // namespace plssvm
 

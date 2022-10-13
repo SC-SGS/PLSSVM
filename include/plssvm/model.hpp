@@ -48,7 +48,6 @@ class model {
     static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
 
     // plssvm::csvm needs the constructor
-    template <typename>
     friend class csvm;
 
   public:
@@ -86,7 +85,7 @@ class model {
      * @brief Return the SVM parameter that were used to learn this model.
      * @return the SVM parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] const parameter<real_type> &svm_parameter() const noexcept { return params_; }
+    [[nodiscard]] const parameter &svm_parameter() const noexcept { return params_; }
     /**
      * @brief The support vectors representing the learned model.
      * @return the support vectors (`[[nodiscard]]`)
@@ -113,10 +112,10 @@ class model {
      * @param[in] params the SVM parameters used to learn this model
      * @param[in] data the data used to learn this model
      */
-    model(parameter<real_type> params, data_set<real_type, label_type> data);
+    model(parameter params, data_set<real_type, label_type> data);
 
     /// The SVM parameter used to learn this model.
-    parameter<real_type> params_{};
+    parameter params_{};
     /// The data (support vectors + respective label) used to learn this model.
     data_set<real_type, label_type> data_{};
     /// The number of support vectors representing this model.
@@ -172,7 +171,7 @@ model<T, U>::model(const std::string &filename) {
 }
 
 template <typename T, typename U>
-model<T, U>::model(parameter<real_type> params, data_set<real_type, label_type> data) :
+model<T, U>::model(parameter params, data_set<real_type, label_type> data) :
     params_{ std::move(params) }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() }, alpha_ptr_{ std::make_shared<std::vector<real_type>>(data_.num_data_points()) } {}
 
 template <typename T, typename U>

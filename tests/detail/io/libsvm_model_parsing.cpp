@@ -119,7 +119,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     EXPECT_EQ(params.kernel_type.value(), plssvm::kernel_function_type::rbf);
     EXPECT_TRUE(params.degree.is_default());
     EXPECT_FALSE(params.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(params.gamma.value(), real_type{ 0.025 });
+    EXPECT_FLOATING_POINT_EQ(params.gamma.value(), 0.025);
     EXPECT_TRUE(params.coef0.is_default());
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
@@ -498,7 +498,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     const std::vector<label_type> label = { first_label, second_label, first_label };
 
     // create necessary parameter
-    const plssvm::parameter<real_type> params{};
+    const plssvm::parameter params{};
     const real_type rho = 3.14159265359;
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
@@ -541,11 +541,11 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     const std::vector<label_type> label = { first_label, second_label, first_label };
 
     // create necessary parameter
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     params.kernel_type = plssvm::kernel_function_type::polynomial;
     params.degree = 3;
-    params.gamma = real_type{ 2.2 };
-    params.coef0 = real_type{ 4.4 };
+    params.gamma = 2.2;
+    params.coef0 = 4.4;
     const real_type rho = 2.71828;
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
@@ -591,9 +591,9 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     const std::vector<label_type> label = { first_label, second_label, first_label };
 
     // create necessary parameter
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     params.kernel_type = plssvm::kernel_function_type::rbf;
-    params.gamma = real_type{ 0.4 };
+    params.gamma = 0.4;
     const real_type rho = 1.41421;
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
@@ -639,7 +639,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     const std::vector<label_type> label = { first_label, second_label, first_label };
 
     // create necessary parameter
-    const plssvm::parameter<real_type> params{};
+    const plssvm::parameter params{};
     const real_type rho = 3.1415;
     const std::vector<real_type> alpha{ -0.1, -0.2, -0.3 };
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
@@ -688,7 +688,7 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_header_without_label) {
     using label_type = typename TypeParam::label_type;
 
     // create necessary parameter
-    const plssvm::parameter<real_type> params{};
+    const plssvm::parameter params{};
     const real_type rho{};
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } } } };
 
@@ -704,7 +704,7 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_without_label) {
     using label_type = typename TypeParam::label_type;
 
     // create necessary parameter
-    const plssvm::parameter<real_type> params{};
+    const plssvm::parameter params{};
     const real_type rho{};
     const std::vector<real_type> alpha{ real_type{ 0.1 } };
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } } } };
@@ -718,7 +718,7 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, num_alphas_and_num_data_points_mismatch) {
     using label_type = typename TypeParam::label_type;
 
     // create necessary parameter
-    const plssvm::parameter<real_type> params{};
+    const plssvm::parameter params{};
     const real_type rho{};
     const std::vector<real_type> alpha{ real_type{ 0.1 } };
     const auto [first_label, second_label] = util::get_distinct_label<label_type>();

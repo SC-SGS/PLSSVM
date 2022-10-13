@@ -40,58 +40,58 @@
 
 namespace generic {
 
-namespace detail {
+//namespace detail {
+//
+//template <template <typename> typename Derived, typename T>
+//inline void expect_correct_csvm_factory(const plssvm::parameter<T> &params) {
+//    // create csvm
+//    auto csvm = plssvm::make_csvm(params);
+//    // check if correct csvm has been instantiated
+//    auto *res = dynamic_cast<Derived<T> *>(csvm.get());
+//    EXPECT_NE(res, nullptr);
+//}
+//
+//}
 
-template <template <typename> typename Derived, typename T>
-inline void expect_correct_csvm_factory(const plssvm::parameter<T> &params) {
-    // create csvm
-    auto csvm = plssvm::make_csvm(params);
-    // check if correct csvm has been instantiated
-    auto *res = dynamic_cast<Derived<T> *>(csvm.get());
-    EXPECT_NE(res, nullptr);
-}
-
-}
-
-template <template <typename> typename csvm_type, typename real_type>
+template <typename csvm_type>
 inline void test_csvm_factory_default(const plssvm::backend_type backend) {
     // create the csvm using the plssvm::make_csvm function
-    auto csvm = plssvm::make_csvm<real_type>(backend);
+    auto csvm = plssvm::make_csvm(backend);
 
     // check whether the created csvm has the same type as the expected one
-    auto *res = dynamic_cast<csvm_type<real_type> *>(csvm.get());
+    auto *res = dynamic_cast<csvm_type*>(csvm.get());
     EXPECT_NE(res, nullptr);
 }
 
-template <template <typename> typename csvm_type, typename real_type>
+template <typename csvm_type>
 inline void test_csvm_factory_parameter(const plssvm::backend_type backend) {
     // create the csvm using the plssvm::make_csvm function
-    const plssvm::parameter<real_type> params{};
-    auto csvm = plssvm::make_csvm<real_type>(backend, params);
+    const plssvm::parameter params{};
+    auto csvm = plssvm::make_csvm(backend, params);
 
     // check whether the created csvm has the same type as the expected one
-    auto *res = dynamic_cast<csvm_type<real_type> *>(csvm.get());
+    auto *res = dynamic_cast<csvm_type*>(csvm.get());
     EXPECT_NE(res, nullptr);
 }
 
-template <template <typename> typename csvm_type, typename real_type, typename ...Args>
+template <typename csvm_type>
 inline void test_csvm_factory_target(const plssvm::backend_type backend, const plssvm::target_platform target) {
     // create the csvm using the plssvm::make_csvm function
-    auto csvm = plssvm::make_csvm<real_type>(backend, target);
+    auto csvm = plssvm::make_csvm(backend, target);
 
     // check whether the created csvm has the same type as the expected one
-    auto *res = dynamic_cast<csvm_type<real_type> *>(csvm.get());
+    auto *res = dynamic_cast<csvm_type*>(csvm.get());
     EXPECT_NE(res, nullptr);
 }
 
-template <template <typename> typename csvm_type, typename real_type, typename ...Args>
+template <typename csvm_type>
 inline void test_csvm_factory_target_and_parameter(const plssvm::backend_type backend, const plssvm::target_platform target) {
     // create the csvm using the plssvm::make_csvm function
-    const plssvm::parameter<real_type> params{};
-    auto csvm = plssvm::make_csvm<real_type>(backend, target, params);
+    const plssvm::parameter params{};
+    auto csvm = plssvm::make_csvm(backend, target, params);
 
     // check whether the created csvm has the same type as the expected one
-    auto *res = dynamic_cast<csvm_type<real_type> *>(csvm.get());
+    auto *res = dynamic_cast<csvm_type*>(csvm.get());
     EXPECT_NE(res, nullptr);
 }
 

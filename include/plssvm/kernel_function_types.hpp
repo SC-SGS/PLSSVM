@@ -96,8 +96,10 @@ template <kernel_function_type kernel, typename real_type, typename... Args>
 }
 
 // forward declare parameter class
+namespace detail {
 template <typename>
 struct parameter;
+}
 
 /**
  * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function and kernel parameter stored in @p params.
@@ -108,7 +110,7 @@ struct parameter;
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter<real_type> &params);
+[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const detail::parameter<real_type> &params); // TODO:
 
 }  // namespace plssvm
 

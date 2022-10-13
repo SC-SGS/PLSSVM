@@ -22,16 +22,14 @@
  * @brief GTest mock class for the OpenMP CSVM.
  * @tparam T the type of the data
  */
-template <typename T>
-class mock_openmp_csvm : public plssvm::openmp::csvm<T> {
-    using base_type = plssvm::openmp::csvm<T>;
+class mock_openmp_csvm : public plssvm::openmp::csvm {
+    using base_type = plssvm::openmp::csvm;
 
   public:
-    using real_type = typename base_type::real_type;
     using size_type = typename base_type::size_type;
 
-    explicit mock_openmp_csvm(plssvm::target_platform target, plssvm::parameter<real_type> params = {}) :
-        base_type{ target, std::move(params) } {}
+    explicit mock_openmp_csvm(plssvm::target_platform target, plssvm::parameter params = {}) :
+        base_type{ target, params } {}
     template <typename... Args>
     mock_openmp_csvm(plssvm::target_platform target, plssvm::kernel_function_type kernel, Args &&...named_args) :
         base_type{ target, kernel, std::forward<Args>(named_args)... } {}

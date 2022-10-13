@@ -80,9 +80,9 @@ namespace plssvm::detail::io {
  * @return the necessary header information: [the SVM parameter, the value of rho, the labels of the data points, num_header_lines] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type, typename size_type>
-[[nodiscard]] inline std::tuple<parameter<real_type>, real_type, std::vector<label_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+[[nodiscard]] inline std::tuple<plssvm::parameter, real_type, std::vector<label_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
-    plssvm::parameter<real_type> params{};
+    plssvm::parameter params{};
     real_type rho{};
     size_type num_support_vectors{};
 
@@ -293,7 +293,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @return the order of the labels; necessary to write the data points in the correct order (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type>
-[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const parameter<real_type> &params, const real_type rho, const data_set<real_type, label_type> &data) {
+[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const real_type rho, const data_set<real_type, label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
 
     // save model file header
@@ -368,7 +368,7 @@ template <typename real_type, typename label_type>
  * @param[in] data the data used to create the model
  */
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(const std::string &filename, const parameter<real_type> &params, const real_type rho, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data) {
+inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const real_type rho, const std::vector<real_type> &alpha, const data_set<real_type, label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(alpha.size() == data.num_data_points(), "The number of weights ({}) doesn't match the number of data points ({})!", alpha.size(), data.num_data_points());
 

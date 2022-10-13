@@ -35,7 +35,7 @@ TEST_F(ParameterTrain, minimal) {
     const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
 
     // check parsed values
-    EXPECT_EQ(params.csvm_params, plssvm::parameter<double>{});
+    EXPECT_EQ(params.csvm_params, plssvm::parameter{});
     EXPECT_TRUE(params.epsilon.is_default());
     EXPECT_DOUBLE_EQ(params.epsilon.value(), 0.001);
     EXPECT_TRUE(params.max_iter.is_default());

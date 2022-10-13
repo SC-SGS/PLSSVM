@@ -30,13 +30,11 @@
 
 namespace plssvm::openmp {
 
-template <typename T>
-csvm<T>::csvm(const target_platform target, parameter<real_type> params) : ::plssvm::csvm<T>{ std::move(params) } {
+csvm::csvm(const target_platform target, parameter params) : ::plssvm::csvm{ std::move(params) } {
     this->init(target);
 }
 
-template <typename T>
-void csvm<T>::init(const target_platform target) {
+void csvm::init(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::cpu) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the OpenMP backend!", target) };
@@ -59,8 +57,8 @@ void csvm<T>::init(const target_platform target) {
     }
 }
 
-template <typename T>
-auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const -> std::vector<real_type> {
+template <typename real_type>
+std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const {
     std::vector<real_type> q(data.size() - 1);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
@@ -75,9 +73,11 @@ auto csvm<T>::generate_q(const parameter<real_type> &params, const std::vector<s
     }
     return q;
 }
+template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const std::vector<std::vector<float>> &) const;
+template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const std::vector<std::vector<double>> &) const;
 
-template <typename T>
-void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
+template <typename real_type>
+void csvm::run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
@@ -90,9 +90,11 @@ void csvm<T>::run_device_kernel(const parameter<real_type> &params, const std::v
             break;
     }
 }
+template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float) const;
+template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double) const;
 
-template <typename T>
-auto csvm<T>::solve_system_of_linear_equations(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const size_type max_iter) const -> std::pair<std::vector<real_type>, real_type> {
+template <typename real_type>
+std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const size_type max_iter) const {
     using namespace plssvm::operators;
 
     // create q vector
@@ -117,7 +119,7 @@ auto csvm<T>::solve_system_of_linear_equations(const parameter<real_type> &param
     std::vector<real_type> r(b);
 
     // r = A + alpha_ (r = b - Ax)
-    run_device_kernel(params, q, r, alpha, A, QA_cost, -1);
+    run_device_kernel(params, q, r, alpha, A, QA_cost, real_type{ -1.0 });
 
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
@@ -145,7 +147,7 @@ auto csvm<T>::solve_system_of_linear_equations(const parameter<real_type> &param
 
         // Ad = A * d (q = A * d)
         std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
-        run_device_kernel(params, q, Ad, d, A, QA_cost, 1);
+        run_device_kernel(params, q, Ad, d, A, QA_cost, real_type{ 1.0 });
 
         // (alpha = delta_new / (d^T * q))
         const real_type alpha_cd = delta / (transposed{ d } * Ad);
@@ -158,7 +160,7 @@ auto csvm<T>::solve_system_of_linear_equations(const parameter<real_type> &param
             // r = b
             r = b;
             // r -= A * x
-            run_device_kernel(params, q, r, alpha, A, QA_cost, -1);
+            run_device_kernel(params, q, r, alpha, A, QA_cost, real_type{ -1.0 });
         } else {
             // r -= alpha_cd * Ad (r = r - alpha * q)
             r -= alpha_cd * Ad;
@@ -199,9 +201,11 @@ auto csvm<T>::solve_system_of_linear_equations(const parameter<real_type> &param
     return std::make_pair(std::move(alpha), -bias);
 }
 
+template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, const float, const size_type) const;
+template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, const double, const size_type) const;
 
-template <typename T>
-auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) const -> std::vector<real_type> {
+template <typename real_type>
+std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) const {
     const size_type num_data_points = A.size();
     const size_type num_features = A.front().size();
 
@@ -221,9 +225,12 @@ auto csvm<T>::calculate_w(const std::vector<std::vector<real_type>> &A, const st
     return w;
 }
 
-template <typename T>
-auto csvm<T>::predict_values(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha,
-                             const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const -> std::vector<real_type> {
+template std::vector<float> csvm::calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &) const;
+template std::vector<double> csvm::calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &) const;
+
+template <typename real_type>
+std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha,
+                                                 const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
     using namespace plssvm::operators;
 
     std::vector<real_type> out(predict_points.size(), -rho);
@@ -255,8 +262,7 @@ auto csvm<T>::predict_values(const parameter<real_type> &params, const std::vect
     return out;
 }
 
-// explicitly instantiate template class
-template class csvm<float>;
-template class csvm<double>;
+template std::vector<float> csvm::predict_values_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, const float, std::vector<float> &, const std::vector<std::vector<float>> &) const;
+template std::vector<double> csvm::predict_values_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, const double, std::vector<double> &, const std::vector<std::vector<double>> &) const;
 
 }  // namespace plssvm::openmp

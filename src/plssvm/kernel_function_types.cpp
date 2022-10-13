@@ -60,7 +60,7 @@ std::istream &operator>>(std::istream &in, kernel_function_type &kernel) {
 }
 
 template <typename real_type>
-real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter<real_type> &params) {
+real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const detail::parameter<real_type> &params) {
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
     switch (params.kernel_type) {
@@ -74,7 +74,7 @@ real_type kernel_function(const std::vector<real_type> &xi, const std::vector<re
     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(params.kernel_type)) };
 }
 
-template float kernel_function(const std::vector<float> &, const std::vector<float> &, const parameter<float> &);
-template double kernel_function(const std::vector<double> &, const std::vector<double> &, const parameter<double> &);
+template float kernel_function(const std::vector<float> &, const std::vector<float> &, const detail::parameter<float> &);
+template double kernel_function(const std::vector<double> &, const std::vector<double> &, const detail::parameter<double> &);
 
 }  // namespace plssvm

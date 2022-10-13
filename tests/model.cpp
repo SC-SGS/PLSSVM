@@ -53,7 +53,7 @@ TYPED_TEST(Model, construct) {
     // test for correct construction
     EXPECT_EQ(model.num_support_vectors(), 5);
     EXPECT_EQ(model.num_features(), 4);
-    EXPECT_EQ(model.svm_parameter(), plssvm::parameter<real_type>{});
+    EXPECT_EQ(model.svm_parameter(), plssvm::parameter{});
     const std::vector<std::vector<real_type>> support_vectors{
         { real_type{ -1.117828 }, real_type{ -2.908719 }, real_type{ 0.6663834 }, real_type{ 1.097883 } },
         { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
@@ -94,7 +94,7 @@ TYPED_TEST(Model, svm_parameter) {
     // create a model using an existing LIBSVM model file
     const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct number of features
-    EXPECT_EQ(model.svm_parameter(), plssvm::parameter<real_type>{});
+    EXPECT_EQ(model.svm_parameter(), plssvm::parameter{});
 }
 TYPED_TEST(Model, support_vectors) {
     using real_type = typename TypeParam::real_type;
