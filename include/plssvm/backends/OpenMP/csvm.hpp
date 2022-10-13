@@ -35,6 +35,7 @@ class csvm : public ::plssvm::csvm<T> {
     using typename base_type::real_type;
     using typename base_type::size_type;
 
+    explicit csvm(parameter<real_type> params = {}) : csvm{ plssvm::target_platform::automatic, std::move(params) } {}
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
@@ -44,8 +45,13 @@ class csvm : public ::plssvm::csvm<T> {
      */
     explicit csvm(target_platform target, parameter<real_type> params = {});
     template <typename... Args>
-    csvm(target_platform target, kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+    csvm(const target_platform target, const kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
         this->init(target);
+    }
+    template <typename... Args>
+    csvm(const kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+        // the default target is the automatic one
+        this->init(plssvm::target_platform::automatic);
     }
 
   private:

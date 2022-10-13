@@ -11,8 +11,10 @@
 
 #pragma once
 
-#include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
-#include "plssvm/parameter.hpp"             // plssvm::parameter
+#include "plssvm/backends/OpenMP/csvm.hpp"   // plssvm::openmp::csvm
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 #include <vector>  // std::vector
 
@@ -26,21 +28,25 @@ class mock_openmp_csvm : public plssvm::openmp::csvm<T> {
 
   public:
     using real_type = typename base_type::real_type;
+    using size_type = typename base_type::size_type;
 
-    explicit mock_openmp_csvm(const plssvm::parameter<T> &params) :
-        base_type{ params } {}
+    explicit mock_openmp_csvm(plssvm::target_platform target, plssvm::parameter<real_type> params = {}) :
+        base_type{ target, std::move(params) } {}
+    template <typename... Args>
+    mock_openmp_csvm(plssvm::target_platform target, plssvm::kernel_function_type kernel, Args &&...named_args) :
+        base_type{ target, kernel, std::forward<Args>(named_args)... } {}
 
-    // make non-virtual functions publicly visible
-    using base_type::generate_q;
-    using base_type::run_device_kernel;
-    using base_type::setup_data_on_device;
-
-    // parameter setter
-    void set_cost(const real_type cost) { base_type::cost_ = cost; }
-    void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
-
-    // getter for internal variable
-    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
-    const std::vector<std::vector<real_type>> &get_device_data() const { return *base_type::data_ptr_; }
-    std::size_t get_num_devices() const { return 1; }
+//    // make non-virtual functions publicly visible
+//    using base_type::generate_q;
+//    using base_type::run_device_kernel;
+//    using base_type::setup_data_on_device;
+//
+//    // parameter setter
+//    void set_cost(const real_type cost) { base_type::cost_ = cost; }
+//    void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
+//
+//    // getter for internal variable
+//    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
+//    const std::vector<std::vector<real_type>> &get_device_data() const { return *base_type::data_ptr_; }
+//    std::size_t get_num_devices() const { return 1; }
 };

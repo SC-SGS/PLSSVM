@@ -23,6 +23,8 @@ namespace compare {
 
 namespace detail {
 
+// TODO: move one dir up? (since used in another test)
+
 /**
  * @brief Compute the value of te two vectors @p x and @p y using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
  * @tparam real_type the type of the data

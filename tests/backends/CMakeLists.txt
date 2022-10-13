@@ -11,20 +11,20 @@ endif()
 
 # create CUDA tests if the CUDA backend is available
 if(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
-    add_subdirectory(CUDA)
+#    add_subdirectory(CUDA)
 endif()
 
 # create HIP tests if the HIP backend is available
 if(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
-    add_subdirectory(HIP)
+#    add_subdirectory(HIP)
 endif()
 
 # create OpenCL tests if the OpenCL backend is available
 if(TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
-    add_subdirectory(OpenCL)
+#    add_subdirectory(OpenCL)
 endif()
 
 # create SYCL tests if the SYCL backend is available
 if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
-    add_subdirectory(SYCL)
+#    add_subdirectory(SYCL)
 endif()

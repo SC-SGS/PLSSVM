@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
             // convert base params to correct type
             const auto csvm_params = static_cast<plssvm::parameter<real_type>>(params.csvm_params);
             // create SVM
-            const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params,
-                                                          plssvm::sycl_implementation_type = params.sycl_implementation_type,
-                                                          plssvm::sycl_kernel_invocation_type = params.sycl_kernel_invocation_type);
+            const auto svm = plssvm::make_csvm<real_type>(params.backend, params.target, csvm_params);//, //TODO
+                                                          //plssvm::sycl_implementation_type = params.sycl_implementation_type,
+                                                          //plssvm::sycl_kernel_invocation_type = params.sycl_kernel_invocation_type);
             // learn model
             const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
             // save model to file

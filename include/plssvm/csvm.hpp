@@ -398,10 +398,7 @@ ExpectedType csvm<T>::get_value_from_named_parameter(const IgorParser &parser, c
     if constexpr (is_default_value_v<parsed_named_arg_type>) {
         static_assert(std::is_convertible_v<typename parsed_named_arg_type::value_type, ExpectedType>, "Cannot convert the wrapped default value to the expected type!");
         // a plssvm::default_value has been provided (e.g., plssvm::default_value<double>)
-        // if the provided plssvm::default_value only contains the default value, do nothing
-        if (!parser(named_arg).is_default()) {
-            return static_cast<ExpectedType>(parser(named_arg).value());
-        }
+        return static_cast<ExpectedType>(parser(named_arg).value());
     } else if constexpr (std::is_convertible_v<parsed_named_arg_type, ExpectedType>) {
         // an unwrapped value has been provided (e.g., double)
         return static_cast<ExpectedType>(parser(named_arg));

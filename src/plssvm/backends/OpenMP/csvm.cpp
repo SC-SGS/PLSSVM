@@ -24,6 +24,7 @@
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <algorithm>  // std::fill, std::all_of
+#include <iostream>   // std::cout, std::endl
 #include <chrono>     // std::chrono
 #include <vector>     // std::vector
 
@@ -54,7 +55,7 @@ void csvm<T>::init(const target_platform target) {
     }
 
     if (verbose) {
-        fmt::print("Using OpenMP as backend with {} threads.\n\n", num_omp_threads);
+        std::cout << fmt::format("Using OpenMP as backend with {} threads.\n\n", num_omp_threads) << std::endl;
     }
 }
 
