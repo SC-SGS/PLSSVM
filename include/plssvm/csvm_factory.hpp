@@ -47,8 +47,7 @@
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
 
 #include <memory>       // std::unique_ptr, std::make_unique
-#include <type_traits>  // std::is_same_v
-#include <type_traits>  // std::enable_if_t
+#include <type_traits>  // std::is_same_v, std::enable_if_t
 #include <utility>      // std::forward
 
 namespace plssvm {
