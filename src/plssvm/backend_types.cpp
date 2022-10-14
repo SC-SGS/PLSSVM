@@ -50,7 +50,7 @@ std::vector<backend_type> list_available_backends() {
 backend_type determine_default_backend(const std::vector<backend_type> &available_backends, const std::vector<target_platform> &available_target_platforms) {
     // the decision order based on empiric findings
     using decision_order_type = std::pair<target_platform, std::vector<backend_type>>;
-    std::array<decision_order_type, 4> decision_order = {
+    const std::array decision_order = {
         decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl } },
         decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl } },
         decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl } },
