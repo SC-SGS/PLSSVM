@@ -71,28 +71,28 @@ template <typename... Args>
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
             return std::make_unique<openmp::csvm>(target, std::forward<Args>(args)...);
 #else
-            throw unsupported_backend_exception{ "No OpenMP backend available!" };
+            throw unsupported_backend_exception{ "No openmp backend available!" };
 #endif
 
         case backend_type::cuda:
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
             return std::make_unique<cuda::csvm<T>>(target, std::forward<Args>(args)...);
 #else
-            throw unsupported_backend_exception{ "No CUDA backend available!" };
+            throw unsupported_backend_exception{ "No cuda backend available!" };
 #endif
 
         case backend_type::hip:
 #if defined(PLSSVM_HAS_HIP_BACKEND)
             return std::make_unique<hip::csvm<T>>(target, std::forward<Args>(args)...);
 #else
-            throw unsupported_backend_exception{ "No HIP backend available!" };
+            throw unsupported_backend_exception{ "No hip backend available!" };
 #endif
 
         case backend_type::opencl:
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
             return std::make_unique<opencl::csvm<T>>(target, kernel, std::forward<Args>(args)...);
 #else
-            throw unsupported_backend_exception{ "No OpenCL backend available!" };
+            throw unsupported_backend_exception{ "No opencl backend available!" };
 #endif
 
         case backend_type::sycl:
@@ -115,18 +115,18 @@ template <typename... Args>
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
                     return std::make_unique<dpcpp::csvm<T>>(target, kernel, std::forward<Args>(args)...);
     #else
-                    throw unsupported_backend_exception{ "No SYCL backend using DPC++ available!" };
+                    throw unsupported_backend_exception{ "No sycl backend available using DPC++!" };
     #endif
                 case sycl_generic::implementation_type::hipsycl:
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
                     return std::make_unique<hipsycl::csvm<T>>(target, kernel, std::forward<Args>(args)...);
     #else
-                    throw unsupported_backend_exception{ "No SYCL backend using hipSYCL available!" };
+                    throw unsupported_backend_exception{ "No sycl backend available using hipSYCL!" };
     #endif
             }
         }
 #else
-            throw unsupported_backend_exception{ "No SYCL backend available!" };
+            throw unsupported_backend_exception{ "No sycl backend available!" };
 #endif
     }
     throw unsupported_backend_exception{ "Can't recognize backend !" };

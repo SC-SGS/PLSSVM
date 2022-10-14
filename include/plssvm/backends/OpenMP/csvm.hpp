@@ -13,13 +13,17 @@
 #define PLSSVM_BACKENDS_OPENMP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"  // plssvm::csvm
-#include "plssvm/parameter.hpp"  // plssvm::parameter
-#include "plssvm/target_platforms.hpp"
+#include "plssvm/csvm.hpp"                   // plssvm::csvm
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include <vector>  // std::vector
+#include <type_traits>  // std::true_type
+#include <vector>       // std::vector
 
-namespace plssvm::openmp {
+namespace plssvm {
+
+namespace openmp {
 
 /**
  * @brief A C-SVM implementation using OpenMP as backend.
@@ -33,10 +37,11 @@ class csvm : public ::plssvm::csvm {
 
   public:
     /// The type of the data. Must be either `float` or `double`.
-//    using typename base_type::real_type;
+    //    using typename base_type::real_type;
     using typename base_type::size_type;
 
-    explicit csvm(parameter params = {}) : csvm{ plssvm::target_platform::automatic, params } {}
+    explicit csvm(parameter params = {}) :
+        csvm{ plssvm::target_platform::automatic, params } {}
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
@@ -46,11 +51,13 @@ class csvm : public ::plssvm::csvm {
      */
     explicit csvm(target_platform target, parameter params = {});
     template <typename... Args>
-    csvm(const target_platform target, const kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+    csvm(const target_platform target, const kernel_function_type kernel, Args &&...named_args) :
+        base_type{ kernel, std::forward<Args>(named_args)... } {
         this->init(target);
     }
     template <typename... Args>
-    explicit csvm(const kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, std::forward<Args>(named_args)... } {
+    explicit csvm(const kernel_function_type kernel, Args &&...named_args) :
+        base_type{ kernel, std::forward<Args>(named_args)... } {
         // the default target is the automatic one
         this->init(plssvm::target_platform::automatic);
     }
@@ -65,7 +72,6 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, size_type max_iter) const;
 
-
     /**
      * @copydoc plssvm::csvm::predict_values_impl
      */
@@ -74,7 +80,6 @@ class csvm : public ::plssvm::csvm {
 
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const;
-
 
     /**
      * @copydoc plssvm::csvm::generate_q
@@ -98,7 +103,6 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     void run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type add) const;
 
-  private:
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.
      * @param[in] target the platform to run on (must be `plssvm::target_platfrom::cpu` for the OpenMP backend).
@@ -106,6 +110,18 @@ class csvm : public ::plssvm::csvm {
     void init(target_platform target);
 };
 
-}  // namespace plssvm::openmp
+}  // namespace openmp
+
+namespace detail {
+
+/**
+ * @brief Sets the `value` to `true` since C-SVMs using the OpenMP are available.
+ */
+template <>
+struct csvm_backend_exists<openmp::csvm> : std::true_type {};
+
+}
+
+}  // namespace plssvm
 
 #endif  // PLSSVM_BACKENDS_OPENMP_CSVM_HPP_

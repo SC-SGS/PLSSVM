@@ -13,6 +13,7 @@
 #define PLSSVM_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backend_types.hpp"          // plssvm::backend_type
 #include "plssvm/constants.hpp"              // plssvm::verbose
 #include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init, plssvm::is_default_value_v
@@ -31,7 +32,7 @@
 #include <iostream>     // std::clog, std::endl
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tie
-#include <type_traits>  // std::is_same_v, std::is_convertible_v
+#include <type_traits>  // std::is_same_v, std::is_convertible_v, std::false_type
 #include <utility>      // std::move, std::forward
 #include <vector>       // std::vector
 
@@ -393,6 +394,35 @@ ExpectedType csvm::get_value_from_named_parameter(const IgorParser &parser, cons
     // may never been reached
     detail::unreachable();
 }
+
+// TODO: test
+namespace detail {
+
+/**
+ * @brief Sets the `value` to `false` since the given type @p T is either not a C-SVM or the C-SVM using the requested backend isn't available.
+ * @tparam T the type of the C-SVM
+ */
+template <typename T>
+struct csvm_backend_exists : std::false_type {};
+
+}
+
+/**
+ * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
+ * @tparam T the type of the C-SVM
+ */
+template <typename T>
+struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<T>> {};
+
+/**
+ * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
+ * @details A shorthand for `plssvm::csvm_backend_exists<T>::value`.
+ * @tparam T the type of the C-SVM
+ */
+template <typename T>
+constexpr bool csvm_backend_exists_v = csvm_backend_exists<T>::value;
+
+
 
 }  // namespace plssvm
 

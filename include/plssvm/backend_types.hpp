@@ -13,6 +13,7 @@
 #define PLSSVM_BACKEND_TYPES_HPP_
 #pragma once
 
+#include "plssvm/detail/utility.hpp"    // plssvm::detail::remove_cvref_t
 #include "plssvm/target_platforms.hpp"  // plssvm::list_available_target_platforms
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
@@ -69,6 +70,90 @@ std::ostream &operator<<(std::ostream &out, backend_type backend);
  * @return the input-stream
  */
 std::istream &operator>>(std::istream &in, backend_type &backend);
+
+// clang-format off
+// Forward declare all possible C-SVMs.
+namespace openmp { class csvm; }
+namespace cuda { class csvm; }
+namespace hip { class csvm; }
+namespace opencl { class csvm; }
+namespace sycl { class csvm; }
+namespace hipsycl { class csvm; }
+namespace dpcpp { class csvm; }
+// clang-format on
+
+namespace detail {
+
+/**
+ * @brief No `value` member variable of anything other than a C-SVM has been provided.
+ */
+template <typename T>
+struct csvm_to_backend_type {};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::openmp` for the OpenMP C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<openmp::csvm> {
+    static constexpr backend_type value = backend_type::openmp;
+};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::cuda` for the CUDA C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<cuda::csvm> {
+    static constexpr backend_type value = backend_type::cuda;
+};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::hip` for the HIP C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<hip::csvm> {
+    static constexpr backend_type value = backend_type::hip;
+};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::opencl` for the OpenCL C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<opencl::csvm> {
+    static constexpr backend_type value = backend_type::opencl;
+};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<sycl::csvm> {
+    static constexpr backend_type value = backend_type::sycl;
+};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using hipSYCL as SYCL implementation.
+ */
+template <>
+struct csvm_to_backend_type<hipsycl::csvm> {
+    static constexpr backend_type value = backend_type::sycl;
+};
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using DPC++ as SYCL implementation.
+ */
+template <>
+struct csvm_to_backend_type<dpcpp::csvm> {
+    static constexpr backend_type value = backend_type::sycl;
+};
+
+}  // namespace detail
+
+/**
+ * @brief Get the plssvm::backend_type of the C-SVM class of type @p T. Ignores all const, volatile, and reference qualifiers.
+ * @tparam T the type of the C-SVM to get the backend type from
+ */
+template <typename T>
+struct csvm_to_backend_type : detail::csvm_to_backend_type<detail::remove_cvref_t<T>> {};
+/**
+ * @brief Get the `plssvm::backend_type` of the C-SVM class of type @p T. Ignores all const, volatile, and reference qualifiers.
+ * @details A shorthand for `plssvm::csvm_to_backend_type::value`.
+ * @tparam T the type of the C-SVM to get the backend type from
+ */
+template <typename T>
+constexpr backend_type csvm_to_backend_type_v = csvm_to_backend_type<T>::value;
 
 }  // namespace plssvm
 
