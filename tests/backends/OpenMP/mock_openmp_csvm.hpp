@@ -22,7 +22,6 @@
 
 /**
  * @brief GTest mock class for the OpenMP CSVM.
- * @tparam T the type of the data
  */
 class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type = plssvm::openmp::csvm;
@@ -30,25 +29,11 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
   public:
     using size_type = typename base_type::size_type;
 
-    explicit mock_openmp_csvm(plssvm::target_platform target, plssvm::parameter params = {}) :
+    explicit mock_openmp_csvm(const plssvm::target_platform target, const plssvm::parameter params = {}) :
         base_type{ target, params } {}
     template <typename... Args>
-    mock_openmp_csvm(plssvm::target_platform target, plssvm::kernel_function_type kernel, Args &&...named_args) :
+    mock_openmp_csvm(const plssvm::target_platform target, const plssvm::kernel_function_type kernel, Args &&...named_args) :
         base_type{ target, kernel, std::forward<Args>(named_args)... } {}
-
-    //    // make non-virtual functions publicly visible
-    //    using base_type::generate_q;
-    //    using base_type::run_device_kernel;
-    //    using base_type::setup_data_on_device;
-    //
-    //    // parameter setter
-    //    void set_cost(const real_type cost) { base_type::cost_ = cost; }
-    //    void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
-    //
-    //    // getter for internal variable
-    //    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
-    //    const std::vector<std::vector<real_type>> &get_device_data() const { return *base_type::data_ptr_; }
-    //    std::size_t get_num_devices() const { return 1; }
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_OPENMP_CSVM_HPP_

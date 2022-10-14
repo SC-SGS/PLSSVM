@@ -115,71 +115,8 @@ inline void test_csvm_factory_target_and_kernel_type(const plssvm::backend_type 
     EXPECT_NE(res, nullptr);
 }
 
-//template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
-//inline void write_model_test() {
-//    // create parameter object
-//    plssvm::parameter<real_type> params;
-//    params.print_info = false;
-//    params.kernel = kernel;
-//
-//    params.parse_train_file(PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm");
-//
-//    // create C-SVM based on specified backend
-//    csvm_type csvm{ params };
-//
-//    // create temporary model file and write model
-//    std::string model_file = util::create_temp_file();
-//
-//    // learn model
-//    csvm.learn();
-//
-//    // write learned model to file
-//    csvm.write_model(model_file);
-//
-//    // read content of model file line by line and delete it
-//    std::vector<std::string> lines;
-//    {
-//        std::ifstream model_ifs(model_file);
-//        std::string line;
-//        while (std::getline(model_ifs, line)) {
-//            lines.push_back(std::move(line));
-//        }
-//    }
-//    std::filesystem::remove(model_file);
-//
-//    // create vector containing correct regex
-//    std::vector<std::string> regex_patterns;
-//    regex_patterns.emplace_back("svm_type c_svc");
-//    regex_patterns.emplace_back(fmt::format("kernel_type {}", params.kernel));
-//    switch (params.kernel) {
-//        case plssvm::kernel_type::linear:
-//            break;
-//        case plssvm::kernel_type::polynomial:
-//            regex_patterns.emplace_back("degree [0-9]+");
-//            regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-//            regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-//            break;
-//        case plssvm::kernel_type::rbf:
-//            regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-//            break;
-//    }
-//    regex_patterns.emplace_back("nr_class 2");
-//    regex_patterns.emplace_back("total_sv [0-9]+");
-//    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-//    regex_patterns.emplace_back("label 1 -1");
-//    regex_patterns.emplace_back("nr_sv [0-9]+ [0-9]+");
-//    regex_patterns.emplace_back("SV");
-//
-//    // at least number of header entries lines must be present
-//    ASSERT_GT(lines.size(), regex_patterns.size());
-//
-//    // check if the model header is valid
-//    for (std::vector<std::string>::size_type i = 0; i < regex_patterns.size(); ++i) {
-//        std::regex reg(regex_patterns[i], std::regex::extended);
-//        ASSERT_TRUE(std::regex_match(lines[i], reg)) << fmt::format("line {}: \"{}\" doesn't match regex pattern: \"{}\"", i, lines[i], regex_patterns[i]);
-//    }
-//}
-//
+// TODO: separate macro for the dynamic_cast?
+
 //template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
 //inline void generate_q_test() {
 //    // create parameter object

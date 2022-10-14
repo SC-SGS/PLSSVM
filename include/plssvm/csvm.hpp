@@ -45,7 +45,7 @@ namespace plssvm {
  */
 class csvm {
   public:
-    using size_type = std::size_t;
+    using size_type = std::size_t; // TODO: remove size_t in favor of hardcoded unsigned long long?!?
 
     /**
      * @brief Construct a C-SVM using the SVM parameter @p params.
