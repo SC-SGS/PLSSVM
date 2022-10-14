@@ -54,8 +54,7 @@ TYPED_TEST(CSVMFactory, factory_default) {
         // create csvm
         auto csvm = plssvm::make_csvm(backend);
         // check whether the created csvm has the same type as the expected one
-        auto *res = dynamic_cast<TypeParam *>(csvm.get());
-        EXPECT_NE(res, nullptr);
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
         EXPECT_THROW_WHAT_MATCHER(std::ignore = plssvm::make_csvm(backend),
                                   plssvm::unsupported_backend_exception,
@@ -71,8 +70,7 @@ TYPED_TEST(CSVMFactory, factory_parameter) {
         // create csvm
         auto csvm = plssvm::make_csvm(backend, params);
         // check whether the created csvm has the same type as the expected one
-        auto *res = dynamic_cast<TypeParam *>(csvm.get());
-        EXPECT_NE(res, nullptr);
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
         EXPECT_THROW_WHAT_MATCHER(std::ignore = plssvm::make_csvm(backend, params),
                                   plssvm::unsupported_backend_exception,
@@ -88,8 +86,7 @@ TYPED_TEST(CSVMFactory, factory_target) {
         // create csvm
         auto csvm = plssvm::make_csvm(backend, target);
         // check whether the created csvm has the same type as the expected one
-        auto *res = dynamic_cast<TypeParam *>(csvm.get());
-        EXPECT_NE(res, nullptr);
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
         EXPECT_THROW_WHAT_MATCHER(std::ignore = plssvm::make_csvm(backend, target),
                                   plssvm::unsupported_backend_exception,
@@ -107,8 +104,7 @@ TYPED_TEST(CSVMFactory, factory_target_and_parameter) {
         // create csvm
         auto csvm = plssvm::make_csvm(backend, target, params);
         // check whether the created csvm has the same type as the expected one
-        auto *res = dynamic_cast<TypeParam *>(csvm.get());
-        EXPECT_NE(res, nullptr);
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
         EXPECT_THROW_WHAT_MATCHER(std::ignore = plssvm::make_csvm(backend, target, params),
                                   plssvm::unsupported_backend_exception,
@@ -127,8 +123,7 @@ TYPED_TEST(CSVMFactory, factory_target_and_named_parameter) {
         // create csvm
         auto csvm = plssvm::make_csvm(backend, target, kernel_type, plssvm::gamma = 0.01);
         // check whether the created csvm has the same type as the expected one
-        auto *res = dynamic_cast<TypeParam *>(csvm.get());
-        EXPECT_NE(res, nullptr);
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
         EXPECT_THROW_WHAT_MATCHER(std::ignore = plssvm::make_csvm(backend, target, kernel_type, plssvm::gamma = 0.01),
                                   plssvm::unsupported_backend_exception,
@@ -144,8 +139,7 @@ TYPED_TEST(CSVMFactory, factory_named_parameter) {
         // create csvm
         auto csvm = plssvm::make_csvm(backend, kernel_type, plssvm::gamma = 0.01);
         // check whether the created csvm has the same type as the expected one
-        auto *res = dynamic_cast<TypeParam *>(csvm.get());
-        EXPECT_NE(res, nullptr);
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
         EXPECT_THROW_WHAT_MATCHER(std::ignore = plssvm::make_csvm(backend, kernel_type, plssvm::gamma = 0.01),
                                   plssvm::unsupported_backend_exception,

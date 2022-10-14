@@ -300,4 +300,15 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
  */
 #define EXPECT_THROW_WHAT(statement, expected_exception, msg) EXPECT_THROW_WHAT_MATCHER(statement, expected_exception, ::testing::StrEq(msg))
 
+/**
+ * @brief Check whether the value of @p instance is an instance of the @p type.
+ * @param[in] type the type the @p instance should have, assumed to not be a pointer type
+ * @param[in] instance the instance to check, assumed to be a pointer type
+ */
+#define EXPECT_INSTANCE_OF(type, instance)           \
+    do {                                             \
+        auto ptr = dynamic_cast<type *>(&*instance); \
+        EXPECT_NE(ptr, nullptr);                     \
+    } while (false)
+
 #endif  // PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_

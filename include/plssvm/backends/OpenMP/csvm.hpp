@@ -120,7 +120,7 @@ namespace detail {
 template <>
 struct csvm_backend_exists<openmp::csvm> : std::true_type {};
 
-}
+}  // namespace detail
 
 }  // namespace plssvm
 
