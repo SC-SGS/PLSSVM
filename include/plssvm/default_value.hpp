@@ -18,7 +18,7 @@
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream
 #include <type_traits>  // std::is_nothrow_default_constructible_v, std::is_nothrow_move_constructible_v, std::is_nothrow_move_assignable_v, std::is_nothrow_swappable_v,
-                        // std::enable_if_t, std::is_convertible_v, std::true_type, std::false_type
+                        // std::enable_if_t, std::is_convertible_v, std::true_type, std::false_type, std::remove_reference_t, std::remove_cv_t
 #include <utility>      // std::move_if_noexcept, std::swap
 
 namespace plssvm {
@@ -296,6 +296,8 @@ template <typename T>
     return !(lhs < rhs);
 }
 
+namespace detail {
+
 /**
  * @brief Test whether the given type @p T is of type `plssvm::default_value` (represents the `false` case).
  * @details Inherits from `std::false_type`.
@@ -310,13 +312,17 @@ struct is_default_value : std::false_type {};
  */
 template <typename T>
 struct is_default_value<default_value<T>> : std::true_type {};
+
+}  // namespace detail
+
 /**
- * @brief Test whether the given type @p T is of type `const plssvm::default_value` (represents the `true` case).
- * @details Inherits from `std::true_type`.
+ * @brief Test whether the given type @p T is of type `plssvm::default_value` ignoring all const, volatile, and reference qualifiers.
+ * @details Inherits from `std::false_type`.
  * @tparam T the type to check whether it is a `plssvm::default_value`
  */
 template <typename T>
-struct is_default_value<const default_value<T>> : std::true_type {};
+struct is_default_value : detail::is_default_value<std::remove_cv_t<std::remove_reference_t<T>>> {};  // can't use detail::remove_cvref_t because of circular dependencies
+
 /**
  * @brief Test whether the given type @p T is of type `plssvm::default_value`.
  * @details A shorthand for `plssvm::default_value<T>::value`.
