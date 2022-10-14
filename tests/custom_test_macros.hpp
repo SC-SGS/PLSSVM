@@ -15,8 +15,9 @@
 #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, SUCCESS, FAIL, EXPECT_LT, ASSERT_LT
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // ::testing::StrEq
+#include "gtest/gtest.h"           // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, SUCCESS, FAIL, EXPECT_LT, ASSERT_LT
 
 #include <algorithm>    // std::max
 #include <cmath>        // std::abs
@@ -272,22 +273,31 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
- * @brief Check whether @p statement throws an exception of type @p expected_exception with the exception's what message @p msg.
+ * @brief Check whether @p statement throws an exception of type @p expected_exception and the exception's `what()` message matches the GTest @p matcher.
  * @details Succeeds only if the exception type **and** message match.
  * @param[in] statement the statement that should throw an exception
  * @param[in] expected_exception the type of the exception that should be thrown
- * @param[in] msg the expected exception's `what()` message
+ * @param[in] matcher the GtTest matcher used to test the exception's `what()` message
  */
-#define EXPECT_THROW_WHAT(statement, expected_exception, msg)                                                \
+#define EXPECT_THROW_WHAT_MATCHER(statement, expected_exception, matcher)                                    \
     do {                                                                                                     \
         try {                                                                                                \
             statement;                                                                                       \
             FAIL() << "Expected " #expected_exception;                                                       \
         } catch (const expected_exception &e) {                                                              \
-            EXPECT_EQ(std::string_view(e.what()), std::string_view(msg));                                    \
+            EXPECT_THAT(std::string_view(e.what()), matcher);                                                \
         } catch (...) {                                                                                      \
             FAIL() << "The expected exception type (" #expected_exception ") doesn't match the caught one!"; \
         }                                                                                                    \
-        } while (false)
+    } while (false)
+
+/**
+ * @brief Check whether @p statement throws an exception of type @p expected_exception with the exception's `what()` message @p msg.
+ * @details Succeeds only if the exception type **and** message match.
+ * @param[in] statement the statement that should throw an exception
+ * @param[in] expected_exception the type of the exception that should be thrown
+ * @param[in] msg the expected exception's `what()` message
+ */
+#define EXPECT_THROW_WHAT(statement, expected_exception, msg) EXPECT_THROW_WHAT_MATCHER(statement, expected_exception, ::testing::StrEq(msg))
 
 #endif  // PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
