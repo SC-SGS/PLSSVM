@@ -20,6 +20,8 @@
 
 #ifdef __unix__
     #include <cstdlib>  // mkstemp
+#else
+    #include <fstream>  // std::ofstream
 #endif
 
 #include <algorithm>    // std::generate
@@ -89,12 +91,12 @@ class temporary_file {
         std::random_device device;
         std::mt19937 gen(device());
         std::uniform_int_distribution<unsigned long long> dist;
-        filename{ fmt::format("tmpfile_{}", dist(gen)) };
+        filename = fmt::format("tmpfile_{}", dist(gen));
         while (std::filesystem::exists(std::filesystem::temp_directory_path() / filename)) {
             filename = fmt::format("tmpfile_{}", dist(gen));
         }
         // create file
-        std::ofstream{ std::filesystem::temp_directory_path() / filename) };
+        std::ofstream{ std::filesystem::temp_directory_path() / filename };
 #endif
     }
     /**
