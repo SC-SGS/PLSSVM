@@ -9,6 +9,8 @@
  */
 
 #include "mock_csvm.hpp"                     // mock_csvm
+
+#include "plssvm/core.hpp"                   // necessary for type_traits
 #include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
@@ -267,7 +269,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
                           ::testing::An<typename mock_csvm::size_type>())).Times(1);
     // clang-format on
 
-// create data set
+    // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
@@ -543,4 +545,49 @@ TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
     EXPECT_THROW_WHAT(std::ignore = csvm.score(learned_model, data_to_score),
                       plssvm::invalid_parameter_exception,
                       "Number of features per data point (2) must match the number of features per support vector of the provided model (4)!");
+}
+
+TEST(BaseCSVM, csvm_backend_exists) {
+    // test whether the given C-SVM backend exist
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvm>);
+#else
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvm>);
+#endif
+
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>);
+#else
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>);
+#endif
+
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hip::csvm>);
+#else
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hip::csvm>);
+#endif
+
+#if defined(PLSSVM_HAS_OPENCL_BACKEND)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::opencl::csvm>);
+#else
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::opencl::csvm>);
+#endif
+
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+        EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    #else
+        EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    #endif
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+        EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    #else
+        EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    #endif
+#else
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+#endif
 }
