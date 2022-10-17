@@ -154,6 +154,9 @@ class csvm {
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const = 0;
+    /**
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+     */
     [[nodiscard]] virtual std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
@@ -166,6 +169,9 @@ class csvm {
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<float> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const = 0;
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
     [[nodiscard]] virtual std::vector<double> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const = 0;
 
   private:
@@ -174,6 +180,15 @@ class csvm {
      */
     void sanity_check_parameter() const;
 
+    /**
+     * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
+     * @tparam ExpectedType the type the value of the named argument should be converted to
+     * @tparam IgorParser the type of the named argument parser
+     * @tparam ProvidedType the type of the named argument (necessary since their are struct tags)
+     * @param[in] parser the named argument parser
+     * @param[in] named_arg the named argument
+     * @return the value of @p named_arg converted to @p ExpectedType (`[[nodiscard]]`)
+     */
     template <typename ExpectedType, typename IgorParser, typename ProvidedType>
     [[nodiscard]] ExpectedType get_value_from_named_parameter(const IgorParser &parser, const ProvidedType &named_arg) const;
 
@@ -413,7 +428,6 @@ struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<
 
 /**
  * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
- * @details A shorthand for `plssvm::csvm_backend_exists<T>::value`.
  * @tparam T the type of the C-SVM
  */
 template <typename T>

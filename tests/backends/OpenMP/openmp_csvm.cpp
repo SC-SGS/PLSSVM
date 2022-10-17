@@ -62,6 +62,7 @@ TEST_F(OpenMPCSVM, construct_parameter_invalid_target_platform) {
     EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::automatic });
     EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::cpu });
 
+    // all other target platforms must throw
     EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_nvidia },
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_nvidia' for the OpenMP backend!");

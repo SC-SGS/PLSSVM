@@ -30,14 +30,7 @@ namespace openmp {
  * @tparam T the type of the data
  */
 class csvm : public ::plssvm::csvm {
-  protected:
-    // protected for test mock class
-    /// The template base type of the OpenMP C-SVM class.
-    using base_type = ::plssvm::csvm;
-
   public:
-    explicit csvm(parameter params = {}) :
-        csvm{ plssvm::target_platform::automatic, params } {}
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
@@ -45,55 +38,102 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
+    explicit csvm(parameter params = {}) :
+        csvm{ plssvm::target_platform::automatic, params } {}
+    /**
+     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     */
     explicit csvm(target_platform target, parameter params = {});
+
+    /**
+     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform with the @p kernel type and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] kernel the kernel type used in the C-SVM
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     */
     template <typename... Args>
     csvm(const target_platform target, const kernel_function_type kernel, Args &&...named_args) :
-        base_type{ kernel, std::forward<Args>(named_args)... } {
+        ::plssvm::csvm{ kernel, std::forward<Args>(named_args)... } {
         this->init(target);
     }
+    /**
+     * @brief Construct a new C-SVM using the OpenMP backend with the @p kernel type and the optionally provided @p named_args.
+     * @param[in] kernel the kernel type used in the C-SVM
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     */
     template <typename... Args>
     explicit csvm(const kernel_function_type kernel, Args &&...named_args) :
-        base_type{ kernel, std::forward<Args>(named_args)... } {
+        ::plssvm::csvm{ kernel, std::forward<Args>(named_args)... } {
         // the default target is the automatic one
         this->init(plssvm::target_platform::automatic);
     }
 
   private:
     /**
-     * @copydoc plssvm::csvm::solver_CG
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
     [[nodiscard]] std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    /**
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+     */
     [[nodiscard]] std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
-
+    /**
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+     */
     template <typename real_type>
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, unsigned long long max_iter) const;
 
     /**
-     * @copydoc plssvm::csvm::predict_values_impl
+     * @copydoc plssvm::csvm::predict_values
      */
     [[nodiscard]] std::vector<float> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
     [[nodiscard]] std::vector<double> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const;
 
     /**
-     * @copydoc plssvm::csvm::generate_q
+     * @brief Calculate the `q` vector used in the dimensional reduction.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
+     * @param[in] data the data points used in the dimensional reduction.
+     * @return the `q` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const;
     /**
-     * @copydoc plssvm::csvm::calculate_w
+     * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param[in] support_vectors the previously learned support vectors
+     * @param[in] alpha the previously learned weights
+     * @return the `w` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) const;
+    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const;
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.
-     * @param[in] q the `q` vector
+     * @param[in] q the `q` vector used in the dimensional reduction
      * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation
-     * @param[in] data the data
+     * @param[in] data the data points
+     * @param[in] QA_cost a value used in the dimensional reduction
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      */
     template <typename real_type>
@@ -101,7 +141,7 @@ class csvm : public ::plssvm::csvm {
 
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.
-     * @param[in] target the platform to run on (must be `plssvm::target_platfrom::cpu` for the OpenMP backend).
+     * @param[in] target the platform to run on (must be `plssvm::target_platform::cpu` or `plssvm::target_platform::automatic` for the OpenMP backend).
      */
     void init(target_platform target);
 };
