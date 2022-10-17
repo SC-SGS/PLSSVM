@@ -8,7 +8,7 @@
  * @brief Tests for the base C-SVM functions through its mock class.
  */
 
-#include "mock_csvm.hpp"                     // mock_csvm
+#include "mock_csvm.hpp"  // mock_csvm
 
 #include "plssvm/core.hpp"                   // necessary for type_traits
 #include "plssvm/data_set.hpp"               // plssvm::data_set
@@ -17,7 +17,7 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "naming.hpp"              // naming::{real_type_to_name, real_type_label_type_combination_to_name}
 #include "types_to_test.hpp"       // util::{real_type_gtest, real_type_label_type_combination_gtest}
 #include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file}
@@ -251,6 +251,16 @@ TYPED_TEST(BaseCSVMFit, fit) {
 
     // call function
     const plssvm::model<real_type, label_type> model = csvm.fit(training_data);
+
+    // check whether the model has been created correctly
+    EXPECT_EQ(model.num_support_vectors(), 5);
+    EXPECT_EQ(model.num_features(), 4);
+    plssvm::parameter params{};
+    params.gamma = 1.0 / 4.0;
+    EXPECT_EQ(model.svm_parameter(), params);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
+    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first);
+    EXPECT_FLOATING_POINT_EQ(model.rho(), solve_system_of_linear_equations_fake_return<real_type>.second);
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     using real_type = typename TypeParam::real_type;
@@ -275,6 +285,16 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
 
     // call function
     const plssvm::model<real_type, label_type> model = csvm.fit(training_data, plssvm::epsilon = 0.1, plssvm::max_iter = 10);
+
+    // check whether the model has been created correctly
+    EXPECT_EQ(model.num_support_vectors(), 5);
+    EXPECT_EQ(model.num_features(), 4);
+    plssvm::parameter params{};
+    params.gamma = 1.0 / 4.0;
+    EXPECT_EQ(model.svm_parameter(), params);
+    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
+    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first);
+    EXPECT_FLOATING_POINT_EQ(model.rho(), solve_system_of_linear_equations_fake_return<real_type>.second);
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     using real_type = typename TypeParam::real_type;
@@ -388,6 +408,10 @@ TYPED_TEST(BaseCSVMPredict, predict) {
 
     // call function
     const std::vector<label_type> prediction = csvm.predict(learned_model, data_to_predict);
+
+    // check return value
+    const std::pair<label_type, label_type> labels = util::get_distinct_label<label_type>();
+    EXPECT_EQ(prediction, (std::vector<label_type>{ labels.first, labels.first, labels.first, labels.second, labels.second }));
 }
 TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     using real_type = typename TypeParam::real_type;
@@ -449,7 +473,10 @@ TYPED_TEST(BaseCSVMScore, score_model) {
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // call function
-    [[maybe_unused]] const real_type score = csvm.score(learned_model);
+    const real_type score = csvm.score(learned_model);
+
+    // check return value
+    EXPECT_FLOATING_POINT_EQ(score, 0.8);
 }
 TYPED_TEST(BaseCSVMScore, score_data_set) {
     using real_type = typename TypeParam::real_type;
@@ -480,7 +507,10 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // call function
-    [[maybe_unused]] const real_type score = csvm.score(learned_model, data_to_score);
+    const real_type score = csvm.score(learned_model, data_to_score);
+
+    // check return value
+    EXPECT_FLOATING_POINT_EQ(score, 0.8);
 }
 
 TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
@@ -576,14 +606,14 @@ TEST(BaseCSVM, csvm_backend_exists) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-        EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
     #else
-        EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
     #endif
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
     #else
-        EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
     #endif
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
