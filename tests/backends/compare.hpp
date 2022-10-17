@@ -198,6 +198,33 @@ template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
     return r;
 }
 
+template <typename real_type>
+[[nodiscard]] inline std::vector<real_type> device_kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data,
+                                                                   const std::vector<real_type> &rhs, const std::vector<real_type> &q, const real_type QA_cost, const real_type add) {
+    PLSSVM_ASSERT(rhs.size() == q.size(), "Sizes mismatch!: {} != {}", rhs.size(), q.size());
+    PLSSVM_ASSERT(rhs.size() == data.size() - 1, "Sizes mismatch!: {} != {}", rhs.size(), data.size() - 1);
+
+    using size_type = typename std::vector<real_type>::size_type;
+
+    const size_type dept = rhs.size();
+
+    std::vector<real_type> result(dept, 0.0);
+    for (size_type i = 0; i < dept; ++i) {
+        for (size_type j = 0; j < dept; ++j) {
+            if (i >= j) {
+                const real_type temp = kernel_function(params, data[i], data[j]) + QA_cost - q[i] - q[j];
+                if (i == j) {
+                    result[i] += (temp + real_type{ 1.0 } / params.cost) * rhs[i] * add;
+                } else {
+                    result[i] += temp * rhs[j] * add;
+                    result[j] += temp * rhs[i] * add;
+                }
+            }
+        }
+    }
+    return result;
+}
+
 }  // namespace compare
 
 #endif  // PLSSVM_TESTS_COMPARE_HPP_
