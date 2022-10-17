@@ -48,11 +48,11 @@ template <typename T>
 class CSVMFactory : public ::testing::Test, private util::redirect_output {};
 TYPED_TEST_SUITE(CSVMFactory, csvm_types);
 
-TYPED_TEST(CSVMFactory, factory_default) {
+TYPED_TEST(CSVMFactory, factory_backend) {
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        auto csvm = plssvm::make_csvm(backend);
+        const auto csvm = plssvm::make_csvm(backend);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
@@ -61,14 +61,18 @@ TYPED_TEST(CSVMFactory, factory_default) {
                                   ::testing::StartsWith(fmt::format("No {} backend available", backend)));
     }
 }
-TYPED_TEST(CSVMFactory, factory_parameter) {
+TEST(CSVMFactory, factory_default) {
+    // with the automatic backend type there MUST be a C-SVM creatable
+    EXPECT_NO_THROW(std::ignore = plssvm::make_csvm());
+}
+TYPED_TEST(CSVMFactory, factory_backend_parameter) {
     // the backend to use
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     // create the parameter class used
     const plssvm::parameter params{};
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        auto csvm = plssvm::make_csvm(backend, params);
+        const auto csvm = plssvm::make_csvm(backend, params);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
@@ -77,14 +81,20 @@ TYPED_TEST(CSVMFactory, factory_parameter) {
                                   ::testing::StartsWith(fmt::format("No {} backend available", backend)));
     }
 }
-TYPED_TEST(CSVMFactory, factory_target) {
+TEST(CSVMFactory, factory_parameter) {
+    // create the parameter class used
+    const plssvm::parameter params{};
+    // with the automatic backend type there MUST be a C-SVM creatable
+    EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(params));
+}
+TYPED_TEST(CSVMFactory, factory_backend_target) {
     // the backend to use
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     // the target platform to use
     const plssvm::target_platform target = plssvm::target_platform::automatic;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        auto csvm = plssvm::make_csvm(backend, target);
+        const auto csvm = plssvm::make_csvm(backend, target);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
@@ -93,7 +103,13 @@ TYPED_TEST(CSVMFactory, factory_target) {
                                   ::testing::StartsWith(fmt::format("No {} backend available", backend)));
     }
 }
-TYPED_TEST(CSVMFactory, factory_target_and_parameter) {
+TEST(CSVMFactory, factory_target) {
+    // the target platform to use
+    const plssvm::target_platform target = plssvm::target_platform::automatic;
+    // with the automatic backend type there MUST be a C-SVM creatable
+    EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(target));
+}
+TYPED_TEST(CSVMFactory, factory_backend_target_and_parameter) {
     // the backend to use
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     // the target platform to use
@@ -102,7 +118,7 @@ TYPED_TEST(CSVMFactory, factory_target_and_parameter) {
     const plssvm::parameter params{};
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        auto csvm = plssvm::make_csvm(backend, target, params);
+        const auto csvm = plssvm::make_csvm(backend, target, params);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
@@ -111,8 +127,16 @@ TYPED_TEST(CSVMFactory, factory_target_and_parameter) {
                                   ::testing::StartsWith(fmt::format("No {} backend available", backend)));
     }
 }
+TEST(CSVMFactory, factory_target_and_parameter) {
+    // the target platform to use
+    const plssvm::target_platform target = plssvm::target_platform::automatic;
+    // create the parameter class used
+    const plssvm::parameter params{};
+    // with the automatic backend type there MUST be a C-SVM creatable
+    EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(target, params));
+}
 
-TYPED_TEST(CSVMFactory, factory_target_and_named_parameter) {
+TYPED_TEST(CSVMFactory, factory_backend_target_and_named_parameter) {
     // the backend to use
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     // the target platform to use
@@ -121,7 +145,7 @@ TYPED_TEST(CSVMFactory, factory_target_and_named_parameter) {
     const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        auto csvm = plssvm::make_csvm(backend, target, kernel_type, plssvm::gamma = 0.01);
+        const auto csvm = plssvm::make_csvm(backend, target, kernel_type, plssvm::gamma = 0.01);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
@@ -130,14 +154,22 @@ TYPED_TEST(CSVMFactory, factory_target_and_named_parameter) {
                                   ::testing::StartsWith(fmt::format("No {} backend available", backend)));
     }
 }
-TYPED_TEST(CSVMFactory, factory_named_parameter) {
+TEST(CSVMFactory, factory_target_and_named_parameter) {
+    // the target platform to use
+    const plssvm::target_platform target = plssvm::target_platform::automatic;
+    // the kernel function to use
+    const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
+    // with the automatic backend type there MUST be a C-SVM creatable
+    EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(target, kernel_type, plssvm::gamma = 0.01));
+}
+TYPED_TEST(CSVMFactory, factory_backend_named_parameter) {
     // the backend to use
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     // the kernel function to use
     const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        auto csvm = plssvm::make_csvm(backend, kernel_type, plssvm::gamma = 0.01);
+        const auto csvm = plssvm::make_csvm(backend, kernel_type, plssvm::gamma = 0.01);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
@@ -145,6 +177,12 @@ TYPED_TEST(CSVMFactory, factory_named_parameter) {
                                   plssvm::unsupported_backend_exception,
                                   ::testing::StartsWith(fmt::format("No {} backend available", backend)));
     }
+}
+TEST(CSVMFactory, factory_named_parameter) {
+    // the kernel function to use
+    const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
+    // with the automatic backend type there MUST be a C-SVM creatable
+    EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(kernel_type, plssvm::gamma = 0.01));
 }
 
 // TODO:
