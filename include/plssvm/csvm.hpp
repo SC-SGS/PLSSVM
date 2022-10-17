@@ -46,8 +46,6 @@ namespace plssvm {
  */
 class csvm {
   public:
-    using size_type = std::size_t; // TODO: remove size_t in favor of hardcoded unsigned long long?!?
-
     /**
      * @brief Construct a C-SVM using the SVM parameter @p params.
      * @details Uses the default SVM parameter if none are provided.
@@ -155,8 +153,8 @@ class csvm {
      * @param[in] max_iter the maximum number of CG iterations
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, size_type max_iter) const = 0;
-    [[nodiscard]] virtual std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, size_type max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @param[in] params the SVM parameters used in the respective kernel functions
@@ -253,7 +251,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
     // set default values
     default_value epsilon_val{ default_init<real_type>{ 0.001 } };
-    default_value max_iter_val{ default_init<size_type>{ data.num_data_points() } };
+    default_value max_iter_val{ default_init<unsigned long long>{ data.num_data_points() } };
 
     // compile time check: only named parameter are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
@@ -267,7 +265,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         // get the value of the provided named parameter
         epsilon_val = get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
         // check if value makes sense
-        if (epsilon_val <= real_type{ 0.0 }) {
+        if (epsilon_val <= static_cast<typename decltype(epsilon_val)::value_type>(0)) {
             throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
         }
     }
@@ -275,7 +273,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         // get the value of the provided named parameter
         max_iter_val = get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
         // check if value makes sense
-        if (max_iter_val == size_type{ 0 }) {
+        if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
             throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
         }
     }
@@ -351,7 +349,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
     const std::vector<label_type> &correct_labels = data.labels().value();
 
     // calculate the accuracy
-    size_type correct{ 0 };
+    typename std::vector<label_type>::size_type correct{ 0 };
     #pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
@@ -395,7 +393,6 @@ ExpectedType csvm::get_value_from_named_parameter(const IgorParser &parser, cons
     detail::unreachable();
 }
 
-// TODO: test
 namespace detail {
 
 /**

@@ -28,8 +28,6 @@
  */
 class mock_csvm final : public plssvm::csvm {
   public:
-    using size_type = typename plssvm::csvm::size_type;
-
     explicit mock_csvm(plssvm::parameter params = {}) :
         plssvm::csvm{ params } {}
     template <typename... Args>
@@ -37,8 +35,8 @@ class mock_csvm final : public plssvm::csvm {
         plssvm::csvm{ kernel, std::forward<Args>(args)... } {}
 
     // mock pure virtual functions
-    MOCK_METHOD((std::pair<std::vector<float>, float>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, float, size_type), (const, override));
-    MOCK_METHOD((std::pair<std::vector<double>, double>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, double, size_type), (const, override));
+    MOCK_METHOD((std::pair<std::vector<float>, float>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, float, unsigned long long), (const, override));
+    MOCK_METHOD((std::pair<std::vector<double>, double>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, double, unsigned long long), (const, override));
     MOCK_METHOD(std::vector<float>, predict_values, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, float, std::vector<float> &, const std::vector<std::vector<float>> &), (const, override));
     MOCK_METHOD(std::vector<double>, predict_values, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, double, std::vector<double> &, const std::vector<std::vector<double>> &), (const, override));
 };

@@ -27,8 +27,6 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type = plssvm::openmp::csvm;
 
   public:
-    using size_type = typename base_type::size_type;
-
     explicit mock_openmp_csvm(const plssvm::target_platform target, const plssvm::parameter params = {}) :
         base_type{ target, params } {}
     template <typename... Args>

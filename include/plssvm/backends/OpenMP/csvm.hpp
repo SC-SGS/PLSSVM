@@ -36,10 +36,6 @@ class csvm : public ::plssvm::csvm {
     using base_type = ::plssvm::csvm;
 
   public:
-    /// The type of the data. Must be either `float` or `double`.
-    //    using typename base_type::real_type;
-    using typename base_type::size_type;
-
     explicit csvm(parameter params = {}) :
         csvm{ plssvm::target_platform::automatic, params } {}
     /**
@@ -66,11 +62,11 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::solver_CG
      */
-    [[nodiscard]] std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, size_type max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
-    [[nodiscard]] std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, size_type max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    [[nodiscard]] std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    [[nodiscard]] std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
 
     template <typename real_type>
-    [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, size_type max_iter) const;
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, unsigned long long max_iter) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values_impl

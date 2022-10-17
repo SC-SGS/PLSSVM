@@ -94,7 +94,7 @@ template void csvm::run_device_kernel(const detail::parameter<float> &, const st
 template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double) const;
 
 template <typename real_type>
-std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const size_type max_iter) const {
+std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const unsigned long long max_iter) const {
     using namespace plssvm::operators;
 
     // create q vector
@@ -138,7 +138,7 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
         average_iteration_time += iteration_duration;
     };
 
-    size_type iter = 0;
+    unsigned long long iter = 0;
     for (; iter < max_iter; ++iter) {
         if (verbose) {
             fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
@@ -201,23 +201,23 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     return std::make_pair(std::move(alpha), -bias);
 }
 
-template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, const float, const size_type) const;
-template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, const double, const size_type) const;
+template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, const float, const unsigned long long) const;
+template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, const double, const unsigned long long) const;
 
 template <typename real_type>
 std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &A, const std::vector<real_type> &alpha) const {
-    const size_type num_data_points = A.size();
-    const size_type num_features = A.front().size();
+    const typename std::vector<std::vector<real_type>>::size_type num_data_points = A.size();
+    const typename std::vector<real_type>::size_type num_features = A.front().size();
 
     // create w vector and fill with zeros
     std::vector<real_type> w(num_features, real_type{ 0.0 });
 
     // calculate the w vector
     #pragma omp parallel for default(none) shared(A, alpha, w) firstprivate(num_features, num_data_points)
-    for (size_type feature_index = 0; feature_index < num_features; ++feature_index) {
+    for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+: temp)
-        for (size_type data_index = 0; data_index < num_data_points; ++data_index) {
+        for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
             temp += alpha[data_index] * A[data_index][feature_index];
         }
         w[feature_index] = temp;
@@ -251,7 +251,7 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
                 {
                     real_type temp{ 0.0 };
                     #pragma omp simd reduction(+: temp)
-                    for (size_type data_index = 0; data_index < support_vectors.size(); ++data_index) {
+                    for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < support_vectors.size(); ++data_index) {
                         temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params);
                     }
                     out[point_index] += temp;

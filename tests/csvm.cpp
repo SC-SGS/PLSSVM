@@ -242,7 +242,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<std::vector<real_type>>(),
                           ::testing::An<real_type>(),
-                          ::testing::An<typename mock_csvm::size_type>())).Times(1);
+                          ::testing::An<unsigned long long>())).Times(1);
     // clang-format on
 
     // create data set
@@ -266,7 +266,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<std::vector<real_type>>(),
                           ::testing::An<real_type>(),
-                          ::testing::An<typename mock_csvm::size_type>())).Times(1);
+                          ::testing::An<unsigned long long>())).Times(1);
     // clang-format on
 
     // create data set
@@ -290,7 +290,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<std::vector<real_type>>(),
                           ::testing::An<real_type>(),
-                          ::testing::An<typename mock_csvm::size_type>())).Times(0);
+                          ::testing::An<unsigned long long>())).Times(0);
     // clang-format on
 
     // create data set
@@ -316,7 +316,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<std::vector<real_type>>(),
                           ::testing::An<real_type>(),
-                          ::testing::An<typename mock_csvm::size_type>())).Times(0);
+                          ::testing::An<unsigned long long>())).Times(0);
     // clang-format on
 
     // create data set
@@ -342,7 +342,7 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<std::vector<real_type>>(),
                           ::testing::An<real_type>(),
-                          ::testing::An<typename mock_csvm::size_type>())).Times(0);
+                          ::testing::An<unsigned long long>())).Times(0);
     // clang-format on
 
     // create data set without labels
