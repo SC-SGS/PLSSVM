@@ -110,3 +110,14 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_intel }, plssvm::backend_type::sycl }),
          naming::pretty_print_supported_backend_combination<BackendTypeSupportedCombination>);
 // clang-format on
+
+TEST(BackendType, csvm_to_backend_type) {
+    // test the type_trait
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::cuda::csvm>, plssvm::backend_type::cuda);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm&>, plssvm::backend_type::hip);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::opencl::csvm&>, plssvm::backend_type::opencl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<volatile plssvm::sycl::csvm>, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::hipsycl::csvm>, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm&>, plssvm::backend_type::sycl);
+}
