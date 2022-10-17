@@ -79,7 +79,7 @@ class csvm : public ::plssvm::csvm {
         this->init(plssvm::target_platform::automatic);
     }
 
-  private:
+  protected:
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
@@ -139,6 +139,7 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     void run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type add) const;
 
+  private:
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.
      * @param[in] target the platform to run on (must be `plssvm::target_platform::cpu` or `plssvm::target_platform::automatic` for the OpenMP backend).

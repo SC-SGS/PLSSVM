@@ -40,7 +40,6 @@
 
 namespace generic {
 
-// TODO: separate macro for the dynamic_cast?
 
 //template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
 //inline void generate_q_test() {

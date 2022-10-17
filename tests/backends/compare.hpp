@@ -16,6 +16,7 @@
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"
 
 #include <vector>  // std::vector
 
@@ -81,7 +82,7 @@ template <typename real_type>
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
-[[nodiscard]] real_type kernel_function(const std::vector<real_type> &x, const std::vector<real_type> &y, [[maybe_unused]] const SVM &csvm) {
+[[nodiscard]] inline real_type kernel_function(const std::vector<real_type> &x, const std::vector<real_type> &y, [[maybe_unused]] const SVM &csvm) {
     PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
     if constexpr (kernel == plssvm::kernel_function_type::linear) {
@@ -95,6 +96,22 @@ template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
     }
 }
 
+template <typename real_type>
+[[nodiscard]] inline real_type kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<real_type> &x, const std::vector<real_type> &y, [[maybe_unused]] const std::size_t num_devices = 1) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
+
+    switch (params.kernel_type) {
+        case plssvm::kernel_function_type::linear:
+            return detail::linear_kernel(x, y, num_devices);
+        case plssvm::kernel_function_type::polynomial:
+            return detail::poly_kernel(x, y, params.degree.value(), params.gamma.value(), params.coef0.value());
+        case plssvm::kernel_function_type::rbf:
+            return detail::radial_kernel(x, y, params.gamma.value());
+    }
+    // unreachable
+    return real_type{};
+}
+
 /**
  * @brief Computes the `q` vector, a subvector of the least-squares matrix equation, using the kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
@@ -106,7 +123,7 @@ template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
-[[nodiscard]] std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const std::size_t num_devices, const SVM &csvm) {
+[[nodiscard]] inline std::vector<real_type> generate_q(const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const std::size_t num_devices, const SVM &csvm) {
     std::vector<real_type> result;
     result.reserve(data.size() - 1);
 
@@ -115,6 +132,27 @@ template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
             result.emplace_back(detail::linear_kernel(data.back(), data[i], num_devices));
         } else {
             result.emplace_back(kernel_function<kernel>(data.back(), data[i], csvm));
+        }
+    }
+    return result;
+}
+
+template <typename real_type>
+[[nodiscard]] inline std::vector<real_type> generate_q(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, [[maybe_unused]] const std::size_t num_devices = 1) {
+    std::vector<real_type> result(data.size() - 1);
+    for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < result.size(); ++i) {
+        result[i] = kernel_function(params, data.back(), data[i]);
+    }
+    return result;
+}
+
+template <typename real_type>
+[[nodiscard]] inline std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights, [[maybe_unused]] const std::size_t num_devices = 1) {
+    std::vector<real_type> result(support_vectors.front().size());
+    // TODO: num devices, assertions
+    for (typename std::vector<real_type>::size_type i = 0; i < result.size(); ++i) {
+        for (typename std::vector<real_type>::size_type j = 0; j < weights.size(); ++j) {
+            result[i] = std::fma(weights[j], support_vectors[j][i], result[i]);
         }
     }
     return result;
@@ -135,7 +173,7 @@ template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
  * @return the result vector (`[[nodiscard]]`)
  */
 template <plssvm::kernel_function_type kernel, typename real_type, typename SVM>
-[[nodiscard]] std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const real_type add, const SVM &csvm) {
+[[nodiscard]] inline std::vector<real_type> device_kernel_function(const std::vector<std::vector<real_type>> &data, std::vector<real_type> &x, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, const real_type add, const SVM &csvm) {
     PLSSVM_ASSERT(x.size() == q.size(), "Sizes mismatch!: {} != {}", x.size(), q.size());
     PLSSVM_ASSERT(x.size() == data.size() - 1, "Sizes mismatch!: {} != {}", x.size(), data.size() - 1);
 

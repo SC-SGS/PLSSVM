@@ -27,11 +27,16 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type = plssvm::openmp::csvm;
 
   public:
+    // TODO: add missing constructors
+    mock_openmp_csvm() = default;
     explicit mock_openmp_csvm(const plssvm::target_platform target, const plssvm::parameter params = {}) :
         base_type{ target, params } {}
     template <typename... Args>
     mock_openmp_csvm(const plssvm::target_platform target, const plssvm::kernel_function_type kernel, Args &&...named_args) :
         base_type{ target, kernel, std::forward<Args>(named_args)... } {}
+
+    using base_type::generate_q;
+    using base_type::calculate_w;
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_OPENMP_CSVM_HPP_

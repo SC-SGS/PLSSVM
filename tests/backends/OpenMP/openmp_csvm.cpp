@@ -16,10 +16,12 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
+#include "naming.hpp"
+#include "types_to_test.hpp"
 #include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::predict_test, generic::accuracy_test
-#include "mock_csvm.hpp"               // mock_csvm
-#include "utility.hpp"                 // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
 #include "custom_test_macros.hpp"
+#include "mock_csvm.hpp"  // mock_csvm
+#include "utility.hpp"    // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"
 #include "fmt/ostream.h"
@@ -51,8 +53,7 @@ using parameter_types = ::testing::Types<
     parameter_definition<double, plssvm::kernel_function_type::polynomial>,
     parameter_definition<double, plssvm::kernel_function_type::rbf>>;
 
-
- // TODO: kernel??!??!?
+// TODO: kernel??!??!?
 
 class OpenMPCSVM : public ::testing::Test, private util::redirect_output {};
 
@@ -74,65 +75,114 @@ TEST_F(OpenMPCSVM, construct_parameter_invalid_target_platform) {
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
 
-//// check whether the q vector is generated correctly
-//TYPED_TEST(OpenMPCSVM, generate_q) {
-//    generic::generate_q_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
-//}
-//
+// TODO: test constructors?!
+
+template <typename T>
+class OpenMPCSVMGenerateQ : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMGenerateQ, parameter_types, parameter_definition_to_name);
+
+TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
+    using real_type = typename TypeParam::real_type;
+    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
+
+    // create parameter struct
+    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+
+    // create the data that should be used
+    const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
+
+    // calculate correct q vector (ground truth)
+    const std::vector<real_type> ground_truth = compare::generate_q(params, data.data());
+
+    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::generate_q is protected
+    const mock_openmp_csvm svm;
+
+    // calculate the q vector using the OpenMP backend
+    const std::vector<real_type> calculated = svm.generate_q(params, data.data());
+
+    // check the calculated result for correctness result for
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+}
+
+template <typename T>
+class OpenMPCSVMCalculateW : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMCalculateW, util::real_type_gtest , naming::real_type_to_name);
+
+TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
+    using real_type = TypeParam;
+
+    // create the data that should be used
+    const plssvm::data_set<real_type> support_vectors{ PLSSVM_TEST_FILE };
+    const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points());
+
+    // calculate the correct w vector
+    const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);
+
+    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
+    const mock_openmp_csvm svm;
+
+    // calculate the w vector using the OpenMP backend
+    const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
+
+    // check the calculated result for correctness result for
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+}
+
+
 //// check whether the device kernels are correct
-//TYPED_TEST(OpenMPCSVM, device_kernel) {
-//    // create parameter object
-//    plssvm::parameter<typename TypeParam::real_type> params;
-//    params.print_info = false;
-//    params.kernel = TypeParam::kernel;
+// TYPED_TEST(OpenMPCSVM, device_kernel) {
+//     // create parameter object
+//     plssvm::parameter<typename TypeParam::real_type> params;
+//     params.print_info = false;
+//     params.kernel = TypeParam::kernel;
 //
-//    params.parse_train_file(PLSSVM_TEST_FILE);
+//     params.parse_train_file(PLSSVM_TEST_FILE);
 //
-//    // create base C-SVM
-//    mock_csvm csvm{ params };
-//    using real_type = typename decltype(csvm)::real_type;
+//     // create base C-SVM
+//     mock_csvm csvm{ params };
+//     using real_type = typename decltype(csvm)::real_type;
 //
-//    const std::size_t dept = csvm.get_num_data_points() - 1;
+//     const std::size_t dept = csvm.get_num_data_points() - 1;
 //
-//    // create x vector and fill it with random values
-//    std::vector<real_type> x(dept);
-//    std::random_device rd;
-//    std::mt19937 gen(rd());
-//    std::uniform_real_distribution<real_type> dist(1.0, 2.0);
-//    std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
+//     // create x vector and fill it with random values
+//     std::vector<real_type> x(dept);
+//     std::random_device rd;
+//     std::mt19937 gen(rd());
+//     std::uniform_real_distribution<real_type> dist(1.0, 2.0);
+//     std::generate(x.begin(), x.end(), [&]() { return dist(gen); });
 //
-//    // create C-SVM using the OpenMP backend
-//    mock_openmp_csvm csvm_openmp{ params };
+//     // create C-SVM using the OpenMP backend
+//     mock_openmp_csvm csvm_openmp{ params };
 //
-//    // create correct q vector, cost and QA_cost
-//    const std::vector<real_type> q_vec = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm_openmp.get_num_devices(), csvm);
-//    const real_type cost = csvm.get_cost();
-//    const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
+//     // create correct q vector, cost and QA_cost
+//     const std::vector<real_type> q_vec = compare::generate_q<TypeParam::kernel>(csvm.get_data(), csvm_openmp.get_num_devices(), csvm);
+//     const real_type cost = csvm.get_cost();
+//     const real_type QA_cost = compare::kernel_function<TypeParam::kernel>(csvm.get_data().back(), csvm.get_data().back(), csvm) + 1 / cost;
 //
-//    // setup data on device
-//    csvm_openmp.setup_data_on_device();
+//     // setup data on device
+//     csvm_openmp.setup_data_on_device();
 //
-//    for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
-//        const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
+//     for (const auto add : { real_type{ -1 }, real_type{ 1 } }) {
+//         const std::vector<real_type> correct = compare::device_kernel_function<TypeParam::kernel>(csvm.get_data(), x, q_vec, QA_cost, cost, add, csvm);
 //
-//        std::vector<real_type> calculated(dept, 0.0);
-//        csvm_openmp.set_QA_cost(QA_cost);
-//        csvm_openmp.set_cost(cost);
-//        csvm_openmp.run_device_kernel(q_vec, calculated, x, csvm_openmp.get_device_data(), add);
+//         std::vector<real_type> calculated(dept, 0.0);
+//         csvm_openmp.set_QA_cost(QA_cost);
+//         csvm_openmp.set_cost(cost);
+//         csvm_openmp.run_device_kernel(q_vec, calculated, x, csvm_openmp.get_device_data(), add);
 //
-//        ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
-//        for (typename std::vector<real_type>::size_type index = 0; index < correct.size(); ++index) {
-//            util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
-//        }
-//    }
-//}
+//         ASSERT_EQ(correct.size(), calculated.size()) << "add: " << add;
+//         for (typename std::vector<real_type>::size_type index = 0; index < correct.size(); ++index) {
+//             util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
+//         }
+//     }
+// }
 //
 //// check whether the correct labels are predicted
-//TYPED_TEST(OpenMPCSVM, predict) {
-//    generic::predict_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
-//}
+// TYPED_TEST(OpenMPCSVM, predict) {
+//     generic::predict_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
+// }
 //
 //// check whether the accuracy calculation is correct
-//TYPED_TEST(OpenMPCSVM, accuracy) {
-//    generic::accuracy_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
-//}
+// TYPED_TEST(OpenMPCSVM, accuracy) {
+//     generic::accuracy_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
+// }

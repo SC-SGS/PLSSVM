@@ -220,7 +220,7 @@ std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type
 #pragma omp simd reduction(+ \
                            : temp)
         for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
-            temp += alpha[data_index] * support_vectors[data_index][feature_index];
+            temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
         }
         w[feature_index] = temp;
     }
