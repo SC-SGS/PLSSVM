@@ -126,7 +126,7 @@ TYPED_TEST(OpenMPCSVMGenerateQ, run_device_kernel) {
 
         // perform the kernel calculation on the device
         std::vector<real_type> calculated(data.num_data_points() - 1);
-        svm.run_device_kernel(params, q, calculated, x, data.data(), QA_cost, add);
+        svm.run_device_kernel(params, q, calculated, rhs, data.data(), QA_cost, add);
 
         // check the calculated result for correctness result for
         EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
