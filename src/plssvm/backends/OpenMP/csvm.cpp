@@ -59,42 +59,6 @@ void csvm::init(const target_platform target) {
 }
 
 template <typename real_type>
-std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const {
-    std::vector<real_type> q(data.size() - 1);
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            device_kernel_q_linear(q, data);
-            break;
-        case kernel_function_type::polynomial:
-            device_kernel_q_poly(q, data, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            device_kernel_q_radial(q, data, params.gamma.value());
-            break;
-    }
-    return q;
-}
-template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const std::vector<std::vector<float>> &) const;
-template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const std::vector<std::vector<double>> &) const;
-
-template <typename real_type>
-void csvm::run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
-            break;
-        case kernel_function_type::polynomial:
-            openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
-            break;
-    }
-}
-template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float) const;
-template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double) const;
-
-template <typename real_type>
 std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const unsigned long long max_iter) const {
     using namespace plssvm::operators;
 
@@ -206,31 +170,6 @@ template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equat
 template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, const double, const unsigned long long) const;
 
 template <typename real_type>
-std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const {
-    const typename std::vector<std::vector<real_type>>::size_type num_data_points = support_vectors.size();
-    const typename std::vector<real_type>::size_type num_features = support_vectors.front().size();
-
-    // create w vector and fill with zeros
-    std::vector<real_type> w(num_features, real_type{ 0.0 });
-
-// calculate the w vector
-#pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
-    for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
-        real_type temp{ 0.0 };
-#pragma omp simd reduction(+ \
-                           : temp)
-        for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
-            temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
-        }
-        w[feature_index] = temp;
-    }
-    return w;
-}
-
-template std::vector<float> csvm::calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &) const;
-template std::vector<double> csvm::calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &) const;
-
-template <typename real_type>
 std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
     using namespace plssvm::operators;
 
@@ -265,6 +204,65 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
 template std::vector<float> csvm::predict_values_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, const float, std::vector<float> &, const std::vector<std::vector<float>> &) const;
 template std::vector<double> csvm::predict_values_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, const double, std::vector<double> &, const std::vector<std::vector<double>> &) const;
 
-// TODO: order
+template <typename real_type>
+std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const {
+    std::vector<real_type> q(data.size() - 1);
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            device_kernel_q_linear(q, data);
+            break;
+        case kernel_function_type::polynomial:
+            device_kernel_q_poly(q, data, params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+            device_kernel_q_radial(q, data, params.gamma.value());
+            break;
+    }
+    return q;
+}
+template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const std::vector<std::vector<float>> &) const;
+template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const std::vector<std::vector<double>> &) const;
+
+template <typename real_type>
+std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const {
+    const typename std::vector<std::vector<real_type>>::size_type num_data_points = support_vectors.size();
+    const typename std::vector<real_type>::size_type num_features = support_vectors.front().size();
+
+    // create w vector and fill with zeros
+    std::vector<real_type> w(num_features, real_type{ 0.0 });
+
+// calculate the w vector
+#pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
+    for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
+        real_type temp{ 0.0 };
+#pragma omp simd reduction(+ \
+                           : temp)
+        for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
+            temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
+        }
+        w[feature_index] = temp;
+    }
+    return w;
+}
+
+template std::vector<float> csvm::calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &) const;
+template std::vector<double> csvm::calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &) const;
+
+template <typename real_type>
+void csvm::run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
+            break;
+        case kernel_function_type::polynomial:
+            openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+            openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
+            break;
+    }
+}
+template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float) const;
+template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double) const;
 
 }  // namespace plssvm::openmp
