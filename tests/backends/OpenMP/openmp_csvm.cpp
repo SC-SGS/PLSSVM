@@ -78,7 +78,41 @@ TEST_F(OpenMPCSVM, construct_parameter_invalid_target_platform) {
 // TODO: test constructors?!
 
 template <typename T>
-class OpenMPCSVMGenerateQ : public OpenMPCSVM {}; // TODO: rename
+class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, parameter_types, parameter_definition_to_name);
+
+TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_diagonal) {
+    using real_type = typename TypeParam::real_type;
+    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
+
+    // create parameter struct
+    plssvm::detail::parameter<real_type> params{};
+    params.kernel_type = kernel_type;
+    params.cost = 2.0;
+
+    // create the data that should be used
+    // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost
+    const std::vector<std::vector<real_type>> data = {
+        { real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 } },
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) } }
+    };
+    const std::vector<real_type> rhs{ real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } };
+
+    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::solve_system_of_linear_equations_impl is protected
+    const mock_openmp_csvm svm;
+
+    // solve the system of linear equations using the CG algorithm: (A + (I * 1 / cost))x =b  => Ix = b => should be trivial x = b
+    const std::pair<std::vector<real_type>, real_type> result = svm.solve_system_of_linear_equations_impl(params, data, rhs, real_type{ 0.00001 }, 1);
+
+    // check the calculated result for correctness
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(rhs, result.first);
+}
+
+template <typename T>
+class OpenMPCSVMGenerateQ : public OpenMPCSVM {};
 TYPED_TEST_SUITE(OpenMPCSVMGenerateQ, parameter_types, parameter_definition_to_name);
 
 TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
@@ -104,7 +138,11 @@ TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
 }
 
-TYPED_TEST(OpenMPCSVMGenerateQ, run_device_kernel) {
+template <typename T>
+class OpenMPCSVMRunDeviceKernel : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMRunDeviceKernel, parameter_types, parameter_definition_to_name);
+
+TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
     using real_type = typename TypeParam::real_type;
     const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
 

@@ -38,6 +38,7 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type::generate_q;
     using base_type::calculate_w;
     using base_type::run_device_kernel;
+    using base_type::solve_system_of_linear_equations_impl;
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_OPENMP_CSVM_HPP_
