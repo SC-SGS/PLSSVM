@@ -141,7 +141,7 @@ inline void test_score(const plssvm::kernel_function_type kernel_type) {
     const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel_type) };
 
     // create C-SVM
-    const plssvm::openmp::csvm svm{ params };
+    const csvm_type svm{ params };
 
     // predict label
     const real_type calculated = svm.score(model, test_data);
