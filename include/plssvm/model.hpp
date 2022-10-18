@@ -85,7 +85,7 @@ class model {
      * @brief Return the SVM parameter that were used to learn this model.
      * @return the SVM parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] const parameter &svm_parameter() const noexcept { return params_; }
+    [[nodiscard]] const parameter &svm_parameter() const noexcept { return params_; }  // TODO: change to get_params ?!
     /**
      * @brief The support vectors representing the learned model.
      * @return the support vectors (`[[nodiscard]]`)
