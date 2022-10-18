@@ -11,34 +11,22 @@
 
 #pragma once
 
-#include "backends/compare.hpp"  // compare::generate_q, compare::kernel_function, compare::device_kernel_function
-#include "mock_csvm.hpp"         // mock_csvm
-#include "utility.hpp"           // util::gtest_assert_floating_point_near, util::gtest_assert_floating_point_eq, util::gtest_expect_correct_csvm_factory, util::create_temp_file
+#include "plssvm/data_set.hpp"               // plssvm::data_set
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/model.hpp"                  // plssvm::model
+#include "plssvm/parameter.hpp"              // plssvm::detail::parameter
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/constants.hpp"                             // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
-#include "plssvm/csvm_factory.hpp"
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
-
-#include "custom_test_macros.hpp"
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
-#include "gmock/gmock.h"  // EXPECT_THAT
-#include "gtest/gtest.h"  // ASSERT_GT, ASSERT_TRUE, ASSERT_EQ, EXPECT_EQ, EXPECT_GT, testing::ContainsRegex, testing::StaticAssertTypeEq
+#include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE
 
-#include <algorithm>   // std::generate
-#include <filesystem>  // std::filesystem::remove
-#include <fstream>     // std::ifstream
-#include <random>      // std::random_device, std::mt19937, std::uniform_real_distribution
-#include <regex>       // std::regex, std::regex_match
-#include <string>      // std::string, std::getline
-#include <vector>      // std::vector
+#include <cmath>     // std::sqrt
+#include <fstream>   // std::ifstream
+#include <iterator>  // std::istream_iterator
+#include <utility>   // std::pair
+#include <vector>    // std::vector
 
 namespace generic {
 
@@ -257,98 +245,6 @@ inline void test_score(const plssvm::kernel_function_type kernel_type) {
 //             util::gtest_assert_floating_point_near(correct[index], calculated[index], fmt::format("\tindex: {}, add: {}", index, add));
 //         }
 //     }
-// }
-//
-// template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
-// inline void predict_test() {
-//     // create parameter object
-//     plssvm::parameter<real_type> params;
-//     params.print_info = false;
-//
-//     params.parse_model_file(fmt::format(PLSSVM_TEST_PATH "/data/models/500x200.libsvm.{}.model", kernel));
-//     params.parse_test_file(PLSSVM_TEST_PATH "/data/libsvm/500x200.libsvm.test");
-//
-//     // create C-SVM using the specified backend
-//     csvm_type csvm{ params };
-//
-//     // predict
-//     std::vector<real_type> predicted_values = csvm.predict_label(*params.test_data_ptr);
-//     std::vector<real_type> predicted_values_real = csvm.predict(*params.test_data_ptr);
-//
-//     // read correct prediction
-//     std::ifstream ifs(PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict");
-//     std::string line;
-//     std::vector<real_type> correct_values;
-//     correct_values.reserve(500);
-//     while (std::getline(ifs, line, '\n')) {
-//         correct_values.push_back(plssvm::detail::convert_to<real_type>(line));
-//     }
-//
-//     ASSERT_EQ(correct_values.size(), predicted_values.size());
-//     for (typename std::vector<real_type>::size_type i = 0; i < correct_values.size(); ++i) {
-//         EXPECT_EQ(correct_values[i], predicted_values[i]) << "data point: " << i << " real value: " << predicted_values_real[i];
-//         EXPECT_GT(correct_values[i] * predicted_values_real[i], real_type{ 0 });
-//     }
-//
-//     // empty points should return an empty vector
-//     std::vector<std::vector<real_type>> points;
-//     EXPECT_EQ(std::vector<real_type>{}, csvm.predict(points));
-//
-//     // test exceptions
-//     [[maybe_unused]] std::vector<real_type> acc_vec;
-//     // the number of features of the prediction points must all be the same
-//     points = { { real_type{ 1 }, real_type{ 2 } }, { real_type{ 3 } } };
-//     EXPECT_THROW_WHAT(acc_vec = csvm.predict(points), plssvm::exception, "All points in the prediction point vector must have the same number of features!");
-//
-//     // the number of features of the prediction points must match the number of features of the data points
-//     points = { { real_type{ 1 }, real_type{ 2 } }, { real_type{ 3 }, real_type{ 4 } } };
-//     EXPECT_THROW_WHAT(acc_vec = csvm.predict_label(points), plssvm::exception, fmt::format("Number of features per data point ({}) must match the number of features per predict point (2)!", params.data_ptr->front().size()));
-//
-//     // alpha values must not be nullptr in order to predict
-//     csvm.get_alpha_ptr() = nullptr;
-//     EXPECT_THROW_WHAT(acc_vec = csvm.predict_label(*params.test_data_ptr), plssvm::exception, "No alphas provided for prediction!");
-// }
-//
-// template <template <typename> typename csvm_type, typename real_type, plssvm::kernel_type kernel>
-// inline void accuracy_test() {
-//     // create parameter object
-//     plssvm::parameter<real_type> params;
-//     params.print_info = false;
-//     params.kernel = kernel;
-//
-//     params.parse_train_file(PLSSVM_TEST_FILE);
-//
-//     // create C-SVM using the specified backend
-//     csvm_type csvm{ params };
-//
-//     // learn
-//     csvm.learn();
-//
-//     // predict label and calculate correct accuracy
-//     const std::vector<real_type> label_predicted = csvm.predict_label(*params.data_ptr);
-//     ASSERT_EQ(label_predicted.size(), params.value_ptr->size());
-//     unsigned long long count = 0;
-//     for (typename std::vector<real_type>::size_type i = 0; i < label_predicted.size(); ++i) {
-//         if (label_predicted[i] == (*params.value_ptr)[i]) {
-//             ++count;
-//         }
-//     }
-//     const real_type accuracy_correct = static_cast<real_type>(count) / static_cast<real_type>(label_predicted.size());
-//
-//     // calculate accuracy using the intern data and labels
-//     const real_type accuracy_calculated_intern = csvm.accuracy();
-//     util::gtest_assert_floating_point_eq(accuracy_calculated_intern, accuracy_correct);
-//     // calculate accuracy using external data and labels
-//     const real_type accuracy_calculated_extern = csvm.accuracy(*params.data_ptr, *params.value_ptr);
-//
-//     util::gtest_assert_floating_point_eq(accuracy_calculated_extern, accuracy_correct);
-//
-//     // check single point prediction
-//     const real_type prediction_first_point = csvm.predict_label((*params.data_ptr)[0]);
-//     const real_type accuracy_calculated_single_point_correct = csvm.accuracy((*params.data_ptr)[0], prediction_first_point);
-//     util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_correct, real_type{ 1.0 });
-//     const real_type accuracy_calculated_single_point_wrong = csvm.accuracy((*params.data_ptr)[0], -prediction_first_point);
-//     util::gtest_assert_floating_point_eq(accuracy_calculated_single_point_wrong, real_type{ 0.0 });
 // }
 
 }  // namespace generic

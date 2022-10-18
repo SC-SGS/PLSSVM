@@ -17,6 +17,7 @@
 #include "plssvm/parameter.hpp"                   // plssvm::detail::data_set
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
+#include "backends/compare.hpp"        // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
 #include "backends/generic_tests.hpp"  // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
 #include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
 #include "naming.hpp"                  // naming::{real_type_kernel_function_to_name, real_type_to_name}
