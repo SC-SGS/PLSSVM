@@ -209,6 +209,17 @@ class real_type_label_type_combination_to_name {
     }
 };
 
+/**
+ * @brief A class used to map all real type and kernel function combinations to a readable name in the GTest test case name.
+ */
+class real_type_kernel_function_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        return fmt::format("{}__{}", plssvm::detail::arithmetic_type_name<typename T::real_type>(), T::kernel_type);
+    }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ////                   PRETTY PRINT PARAMETERIZED TESTS                     ////
 ////////////////////////////////////////////////////////////////////////////////

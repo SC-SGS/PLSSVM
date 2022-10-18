@@ -23,35 +23,9 @@
 #include "types_to_test.hpp"
 #include "utility.hpp"  // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
 
-#include "fmt/core.h"
-#include "fmt/ostream.h"
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, ASSERT_EQ
 
-#include <random>  // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <vector>  // std::vector
-
-template <typename T, plssvm::kernel_function_type kernel>
-struct parameter_definition {
-    using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
-};
-
-class parameter_definition_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}__{}", plssvm::detail::arithmetic_type_name<typename T::real_type>(), T::kernel_type);
-    }
-};
-
-// enumerate all floating point type and kernel combinations to test
-using parameter_types = ::testing::Types<
-    parameter_definition<float, plssvm::kernel_function_type::linear>,
-    parameter_definition<float, plssvm::kernel_function_type::polynomial>,
-    parameter_definition<float, plssvm::kernel_function_type::rbf>,
-    parameter_definition<double, plssvm::kernel_function_type::linear>,
-    parameter_definition<double, plssvm::kernel_function_type::polynomial>,
-    parameter_definition<double, plssvm::kernel_function_type::rbf>>;
 
 // TODO: kernel??!??!?
 
@@ -79,7 +53,7 @@ TEST_F(OpenMPCSVM, construct_parameter_invalid_target_platform) {
 
 template <typename T>
 class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, parameter_types, parameter_definition_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, util::real_type_kernel_function_gtest , naming::real_type_kernel_function_to_name);
 
 TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_diagonal) {
     generic::test_solve_system_of_linear_equations<typename TypeParam::real_type, mock_openmp_csvm>(TypeParam::kernel_type);
@@ -87,7 +61,7 @@ TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equati
 
 template <typename T>
 class OpenMPCSVMPredictValues : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMPredictValues, parameter_types, parameter_definition_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMPredictValues, util::real_type_kernel_function_gtest , naming::real_type_kernel_function_to_name);
 
 TYPED_TEST(OpenMPCSVMPredictValues, predict_values) {
     generic::test_predict_values<typename TypeParam::real_type, mock_openmp_csvm>(TypeParam::kernel_type);
@@ -95,7 +69,7 @@ TYPED_TEST(OpenMPCSVMPredictValues, predict_values) {
 
 template <typename T>
 class OpenMPCSVMGenerateQ : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMGenerateQ, parameter_types, parameter_definition_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMGenerateQ, util::real_type_kernel_function_gtest , naming::real_type_kernel_function_to_name);
 
 TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
     using real_type = typename TypeParam::real_type;
@@ -146,7 +120,7 @@ TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
 
 template <typename T>
 class OpenMPCSVMRunDeviceKernel : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMRunDeviceKernel, parameter_types, parameter_definition_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMRunDeviceKernel, util::real_type_kernel_function_gtest , naming::real_type_kernel_function_to_name);
 
 TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
     using real_type = typename TypeParam::real_type;
@@ -179,7 +153,7 @@ TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
 
 template <typename T>
 class OpenMPCSVMPredictAndScore : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMPredictAndScore, parameter_types, parameter_definition_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMPredictAndScore, util::real_type_kernel_function_gtest , naming::real_type_kernel_function_to_name);
 
 TYPED_TEST(OpenMPCSVMPredictAndScore, predict) {
     generic::test_predict<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);

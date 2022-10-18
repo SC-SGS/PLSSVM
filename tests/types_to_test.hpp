@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"         // plssvm::always_false_v
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // ::testing::Types, FAIL()
@@ -124,6 +125,26 @@ using label_type_gtest = detail::tuple_to_gtest_types_t<label_type_list>;
 using real_type_label_type_combination_list = detail::cartesian_type_product_t<real_type_list, label_type_list>;
 /// The cartesian product of all real types and label types usable in google test
 using real_type_label_type_combination_gtest = detail::tuple_to_gtest_types_t<real_type_label_type_combination_list>;
+
+/**
+ * @brief Encapsulates a combination of a used `real_type` (`float` or `double`) and a `plssvm::kernel_function_type`.
+ * @tparam T the used `real_type`
+ * @tparam kernel the `plssvm::kernel_function_type`
+ */
+template <typename T, plssvm::kernel_function_type kernel>
+struct parameter_definition {
+    using real_type = T;
+    static constexpr plssvm::kernel_function_type kernel_type = kernel;
+};
+
+/// A type list of all supported real_type and kernel_function_type combinations.
+using real_type_kernel_function_gtest = ::testing::Types<
+    parameter_definition<float, plssvm::kernel_function_type::linear>,
+    parameter_definition<float, plssvm::kernel_function_type::polynomial>,
+    parameter_definition<float, plssvm::kernel_function_type::rbf>,
+    parameter_definition<double, plssvm::kernel_function_type::linear>,
+    parameter_definition<double, plssvm::kernel_function_type::polynomial>,
+    parameter_definition<double, plssvm::kernel_function_type::rbf>>;
 
 /**
  * @brief Get two distinct labels based on the provided label type.
