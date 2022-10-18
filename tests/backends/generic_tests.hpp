@@ -42,7 +42,7 @@
 
 namespace generic {
 
-template <typename real_type, typename csvm_type>
+template <typename real_type, typename mock_csvm_type>
 inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_type kernel_type) {
     // create parameter struct
     plssvm::detail::parameter<real_type> params{};
@@ -60,14 +60,46 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
     };
     const std::vector<real_type> rhs{ real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } };
 
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::solve_system_of_linear_equations_impl is protected
-    const mock_openmp_csvm svm;
+    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    const mock_csvm_type svm{};
 
     // solve the system of linear equations using the CG algorithm: (A + (I * 1 / cost))x =b  => Ix = b => should be trivial x = b
-    const std::pair<std::vector<real_type>, real_type> result = svm.solve_system_of_linear_equations_impl(params, data, rhs, real_type{ 0.00001 }, 1);
+    const std::pair<std::vector<real_type>, real_type> calculated = svm.solve_system_of_linear_equations_impl(params, data, rhs, real_type{ 0.00001 }, 1);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(rhs, result.first);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(rhs, calculated.first);
+    // TODO: test rho
+}
+
+template <typename real_type, typename mock_csvm_type>
+inline void test_predict_values(const plssvm::kernel_function_type kernel_type) {
+    // create parameter struct
+    plssvm::detail::parameter<real_type> params{};
+    params.kernel_type = kernel_type;
+
+    // create the data that should be used
+    // TODO: meaningful data
+    const std::vector<std::vector<real_type>> support_vectors{ { real_type{ 1.0 } } };
+    const std::vector<real_type> weights{ real_type{ 0.5 } };
+    const real_type rho{};
+    std::vector<real_type> w{};
+    const std::vector<std::vector<real_type>> data{ { real_type{ 2.0 } } };
+
+    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    const mock_csvm_type svm{};
+
+    // predict the values using the previously learned support vectors and weights
+    const std::vector<real_type> calculated = svm.predict_values_impl(params, support_vectors, weights, rho, w, data);
+
+    // check the calculated result for correctness
+    ASSERT_EQ(calculated.size(), data.size());
+    // TODO: add other tests
+    // in case of the linear kernel, the w vector should have been filled
+    if (kernel_type == plssvm::kernel_function_type::linear) {
+        EXPECT_EQ(w.size(), support_vectors.front().size());
+    } else {
+        EXPECT_TRUE(w.empty());
+    }
 }
 
 template <typename real_type, typename csvm_type>

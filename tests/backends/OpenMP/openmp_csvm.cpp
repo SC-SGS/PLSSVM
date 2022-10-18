@@ -16,12 +16,12 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "naming.hpp"
-#include "types_to_test.hpp"
 #include "backends/generic_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::predict_test, generic::accuracy_test
 #include "custom_test_macros.hpp"
 #include "mock_csvm.hpp"  // mock_csvm
-#include "utility.hpp"    // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
+#include "naming.hpp"
+#include "types_to_test.hpp"
+#include "utility.hpp"  // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name, util::gtest_assert_floating_point_near, EXPECT_THROW_WHAT
 
 #include "fmt/core.h"
 #include "fmt/ostream.h"
@@ -82,7 +82,15 @@ class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
 TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, parameter_types, parameter_definition_to_name);
 
 TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_diagonal) {
-    generic::test_solve_system_of_linear_equations<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);
+    generic::test_solve_system_of_linear_equations<typename TypeParam::real_type, mock_openmp_csvm>(TypeParam::kernel_type);
+}
+
+template <typename T>
+class OpenMPCSVMPredictValues : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMPredictValues, parameter_types, parameter_definition_to_name);
+
+TYPED_TEST(OpenMPCSVMPredictValues, predict_values) {
+    generic::test_predict_values<typename TypeParam::real_type, mock_openmp_csvm>(TypeParam::kernel_type);
 }
 
 template <typename T>
@@ -107,6 +115,30 @@ TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
 
     // calculate the q vector using the OpenMP backend
     const std::vector<real_type> calculated = svm.generate_q(params, data.data());
+
+    // check the calculated result for correctness
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+}
+
+template <typename T>
+class OpenMPCSVMCalculateW : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
+    using real_type = TypeParam;
+
+    // create the data that should be used
+    const plssvm::data_set<real_type> support_vectors{ PLSSVM_TEST_FILE };
+    const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points());
+
+    // calculate the correct w vector
+    const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);
+
+    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
+    const mock_openmp_csvm svm;
+
+    // calculate the w vector using the OpenMP backend
+    const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
@@ -143,30 +175,6 @@ TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
         // check the calculated result for correctness
         EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
     }
-}
-
-template <typename T>
-class OpenMPCSVMCalculateW : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMCalculateW, util::real_type_gtest , naming::real_type_to_name);
-
-TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
-    using real_type = TypeParam;
-
-    // create the data that should be used
-    const plssvm::data_set<real_type> support_vectors{ PLSSVM_TEST_FILE };
-    const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points());
-
-    // calculate the correct w vector
-    const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);
-
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-    const mock_openmp_csvm svm;
-
-    // calculate the w vector using the OpenMP backend
-    const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
-
-    // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
 }
 
 template <typename T>
