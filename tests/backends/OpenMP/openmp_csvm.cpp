@@ -82,33 +82,7 @@ class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
 TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, parameter_types, parameter_definition_to_name);
 
 TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_diagonal) {
-    using real_type = typename TypeParam::real_type;
-    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
-
-    // create parameter struct
-    plssvm::detail::parameter<real_type> params{};
-    params.kernel_type = kernel_type;
-    params.cost = 2.0;
-
-    // create the data that should be used
-    // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost
-    const std::vector<std::vector<real_type>> data = {
-        { real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) } }
-    };
-    const std::vector<real_type> rhs{ real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } };
-
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::solve_system_of_linear_equations_impl is protected
-    const mock_openmp_csvm svm;
-
-    // solve the system of linear equations using the CG algorithm: (A + (I * 1 / cost))x =b  => Ix = b => should be trivial x = b
-    const std::pair<std::vector<real_type>, real_type> result = svm.solve_system_of_linear_equations_impl(params, data, rhs, real_type{ 0.00001 }, 1);
-
-    // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(rhs, result.first);
+    generic::test_solve_system_of_linear_equations<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);
 }
 
 template <typename T>
@@ -200,63 +174,9 @@ class OpenMPCSVMPredictAndScore : public OpenMPCSVM {};
 TYPED_TEST_SUITE(OpenMPCSVMPredictAndScore, parameter_types, parameter_definition_to_name);
 
 TYPED_TEST(OpenMPCSVMPredictAndScore, predict) {
-    using real_type = typename TypeParam::real_type;
-    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
-
-    // create parameter struct
-    plssvm::parameter params{};
-    params.kernel_type = kernel_type;
-
-    // create data set to be used
-    const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
-
-    // read the previously learned model
-    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel_type) };
-
-    // create C-SVM
-    const plssvm::openmp::csvm svm{ params };
-
-    // predict label
-    const std::vector<int> calculated = svm.predict(model, test_data);
-
-    // read ground truth from file
-    std::ifstream prediction_file{ PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict" };
-    const std::vector<int> ground_truth{ std::istream_iterator<int>{ prediction_file }, std::istream_iterator<int>{} };
-
-    // check the calculated result for correctness
-    EXPECT_EQ(calculated, ground_truth);
+    generic::test_predict<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);
 }
 
 TYPED_TEST(OpenMPCSVMPredictAndScore, score) {
-    using real_type = typename TypeParam::real_type;
-    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
-
-    // create parameter struct
-    plssvm::parameter params{};
-    params.kernel_type = kernel_type;
-
-    // create data set to be used
-    const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
-
-    // read the previously learned model
-    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel_type) };
-
-    // create C-SVM
-    const plssvm::openmp::csvm svm{ params };
-
-    // predict label
-    const real_type calculated = svm.score(model, test_data);
-
-    // check the calculated result for correctness
-    EXPECT_EQ(calculated, real_type{ 1.0 });
+    generic::test_score<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);
 }
-
-//// check whether the correct labels are predicted
-// TYPED_TEST(OpenMPCSVM, predict) {
-//     generic::predict_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
-// }
-//
-//// check whether the accuracy calculation is correct
-// TYPED_TEST(OpenMPCSVM, accuracy) {
-//     generic::accuracy_test<mock_openmp_csvm, typename TypeParam::real_type, TypeParam::kernel>();
-// }
