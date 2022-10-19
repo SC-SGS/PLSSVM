@@ -20,6 +20,11 @@ namespace detail {
 
 template <kernel_function_type kernel, typename real_type, typename... Args>
 void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add, Args &&...args) {
+    PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
+    PLSSVM_ASSERT(q.size() == ret.size(), "Sizes mismatch!: {} != {}", q.size(), ret.size());
+    PLSSVM_ASSERT(q.size() == d.size(), "Sizes mismatch!: {} != {}", q.size(), d.size());
+    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "Add must either be -1.0 or 1.0, but is {}!", add);
+
     const auto dept = static_cast<kernel_index_type>(d.size());
 
     #pragma omp parallel for collapse(2) schedule(dynamic)
