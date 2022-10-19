@@ -37,7 +37,7 @@ TYPED_TEST(OpenMPSVMKernelDeathTest, polynomial) {
     const real_type QA_cost{};
     const real_type cost{ 1.0 };
     const real_type add{ 1.0 };
-    EXPECT_DEATH(plssvm::openmp::device_kernel_poly(q, ret, d, data, QA_cost, cost, add, 2, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
+    EXPECT_DEATH(plssvm::openmp::device_kernel_polynomial(q, ret, d, data, QA_cost, cost, add, 2, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
 }
 TYPED_TEST(OpenMPSVMKernelDeathTest, rbf) {
     using real_type = TypeParam;
@@ -52,7 +52,7 @@ TYPED_TEST(OpenMPSVMKernelDeathTest, rbf) {
     std::vector<real_type> ret(data.size() - 1);
     const std::vector<real_type> d(data.size() - 1);
 
-    EXPECT_DEATH(plssvm::openmp::device_kernel_radial(q, ret, d, data, real_type{ 0.0 }, real_type{ 1.0 }, real_type{ 1.0 }, real_type{ 0.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
+    EXPECT_DEATH(plssvm::openmp::device_kernel_rbf(q, ret, d, data, real_type{ 0.0 }, real_type{ 1.0 }, real_type{ 1.0 }, real_type{ 0.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
 }
 
 TYPED_TEST(OpenMPSVMKernelDeathTest, device_kernel) {

@@ -44,10 +44,10 @@ TYPED_TEST(OpenMPQKernelDeathTest, polynomial) {
         { real_type{ 4.0 }, real_type{ 5.0 } }
     };
     std::vector<real_type> q(1);
-    EXPECT_DEATH(plssvm::openmp::device_kernel_q_poly(q, data, 2, real_type{ 0.1 }, real_type{ 1.0 }), ::testing::HasSubstr("Sizes mismatch!: 1 != 2"));
+    EXPECT_DEATH(plssvm::openmp::device_kernel_q_polynomial(q, data, 2, real_type{ 0.1 }, real_type{ 1.0 }), ::testing::HasSubstr("Sizes mismatch!: 1 != 2"));
 
     q.resize(data.size() - 1);
-    EXPECT_DEATH(plssvm::openmp::device_kernel_q_poly(q, data, 2, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
+    EXPECT_DEATH(plssvm::openmp::device_kernel_q_polynomial(q, data, 2, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
 }
 TYPED_TEST(OpenMPQKernelDeathTest, rbf) {
     using real_type = TypeParam;
@@ -59,8 +59,8 @@ TYPED_TEST(OpenMPQKernelDeathTest, rbf) {
         { real_type{ 4.0 }, real_type{ 5.0 } }
     };
     std::vector<real_type> q(1);
-    EXPECT_DEATH(plssvm::openmp::device_kernel_q_radial(q, data, real_type{ 0.1 }), ::testing::HasSubstr("Sizes mismatch!: 1 != 2"));
+    EXPECT_DEATH(plssvm::openmp::device_kernel_q_rbf(q, data, real_type{ 0.1 }), ::testing::HasSubstr("Sizes mismatch!: 1 != 2"));
 
     q.resize(data.size() - 1);
-    EXPECT_DEATH(plssvm::openmp::device_kernel_q_radial(q, data, real_type{ 0.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
+    EXPECT_DEATH(plssvm::openmp::device_kernel_q_rbf(q, data, real_type{ 0.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
 }

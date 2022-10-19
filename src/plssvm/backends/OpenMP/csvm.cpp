@@ -213,10 +213,10 @@ std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &para
             device_kernel_q_linear(q, data);
             break;
         case kernel_function_type::polynomial:
-            device_kernel_q_poly(q, data, params.degree.value(), params.gamma.value(), params.coef0.value());
+            device_kernel_q_polynomial(q, data, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            device_kernel_q_radial(q, data, params.gamma.value());
+            device_kernel_q_rbf(q, data, params.gamma.value());
             break;
     }
     return q;
@@ -256,10 +256,10 @@ void csvm::run_device_kernel(const detail::parameter<real_type> &params, const s
             openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
             break;
         case kernel_function_type::polynomial:
-            openmp::device_kernel_poly(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
+            openmp::device_kernel_polynomial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            openmp::device_kernel_radial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
+            openmp::device_kernel_rbf(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
             break;
     }
 }
