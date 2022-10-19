@@ -104,8 +104,8 @@ TEST(GitMetadata, branch) {
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(@\\{)+")));           // must not contain @{
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(@|\\\\)+")));         // must not contain a single @ or backslash
     } else {
-        // if we are outside a Git repository, the branch must be empty
-        EXPECT_TRUE(git_metadata::branch().empty());
+        // if we are outside a Git repository, the branch name is HEAD
+        EXPECT_EQ(git_metadata::branch(), "HEAD");
     }
 }
 

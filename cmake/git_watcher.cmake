@@ -135,7 +135,7 @@ macro(RunGitCommand)
         # Most methods have a fall-back default value that's used in case of non-zero
         # exit codes. If you're feeling risky, disable this safety check and use
         # those default values.
-        if(GIT_FAIL_IF_NONZERO_EXIT )
+        if(GIT_FAIL_IF_NONZERO_EXIT)
             string(REPLACE ";" " " args_with_spaces "${ARGV}")
             message(FATAL_ERROR "${stderr} (${GIT_EXECUTABLE} ${args_with_spaces})")
         endif()
@@ -227,7 +227,7 @@ function(GetGitState _working_dir)
     # Get output of git describe
     RunGitCommand(describe --always ${object})
     if(NOT exit_code EQUAL 0)
-        set(ENV{GIT_DESCRIBE} "unknown")
+        set(ENV{GIT_DESCRIBE} "") # empty string.
     else()
         set(ENV{GIT_DESCRIBE} "${output}")
     endif()
@@ -250,7 +250,7 @@ function(GetGitState _working_dir)
     #    to the "_state_variable_names" list.
     RunGitCommand(config --get remote.origin.url)
     if(NOT exit_code EQUAL 0)
-        set(ENV{GIT_REMOTE_URL} "unknown")
+        set(ENV{GIT_REMOTE_URL} "") # empty string.
     else()
         set(ENV{GIT_REMOTE_URL} "${output}")
     endif()
