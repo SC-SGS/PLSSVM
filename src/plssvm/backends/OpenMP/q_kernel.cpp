@@ -30,25 +30,27 @@ template void device_kernel_q_linear(std::vector<double> &, const std::vector<st
 template <typename real_type>
 void device_kernel_q_poly(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, const int degree, const real_type gamma, const real_type coef0) {
     PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
+    PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     #pragma omp parallel for default(none) shared(q, data) firstprivate(degree, gamma, coef0)
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
         q[i] = kernel_function<kernel_function_type::polynomial>(data[i], data.back(), degree, gamma, coef0);
     }
 }
-template void device_kernel_q_poly(std::vector<float> &, const std::vector<std::vector<float>> &, const int, const float, const float);
-template void device_kernel_q_poly(std::vector<double> &, const std::vector<std::vector<double>> &, const int, const double, const double);
+template void device_kernel_q_poly(std::vector<float> &, const std::vector<std::vector<float>> &, int, float, float);
+template void device_kernel_q_poly(std::vector<double> &, const std::vector<std::vector<double>> &, int, double, double);
 
 template <typename real_type>
 void device_kernel_q_radial(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, const real_type gamma) {
     PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
+    PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     #pragma omp parallel for default(none) shared(q, data) firstprivate(gamma)
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size() - 1; ++i) {
         q[i] = kernel_function<kernel_function_type::rbf>(data[i], data.back(), gamma);
     }
 }
-template void device_kernel_q_radial(std::vector<float> &, const std::vector<std::vector<float>> &, const float);
-template void device_kernel_q_radial(std::vector<double> &, const std::vector<std::vector<double>> &, const double);
+template void device_kernel_q_radial(std::vector<float> &, const std::vector<std::vector<float>> &, float);
+template void device_kernel_q_radial(std::vector<double> &, const std::vector<std::vector<double>> &, double);
 
 }  // namespace plssvm::openmp

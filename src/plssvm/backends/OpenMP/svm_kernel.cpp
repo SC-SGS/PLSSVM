@@ -9,6 +9,7 @@
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"
 
 #include "plssvm/constants.hpp"              // plssvm::kernel_index_type, plssvm::OPENMP_BLOCK_SIZE
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
 
 #include <utility>  // std::forward
@@ -23,7 +24,8 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
     PLSSVM_ASSERT(q.size() == data.size() - 1, "Sizes mismatch!: {} != {}", q.size(), data.size() - 1);
     PLSSVM_ASSERT(q.size() == ret.size(), "Sizes mismatch!: {} != {}", q.size(), ret.size());
     PLSSVM_ASSERT(q.size() == d.size(), "Sizes mismatch!: {} != {}", q.size(), d.size());
-    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "Add must either be -1.0 or 1.0, but is {}!", add);
+    PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
+    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either be -1.0 or 1.0, but is {}!", add);
 
     const auto dept = static_cast<kernel_index_type>(d.size());
 
@@ -57,21 +59,25 @@ template <typename real_type>
 void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add) {
     detail::device_kernel<kernel_function_type::linear>(q, ret, d, data, QA_cost, cost, add);
 }
-template void device_kernel_linear(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const float);
-template void device_kernel_linear(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const double);
+template void device_kernel_linear(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, float, float, float);
+template void device_kernel_linear(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, double, double, double);
 
 template <typename real_type>
 void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
+    PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
+
     detail::device_kernel<kernel_function_type::polynomial>(q, ret, d, data, QA_cost, cost, add, degree, gamma, coef0);
 }
-template void device_kernel_poly(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const float, const int, const float, const float);
-template void device_kernel_poly(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const double, const int, const double, const double);
+template void device_kernel_poly(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, float, float, float, int, float, float);
+template void device_kernel_poly(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, double, double, double, int, double, double);
 
 template <typename real_type>
 void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type cost, const real_type add, const real_type gamma) {
+    PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
+
     detail::device_kernel<kernel_function_type::rbf>(q, ret, d, data, QA_cost, cost, add, gamma);
 }
-template void device_kernel_radial(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float, const float, const float);
-template void device_kernel_radial(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double, const double, const double);
+template void device_kernel_radial(const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, float, float, float, float);
+template void device_kernel_radial(const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, double, double, double, double);
 
 }  // namespace plssvm::openmp

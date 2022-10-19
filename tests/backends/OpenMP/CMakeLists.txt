@@ -11,6 +11,8 @@ set(PLSSVM_OPENMP_TEST_NAME OpenMP_tests)
 set(PLSSVM_OPENMP_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/openmp_csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cpp
 )
 
 # add test executable
