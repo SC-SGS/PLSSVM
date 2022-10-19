@@ -46,7 +46,7 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
                    "  in function  {}\n"
                    "  @ line       {}\n\n"
                    "{}\n",
-                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), cond_str),
+                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), "{}", cond_str),
                    loc.file_name(),
                    loc.function_name(),
                    loc.line(),
