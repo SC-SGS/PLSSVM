@@ -60,10 +60,9 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
 }
 
 template <typename real_type, typename mock_csvm_type>
-inline void test_predict_values(const plssvm::kernel_function_type kernel_type) {
+inline void test_predict_values(const plssvm::kernel_function_type kernel) {
     // create parameter struct
-    plssvm::detail::parameter<real_type> params{};
-    params.kernel_type = kernel_type;
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
 
     // create the data that should be used
     // TODO: meaningful data
@@ -83,7 +82,7 @@ inline void test_predict_values(const plssvm::kernel_function_type kernel_type) 
     ASSERT_EQ(calculated.size(), data.size());
     // TODO: add other tests
     // in case of the linear kernel, the w vector should have been filled
-    if (kernel_type == plssvm::kernel_function_type::linear) {
+    if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.size(), support_vectors.front().size());
     } else {
         EXPECT_TRUE(w.empty());
@@ -91,16 +90,15 @@ inline void test_predict_values(const plssvm::kernel_function_type kernel_type) 
 }
 
 template <typename real_type, typename csvm_type>
-inline void test_predict(const plssvm::kernel_function_type kernel_type) {
+inline void test_predict(const plssvm::kernel_function_type kernel) {
     // create parameter struct
-    plssvm::parameter params{};
-    params.kernel_type = kernel_type;
+    const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
     const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
 
     // read the previously learned model
-    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel_type) };
+    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
 
     // create C-SVM
     const csvm_type svm{ params };
@@ -117,16 +115,15 @@ inline void test_predict(const plssvm::kernel_function_type kernel_type) {
 }
 
 template <typename real_type, typename csvm_type>
-inline void test_score(const plssvm::kernel_function_type kernel_type) {
+inline void test_score(const plssvm::kernel_function_type kernel) {
     // create parameter struct
-    plssvm::parameter params{};
-    params.kernel_type = kernel_type;
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
     const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
 
     // read the previously learned model
-    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel_type) };
+    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
 
     // create C-SVM
     const csvm_type svm{ params };

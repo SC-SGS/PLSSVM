@@ -22,7 +22,7 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/model.hpp"                  // plssvm::model
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::get_value_from_named_parameter
 
 #include "fmt/core.h"     // fmt::format, fmt::print
 #include "igor/igor.hpp"  // igor::parser
@@ -78,7 +78,7 @@ class csvm {
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] parameter get_params() const noexcept { return params_; } // static_assert
+    [[nodiscard]] parameter get_params() const noexcept { return params_; }
 
     /**
      * @brief Override the old SVM parameter with the new @p params.
@@ -180,18 +180,6 @@ class csvm {
      */
     void sanity_check_parameter() const;
 
-    /**
-     * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
-     * @tparam ExpectedType the type the value of the named argument should be converted to
-     * @tparam IgorParser the type of the named argument parser
-     * @tparam ProvidedType the type of the named argument (necessary since their are struct tags)
-     * @param[in] parser the named argument parser
-     * @param[in] named_arg the named argument
-     * @return the value of @p named_arg converted to @p ExpectedType (`[[nodiscard]]`)
-     */
-    template <typename ExpectedType, typename IgorParser, typename ProvidedType>
-    [[nodiscard]] ExpectedType get_value_from_named_parameter(const IgorParser &parser, const ProvidedType &named_arg) const;
-
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
 };
@@ -202,58 +190,33 @@ inline csvm::csvm(parameter params) :
 }
 
 template <typename... Args>
-csvm::csvm(kernel_function_type kernel, Args &&...named_args) {
-    this->set_params(kernel_type = kernel, std::forward<Args>(named_args)...);
+csvm::csvm(kernel_function_type kernel, Args &&...named_args) :
+    params_{ plssvm::kernel_type = kernel, std::forward<Args>(named_args)... } {
+    this->sanity_check_parameter();
 }
 
 template <typename... Args>
 void csvm::set_params(Args &&...named_args) {
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    static_assert(sizeof...(Args) > 0, "At least one named parameter mus be given when calling set_params()!");
 
-    // compile time check: only named parameter are permitted
-    static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
-    // compile time check: each named parameter must only be passed once
-    static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
-    // compile time check: only some named parameters are allowed // TODO: SYCL
-    static_assert(!parser.has_other_than(kernel_type, gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
+    // create new parameter struct which is responsible for parsing the named_args
+    parameter provided_params{ std::forward<Args>(named_args)... };
 
-    // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
-    [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
-        std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_function_type_to_math_string(kernel)) << std::endl;
-    };
-
-    // compile time/runtime check: the values must have the correct types
-    if constexpr (parser.has(kernel_type)) {
-        // get the value of the provided named parameter
-        params_.kernel_type = get_value_from_named_parameter<typename decltype(params_.kernel_type)::value_type>(parser, kernel_type);
+    // set the value of params_ if and only if the respective value in provided_params isn't the default value
+    if (!provided_params.kernel_type.is_default()) {
+        params_.kernel_type = provided_params.kernel_type.value();
     }
-    if constexpr (parser.has(gamma)) {
-        // get the value of the provided named parameter
-        params_.gamma = get_value_from_named_parameter<typename decltype(params_.gamma)::value_type>(parser, gamma);
-        // runtime check: the value may only be used with a specific kernel type
-        if (params_.kernel_type == kernel_function_type::linear) {
-            print_warning("gamma", params_.kernel_type);
-        }
+    if (!provided_params.gamma.is_default()) {
+        params_.gamma = provided_params.gamma.value();
     }
-    if constexpr (parser.has(degree)) {
-        // get the value of the provided named parameter
-        params_.degree = get_value_from_named_parameter<typename decltype(params_.degree)::value_type>(parser, degree);
-        // runtime check: the value may only be used with a specific kernel type
-        if (params_.kernel_type == kernel_function_type::linear || params_.kernel_type == kernel_function_type::rbf) {
-            print_warning("degree", params_.kernel_type);
-        }
+    if (!provided_params.degree.is_default()) {
+        params_.degree = provided_params.degree.value();
     }
-    if constexpr (parser.has(coef0)) {
-        // get the value of the provided named parameter
-        params_.coef0 = get_value_from_named_parameter<typename decltype(params_.coef0)::value_type>(parser, coef0);
-        // runtime check: the value may only be used with a specific kernel type
-        if (params_.kernel_type == kernel_function_type::linear || params_.kernel_type == kernel_function_type::rbf) {
-            print_warning("coef0", params_.kernel_type);
-        }
+    if (!provided_params.coef0.is_default()) {
+        params_.coef0 = provided_params.coef0.value();
     }
-    if constexpr (parser.has(cost)) {
-        // get the value of the provided named parameter
-        params_.cost = get_value_from_named_parameter<typename decltype(params_.cost)::value_type>(parser, cost);
+    if (!provided_params.cost.is_default()) {
+        params_.cost = provided_params.cost.value();
     }
 
     // check if parameters make sense
@@ -278,7 +241,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     // compile time/runtime check: the values must have the correct types
     if constexpr (parser.has(epsilon)) {
         // get the value of the provided named parameter
-        epsilon_val = get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
+        epsilon_val = detail::get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
         // check if value makes sense
         if (epsilon_val <= static_cast<typename decltype(epsilon_val)::value_type>(0)) {
             throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
@@ -286,7 +249,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     }
     if constexpr (parser.has(max_iter)) {
         // get the value of the provided named parameter
-        max_iter_val = get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
+        max_iter_val = detail::get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
         // check if value makes sense
         if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
             throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
@@ -381,31 +344,12 @@ inline void csvm::sanity_check_parameter() const {
     }
 
     // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
-    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) &&
-        !params_.gamma.is_default() && params_.gamma.value() <= 0.0) {
+    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= 0.0) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
     }
     // degree: all allowed
     // coef0: all allowed
     // cost: all allowed
-}
-
-template <typename ExpectedType, typename IgorParser, typename NamedArgType>
-ExpectedType csvm::get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) const {
-    using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
-    // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
-    if constexpr (is_default_value_v<parsed_named_arg_type>) {
-        static_assert(std::is_convertible_v<typename parsed_named_arg_type::value_type, ExpectedType>, "Cannot convert the wrapped default value to the expected type!");
-        // a plssvm::default_value has been provided (e.g., plssvm::default_value<double>)
-        return static_cast<ExpectedType>(parser(named_arg).value());
-    } else if constexpr (std::is_convertible_v<parsed_named_arg_type, ExpectedType>) {
-        // an unwrapped value has been provided (e.g., double)
-        return static_cast<ExpectedType>(parser(named_arg));
-    } else {
-        static_assert(plssvm::detail::always_false_v<ExpectedType>, "The named parameter must be of type plssvm::default_value or a built-in type!");
-    }
-    // may never been reached
-    detail::unreachable();
 }
 
 namespace detail {
@@ -417,7 +361,7 @@ namespace detail {
 template <typename T>
 struct csvm_backend_exists : std::false_type {};
 
-}
+}  // namespace detail
 
 /**
  * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
@@ -432,8 +376,6 @@ struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<
  */
 template <typename T>
 constexpr bool csvm_backend_exists_v = csvm_backend_exists<T>::value;
-
-
 
 }  // namespace plssvm
 
