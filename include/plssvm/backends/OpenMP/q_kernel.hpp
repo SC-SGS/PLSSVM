@@ -9,6 +9,8 @@
  * @brief Defines OpenMP functions for generating the `q` vector.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_
+#define PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_
 #pragma once
 
 #include <vector>  // std::vector
@@ -47,3 +49,5 @@ template <typename real_type>
 void device_kernel_q_radial(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, real_type gamma);
 
 }  // namespace plssvm::openmp
+
+#endif  // PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_

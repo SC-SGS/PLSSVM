@@ -31,11 +31,9 @@
 namespace generic {
 
 template <typename real_type, typename mock_csvm_type>
-inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_type kernel_type) {
+inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_type kernel) {
     // create parameter struct
-    plssvm::detail::parameter<real_type> params{};
-    params.kernel_type = kernel_type;
-    params.cost = 2.0;
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
 
     // create the data that should be used
     // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost

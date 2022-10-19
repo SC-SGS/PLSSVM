@@ -9,6 +9,8 @@
  * @brief Defines the kernel functions for the C-SVM using the OpenMP backend.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENMP_SVM_KERNEL_HPP_
+#define PLSSVM_BACKENDS_OPENMP_SVM_KERNEL_HPP_
 #pragma once
 
 #include <vector>  // std::vector
@@ -62,3 +64,5 @@ template <typename real_type>
 void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, real_type gamma);
 
 }  // namespace plssvm::openmp
+
+#endif  // PLSSVM_BACKENDS_OPENMP_SVM_KERNEL_HPP_

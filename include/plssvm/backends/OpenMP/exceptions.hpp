@@ -9,6 +9,8 @@
  * @brief Implements custom exception classes specific to the OpenMP backend.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENMP_EXCEPTIONS_HPP_
+#define PLSSVM_BACKENDS_OPENMP_EXCEPTIONS_HPP_
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
@@ -32,3 +34,5 @@ class backend_exception : public exception {
 };
 
 }  // namespace plssvm::openmp
+
+#endif  // PLSSVM_BACKENDS_OPENMP_EXCEPTIONS_HPP_
