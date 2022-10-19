@@ -99,14 +99,14 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     const auto output_iteration_duration = [&]() {
         std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
         auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        fmt::print("Done in {}.\n", iteration_duration);
+        std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
         average_iteration_time += iteration_duration;
     };
 
     unsigned long long iter = 0;
     for (; iter < max_iter; ++iter) {
         if (verbose) {
-            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
+            std::cout << fmt::format("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         }
         iteration_start_time = std::chrono::steady_clock::now();
 
@@ -152,11 +152,12 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
         }
     }
     if (verbose) {
-        fmt::print("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
-                   std::min(iter + 1, max_iter),
-                   delta,
-                   eps * eps * delta0,
-                   average_iteration_time / std::min(iter + 1, max_iter));
+        std::cout << fmt::format("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.",
+                                 std::min(iter + 1, max_iter),
+                                 delta,
+                                 eps * eps * delta0,
+                                 average_iteration_time / std::min(iter + 1, max_iter))
+                  << std::endl;
     }
 
     // calculate bias
