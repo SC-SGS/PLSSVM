@@ -31,7 +31,7 @@
 namespace plssvm::openmp {
 
 csvm::csvm(const target_platform target, parameter params) :
-    ::plssvm::csvm{ std::move(params) } {
+    ::plssvm::csvm{ params } {
     this->init(target);
 }
 
@@ -42,14 +42,14 @@ void csvm::init(const target_platform target) {
     }
     // the CPU target must be available
 #if !defined(PLSSVM_HAS_CPU_TARGET)
-    throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+    throw backend_exception{ "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
 #endif
 
     // get the number of used OpenMP threads
     int num_omp_threads = 0;
-#pragma omp parallel default(none) shared(num_omp_threads)
+    #pragma omp parallel default(none) shared(num_omp_threads)
     {
-#pragma omp master
+        #pragma omp master
         num_omp_threads = omp_get_num_threads();
     }
 
@@ -181,7 +181,7 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
         w = calculate_w(support_vectors, alpha);
     }
 
-#pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
+    #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
         switch (params.kernel_type) {
             case kernel_function_type::linear:
@@ -190,8 +190,7 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
             case kernel_function_type::polynomial:
             case kernel_function_type::rbf: {
                 real_type temp{ 0.0 };
-#pragma omp simd reduction(+ \
-                           : temp)
+                #pragma omp simd reduction(+ : temp)
                 for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < support_vectors.size(); ++data_index) {
                     temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params);
                 }
@@ -202,8 +201,8 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
     return out;
 }
 
-template std::vector<float> csvm::predict_values_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, const float, std::vector<float> &, const std::vector<std::vector<float>> &) const;
-template std::vector<double> csvm::predict_values_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, const double, std::vector<double> &, const std::vector<std::vector<double>> &) const;
+template std::vector<float> csvm::predict_values_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, float, std::vector<float> &, const std::vector<std::vector<float>> &) const;
+template std::vector<double> csvm::predict_values_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, double, std::vector<double> &, const std::vector<std::vector<double>> &) const;
 
 template <typename real_type>
 std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const {
@@ -232,12 +231,11 @@ std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type
     // create w vector and fill with zeros
     std::vector<real_type> w(num_features, real_type{ 0.0 });
 
-// calculate the w vector
-#pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
+    // calculate the w vector
+    #pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
     for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
         real_type temp{ 0.0 };
-#pragma omp simd reduction(+ \
-                           : temp)
+        #pragma omp simd reduction(+ : temp)
         for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
             temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
         }
@@ -263,7 +261,7 @@ void csvm::run_device_kernel(const detail::parameter<real_type> &params, const s
             break;
     }
 }
-template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, const float, const float) const;
-template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, const double, const double) const;
+template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, float, float) const;
+template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, double, double) const;
 
 }  // namespace plssvm::openmp

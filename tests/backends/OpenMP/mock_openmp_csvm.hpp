@@ -13,12 +13,7 @@
 #define PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_OPENMP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/OpenMP/csvm.hpp"   // plssvm::openmp::csvm
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
-
-#include <vector>  // std::vector
+#include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
 
 /**
  * @brief GTest mock class for the OpenMP CSVM.
@@ -27,19 +22,12 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type = plssvm::openmp::csvm;
 
   public:
-    // TODO: add missing constructors
-    mock_openmp_csvm() = default;
-    explicit mock_openmp_csvm(const plssvm::target_platform target, const plssvm::parameter params = {}) :
-        base_type{ target, params } {}
-    template <typename... Args>
-    mock_openmp_csvm(const plssvm::target_platform target, const plssvm::kernel_function_type kernel, Args &&...named_args) :
-        base_type{ target, kernel, std::forward<Args>(named_args)... } {}
-
-    using base_type::generate_q;
+    // make protected member functions public
     using base_type::calculate_w;
+    using base_type::generate_q;
+    using base_type::predict_values;
     using base_type::run_device_kernel;
     using base_type::solve_system_of_linear_equations;
-    using base_type::predict_values;
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_OPENMP_CSVM_HPP_

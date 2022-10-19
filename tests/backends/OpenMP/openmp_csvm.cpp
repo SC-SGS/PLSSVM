@@ -28,29 +28,71 @@
 
 #include <vector>  // std::vector
 
-// TODO: kernel??!??!?
-
 class OpenMPCSVM : public ::testing::Test, private util::redirect_output {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TEST_F(OpenMPCSVM, construct_parameter_invalid_target_platform) {
+TEST_F(OpenMPCSVM, construct_parameter) {
+#if defined(PLSSVM_HAS_CPU_TARGET)
+    // the automatic target platform must always be available
+    EXPECT_NO_THROW(plssvm::openmp::csvm{ plssvm::parameter{} });
+#else
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::parameter{} }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+TEST_F(OpenMPCSVM, construct_target_and_parameter) {
+    // create parameter struct
+    const plssvm::parameter params{};
+
+#if defined(PLSSVM_HAS_CPU_TARGET)
     // only automatic or cpu are allowed as target platform for the OpenMP backend
-    EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::automatic });
-    EXPECT_NO_THROW(mock_openmp_csvm{ plssvm::target_platform::cpu });
+    EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }));
+    EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }));
+#else
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
 
     // all other target platforms must throw
-    EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_nvidia },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_nvidia, params }),
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_nvidia' for the OpenMP backend!");
-    EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_amd },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_amd, params }),
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_amd' for the OpenMP backend!");
-    EXPECT_THROW_WHAT(mock_openmp_csvm{ plssvm::target_platform::gpu_intel },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_intel, params }),
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
 
-// TODO: test constructors?!
+TEST_F(OpenMPCSVM, construct_kernel_type_and_named_args) {
+#if defined(PLSSVM_HAS_CPU_TARGET)
+    // the automatic target platform must always be available
+    EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+#else
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }), plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+TEST_F(OpenMPCSVM, construct_target_kernel_type_and_named_args) {
+#if defined(PLSSVM_HAS_CPU_TARGET)
+    // only automatic or cpu are allowed as target platform for the OpenMP backend
+    EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+#else
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+
+    // all other target platforms must throw
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::openmp::backend_exception,
+                      "Invalid target platform 'gpu_nvidia' for the OpenMP backend!");
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::openmp::backend_exception,
+                      "Invalid target platform 'gpu_amd' for the OpenMP backend!");
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_intel, plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::openmp::backend_exception,
+                      "Invalid target platform 'gpu_intel' for the OpenMP backend!");
+}
 
 template <typename T>
 class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
@@ -86,7 +128,7 @@ TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
     const std::vector<real_type> ground_truth = compare::generate_q(params, data.data());
 
     // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::generate_q is protected
-    const mock_openmp_csvm svm;
+    const mock_openmp_csvm svm{};
 
     // calculate the q vector using the OpenMP backend
     const std::vector<real_type> calculated = svm.generate_q(params, data.data());
@@ -110,7 +152,7 @@ TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
     const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);
 
     // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-    const mock_openmp_csvm svm;
+    const mock_openmp_csvm svm{};
 
     // calculate the w vector using the OpenMP backend
     const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
@@ -137,7 +179,7 @@ TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
     const real_type QA_cost = compare::kernel_function(params, data.data().back(), data.data().back()) + 1 / params.cost;
 
     // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-    const mock_openmp_csvm svm;
+    const mock_openmp_csvm svm{};
 
     for (const real_type add : { real_type{ -1.0 }, real_type{ 1.0 } }) {
         // calculate the correct device function result
