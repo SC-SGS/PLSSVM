@@ -50,7 +50,7 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
     const mock_csvm_type svm{};
 
     // solve the system of linear equations using the CG algorithm: (A + (I * 1 / cost))x =b  => Ix = b => should be trivial x = b
-    const std::pair<std::vector<real_type>, real_type> calculated = svm.solve_system_of_linear_equations_impl(params, data, rhs, real_type{ 0.00001 }, 1);
+    const std::pair<std::vector<real_type>, real_type> calculated = svm.solve_system_of_linear_equations(params, data, rhs, real_type{ 0.00001 }, 1);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(rhs, calculated.first);
@@ -74,7 +74,7 @@ inline void test_predict_values(const plssvm::kernel_function_type kernel) {
     const mock_csvm_type svm{};
 
     // predict the values using the previously learned support vectors and weights
-    const std::vector<real_type> calculated = svm.predict_values_impl(params, support_vectors, weights, rho, w, data);
+    const std::vector<real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
 
     // check the calculated result for correctness
     ASSERT_EQ(calculated.size(), data.size());
