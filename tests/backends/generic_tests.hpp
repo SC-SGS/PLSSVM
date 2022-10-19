@@ -33,7 +33,7 @@ namespace generic {
 template <typename real_type, typename mock_csvm_type>
 inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_type kernel) {
     // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel, plssvm::gamma = 0.2, plssvm::cost = 2.0 };
 
     // create the data that should be used
     // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost
@@ -49,7 +49,7 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
     // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
     const mock_csvm_type svm{};
 
-    // solve the system of linear equations using the CG algorithm: (A + (I * 1 / cost))x =b  => Ix = b => should be trivial x = b
+    // solve the system of linear equations using the CG algorithm: (A^TA + (I * 1 / cost))x = b  => Ix = b => should be trivial x = b
     const std::pair<std::vector<real_type>, real_type> calculated = svm.solve_system_of_linear_equations(params, data, rhs, real_type{ 0.00001 }, 1);
 
     // check the calculated result for correctness
