@@ -185,9 +185,7 @@ TEST(CSVMFactory, factory_named_parameter) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(kernel_type, plssvm::gamma = 0.01));
 }
 
-// TODO:
-// automatic backend
-//
+// TODO: tests for the SYCL implementation if they are finished
 // TYPED_TEST(CSVMFactory, factory_sycl_implementation) {
 //
 //}

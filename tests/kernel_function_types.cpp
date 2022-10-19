@@ -129,7 +129,7 @@ TYPED_TEST(KernelFunction, polynomial_kernel_function_variadic) {
             const int degree = params.degree;
             const real_type gamma = params.gamma;
             const real_type coef0 = params.coef0;
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, degree, gamma, coef0), compare::detail::poly_kernel(x1, x2, degree, gamma, coef0));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, degree, gamma, coef0), compare::detail::polynomial_kernel(x1, x2, degree, gamma, coef0));
         }
     }
 }
@@ -144,7 +144,7 @@ TYPED_TEST(KernelFunction, polynomial_kernel_function_parameter) {
         // test polynomial kernel function
         for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::polynomial>) {
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params),
-                                       compare::detail::poly_kernel(x1, x2, params.degree.value(), params.gamma.value(), params.coef0.value()));
+                                       compare::detail::polynomial_kernel(x1, x2, params.degree.value(), params.gamma.value(), params.coef0.value()));
         }
     }
 }
@@ -160,7 +160,7 @@ TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_variadic) {
         // test rbf kernel function
         for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
             const real_type gamma = params.gamma;
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma), compare::detail::radial_kernel(x1, x2, gamma));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma), compare::detail::rbf_kernel(x1, x2, gamma));
         }
     }
 }
@@ -174,7 +174,7 @@ TYPED_TEST(KernelFunction, radial_basis_function_kernel_function_parameter) {
 
         // test rbf kernel function
         for (const plssvm::detail::parameter<real_type> &params : parameter_set<real_type, plssvm::kernel_function_type::rbf>) {
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), compare::detail::radial_kernel(x1, x2, params.gamma.value()));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), compare::detail::rbf_kernel(x1, x2, params.gamma.value()));
         }
     }
 }
