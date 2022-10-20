@@ -53,7 +53,7 @@ TYPED_TEST(Model, construct) {
     // test for correct construction
     EXPECT_EQ(model.num_support_vectors(), 5);
     EXPECT_EQ(model.num_features(), 4);
-    EXPECT_EQ(model.svm_parameter(), plssvm::parameter{});
+    EXPECT_EQ(model.get_params(), plssvm::parameter{});
     const std::vector<std::vector<real_type>> support_vectors{
         { real_type{ -1.117828 }, real_type{ -2.908719 }, real_type{ 0.6663834 }, real_type{ 1.097883 } },
         { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
@@ -87,14 +87,14 @@ TYPED_TEST(Model, num_features) {
     // test for the correct number of features
     EXPECT_EQ(model.num_features(), 4);
 }
-TYPED_TEST(Model, svm_parameter) {
+TYPED_TEST(Model, get_params) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
 
     // create a model using an existing LIBSVM model file
     const plssvm::model<real_type, label_type> model{ PLSSVM_TEST_PATH "/data/model/5x4_linear.libsvm.model" };
     // test for the correct number of features
-    EXPECT_EQ(model.svm_parameter(), plssvm::parameter{});
+    EXPECT_EQ(model.get_params(), plssvm::parameter{});
 }
 TYPED_TEST(Model, support_vectors) {
     using real_type = typename TypeParam::real_type;
@@ -151,8 +151,8 @@ TEST_P(ModelSave, save) {
     // create vector containing correct regex expressions for the LIBSVM model file header
     std::vector<std::string> regex_patterns;
     regex_patterns.emplace_back("svm_type c_svc");
-    regex_patterns.emplace_back(fmt::format("kernel_type {}", model.svm_parameter().kernel_type));
-    switch (model.svm_parameter().kernel_type) {
+    regex_patterns.emplace_back(fmt::format("kernel_type {}", model.get_params().kernel_type));
+    switch (model.get_params().kernel_type) {
         case plssvm::kernel_function_type::linear:
             break;
         case plssvm::kernel_function_type::polynomial:

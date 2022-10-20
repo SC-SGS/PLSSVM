@@ -257,7 +257,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
     EXPECT_EQ(model.num_features(), 4);
     plssvm::parameter params{};
     params.gamma = 1.0 / 4.0;
-    EXPECT_EQ(model.svm_parameter(), params);
+    EXPECT_EQ(model.get_params(), params);
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first);
     EXPECT_FLOATING_POINT_EQ(model.rho(), solve_system_of_linear_equations_fake_return<real_type>.second);
@@ -291,7 +291,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     EXPECT_EQ(model.num_features(), 4);
     plssvm::parameter params{};
     params.gamma = 1.0 / 4.0;
-    EXPECT_EQ(model.svm_parameter(), params);
+    EXPECT_EQ(model.get_params(), params);
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first);
     EXPECT_FLOATING_POINT_EQ(model.rho(), solve_system_of_linear_equations_fake_return<real_type>.second);
