@@ -22,12 +22,17 @@
 #include <set>            // std::set
 #include <string>         // std::string
 #include <tuple>          // std::forward_as_tuple, std::get
-#include <type_traits>    // std::remove_cv_t, std::remove_reference_t, std::underlying_type_t, std::is_enum_v
+#include <type_traits>    // std::remove_cv_t, std::remove_reference_t, std::underlying_type_t, std::is_enum_v, std::enable_if_t
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
 
 namespace plssvm::detail {
+
+/**
+ * @brief A shorthand macro for the `std::enable_if_t` type trait.
+ */
+#define PLSSVM_REQUIRES(...) std::enable_if_t<__VA_ARGS__, bool> = true
 
 /**
  * @brief Type-dependent expression that always evaluates to `false`.

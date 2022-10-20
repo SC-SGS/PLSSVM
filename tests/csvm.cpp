@@ -79,7 +79,7 @@ TEST(BaseCSVM, construct_linear_from_named_parameters) {
     params.cost = 2.0;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::cost = params.cost };
+    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = params.cost };
 
     // check whether the parameters have been set correctly
     EXPECT_TRUE(csvm.get_params().equivalent(params));
@@ -89,7 +89,7 @@ TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.1, 1.2, 0.001 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{ plssvm::kernel_function_type::polynomial,
+    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
                           plssvm::degree = params.degree,
                           plssvm::gamma = params.gamma,
                           plssvm::coef0 = params.coef0,
@@ -106,7 +106,7 @@ TEST(BaseCSVM, construct_rbf_from_named_parameters) {
     params.cost = 10.0;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{ plssvm::kernel_function_type::rbf,
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
                           plssvm::gamma = params.gamma,
                           plssvm::cost = params.cost };
 
@@ -137,7 +137,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     // start capture of std::clog
     this->start_capturing();
 
-    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::degree = 2 };
+    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
 
     // end capture of std::clog
     this->end_capturing();
@@ -148,7 +148,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     // start capture of std::clog
     this->start_capturing();
 
-    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
+    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
 
     // end capture of std::clog
     this->end_capturing();
@@ -159,7 +159,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     // start capture of std::clog
     this->start_capturing();
 
-    const mock_csvm csvm{ plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
+    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
 
     // end capture of std::clog
     this->end_capturing();
@@ -169,13 +169,13 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
 
 TEST(BaseCSVM, construct_from_named_parameters_invalid_kernel_type) {
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid kernel type must throw
-    EXPECT_THROW_WHAT(mock_csvm{ static_cast<plssvm::kernel_function_type>(3) },
+    EXPECT_THROW_WHAT(mock_csvm{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(3) },
                       plssvm::invalid_parameter_exception,
                       "Invalid kernel function 3 given!");
 }
 TEST(BaseCSVM, construct_from_named_parameters_invalid_gamma) {
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
-    EXPECT_THROW_WHAT((mock_csvm{ plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 }),
+    EXPECT_THROW_WHAT((mock_csvm{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 }),
                       plssvm::invalid_parameter_exception,
                       "gamma must be greater than 0.0, but is -1!");
 }

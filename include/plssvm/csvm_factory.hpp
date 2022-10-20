@@ -55,234 +55,127 @@ namespace plssvm {
 namespace detail {
 
 /**
- * @brief Create a new C-SVM using the @p backend type and @p target platform forwarding all additional parameters to the respective C-SVM constructors.
- * @tparam Args the type of the potential additional parameter
+ * @brief Construct a C-SVM using the parameters @p args.
+ * @details The default case, no special parameters for the C-SVMs are necessary.
+ * @tparam csvm_type the type of the C-SVM
+ * @tparam Args the types of the parameters to initialize the C-SVM
+ * @param[in] args the parameters used to initialize the C-SVM
+ * @return the C-SVM (`[[nodiscard]]`)
+ */
+template <typename csvm_type, typename... Args>
+[[nodiscard]] std::unique_ptr<csvm> make_csvm_default_impl([[maybe_unused]] Args &&...args) {
+    // test whether the backend is available
+    if constexpr (csvm_backend_exists_v<csvm_type>) {
+        // test whether the backend can be constructed with the provided parameter
+        if constexpr (std::is_constructible_v<csvm_type, Args...>) {
+            return std::make_unique<csvm_type>(std::forward<Args>(args)...);
+        } else {
+            throw unsupported_backend_exception{ fmt::format("Provided invalid (named) arguments for the {} backend!", plssvm::csvm_to_backend_type_v<csvm_type>) };
+        }
+    } else {
+        throw unsupported_backend_exception{ fmt::format("No {} backend available!", plssvm::csvm_to_backend_type_v<csvm_type>) };
+    }
+}
+/**
+ * @brief Construct a SYCL C-SVM using the parameters @p args.
+ * @details The special case for the SYCL backend to handle the SYCL specific parameters.
+ * @tparam Args the types of the parameters to initialize the SYCL C-SVM
+ * @param[in] args the parameters used to initialize the SYCL C-SVM
+ * @return the SYCL C-SVM (`[[nodiscard]]`)
+ */
+template <typename... Args>
+[[nodiscard]] std::unique_ptr<csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
+    // TODO: look at it
+    // test whether the SYCL backend is available
+    if constexpr (csvm_backend_exists_v<sycl::csvm>) {
+        if constexpr (std::is_constructible_v<sycl::csvm, Args...>) {
+            // check igor parameter
+            igor::parser parser{ args... };
+
+            // get the SYCL implementation type to use
+            sycl_generic::implementation_type impl_type = sycl_generic::implementation_type::automatic;
+            // check whether a specific SYCL implementation type has been requested
+            if constexpr (parser.has(sycl_implementation_type)) {
+                // compile time check: the value must have the correct type
+                static_assert(std::is_same_v<detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl_generic::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
+                impl_type = static_cast<sycl_generic::implementation_type>(parser(sycl_implementation_type));
+            }
+
+            switch (impl_type) {
+                case sycl_generic::implementation_type::automatic:
+                    return std::make_unique<sycl::csvm>(std::forward<Args>(args)...);
+                case sycl_generic::implementation_type::dpcpp:
+                    if constexpr (csvm_backend_exists_v<plssvm::dpcpp::csvm>) {
+                        return std::make_unique<dpcpp::csvm>(std::forward<Args>(args)...);
+                    } else {
+                        throw unsupported_backend_exception{ "No sycl backend available using DPC++!" };
+                    }
+
+                case sycl_generic::implementation_type::hipsycl:
+                    if constexpr (csvm_backend_exists_v<plssvm::hipsycl::csvm>) {
+                        return std::make_unique<hipsycl::csvm>(std::forward<Args>(args)...);
+                    } else {
+                        throw unsupported_backend_exception{ "No sycl backend available using hipSYCL!" };
+                    }
+            }
+        } else {
+            throw unsupported_backend_exception{ "Provided invalid (named) arguments for the sycl backend!" };
+        }
+    } else {
+        throw unsupported_backend_exception{ "No sycl backend available!" };
+    }
+}
+
+/**
+ * @brief Create a new C-SVM using the @p backend type and the additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
- * @param[in] target the target platform to target
- * @param[in] args the additional parameters passed on to the respective constructors
+ * @param[in] args the parameters used to initialize the respective C-SVM
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] std::unique_ptr<csvm> make_csvm_impl(const backend_type backend, const target_platform target, Args &&...args) {
+[[nodiscard]] std::unique_ptr<csvm> make_csvm_impl(const backend_type backend, Args &&...args) {
     switch (backend) {
         case backend_type::automatic:
-            return make_csvm_impl(determine_default_backend(), target, std::forward<Args>(args)...);
+            return make_csvm_impl(determine_default_backend(), std::forward<Args>(args)...);
         case backend_type::openmp:
-            if constexpr (csvm_backend_exists_v<plssvm::openmp::csvm>) {
-                return std::make_unique<openmp::csvm>(target, std::forward<Args>(args)...);
-            } else {
-                throw unsupported_backend_exception{ "No openmp backend available!" };
-            }
-
+            return make_csvm_default_impl<openmp::csvm>(std::forward<Args>(args)...);
         case backend_type::cuda:
-            if constexpr (csvm_backend_exists_v<plssvm::cuda::csvm>) {
-                return std::make_unique<cuda::csvm>(target, std::forward<Args>(args)...);
-            } else {
-                throw unsupported_backend_exception{ "No cuda backend available!" };
-            }
-
+            return make_csvm_default_impl<cuda::csvm>(std::forward<Args>(args)...);
         case backend_type::hip:
-            if constexpr (csvm_backend_exists_v<plssvm::hip::csvm>) {
-                return std::make_unique<hip::csvm>(target, std::forward<Args>(args)...);
-            } else {
-                throw unsupported_backend_exception{ "No hip backend available!" };
-            }
-
+            return make_csvm_default_impl<hip::csvm>(std::forward<Args>(args)...);
         case backend_type::opencl:
-            if constexpr (csvm_backend_exists_v<plssvm::opencl::csvm>) {
-                return std::make_unique<opencl::csvm>(target, std::forward<Args>(args)...);
-            } else {
-                throw unsupported_backend_exception{ "No opencl backend available!" };
-            }
-
+            return make_csvm_default_impl<opencl::csvm>(std::forward<Args>(args)...);
         case backend_type::sycl:
-            if constexpr (csvm_backend_exists_v<plssvm::sycl::csvm>) {  // TODO: look at it
-                // check igor parameter
-                igor::parser parser{ args... };
-
-                // get the SYCL implementation type to use
-                sycl_generic::implementation_type impl_type = sycl_generic::implementation_type::automatic;
-                // check whether a specific SYCL implementation type has been requested
-                if constexpr (parser.has(sycl_implementation_type)) {
-                    // compile time check: the value must have the correct type
-                    static_assert(std::is_same_v<detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl_generic::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
-                    impl_type = static_cast<sycl_generic::implementation_type>(parser(sycl_implementation_type));
-                }
-
-                switch (impl_type) {
-                    case sycl_generic::implementation_type::automatic:
-                        return std::make_unique<sycl::csvm>(target, std::forward<Args>(args)...);
-                    case sycl_generic::implementation_type::dpcpp:
-                        if constexpr (csvm_backend_exists_v<plssvm::dpcpp::csvm>) {
-                            return std::make_unique<dpcpp::csvm>(target, std::forward<Args>(args)...);
-                        } else {
-                            throw unsupported_backend_exception{ "No sycl backend available using DPC++!" };
-                        }
-
-                    case sycl_generic::implementation_type::hipsycl:
-                        if constexpr (csvm_backend_exists_v<plssvm::hipsycl::csvm>) {
-                            return std::make_unique<hipsycl::csvm>(target, std::forward<Args>(args)...);
-                        } else {
-                            throw unsupported_backend_exception{ "No sycl backend available using hipSYCL!" };
-                        }
-                }
-            } else {
-                throw unsupported_backend_exception{ "No sycl backend available!" };
-            }
+            return make_csvm_sycl_impl(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "Can't recognize backend !" };
 }
 
 }  // namespace detail
 
-/**
- * @brief Create a new C-SVM using the @p backend type, @p target platform, @p kernel type, and potential additional named parameter @p named_args.
- * @tparam Args the type of the potential named parameter
- * @param[in] backend the backend to use
- * @param[in] target the target platform to target
- * @param[in] kernel the kernel function to use
- * @param[in] named_args possible additional parameters (e.g., degree parameter for the polynomial kernel)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] std::unique_ptr<csvm> make_csvm(const backend_type backend, const target_platform target, const kernel_function_type kernel, Args &&...named_args) {
-    return detail::make_csvm_impl(backend, target, kernel, std::forward<Args>(named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the automatic backend type, @p target platform, @p kernel type, and potential additional named parameter @p named_args.
- * @tparam Args the type of the potential named parameter
- * @param[in] target the target platform to target
- * @param[in] kernel the kernel function to use
- * @param[in] named_args possible additional parameters (e.g., degree parameter for the polynomial kernel)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] std::unique_ptr<csvm> make_csvm(const target_platform target, const kernel_function_type kernel, Args &&...named_args) {
-    return make_csvm(backend_type::automatic, target, kernel, std::forward<Args>(named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the @p backend type, the automatic target platform, @p kernel type, and potential additional named parameter @p named_args.
- * @tparam Args the type of the potential named parameter
- * @param[in] backend the backend to use
- * @param[in] kernel the kernel function to use
- * @param[in] named_args possible additional parameters (e.g., degree parameter for the polynomial kernel)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] std::unique_ptr<csvm> make_csvm(const backend_type backend, const kernel_function_type kernel, Args &&...named_args) {
-    return make_csvm(backend, target_platform::automatic, kernel, std::forward<Args>(named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the automatic backend type, the automatic target platform, @p kernel type, and potential additional named parameter @p named_args.
- * @tparam Args the type of the potential named parameter
- * @param[in] kernel the kernel function to use
- * @param[in] named_args possible additional parameters (e.g., degree parameter for the polynomial kernel)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] std::unique_ptr<csvm> make_csvm(const kernel_function_type kernel, Args &&...named_args) {
-    return make_csvm(backend_type::automatic, target_platform::automatic, kernel, std::forward<Args>(named_args)...);
-}
+// TODO: investigate with
 
 /**
- * @brief Create a new C-SVM using the @p backend type, @p target platform, and @p params. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
+ * @brief Create a new C-SVM using the @p backend type, the automatic target platform, and additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
- * @param[in] target the target platform to target
- * @param[in] params the SVM parameters to use
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
+ * @param[in] args the parameters used to initialize the respective C-SVM
  * @return the C-SVM (`[[nodiscard]]`)
  */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, const target_platform target, parameter params, Args &&...optional_named_args) {
-    return detail::make_csvm_impl(backend, target, params, std::forward<Args>(optional_named_args)...);
+template <typename... Args>
+[[nodiscard]] std::unique_ptr<csvm> make_csvm(const backend_type backend, Args &&...args) {
+    return detail::make_csvm_impl(backend, std::forward<Args>(args)...);
 }
 /**
- * @brief Create a new C-SVM using the automatic backend type, @p target platform, and @p params. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] target the target platform to target
- * @param[in] params the SVM parameters to use
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
+ * @brief Create a new C-SVM using the automatic backend type, the automatic target platform, and the additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVM
+ * @param[in] args the parameters used to initialize the respective C-SVM
  * @return the C-SVM (`[[nodiscard]]`)
  */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const target_platform target, parameter params, Args &&...optional_named_args) {
-    return make_csvm(backend_type::automatic, target, params, std::forward<Args>(optional_named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the @p backend type, the automatic target platform, and the default SVM parameter. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] backend the backend to use
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args &&...optional_named_args) {
-    return make_csvm(backend, target_platform::automatic, parameter{}, std::forward<Args>(optional_named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the automatic backend type, the automatic target platform, and the default SVM parameter. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args &&...optional_named_args) {
-    return make_csvm(backend_type::automatic, std::forward<Args>(optional_named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the @p backend type, the automatic target platform, and @p params. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] backend the backend to use
- * @param[in] params the SVM parameters to use
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, parameter params, Args &&...optional_named_args) {
-    return make_csvm(backend, target_platform::automatic, params, std::forward<Args>(optional_named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the automatic backend type, the automatic target platform, and @p params. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] params the SVM parameters to use
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(parameter params, Args &&...optional_named_args) {
-    return make_csvm(backend_type::automatic, params, std::forward<Args>(optional_named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the @p backend type, @p target platform, and the default SVM parameters. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] backend the backend to use
- * @param[in] target the target platform to target
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, const target_platform target, Args &&...optional_named_args) {
-    return make_csvm(backend, target, parameter{}, std::forward<Args>(optional_named_args)...);
-}
-/**
- * @brief Create a new C-SVM using the automatic backend type, @p target platform, and the default SVM parameters. Additional parameters via @p optional_named_args.
- * @details Currently only SYCL backend specific named parameters are allowed in @p optional_named_args (throws a compiler error otherwise).
- * @tparam Args the type of the potential additional parameters
- * @param[in] target the target platform to target
- * @param[in] optional_named_args possible additional parameters (e.g., the SYCL implementation type if and only if the @p backend is SYCL)
- * @return the C-SVM (`[[nodiscard]]`)
- */
-template <typename... Args, std::enable_if_t<!igor::has_unnamed_arguments<Args...>(), bool> = true>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const target_platform target, Args &&...optional_named_args) {
-    return make_csvm(backend_type::automatic, target, std::forward<Args>(optional_named_args)...);
+template <typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args &&...args) {
+    return detail::make_csvm_impl(backend_type::automatic, std::forward<Args>(args)...);
 }
 
 }  // namespace plssvm

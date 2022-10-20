@@ -58,9 +58,6 @@ int main(int argc, char *argv[]) {
             } else {
                 svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
             }
-//            const auto svm = plssvm::make_csvm(cmd_params.backend, cmd_params.target, cmd_params.csvm_params,
-//                                               plssvm::sycl_implementation_type = cmd_params.sycl_implementation_type,
-//                                               plssvm::sycl_kernel_invocation_type = cmd_params.sycl_kernel_invocation_type);
             // learn model
             if (cmd_parser.max_iter.is_default()) {
                 cmd_parser.max_iter = data.num_data_points();

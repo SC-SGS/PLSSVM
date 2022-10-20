@@ -18,11 +18,11 @@
 #include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init, plssvm::is_default_value_v
 #include "plssvm/detail/operators.hpp"       // plssvm::operators::sign
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, remove_cvref_t, always_false_v, unreachable}
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, remove_cvref_t, always_false_v, unreachable}, PLSSVM_REQUIRES
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/model.hpp"                  // plssvm::model
-#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::get_value_from_named_parameter
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 
 #include "fmt/core.h"     // fmt::format, fmt::print
 #include "igor/igor.hpp"  // igor::parser
@@ -59,7 +59,7 @@ class csvm {
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args>
-    explicit csvm(kernel_function_type kernel, Args &&...named_args);
+    explicit csvm(Args &&...named_args);
 
     /**
      * @brief Default copy-constructor since a virtual destructor has been declared.
@@ -90,7 +90,7 @@ class csvm {
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
-    template <typename... Args>
+    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
     void set_params(Args &&...named_args);
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -190,12 +190,12 @@ inline csvm::csvm(parameter params) :
 }
 
 template <typename... Args>
-csvm::csvm(kernel_function_type kernel, Args &&...named_args) :
-    params_{ plssvm::kernel_type = kernel, std::forward<Args>(named_args)... } {
+csvm::csvm(Args &&...named_args) :
+    params_{ std::forward<Args>(named_args)... } {
     this->sanity_check_parameter();
 }
 
-template <typename... Args>
+template <typename... Args, std::enable_if_t<detail::has_only_parameter_named_args_v<Args...>, bool>>
 void csvm::set_params(Args &&...named_args) {
     static_assert(sizeof...(Args) > 0, "At least one named parameter mus be given when calling set_params()!");
 

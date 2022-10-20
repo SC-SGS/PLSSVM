@@ -38,8 +38,8 @@ class mock_csvm final : public plssvm::csvm {
         this->fake_functions();
     }
     template <typename... Args>
-    explicit mock_csvm(const plssvm::kernel_function_type kernel, Args &&...args) :
-        plssvm::csvm{ kernel, std::forward<Args>(args)... } {
+    explicit mock_csvm(Args &&...args) :
+        plssvm::csvm{ std::forward<Args>(args)... } {
         this->fake_functions();
     }
 

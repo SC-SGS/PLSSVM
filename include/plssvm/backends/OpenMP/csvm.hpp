@@ -14,8 +14,9 @@
 #pragma once
 
 #include "plssvm/csvm.hpp"                   // plssvm::csvm
+#include "plssvm/detail/utility.hpp"         // PLSSVM_REQUIRES
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 #include <type_traits>  // std::true_type
@@ -59,9 +60,9 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    template <typename... Args>
-    csvm(const target_platform target, const kernel_function_type kernel, Args &&...named_args) :
-        ::plssvm::csvm{ kernel, std::forward<Args>(named_args)... } {
+    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvm(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         this->init(target);
     }
     /**
@@ -72,9 +73,9 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    template <typename... Args>
-    explicit csvm(const kernel_function_type kernel, Args &&...named_args) :
-        ::plssvm::csvm{ kernel, std::forward<Args>(named_args)... } {
+    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvm(Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         // the default target is the automatic one
         this->init(plssvm::target_platform::automatic);
     }
