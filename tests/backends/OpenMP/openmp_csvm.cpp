@@ -96,18 +96,26 @@ TEST_F(OpenMPCSVM, construct_target_kernel_type_and_named_args) {
 
 template <typename T>
 class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, util::real_type_gtest, naming::real_type_to_name);
 
-TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_diagonal) {
-    generic::test_solve_system_of_linear_equations<typename TypeParam::real_type, mock_openmp_csvm>(TypeParam::kernel_type);
+TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_trivial) {
+    SCOPED_TRACE("plssvm::kernel_function_type::linear");
+    generic::test_solve_system_of_linear_equations<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::linear);
+    SCOPED_TRACE("plssvm::kernel_function_type::polynomial");
+    generic::test_solve_system_of_linear_equations<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::polynomial);
+    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
 }
 
 template <typename T>
 class OpenMPCSVMPredictValues : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMPredictValues, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+TYPED_TEST_SUITE(OpenMPCSVMPredictValues, util::real_type_gtest, naming::real_type_to_name);
 
 TYPED_TEST(OpenMPCSVMPredictValues, predict_values) {
-    generic::test_predict_values<typename TypeParam::real_type, mock_openmp_csvm>(TypeParam::kernel_type);
+    SCOPED_TRACE("plssvm::kernel_function_type::linear");
+    generic::test_predict_values<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::linear);
+    SCOPED_TRACE("plssvm::kernel_function_type::polynomial");
+    generic::test_predict_values<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::polynomial);
+    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
 }
 
 template <typename T>
