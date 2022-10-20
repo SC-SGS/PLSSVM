@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/cmd/parameter_train.hpp"
+#include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
@@ -31,7 +31,7 @@
 
 namespace plssvm::detail::cmd {
 
-parameter_train::parameter_train(int argc, char **argv) {
+parser_train::parser_train(int argc, char **argv) {
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
@@ -188,7 +188,7 @@ parameter_train::parameter_train(int argc, char **argv) {
     }
 }
 
-std::ostream &operator<<(std::ostream &out, const parameter_train &params) {
+std::ostream &operator<<(std::ostream &out, const parser_train &params) {
     out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel_type, kernel_function_type_to_math_string(params.csvm_params.kernel_type));
     switch (params.csvm_params.kernel_type) {
         case kernel_function_type::linear:

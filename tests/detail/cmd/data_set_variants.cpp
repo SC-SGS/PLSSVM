@@ -10,9 +10,9 @@
 
 #include "plssvm/detail/cmd/data_set_variants.hpp"
 
-#include "plssvm/detail/cmd/parameter_predict.hpp"  // plssvm::detail::cmd::parameter_predict
-#include "plssvm/detail/cmd/parameter_scale.hpp"    // plssvm::detail::cmd::parameter_scale
-#include "plssvm/detail/cmd/parameter_train.hpp"    // plssvm::detail::cmd::parameter_train
+#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
 #include "../../naming.hpp"         // naming::pretty_print_data_set_factory
 #include "../../types_to_test.hpp"  // util::instantiate_template_file
@@ -43,10 +43,10 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}{} data.libsvm.model", cmd_params, this->filename));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(params);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
 TEST_P(DataSetFactory, data_set_factory_scale) {
@@ -62,10 +62,10 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
     this->CreateCMDArgs(fmt::format("./plssvm-scale {}{}", cmd_params, this->filename));
     // create parameter object
-    const plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(params);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
 TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
@@ -81,10 +81,10 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
     this->CreateCMDArgs(fmt::format("./plssvm-scale -r {} {}{}", PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt", cmd_params, this->filename));
     // create parameter object
-    const plssvm::detail::cmd::parameter_scale params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(params);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
 TEST_P(DataSetFactory, data_set_factory_train) {
@@ -100,10 +100,10 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
     this->CreateCMDArgs(fmt::format("./plssvm-train {}{}", cmd_params, this->filename));
     // create parameter object
-    const plssvm::detail::cmd::parameter_train params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(params);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
 // clang-format off

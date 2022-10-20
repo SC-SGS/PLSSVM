@@ -8,7 +8,7 @@
  * @brief Tests for the predict cmd parameter parsing.
  */
 
-#include "plssvm/detail/cmd/parameter_predict.hpp"
+#include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
@@ -32,24 +32,24 @@ TEST_F(ParameterPredict, minimal) {
     this->CreateCMDArgs(fmt::format("./plssvm-predict data.libsvm data.libsvm.model"));
 
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // check parsed values
-    EXPECT_EQ(params.backend, plssvm::backend_type::automatic);
-    EXPECT_EQ(params.target, plssvm::target_platform::automatic);
-    EXPECT_EQ(params.sycl_implementation_type, plssvm::sycl_generic::implementation_type::automatic);
-    EXPECT_FALSE(params.strings_as_labels);
-    EXPECT_FALSE(params.float_as_real_type);
-    EXPECT_EQ(params.input_filename, "data.libsvm");
-    EXPECT_EQ(params.model_filename, "data.libsvm.model");
-    EXPECT_EQ(params.predict_filename, "data.libsvm.predict");
+    EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
+    EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
+    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl_generic::implementation_type::automatic);
+    EXPECT_FALSE(parser.strings_as_labels);
+    EXPECT_FALSE(parser.float_as_real_type);
+    EXPECT_EQ(parser.input_filename, "data.libsvm");
+    EXPECT_EQ(parser.model_filename, "data.libsvm.model");
+    EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
 }
 TEST_F(ParameterPredict, minimal_output) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict data.libsvm data.libsvm.model"));
 
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // test output string
     const std::string correct =
@@ -58,7 +58,7 @@ TEST_F(ParameterPredict, minimal_output) {
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
         "output file (prediction): 'data.libsvm.predict'\n";
-    EXPECT_EQ(util::convert_to_string(params), correct);
+    EXPECT_EQ(util::convert_to_string(parser), correct);
 }
 
 TEST_F(ParameterPredict, all_arguments) {
@@ -70,21 +70,21 @@ TEST_F(ParameterPredict, all_arguments) {
     this->CreateCMDArgs(fmt::format("./plssvm-predict --backend cuda --target_platform gpu_nvidia --use_strings_as_labels --use_float_as_real_type {}data.libsvm data.libsvm.model data.libsvm.predict", sycl_specific_flag));
 
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // check parsed values
-    EXPECT_EQ(params.backend, plssvm::backend_type::cuda);
-    EXPECT_EQ(params.target, plssvm::target_platform::gpu_nvidia);
+    EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
+    EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(params.sycl_implementation_type, plssvm::sycl_generic::implementation_type::dpcpp);
+    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl_generic::implementation_type::dpcpp);
 #else
-    EXPECT_EQ(params.sycl_implementation_type, plssvm::sycl_generic::implementation_type::automatic);
+    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl_generic::implementation_type::automatic);
 #endif
-    EXPECT_TRUE(params.strings_as_labels);
-    EXPECT_TRUE(params.float_as_real_type);
-    EXPECT_EQ(params.input_filename, "data.libsvm");
-    EXPECT_EQ(params.model_filename, "data.libsvm.model");
-    EXPECT_EQ(params.predict_filename, "data.libsvm.predict");
+    EXPECT_TRUE(parser.strings_as_labels);
+    EXPECT_TRUE(parser.float_as_real_type);
+    EXPECT_EQ(parser.input_filename, "data.libsvm");
+    EXPECT_EQ(parser.model_filename, "data.libsvm.model");
+    EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
 }
 TEST_F(ParameterPredict, all_arguments_output) {
     // create artificial command line arguments in test fixture
@@ -95,7 +95,7 @@ TEST_F(ParameterPredict, all_arguments_output) {
     this->CreateCMDArgs(fmt::format("./plssvm-predict --backend cuda --target_platform gpu_nvidia --use_strings_as_labels --use_float_as_real_type {}data.libsvm data.libsvm.model data.libsvm.predict", sycl_specific_flag));
 
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // test output string
     const std::string correct =
@@ -104,7 +104,7 @@ TEST_F(ParameterPredict, all_arguments_output) {
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
         "output file (prediction): 'data.libsvm.predict'\n";
-    EXPECT_EQ(util::convert_to_string(params), correct);
+    EXPECT_EQ(util::convert_to_string(parser), correct);
 }
 
 // test all command line parameter separately
@@ -116,9 +116,9 @@ TEST_P(ParameterPredictBackend, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {} {} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.backend, backend);
+    EXPECT_EQ(parser.backend, backend);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictBackend, ::testing::Combine(
@@ -135,9 +135,9 @@ TEST_P(ParameterPredictTargetPlatform, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {} {} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.target, target_platform);
+    EXPECT_EQ(parser.target, target_platform);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictTargetPlatform, ::testing::Combine(
@@ -156,9 +156,9 @@ TEST_P(ParameterPredictSYCLImplementation, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.sycl_implementation_type, sycl_implementation_type);
+    EXPECT_EQ(parser.sycl_implementation_type, sycl_implementation_type);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictSYCLImplementation, ::testing::Combine(
@@ -176,9 +176,9 @@ TEST_P(ParameterPredictUseStringsAsLabels, parsing) {
     fmt::print("./plssvm-predict {} {} data.libsvm data.libsvm.model", flag, value);
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.strings_as_labels, value);
+    EXPECT_EQ(parser.strings_as_labels, value);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseStringsAsLabels, ::testing::Combine(
@@ -193,9 +193,9 @@ TEST_P(ParameterPredictUseFloatAsRealType, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm data.libsvm.model", flag, value));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(params.float_as_real_type, value);
+    EXPECT_EQ(parser.float_as_real_type, value);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictUseFloatAsRealType, ::testing::Combine(
@@ -210,7 +210,7 @@ TEST_P(ParameterPredictQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {} data.libsvm data.libsvm.model", flag));
     // create parameter object
-    const plssvm::detail::cmd::parameter_predict params{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
     EXPECT_EQ(plssvm::verbose, flag.empty());
 }
@@ -222,7 +222,7 @@ TEST_P(ParameterPredictHelp, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}", flag));
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParameterPredictHelp>);
 
@@ -232,39 +232,39 @@ TEST_P(ParameterPredictVersion, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}", flag));
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 INSTANTIATE_TEST_SUITE_P(ParameterPredict, ParameterPredictVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParameterPredictHelp>);
 
 TEST_F(ParameterPredict, no_positional_argument) {
     this->CreateCMDArgs("./plssvm-predict");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }),
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::StartsWith("Error missing test file!"));
 }
 TEST_F(ParameterPredict, single_positional_argument) {
     this->CreateCMDArgs("./plssvm-predict data.libsvm");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }),
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::StartsWith("Error missing model file!"));
 }
 TEST_F(ParameterPredict, too_many_positional_arguments) {
     this->CreateCMDArgs("./plssvm-predict p1 p2 p3 p4");
-    EXPECT_EXIT((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }),
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::HasSubstr(R"(Only up to three positional options may be given, but 1 ("p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParameterPredictDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ 0, nullptr }),
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ 0, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 TEST_F(ParameterPredictDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ 1, nullptr }),
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ 1, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
 TEST_F(ParameterPredictDeathTest, unrecognized_option) {
     this->CreateCMDArgs("./plssvm-predict --foo bar");
-    EXPECT_DEATH((plssvm::detail::cmd::parameter_predict{ this->argc, this->argv }), "");
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }), "");
 }

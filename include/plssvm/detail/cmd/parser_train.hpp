@@ -9,8 +9,8 @@
  * @brief Implements a class encapsulating all necessary parameters for training the C-SVM possibly provided through command line arguments.
  */
 
-#ifndef PLSSVM_DETAIL_CMD_PARAMETER_TRAIN_HPP_
-#define PLSSVM_DETAIL_CMD_PARAMETER_TRAIN_HPP_
+#ifndef PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_
+#define PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_
 #pragma once
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
@@ -33,14 +33,14 @@ using namespace ::plssvm::sycl_generic;
 /**
  * @brief Class for encapsulating all necessary parameters for training possibly provided through command line arguments.
  */
-class parameter_train {
+class parser_train {
   public:
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly. Parse the given data file.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parameter_train(int argc, char **argv);
+    parser_train(int argc, char **argv);
 
     /// Other base C-SVM parameters
     plssvm::parameter csvm_params{};
@@ -77,8 +77,8 @@ class parameter_train {
  * @param[in] params the parameters
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, const parameter_train &params);
+std::ostream &operator<<(std::ostream &out, const parser_train &params);
 
 }  // namespace plssvm::detail::cmd
 
-#endif  // PLSSVM_DETAIL_CMD_PARAMETER_TRAIN_HPP_
+#endif  // PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_

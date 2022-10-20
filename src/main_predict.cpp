@@ -23,23 +23,22 @@
 #include <variant>    // std::visit
 #include <vector>     // std::vector
 
-
 int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
-        plssvm::detail::cmd::parameter_predict params{ argc, argv };
+        plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
 
         // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-        if (params.backend != plssvm::backend_type::sycl && params.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
+        if (cmd_parser.backend != plssvm::backend_type::sycl && cmd_parser.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                      "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                     params.sycl_implementation_type)
+                                     cmd_parser.sycl_implementation_type)
                       << std::endl;
         }
 
         // output used parameter
         if (plssvm::verbose) {
-            fmt::print("\ntask: prediction\n{}\n\n", params);
+            fmt::print("\ntask: prediction\n{}\n\n", cmd_parser);
         }
 
         // create data set
@@ -48,9 +47,9 @@ int main(int argc, char *argv[]) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create model
-            plssvm::model<real_type, label_type> model{ params.model_filename };
+            plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
             // create default csvm
-            auto svm = plssvm::make_csvm(params.backend, params.target);
+            auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
             {
                 std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-                fmt::ostream out = fmt::output_file(params.predict_filename);
+                fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
                 out.print("{}", fmt::join(predicted_labels, "\n"));
 
                 std::chrono::time_point end_time = std::chrono::steady_clock::now();
@@ -66,7 +65,7 @@ int main(int argc, char *argv[]) {
                     fmt::print("Write {} predictions in {} to the file '{}'.\n",
                                predicted_labels.size(),
                                std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                               params.predict_filename);
+                               cmd_parser.predict_filename);
                 }
             }
 
@@ -86,9 +85,7 @@ int main(int argc, char *argv[]) {
                            correct,
                            data.num_data_points());
             }
-
-        }, plssvm::detail::cmd::data_set_factory(params));
-
+        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;

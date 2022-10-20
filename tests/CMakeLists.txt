@@ -95,9 +95,9 @@ set(PLSSVM_BASE_TEST_NAME Base_tests)
 # list all necessary sources
 set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parameter_predict.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parameter_scale.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parameter_train.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp

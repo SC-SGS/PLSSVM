@@ -9,8 +9,8 @@
  * @brief Implements a class encapsulating all necessary parameters for predicting using the C-SVM possibly provided through command line arguments.
  */
 
-#ifndef PLSSVM_DETAIL_CMD_PARAMETER_PREDICT_HPP_
-#define PLSSVM_DETAIL_CMD_PARAMETER_PREDICT_HPP_
+#ifndef PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_
+#define PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_
 #pragma once
 
 #include "plssvm/backend_types.hpp"                      // plssvm::backend_type
@@ -29,14 +29,14 @@ using namespace ::plssvm::sycl_generic;
 /**
  * @brief Class for encapsulating all necessary parameters for prediction normally provided through command line arguments.
  */
-class parameter_predict {
+class parser_predict {
   public:
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parameter_predict(int argc, char **argv);
+    parser_predict(int argc, char **argv);
 
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, CUDA, HIP, OpenCL, or SYCL.
     backend_type backend{ backend_type::automatic };
@@ -65,8 +65,8 @@ class parameter_predict {
  * @param[in] params the parameters
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, const parameter_predict &params);
+std::ostream &operator<<(std::ostream &out, const parser_predict &params);
 
 }  // namespace plssvm::detail::cmd
 
-#endif  // PLSSVM_DETAIL_CMD_PARAMETER_PREDICT_HPP_
+#endif  // PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_

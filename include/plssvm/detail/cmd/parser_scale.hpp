@@ -9,8 +9,8 @@
  * @brief Implements a class encapsulating all necessary parameters for scaling a data set possibly provided through command line arguments.
  */
 
-#ifndef PLSSVM_DETAIL_CMD_PARAMETER_SCALE_HPP_
-#define PLSSVM_DETAIL_CMD_PARAMETER_SCALE_HPP_
+#ifndef PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_
+#define PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_
 #pragma once
 
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
@@ -23,14 +23,14 @@ namespace plssvm::detail::cmd {
 /**
  * @brief Class for encapsulating all necessary parameters for scaling a data set possibly provided through command line arguments.
  */
-class parameter_scale {
+class parser_scale {
   public:
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the scale parameters accordingly.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parameter_scale(int argc, char **argv);
+    parser_scale(int argc, char **argv);
 
     /// The lower bound of the scaled data values.
     double lower{ -1 };
@@ -60,8 +60,8 @@ class parameter_scale {
  * @param[in] params the parameters
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, const parameter_scale &params);
+std::ostream &operator<<(std::ostream &out, const parser_scale &params);
 
 }  // namespace plssvm::detail::cmd
 
-#endif  // PLSSVM_DETAIL_CMD_PARAMETER_SCALE_HPP_
+#endif  // PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_

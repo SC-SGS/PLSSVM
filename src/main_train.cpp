@@ -19,48 +19,53 @@
 #include <iostream>   // std::cerr, std::clog, std::endl
 #include <variant>    // std::visit
 
-
 int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
-        plssvm::detail::cmd::parameter_train params{ argc, argv };
+        plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
 
         // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
-        if (params.backend != plssvm::backend_type::sycl && params.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
+        if (cmd_parser.backend != plssvm::backend_type::sycl && cmd_parser.sycl_kernel_invocation_type != plssvm::sycl::kernel_invocation_type::automatic) {
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                      "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
-                                     params.sycl_kernel_invocation_type)
+                                     cmd_parser.sycl_kernel_invocation_type)
                       << std::endl;
         }
         // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-        if (params.backend != plssvm::backend_type::sycl && params.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
+        if (cmd_parser.backend != plssvm::backend_type::sycl && cmd_parser.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                      "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                     params.sycl_implementation_type)
+                                     cmd_parser.sycl_implementation_type)
                       << std::endl;
         }
 
         // output used parameter
         if (plssvm::verbose) {
-            fmt::print("\ntask: training\n{}\n\n", params);
+            fmt::print("\ntask: training\n{}\n\n", cmd_parser);
         }
 
         // create data set
-        std::visit([&](auto&& data){
+        std::visit([&](auto &&data) {
             using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create SVM
-            const auto svm = plssvm::make_csvm(params.backend, params.target, params.csvm_params);//, //TODO
-                                                          //plssvm::sycl_implementation_type = params.sycl_implementation_type,
-                                                          //plssvm::sycl_kernel_invocation_type = params.sycl_kernel_invocation_type);
+            std::unique_ptr<plssvm::csvm> svm;
+            if (cmd_parser.backend == plssvm::backend_type::sycl) {
+                svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params,
+                                        plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type,
+                                        plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
+            } else {
+                svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
+            }
+//            const auto svm = plssvm::make_csvm(cmd_params.backend, cmd_params.target, cmd_params.csvm_params,
+//                                               plssvm::sycl_implementation_type = cmd_params.sycl_implementation_type,
+//                                               plssvm::sycl_kernel_invocation_type = cmd_params.sycl_kernel_invocation_type);
             // learn model
-            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = params.epsilon, plssvm::max_iter = params.max_iter);
+            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter);
             // save model to file
-            model.save(params.model_filename);
-
-        }, plssvm::detail::cmd::data_set_factory(params));
-
+            model.save(cmd_parser.model_filename);
+        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;

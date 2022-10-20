@@ -10,7 +10,7 @@
 
 #include "plssvm/core.hpp"
 
-#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/core.h"  // fmt::print, fmt::format
 
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
@@ -18,29 +18,26 @@
 #include <utility>    // std::pair
 #include <variant>    // std::visit
 
-
 int main(int argc, char *argv[]) {
     try {
         // create default parameters
-        plssvm::detail::cmd::parameter_scale params{ argc, argv };
+        plssvm::detail::cmd::parser_scale cmd_parser{ argc, argv };
 
         // output used parameter
         if (plssvm::verbose) {
-            fmt::print("\ntask: scaling\n{}\n", params);
+            fmt::print("\ntask: scaling\n{}\n", cmd_parser);
         }
 
         // create data set and scale
-        std::visit([&](auto&& data){
+        std::visit([&](auto &&data) {
             // write scaled data to output file
-            data.save(params.scaled_filename, params.format);
+            data.save(cmd_parser.scaled_filename, cmd_parser.format);
 
             // save scaling parameters if requested
-            if (!params.save_filename.empty() && data.scaling_factors().has_value()) {
-                data.scaling_factors()->get().save(params.save_filename);
+            if (!cmd_parser.save_filename.empty() && data.scaling_factors().has_value()) {
+                data.scaling_factors()->get().save(cmd_parser.save_filename);
             }
-
-        }, plssvm::detail::cmd::data_set_factory(params));
-
+        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;

@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/cmd/parameter_scale.hpp"
+#include "plssvm/detail/cmd/parser_scale.hpp"
 
 #include "plssvm/constants.hpp"        // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
@@ -23,7 +23,7 @@
 
 namespace plssvm::detail::cmd {
 
-parameter_scale::parameter_scale(int argc, char **argv) {
+parser_scale::parser_scale(int argc, char **argv) {
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
@@ -144,7 +144,7 @@ parameter_scale::parameter_scale(int argc, char **argv) {
     }
 }
 
-std::ostream &operator<<(std::ostream &out, const parameter_scale &params) {
+std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
     return out << fmt::format(
                "lower: {}\n"
                "upper: {}\n"

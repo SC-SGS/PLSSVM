@@ -279,7 +279,7 @@ template <typename T>
                        detail::escape_string(std::get<2>(param_info.param)));
 }
 
-// detail/cmd/parameter_*.cpp -> parameter_predict, parameter_scale, parameter_train
+// detail/cmd/parameter_*.cpp -> parser_predict, parser_scale, parser_train
 /**
  * @brief Generate a test case name using a command line flag and value combination.
  * @details Replaces all "-" in a flag with "" and escapes the value string using `naming::detail::escape_string()`.
