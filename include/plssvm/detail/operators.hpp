@@ -145,8 +145,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-#pragma omp simd reduction(+ \
-                           : val)
+    #pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
