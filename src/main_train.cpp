@@ -62,6 +62,9 @@ int main(int argc, char *argv[]) {
 //                                               plssvm::sycl_implementation_type = cmd_params.sycl_implementation_type,
 //                                               plssvm::sycl_kernel_invocation_type = cmd_params.sycl_kernel_invocation_type);
             // learn model
+            if (cmd_parser.max_iter.is_default()) {
+                cmd_parser.max_iter = data.num_data_points();
+            }
             const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter);
             // save model to file
             model.save(cmd_parser.model_filename);
