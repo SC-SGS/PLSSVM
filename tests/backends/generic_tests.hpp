@@ -30,6 +30,8 @@
 
 namespace generic {
 
+// TODO: add non-trivial test
+
 template <typename real_type, typename mock_csvm_type>
 inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_type kernel) {
     // create parameter struct
