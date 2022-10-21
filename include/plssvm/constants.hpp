@@ -15,7 +15,7 @@
 
 namespace plssvm {
 
-// TODO: something better than an unprotected global variable?
+// TODO: replace with logging library?!
 
 /// Per default use a verbose output of all information.
 constexpr bool verbose_default = true;

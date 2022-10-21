@@ -110,7 +110,7 @@ struct parameter;
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const detail::parameter<real_type> &params); // TODO:
+[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const detail::parameter<real_type> &params);
 
 }  // namespace plssvm
 
