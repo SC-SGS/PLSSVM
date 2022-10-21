@@ -52,9 +52,8 @@ class csvm : public ::plssvm::csvm {
     explicit csvm(target_platform target, parameter params = {});
 
     /**
-     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform with the @p kernel type and the optionally provided @p named_args.
+     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
-     * @param[in] kernel the kernel type used in the C-SVM
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::csvm::csvm() exceptions
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
@@ -66,8 +65,7 @@ class csvm : public ::plssvm::csvm {
         this->init(target);
     }
     /**
-     * @brief Construct a new C-SVM using the OpenMP backend with the @p kernel type and the optionally provided @p named_args.
-     * @param[in] kernel the kernel type used in the C-SVM
+     * @brief Construct a new C-SVM using the OpenMP backend and the optionally provided @p named_args.
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::csvm::csvm() exceptions
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu

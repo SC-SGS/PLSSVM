@@ -9,7 +9,7 @@ set(PLSSVM_CUDA_TEST_NAME CUDA_tests)
 
 # list all necessary sources
 set(PLSSVM_CUDA_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cuda_csvm.cpp
 )
 
 # add test executable

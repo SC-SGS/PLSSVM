@@ -11,7 +11,7 @@ endif()
 
 # create CUDA tests if the CUDA backend is available
 if(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
-#    add_subdirectory(CUDA)
+    add_subdirectory(CUDA)
 endif()
 
 # create HIP tests if the HIP backend is available
