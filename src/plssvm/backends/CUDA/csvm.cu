@@ -46,7 +46,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (plssvm::verbose) {
-        fmt::print("Using CUDA as backend.\n");
+        std::cout << fmt::format("Using CUDA as backend.") << std::endl;
     }
 
     // get all available devices wrt the requested target platform
