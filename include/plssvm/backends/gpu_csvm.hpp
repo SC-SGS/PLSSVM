@@ -533,7 +533,7 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
 template <template <typename> typename device_ptr_t, typename queue_t>
 std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type kernel, const std::size_t num_features) const noexcept {
     // polynomial and rbf kernel currently only support single GPU execution
-    if (kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) {
+    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
         std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
         return 1;
     }
