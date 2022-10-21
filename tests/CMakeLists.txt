@@ -159,15 +159,23 @@ endif()
 
 
 # add test for help messages
-add_test(NAME ParserTrain/executable_help COMMAND plssvm-train --help)
-add_test(NAME ParserPredict/executable_help COMMAND plssvm-predict --help)
-add_test(NAME ParserScale/executable_help COMMAND plssvm-scale --help)
+add_test(NAME MainTrain/executable_help COMMAND plssvm-train --help)
+add_test(NAME MainPredict/executable_help COMMAND plssvm-predict --help)
+add_test(NAME MainScale/executable_help COMMAND plssvm-scale --help)
 
 # add test for version messages
-add_test(NAME ParserTrain/executable_version COMMAND plssvm-train --version)
-add_test(NAME ParserPredict/executable_version COMMAND plssvm-predict --version)
-add_test(NAME ParserScale/executable_version COMMAND plssvm-scale --version)
+add_test(NAME MainTrain/executable_version COMMAND plssvm-train --version)
+add_test(NAME MainPredict/executable_version COMMAND plssvm-predict --version)
+add_test(NAME MainScale/executable_version COMMAND plssvm-scale --version)
 
+# add minimal run test
+add_test(NAME MainTrain/executable_minimal COMMAND plssvm-train "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
+add_test(NAME MainPredict/executable_minimal COMMAND plssvm-predict
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"          # test file
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_linear.libsvm.model"  # model file
+        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                     # predict file (result)
+        )
+add_test(NAME MainScale/executable_minimal COMMAND plssvm-scale "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
 
 # add test as coverage dependency
 if(TARGET coverage)
