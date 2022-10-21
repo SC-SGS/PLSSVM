@@ -159,14 +159,14 @@ endif()
 
 
 # add test for help messages
-add_test(NAME ParameterTrain/plssvm-train_help COMMAND plssvm-train --help)
-add_test(NAME ParameterPredict/plssvm-predict_help COMMAND plssvm-predict --help)
-add_test(NAME ParameterScale/plssvm-scale_help COMMAND plssvm-scale --help)
+add_test(NAME ParserTrain/executable_help COMMAND plssvm-train --help)
+add_test(NAME ParserPredict/executable_help COMMAND plssvm-predict --help)
+add_test(NAME ParserScale/executable_help COMMAND plssvm-scale --help)
 
 # add test for version messages
-add_test(NAME ParameterTrain/plssvm-train_version COMMAND plssvm-train --version)
-add_test(NAME ParameterPredict/plssvm-predict_version COMMAND plssvm-predict --version)
-add_test(NAME ParameterScale/plssvm-scale_version COMMAND plssvm-scale --version)
+add_test(NAME ParserTrain/executable_version COMMAND plssvm-train --version)
+add_test(NAME ParserPredict/executable_version COMMAND plssvm-predict --version)
+add_test(NAME ParserScale/executable_version COMMAND plssvm-scale --version)
 
 
 # add test as coverage dependency
