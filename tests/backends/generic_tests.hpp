@@ -57,7 +57,7 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
     // | Q  1 |  *  | a |  =  | y |
     // | 1  0 |     | b |     | 0 |
     // with Q = A^TA
-    const auto &[calculated_x, calculated_rho] = svm.solve_system_of_linear_equations(params, A, rhs, real_type{ 0.00001 }, 5);
+    const auto &[calculated_x, calculated_rho] = svm.solve_system_of_linear_equations(params, A, rhs, real_type{ 0.00001 }, A.front().size());
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated_x, rhs);
