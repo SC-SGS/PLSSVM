@@ -291,11 +291,6 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
 
-    // initialize w to an empty vector if necessary
-    if (model.w_ == nullptr) {
-        model.w_ = std::make_shared<std::vector<real_type>>();
-    }
-
     // predict values
     const std::vector<real_type> predicted_values = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, model.rho_, *model.w_, data.data());
 
