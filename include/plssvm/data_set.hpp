@@ -203,7 +203,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}  // TODO: necessary to init X_ptr_ to empty vector?
+        X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}
 
     /**
      * @brief Create the mapping between the provided labels and the internally used mapped values, i.e., { -1, 1 }.
