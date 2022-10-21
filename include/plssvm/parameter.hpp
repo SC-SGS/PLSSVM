@@ -50,12 +50,19 @@ IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
 
 namespace detail {
 
+/**
+ * @brief Trait to check whether @p Args only contains named-parameter.
+ * @tparam Args the types to check
+ */
 template <typename... Args>
 constexpr bool has_only_named_args_v = !igor::has_unnamed_arguments<Args...>();
 
+/**
+ * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct.
+ * @tparam Args the types to check
+ */
 template <typename... Args>
 constexpr bool has_only_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost);
-// TODO: constexpr bool only_parameter_named_args = has_only_named_args_v<Args...> && !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost);
 
 /**
  * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
