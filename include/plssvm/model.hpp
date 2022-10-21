@@ -130,9 +130,9 @@ class model {
 
     /**
      * @brief A vector used to speedup the prediction in case of the linear kernel function.
-     * @details Must be initialized to an empty vector instead of nullptr!
+     * @details Will be reused be subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      */
-    std::shared_ptr<std::vector<real_type>> w_{ std::make_shared<std::vector<real_type>>() };  // TODO: really necessary?
+    std::shared_ptr<std::vector<real_type>> w_{ nullptr };
 };
 
 template <typename T, typename U>
