@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - documentation
   pull_request:
     branches:
       - main
