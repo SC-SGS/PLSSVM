@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['set_5fdevice_262',['set_device',['../namespaceplssvm_1_1hip_1_1detail.html#af040fc1252b7b6b8d07d8deaaa3d41e4',1,'plssvm::hip::detail::set_device()'],['../namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3',1,'plssvm::cuda::detail::set_device()']]],
+  ['set_5fdevice_262',['set_device',['../namespaceplssvm_1_1cuda_1_1detail.html#a30e0f355508ac40b44e98dee923c85f3',1,'plssvm::cuda::detail::set_device()'],['../namespaceplssvm_1_1hip_1_1detail.html#af040fc1252b7b6b8d07d8deaaa3d41e4',1,'plssvm::hip::detail::set_device()']]],
   ['set_5fkernel_5fargs_263',['set_kernel_args',['../namespaceplssvm_1_1opencl_1_1detail.html#a282a05f06dd0c74a8e4f1e992918dfb8',1,'plssvm::opencl::detail']]],
   ['setup_5fdata_5fon_5fdevice_264',['setup_data_on_device',['../classplssvm_1_1detail_1_1gpu__csvm.html#a12d1da26312c544c5983df069c84ffce',1,'plssvm::detail::gpu_csvm::setup_data_on_device()'],['../classplssvm_1_1openmp_1_1csvm.html#a9b43d6fec66633275f311189ef6c1903',1,'plssvm::openmp::csvm::setup_data_on_device()'],['../classplssvm_1_1csvm.html#a13b722b41440a22ec00bf00ac1461e3b',1,'plssvm::csvm::setup_data_on_device()']]],
   ['sha256_265',['sha256',['../classplssvm_1_1detail_1_1sha256.html',1,'plssvm::detail']]],
@@ -9,12 +9,12 @@ var searchData=
   ['size_268',['size',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a3ed88a98a3970ff26e29c755b2fc6b4b',1,'plssvm::detail::gpu_device_ptr']]],
   ['size_5f_269',['size_',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a5e51dce2c925f41b106c502204fc5a1e',1,'plssvm::detail::gpu_device_ptr']]],
   ['size_5ftype_270',['size_type',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#af266554a3b83db23fc0863ddbca49164',1,'plssvm::detail::gpu_device_ptr']]],
-  ['solver_5fcg_271',['solver_CG',['../classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a',1,'plssvm::csvm::solver_CG()'],['../classplssvm_1_1openmp_1_1csvm.html#a1180045e6a4c5bf65259984ce541c216',1,'plssvm::openmp::csvm::solver_CG()'],['../classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0',1,'plssvm::detail::gpu_csvm::solver_CG()']]],
+  ['solver_5fcg_271',['solver_CG',['../classplssvm_1_1detail_1_1gpu__csvm.html#a8b805d4e6b987d5bf3dbe7fc5fc648a0',1,'plssvm::detail::gpu_csvm::solver_CG()'],['../classplssvm_1_1openmp_1_1csvm.html#a1180045e6a4c5bf65259984ce541c216',1,'plssvm::openmp::csvm::solver_CG()'],['../classplssvm_1_1csvm.html#a5bf3d98bc9011725e27016a0b404bf7a',1,'plssvm::csvm::solver_CG()']]],
   ['source_5flocation_272',['source_location',['../classplssvm_1_1source__location.html',1,'plssvm']]],
   ['source_5flocation_2ehpp_273',['source_location.hpp',['../source__location_8hpp.html',1,'']]],
   ['split_274',['split',['../namespaceplssvm_1_1detail.html#a0d276ad3270ad72807432ba9b672c4b6',1,'plssvm::detail']]],
   ['squared_5feuclidean_5fdist_275',['squared_euclidean_dist',['../namespaceplssvm_1_1operators.html#a9f7f472e06e60dbf27aadfa8309af120',1,'plssvm::operators']]],
-  ['starts_5fwith_276',['starts_with',['../namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338',1,'plssvm::detail::starts_with(std::string_view str, char c) noexcept'],['../namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0',1,'plssvm::detail::starts_with(std::string_view str, std::string_view sv) noexcept']]],
+  ['starts_5fwith_276',['starts_with',['../namespaceplssvm_1_1detail.html#a0193c3037a7a004e13394d680f4048d0',1,'plssvm::detail::starts_with(std::string_view str, std::string_view sv) noexcept'],['../namespaceplssvm_1_1detail.html#ae2b482fd3bcf02cac7308cfddd74e338',1,'plssvm::detail::starts_with(std::string_view str, char c) noexcept']]],
   ['string_277',['string',['../namespaceplssvm_1_1version.html#acbfea9704390b4a4d348dd4ee3557700',1,'plssvm::version']]],
   ['string_5fconversion_2ehpp_278',['string_conversion.hpp',['../string__conversion_8hpp.html',1,'']]],
   ['string_5futility_2ehpp_279',['string_utility.hpp',['../string__utility_8hpp.html',1,'']]],
@@ -26,8 +26,8 @@ var searchData=
   ['svm_5fkernel_2ehpp_285',['svm_kernel.hpp',['../svm__kernel_8hpp.html',1,'']]],
   ['svm_5fkernel_5fhierarchical_2ehpp_286',['svm_kernel_hierarchical.hpp',['../svm__kernel__hierarchical_8hpp.html',1,'']]],
   ['svm_5fkernel_5fnd_5frange_2ehpp_287',['svm_kernel_nd_range.hpp',['../svm__kernel__nd__range_8hpp.html',1,'']]],
-  ['swap_288',['swap',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a00c394738cdf6dcdd46ebb49c196e538',1,'plssvm::detail::gpu_device_ptr::swap()'],['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a7969a54dea1ffa4b22000e4e53d50cf5',1,'plssvm::detail::gpu_device_ptr::swap(gpu_device_ptr &amp;other) noexcept']]],
+  ['swap_288',['swap',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a7969a54dea1ffa4b22000e4e53d50cf5',1,'plssvm::detail::gpu_device_ptr::swap(gpu_device_ptr &amp;other) noexcept'],['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a00c394738cdf6dcdd46ebb49c196e538',1,'plssvm::detail::gpu_device_ptr::swap()']]],
   ['sycl_289',['sycl',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70af12ff9623f29ed44f5ff085b556f74f6',1,'plssvm']]],
-  ['sycl_5fimplementation_5ftype_290',['sycl_implementation_type',['../classplssvm_1_1parameter__train.html#aac70755fb791daeef214669042ff4f39',1,'plssvm::parameter_train::sycl_implementation_type()'],['../classplssvm_1_1parameter__predict.html#aac70755fb791daeef214669042ff4f39',1,'plssvm::parameter_predict::sycl_implementation_type()'],['../classplssvm_1_1parameter.html#aac70755fb791daeef214669042ff4f39',1,'plssvm::parameter::sycl_implementation_type()']]],
-  ['sycl_5fkernel_5finvocation_5ftype_291',['sycl_kernel_invocation_type',['../classplssvm_1_1parameter__train.html#a6a3542887a62b89b454e9cc1d2697273',1,'plssvm::parameter_train::sycl_kernel_invocation_type()'],['../classplssvm_1_1parameter.html#a6a3542887a62b89b454e9cc1d2697273',1,'plssvm::parameter::sycl_kernel_invocation_type()']]]
+  ['sycl_5fimplementation_5ftype_290',['sycl_implementation_type',['../classplssvm_1_1parameter.html#aac70755fb791daeef214669042ff4f39',1,'plssvm::parameter']]],
+  ['sycl_5fkernel_5finvocation_5ftype_291',['sycl_kernel_invocation_type',['../classplssvm_1_1parameter.html#a6a3542887a62b89b454e9cc1d2697273',1,'plssvm::parameter']]]
 ];

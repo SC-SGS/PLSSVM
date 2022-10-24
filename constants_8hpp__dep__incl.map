@@ -8,6 +8,6 @@
 <area shape="rect" id="node7" href="$svm__kernel_8hip_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the HIP backend." alt="" coords="1065,80,1250,121"/>
 <area shape="rect" id="node8" href="$predict__kernel_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the SYCL backend." alt="" coords="1274,80,1459,121"/>
 <area shape="rect" id="node9" href="$SYCL_2q__kernel_8hpp.html" title="Defines SYCL functions for generating the q vector." alt="" coords="1483,80,1669,121"/>
-<area shape="rect" id="node10" href="$svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="1693,80,1923,121"/>
-<area shape="rect" id="node11" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="1947,80,2194,121"/>
+<area shape="rect" id="node10" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="1693,80,1939,121"/>
+<area shape="rect" id="node11" href="$svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="1963,80,2194,121"/>
 </map>

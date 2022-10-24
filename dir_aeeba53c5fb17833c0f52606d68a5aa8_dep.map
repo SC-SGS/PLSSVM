@@ -1,8 +1,8 @@
 <map id="include/plssvm/backends/SYCL" name="include/plssvm/backends/SYCL">
 <area shape="rect" id="node2" href="dir_a961c9b5cb5cee6ff9544a511347539d.html" title="detail" alt="" coords="37,159,109,207"/>
-<area shape="rect" id="edge2-headlabel" href="dir_000009_000014.html" title="3" alt="" coords="77,133,86,148"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000009_000014.html" title="3" alt="" coords="77,133,86,148"/>
 <area shape="rect" id="node3" href="dir_49c4dd39876428c8a6f54100703c6d1b.html" title="exceptions" alt="" coords="136,255,229,303"/>
-<area shape="rect" id="edge1-headlabel" href="dir_000009_000011.html" title="2" alt="" coords="167,227,176,242"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000009_000011.html" title="2" alt="" coords="167,227,176,242"/>
 <area shape="rect" id="node4" href="dir_f7dfbd464fc0226e1f04610e75575ed1.html" title="detail" alt="" coords="184,159,256,207"/>
 <area shape="rect" id="edge3-headlabel" href="dir_000009_000015.html" title="1" alt="" coords="169,134,178,149"/>
 <area shape="rect" id="edge4-headlabel" href="dir_000015_000011.html" title="1" alt="" coords="202,234,211,248"/>

@@ -1,4 +1,5 @@
 <map id="plssvm::opencl::detail::device_ptr&lt; T &gt;" name="plssvm::opencl::detail::device_ptr&lt; T &gt;">
-<area shape="rect" id="node1" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="19,109,185,151"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,199,61"/>
+<area shape="rect" id="node1" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="19,215,185,256"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,109,199,165"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1opencl_1_1detail_1_1command__queue.html" title="RAII wrapper class around a cl_command_queue." alt="" coords="19,5,185,47"/>
 </map>

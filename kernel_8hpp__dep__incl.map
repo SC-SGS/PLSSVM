@@ -1,7 +1,7 @@
 <map id="include/plssvm/backends/OpenCL/detail/kernel.hpp" name="include/plssvm/backends/OpenCL/detail/kernel.hpp">
-<area shape="rect" id="node1" title="Defines a very small RAII wrapper around a cl_kernel." alt="" coords="199,5,389,47"/>
-<area shape="rect" id="node2" href="$command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="135,95,322,151"/>
-<area shape="rect" id="node5" href="$backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="267,206,452,247"/>
-<area shape="rect" id="node3" href="$OpenCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a OpenCL device pointer." alt="" coords="5,199,191,255"/>
-<area shape="rect" id="node4" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="71,303,256,344"/>
+<area shape="rect" id="node1" title="Defines a very small RAII wrapper around a cl_kernel." alt="" coords="173,5,362,47"/>
+<area shape="rect" id="node2" href="$command__queue_8hpp.html" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="109,95,295,151"/>
+<area shape="rect" id="node5" href="$backends_2OpenCL_2detail_2utility_8hpp.html" title="Utility functions specific to the OpenCL backend." alt="" coords="280,206,465,247"/>
+<area shape="rect" id="node3" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="5,303,191,344"/>
+<area shape="rect" id="node4" href="$OpenCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a OpenCL device pointer." alt="" coords="71,199,256,255"/>
 </map>
