@@ -31,59 +31,59 @@
 class CUDACSVM : public ::testing::Test, private util::redirect_output {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
-//TEST_F(CUDACSVM, construct_parameter) {
-//#if defined(PLSSVM_HAS_CPU_TARGET)
-//   // the automatic target platform must always be available
-//   EXPECT_NO_THROW(plssvm::openmp::csvm{ plssvm::parameter{} });
-//#else
-//   EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::parameter{} }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-//#endif
-//}
-//TEST_F(CUDACSVM, construct_target_and_parameter) {
-//   // create parameter struct
-//   const plssvm::parameter params{};
-//
-//#if defined(PLSSVM_HAS_CPU_TARGET)
-//   // only automatic or cpu are allowed as target platform for the OpenMP backend
-//   EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }));
-//   EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }));
-//#else
-//   EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-//   EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-//#endif
-//
-//   // all other target platforms must throw
-//   EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_nvidia, params }),
-//                     plssvm::openmp::backend_exception,
-//                     "Invalid target platform 'gpu_nvidia' for the OpenMP backend!");
-//   EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_amd, params }),
-//                     plssvm::openmp::backend_exception,
-//                     "Invalid target platform 'gpu_amd' for the OpenMP backend!");
-//   EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_intel, params }),
-//                     plssvm::openmp::backend_exception,
-//                     "Invalid target platform 'gpu_intel' for the OpenMP backend!");
-//}
-//TEST_F(OpenMPCSVM, construct_target_and_named_args) {
-//#if defined(PLSSVM_HAS_CPU_TARGET)
-//   // only automatic or cpu are allowed as target platform for the OpenMP backend
-//   EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
-//   EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }));
-//#else
-//   EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-//   EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-//#endif
-//
-//   // all other target platforms must throw
-//   EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }),
-//                     plssvm::openmp::backend_exception,
-//                     "Invalid target platform 'gpu_nvidia' for the OpenMP backend!");
-//   EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
-//                     plssvm::openmp::backend_exception,
-//                     "Invalid target platform 'gpu_amd' for the OpenMP backend!");
-//   EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
-//                     plssvm::openmp::backend_exception,
-//                     "Invalid target platform 'gpu_intel' for the OpenMP backend!");
-//}
+TEST_F(CUDACSVM, construct_parameter) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+   // the automatic target platform must always be available
+   EXPECT_NO_THROW(plssvm::cuda::csvm{ plssvm::parameter{} });
+#else
+   EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::parameter{} }, plssvm::cuda::backend_exception, "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+TEST_F(CUDACSVM, construct_target_and_parameter) {
+   // create parameter struct
+   const plssvm::parameter params{};
+
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+   // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
+   EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::automatic, params }));
+   EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params }));
+#else
+   EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::automatic, params }, plssvm::cuda::backend_exception, "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+   EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params }, plssvm::cuda::backend_exception, "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+
+   // all other target platforms must throw
+   EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::cpu, params }),
+                     plssvm::cuda::backend_exception,
+                     "Invalid target platform 'cpu' for the CUDA backend!");
+   EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_amd, params }),
+                     plssvm::cuda::backend_exception,
+                     "Invalid target platform 'gpu_amd' for the CUDA backend!");
+   EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_intel, params }),
+                     plssvm::cuda::backend_exception,
+                     "Invalid target platform 'gpu_intel' for the CUDA backend!");
+}
+TEST_F(CUDACSVM, construct_target_and_named_args) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+   // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
+   EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+   EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
+#else
+   EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }, plssvm::cuda::backend_exception, "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+   EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }, plssvm::cuda::backend_exception, "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+
+   // all other target platforms must throw
+   EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
+                     plssvm::cuda::backend_exception,
+                     "Invalid target platform 'cpu' for the CUDA backend!");
+   EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
+                     plssvm::cuda::backend_exception,
+                     "Invalid target platform 'gpu_amd' for the CUDA backend!");
+   EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
+                     plssvm::cuda::backend_exception,
+                     "Invalid target platform 'gpu_intel' for the CUDA backend!");
+}
 
 template <typename T>
 class CUDACSVMSolveSystemOfLinearEquations : public CUDACSVM {};

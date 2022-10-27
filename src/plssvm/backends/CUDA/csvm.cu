@@ -41,7 +41,7 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target) };
     } else {
 #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-        throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+        throw backend_exception{ "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
 #endif
     }
 
