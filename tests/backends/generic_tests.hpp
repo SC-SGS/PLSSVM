@@ -338,13 +338,15 @@ inline void test_setup_data_on_device() {
     const std::size_t num_devices = svm.select_num_used_devices(plssvm::kernel_function_type::linear, input.front().size());
     const std::size_t num_data_points = input.size();
     const std::size_t num_features = input.front().size();
-    auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(input, num_data_points - 1, num_features, boundary_size, num_devices);
+
+    // perform setup
+    auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(input, num_data_points - 1, num_features - 1, boundary_size, num_devices);
 
     // check returned values
     // the feature ranges
     ASSERT_EQ(feature_ranges.size(), num_devices + 1);
     for (std::size_t i = 0; i <= num_devices; ++i) {
-        EXPECT_EQ(feature_ranges[i], i * num_features / num_devices);
+        EXPECT_EQ(feature_ranges[i], i * (num_features - 1) / num_devices);
     }
 
     const std::vector<real_type> transformed_data = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, input, boundary_size, num_data_points - 1);
@@ -374,6 +376,38 @@ inline void test_setup_data_on_device() {
         ground_truth.resize(ground_truth.size() + boundary_size, real_type{ 0.0 });
         EXPECT_FLOATING_POINT_VECTOR_EQ(data_last, ground_truth);
     }
+}
+
+template <typename real_type, typename mock_csvm_type>
+inline void test_setup_data_on_device_death_test() {
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    const mock_csvm_type svm{};
+
+    // empty data is not allowed
+    EXPECT_DEATH(std::ignore = svm.setup_data_on_device(std::vector<std::vector<real_type>>{}, 1, 1, 0, 1), "The data must not be empty!");
+    // empty features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.setup_data_on_device(std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, 1, 1, 0, 1)), "The data points must contain at least one feature!");
+    // all data points must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.setup_data_on_device(std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, 1, 1, 0, 1)),
+                 "All data points must have the same number of features!");
+
+    const std::vector<std::vector<real_type>> data = {
+        { real_type{ 1.0 }, real_type{ 2.0 } },
+        { real_type{ 3.0 }, real_type{ 4.0 } }
+    };
+
+    // at least one data point must be copied to the device
+    EXPECT_DEATH(std::ignore = svm.setup_data_on_device(data, 0, 1, 0, 1), "At least one data point must be copied to the device!");
+    // at most two data point can be copied to the device
+    EXPECT_DEATH(std::ignore = svm.setup_data_on_device(data, 3, 1, 0, 1), "Can't copy more data points to the device than are present!: 3 <= 2");
+    // at least one feature must be copied to the device
+    EXPECT_DEATH(std::ignore = svm.setup_data_on_device(data, 1, 0, 0, 1), "At least one feature must be copied to the device!");
+    // at most two features can be copied to the device
+    EXPECT_DEATH(std::ignore = svm.setup_data_on_device(data, 1, 3, 0, 1), "Can't copy more features to the device than are present!: 3 <= 2");
+
+    // can't use more than the available device
+    EXPECT_DEATH(std::ignore = svm.setup_data_on_device(data, 1, 1, 0, svm.num_available_devices() + 1),
+                 fmt::format("Can't use more devices than are available!: {} <= {}", svm.num_available_devices() + 1, svm.num_available_devices()));
 }
 
 template <typename real_type, typename csvm_type>

@@ -109,14 +109,14 @@ class gpu_csvm : public ::plssvm::csvm {
      * @details Distributed the data evenly across all devices, adds padding data points, and transforms the data layout to SoA.
      * @tparam real_type the type of the data points (either `float` or `double`)
      * @param[in] data the data that should be copied to the device(s)
-     * @param[in] num_data_points the number of data points that should be copied to the device
-     * @param[in] num_features the number of features in the data set
+     * @param[in] num_data_points_to_setup the number of data points that should be copied to the device
+     * @param[in] num_features_to_setup the number of features in the data set
      * @param[in] boundary_size the size of the padding boundary
      * @param[in] num_used_devices the number of devices to distribute the data across
      * @return a tuple: [pointers to the main data distributed across the devices, pointers to the last data point of the data set distributed across the devices, the feature ranges a specific device is responsible for] (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, std::size_t num_data_points, std::size_t num_features, std::size_t boundary_size, std::size_t num_used_devices) const;
+    [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, std::size_t num_data_points_to_setup, std::size_t num_features_to_setup, std::size_t boundary_size, std::size_t num_used_devices) const;
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
      * @tparam real_type the type of the data points (either `float` or `double`)
@@ -258,23 +258,32 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 std::tuple<std::vector<device_ptr_t<real_type>>, std::vector<device_ptr_t<real_type>>, std::vector<std::size_t>>
 gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vector<real_type>> &data,
-                                                      const std::size_t num_data_points,
-                                                      const std::size_t num_features,
+                                                      const std::size_t num_data_points_to_setup,
+                                                      const std::size_t num_features_to_setup,
                                                       const std::size_t boundary_size,
                                                       const std::size_t num_used_devices) const {
+    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
+    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<real_type> &data_point) { return data_point.size() == data.front().size(); }), "All data points must have the same number of features!");
+    PLSSVM_ASSERT(num_data_points_to_setup > 0, "At least one data point must be copied to the device!");
+    PLSSVM_ASSERT(num_data_points_to_setup <= data.size(), "Can't copy more data points to the device than are present!: {} <= {}", num_data_points_to_setup, data.size());
+    PLSSVM_ASSERT(num_features_to_setup > 0, "At least one feature must be copied to the device!");
+    PLSSVM_ASSERT(num_features_to_setup <= data.front().size(), "Can't copy more features to the device than are present!: {} <= {}", num_features_to_setup, data.front().size());
+    PLSSVM_ASSERT(num_used_devices <= devices_.size(), "Can't use more devices than are available!: {} <= {}", num_used_devices, devices_.size());
+
     // calculate the number of features per device
     std::vector<std::size_t> feature_ranges(num_used_devices + 1);
     for (typename std::vector<queue_type>::size_type device = 0; device <= num_used_devices; ++device) {
-        feature_ranges[device] = device * num_features / num_used_devices;
+        feature_ranges[device] = device * num_features_to_setup / num_used_devices;
     }
 
     // transform 2D to 1D SoA data
-    const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::soa, data, boundary_size, num_data_points);
+    const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::soa, data, boundary_size, num_data_points_to_setup);
 
     std::vector<device_ptr_type<real_type>> data_last_d(num_used_devices);
     std::vector<device_ptr_type<real_type>> data_d(num_used_devices);
 
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points, boundary_size, num_features)
+#pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points_to_setup, boundary_size, num_features_to_setup)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         const std::size_t num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
 
@@ -283,9 +292,9 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vec
         data_last_d[device].memset(0);
         data_last_d[device].memcpy_to_device(data.back().data() + feature_ranges[device], 0, num_features_in_range);
 
-        const std::size_t device_data_size = num_features_in_range * (num_data_points + boundary_size);
+        const std::size_t device_data_size = num_features_in_range * (num_data_points_to_setup + boundary_size);
         data_d[device] = device_ptr_type<real_type>{ device_data_size, devices_[device] };
-        data_d[device].memcpy_to_device(transformed_data.data() + feature_ranges[device] * (num_data_points + boundary_size), 0, device_data_size);
+        data_d[device].memcpy_to_device(transformed_data.data() + feature_ranges[device] * (num_data_points_to_setup + boundary_size), 0, device_data_size);
     }
 
     return std::make_tuple(std::move(data_d), std::move(data_last_d), std::move(feature_ranges));

@@ -174,6 +174,14 @@ TYPED_TEST(CUDACSVMSetupDataOnDevice, setup_data_on_device) {
    generic::test_setup_data_on_device<TypeParam, mock_cuda_csvm>();
 }
 
+template <typename T>
+class CUDACSVMSetupDataOnDeviceDeathTest : public CUDACSVMSetupDataOnDevice<T> {};
+TYPED_TEST_SUITE(CUDACSVMSetupDataOnDeviceDeathTest, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(CUDACSVMSetupDataOnDeviceDeathTest, sanity_checks) {
+    generic::test_setup_data_on_device_death_test<TypeParam, mock_cuda_csvm>();
+}
+
 
 template <typename T>
 class CUDACSVMPredictAndScore : public CUDACSVM {};
