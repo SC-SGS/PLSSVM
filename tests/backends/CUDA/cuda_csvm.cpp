@@ -85,6 +85,10 @@ TEST_F(CUDACSVM, construct_target_and_named_args) {
                      "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
 
+TEST_F(CUDACSVM, num_available_devices) {
+    generic::test_num_available_devices();
+}
+
 template <typename T>
 class CUDACSVMSolveSystemOfLinearEquations : public CUDACSVM {};
 TYPED_TEST_SUITE(CUDACSVMSolveSystemOfLinearEquations, util::real_type_gtest, naming::real_type_to_name);

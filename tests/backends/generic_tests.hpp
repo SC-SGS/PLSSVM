@@ -408,4 +408,14 @@ inline void test_score(const plssvm::kernel_function_type kernel) {
     EXPECT_EQ(calculated, real_type{ 1.0 });
 }
 
+template <typename mock_csvm_type>
+inline void test_num_available_devices() {
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::devices_ is protected
+    const mock_csvm_type svm{};
+
+    // test the number of available devices
+    ASSERT_EQ(svm.num_available_devices(), svm.devices_.size());
+    EXPECT_GE(svm.num_available_devices(), 1);
+}
+
 }  // namespace generic
