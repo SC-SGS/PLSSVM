@@ -227,6 +227,8 @@ inline void test_run_device_kernel(const plssvm::kernel_function_type kernel_typ
 
 template <typename real_type, typename mock_csvm_type>
 inline void test_device_reduction() {
+    using namespace plssvm::operators;
+
     using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
     using queue_type = typename mock_csvm_type::queue_type;
 
@@ -246,17 +248,26 @@ inline void test_device_reduction() {
     svm.device_reduction(data_d, calculated);
 
     // check the calculated result for correctness
-    using namespace plssvm::operators;
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(data * static_cast<real_type>(svm.devices_.size()), calculated);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, data * static_cast<real_type>(svm.devices_.size()));
 
+    // check if the values have been correctly promoted back onto the device(s)
+    for (std::size_t device = 0; device < svm.devices_.size(); ++device) {
+        std::vector<real_type> device_data(data.size());
+        data_d[device].memcpy_to_host(device_data);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data * static_cast<real_type>(svm.devices_.size()));
+    }
+
+    //
     // test reduction of a single device
     data_d.resize(1);
     calculated.assign(data.size(), real_type{ 0.0 });
     svm.device_reduction(data_d, calculated);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(data, calculated);  // TODO: order?!
-    // TODO: test redistribution to devices
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, data);
+    std::vector<real_type> device_data(data.size());
+    data_d.front().memcpy_to_host(device_data);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data);
 }
 
 template <typename real_type, typename mock_csvm_type>
