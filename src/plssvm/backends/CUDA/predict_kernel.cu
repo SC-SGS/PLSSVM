@@ -36,7 +36,7 @@ __global__ void device_kernel_predict_poly(real_type *out_d, const real_type *da
     real_type temp{ 0.0 };
     if (predict_point_index < num_predict_points) {
         for (kernel_index_type feature_index = 0; feature_index < num_features; ++feature_index) {
-            if (data_point_index == num_data_points) {
+            if (data_point_index == num_data_points - 1) {
                 temp += data_last_d[feature_index] * points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
             } else {
                 temp += data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] * points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
@@ -60,7 +60,7 @@ __global__ void device_kernel_predict_radial(real_type *out_d, const real_type *
     real_type temp{ 0.0 };
     if (predict_point_index < num_predict_points) {
         for (kernel_index_type feature_index = 0; feature_index < num_features; ++feature_index) {
-            if (data_point_index == num_data_points) {
+            if (data_point_index == num_data_points - 1) {
                 temp += (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d[feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
             } else {
                 temp += (data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_d[data_point_index + (num_data_points - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points[predict_point_index + (num_predict_points + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
