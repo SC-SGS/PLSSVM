@@ -36,7 +36,9 @@ TEST_F(OpenMPCSVM, construct_parameter) {
     // the automatic target platform must always be available
     EXPECT_NO_THROW(plssvm::openmp::csvm{ plssvm::parameter{} });
 #else
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::parameter{} }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::parameter{} },
+                      plssvm::openmp::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
 TEST_F(OpenMPCSVM, construct_target_and_parameter) {
@@ -48,8 +50,12 @@ TEST_F(OpenMPCSVM, construct_target_and_parameter) {
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }));
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }));
 #else
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, params },
+                      plssvm::openmp::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, params },
+                      plssvm::openmp::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 
     // all other target platforms must throw
@@ -69,8 +75,12 @@ TEST_F(OpenMPCSVM, construct_target_and_named_args) {
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }));
 #else
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }, plssvm::openmp::backend_exception, "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 },
+                      plssvm::openmp::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 },
+                      plssvm::openmp::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 
     // all other target platforms must throw

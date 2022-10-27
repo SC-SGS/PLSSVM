@@ -42,7 +42,7 @@ void csvm::init(const target_platform target) {
     }
     // the CPU target must be available
 #if !defined(PLSSVM_HAS_CPU_TARGET)
-    throw backend_exception{ "Requested target platform cpu that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
+    throw backend_exception{ "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
 #endif
 
     // get the number of used OpenMP threads
