@@ -22,12 +22,19 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type = plssvm::cuda::csvm;
 
   public:
+    using base_type::device_ptr_type;
+
     // make protected member functions public
     using base_type::calculate_w;
     using base_type::generate_q;
     using base_type::predict_values;
     using base_type::run_device_kernel;
+    using base_type::setup_data_on_device;
+    using base_type::select_num_used_devices;
     using base_type::solve_system_of_linear_equations;
+    using base_type::device_reduction;
+
+    using base_type::devices_;
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_CUDA_CSVM_HPP_

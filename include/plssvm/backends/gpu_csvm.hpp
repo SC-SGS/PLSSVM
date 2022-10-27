@@ -81,6 +81,9 @@ class gpu_csvm : public ::plssvm::csvm {
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const;
 
+
+    [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
+
     /**
      * @copydoc plssvm::csvm::setup_data_on_device
      */
@@ -114,8 +117,9 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     template <typename real_type>
     void device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const;
-
-    [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
+    // TODO: order!
+    // TODO: assertions?!
+    // TODO: API :/
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //

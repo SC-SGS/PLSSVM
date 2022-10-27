@@ -109,89 +109,57 @@ TYPED_TEST(CUDACSVMPredictValues, predict_values) {
    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
 }
 
-//template <typename T>
-//class CUDACSVMGenerateQ : public OpenMPCSVM {};
-//TYPED_TEST_SUITE(CUDACSVMGenerateQ, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-//
-//TYPED_TEST(CUDACSVMGenerateQ, generate_q) {
-//   using real_type = typename TypeParam::real_type;
-//   const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
-//
-//   // create parameter struct
-//   const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
-//
-//   // create the data that should be used
-//   const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
-//
-//   // calculate correct q vector (ground truth)
-//   const std::vector<real_type> ground_truth = compare::generate_q(params, data.data());
-//
-//   // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::generate_q is protected
-//   const mock_openmp_csvm svm{};
-//
-//   // calculate the q vector using the OpenMP backend
-//   const std::vector<real_type> calculated = svm.generate_q(params, data.data());
-//
-//   // check the calculated result for correctness
-//   EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
-//}
-//
-//template <typename T>
-//class OpenMPCSVMCalculateW : public OpenMPCSVM {};
-//TYPED_TEST_SUITE(OpenMPCSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
-//
-//TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
-//   using real_type = TypeParam;
-//
-//   // create the data that should be used
-//   const plssvm::data_set<real_type> support_vectors{ PLSSVM_TEST_FILE };
-//   const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points());
-//
-//   // calculate the correct w vector
-//   const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);
-//
-//   // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-//   const mock_openmp_csvm svm{};
-//
-//   // calculate the w vector using the OpenMP backend
-//   const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
-//
-//   // check the calculated result for correctness
-//   EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
-//}
-//
-//template <typename T>
-//class OpenMPCSVMRunDeviceKernel : public OpenMPCSVM {};
-//TYPED_TEST_SUITE(OpenMPCSVMRunDeviceKernel, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-//
-//TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
-//   using real_type = typename TypeParam::real_type;
-//   const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
-//
-//   // create parameter struct
-//   const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
-//
-//   // create the data that should be used
-//   const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
-//   const std::vector<real_type> rhs = util::generate_random_vector<real_type>(data.num_data_points() - 1, real_type{ 1.0 }, real_type{ 2.0 });
-//   const std::vector<real_type> q = compare::generate_q(params, data.data());
-//   const real_type QA_cost = compare::kernel_function(params, data.data().back(), data.data().back()) + 1 / params.cost;
-//
-//   // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-//   const mock_openmp_csvm svm{};
-//
-//   for (const real_type add : { real_type{ -1.0 }, real_type{ 1.0 } }) {
-//       // calculate the correct device function result
-//       const std::vector<real_type> ground_truth = compare::device_kernel_function(params, data.data(), rhs, q, QA_cost, add);
-//
-//       // perform the kernel calculation on the device
-//       std::vector<real_type> calculated(data.num_data_points() - 1);
-//       svm.run_device_kernel(params, q, calculated, rhs, data.data(), QA_cost, add);
-//
-//       // check the calculated result for correctness
-//       EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
-//   }
-//}
+template <typename T>
+class CUDACSVMGenerateQ : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMGenerateQ, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+
+TYPED_TEST(CUDACSVMGenerateQ, generate_q) {
+   generic::test_generate_q<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
+}
+
+template <typename T>
+class CUDACSVMCalculateW : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(CUDACSVMCalculateW, calculate_w) {
+   generic::test_calculate_w<TypeParam, mock_cuda_csvm>();
+}
+
+template <typename T>
+class CUDACSVMRunDeviceKernel : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMRunDeviceKernel, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+
+TYPED_TEST(CUDACSVMRunDeviceKernel, run_device_kernel) {
+   generic::test_run_device_kernel<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
+}
+
+template <typename T>
+class CUDACSVMDeviceReduction : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMDeviceReduction, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(CUDACSVMDeviceReduction, device_reduction) {
+   generic::test_device_reduction<TypeParam, mock_cuda_csvm>();
+}
+
+template <typename T>
+class CUDACSVMSelectNumUsedDevices : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMSelectNumUsedDevices, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+
+TYPED_TEST(CUDACSVMSelectNumUsedDevices, select_num_used_devices) {
+   generic::test_select_num_used_devices<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
+}
+
+template <typename T>
+class CUDACSVMSetupDataOnDevice : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMSetupDataOnDevice, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(CUDACSVMSetupDataOnDevice, setup_data_on_device_minimal) {
+   generic::test_setup_data_on_device_minimal<TypeParam, mock_cuda_csvm>();
+}
+TYPED_TEST(CUDACSVMSetupDataOnDevice, setup_data_on_device) {
+   generic::test_setup_data_on_device<TypeParam, mock_cuda_csvm>();
+}
+
 
 template <typename T>
 class CUDACSVMPredictAndScore : public CUDACSVM {};
