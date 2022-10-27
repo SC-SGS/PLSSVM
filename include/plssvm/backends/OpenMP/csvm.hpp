@@ -128,6 +128,8 @@ class csvm : public ::plssvm::csvm {
 
     /**
      * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
      * @param[in] q the `q` vector used in the dimensional reduction
      * @param[out] ret the result vector
      * @param[in] d the right-hand side of the equation

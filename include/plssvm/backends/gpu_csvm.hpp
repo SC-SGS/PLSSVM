@@ -44,11 +44,7 @@ class gpu_csvm : public ::plssvm::csvm {
         ::plssvm::csvm{ params } {}
     /**
      * @brief Construct a new C-SVM using one of the GPU backend with the optionally provided @p named_args.
-     * @param[in] kernel the kernel type used in the C-SVM
      * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::csvm::csvm() exceptions
-     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
     explicit gpu_csvm(Args &&...named_args) :
@@ -57,7 +53,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @brief Virtual destructor to enable safe inheritance.
      */
-    virtual ~gpu_csvm() = default;
+    ~gpu_csvm() override = default;
 
     /**
      * @brief Return the number of available devices for the current backend.
@@ -69,44 +65,97 @@ class gpu_csvm : public ::plssvm::csvm {
 
   protected:
     /**
-     * @copydoc plssvm::csvm::solver_CG
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
     [[nodiscard]] std::pair<std::vector<float>, float> solve_system_of_linear_equations(const parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    /**
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+     */
     [[nodiscard]] std::pair<std::vector<double>, double> solve_system_of_linear_equations(const parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    /**
+     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+     */
     template <typename real_type>
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, real_type eps, unsigned long long max_iter) const;
 
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
     [[nodiscard]] std::vector<float> predict_values(const parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
     [[nodiscard]] std::vector<double> predict_values(const parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const;
 
-
+    /**
+     * @brief Returns the number of usable devices given the kernel function @p kernel_type and the number of features @p num_features.
+     * @details Only the linear kernel supports multi-GPU execution, i.e., for the polynomial and rbf kernel, this function **always** returns 1.
+     *          In addition, at most @p num_features devices may be used (i.e., if **more** devices than features are present not all devices are used).
+     * @param[in] kernel the kernel function type
+     * @param[in] num_features the number of features
+     * @return the number of usable devices, may be less than the discovered devices in the system (`[[nodiscard]]`)
+     */
     [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
 
     /**
-     * @copydoc plssvm::csvm::setup_data_on_device
+     * @brief Performs all necessary steps such that the data is available on the device with the correct layout.
+     * @details Distributed the data evenly across all devices, adds padding data points, and transforms the data layout to SoA.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param[in] data the data that should be copied to the device(s)
+     * @param[in] num_data_points the number of data points that should be copied to the device
+     * @param[in] num_features the number of features in the data set
+     * @param[in] boundary_size the size of the padding boundary
+     * @param[in] num_used_devices the number of devices to distribute the data across
+     * @return a tuple: [pointers to the main data distributed across the devices, pointers to the last data point of the data set distributed across the devices, the feature ranges a specific device is responsible for] (`[[nodiscard]]`)
      */
     template <typename real_type>
     [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, std::size_t num_data_points, std::size_t num_features, std::size_t boundary_size, std::size_t num_used_devices) const;
     /**
-     * @copydoc plssvm::csvm::generate_q
+     * @brief Calculate the `q` vector used in the dimensional reduction.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param params the SVM parameter used to calculate `q` (e.g., kernel_type)
+     * @param data_d the data points used in the dimensional reduction located on the device(s)
+     * @param data_last_d the last data point of the data set located on the device(s)
+     * @param num_data_points the number of data points in @p data_p
+     * @param feature_ranges the range of features a specific device is responsible for
+     * @param boundary_size the size of the padding boundary
+     * @param num_used_devices the number of devices to distribute the data across
+     * @return the `q` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges, std::size_t boundary_size, std::size_t num_used_devices) const;
     /**
-     * @copydoc plssvm::csvm::update_w
+     * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] data_last_d the last data point of the data set located on the device(s)
+     * @param[in] alpha_d the previously learned weights located on the device(s)
+     * @param[in] num_data_points the number of data points in @p data_p
+     * @param[in] feature_ranges the range of features a specific device is responsible for
+     * @param[in] num_used_devices the number of devices to distribute the data across
+     * @return the `w` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, const std::vector<device_ptr_type<real_type>> &alpha_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges, std::size_t num_used_devices) const;
 
     /**
-     * @brief Run the SVM kernel on the GPU denoted by the @p device ID.
-     * @param[in] device the device ID denoting the GPU on which the kernel should be executed
-     * @param[in] q_d subvector of the least-squares matrix equation
-     * @param[in,out] r_d the result vector
-     * @param[in] x_d the right-hand side of the equation
+     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the device denoted by @p device.
+     * @param[in] device the device ID denoting the device on which the kernel should be executed
+     * @param[in] params the SVM parameter used (e.g., kernel_type)
+     * @param[in] q_d subvector of the least-squares matrix equation located on the device(s)
+     * @param[in,out] r_d the result vector located on the device(s)
+     * @param[in] x_d the right-hand side of the equation located on the device(s)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] feature_ranges the range of features a specific device is responsible for
+     * @param[in] QA_cost a value used in the dimensional reduction
      * @param[in] add denotes whether the values are added or subtracted from the result vector
+     * @param[in] dept the number of data points after the dimensional reduction
+     * @param[in] boundary_size the size of the padding boundary
      */
     template <typename real_type>
     void run_device_kernel(std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, real_type QA_cost, real_type add, std::size_t dept, std::size_t boundary_size) const;
@@ -126,49 +175,77 @@ class gpu_csvm : public ::plssvm::csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Synchronize the device denoted by @p queue.
-     * @param[in,out] queue the queue denoting the device to synchronize
+     * @param[in] queue the queue denoting the device to synchronize
      */
     virtual void device_synchronize(const queue_type &queue) const = 0;
     /**
-     * @brief Run the GPU kernel filling the `q` vector.
+     * @brief Run the device kernel filling the `q` vector.
      * @param[in] device the device ID denoting the GPU on which the kernel should be executed
      * @param[in] range the execution range used to launch the kernel
-     * @param[out] q_d the `q` vector to fill
+     * @param[in] params the SVM parameter used (e.g., kernel_type)
+     * @param[out] q_d the `q` vector to fill located on the device(s)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] data_last_d the last data point of the data set located on the device(s)
+     * @param[in] num_data_points_padded the number of data points after the padding has been applied
      * @param[in] num_features number of features used for the calculation on the @p device
      */
     virtual void run_q_kernel(std::size_t device, const detail::execution_range &range, const parameter<float> &params, device_ptr_type<float> &q_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const = 0;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
+     */
     virtual void run_q_kernel(std::size_t device, const detail::execution_range &range, const parameter<double> &params, device_ptr_type<double> &q_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const = 0;
     /**
-     * @brief Run the main GPU kernel used in the CG algorithm.
+     * @brief Run the main device kernel used in the CG algorithm.
      * @param[in] device the device ID denoting the GPU on which the kernel should be executed
      * @param[in] range the execution range used to launch the kernel
-     * @param[in] q_d the `q` vector
-     * @param[in,out] r_d the result vector
-     * @param[in] x_d the right-hand side of the equation
+     * @param[in] params the SVM parameter used (e.g., kernel_type)
+     * @param[in] q_d the `q` vector located on the device(s)
+     * @param[in,out] r_d the result vector located on the device(s)
+     * @param[in] x_d the right-hand side of the equation located on the device(s)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
      * @param[in] add denotes whether the values are added or subtracted from the result vector
+     * @param[in] QA_cost a value used in the dimensional reduction
+     * @param[in] num_data_points_padded the number of data points after the padding has been applied
      * @param[in] num_features number of features used for the calculation in the @p device
      */
     virtual void run_svm_kernel(std::size_t device, const detail::execution_range &range, const parameter<float> &params, const device_ptr_type<float> &q_d, device_ptr_type<float> &r_d, const device_ptr_type<float> &x_d, const device_ptr_type<float> &data_d, float QA_cost, float add, std::size_t num_data_points_padded, std::size_t num_features) const = 0;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
+     */
     virtual void run_svm_kernel(std::size_t device, const detail::execution_range &range, const parameter<double> &params, const device_ptr_type<double> &q_d, device_ptr_type<double> &r_d, const device_ptr_type<double> &x_d, const device_ptr_type<double> &data_d, double QA_cost, double add, std::size_t num_data_points_padded, std::size_t num_features) const = 0;
     /**
-     * @brief Run the GPU kernel (only on the first GPU) the calculate the `w` vector used to speed up the prediction when using the linear kernel function.
-     * @param[in] device the device ID denoting the GPU on which the kernel should be executed
+     * @brief Run the device kernel the calculate the `w` vector used to speed up the prediction when using the linear kernel function.
+     * @param[in] device the device ID denoting the device on which the kernel should be executed
      * @param[in] range the execution range used to launch the
-     * @param[out] w_d the `w` vector to fill, used to speed up the prediction when using the linear kernel
-     * @param[in] alpha_d the previously calculated weight for each data point
+     * @param[out] w_d the `w` vector to fill, used to speed up the prediction when using the linear kernel located on the device(s)
+     * @param[in] alpha_d the previously calculated weight for each data point located on the device(s)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] data_last_d the last data point of the data set located on the device(s)
+     * @param[in] num_data_points the number of data points
      * @param[in] num_features number of features used for the calculation on the @p device
      */
     virtual void run_w_kernel(std::size_t device, const detail::execution_range &range, device_ptr_type<float> &w_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_data_points, std::size_t num_features) const = 0;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
+     */
     virtual void run_w_kernel(std::size_t device, const detail::execution_range &range, device_ptr_type<double> &w_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_data_points, std::size_t num_features) const = 0;
     /**
-     * @brief Run the GPU kernel (only on the first GPU) to predict the new data points @p point_d.
+     * @brief Run the device kernel (only on the first device) to predict the new data points @p point_d.
      * @param[in] range the execution range used to launch the kernel
+     * @param[in] params the SVM parameter used (e.g., kernel_type)
      * @param[out] out_d the calculated prediction
-     * @param[in] alpha_d the previously calculated weight for each data point
-     * @param[in] point_d the data points to predict
+     * @param[in] alpha_d the previously calculated weight for each data point located on the device(s)
+     * @param[in] point_d the data points to predict located on the device(s)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] data_last_d the last data point of the data set located on the device(s)
+     * @param[in] num_support_vectors the number of support vectors
      * @param[in] num_predict_points the number of data points to predict
+     * @param[in] num_features number of features used for the calculation on the @p device
      */
     virtual void run_predict_kernel(const detail::execution_range &range, const parameter<float> &params, device_ptr_type<float> &out_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &point_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
+     */
     virtual void run_predict_kernel(const detail::execution_range &range, const parameter<double> &params, device_ptr_type<double> &out_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &point_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
     /// The available/used backend devices.

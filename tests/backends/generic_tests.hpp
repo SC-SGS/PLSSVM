@@ -256,6 +256,7 @@ inline void test_device_reduction() {
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(data, calculated);  // TODO: order?!
+    // TODO: test redistribution to devices
 }
 
 template <typename real_type, typename mock_csvm_type>
