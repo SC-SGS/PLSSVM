@@ -27,7 +27,7 @@ namespace plssvm::detail {
  * @tparam device_ptr_t the type of the device pointer (dependent on the used backend)
  * @tparam queue_t the type of the device queue (dependent on the used backend)
  */
-template <template<typename> typename device_ptr_t, typename queue_t>
+template <template <typename> typename device_ptr_t, typename queue_t>
 class gpu_csvm : public ::plssvm::csvm {
   public:
     /// The type of the device pointer (dependent on the used backend).
@@ -314,14 +314,14 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     const auto output_iteration_duration = [&]() {
         auto iteration_end_time = std::chrono::steady_clock::now();
         auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        fmt::print("Done in {}.\n", iteration_duration);
+        std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
         average_iteration_time += iteration_duration;
     };
 
     unsigned long long run = 0;
     for (; run < max_iter; ++run) {
         if (verbose) {
-            fmt::print("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
+            std::cout << fmt::format("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
         }
         iteration_start_time = std::chrono::steady_clock::now();
 
@@ -394,11 +394,12 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         }
     }
     if (verbose) {
-        fmt::print("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
-                   std::min(run + 1, max_iter),
-                   delta,
-                   eps * eps * delta0,
-                   average_iteration_time / std::min(run + 1, max_iter));
+        std::cout << fmt::format("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.",
+                                 std::min(run + 1, max_iter),
+                                 delta,
+                                 eps * eps * delta0,
+                                 average_iteration_time / std::min(run + 1, max_iter))
+                  << std::endl;
     }
 
     // calculate bias
