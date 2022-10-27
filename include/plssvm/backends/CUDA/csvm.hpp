@@ -9,6 +9,8 @@
  * @brief Defines a C-SVM using the CUDA backend.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_CSVM_HPP_
+#define PLSSVM_BACKENDS_CUDA_CSVM_HPP_
 #pragma once
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
@@ -139,3 +141,5 @@ struct csvm_backend_exists<cuda::csvm> : std::true_type {};
 }  // namespace detail
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_BACKENDS_CUDA_CSVM_HPP_

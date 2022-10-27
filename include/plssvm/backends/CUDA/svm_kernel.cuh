@@ -9,6 +9,8 @@
  * @brief Defines the kernel functions for the C-SVM using the CUDA backend.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
+#define PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
@@ -72,3 +74,5 @@ template <typename real_type>
 __global__ void device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma);
 
 }  // namespace plssvm::cuda
+
+#endif  // PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_

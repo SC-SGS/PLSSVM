@@ -9,6 +9,8 @@
  * @brief Generic tests for all backends to reduce code duplication.
  */
 
+#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_TESTS_HPP_
+#define PLSSVM_TESTS_BACKENDS_GENERIC_TESTS_HPP_
 #pragma once
 
 #include "plssvm/data_set.hpp"               // plssvm::data_set
@@ -431,3 +433,5 @@ inline void test_num_available_devices() {
 }
 
 }  // namespace generic
+
+#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_TESTS_HPP_

@@ -9,14 +9,14 @@
  * @brief MOCK class for the C-SVM class using the CUDA backend.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_CUDA_CSVM_HPP_
-#define PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_CUDA_CSVM_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_
 #pragma once
 
 #include "plssvm/backends/CUDA/csvm.hpp"               // plssvm::cuda::csvm
 
 /**
- * @brief GTest mock class for the OpenMP CSVM.
+ * @brief GTest mock class for the CUDA CSVM.
  */
 class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type = plssvm::cuda::csvm;
@@ -37,4 +37,4 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type::devices_;
 };
 
-#endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_CUDA_CSVM_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_

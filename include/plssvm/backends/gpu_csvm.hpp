@@ -9,6 +9,8 @@
  * @brief Defines the base class for all C-SVM backends using a GPU. Used for code duplication reduction.
  */
 
+#ifndef PLSSVM_BACKENDS_GPU_CSVM_HPP_
+#define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
 #include "plssvm/csvm.hpp"  // plssvm::csvm
@@ -629,3 +631,5 @@ std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kerne
 }
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_BACKENDS_GPU_CSVM_HPP_

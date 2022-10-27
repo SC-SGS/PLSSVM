@@ -9,6 +9,8 @@
  * @brief Defines the functions used for prediction for the C-SVM using the CUDA backend.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_PREDICT_KERNEL_HPP_
+#define PLSSVM_BACKENDS_CUDA_PREDICT_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
@@ -66,3 +68,5 @@ template <typename real_type>
 __global__ void device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma);
 
 }  // namespace plssvm::cuda
+
+#endif  // PLSSVM_BACKENDS_CUDA_PREDICT_KERNEL_HPP_

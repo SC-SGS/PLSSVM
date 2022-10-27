@@ -9,8 +9,8 @@
  * @brief Functions used for testing the correctness of the PLSSVM implementation.
  */
 
-#ifndef PLSSVM_TESTS_COMPARE_HPP_
-#define PLSSVM_TESTS_COMPARE_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
+#define PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
 #pragma once
 
 #include "plssvm/parameter.hpp"  // plssvm::detail::parameter
@@ -110,4 +110,4 @@ template <typename real_type>
 
 }  // namespace compare
 
-#endif  // PLSSVM_TESTS_COMPARE_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_COMPARE_HPP_

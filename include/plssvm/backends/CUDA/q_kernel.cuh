@@ -9,6 +9,8 @@
  * @brief Defines CUDA functions for generating the `q` vector.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_Q_KERNEL_HPP_
+#define PLSSVM_BACKENDS_CUDA_Q_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
@@ -59,3 +61,5 @@ template <typename real_type>
 __global__ void device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma);
 
 }  // namespace plssvm::cuda
+
+#endif  // PLSSVM_BACKENDS_CUDA_Q_KERNEL_HPP_
