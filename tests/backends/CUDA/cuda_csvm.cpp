@@ -148,6 +148,14 @@ TYPED_TEST(CUDACSVMCalculateW, calculate_w) {
 }
 
 template <typename T>
+class CUDACSVMCalculateWDeathTest : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMCalculateWDeathTest, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(CUDACSVMCalculateWDeathTest, calculate_w_death_test) {
+   generic::test_calculate_w_death_test<TypeParam, mock_cuda_csvm>();
+}
+
+template <typename T>
 class CUDACSVMRunDeviceKernel : public CUDACSVM {};
 TYPED_TEST_SUITE(CUDACSVMRunDeviceKernel, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
 
