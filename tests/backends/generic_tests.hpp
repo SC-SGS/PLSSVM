@@ -250,16 +250,16 @@ inline void test_calculate_w_death_test() {
     EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, std::vector<device_ptr_type>(1), vec1, 1, feature_range),
                  "Each device_ptr in data_last_d must at least contain one data point!");
     // data_d and data_last_d must have the same size
-    EXPECT_DEATH(std::ignore = svm.calculate_w( vec1, vec2, vec1, 1, feature_range),
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec2, vec1, 1, feature_range),
                  "The number of used devices to the data_d and data_last_d vectors must be equal!: 1 != 2");
     // the alpha_d vector must not be empty!
-    EXPECT_DEATH(std::ignore = svm.calculate_w( vec1, vec1, std::vector<device_ptr_type>{}, 1, feature_range),
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, std::vector<device_ptr_type>{}, 1, feature_range),
                  "The alpha_d array may not be empty!");
     // the ptr in the alpha_d vector must not be empty
     EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, std::vector<device_ptr_type>(1), 1, feature_range),
                  "Each device_ptr in alpha_d must at least contain one data point!");
     // data_d and alpha_d must have the same size
-    EXPECT_DEATH(std::ignore = svm.calculate_w( vec1, vec1, vec2, 1, feature_range),
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec2, 1, feature_range),
                  "The number of used devices to the data_d and alpha_d vectors must be equal!: 1 != 2");
 
     // the number of data points must be greater than zero
@@ -324,6 +324,51 @@ inline void test_run_device_kernel(const plssvm::kernel_function_type kernel_typ
         // check the calculated result for correctness
         EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
     }
+}
+
+template <typename real_type, typename mock_csvm_type>
+inline void test_run_device_kernel_death_test(const plssvm::kernel_function_type kernel_type) {
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create parameter struct
+    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::run_device_kernel is protected
+    const mock_csvm_type svm{};
+
+    // valid feature_range
+    const std::vector<std::size_t> feature_range{ 0, 1 };
+
+    // the data_d vector must not be empty!
+    device_ptr_type ptr{ 1, svm.devices_[0] };
+    device_ptr_type empty_ptr{};
+
+    // the device id must be smaller than the total number of available devices
+    EXPECT_DEATH(svm.run_device_kernel(svm.num_available_devices(), params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 ::testing::HasSubstr(fmt::format("Requested device {}, but only {} device(s) are available!", svm.num_available_devices(), svm.num_available_devices())));
+    // the q_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, empty_ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The q_d device_ptr may not be empty!");
+    // the r_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, empty_ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The r_d device_ptr may not be empty!");
+    // the x_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, empty_ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The x_d device_ptr may not be empty!");
+    // the data_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, empty_ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The data_d device_ptr may not be empty!");
+
+    // the values in the feature_ranges vector must be monotonically increasing
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, { 1, 0 }, real_type{ 0.0 }, real_type{ 0.0 }, 1, 0),
+                 "The feature ranges are not monotonically increasing!");
+
+    // add must either be -1.0 or 1.0
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 0.0 }, 1, 0),
+                 "add must either by -1.0 or 1.0, but is 0!");
+    // at least one data point must be available
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 0, 0),
+                 "At least one data point must be used to calculate q!");
 }
 
 template <typename real_type, typename mock_csvm_type>

@@ -399,6 +399,15 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::v
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
+    PLSSVM_ASSERT(device < devices_.size(), "Requested device {}, but only {} device(s) are available!", device, devices_.size());
+    PLSSVM_ASSERT(!q_d.empty(), "The q_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(!r_d.empty(), "The r_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(!x_d.empty(), "The x_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(!data_d.empty(), "The data_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(std::adjacent_find(feature_ranges.cbegin(), feature_ranges.cend(), std::less_equal<>{}) != feature_ranges.cend(), "The feature ranges are not monotonically increasing!");
+    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either by -1.0 or 1.0, but is {}!", add);
+    PLSSVM_ASSERT(dept > 0, "At least one data point must be used to calculate q!");
+
     const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(boundary_size)));
     const detail::execution_range range({ grid, grid }, { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE });
 
