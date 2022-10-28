@@ -132,7 +132,7 @@ TYPED_TEST(CUDACSVMGenerateQ, generate_q) {
 }
 
 template <typename T>
-class CUDACSVMGenerateQDeathTest : public CUDACSVM {};
+class CUDACSVMGenerateQDeathTest : public CUDACSVMGenerateQ<T> {};
 TYPED_TEST_SUITE(CUDACSVMGenerateQDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
 
 TYPED_TEST(CUDACSVMGenerateQDeathTest, generate_q) {
@@ -148,7 +148,7 @@ TYPED_TEST(CUDACSVMCalculateW, calculate_w) {
 }
 
 template <typename T>
-class CUDACSVMCalculateWDeathTest : public CUDACSVM {};
+class CUDACSVMCalculateWDeathTest : public CUDACSVMCalculateW<T> {};
 TYPED_TEST_SUITE(CUDACSVMCalculateWDeathTest, util::real_type_gtest, naming::real_type_to_name);
 
 TYPED_TEST(CUDACSVMCalculateWDeathTest, calculate_w_death_test) {
@@ -169,6 +169,14 @@ TYPED_TEST_SUITE(CUDACSVMDeviceReduction, util::real_type_gtest, naming::real_ty
 
 TYPED_TEST(CUDACSVMDeviceReduction, device_reduction) {
    generic::test_device_reduction<TypeParam, mock_cuda_csvm>();
+}
+
+template <typename T>
+class CUDACSVMDeviceReductionDeathTest : public CUDACSVMDeviceReduction<T> {};
+TYPED_TEST_SUITE(CUDACSVMDeviceReductionDeathTest, util::real_type_gtest, naming::real_type_to_name);
+
+TYPED_TEST(CUDACSVMDeviceReductionDeathTest, device_reduction) {
+   generic::test_device_reduction_death_test<TypeParam, mock_cuda_csvm>();
 }
 
 template <typename T>

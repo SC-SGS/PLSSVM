@@ -237,12 +237,13 @@ inline void test_calculate_w_death_test() {
     vec2.emplace_back(1, svm.devices_[0]);
     vec2.emplace_back(1, svm.devices_[0]);
 
+    // the data_d vector must not be empty
     EXPECT_DEATH(std::ignore = svm.calculate_w(std::vector<device_ptr_type>{}, vec1, vec1, 1, feature_range),
                  "The data_d array may not be empty!");
     // the ptr in the data_d vector must not be empty
     EXPECT_DEATH(std::ignore = svm.calculate_w(std::vector<device_ptr_type>(1), vec1, vec1, 1, feature_range),
                  "Each device_ptr in data_d must at least contain one data point!");
-    // the data_last_d vector must not be empty!
+    // the data_last_d vector must not be empty
     EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, std::vector<device_ptr_type>{}, vec1, 1, feature_range),
                  "The data_last_d array may not be empty!");
     // the ptr in the data_last_d vector must not be empty
@@ -368,6 +369,33 @@ inline void test_device_reduction() {
     std::vector<real_type> device_data(data.size());
     data_d.front().memcpy_to_host(device_data);
     EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data);
+}
+
+template <typename real_type, typename mock_csvm_type>
+inline void test_device_reduction_death_test() {
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
+    const mock_csvm_type svm{};
+
+    // the data_d vector must not be empty!
+    std::vector<device_ptr_type> vec1;
+    vec1.emplace_back(1, svm.devices_[0]);
+
+    std::vector<device_ptr_type> empty_device_ptr_vec{};
+    std::vector<device_ptr_type> one_element_device_ptr_vec(1);
+    std::vector<real_type> empty_buffer_vec{};
+    std::vector<real_type> one_element_buffer_vec(1);
+
+    // the buffer_d vector must not be empty
+    EXPECT_DEATH(svm.device_reduction(empty_device_ptr_vec, one_element_buffer_vec),
+                 "The buffer_d array may not be empty!");
+    // the ptr in the buffer_d vector must not be empty
+    EXPECT_DEATH(svm.device_reduction(one_element_device_ptr_vec, one_element_buffer_vec),
+                 "Each device_ptr in buffer_d must at least contain one data point!");
+    // the buffer vector must not be empty
+    EXPECT_DEATH(svm.device_reduction(vec1, empty_buffer_vec),
+                 "The buffer array may not be empty!");
 }
 
 template <typename real_type, typename mock_csvm_type>

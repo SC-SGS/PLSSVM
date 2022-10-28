@@ -398,6 +398,43 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::v
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
+void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
+    const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(boundary_size)));
+    const detail::execution_range range({ grid, grid }, { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE });
+
+    run_svm_kernel(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, dept + boundary_size, feature_ranges[device + 1] - feature_ranges[device]);
+}
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const {
+    PLSSVM_ASSERT(!buffer_d.empty(), "The buffer_d array may not be empty!");
+    PLSSVM_ASSERT(std::all_of(buffer_d.cbegin(), buffer_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in buffer_d must at least contain one data point!");
+    PLSSVM_ASSERT(!buffer.empty(), "The buffer array may not be empty!");
+
+    using namespace plssvm::operators;
+
+    device_synchronize(devices_[0]);
+    buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
+
+    if (buffer_d.size() > 1) {
+        std::vector<real_type> ret(buffer.size());
+        for (typename std::vector<device_ptr_type<real_type>>::size_type device = 1; device < buffer_d.size(); ++device) {
+            device_synchronize(devices_[device]);
+            buffer_d[device].memcpy_to_host(ret, 0, ret.size());
+
+            buffer += ret;
+        }
+
+#pragma omp parallel for default(none) shared(buffer_d, buffer)
+        for (typename std::vector<device_ptr_type<real_type>>::size_type device = 0; device < buffer_d.size(); ++device) {
+            buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
+        }
+    }
+}
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
 std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
                                                                                                                     const std::vector<std::vector<real_type>> &A,
                                                                                                                     std::vector<real_type> b,
@@ -629,39 +666,6 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
         out += -rho;
     }
     return out;
-}
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-template <typename real_type>
-void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
-    const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(boundary_size)));
-    const detail::execution_range range({ grid, grid }, { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE });
-
-    run_svm_kernel(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, dept + boundary_size, feature_ranges[device + 1] - feature_ranges[device]);
-}
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-template <typename real_type>
-void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const {
-    using namespace plssvm::operators;
-
-    device_synchronize(devices_[0]);
-    buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
-
-    if (buffer_d.size() > 1) {
-        std::vector<real_type> ret(buffer.size());
-        for (typename std::vector<device_ptr_type<real_type>>::size_type device = 1; device < buffer_d.size(); ++device) {
-            device_synchronize(devices_[device]);
-            buffer_d[device].memcpy_to_host(ret, 0, ret.size());
-
-            buffer += ret;
-        }
-
-#pragma omp parallel for default(none) shared(buffer_d, buffer)
-        for (typename std::vector<device_ptr_type<real_type>>::size_type device = 0; device < buffer_d.size(); ++device) {
-            buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
-        }
-    }
 }
 
 }  // namespace plssvm::detail
