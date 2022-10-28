@@ -214,7 +214,7 @@ inline void test_calculate_w() {
     }
 
     // calculate the w vector using a GPU backend
-    const std::vector<real_type> calculated = svm.calculate_w(data_d, data_last_d, alpha_d, num_support_vectors, feature_ranges, num_used_devices);
+    const std::vector<real_type> calculated = svm.calculate_w(data_d, data_last_d, alpha_d, num_support_vectors, feature_ranges);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
