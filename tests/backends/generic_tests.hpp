@@ -133,10 +133,56 @@ inline void test_generate_q(const plssvm::kernel_function_type kernel_type) {
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(data.data(), data.num_data_points() - 1, data.num_features(), boundary_size, num_used_devices);
 
     // calculate the q vector using a GPU backend
-    const std::vector<real_type> calculated = svm.generate_q(params, data_d, data_last_d, data.num_data_points() - 1, feature_ranges, boundary_size, num_used_devices);
+    const std::vector<real_type> calculated = svm.generate_q(params, data_d, data_last_d, data.num_data_points() - 1, feature_ranges, boundary_size);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+}
+
+template <typename real_type, typename mock_csvm_type>
+inline void test_generate_q_death_test(const plssvm::kernel_function_type kernel_type) {
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create parameter struct
+    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
+    const mock_csvm_type svm{};
+
+    // valid feature_range
+    const std::vector<std::size_t> feature_range{ 0, 1 };
+
+    // the data_d vector must not be empty!
+    std::vector<device_ptr_type> vec1;
+    vec1.emplace_back(1, svm.devices_[0]);
+    std::vector<device_ptr_type> vec2;
+    vec2.emplace_back(1, svm.devices_[0]);
+    vec2.emplace_back(1, svm.devices_[0]);
+
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, std::vector<device_ptr_type>{}, vec1, 1, feature_range, 0),
+                 "The data_d array may not be empty!");
+    // the ptr in the data_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, std::vector<device_ptr_type>(1), vec1, 1, feature_range, 0),
+                 "Each device_ptr in data_d must at least contain one data point!");
+    // the data_last_d vector must not be empty!
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, std::vector<device_ptr_type>{}, 1, feature_range, 0),
+                 "The data_last_d array may not be empty!");
+    // the ptr in the data_last_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, std::vector<device_ptr_type>(1), 1, feature_range, 0),
+                 "Each device_ptr in data_last_d must at least contain one data point!");
+    // data_d and data_last_d must have the same size
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec2, 1, feature_range, 0),
+                 "The number of used devices to the data_d and data_last_d vectors must be equal!: 1 != 2");
+
+    // the number of data points must be greater than zero
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 0, feature_range, 0),
+                 "At least one data point must be used to calculate q!");
+    // the number of elements in the feature_ranges vector must be one greater than the number of used devices
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 1, std::vector<std::size_t>{}, 0),
+                 ::testing::HasSubstr("The number of values in the feature_range vector must be exactly one more than the number of used devices!: 0 != 1 + 1"));
+    // the values in the feature_ranges vector must be monotonically increasing
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 1, { 1, 0 }, 0),
+                 "The feature ranges are not monotonically increasing!");
 }
 
 template <typename real_type, typename mock_csvm_type>

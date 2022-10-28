@@ -103,7 +103,6 @@ class gpu_csvm : public ::plssvm::csvm {
      * @return the number of usable devices, may be less than the discovered devices in the system (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
-
     /**
      * @brief Performs all necessary steps such that the data is available on the device with the correct layout.
      * @details Distributed the data evenly across all devices, adds padding data points, and transforms the data layout to SoA.
@@ -117,6 +116,7 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     template <typename real_type>
     [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, std::size_t num_data_points_to_setup, std::size_t num_features_to_setup, std::size_t boundary_size, std::size_t num_used_devices) const;
+
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
      * @tparam real_type the type of the data points (either `float` or `double`)
@@ -126,11 +126,10 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param num_data_points the number of data points in @p data_p
      * @param feature_ranges the range of features a specific device is responsible for
      * @param boundary_size the size of the padding boundary
-     * @param num_used_devices the number of devices to distribute the data across
      * @return the `q` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges, std::size_t boundary_size, std::size_t num_used_devices) const;
+    [[nodiscard]] std::vector<real_type> generate_q(const parameter<real_type> &params, const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges, std::size_t boundary_size) const;
     /**
      * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
      * @tparam real_type the type of the data points (either `float` or `double`)
@@ -254,6 +253,24 @@ class gpu_csvm : public ::plssvm::csvm {
     std::vector<queue_type> devices_{};
 };
 
+
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type kernel, const std::size_t num_features) const noexcept {
+    // polynomial and rbf kernel currently only support single GPU execution
+    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
+        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
+        return 1;
+    }
+
+    // the number of used devices may not exceed the number of features
+    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
+    if (num_used_devices < devices_.size()) {
+        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
+    }
+    return num_used_devices;
+}
+
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 std::tuple<std::vector<device_ptr_t<real_type>>, std::vector<device_ptr_t<real_type>>, std::vector<std::size_t>>
@@ -307,8 +324,17 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::generate_q(const paramet
                                                                    const std::vector<device_ptr_type<real_type>> &data_last_d,
                                                                    const std::size_t num_data_points,
                                                                    const std::vector<std::size_t> &feature_ranges,
-                                                                   const std::size_t boundary_size,
-                                                                   const std::size_t num_used_devices) const {
+                                                                   const std::size_t boundary_size) const {
+    PLSSVM_ASSERT(!data_d.empty(), "The data_d array may not be empty!");
+    PLSSVM_ASSERT(std::all_of(data_d.cbegin(), data_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in data_d must at least contain one data point!");
+    PLSSVM_ASSERT(!data_last_d.empty(), "The data_last_d array may not be empty!");
+    PLSSVM_ASSERT(std::all_of(data_last_d.cbegin(), data_last_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in data_last_d must at least contain one data point!");
+    PLSSVM_ASSERT(data_d.size() == data_last_d.size(), "The number of used devices to the data_d and data_last_d vectors must be equal!: {} != {}", data_d.size(), data_last_d.size());
+    PLSSVM_ASSERT(num_data_points > 0, "At least one data point must be used to calculate q!");
+    PLSSVM_ASSERT(feature_ranges.size() == data_d.size() + 1, "The number of values in the feature_range vector must be exactly one more than the number of used devices!: {} != {} + 1", feature_ranges.size(), data_d.size());
+    PLSSVM_ASSERT(std::adjacent_find(feature_ranges.cbegin(), feature_ranges.cend(), std::less_equal<>{}) != feature_ranges.cend(), "The feature ranges are not monotonically increasing!");
+
+    const std::size_t num_used_devices = data_d.size();
     std::vector<device_ptr_type<real_type>> q_d(num_used_devices);
 
 #pragma omp parallel for default(none) shared(num_used_devices, q_d, devices_, data_d, data_last_d, feature_ranges, params) firstprivate(num_data_points, boundary_size, THREAD_BLOCK_SIZE)
@@ -341,7 +367,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     constexpr std::size_t boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     const std::size_t num_features = A.front().size();
 
-    const std::size_t num_used_devices = select_num_used_devices(params.kernel_type, num_features);
+    const std::size_t num_used_devices = this->select_num_used_devices(params.kernel_type, num_features);
 
     std::vector<device_ptr_type<real_type>> data_d;
     std::vector<device_ptr_type<real_type>> data_last_d;
@@ -349,7 +375,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     std::tie(data_d, data_last_d, feature_ranges) = this->setup_data_on_device(A, dept, num_features, boundary_size, num_used_devices);
 
     // create q vector
-    const std::vector<real_type> q = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size, num_used_devices);
+    const std::vector<real_type> q = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size);
 
     // calculate QA_costs
     const real_type QA_cost = kernel_function(A.back(), A.back(), params) + real_type{ 1.0 } / params.cost;
@@ -539,7 +565,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
     const std::size_t num_features = predict_points.front().size();
     const std::size_t boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
 
-    const std::size_t num_used_devices = select_num_used_devices(params.kernel_type, num_features);
+    const std::size_t num_used_devices = this->select_num_used_devices(params.kernel_type, num_features);
 
     auto [data_d, data_last_d, feature_ranges] = this->setup_data_on_device(support_vectors, num_support_vectors - 1, num_features, boundary_size, num_used_devices);
 
@@ -621,22 +647,6 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
             buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
         }
     }
-}
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type kernel, const std::size_t num_features) const noexcept {
-    // polynomial and rbf kernel currently only support single GPU execution
-    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
-        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
-        return 1;
-    }
-
-    // the number of used devices may not exceed the number of features
-    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
-    if (num_used_devices < devices_.size()) {
-        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
-    }
-    return num_used_devices;
 }
 
 }  // namespace plssvm::detail

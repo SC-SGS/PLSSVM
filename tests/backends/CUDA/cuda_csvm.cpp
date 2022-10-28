@@ -132,6 +132,14 @@ TYPED_TEST(CUDACSVMGenerateQ, generate_q) {
 }
 
 template <typename T>
+class CUDACSVMGenerateQDeathTest : public CUDACSVM {};
+TYPED_TEST_SUITE(CUDACSVMGenerateQDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+
+TYPED_TEST(CUDACSVMGenerateQDeathTest, generate_q) {
+   generic::test_generate_q_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
+}
+
+template <typename T>
 class CUDACSVMCalculateW : public CUDACSVM {};
 TYPED_TEST_SUITE(CUDACSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
 
