@@ -212,6 +212,14 @@ TYPED_TEST(CUDACSVMSelectNumUsedDevices, select_num_used_devices) {
 }
 
 template <typename T>
+class CUDACSVMSelectNumUsedDevicesDeathTest : public CUDACSVMSelectNumUsedDevices<T> {};
+TYPED_TEST_SUITE(CUDACSVMSelectNumUsedDevicesDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+
+TYPED_TEST(CUDACSVMSelectNumUsedDevicesDeathTest, select_num_used_devices) {
+    generic::test_select_num_used_devices_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
+}
+
+template <typename T>
 class CUDACSVMSetupDataOnDevice : public CUDACSVM {};
 TYPED_TEST_SUITE(CUDACSVMSetupDataOnDevice, util::real_type_gtest, naming::real_type_to_name);
 

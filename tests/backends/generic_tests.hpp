@@ -542,6 +542,15 @@ inline void test_select_num_used_devices(const plssvm::kernel_function_type kern
 }
 
 template <typename real_type, typename mock_csvm_type>
+inline void test_select_num_used_devices_death_test(const plssvm::kernel_function_type kernel_type) {
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::select_num_used_devices is protected
+    const mock_csvm_type svm{};
+
+    // at least one feature must be provided
+    EXPECT_DEATH( std::ignore = svm.select_num_used_devices(kernel_type, 0), "At lest one feature must be given!");
+}
+
+template <typename real_type, typename mock_csvm_type>
 inline void test_setup_data_on_device_minimal() {
     // minimal example
     const std::vector<std::vector<real_type>> input = {
