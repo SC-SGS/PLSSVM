@@ -9,6 +9,8 @@
  * @brief Utility functions for the CUDA backend.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
+#define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
 #pragma once
 
 /**
@@ -54,3 +56,5 @@ void peek_at_last_error();
 void device_synchronize(int device);
 
 }  // namespace plssvm::cuda::detail
+
+#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_

@@ -9,6 +9,8 @@
  * @brief Small wrapper around a CUDA device pointer.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_DEVICE_PTR_HPP_
+#define PLSSVM_BACKENDS_CUDA_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
@@ -95,3 +97,5 @@ extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
 }  // namespace plssvm::cuda::detail
+
+#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_DEVICE_PTR_HPP_
