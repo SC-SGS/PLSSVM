@@ -36,6 +36,7 @@ void gpu_assert(cudaError_t code);
 /**
  * @brief Set the device @p device to the active CUDA device.
  * @param[in] device the now active device
+ * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
  */
 void set_device(int device);
 

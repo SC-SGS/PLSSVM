@@ -27,6 +27,9 @@ void gpu_assert(const cudaError_t code) {
 }
 
 void set_device(const int device) {
+    if (device < 0 || device >= static_cast<int>(get_device_count())) {
+        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device) };
+    }
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device));
 }
 
