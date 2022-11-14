@@ -71,6 +71,42 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
 }
 
 template <typename real_type, typename mock_csvm_type>
+inline void test_solve_system_of_linear_equations_death_test(const plssvm::kernel_function_type kernel_function) {
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
+    const mock_csvm_type svm{};
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel_function };
+
+    const std::vector<real_type> b{ real_type{ 1.0 }, real_type{ 2.0 } };
+
+    // empty data is not allowed
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{}, b, real_type{ 0.1 }, 2),
+                 "The data must not be empty!");
+    // empty features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, b, real_type{ 0.1 }, 2)),
+                 "The data points must contain at least one feature!");
+    // all data points must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, b, real_type{ 0.1 }, 2)),
+                 "All data points must have the same number of features!");
+
+    const std::vector<std::vector<real_type>> data = {
+        { real_type{ 1.0 }, real_type{ 2.0 } },
+        { real_type{ 3.0 }, real_type{ 4.0 } }
+    };
+
+    // the number of data points and values in b must be the same
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<real_type>{ }, 0.1, 2),
+                 ::testing::HasSubstr("The number of data points in the matrix A (2) and the values in the right hand side vector (0) must be the same!"));
+    // the stopping criterion must be greater than zero
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.0 }, 2),
+                 "The stopping criterion in the CG algorithm must be greater than 0.0, but is 0!");
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ -0.1 }, 2),
+                 "The stopping criterion in the CG algorithm must be greater than 0.0, but is -0.1!");
+    // at least one CG iteration must be performed
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.1 }, 0),
+                 "The number of CG iterations must be greater than 0!");
+}
+
+template <typename real_type, typename mock_csvm_type>
 inline void test_predict_values(const plssvm::kernel_function_type kernel) {
     // create parameter struct
     plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
@@ -111,6 +147,52 @@ inline void test_predict_values(const plssvm::kernel_function_type kernel) {
     } else {
         EXPECT_TRUE(w.empty());
     }
+}
+
+template <typename real_type, typename mock_csvm_type>
+inline void test_predict_values_death_test(const plssvm::kernel_function_type kernel_function) {
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
+    const mock_csvm_type svm{};
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel_function };
+
+    const std::vector<std::vector<real_type>> data = {
+        { real_type{ 1.0 }, real_type{ 2.0 } },
+        { real_type{ 3.0 }, real_type{ 4.0 } }
+    };
+    const std::vector<real_type> alpha{ real_type{ 1.0 }, real_type{ 2.0 } };
+    std::vector<real_type> w{};
+
+    // empty support vector data is not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{}, alpha, real_type{ 0.0 }, w, data)),
+                 "The support vectors must not be empty!");
+    // empty support vector features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, alpha, real_type{ 0.0 }, w, data)),
+                 "The support vectors must contain at least one feature!");
+    // all support vector must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, alpha, real_type{ 0.0 }, w, data)),
+                 "All support vectors must have the same number of features!");
+
+    // number of support vectors and weights must be the same
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<real_type>{ real_type{ 1.0 } }, real_type{ 0.0 }, w, data)),
+                 ::testing::HasSubstr("The number of support vectors (2) and number of weights (1) must be the same!"));
+    // either w must be empty or contain num features many entries
+    w.resize(1);
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, data)),
+                 ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (1) as features are present (2)!"));
+    w.clear();
+
+    // empty data points to predict is not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{})),
+                 "The data points to predict must not be empty!");
+    // empty data points to predict features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{} })),
+                 "The data points to predict must contain at least one feature!");
+    // all data points to predict must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } })),
+                 "All data points to predict must have the same number of features!");
+    // the number of features in the support vectors and data points to predict must be the same
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 2.0 } } })),
+                 ::testing::HasSubstr("The number of features in the support vectors (2) must be the same as in the data points to predict (1)!"));
 }
 
 template <typename real_type, typename mock_csvm_type>

@@ -297,7 +297,7 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vec
     std::vector<device_ptr_type<real_type>> data_last_d(num_used_devices);
     std::vector<device_ptr_type<real_type>> data_d(num_used_devices);
 
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points_to_setup, boundary_size, num_features_to_setup)
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points_to_setup, boundary_size, num_features_to_setup)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         const std::size_t num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
 
@@ -334,7 +334,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::generate_q(const paramet
     const std::size_t num_used_devices = data_d.size();
     std::vector<device_ptr_type<real_type>> q_d(num_used_devices);
 
-#pragma omp parallel for default(none) shared(num_used_devices, q_d, devices_, data_d, data_last_d, feature_ranges, params) firstprivate(num_data_points, boundary_size, THREAD_BLOCK_SIZE)
+    #pragma omp parallel for default(none) shared(num_used_devices, q_d, devices_, data_d, data_last_d, feature_ranges, params) firstprivate(num_data_points, boundary_size, THREAD_BLOCK_SIZE)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         q_d[device] = device_ptr_type<real_type>{ num_data_points + boundary_size, devices_[device] };
         q_d[device].memset(0);
@@ -375,7 +375,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::v
     // create w vector and fill with zeros
     std::vector<real_type> w(std::accumulate(feature_ranges.begin(), feature_ranges.end(), std::size_t{ 0 }), real_type{ 0.0 });
 
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         // feature splitting on multiple devices
         const std::size_t num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
@@ -435,7 +435,7 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
             buffer += ret;
         }
 
-#pragma omp parallel for default(none) shared(buffer_d, buffer)
+        #pragma omp parallel for default(none) shared(buffer_d, buffer)
         for (typename std::vector<device_ptr_type<real_type>>::size_type device = 0; device < buffer_d.size(); ++device) {
             buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
         }
@@ -449,6 +449,13 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
                                                                                                                     std::vector<real_type> b,
                                                                                                                     const real_type eps,
                                                                                                                     const unsigned long long max_iter) const {
+    PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
+    PLSSVM_ASSERT(!A.front().empty(), "The data points must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(A.cbegin(), A.cend(), [&A](const std::vector<real_type> &data_point) { return data_point.size() == A.front().size(); }), "All data points must have the same number of features!");
+    PLSSVM_ASSERT(A.size() == b.size(), "The number of data points in the matrix A ({}) and the values in the right hand side vector ({}) must be the same!", A.size(), b.size());
+    PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
+    PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
+
     using namespace plssvm::operators;
 
     const std::size_t dept = A.size() - 1;
@@ -479,7 +486,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     std::vector<real_type> r(dept, 0.0);
     std::vector<device_ptr_type<real_type>> r_d(num_used_devices);
 
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d, r_d) firstprivate(dept, boundary_size)
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d, r_d) firstprivate(dept, boundary_size)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         x_d[device] = device_ptr_type<real_type>{ dept + boundary_size, devices_[device] };
         x_d[device].memset(0);
@@ -491,7 +498,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     r_d[0].memcpy_to_device(b, 0, dept);
 
     std::vector<device_ptr_type<real_type>> q_d(num_used_devices);
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, q, q_d, r_d, x_d, data_d, feature_ranges, params) firstprivate(dept, boundary_size, QA_cost, num_features)
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, q, q_d, r_d, x_d, data_d, feature_ranges, params) firstprivate(dept, boundary_size, QA_cost, num_features)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         q_d[device] = device_ptr_type<real_type>{ dept + boundary_size, devices_[device] };
         q_d[device].memset(0);
@@ -531,8 +538,8 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         }
         iteration_start_time = std::chrono::steady_clock::now();
 
-// Ad = A * r (q = A * d)
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, Ad_d, r_d, q_d, data_d, feature_ranges, params) firstprivate(dept, QA_cost, boundary_size, num_features)
+        // Ad = A * r (q = A * d)
+        #pragma omp parallel for default(none) shared(num_used_devices, devices_, Ad_d, r_d, q_d, data_d, feature_ranges, params) firstprivate(dept, QA_cost, boundary_size, num_features)
         for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             Ad_d[device].memset(0);
             r_d[device].memset(0, dept);
@@ -548,13 +555,13 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         // (x = x + alpha * d)
         x += alpha_cd * d;
 
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d) firstprivate(dept)
+        #pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d) firstprivate(dept)
         for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             x_d[device].memcpy_to_device(x, 0, dept);
         }
 
         if (run % 50 == 49) {
-#pragma omp parallel for default(none) shared(devices_, r_d, b, q_d, x_d, params, data_d, feature_ranges) firstprivate(QA_cost, dept)
+            #pragma omp parallel for default(none) shared(devices_, r_d, b, q_d, x_d, params, data_d, feature_ranges) firstprivate(QA_cost, dept)
             for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
                 if (device == 0) {
                     // r = b
@@ -589,8 +596,8 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         // d = beta * d + r
         d = beta * d + r;
 
-// r_d = d
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, r_d, d) firstprivate(dept)
+        // r_d = d
+        #pragma omp parallel for default(none) shared(num_used_devices, devices_, r_d, d) firstprivate(dept)
         for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
             r_d[device].memcpy_to_device(d, 0, dept);
         }
@@ -618,7 +625,22 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
+std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
+                                                                            const std::vector<std::vector<real_type>> &support_vectors,
+                                                                            const std::vector<real_type> &alpha,
+                                                                            real_type rho,
+                                                                            std::vector<real_type> &w,
+                                                                            const std::vector<std::vector<real_type>> &predict_points) const {
+    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(!support_vectors.front().empty(), "The support vectors must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [&support_vectors](const std::vector<real_type> &data_point) { return data_point.size() == support_vectors.front().size(); }), "All support vectors must have the same number of features!");
+    PLSSVM_ASSERT(support_vectors.size() == alpha.size(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.size(), alpha.size());
+    PLSSVM_ASSERT(w.empty() || support_vectors.front().size() == w.size(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.size(), support_vectors.front().size());
+    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(!predict_points.front().empty(), "The data points to predict must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(predict_points.cbegin(), predict_points.cend(), [&predict_points](const std::vector<real_type> &data_point) { return data_point.size() == predict_points.front().size(); }), "All data points to predict must have the same number of features!");
+    PLSSVM_ASSERT(support_vectors.front().size() == predict_points.front().size(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.front().size(), predict_points.front().size());
+
     using namespace plssvm::operators;
 
     const std::size_t num_support_vectors = support_vectors.size();
@@ -631,7 +653,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
     auto [data_d, data_last_d, feature_ranges] = this->setup_data_on_device(support_vectors, num_support_vectors - 1, num_features, boundary_size, num_used_devices);
 
     std::vector<device_ptr_type<real_type>> alpha_d(num_used_devices);
-#pragma omp parallel for default(none) shared(num_used_devices, devices_, alpha_d, alpha) firstprivate(num_support_vectors)
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, alpha_d, alpha) firstprivate(num_support_vectors)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         alpha_d[device] = device_ptr_type<real_type>{ num_support_vectors + THREAD_BLOCK_SIZE, devices_[device] };
         alpha_d[device].memset(0);
@@ -646,8 +668,8 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
     }
 
     if (params.kernel_type == kernel_function_type::linear) {
-// use faster methode in case of the linear kernel function
-#pragma omp parallel for default(none) shared(out, predict_points, w) firstprivate(num_predict_points, rho)
+        // use faster methode in case of the linear kernel function
+        #pragma omp parallel for default(none) shared(out, predict_points, w) firstprivate(num_predict_points, rho)
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < num_predict_points; ++i) {
             out[i] = transposed<real_type>{ w } * predict_points[i] + -rho;
         }
