@@ -13,12 +13,23 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"  // plssvm::csvm
-#include "plssvm/detail/execution_range.hpp"
-#include "plssvm/detail/layout.hpp"
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/csvm.hpp"                    // plssvm::csvm
+#include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
+#include "plssvm/detail/layout.hpp"           // plssvm::detail::{transform_to_layout, layout_type}
+#include "plssvm/parameter.hpp"               // plssvm::parameter
 
-#include <vector>  // std::vector
+#include "fmt/chrono.h"  // output std::chrono times using {fmt}
+#include "fmt/core.h"    // fmt::format
+
+#include <algorithm>   // std::min, std::all_of, std::adjacent_find
+#include <chrono>      // std::chrono::{milliseconds, steady_clock, duration_cast}
+#include <cmath>       // std::ceil
+#include <cstddef>     // std::size_t
+#include <iostream>    // std::clog, std::cout, std::endl
+#include <functional>  // std::less_equal
+#include <tuple>       // std::tuple, std::make_tuple
+#include <utility>     // std::forward, std::pair, std::move, std::make_pair
+#include <vector>      // std::vector
 
 namespace plssvm::detail {
 
@@ -166,9 +177,6 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     template <typename real_type>
     void device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const;
-    // TODO: order!
-    // TODO: assertions?!
-    // TODO: API :/
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
