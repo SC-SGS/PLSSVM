@@ -81,6 +81,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_device(const std::v
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_device(const_host_pointer_type data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid pointer for the data to copy!");
 
     this->memcpy_to_device(data_to_copy, 0, size_);
 }
@@ -104,6 +105,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_host(std::vector<va
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_host(host_pointer_type buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(buffer != nullptr, "Invalid pointer for the data to copy!");
 
     this->memcpy_to_host(buffer, 0, size_);
 }

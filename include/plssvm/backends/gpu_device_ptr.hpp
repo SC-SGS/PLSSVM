@@ -161,7 +161,7 @@ class gpu_device_ptr {
     void memcpy_to_device(const std::vector<value_type> &data_to_copy);
     /**
      * @brief Memcpy up-to @p count many values from @p data_to_copy to the device starting at device pointer position @p pos.
-     * @details Copies `[p, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[in] data_to_copy the data to copy onto the device
      * @param[in] pos the starting position for the copying in the CUDA device pointer
      * @param[in] count the number of elements to copy
