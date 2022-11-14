@@ -28,7 +28,7 @@
 namespace plssvm::detail {
 
 template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const queue_type queue, size_type size) :
+gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(size_type size, const queue_type queue) :
     queue_{ queue }, size_{ size } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
