@@ -25,8 +25,9 @@ namespace plssvm::detail {
  */
 template <typename T, typename queue_t, typename device_pointer_t = T *>
 class gpu_device_ptr {
-    // only float and doubles are allowed
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
+    // any non-reference arithmetic type
+    static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are allowed!");
+    static_assert(!std::is_reference_v<T>, "T must not be a reference!");
 
   public:
     /// The type of the values used in the device_ptr.
