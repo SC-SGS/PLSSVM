@@ -292,7 +292,7 @@ inline void test_calculate_w() {
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         alpha_d[device] = device_ptr_type{ num_support_vectors + plssvm::THREAD_BLOCK_SIZE, svm.devices_[device] };
         alpha_d[device].memset(0);
-        alpha_d[device].memcpy_to_device(weights, 0, num_support_vectors);
+        alpha_d[device].copy_to_device(weights, 0, num_support_vectors);
     }
 
     // calculate the w vector using a GPU backend
@@ -382,9 +382,9 @@ inline void test_run_device_kernel(const plssvm::kernel_function_type kernel_typ
     std::vector<device_ptr_type> r_d{};
 
     for (const queue_type &queue : svm.devices_) {
-        q_d.emplace_back(dept + boundary_size, queue).memcpy_to_device(q, 0, dept);
+        q_d.emplace_back(dept + boundary_size, queue).copy_to_device(q, 0, dept);
         x_d.emplace_back(dept + boundary_size, queue).memset(0);
-        x_d.back().memcpy_to_device(rhs, 0, dept);
+        x_d.back().copy_to_device(rhs, 0, dept);
         r_d.emplace_back(dept + boundary_size, queue).memset(0);
     }
 
@@ -469,7 +469,7 @@ inline void test_device_reduction() {
     // perform the kernel calculation on the device
     std::vector<device_ptr_type> data_d{};
     for (const queue_type &queue : svm.devices_) {
-        data_d.emplace_back(data.size(), queue).memcpy_to_device(data);
+        data_d.emplace_back(data.size(), queue).copy_to_device(data);
     }
 
     std::vector<real_type> calculated(data.size());
@@ -481,7 +481,7 @@ inline void test_device_reduction() {
     // check if the values have been correctly promoted back onto the device(s)
     for (std::size_t device = 0; device < svm.devices_.size(); ++device) {
         std::vector<real_type> device_data(data.size());
-        data_d[device].memcpy_to_host(device_data);
+        data_d[device].copy_to_host(device_data);
         EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data * static_cast<real_type>(svm.devices_.size()));
     }
 
@@ -494,7 +494,7 @@ inline void test_device_reduction() {
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, data);
     std::vector<real_type> device_data(data.size());
-    data_d.front().memcpy_to_host(device_data);
+    data_d.front().copy_to_host(device_data);
     EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data);
 }
 
@@ -570,13 +570,13 @@ inline void test_setup_data_on_device_minimal() {
     ASSERT_EQ(data_d.size(), 1);
     ASSERT_EQ(data_d[0].size(), 9);
     std::vector<real_type> data(9);
-    data_d[0].memcpy_to_host(data);
+    data_d[0].copy_to_host(data);
     EXPECT_FLOATING_POINT_VECTOR_EQ(data, (std::vector<real_type>{ real_type{ 1.0 }, real_type{ 4.0 }, real_type{ 7.0 }, real_type{ 2.0 }, real_type{ 5.0 }, real_type{ 8.0 }, real_type{ 3.0 }, real_type{ 6.0 }, real_type{ 9.0 } }));
     // the last row in the original data
     ASSERT_EQ(data_last_d.size(), 1);
     ASSERT_EQ(data_last_d[0].size(), 3);
     std::vector<real_type> data_last(3);
-    data_last_d[0].memcpy_to_host(data_last);
+    data_last_d[0].copy_to_host(data_last);
     EXPECT_FLOATING_POINT_VECTOR_EQ(data_last, (std::vector<real_type>{ real_type{ 7.0 }, real_type{ 8.0 }, real_type{ 9.0 } }));
     // the feature ranges
     ASSERT_EQ(feature_ranges.size(), 2);
@@ -619,7 +619,7 @@ inline void test_setup_data_on_device() {
         const std::size_t expected_size = (feature_ranges[device + 1] - feature_ranges[device]) * (num_data_points - 1 + boundary_size);
         ASSERT_EQ(data_d[device].size(), expected_size) << fmt::format("for device {}: [{}, {}]", device, feature_ranges[device], feature_ranges[device + 1]);
         std::vector<real_type> data(expected_size);
-        data_d[device].memcpy_to_host(data);
+        data_d[device].copy_to_host(data);
 
         const std::size_t device_data_size = (feature_ranges[device + 1] - feature_ranges[device]) * (num_data_points - 1 + boundary_size);
         const std::vector<real_type> ground_truth(transformed_data.data() + feature_ranges[device] * (num_data_points - 1 + boundary_size),
@@ -632,7 +632,7 @@ inline void test_setup_data_on_device() {
         const std::size_t expected_size = feature_ranges[device + 1] - feature_ranges[device] + boundary_size;
         ASSERT_EQ(data_last_d[device].size(), expected_size);
         std::vector<real_type> data_last(expected_size);
-        data_last_d[device].memcpy_to_host(data_last);
+        data_last_d[device].copy_to_host(data_last);
 
         std::vector<real_type> ground_truth(input.back().data() + feature_ranges[device], input.back().data() + feature_ranges[device] + (feature_ranges[device + 1] - feature_ranges[device]));
         ground_truth.resize(ground_truth.size() + boundary_size, real_type{ 0.0 });

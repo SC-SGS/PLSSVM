@@ -63,51 +63,51 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::memset(const int value, const
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_device(const std::vector<value_type> &data_to_copy) {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
 
-    this->memcpy_to_device(data_to_copy, 0, size_);
+    this->copy_to_device(data_to_copy, 0, size_);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
 
     const size_type rcount = std::min(count, size_ - pos);
     if (data_to_copy.size() < rcount) {
         throw gpu_device_ptr_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
     }
-    this->memcpy_to_device(data_to_copy.data(), pos, rcount);
+    this->copy_to_device(data_to_copy.data(), pos, rcount);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_device(const_host_pointer_type data_to_copy) {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const_host_pointer_type data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid pointer for the data to copy!");
 
-    this->memcpy_to_device(data_to_copy, 0, size_);
+    this->copy_to_device(data_to_copy, 0, size_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_host(std::vector<value_type> &buffer) const {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
 
-    this->memcpy_to_host(buffer, 0, size_);
+    this->copy_to_host(buffer, 0, size_);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
 
     const size_type rcount = std::min(count, size_ - pos);
     if (buffer.size() < rcount) {
         throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
     }
-    this->memcpy_to_host(buffer.data(), pos, rcount);
+    this->copy_to_host(buffer.data(), pos, rcount);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memcpy_to_host(host_pointer_type buffer) const {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(host_pointer_type buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid pointer for the data to copy!");
 
-    this->memcpy_to_host(buffer, 0, size_);
+    this->copy_to_host(buffer, 0, size_);
 }
 
 // explicitly instantiate template class depending on available backends

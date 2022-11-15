@@ -314,11 +314,11 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vec
         // initialize data_last on device
         data_last_d[device] = device_ptr_type<real_type>{ num_features_in_range + boundary_size, devices_[device] };
         data_last_d[device].memset(0);
-        data_last_d[device].memcpy_to_device(data.back().data() + feature_ranges[device], 0, num_features_in_range);
+        data_last_d[device].copy_to_device(data.back().data() + feature_ranges[device], 0, num_features_in_range);
 
         const std::size_t device_data_size = num_features_in_range * (num_data_points_to_setup + boundary_size);
         data_d[device] = device_ptr_type<real_type>{ device_data_size, devices_[device] };
-        data_d[device].memcpy_to_device(transformed_data.data() + feature_ranges[device] * (num_data_points_to_setup + boundary_size), 0, device_data_size);
+        data_d[device].copy_to_device(transformed_data.data() + feature_ranges[device] * (num_data_points_to_setup + boundary_size), 0, device_data_size);
     }
 
     return std::make_tuple(std::move(data_d), std::move(data_last_d), std::move(feature_ranges));
@@ -401,7 +401,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::v
         device_synchronize(devices_[device]);
 
         // copy back to host memory
-        w_d.memcpy_to_host(w.data() + feature_ranges[device], 0, num_features_in_range);
+        w_d.copy_to_host(w.data() + feature_ranges[device], 0, num_features_in_range);
     }
     return w;
 }
@@ -434,20 +434,20 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
     using namespace plssvm::operators;
 
     device_synchronize(devices_[0]);
-    buffer_d[0].memcpy_to_host(buffer, 0, buffer.size());
+    buffer_d[0].copy_to_host(buffer, 0, buffer.size());
 
     if (buffer_d.size() > 1) {
         std::vector<real_type> ret(buffer.size());
         for (typename std::vector<device_ptr_type<real_type>>::size_type device = 1; device < buffer_d.size(); ++device) {
             device_synchronize(devices_[device]);
-            buffer_d[device].memcpy_to_host(ret, 0, ret.size());
+            buffer_d[device].copy_to_host(ret, 0, ret.size());
 
             buffer += ret;
         }
 
         #pragma omp parallel for default(none) shared(buffer_d, buffer)
         for (typename std::vector<device_ptr_type<real_type>>::size_type device = 0; device < buffer_d.size(); ++device) {
-            buffer_d[device].memcpy_to_device(buffer, 0, buffer.size());
+            buffer_d[device].copy_to_device(buffer, 0, buffer.size());
         }
     }
 }
@@ -500,19 +500,19 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         x_d[device] = device_ptr_type<real_type>{ dept + boundary_size, devices_[device] };
         x_d[device].memset(0);
-        x_d[device].memcpy_to_device(x, 0, dept);
+        x_d[device].copy_to_device(x, 0, dept);
 
         r_d[device] = device_ptr_type<real_type>{ dept + boundary_size, devices_[device] };
         r_d[device].memset(0);
     }
-    r_d[0].memcpy_to_device(b, 0, dept);
+    r_d[0].copy_to_device(b, 0, dept);
 
     std::vector<device_ptr_type<real_type>> q_d(num_used_devices);
     #pragma omp parallel for default(none) shared(num_used_devices, devices_, q, q_d, r_d, x_d, data_d, feature_ranges, params) firstprivate(dept, boundary_size, QA_cost, num_features)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         q_d[device] = device_ptr_type<real_type>{ dept + boundary_size, devices_[device] };
         q_d[device].memset(0);
-        q_d[device].memcpy_to_device(q, 0, dept);
+        q_d[device].copy_to_device(q, 0, dept);
 
         // r = Ax (r = b - Ax)
         run_device_kernel(device, params, q_d[device], r_d[device], x_d[device], data_d[device], feature_ranges, QA_cost, real_type{ -1.0 }, dept, boundary_size);
@@ -567,7 +567,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
 
         #pragma omp parallel for default(none) shared(num_used_devices, devices_, x, x_d) firstprivate(dept)
         for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
-            x_d[device].memcpy_to_device(x, 0, dept);
+            x_d[device].copy_to_device(x, 0, dept);
         }
 
         if (run % 50 == 49) {
@@ -575,7 +575,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
             for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
                 if (device == 0) {
                     // r = b
-                    r_d[device].memcpy_to_device(b, 0, dept);
+                    r_d[device].copy_to_device(b, 0, dept);
                 } else {
                     // set r to 0
                     r_d[device].memset(0);
@@ -609,7 +609,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         // r_d = d
         #pragma omp parallel for default(none) shared(num_used_devices, devices_, r_d, d) firstprivate(dept)
         for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
-            r_d[device].memcpy_to_device(d, 0, dept);
+            r_d[device].copy_to_device(d, 0, dept);
         }
 
         if (verbose) {
@@ -667,7 +667,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         alpha_d[device] = device_ptr_type<real_type>{ num_support_vectors + THREAD_BLOCK_SIZE, devices_[device] };
         alpha_d[device].memset(0);
-        alpha_d[device].memcpy_to_device(alpha, 0, num_support_vectors);
+        alpha_d[device].copy_to_device(alpha, 0, num_support_vectors);
     }
 
     std::vector<real_type> out(predict_points.size());
@@ -692,7 +692,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
         const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::soa, predict_points, boundary_size, predict_points.size());
         device_ptr_type<real_type> point_d{ num_features * (num_predict_points + boundary_size), devices_[0] };
         point_d.memset(0);
-        point_d.memcpy_to_device(transformed_data, 0, transformed_data.size());
+        point_d.copy_to_device(transformed_data, 0, transformed_data.size());
 
         const detail::execution_range range({ static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_support_vectors) / static_cast<real_type>(THREAD_BLOCK_SIZE))),
                                               static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_predict_points) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
@@ -701,7 +701,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
         // perform prediction on the first device
         run_predict_kernel(range, params, out_d, alpha_d[0], point_d, data_d[0], data_last_d[0], num_support_vectors, num_predict_points, num_features);
 
-        out_d.memcpy_to_host(out, 0, num_predict_points);
+        out_d.copy_to_host(out, 0, num_predict_points);
 
         // add bias_ to all predictions
         out += -rho;
