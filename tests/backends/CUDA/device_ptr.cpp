@@ -50,6 +50,10 @@ TYPED_TEST(CUDADevicePtr, memset_with_count) {
     generic::test_memset_with_count<plssvm::cuda::detail::device_ptr<TypeParam>>();
 }
 
+TYPED_TEST(CUDADevicePtr, fill) {
+    generic::test_fill<plssvm::cuda::detail::device_ptr<TypeParam>>();
+}
+
 TYPED_TEST(CUDADevicePtr, copy_vector) {
     generic::test_copy_vector<plssvm::cuda::detail::device_ptr<TypeParam>>();
 }

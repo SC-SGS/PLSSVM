@@ -137,21 +137,38 @@ class gpu_device_ptr {
     }
 
     /**
-     * @brief Memset all values to @p value starting at position @p pos.
-     * @param[in] value the memset value
-     * @param[in] pos the position to start the memset (default: 0)
+     * @brief Memset all bytes using the @p pattern starting at position @p pos.
+     * @param[in] pattern the memset pattern
+     * @param[in] pos the position to start the memset
      * @throws plssvm::gpu_device_ptr_exception if @p pos is greater or equal than device_ptr::size()
      */
-    void memset(int value, size_type pos = 0);
+    void memset(int pattern, size_type pos = 0);
     /**
-     * @brief Memset up-to @p count values to @p value starting at position @p pos.
-     * @details Memset `[p, rcount)` where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
-     * @param[in] value the memset value
+     * @brief Memset up-to @p num_bytes values to @p pattern starting at position @p pos.
+     * @details Memset `[pos, rnum_bytes)` where `num_bytes` is the smaller value of @p num_bytes and `(device_ptr::size() - pos) * sizeof(value_type)`.
+     * @param[in] pattern the memset value
      * @param[in] pos the position to start the memset
+     * @param[in] num_bytes the number of bytes to set
+     * @throws plssvm::gpu_device_ptr_exception if @p pos is greater or equal than device_ptr::size()
+     */
+    virtual void memset(int pattern, size_type pos, size_type num_bytes) = 0;
+
+    /**
+     * @brief Fill all values with the @p value starting at position @p pos.
+     * @param[in] value the fill value
+     * @param[in] pos the position to start the fill
+     * @throws plssvm::gpu_device_ptr_exception if @p pos is greater or equal than device_ptr::size()
+     */
+    void fill(value_type value, size_type pos = 0);
+    /**
+     * @brief Fill up-to @p count values to @p value starting at position @p pos.
+     * @details Fill `[pos, rcount)` where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @param[in] value the fill value
+     * @param[in] pos the position to start the fill
      * @param[in] count the number of values to set
      * @throws plssvm::gpu_device_ptr_exception if @p pos is greater or equal than device_ptr::size()
      */
-    virtual void memset(int value, size_type pos, size_type count) = 0;
+    virtual void fill(value_type value, size_type pos, size_type count) = 0;
 
     /**
      * @brief Memcpy device_ptr::size() many values from @p data_to_copy to the device.
@@ -175,7 +192,7 @@ class gpu_device_ptr {
     void copy_to_device(const_host_pointer_type data_to_copy);
     /**
      * @brief Memcpy up-to @p count many values from @p data_to_copy to the device starting at device pointer position @p pos.
-     * @details Copies `[p, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[in] data_to_copy the data to copy onto the device
      * @param[in] pos the starting position for the copying in the device pointer
      * @param[in] count the number of elements to copy
@@ -190,7 +207,7 @@ class gpu_device_ptr {
     void copy_to_host(std::vector<value_type> &buffer) const;
     /**
      * @brief Memcpy up-to @p count many values from the device starting at device pointer position @p pos to the host buffer @p buffer.
-     * @details Copies `[p, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[out] buffer the buffer to copy the data to
      * @param[in] pos the starting position for the copying in the device pointer
      * @param[in] count the number of elements to copy
@@ -204,7 +221,7 @@ class gpu_device_ptr {
     void copy_to_host(host_pointer_type buffer) const;
     /**
      * @brief Memcpy up-to @p count many values from the device starting at device pointer position @p pos to the host buffer @p buffer.
-     * @details Copies `[p, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[out] buffer the buffer to copy the data to
      * @param[in] pos the starting position for the copying in the device pointer
      * @param[in] count the number of elements to copy

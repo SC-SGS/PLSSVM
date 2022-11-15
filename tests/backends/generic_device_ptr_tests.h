@@ -156,7 +156,7 @@ void test_memset_with_count() {
     device_ptr_type ptr{ 10 };
 
     // memset values to all ones
-    ptr.memset(1, 2, 4);
+    ptr.memset(1, 2, 4 * sizeof(real_type));
 
     // copy values to host
     std::vector<real_type> result(ptr.size());
@@ -177,6 +177,27 @@ void test_memset_death_test() {
     // memset values to all ones
     EXPECT_DEATH(ptr.memset(1, 2), "Invalid data pointer!");
     EXPECT_DEATH(ptr.memset(1, 2, 4), "Invalid data pointer!");
+}
+
+template <typename device_ptr_type>
+void test_fill() {
+    using real_type = typename device_ptr_type::value_type;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10 };
+
+    // memset values to all ones
+    ptr.fill(real_type{ 42.0 }, 2);
+
+    // copy values to host
+    std::vector<real_type> result(ptr.size());
+    ptr.copy_to_host(result);
+
+    // check values
+    std::vector<real_type> correct(ptr.size(), 42);
+    correct[0] = real_type{ 0.0 };
+    correct[1] = real_type{ 0.0 };
+    EXPECT_EQ(result, correct);
 }
 
 template <typename device_ptr_type>

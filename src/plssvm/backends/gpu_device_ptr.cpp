@@ -56,10 +56,17 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::swap(gpu_device_ptr &other) n
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memset(const int value, const size_type pos) {
+void gpu_device_ptr<T, queue_t, device_pointer_t>::memset(const int pattern, const size_type pos) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
 
-    this->memset(value, pos, size_);
+    this->memset(pattern, pos, size_ * sizeof(value_type));
+}
+
+template <typename T, typename queue_t, typename device_pointer_t>
+void gpu_device_ptr<T, queue_t, device_pointer_t>::fill(const value_type value, const size_type pos) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
+    this->fill(value, pos, size_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>

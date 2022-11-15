@@ -36,15 +36,44 @@ device_ptr<T>::~device_ptr() {
 }
 
 template <typename T>
-void device_ptr<T>::memset(const int value, const size_type pos, const size_type count) {
+void device_ptr<T>::memset(const int pattern, const size_type pos, const size_type num_bytes) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
 
     if (pos >= size_) {
         throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
     }
     PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(queue_));
+    const size_type rnum_bytes = std::min(num_bytes, (size_ - pos) * sizeof(value_type));
+    PLSSVM_CUDA_ERROR_CHECK(cudaMemset(data_ + pos, pattern, rnum_bytes));
+}
+
+template <typename value_type, typename size_type>
+__global__ void gpu_fill(value_type* data, value_type value, size_type pos, size_type count) {
+    const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    // fill the array
+    if (idx < count) {
+        data[pos + idx] = value;
+    }
+}
+
+template <typename T>
+void device_ptr<T>::fill(const value_type value, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+
+    if (pos >= size_) {
+        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+    }
+
+    detail::set_device(queue_);
+
+    // run GPU kernel
     const size_type rcount = std::min(count, size_ - pos);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMemset(data_ + pos, value, rcount * sizeof(value_type)));
+    int block_size = 512;
+    int grid_size = (rcount + block_size - 1) / block_size;
+    gpu_fill<<<grid_size, block_size>>>(data_, value, pos, rcount);
+
+    detail::peek_at_last_error();
+    detail::device_synchronize(queue_);
 }
 
 template <typename T>
