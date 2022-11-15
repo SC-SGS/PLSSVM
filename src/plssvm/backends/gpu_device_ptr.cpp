@@ -57,62 +57,62 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::swap(gpu_device_ptr &other) n
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::memset(const int pattern, const size_type pos) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->memset(pattern, pos, size_ * sizeof(value_type));
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::fill(const value_type value, const size_type pos) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->fill(value, pos, size_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->copy_to_device(data_to_copy, 0, size_);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     const size_type rcount = std::min(count, size_ - pos);
     if (data_to_copy.size() < rcount) {
-        throw gpu_device_ptr_exception{ fmt::format("Too few data to perform memcpy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
+        throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
     }
     this->copy_to_device(data_to_copy.data(), pos, rcount);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const_host_pointer_type data_to_copy) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
-    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid pointer for the data to copy!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     this->copy_to_device(data_to_copy, 0, size_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->copy_to_host(buffer, 0, size_);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     const size_type rcount = std::min(count, size_ - pos);
     if (buffer.size() < rcount) {
-        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform memcpy (needed: {}, provided: {})!", rcount, buffer.size()) };
+        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, buffer.size()) };
     }
     this->copy_to_host(buffer.data(), pos, rcount);
 }
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(host_pointer_type buffer) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer!");
-    PLSSVM_ASSERT(buffer != nullptr, "Invalid pointer for the data to copy!");
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     this->copy_to_host(buffer, 0, size_);
 }

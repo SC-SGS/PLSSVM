@@ -175,8 +175,8 @@ void test_memset_death_test() {
     device_ptr_type ptr{};
 
     // memset values to all ones
-    EXPECT_DEATH(ptr.memset(1, 2), "Invalid data pointer!");
-    EXPECT_DEATH(ptr.memset(1, 2, 4), "Invalid data pointer!");
+    EXPECT_DEATH(ptr.memset(1, 2), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(ptr.memset(1, 2, 4), "Invalid data pointer! Maybe *this has been default constructed?");
 }
 
 template <typename device_ptr_type>
@@ -194,10 +194,39 @@ void test_fill() {
     ptr.copy_to_host(result);
 
     // check values
-    std::vector<real_type> correct(ptr.size(), 42);
-    correct[0] = real_type{ 0.0 };
-    correct[1] = real_type{ 0.0 };
+    std::vector<real_type> correct(ptr.size(), real_type{ 42.0 });
+    correct[0] = correct[1] = real_type{ 0.0 };
     EXPECT_EQ(result, correct);
+}
+template <typename device_ptr_type>
+void test_fill_with_count() {
+    using real_type = typename device_ptr_type::value_type;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10 };
+
+    // memset values to all ones
+    ptr.memset(real_type{ 42.0 }, 2, 4);
+
+    // copy values to host
+    std::vector<real_type> result(ptr.size());
+    ptr.copy_to_host(result);
+
+    // check values
+    std::vector<real_type> correct(ptr.size(), real_type{ 0.0 });
+    correct[2] = correct[3] = correct[4] = correct[5] = real_type{ 42.0 };
+    EXPECT_EQ(result, correct);
+}
+template <typename device_ptr_type>
+void test_fill_death_test() {
+    using real_type = typename device_ptr_type::value_type;
+
+    // default construct device_ptr
+    device_ptr_type ptr{};
+
+    // memset values to all ones
+    EXPECT_DEATH(ptr.fill(1, 2), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(ptr.fill(1, 2, 4), "Invalid data pointer! Maybe *this has been default constructed?");
 }
 
 template <typename device_ptr_type>
@@ -228,11 +257,11 @@ void test_copy_vector_exception() {
 
     // try copying data to the device with too few elements
     std::vector<real_type> data(8, 42);
-    EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform memcpy (needed: 10, provided: 8)!");
+    EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 
     // try copying data back to the host with a buffer with too few elements
     std::vector<real_type> result(8);
-    EXPECT_THROW_WHAT(ptr.copy_to_host(data), plssvm::gpu_device_ptr_exception, "Buffer too small to perform memcpy (needed: 10, provided: 8)!");
+    EXPECT_THROW_WHAT(ptr.copy_to_host(data), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
 }
 
 template <typename device_ptr_type>
@@ -283,11 +312,11 @@ void test_copy_vector_with_count_exception() {
 
     // try copying data to the device with too few elements
     std::vector<real_type> data(4, 42);
-    EXPECT_THROW_WHAT(ptr.copy_to_device(data, 1, 7), plssvm::gpu_device_ptr_exception, "Too few data to perform memcpy (needed: 5, provided: 4)!");
+    EXPECT_THROW_WHAT(ptr.copy_to_device(data, 1, 7), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 5, provided: 4)!");
 
     // try copying data back to the host with a buffer with too few elements
     std::vector<real_type> result(4);
-    EXPECT_THROW_WHAT(ptr.copy_to_host(data, 1, 7), plssvm::gpu_device_ptr_exception, "Buffer too small to perform memcpy (needed: 5, provided: 4)!");
+    EXPECT_THROW_WHAT(ptr.copy_to_host(data, 1, 7), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 5, provided: 4)!");
 }
 
 template <typename device_ptr_type>
@@ -308,25 +337,6 @@ void test_copy_ptr() {
 
     // check values for correctness
     EXPECT_EQ(result, std::vector<real_type>(10, 42));
-}
-template <typename device_ptr_type>
-void test_copy_ptr_death_test() {
-    using real_type = typename device_ptr_type::value_type;
-
-    // construct device_ptr
-    device_ptr_type ptr{ 10 };
-
-    // memcpy with invalid data pointer
-    EXPECT_DEATH(ptr.copy_to_device(nullptr), "Invalid pointer for the data to copy!");
-    EXPECT_DEATH(ptr.copy_to_host(nullptr), "Invalid pointer for the data to copy!");
-
-    // construct default device_ptr
-    device_ptr_type def{};
-
-    // memcpy with invalid data pointer
-    std::vector<real_type> data(def.size());
-    EXPECT_DEATH(def.copy_to_device(data), "Invalid data pointer!");
-    EXPECT_DEATH(def.copy_to_host(data), "Invalid data pointer!");
 }
 
 template <typename device_ptr_type>
@@ -368,24 +378,48 @@ void test_copy_ptr_with_count() {
         EXPECT_EQ(result, (std::vector<real_type>{ real_type{ 0.0 }, real_type{ 42.0 }, real_type{ 42.0 }, real_type{ 42.0 }, real_type{ 42.0 }, real_type{ 42.0 } }));
     }
 }
+
 template <typename device_ptr_type>
-void test_copy_ptr_with_count_death_test() {
+void test_copy_death_test() {
     using real_type = typename device_ptr_type::value_type;
 
     // construct device_ptr
     device_ptr_type ptr{ 10 };
 
-    // memcpy with invalid data pointer
+    // copy with invalid data pointer
+    EXPECT_DEATH(ptr.copy_to_device(nullptr), "Invalid host pointer for the data to copy!");
+    EXPECT_DEATH(ptr.copy_to_host(nullptr), "Invalid host pointer for the data to copy!");
+
+    // construct default device_ptr
+    device_ptr_type def{};
+
+    // copy with invalid device pointer
+    std::vector<real_type> data(def.size());
+    EXPECT_DEATH(def.copy_to_device(data.data()), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(def.copy_to_host(data.data()), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(def.copy_to_device(data), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(def.copy_to_host(data), "Invalid data pointer! Maybe *this has been default constructed?");
+}
+template <typename device_ptr_type>
+void test_copy_with_count_death_test() {
+    using real_type = typename device_ptr_type::value_type;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10 };
+
+    // copy with invalid data pointer
     EXPECT_DEATH(ptr.copy_to_device(nullptr, 0, 10), "Invalid pointer for the data to copy!");
     EXPECT_DEATH(ptr.copy_to_host(nullptr, 0, 10), "Invalid pointer for the data to copy!");
 
     // construct default device_ptr
     device_ptr_type def{};
 
-    // memcpy with invalid data pointer
+    // copy with invalid data pointer
     std::vector<real_type> data(def.size());
-    EXPECT_DEATH(def.copy_to_device(data, 0, 0), "Invalid data pointer!");
-    EXPECT_DEATH(def.copy_to_host(data, 0, 0), "Invalid data pointer!");
+    EXPECT_DEATH(def.copy_to_device(data.data(), 0, 0), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(def.copy_to_host(data.data(), 0, 0), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(def.copy_to_device(data, 0, 0), "Invalid data pointer! Maybe *this has been default constructed?");
+    EXPECT_DEATH(def.copy_to_host(data, 0, 0), "Invalid data pointer! Maybe *this has been default constructed?");
 }
 
 }  // namespace generic

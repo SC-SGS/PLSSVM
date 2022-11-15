@@ -53,6 +53,9 @@ TYPED_TEST(CUDADevicePtr, memset_with_count) {
 TYPED_TEST(CUDADevicePtr, fill) {
     generic::test_fill<plssvm::cuda::detail::device_ptr<TypeParam>>();
 }
+TYPED_TEST(CUDADevicePtr, fill_with_count) {
+    generic::test_fill<plssvm::cuda::detail::device_ptr<TypeParam>>();
+}
 
 TYPED_TEST(CUDADevicePtr, copy_vector) {
     generic::test_copy_vector<plssvm::cuda::detail::device_ptr<TypeParam>>();
@@ -83,12 +86,13 @@ TYPED_TEST(CUDADevicePtrDeathTest, memset) {
     generic::test_memset_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
 }
 
-TYPED_TEST(CUDADevicePtrDeathTest, copy_ptr) {
-    generic::test_copy_ptr_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtrDeathTest, copy_ptr_with_count) {
-    generic::test_copy_ptr_with_count_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
+TYPED_TEST(CUDADevicePtrDeathTest, fill) {
+    generic::test_fill_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
 }
 
-// TODO: add missing death tests
-
+TYPED_TEST(CUDADevicePtrDeathTest, copy) {
+    generic::test_copy_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
+}
+TYPED_TEST(CUDADevicePtrDeathTest, copy_with_count) {
+    generic::test_copy_with_count_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
+}
