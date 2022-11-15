@@ -9,6 +9,8 @@
  * @brief Defines the kernel functions for the C-SVM using the HIP backend.
  */
 
+#ifndef PLSSVM_BACKENDS_HIP_SVM_KERNEL_HPP_
+#define PLSSVM_BACKENDS_HIP_SVM_KERNEL_HPP_
 #pragma once
 
 #include "hip/hip_runtime.h"
@@ -268,3 +270,5 @@ __global__ void device_kernel_radial(const real_type *q, real_type *ret, const r
 }
 
 }  // namespace plssvm::hip
+
+#endif  // PLSSVM_BACKENDS_HIP_SVM_KERNEL_HPP_

@@ -9,6 +9,8 @@
  * @brief Implements custom exception classes specific to the HIP backend.
  */
 
+#ifndef PLSSVM_BACKENDS_HIP_EXCEPTIONS_HPP_
+#define PLSSVM_BACKENDS_HIP_EXCEPTIONS_HPP_
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
@@ -32,3 +34,5 @@ class backend_exception : public exception {
 };
 
 }  // namespace plssvm::hip
+
+#endif  // PLSSVM_BACKENDS_HIP_EXCEPTIONS_HPP_

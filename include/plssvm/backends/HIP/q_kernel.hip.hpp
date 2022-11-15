@@ -9,6 +9,8 @@
  * @brief Defines HIP functions for generating the `q` vector.
  */
 
+#ifndef PLSSVM_BACKENDS_HIP_Q_KERNEL_HPP_
+#define PLSSVM_BACKENDS_HIP_Q_KERNEL_HPP_
 #pragma once
 
 #include "hip/hip_runtime.h"
@@ -83,3 +85,5 @@ __global__ void device_kernel_q_radial(real_type *q, const real_type *data_d, co
 }
 
 }  // namespace plssvm::hip
+
+#endif  // PLSSVM_BACKENDS_HIP_Q_KERNEL_HPP_
