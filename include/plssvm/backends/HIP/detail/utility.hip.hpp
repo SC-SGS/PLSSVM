@@ -9,6 +9,8 @@
  * @brief Utility functions for the HIP backend.
  */
 
+#ifndef PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
+#define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
 #pragma once
 
 #include "hip/hip_runtime_api.h"  // hipError_t
@@ -38,6 +40,7 @@ void gpu_assert(hipError_t code);
 /**
  * @brief Set the device @p device to the active HIP device.
  * @param[in] device the now active device
+ * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
  */
 void set_device(int device);
 
@@ -55,3 +58,5 @@ void peek_at_last_error();
 void device_synchronize(int device);
 
 }  // namespace plssvm::hip::detail
+
+#endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
