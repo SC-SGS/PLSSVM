@@ -55,7 +55,6 @@ class csvm {
     /**
      * @brief Construct a C-SVM using named-parameters with the @p kernel type.
      * @tparam Args the type of the named-parameters
-     * @param[in] kernel the kernel type to use
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args>

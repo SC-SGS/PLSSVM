@@ -9,10 +9,12 @@
  * @brief Defines the base class for all C-SVM backends using a GPU. Used for code duplication reduction.
  */
 
+#ifndef PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_
+#define PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_
 #pragma once
 
 #include <cstddef>      // std::size_t
-#include <type_traits>  // std::is_same_v
+#include <type_traits>  // std::is_arithmetic_v, std::is_reference_v
 #include <vector>       // std::vector
 
 namespace plssvm::detail {
@@ -238,3 +240,5 @@ class gpu_device_ptr {
 };
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_

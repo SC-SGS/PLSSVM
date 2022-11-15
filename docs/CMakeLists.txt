@@ -27,6 +27,7 @@ set(DOXYGEN_SORT_MEMBER_DOCS "NO")
 set(DOXYGEN_INLINE_INHERITED_MEMB "YES")
 set(DOXYGEN_USE_MATHJAX "YES")
 set(DOXYGEN_PROJECT_LOGO "${PROJECT_SOURCE_DIR}/docs/resources/logo_90x55.png")
+set(DOXYGEN_EXCLUDE_SYMBOLS "*_HPP_")
 
 ## enable processing of specific attributes and macros
 set(DOXYGEN_ENABLE_PREPROCESSING "YES")

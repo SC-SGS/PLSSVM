@@ -89,11 +89,11 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      */
     void fill(value_type value, size_type pos, size_type count) override;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::memcpy_to_device(const_host_pointer_type, size_type, size_type)
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_device(const_host_pointer_type, size_type, size_type)
      */
     void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) override;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::memcpy_to_host(host_pointer_type, size_type, size_type) const
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_host(host_pointer_type, size_type, size_type) const
      */
     void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
 };

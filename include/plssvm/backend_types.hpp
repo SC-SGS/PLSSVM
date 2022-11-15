@@ -94,6 +94,7 @@ struct csvm_to_backend_type {};
  */
 template <>
 struct csvm_to_backend_type<openmp::csvm> {
+    /// The enum value representing the OpenMP backend.
     static constexpr backend_type value = backend_type::openmp;
 };
 /**
@@ -101,6 +102,7 @@ struct csvm_to_backend_type<openmp::csvm> {
  */
 template <>
 struct csvm_to_backend_type<cuda::csvm> {
+    /// The enum value representing the CUDA backend.
     static constexpr backend_type value = backend_type::cuda;
 };
 /**
@@ -108,6 +110,7 @@ struct csvm_to_backend_type<cuda::csvm> {
  */
 template <>
 struct csvm_to_backend_type<hip::csvm> {
+    /// The enum value representing the HIP backend.
     static constexpr backend_type value = backend_type::hip;
 };
 /**
@@ -115,6 +118,7 @@ struct csvm_to_backend_type<hip::csvm> {
  */
 template <>
 struct csvm_to_backend_type<opencl::csvm> {
+    /// The enum value representing the OpenCL backend.
     static constexpr backend_type value = backend_type::opencl;
 };
 /**
@@ -122,6 +126,7 @@ struct csvm_to_backend_type<opencl::csvm> {
  */
 template <>
 struct csvm_to_backend_type<sycl::csvm> {
+    /// The enum value representing the SYCL backend.
     static constexpr backend_type value = backend_type::sycl;
 };
 /**
@@ -129,6 +134,7 @@ struct csvm_to_backend_type<sycl::csvm> {
  */
 template <>
 struct csvm_to_backend_type<hipsycl::csvm> {
+    /// The enum value representing the SYCL (hipSYCL) backend.
     static constexpr backend_type value = backend_type::sycl;
 };
 /**
@@ -136,6 +142,7 @@ struct csvm_to_backend_type<hipsycl::csvm> {
  */
 template <>
 struct csvm_to_backend_type<dpcpp::csvm> {
+    /// The enum value representing the SYCL (DPC++) backend.
     static constexpr backend_type value = backend_type::sycl;
 };
 
