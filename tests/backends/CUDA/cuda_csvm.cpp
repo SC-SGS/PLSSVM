@@ -10,24 +10,17 @@
 
 #include "backends/CUDA/mock_cuda_csvm.hpp"
 
-#include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::openmp::csvm
-#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/data_set.hpp"                  // plssvm::data_set
+#include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                 // plssvm::detail::data_set
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "backends/compare.hpp"        // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
-#include "backends/generic_tests.hpp"  // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
-#include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "naming.hpp"                  // naming::{real_type_kernel_function_to_name, real_type_to_name}
-#include "types_to_test.hpp"           // util::{real_type_kernel_function_gtest, real_type_gtest}
-#include "utility.hpp"                 // util::{redirect_output, generate_random_vector}
+#include "backends/generic_tests.hpp"  // CSVM, CSVMDeathTest
+#include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT
+#include "utility.hpp"                 // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, ::testing::Test
-
-#include <vector>  // std::vector
-
 
 class CUDACSVM : public ::testing::Test, private util::redirect_output {};
 
