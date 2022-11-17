@@ -33,4 +33,4 @@ using device_ptr_test_types = ::testing::Types<
 
 // instantiate type-parameterized tests
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
