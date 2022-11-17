@@ -1,98 +1,36 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*
-* @brief Tests for the CUDA backend device pointer.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Tests for the CUDA backend device pointer.
+ */
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 
-#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
-
 #include "../generic_device_ptr_tests.h"
 
-#include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "naming.hpp"                  // naming::{real_type_kernel_function_to_name, real_type_to_name}
-#include "types_to_test.hpp"           // util::{real_type_kernel_function_gtest, real_type_gtest}
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW, ::testing::StartsWith
+#include <cstddef>  // std::size_t
 
 template <typename T>
-class CUDADevicePtr : public ::testing::Test {};
-TYPED_TEST_SUITE(CUDADevicePtr, util::real_type_gtest, naming::real_type_to_name); // TODO: other types also?
+struct device_ptr_test_type {
+    using device_ptr_type = plssvm::cuda::detail::device_ptr<T>;
+    using queue_type = int;
 
-TYPED_TEST(CUDADevicePtr, default_construct) {
-    generic::test_default_construct<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, construct) {
-    generic::test_construct<plssvm::cuda::detail::device_ptr<TypeParam>>(0);
-}
-TYPED_TEST(CUDADevicePtr, move_construct) {
-    generic::test_move_construct<plssvm::cuda::detail::device_ptr<TypeParam>>(0);
-}
-TYPED_TEST(CUDADevicePtr, move_assign) {
-    generic::test_move_assign<plssvm::cuda::detail::device_ptr<TypeParam>>(0);
-}
+    static const queue_type &default_queue() {
+        static queue_type queue = 0;
+        return queue;
+    }
+};
 
-TYPED_TEST(CUDADevicePtr, swap) {
-    generic::test_swap<plssvm::cuda::detail::device_ptr<TypeParam>>(0);
-}
+using device_ptr_test_types = ::testing::Types<
+    device_ptr_test_type<float>,
+    device_ptr_test_type<double>>;
 
-TYPED_TEST(CUDADevicePtr, memset) {
-    generic::test_memset<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, memset_with_count) {
-    generic::test_memset_with_count<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-
-TYPED_TEST(CUDADevicePtr, fill) {
-    generic::test_fill<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, fill_with_count) {
-    generic::test_fill<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-
-TYPED_TEST(CUDADevicePtr, copy_vector) {
-    generic::test_copy_vector<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, copy_vector_exception) {
-    generic::test_copy_vector_exception<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, copy_vector_with_count) {
-    generic::test_copy_vector_with_count<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, copy_vector_with_count_exception) {
-    generic::test_copy_vector_with_count_exception<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-
-TYPED_TEST(CUDADevicePtr, copy_ptr) {
-    generic::test_copy_ptr<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtr, copy_ptr_with_count) {
-    generic::test_copy_ptr<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-
-
-template <typename T>
-class CUDADevicePtrDeathTest : public CUDADevicePtr<T> {};
-TYPED_TEST_SUITE(CUDADevicePtrDeathTest, util::real_type_gtest, naming::real_type_to_name); // TODO: other types also?
-
-TYPED_TEST(CUDADevicePtrDeathTest, memset) {
-    generic::test_memset_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-
-TYPED_TEST(CUDADevicePtrDeathTest, fill) {
-    generic::test_fill_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-
-TYPED_TEST(CUDADevicePtrDeathTest, copy) {
-    generic::test_copy_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
-TYPED_TEST(CUDADevicePtrDeathTest, copy_with_count) {
-    generic::test_copy_with_count_death_test<plssvm::cuda::detail::device_ptr<TypeParam>>();
-}
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, DevicePtr, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, DevicePtrDeathTest, device_ptr_test_types);
