@@ -19,11 +19,12 @@
 #include "plssvm/parameter.hpp"              // plssvm::detail::parameter
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "utility.hpp"             // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
-#include "utility.hpp"
-#include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE
+#include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
+                          // ::testing::Test
 
 #include <cmath>     // std::sqrt
 #include <fstream>   // std::ifstream
@@ -31,18 +32,25 @@
 #include <utility>   // std::pair
 #include <vector>    // std::vector
 
-namespace generic {
-
 // TODO: add non-trivial test
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_type kernel) {
+template <typename T>
+class CSVM : public ::testing::Test, protected util::redirect_output {};
+TYPED_TEST_SUITE_P(CSVM);
+
+TYPED_TEST_P(CSVM, solve_system_of_linear_equations_trivial) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
     // create parameter struct
     plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
-    if (kernel == plssvm::kernel_function_type::polynomial) {
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1.0;
         params.gamma = 1.0;
         params.coef0 = 0.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        GTEST_SKIP() << "solve_system_of_linear_equations_trivial currently doesn't work with the rbf kernel!";
     }
 
     // create the data that should be used
@@ -70,50 +78,19 @@ inline void test_solve_system_of_linear_equations(const plssvm::kernel_function_
     EXPECT_FLOATING_POINT_NEAR(std::abs(calculated_rho) - std::numeric_limits<real_type>::epsilon(), std::numeric_limits<real_type>::epsilon());
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_solve_system_of_linear_equations_death_test(const plssvm::kernel_function_type kernel_function) {
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
-    const mock_csvm_type svm{};
-    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel_function };
+TYPED_TEST_P(CSVM, predict_values) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
-    const std::vector<real_type> b{ real_type{ 1.0 }, real_type{ 2.0 } };
-
-    // empty data is not allowed
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{}, b, real_type{ 0.1 }, 2),
-                 "The data must not be empty!");
-    // empty features are not allowed
-    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, b, real_type{ 0.1 }, 2)),
-                 "The data points must contain at least one feature!");
-    // all data points must have the same number of features
-    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, b, real_type{ 0.1 }, 2)),
-                 "All data points must have the same number of features!");
-
-    const std::vector<std::vector<real_type>> data = {
-        { real_type{ 1.0 }, real_type{ 2.0 } },
-        { real_type{ 3.0 }, real_type{ 4.0 } }
-    };
-
-    // the number of data points and values in b must be the same
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<real_type>{ }, 0.1, 2),
-                 ::testing::HasSubstr("The number of data points in the matrix A (2) and the values in the right hand side vector (0) must be the same!"));
-    // the stopping criterion must be greater than zero
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.0 }, 2),
-                 "The stopping criterion in the CG algorithm must be greater than 0.0, but is 0!");
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ -0.1 }, 2),
-                 "The stopping criterion in the CG algorithm must be greater than 0.0, but is -0.1!");
-    // at least one CG iteration must be performed
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.1 }, 0),
-                 "The number of CG iterations must be greater than 0!");
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_predict_values(const plssvm::kernel_function_type kernel) {
     // create parameter struct
     plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
-    if (kernel == plssvm::kernel_function_type::polynomial) {
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1.0;
         params.gamma = 1.0;
         params.coef0 = 0.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        GTEST_SKIP() << "predict_values currently doesn't work with the rbf kernel!";
     }
 
     // create the data that should be used
@@ -149,56 +126,13 @@ inline void test_predict_values(const plssvm::kernel_function_type kernel) {
     }
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_predict_values_death_test(const plssvm::kernel_function_type kernel_function) {
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
-    const mock_csvm_type svm{};
-    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel_function };
+TYPED_TEST_P(CSVM, generate_q) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
-    const std::vector<std::vector<real_type>> data = {
-        { real_type{ 1.0 }, real_type{ 2.0 } },
-        { real_type{ 3.0 }, real_type{ 4.0 } }
-    };
-    const std::vector<real_type> alpha{ real_type{ 1.0 }, real_type{ 2.0 } };
-    std::vector<real_type> w{};
-
-    // empty support vector data is not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{}, alpha, real_type{ 0.0 }, w, data)),
-                 "The support vectors must not be empty!");
-    // empty support vector features are not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, alpha, real_type{ 0.0 }, w, data)),
-                 "The support vectors must contain at least one feature!");
-    // all support vector must have the same number of features
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, alpha, real_type{ 0.0 }, w, data)),
-                 "All support vectors must have the same number of features!");
-
-    // number of support vectors and weights must be the same
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<real_type>{ real_type{ 1.0 } }, real_type{ 0.0 }, w, data)),
-                 ::testing::HasSubstr("The number of support vectors (2) and number of weights (1) must be the same!"));
-    // either w must be empty or contain num features many entries
-    w.resize(1);
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, data)),
-                 ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (1) as features are present (2)!"));
-    w.clear();
-
-    // empty data points to predict is not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{})),
-                 "The data points to predict must not be empty!");
-    // empty data points to predict features are not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{} })),
-                 "The data points to predict must contain at least one feature!");
-    // all data points to predict must have the same number of features
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } })),
-                 "All data points to predict must have the same number of features!");
-    // the number of features in the support vectors and data points to predict must be the same
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 2.0 } } })),
-                 ::testing::HasSubstr("The number of features in the support vectors (2) must be the same as in the data points to predict (1)!"));
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_generate_q(const plssvm::kernel_function_type kernel_type) {
     // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+    const plssvm::detail::parameter<real_type> params{ kernel, 2, 0.001, 1.0, 0.1 };
 
     // create the data that should be used
     const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
@@ -221,54 +155,11 @@ inline void test_generate_q(const plssvm::kernel_function_type kernel_type) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_generate_q_death_test(const plssvm::kernel_function_type kernel_type) {
-    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+TYPED_TEST_P(CSVM, calculate_w) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
-    // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
-    const mock_csvm_type svm{};
-
-    // valid feature_range
-    const std::vector<std::size_t> feature_range{ 0, 1 };
-
-    // the data_d vector must not be empty!
-    std::vector<device_ptr_type> vec1;
-    vec1.emplace_back(1, svm.devices_[0]);
-    std::vector<device_ptr_type> vec2;
-    vec2.emplace_back(1, svm.devices_[0]);
-    vec2.emplace_back(1, svm.devices_[0]);
-
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, std::vector<device_ptr_type>{}, vec1, 1, feature_range, 0),
-                 "The data_d array may not be empty!");
-    // the ptr in the data_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, std::vector<device_ptr_type>(1), vec1, 1, feature_range, 0),
-                 "Each device_ptr in data_d must at least contain one data point!");
-    // the data_last_d vector must not be empty!
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, std::vector<device_ptr_type>{}, 1, feature_range, 0),
-                 "The data_last_d array may not be empty!");
-    // the ptr in the data_last_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, std::vector<device_ptr_type>(1), 1, feature_range, 0),
-                 "Each device_ptr in data_last_d must at least contain one data point!");
-    // data_d and data_last_d must have the same size
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec2, 1, feature_range, 0),
-                 "The number of used devices to the data_d and data_last_d vectors must be equal!: 1 != 2");
-
-    // the number of data points must be greater than zero
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 0, feature_range, 0),
-                 "At least one data point must be used to calculate q!");
-    // the number of elements in the feature_ranges vector must be one greater than the number of used devices
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 1, std::vector<std::size_t>{}, 0),
-                 ::testing::HasSubstr("The number of values in the feature_range vector must be exactly one more than the number of used devices!: 0 != 1 + 1"));
-    // the values in the feature_ranges vector must be monotonically increasing
-    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 1, { 1, 0 }, 0),
-                 "The feature ranges are not monotonically increasing!");
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_calculate_w() {
     using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
     using queue_type = typename mock_csvm_type::queue_type;
 
@@ -302,66 +193,16 @@ inline void test_calculate_w() {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_calculate_w_death_test() {
-    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+TYPED_TEST_P(CSVM, run_device_kernel) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
-    const mock_csvm_type svm{};
-
-    // valid feature_range
-    const std::vector<std::size_t> feature_range{ 0, 1 };
-
-    // the data_d vector must not be empty!
-    std::vector<device_ptr_type> vec1;
-    vec1.emplace_back(1, svm.devices_[0]);
-    std::vector<device_ptr_type> vec2;
-    vec2.emplace_back(1, svm.devices_[0]);
-    vec2.emplace_back(1, svm.devices_[0]);
-
-    // the data_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.calculate_w(std::vector<device_ptr_type>{}, vec1, vec1, 1, feature_range),
-                 "The data_d array may not be empty!");
-    // the ptr in the data_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.calculate_w(std::vector<device_ptr_type>(1), vec1, vec1, 1, feature_range),
-                 "Each device_ptr in data_d must at least contain one data point!");
-    // the data_last_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, std::vector<device_ptr_type>{}, vec1, 1, feature_range),
-                 "The data_last_d array may not be empty!");
-    // the ptr in the data_last_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, std::vector<device_ptr_type>(1), vec1, 1, feature_range),
-                 "Each device_ptr in data_last_d must at least contain one data point!");
-    // data_d and data_last_d must have the same size
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec2, vec1, 1, feature_range),
-                 "The number of used devices to the data_d and data_last_d vectors must be equal!: 1 != 2");
-    // the alpha_d vector must not be empty!
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, std::vector<device_ptr_type>{}, 1, feature_range),
-                 "The alpha_d array may not be empty!");
-    // the ptr in the alpha_d vector must not be empty
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, std::vector<device_ptr_type>(1), 1, feature_range),
-                 "Each device_ptr in alpha_d must at least contain one data point!");
-    // data_d and alpha_d must have the same size
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec2, 1, feature_range),
-                 "The number of used devices to the data_d and alpha_d vectors must be equal!: 1 != 2");
-
-    // the number of data points must be greater than zero
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec1, 0, feature_range),
-                 "At least one data point must be used to calculate q!");
-    // the number of elements in the feature_ranges vector must be one greater than the number of used devices
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec1, 1, std::vector<std::size_t>{}),
-                 ::testing::HasSubstr("The number of values in the feature_range vector must be exactly one more than the number of used devices!: 0 != 1 + 1"));
-    // the values in the feature_ranges vector must be monotonically increasing
-    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec1, 1, { 1, 0 }),
-                 "The feature ranges are not monotonically increasing!");
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_run_device_kernel(const plssvm::kernel_function_type kernel_type) {
     using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
     using queue_type = typename mock_csvm_type::queue_type;
 
     // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+    const plssvm::detail::parameter<real_type> params{ kernel, 2, 0.001, 1.0, 0.1 };
 
     // create the data that should be used
     const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
@@ -375,7 +216,7 @@ inline void test_run_device_kernel(const plssvm::kernel_function_type kernel_typ
 
     // perform the data setup on the device
     constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
-    const std::size_t num_used_devices = svm.select_num_used_devices(kernel_type, data.num_features());
+    const std::size_t num_used_devices = svm.select_num_used_devices(kernel, data.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(data.data(), dept, data.num_features(), boundary_size, num_used_devices);
     std::vector<device_ptr_type> q_d{};
     std::vector<device_ptr_type> x_d{};
@@ -408,53 +249,11 @@ inline void test_run_device_kernel(const plssvm::kernel_function_type kernel_typ
     }
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_run_device_kernel_death_test(const plssvm::kernel_function_type kernel_type) {
-    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+TYPED_TEST_P(CSVM, device_reduction) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
-    // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::run_device_kernel is protected
-    const mock_csvm_type svm{};
-
-    // valid feature_range
-    const std::vector<std::size_t> feature_range{ 0, 1 };
-
-    // the data_d vector must not be empty!
-    device_ptr_type ptr{ 1, svm.devices_[0] };
-    device_ptr_type empty_ptr{};
-
-    // the device id must be smaller than the total number of available devices
-    EXPECT_DEATH(svm.run_device_kernel(svm.num_available_devices(), params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
-                 ::testing::HasSubstr(fmt::format("Requested device {}, but only {} device(s) are available!", svm.num_available_devices(), svm.num_available_devices())));
-    // the q_d device_ptr must not be empty
-    EXPECT_DEATH(svm.run_device_kernel(0, params, empty_ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
-                 "The q_d device_ptr may not be empty!");
-    // the r_d device_ptr must not be empty
-    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, empty_ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
-                 "The r_d device_ptr may not be empty!");
-    // the x_d device_ptr must not be empty
-    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, empty_ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
-                 "The x_d device_ptr may not be empty!");
-    // the data_d device_ptr must not be empty
-    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, empty_ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
-                 "The data_d device_ptr may not be empty!");
-
-    // the values in the feature_ranges vector must be monotonically increasing
-    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, { 1, 0 }, real_type{ 0.0 }, real_type{ 0.0 }, 1, 0),
-                 "The feature ranges are not monotonically increasing!");
-
-    // add must either be -1.0 or 1.0
-    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 0.0 }, 1, 0),
-                 "add must either by -1.0 or 1.0, but is 0!");
-    // at least one data point must be available
-    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 0, 0),
-                 "At least one data point must be used to calculate q!");
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_device_reduction() {
     using namespace plssvm::operators;
 
     using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
@@ -498,60 +297,29 @@ inline void test_device_reduction() {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data);
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_device_reduction_death_test() {
-    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+TYPED_TEST_P(CSVM, select_num_used_devices) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
-    const mock_csvm_type svm{};
-
-    // the data_d vector must not be empty!
-    std::vector<device_ptr_type> vec1;
-    vec1.emplace_back(1, svm.devices_[0]);
-
-    std::vector<device_ptr_type> empty_device_ptr_vec{};
-    std::vector<device_ptr_type> one_element_device_ptr_vec(1);
-    std::vector<real_type> empty_buffer_vec{};
-    std::vector<real_type> one_element_buffer_vec(1);
-
-    // the buffer_d vector must not be empty
-    EXPECT_DEATH(svm.device_reduction(empty_device_ptr_vec, one_element_buffer_vec),
-                 "The buffer_d array may not be empty!");
-    // the ptr in the buffer_d vector must not be empty
-    EXPECT_DEATH(svm.device_reduction(one_element_device_ptr_vec, one_element_buffer_vec),
-                 "Each device_ptr in buffer_d must at least contain one data point!");
-    // the buffer vector must not be empty
-    EXPECT_DEATH(svm.device_reduction(vec1, empty_buffer_vec),
-                 "The buffer array may not be empty!");
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_select_num_used_devices(const plssvm::kernel_function_type kernel_type) {
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::select_num_used_devices is protected
     const mock_csvm_type svm{};
 
-    if (kernel_type == plssvm::kernel_function_type::linear) {
+    if (kernel == plssvm::kernel_function_type::linear) {
         // the linear kernel function is compatible with at least one device
-        EXPECT_GE(svm.select_num_used_devices(kernel_type, 1'204), 1);
+        EXPECT_GE(svm.select_num_used_devices(kernel, 1'204), 1);
     } else {
         // the other kernel functions are compatible only with exactly one device
-        EXPECT_EQ(svm.select_num_used_devices(kernel_type, 1'204), 1);
+        EXPECT_EQ(svm.select_num_used_devices(kernel, 1'204), 1);
     }
     // if only a single feature is provided, only a single device may ever be used
-    EXPECT_EQ(svm.select_num_used_devices(kernel_type, 1), 1);
+    EXPECT_EQ(svm.select_num_used_devices(kernel, 1), 1);
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_select_num_used_devices_death_test(const plssvm::kernel_function_type kernel_type) {
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::select_num_used_devices is protected
-    const mock_csvm_type svm{};
+TYPED_TEST_P(CSVM, setup_data_on_device_minimal) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
 
-    // at least one feature must be provided
-    EXPECT_DEATH( std::ignore = svm.select_num_used_devices(kernel_type, 0), "At lest one feature must be given!");
-}
-
-template <typename real_type, typename mock_csvm_type>
-inline void test_setup_data_on_device_minimal() {
     // minimal example
     const std::vector<std::vector<real_type>> input = {
         { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } },
@@ -583,8 +351,10 @@ inline void test_setup_data_on_device_minimal() {
     EXPECT_EQ(feature_ranges, (std::vector<std::size_t>{ 0, input.front().size() }));
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_setup_data_on_device() {
+TYPED_TEST_P(CSVM, setup_data_on_device) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+
     // minimal example
     const std::vector<std::vector<real_type>> input = {
         { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } },
@@ -640,8 +410,363 @@ inline void test_setup_data_on_device() {
     }
 }
 
-template <typename real_type, typename mock_csvm_type>
-inline void test_setup_data_on_device_death_test() {
+TYPED_TEST_P(CSVM, predict) {
+    using csvm_type = typename TypeParam::csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    // create parameter struct
+    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+
+    // create data set to be used
+    const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
+
+    // read the previously learned model
+    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
+
+    // create C-SVM
+    const csvm_type svm{ params };
+
+    // predict label
+    const std::vector<int> calculated = svm.predict(model, test_data);
+
+    // read ground truth from file
+    std::ifstream prediction_file{ PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict" };
+    const std::vector<int> ground_truth{ std::istream_iterator<int>{ prediction_file }, std::istream_iterator<int>{} };
+
+    // check the calculated result for correctness
+    EXPECT_EQ(calculated, ground_truth);
+}
+
+TYPED_TEST_P(CSVM, score) {
+    using csvm_type = typename TypeParam::csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    // create parameter struct
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+
+    // create data set to be used
+    const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
+
+    // read the previously learned model
+    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
+
+    // create C-SVM
+    const csvm_type svm{ params };
+
+    // predict label
+    const real_type calculated = svm.score(model, test_data);
+
+    // check the calculated result for correctness
+    EXPECT_EQ(calculated, real_type{ 1.0 });
+}
+
+TYPED_TEST_P(CSVM, num_available_devices) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::devices_ is protected
+    const mock_csvm_type svm{};
+
+    // test the number of available devices
+    ASSERT_EQ(svm.num_available_devices(), svm.devices_.size());
+    EXPECT_GE(svm.num_available_devices(), 1);
+}
+
+// clang-format off
+REGISTER_TYPED_TEST_SUITE_P(CSVM,
+                            solve_system_of_linear_equations_trivial, predict_values, generate_q, calculate_w, run_device_kernel, device_reduction,
+                            select_num_used_devices, setup_data_on_device_minimal, setup_data_on_device, predict, score, num_available_devices);
+// clang-format on
+
+template <typename T>
+class CSVMDeathTest : public CSVM<T> {};
+TYPED_TEST_SUITE_P(CSVMDeathTest);
+
+TYPED_TEST_P(CSVMDeathTest, solve_system_of_linear_equations) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
+    const mock_csvm_type svm{};
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+
+    const std::vector<real_type> b{ real_type{ 1.0 }, real_type{ 2.0 } };
+
+    // empty data is not allowed
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{}, b, real_type{ 0.1 }, 2),
+                 "The data must not be empty!");
+    // empty features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, b, real_type{ 0.1 }, 2)),
+                 "The data points must contain at least one feature!");
+    // all data points must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, b, real_type{ 0.1 }, 2)),
+                 "All data points must have the same number of features!");
+
+    const std::vector<std::vector<real_type>> data = {
+        { real_type{ 1.0 }, real_type{ 2.0 } },
+        { real_type{ 3.0 }, real_type{ 4.0 } }
+    };
+
+    // the number of data points and values in b must be the same
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<real_type>{ }, 0.1, 2),
+                 ::testing::HasSubstr("The number of data points in the matrix A (2) and the values in the right hand side vector (0) must be the same!"));
+    // the stopping criterion must be greater than zero
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.0 }, 2),
+                 "The stopping criterion in the CG algorithm must be greater than 0.0, but is 0!");
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ -0.1 }, 2),
+                 "The stopping criterion in the CG algorithm must be greater than 0.0, but is -0.1!");
+    // at least one CG iteration must be performed
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.1 }, 0),
+                 "The number of CG iterations must be greater than 0!");
+}
+
+TYPED_TEST_P(CSVMDeathTest, predict_values) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
+    const mock_csvm_type svm{};
+    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+
+    const std::vector<std::vector<real_type>> data = {
+        { real_type{ 1.0 }, real_type{ 2.0 } },
+        { real_type{ 3.0 }, real_type{ 4.0 } }
+    };
+    const std::vector<real_type> alpha{ real_type{ 1.0 }, real_type{ 2.0 } };
+    std::vector<real_type> w{};
+
+    // empty support vector data is not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{}, alpha, real_type{ 0.0 }, w, data)),
+                 "The support vectors must not be empty!");
+    // empty support vector features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, alpha, real_type{ 0.0 }, w, data)),
+                 "The support vectors must contain at least one feature!");
+    // all support vector must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, alpha, real_type{ 0.0 }, w, data)),
+                 "All support vectors must have the same number of features!");
+
+    // number of support vectors and weights must be the same
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<real_type>{ real_type{ 1.0 } }, real_type{ 0.0 }, w, data)),
+                 ::testing::HasSubstr("The number of support vectors (2) and number of weights (1) must be the same!"));
+    // either w must be empty or contain num features many entries
+    w.resize(1);
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, data)),
+                 ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (1) as features are present (2)!"));
+    w.clear();
+
+    // empty data points to predict is not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{})),
+                 "The data points to predict must not be empty!");
+    // empty data points to predict features are not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{} })),
+                 "The data points to predict must contain at least one feature!");
+    // all data points to predict must have the same number of features
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } })),
+                 "All data points to predict must have the same number of features!");
+    // the number of features in the support vectors and data points to predict must be the same
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 2.0 } } })),
+                 ::testing::HasSubstr("The number of features in the support vectors (2) must be the same as in the data points to predict (1)!"));
+}
+
+TYPED_TEST_P(CSVMDeathTest, generate_q) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create parameter struct
+    const plssvm::detail::parameter<real_type> params{ kernel, 2, 0.001, 1.0, 0.1 };
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
+    const mock_csvm_type svm{};
+
+    // valid feature_range
+    const std::vector<std::size_t> feature_range{ 0, 1 };
+
+    // the data_d vector must not be empty!
+    std::vector<device_ptr_type> vec1;
+    vec1.emplace_back(1, svm.devices_[0]);
+    std::vector<device_ptr_type> vec2;
+    vec2.emplace_back(1, svm.devices_[0]);
+    vec2.emplace_back(1, svm.devices_[0]);
+
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, std::vector<device_ptr_type>{}, vec1, 1, feature_range, 0),
+                 "The data_d array may not be empty!");
+    // the ptr in the data_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, std::vector<device_ptr_type>(1), vec1, 1, feature_range, 0),
+                 "Each device_ptr in data_d must at least contain one data point!");
+    // the data_last_d vector must not be empty!
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, std::vector<device_ptr_type>{}, 1, feature_range, 0),
+                 "The data_last_d array may not be empty!");
+    // the ptr in the data_last_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, std::vector<device_ptr_type>(1), 1, feature_range, 0),
+                 "Each device_ptr in data_last_d must at least contain one data point!");
+    // data_d and data_last_d must have the same size
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec2, 1, feature_range, 0),
+                 "The number of used devices to the data_d and data_last_d vectors must be equal!: 1 != 2");
+
+    // the number of data points must be greater than zero
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 0, feature_range, 0),
+                 "At least one data point must be used to calculate q!");
+    // the number of elements in the feature_ranges vector must be one greater than the number of used devices
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 1, std::vector<std::size_t>{}, 0),
+                 ::testing::HasSubstr("The number of values in the feature_range vector must be exactly one more than the number of used devices!: 0 != 1 + 1"));
+    // the values in the feature_ranges vector must be monotonically increasing
+    EXPECT_DEATH(std::ignore = svm.generate_q(params, vec1, vec1, 1, { 1, 0 }, 0),
+                 "The feature ranges are not monotonically increasing!");
+}
+
+TYPED_TEST_P(CSVMDeathTest, calculate_w) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
+    const mock_csvm_type svm{};
+
+    // valid feature_range
+    const std::vector<std::size_t> feature_range{ 0, 1 };
+
+    // the data_d vector must not be empty!
+    std::vector<device_ptr_type> vec1;
+    vec1.emplace_back(1, svm.devices_[0]);
+    std::vector<device_ptr_type> vec2;
+    vec2.emplace_back(1, svm.devices_[0]);
+    vec2.emplace_back(1, svm.devices_[0]);
+
+    // the data_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.calculate_w(std::vector<device_ptr_type>{}, vec1, vec1, 1, feature_range),
+                 "The data_d array may not be empty!");
+    // the ptr in the data_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.calculate_w(std::vector<device_ptr_type>(1), vec1, vec1, 1, feature_range),
+                 "Each device_ptr in data_d must at least contain one data point!");
+    // the data_last_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, std::vector<device_ptr_type>{}, vec1, 1, feature_range),
+                 "The data_last_d array may not be empty!");
+    // the ptr in the data_last_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, std::vector<device_ptr_type>(1), vec1, 1, feature_range),
+                 "Each device_ptr in data_last_d must at least contain one data point!");
+    // data_d and data_last_d must have the same size
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec2, vec1, 1, feature_range),
+                 "The number of used devices to the data_d and data_last_d vectors must be equal!: 1 != 2");
+    // the alpha_d vector must not be empty!
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, std::vector<device_ptr_type>{}, 1, feature_range),
+                 "The alpha_d array may not be empty!");
+    // the ptr in the alpha_d vector must not be empty
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, std::vector<device_ptr_type>(1), 1, feature_range),
+                 "Each device_ptr in alpha_d must at least contain one data point!");
+    // data_d and alpha_d must have the same size
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec2, 1, feature_range),
+                 "The number of used devices to the data_d and alpha_d vectors must be equal!: 1 != 2");
+
+    // the number of data points must be greater than zero
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec1, 0, feature_range),
+                 "At least one data point must be used to calculate q!");
+    // the number of elements in the feature_ranges vector must be one greater than the number of used devices
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec1, 1, std::vector<std::size_t>{}),
+                 ::testing::HasSubstr("The number of values in the feature_range vector must be exactly one more than the number of used devices!: 0 != 1 + 1"));
+    // the values in the feature_ranges vector must be monotonically increasing
+    EXPECT_DEATH(std::ignore = svm.calculate_w(vec1, vec1, vec1, 1, { 1, 0 }),
+                 "The feature ranges are not monotonically increasing!");
+}
+
+TYPED_TEST_P(CSVMDeathTest, run_device_kernel) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create parameter struct
+    const plssvm::detail::parameter<real_type> params{ kernel, 2, 0.001, 1.0, 0.1 };
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::run_device_kernel is protected
+    const mock_csvm_type svm{};
+
+    // valid feature_range
+    const std::vector<std::size_t> feature_range{ 0, 1 };
+
+    // the data_d vector must not be empty!
+    device_ptr_type ptr{ 1, svm.devices_[0] };
+    device_ptr_type empty_ptr{};
+
+    // the device id must be smaller than the total number of available devices
+    EXPECT_DEATH(svm.run_device_kernel(svm.num_available_devices(), params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 ::testing::HasSubstr(fmt::format("Requested device {}, but only {} device(s) are available!", svm.num_available_devices(), svm.num_available_devices())));
+    // the q_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, empty_ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The q_d device_ptr may not be empty!");
+    // the r_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, empty_ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The r_d device_ptr may not be empty!");
+    // the x_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, empty_ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The x_d device_ptr may not be empty!");
+    // the data_d device_ptr must not be empty
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, empty_ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 1, 0),
+                 "The data_d device_ptr may not be empty!");
+
+    // the values in the feature_ranges vector must be monotonically increasing
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, { 1, 0 }, real_type{ 0.0 }, real_type{ 0.0 }, 1, 0),
+                 "The feature ranges are not monotonically increasing!");
+
+    // add must either be -1.0 or 1.0
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 0.0 }, 1, 0),
+                 "add must either by -1.0 or 1.0, but is 0!");
+    // at least one data point must be available
+    EXPECT_DEATH(svm.run_device_kernel(0, params, ptr, ptr, ptr, ptr, feature_range, real_type{ 0.0 }, real_type{ 1.0 }, 0, 0),
+                 "At least one data point must be used to calculate q!");
+}
+
+TYPED_TEST_P(CSVMDeathTest, device_reduction) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+
+    using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
+    const mock_csvm_type svm{};
+
+    // the data_d vector must not be empty!
+    std::vector<device_ptr_type> vec1;
+    vec1.emplace_back(1, svm.devices_[0]);
+
+    std::vector<device_ptr_type> empty_device_ptr_vec{};
+    std::vector<device_ptr_type> one_element_device_ptr_vec(1);
+    std::vector<real_type> empty_buffer_vec{};
+    std::vector<real_type> one_element_buffer_vec(1);
+
+    // the buffer_d vector must not be empty
+    EXPECT_DEATH(svm.device_reduction(empty_device_ptr_vec, one_element_buffer_vec),
+                 "The buffer_d array may not be empty!");
+    // the ptr in the buffer_d vector must not be empty
+    EXPECT_DEATH(svm.device_reduction(one_element_device_ptr_vec, one_element_buffer_vec),
+                 "Each device_ptr in buffer_d must at least contain one data point!");
+    // the buffer vector must not be empty
+    EXPECT_DEATH(svm.device_reduction(vec1, empty_buffer_vec),
+                 "The buffer array may not be empty!");
+}
+
+TYPED_TEST_P(CSVMDeathTest, select_num_used_devices) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::select_num_used_devices is protected
+    const mock_csvm_type svm{};
+
+    // at least one feature must be provided
+    EXPECT_DEATH( std::ignore = svm.select_num_used_devices(kernel, 0), "At lest one feature must be given!");
+}
+
+TYPED_TEST_P(CSVMDeathTest, setup_data_on_device) {
+    using mock_csvm_type = typename TypeParam::mock_csvm_type;
+    using real_type = typename TypeParam::real_type;
+
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
     const mock_csvm_type svm{};
 
@@ -672,62 +797,10 @@ inline void test_setup_data_on_device_death_test() {
                  fmt::format("Can't use more devices than are available!: {} <= {}", svm.num_available_devices() + 1, svm.num_available_devices()));
 }
 
-template <typename real_type, typename csvm_type>
-inline void test_predict(const plssvm::kernel_function_type kernel) {
-    // create parameter struct
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
-
-    // create data set to be used
-    const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
-
-    // read the previously learned model
-    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
-
-    // create C-SVM
-    const csvm_type svm{ params };
-
-    // predict label
-    const std::vector<int> calculated = svm.predict(model, test_data);
-
-    // read ground truth from file
-    std::ifstream prediction_file{ PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict" };
-    const std::vector<int> ground_truth{ std::istream_iterator<int>{ prediction_file }, std::istream_iterator<int>{} };
-
-    // check the calculated result for correctness
-    EXPECT_EQ(calculated, ground_truth);
-}
-
-template <typename real_type, typename csvm_type>
-inline void test_score(const plssvm::kernel_function_type kernel) {
-    // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
-
-    // create data set to be used
-    const plssvm::data_set<real_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200_test.libsvm" };
-
-    // read the previously learned model
-    const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
-
-    // create C-SVM
-    const csvm_type svm{ params };
-
-    // predict label
-    const real_type calculated = svm.score(model, test_data);
-
-    // check the calculated result for correctness
-    EXPECT_EQ(calculated, real_type{ 1.0 });
-}
-
-template <typename mock_csvm_type>
-inline void test_num_available_devices() {
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::devices_ is protected
-    const mock_csvm_type svm{};
-
-    // test the number of available devices
-    ASSERT_EQ(svm.num_available_devices(), svm.devices_.size());
-    EXPECT_GE(svm.num_available_devices(), 1);
-}
-
-}  // namespace generic
+// clang-format off
+REGISTER_TYPED_TEST_SUITE_P(CSVMDeathTest,
+                            solve_system_of_linear_equations, predict_values, generate_q, calculate_w, run_device_kernel, device_reduction,
+                            select_num_used_devices, setup_data_on_device);
+// clang-format on
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_TESTS_HPP_

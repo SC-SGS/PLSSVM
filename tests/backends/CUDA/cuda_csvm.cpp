@@ -28,6 +28,7 @@
 
 #include <vector>  // std::vector
 
+
 class CUDACSVM : public ::testing::Test, private util::redirect_output {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
@@ -95,157 +96,22 @@ TEST_F(CUDACSVM, construct_target_and_named_args) {
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
 
-TEST_F(CUDACSVM, num_available_devices) {
-    generic::test_num_available_devices<mock_cuda_csvm>();
-}
+template <typename T, plssvm::kernel_function_type kernel>
+struct csvm_test_type {
+    using mock_csvm_type = mock_cuda_csvm;
+    using csvm_type = plssvm::cuda::csvm;
+    using real_type = T;
+    static constexpr plssvm::kernel_function_type kernel_type = kernel;
+};
 
-template <typename T>
-class CUDACSVMSolveSystemOfLinearEquations : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMSolveSystemOfLinearEquations, util::real_type_gtest, naming::real_type_to_name);
+using csvm_test_types = ::testing::Types<
+    csvm_test_type<float, plssvm::kernel_function_type::linear>,
+    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
+    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
+    csvm_test_type<double, plssvm::kernel_function_type::linear>,
+    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
+    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
 
-TYPED_TEST(CUDACSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_trivial) {
-    SCOPED_TRACE("plssvm::kernel_function_type::linear");
-    generic::test_solve_system_of_linear_equations<TypeParam, mock_cuda_csvm>(plssvm::kernel_function_type::linear);
-    SCOPED_TRACE("plssvm::kernel_function_type::polynomial");
-    generic::test_solve_system_of_linear_equations<TypeParam, mock_cuda_csvm>(plssvm::kernel_function_type::polynomial);
-    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
-}
-
-template <typename T>
-class CUDACSVMSolveSystemOfLinearEquationsDeathTest : public CUDACSVMSolveSystemOfLinearEquations<T> {};
-TYPED_TEST_SUITE(CUDACSVMSolveSystemOfLinearEquationsDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMSolveSystemOfLinearEquationsDeathTest, solve_system_of_linear_equations) {
-    generic::test_solve_system_of_linear_equations_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMPredictValues : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMPredictValues, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMPredictValues, predict_values) {
-    SCOPED_TRACE("plssvm::kernel_function_type::linear");
-    generic::test_predict_values<TypeParam, mock_cuda_csvm>(plssvm::kernel_function_type::linear);
-    SCOPED_TRACE("plssvm::kernel_function_type::polynomial");
-    generic::test_predict_values<TypeParam, mock_cuda_csvm>(plssvm::kernel_function_type::polynomial);
-    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
-}
-
-template <typename T>
-class CUDACSVMPredictValuesDeathTest : public CUDACSVMPredictValues<T> {};
-TYPED_TEST_SUITE(CUDACSVMPredictValuesDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMPredictValuesDeathTest, predict_values) {
-    generic::test_predict_values_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMGenerateQ : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMGenerateQ, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMGenerateQ, generate_q) {
-    generic::test_generate_q<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMGenerateQDeathTest : public CUDACSVMGenerateQ<T> {};
-TYPED_TEST_SUITE(CUDACSVMGenerateQDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMGenerateQDeathTest, generate_q) {
-    generic::test_generate_q_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMCalculateW : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMCalculateW, calculate_w) {
-    generic::test_calculate_w<TypeParam, mock_cuda_csvm>();
-}
-
-template <typename T>
-class CUDACSVMCalculateWDeathTest : public CUDACSVMCalculateW<T> {};
-TYPED_TEST_SUITE(CUDACSVMCalculateWDeathTest, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMCalculateWDeathTest, calculate_w) {
-    generic::test_calculate_w_death_test<TypeParam, mock_cuda_csvm>();
-}
-
-template <typename T>
-class CUDACSVMRunDeviceKernel : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMRunDeviceKernel, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMRunDeviceKernel, run_device_kernel) {
-    generic::test_run_device_kernel<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMRunDeviceKernelDeathTest : public CUDACSVMRunDeviceKernel<T> {};
-TYPED_TEST_SUITE(CUDACSVMRunDeviceKernelDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMRunDeviceKernelDeathTest, run_device_kernel) {
-    generic::test_run_device_kernel_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMDeviceReduction : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMDeviceReduction, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMDeviceReduction, device_reduction) {
-    generic::test_device_reduction<TypeParam, mock_cuda_csvm>();
-}
-
-template <typename T>
-class CUDACSVMDeviceReductionDeathTest : public CUDACSVMDeviceReduction<T> {};
-TYPED_TEST_SUITE(CUDACSVMDeviceReductionDeathTest, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMDeviceReductionDeathTest, device_reduction) {
-    generic::test_device_reduction_death_test<TypeParam, mock_cuda_csvm>();
-}
-
-template <typename T>
-class CUDACSVMSelectNumUsedDevices : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMSelectNumUsedDevices, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMSelectNumUsedDevices, select_num_used_devices) {
-    generic::test_select_num_used_devices<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMSelectNumUsedDevicesDeathTest : public CUDACSVMSelectNumUsedDevices<T> {};
-TYPED_TEST_SUITE(CUDACSVMSelectNumUsedDevicesDeathTest, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMSelectNumUsedDevicesDeathTest, select_num_used_devices) {
-    generic::test_select_num_used_devices_death_test<typename TypeParam::real_type, mock_cuda_csvm>(TypeParam::kernel_type);
-}
-
-template <typename T>
-class CUDACSVMSetupDataOnDevice : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMSetupDataOnDevice, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMSetupDataOnDevice, setup_data_on_device_minimal) {
-    generic::test_setup_data_on_device_minimal<TypeParam, mock_cuda_csvm>();
-}
-TYPED_TEST(CUDACSVMSetupDataOnDevice, setup_data_on_device) {
-    generic::test_setup_data_on_device<TypeParam, mock_cuda_csvm>();
-}
-
-template <typename T>
-class CUDACSVMSetupDataOnDeviceDeathTest : public CUDACSVMSetupDataOnDevice<T> {};
-TYPED_TEST_SUITE(CUDACSVMSetupDataOnDeviceDeathTest, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(CUDACSVMSetupDataOnDeviceDeathTest, sanity_checks) {
-    generic::test_setup_data_on_device_death_test<TypeParam, mock_cuda_csvm>();
-}
-
-template <typename T>
-class CUDACSVMPredictAndScore : public CUDACSVM {};
-TYPED_TEST_SUITE(CUDACSVMPredictAndScore, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(CUDACSVMPredictAndScore, predict) {
-    generic::test_predict<typename TypeParam::real_type, plssvm::cuda::csvm>(TypeParam::kernel_type);
-}
-
-TYPED_TEST(CUDACSVMPredictAndScore, score) {
-    generic::test_score<typename TypeParam::real_type, plssvm::cuda::csvm>(TypeParam::kernel_type);
-}
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, CSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackendDeathTest, CSVMDeathTest, csvm_test_types);
