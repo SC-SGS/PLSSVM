@@ -72,7 +72,6 @@ inline void floating_point_eq(const T val1, const T val2, const std::string &msg
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 the first vector to compare
  * @param[in] val2 the second vector to compare
- * @param[in] msg an optional message
  */
 template <typename T, bool expect>
 inline void floating_point_vector_eq(const std::vector<T> &val1, const std::vector<T> &val2) {
@@ -87,7 +86,6 @@ inline void floating_point_vector_eq(const std::vector<T> &val1, const std::vect
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 the first 2D vector to compare
  * @param[in] val2 the second 2D vector to compare
- * @param[in] msg an optional message
  */
 template <typename T, bool expect>
 inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1, const std::vector<std::vector<T>> &val2) {
@@ -106,7 +104,6 @@ inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1,
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 first value to compare
  * @param[in] val2 second value to compare
- * @param[in] scale scale the epsilon value by the provided value
  * @param[in] msg an optional message
  */
 template <typename T, bool expect>
@@ -140,7 +137,6 @@ inline void floating_point_near(const T val1, const T val2, const std::string &m
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 the first vector to compare
  * @param[in] val2 the second vector to compare
- * @param[in] msg an optional message
  */
 template <typename T, bool expect>
 inline void floating_point_vector_near(const std::vector<T> &val1, const std::vector<T> &val2) {
@@ -155,7 +151,6 @@ inline void floating_point_vector_near(const std::vector<T> &val1, const std::ve
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 the first 2D vector to compare
  * @param[in] val2 the second 2D vector to compare
- * @param[in] msg an optional message
  */
 template <typename T, bool expect>
 inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val1, const std::vector<std::vector<T>> &val2) {

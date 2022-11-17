@@ -68,7 +68,7 @@ constexpr bool has_only_parameter_named_args_v = !igor::has_other_than<Args...>(
  * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
  * @tparam ExpectedType the type the value of the named argument should be converted to
  * @tparam IgorParser the type of the named argument parser
- * @tparam ProvidedType the type of the named argument (necessary since their are struct tags)
+ * @tparam NamedArgType the type of the named argument (necessary since their are struct tags)
  * @param[in] parser the named argument parser
  * @param[in] named_arg the named argument
  * @return the value of @p named_arg converted to @p ExpectedType (`[[nodiscard]]`)

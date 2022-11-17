@@ -244,8 +244,6 @@ class data_set {
 
 /**
  * @brief Implements all necessary data needed for scaling a data set to an user-defined range.
- * @tparam T the data type of the data set
- * @tparam U the label type of the data set
  */
 template <typename T, typename U>
 class data_set<T, U>::scaling {
@@ -342,8 +340,6 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
 
 /**
  * @brief Implements all necessary functionality to map arbitrary labels to labels usable by the C-SVMs.
- * @tparam T the data type of the data set
- * @tparam U the label type of the data set
  */
 template <typename T, typename U>
 class data_set<T, U>::label_mapper {

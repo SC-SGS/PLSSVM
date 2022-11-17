@@ -482,7 +482,6 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
  * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
- * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
  * @param[in] label the labels to write to the file
@@ -514,7 +513,6 @@ inline void write_arff_data(const std::string &filename, const std::vector<std::
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
  * @tparam real_type the floating point type
- * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
  * @note The resulting order of the data points in the ARFF file is unspecified!

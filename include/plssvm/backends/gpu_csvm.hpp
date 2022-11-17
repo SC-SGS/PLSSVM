@@ -36,7 +36,6 @@ namespace plssvm::detail {
 /**
  * @brief A C-SVM implementation for all GPU backends to reduce code duplication.
  * @details Implements all virtual functions defined in plssvm::csvm. The GPU backends only have to implement the actual kernel launches.
- * @tparam T the type of the data
  * @tparam device_ptr_t the type of the device pointer (dependent on the used backend)
  * @tparam queue_t the type of the device queue (dependent on the used backend)
  */

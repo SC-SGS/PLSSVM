@@ -42,7 +42,6 @@ namespace plssvm {
 
 /**
  * @brief Base class for all C-SVM backends.
- * @tparam T the floating point type of the data
  */
 class csvm {
   public:

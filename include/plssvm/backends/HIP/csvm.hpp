@@ -36,7 +36,6 @@ namespace hip {
 
 /**
  * @brief A C-SVM implementation using HIP as backend.
- * @tparam T the type of the data
  */
 class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::hip::detail::device_ptr, int> {
   protected:
