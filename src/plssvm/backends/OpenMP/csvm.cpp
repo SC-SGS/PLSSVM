@@ -60,6 +60,13 @@ void csvm::init(const target_platform target) {
 
 template <typename real_type>
 std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const unsigned long long max_iter) const {
+    PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
+    PLSSVM_ASSERT(!A.front().empty(), "The data points must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(A.cbegin(), A.cend(), [&A](const std::vector<real_type> &data_point) { return data_point.size() == A.front().size(); }), "All data points must have the same number of features!");
+    PLSSVM_ASSERT(A.size() == b.size(), "The number of data points in the matrix A ({}) and the values in the right hand side vector ({}) must be the same!", A.size(), b.size());
+    PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
+    PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
+
     using namespace plssvm::operators;
 
     // create q vector
@@ -172,6 +179,16 @@ template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equ
 
 template <typename real_type>
 std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
+    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(!support_vectors.front().empty(), "The support vectors must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [&support_vectors](const std::vector<real_type> &data_point) { return data_point.size() == support_vectors.front().size(); }), "All support vectors must have the same number of features!");
+    PLSSVM_ASSERT(support_vectors.size() == alpha.size(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.size(), alpha.size());
+    PLSSVM_ASSERT(w.empty() || support_vectors.front().size() == w.size(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.size(), support_vectors.front().size());
+    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(!predict_points.front().empty(), "The data points to predict must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(predict_points.cbegin(), predict_points.cend(), [&predict_points](const std::vector<real_type> &data_point) { return data_point.size() == predict_points.front().size(); }), "All data points to predict must have the same number of features!");
+    PLSSVM_ASSERT(support_vectors.front().size() == predict_points.front().size(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.front().size(), predict_points.front().size());
+
     using namespace plssvm::operators;
 
     std::vector<real_type> out(predict_points.size(), -rho);
@@ -206,6 +223,10 @@ template std::vector<double> csvm::predict_values_impl(const detail::parameter<d
 
 template <typename real_type>
 std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const {
+    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
+    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point must have exactly the same number of features!");
+
     std::vector<real_type> q(data.size() - 1);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
@@ -225,6 +246,12 @@ template std::vector<double> csvm::generate_q<double>(const detail::parameter<do
 
 template <typename real_type>
 std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const {
+    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors may not be empty!");
+    PLSSVM_ASSERT(!support_vectors.front().empty(), "Each support vector must at least contain one feature!");
+    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All support vectors must have exactly the same number of features!");
+    PLSSVM_ASSERT(!alpha.empty(), "The alpha array may not be empty!");
+    PLSSVM_ASSERT(support_vectors.size() == alpha.size(), "The number of support vectors ({}) and weights ({}) must match!", support_vectors.size(), alpha.size());
+
     const typename std::vector<std::vector<real_type>>::size_type num_data_points = support_vectors.size();
     const typename std::vector<real_type>::size_type num_features = support_vectors.front().size();
 
@@ -249,6 +276,14 @@ template std::vector<double> csvm::calculate_w(const std::vector<std::vector<dou
 
 template <typename real_type>
 void csvm::run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
+    PLSSVM_ASSERT(!q.empty(), "The q array may not be empty!");
+    PLSSVM_ASSERT(!ret.empty(), "The ret array may not be empty!");
+    PLSSVM_ASSERT(!d.empty(), "The d array may not be empty!");
+    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
+    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point must have exactly the same number of features!");
+    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either by -1.0 or 1.0, but is {}!", add);
+
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
