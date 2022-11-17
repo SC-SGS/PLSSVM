@@ -161,6 +161,7 @@ TYPED_TEST_P(DevicePtr, memset) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
 
     // memset values to all ones
     ptr.memset(1, 2);
@@ -182,6 +183,7 @@ TYPED_TEST_P(DevicePtr, memset_with_count) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
 
     // memset values to all ones
     ptr.memset(1, 2, 4 * sizeof(value_type));
@@ -204,6 +206,7 @@ TYPED_TEST_P(DevicePtr, fill) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
 
     // fill values with a specific value
     ptr.fill(value_type{ 42.0 }, 2);
@@ -225,6 +228,7 @@ TYPED_TEST_P(DevicePtr, fill_with_count) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
 
     // fill values with a specific value
     ptr.fill(value_type{ 42.0 }, 2, 4);
@@ -247,6 +251,7 @@ TYPED_TEST_P(DevicePtr, copy_vector) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -268,6 +273,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -289,6 +295,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -310,6 +317,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -385,6 +393,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -406,6 +415,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -427,6 +437,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -448,6 +459,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
+    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -502,7 +514,6 @@ TYPED_TEST_P(DevicePtrDeathTest, fill) {
 
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_host_ptr) {
     using device_ptr_type = typename TypeParam::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
     using queue_type = typename TypeParam::queue_type;
     const queue_type &queue = TypeParam::default_queue();
 
@@ -530,7 +541,6 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
 
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_host_ptr) {
     using device_ptr_type = typename TypeParam::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
     using queue_type = typename TypeParam::queue_type;
     const queue_type &queue = TypeParam::default_queue();
 
