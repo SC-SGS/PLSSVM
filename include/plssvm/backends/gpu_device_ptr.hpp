@@ -14,7 +14,7 @@
 #pragma once
 
 #include <cstddef>      // std::size_t
-#include <type_traits>  // std::is_arithmetic_v, std::is_reference_v
+#include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
 namespace plssvm::detail {
@@ -28,8 +28,9 @@ namespace plssvm::detail {
 template <typename T, typename queue_t, typename device_pointer_t = T *>
 class gpu_device_ptr {
     // any non-reference arithmetic type
-    static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are allowed!");
-    static_assert(!std::is_reference_v<T>, "T must not be a reference!");
+    static_assert(std::is_same_v<float, T> || std::is_same_v<double, T>, "Currently only 'float' or 'double' are allowed!");
+//    static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are allowed!");
+//    static_assert(!std::is_reference_v<T>, "T must not be a reference!");
 
   public:
     /// The type of the values used in the device_ptr.
