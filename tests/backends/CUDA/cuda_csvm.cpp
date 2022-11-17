@@ -16,7 +16,7 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "backends/generic_tests.hpp"  // CSVM, CSVMDeathTest
+#include "backends/generic_csvm_tests.hpp"  // CSVM, CSVMDeathTest
 #include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT
 #include "utility.hpp"                 // util::redirect_output
 

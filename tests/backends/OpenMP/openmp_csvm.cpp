@@ -18,7 +18,7 @@
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "backends/compare.hpp"        // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
-#include "backends/generic_tests.hpp"  // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
+#include "backends/generic_csvm_tests.hpp"  // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
 #include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
 #include "naming.hpp"                  // naming::{real_type_kernel_function_to_name, real_type_to_name}
 #include "types_to_test.hpp"           // util::{real_type_kernel_function_gtest, real_type_gtest}
@@ -94,6 +94,8 @@ TEST_F(OpenMPCSVM, construct_target_and_named_args) {
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
+
+// TODO: fix :/
 
 template <typename T>
 class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
