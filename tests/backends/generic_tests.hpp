@@ -13,11 +13,15 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_TESTS_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"              // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE;
 #include "plssvm/data_set.hpp"               // plssvm::data_set
+#include "plssvm/detail/layout.hpp"          // plssvm::detail::{layout_type, transform_to_layout}
+#include "plssvm/detail/operators.hpp"       // operators namespace
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/model.hpp"                  // plssvm::model
-#include "plssvm/parameter.hpp"              // plssvm::detail::parameter
+#include "plssvm/parameter.hpp"              // plssvm::cost, plssvm::kernel_type, plssvm::detail::parameter
 
+#include "compare.hpp"             // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
 #include "utility.hpp"             // util::redirect_output
 
@@ -26,10 +30,12 @@
 #include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
                           // ::testing::Test
 
-#include <cmath>     // std::sqrt
+#include <cmath>     // std::sqrt, std::abs
+#include <cstddef>   // std::size_t
 #include <fstream>   // std::ifstream
 #include <iterator>  // std::istream_iterator
-#include <utility>   // std::pair
+#include <limits>    // std::numeric_limits
+#include <tuple>     // std::ignore
 #include <vector>    // std::vector
 
 // TODO: add non-trivial test
@@ -158,7 +164,6 @@ TYPED_TEST_P(CSVM, generate_q) {
 TYPED_TEST_P(CSVM, calculate_w) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
     using real_type = typename TypeParam::real_type;
-    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
     using queue_type = typename mock_csvm_type::queue_type;
@@ -252,7 +257,6 @@ TYPED_TEST_P(CSVM, run_device_kernel) {
 TYPED_TEST_P(CSVM, device_reduction) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
     using real_type = typename TypeParam::real_type;
-    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     using namespace plssvm::operators;
 
@@ -299,7 +303,6 @@ TYPED_TEST_P(CSVM, device_reduction) {
 
 TYPED_TEST_P(CSVM, select_num_used_devices) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
-    using real_type = typename TypeParam::real_type;
     constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::select_num_used_devices is protected
@@ -510,7 +513,7 @@ TYPED_TEST_P(CSVMDeathTest, solve_system_of_linear_equations) {
     };
 
     // the number of data points and values in b must be the same
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<real_type>{ }, 0.1, 2),
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<real_type>{}, 0.1, 2),
                  ::testing::HasSubstr("The number of data points in the matrix A (2) and the values in the right hand side vector (0) must be the same!"));
     // the stopping criterion must be greater than zero
     EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.0 }, 2),
@@ -760,7 +763,7 @@ TYPED_TEST_P(CSVMDeathTest, select_num_used_devices) {
     const mock_csvm_type svm{};
 
     // at least one feature must be provided
-    EXPECT_DEATH( std::ignore = svm.select_num_used_devices(kernel, 0), "At lest one feature must be given!");
+    EXPECT_DEATH(std::ignore = svm.select_num_used_devices(kernel, 0), "At lest one feature must be given!");
 }
 
 TYPED_TEST_P(CSVMDeathTest, setup_data_on_device) {
