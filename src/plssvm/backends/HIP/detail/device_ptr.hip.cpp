@@ -74,7 +74,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
 template <typename T>
 void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid pointer for the data to copy!");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     detail::set_device(queue_);
     const size_type rcount = std::min(count, size_ - pos);
@@ -84,7 +84,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
 template <typename T>
 void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(buffer != nullptr, "Invalid pointer for the data to copy!");
+    PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     detail::set_device(queue_);
     const size_type rcount = std::min(count, size_ - pos);

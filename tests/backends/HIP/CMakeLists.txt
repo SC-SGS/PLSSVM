@@ -9,11 +9,12 @@ set(PLSSVM_HIP_TEST_NAME HIP_tests)
 
 # list all necessary sources
 set(PLSSVM_HIP_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/device_ptr.cpp
 )
 
 # add test executable
-add_executable(${PLSSVM_HIP_TEST_NAME} ${PLSSVM_HIP_TEST_SOURCES})
+add_executable(${PLSSVM_HIP_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_HIP_TEST_SOURCES})
 
 # link against test library
 target_link_libraries(${PLSSVM_HIP_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
