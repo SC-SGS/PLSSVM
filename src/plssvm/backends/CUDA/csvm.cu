@@ -55,7 +55,7 @@ void csvm::init(const target_platform target) {
 
     // throw exception if no CUDA devices could be found
     if (devices_.empty()) {
-        throw backend_exception{ "CUDA backend selected but no CUDA devices were found!" };
+        throw backend_exception{ "CUDA backend selected but no CUDA capable devices were found!" };
     }
 
     if (plssvm::verbose) {
@@ -77,7 +77,7 @@ csvm::~csvm() {
             detail::device_synchronize(device);
         }
     } catch (const plssvm::exception &e) {
-        std::cout << fmt::format("{}", e.what_with_loc()) << std::endl;
+        std::cout << e.what_with_loc() << std::endl;
         std::terminate();
     }
 }
@@ -94,7 +94,7 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 
 template <typename real_type>
 void csvm::run_q_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &q_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points_padded, const std::size_t num_features) const {
-    auto [grid, block] = execution_range_to_native(range);
+    const auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(static_cast<queue_type>(device));
     switch (params.kernel_type) {
@@ -118,7 +118,7 @@ template void csvm::run_q_kernel_impl(std::size_t, const ::plssvm::detail::execu
 
 template <typename real_type>
 void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const real_type QA_cost, const real_type add, const std::size_t num_data_points_padded, const std::size_t num_features) const {
-    auto [grid, block] = execution_range_to_native(range);
+    const auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(static_cast<queue_type>(device));
     switch (params.kernel_type) {
@@ -142,7 +142,7 @@ template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::exe
 
 template <typename real_type>
 void csvm::run_w_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points, const std::size_t num_features) const {
-    auto [grid, block] = execution_range_to_native(range);
+    const auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(static_cast<queue_type>(device));
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features));
@@ -154,7 +154,7 @@ template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail
 
 template <typename real_type>
 void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_support_vectors, const std::size_t num_predict_points, const std::size_t num_features) const {
-    auto [grid, block] = execution_range_to_native(range);
+    const auto [grid, block] = execution_range_to_native(range);
 
     detail::set_device(0);
     switch (params.kernel_type) {

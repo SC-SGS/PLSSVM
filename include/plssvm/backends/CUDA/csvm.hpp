@@ -19,7 +19,9 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
-#include <utility>  // std::forward
+#include <cstddef>      // std::size_t
+#include <utility>      // std::forward
+#include <type_traits>  // std::true_type
 
 namespace plssvm {
 
@@ -161,7 +163,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::cuda::detail::device_pt
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the OpenMP are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the CUDA are available.
  */
 template <>
 struct csvm_backend_exists<cuda::csvm> : std::true_type {};
