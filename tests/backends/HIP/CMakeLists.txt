@@ -9,7 +9,7 @@ set(PLSSVM_HIP_TEST_NAME HIP_tests)
 
 # list all necessary sources
 set(PLSSVM_HIP_TEST_SOURCES
-#    ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/device_ptr.cpp
 )
 

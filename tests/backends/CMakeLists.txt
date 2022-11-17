@@ -16,7 +16,7 @@ endif()
 
 # create HIP tests if the HIP backend is available
 if(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
-#    add_subdirectory(HIP)
+    add_subdirectory(HIP)
 endif()
 
 # create OpenCL tests if the OpenCL backend is available
