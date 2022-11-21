@@ -12,6 +12,7 @@ set(PLSSVM_HIP_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 
 # add test executable

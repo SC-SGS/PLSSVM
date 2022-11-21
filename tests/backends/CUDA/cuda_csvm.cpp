@@ -106,5 +106,7 @@ using csvm_test_types = ::testing::Types<
     csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, CSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackendDeathTest, CSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, GenericCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, GenericGPUCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);

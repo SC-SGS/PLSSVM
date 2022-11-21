@@ -17,12 +17,12 @@
 #include "plssvm/parameter.hpp"                   // plssvm::detail::data_set
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "backends/compare.hpp"        // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
+#include "backends/compare.hpp"             // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
 #include "backends/generic_csvm_tests.hpp"  // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
-#include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "naming.hpp"                  // naming::{real_type_kernel_function_to_name, real_type_to_name}
-#include "types_to_test.hpp"           // util::{real_type_kernel_function_gtest, real_type_gtest}
-#include "utility.hpp"                 // util::{redirect_output, generate_random_vector}
+#include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "naming.hpp"                       // naming::{real_type_kernel_function_to_name, real_type_to_name}
+#include "types_to_test.hpp"                // util::{real_type_kernel_function_gtest, real_type_gtest}
+#include "utility.hpp"                      // util::{redirect_output, generate_random_vector}
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, ::testing::Test
 
@@ -95,31 +95,25 @@ TEST_F(OpenMPCSVM, construct_target_and_named_args) {
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
 
-// TODO: fix :/
+template <typename T, plssvm::kernel_function_type kernel>
+struct csvm_test_type {
+    using mock_csvm_type = mock_openmp_csvm;
+    using csvm_type = plssvm::openmp::csvm;
+    using real_type = T;
+    static constexpr plssvm::kernel_function_type kernel_type = kernel;
+};
 
-template <typename T>
-class OpenMPCSVMSolveSystemOfLinearEquations : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMSolveSystemOfLinearEquations, util::real_type_gtest, naming::real_type_to_name);
+using csvm_test_types = ::testing::Types<
+    csvm_test_type<float, plssvm::kernel_function_type::linear>,
+    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
+    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
+    csvm_test_type<double, plssvm::kernel_function_type::linear>,
+    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
+    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
 
-TYPED_TEST(OpenMPCSVMSolveSystemOfLinearEquations, solve_system_of_linear_equations_trivial) {
-    SCOPED_TRACE("plssvm::kernel_function_type::linear");
-    generic::test_solve_system_of_linear_equations<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::linear);
-    SCOPED_TRACE("plssvm::kernel_function_type::polynomial");
-    generic::test_solve_system_of_linear_equations<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::polynomial);
-    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
-}
-
-template <typename T>
-class OpenMPCSVMPredictValues : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMPredictValues, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(OpenMPCSVMPredictValues, predict_values) {
-    SCOPED_TRACE("plssvm::kernel_function_type::linear");
-    generic::test_predict_values<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::linear);
-    SCOPED_TRACE("plssvm::kernel_function_type::polynomial");
-    generic::test_predict_values<TypeParam, mock_openmp_csvm>(plssvm::kernel_function_type::polynomial);
-    // no tests for RBF since it is non-trivial to find a parameter set with a trivial solution
-}
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackend, GenericCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
 
 template <typename T>
 class OpenMPCSVMGenerateQ : public OpenMPCSVM {};
@@ -203,16 +197,4 @@ TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
         // check the calculated result for correctness
         EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
     }
-}
-
-template <typename T>
-class OpenMPCSVMPredictAndScore : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMPredictAndScore, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(OpenMPCSVMPredictAndScore, predict) {
-    generic::test_predict<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);
-}
-
-TYPED_TEST(OpenMPCSVMPredictAndScore, score) {
-    generic::test_score<typename TypeParam::real_type, plssvm::openmp::csvm>(TypeParam::kernel_type);
 }

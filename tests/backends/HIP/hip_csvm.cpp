@@ -107,5 +107,7 @@ using csvm_test_types = ::testing::Types<
     csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, CSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, CSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, GenericCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPABackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, GenericGPUCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);;
