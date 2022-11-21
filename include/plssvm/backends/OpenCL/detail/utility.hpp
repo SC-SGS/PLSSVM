@@ -78,7 +78,7 @@ void device_synchronize(const command_queue &queue);
  * @param[in] kernel the kernel type
  * @return the kernel function names with the respective compute_kernel_name identifier (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_type kernel);
+[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_function_type kernel);
 
 /**
  * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and

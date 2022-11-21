@@ -37,38 +37,35 @@
 
 namespace plssvm::opencl {
 
-template <typename T>
-csvm<T>::csvm(const target_platform target, parameter<real_type> params) : base_type{ params } {
-    this->init(target, params.kernel);
-}
-
-template <typename T>
-void csvm<T>::init(const target_platform target, const kernel_function_type kernel) {
+void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
         case target_platform::automatic:
             break;
         case target_platform::cpu:
 #if !defined(PLSSVM_HAS_CPU_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_nvidia:
 #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_amd:
 #if !defined(PLSSVM_HAS_AMD_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_intel:
 #if !defined(PLSSVM_HAS_INTEL_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
     }
+
+    // get kernel type from base class
+    const kernel_function_type kernel = base_type::get_params().kernel_type;
 
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     target_platform used_target;
@@ -86,11 +83,11 @@ void csvm<T>::init(const target_platform target, const kernel_function_type kern
 
     // print OpenCL info
     if (verbose) {
-        fmt::print("Using OpenCL as backend.\n");
+        std::cout << fmt::format("Using OpenCL as backend.\n");
         if (target == target_platform::automatic) {
-            fmt::print("Using {} as automatic target platform.\n", used_target);
+            std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
         }
-        fmt::print("\n");
+        std::cout << std::endl;
     }
 
     // create command_queues and JIT compile OpenCL kernels
@@ -100,20 +97,21 @@ void csvm<T>::init(const target_platform target, const kernel_function_type kern
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel);
     // the kernel order in the respective command_queue is the same as the other of the provided kernel names
     // i.e.: kernels[0] -> q_kernel, kernels[1] -> svm_kernel, kernels[2] -> w_kernel/predict_kernel
+    using real_type = double;  // TODO: !!!!
     devices_ = detail::create_command_queues<real_type>(contexts_, used_target, kernel_names, verbose);
 
     auto jit_end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        fmt::print("OpenCL kernel JIT compilation done in {}.\n\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time));
+        std::cout << fmt::format("OpenCL kernel JIT compilation done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time)) << std::endl;
     }
 
     if (verbose) {
         // print found OpenCL devices
-        fmt::print("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), used_target);
+        std::cout << fmt::format("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), used_target);
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            fmt::print("  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
+            std::cout << fmt::format("  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
         }
-        fmt::print("\n");
+        std::cout << std::endl;
     }
 
     // sanity checks for the number of OpenCL kernels
@@ -132,21 +130,19 @@ void csvm<T>::init(const target_platform target, const kernel_function_type kern
     }
 }
 
-template <typename T>
-csvm<T>::~csvm() {
+csvm::~csvm() {
     try {
         // be sure that all operations on the OpenCL devices have finished before destruction
         for (const queue_type &queue : devices_) {
             detail::device_synchronize(queue);
         }
     } catch (const plssvm::exception &e) {
-        fmt::print("{}\n", e.what_with_loc());
+        std::cout << e.what_with_loc() << std::endl;
         std::terminate();
     }
 }
 
-template <typename T>
-void csvm<T>::device_synchronize(const queue_type &queue) const {
+void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
@@ -159,8 +155,8 @@ std::pair<std::vector<std::size_t>, std::vector<std::size_t>> execution_range_to
     return std::make_pair(std::move(grid), std::move(block));
 }
 
-template <typename T>
-void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &q_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points_padded, const size_type num_features) const {
+template <typename real_type>
+void csvm::run_q_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &q_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points_padded, const std::size_t num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (params.kernel_type) {
@@ -178,8 +174,11 @@ void csvm<T>::run_q_kernel(const size_type device, const ::plssvm::detail::execu
     }
 }
 
-template <typename T>
-void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const real_type QA_cost, const real_type add, const size_type num_data_points_padded, const size_type num_features) const {
+template void csvm::run_q_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t) const;
+template void csvm::run_q_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t) const;
+
+template <typename real_type>
+void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const real_type QA_cost, const real_type add, const std::size_t num_data_points_padded, const std::size_t num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (params.kernel_type) {
@@ -197,15 +196,21 @@ void csvm<T>::run_svm_kernel(const size_type device, const ::plssvm::detail::exe
     }
 }
 
-template <typename T>
-void csvm<T>::run_w_kernel(const size_type device, const ::plssvm::detail::execution_range &range, device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_data_points, const size_type num_features) const {
+template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, float, float, std::size_t, std::size_t) const;
+template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, double, double, std::size_t, std::size_t) const;
+
+template <typename real_type>
+void csvm::run_w_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points, const std::size_t num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     detail::run_kernel(devices_[device], devices_[device].kernels.at(detail::compute_kernel_name::w_kernel), grid, block, w_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features));
 }
 
-template <typename T>
-void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range, const parameter<real_type> &params, device_ptr_type &out_d, const device_ptr_type &alpha_d, const device_ptr_type &point_d, const device_ptr_type &data_d, const device_ptr_type &data_last_d, const size_type num_support_vectors, const size_type num_predict_points, const size_type num_features) const {
+template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t) const;
+template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t) const;
+
+template <typename real_type>
+void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_support_vectors, const std::size_t num_predict_points, const std::size_t num_features) const {
     auto [grid, block] = execution_range_to_native(range);
 
     switch (params.kernel_type) {
@@ -220,8 +225,7 @@ void csvm<T>::run_predict_kernel(const ::plssvm::detail::execution_range &range,
     }
 }
 
-// explicitly instantiate template class
-template class csvm<float>;
-template class csvm<double>;
+template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const;
+template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
 }  // namespace plssvm::opencl

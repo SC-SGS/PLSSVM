@@ -21,7 +21,7 @@ endif()
 
 # create OpenCL tests if the OpenCL backend is available
 if(TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
-#    add_subdirectory(OpenCL)
+    add_subdirectory(OpenCL)
 endif()
 
 # create SYCL tests if the SYCL backend is available

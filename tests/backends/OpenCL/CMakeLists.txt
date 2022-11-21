@@ -9,11 +9,11 @@ set(PLSSVM_OPENCL_TEST_NAME OpenCL_tests)
 
 # list all necessary sources
 set(PLSSVM_OPENCL_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/opencl_csvm.cpp
 )
 
 # add test executable
-add_executable(${PLSSVM_OPENCL_TEST_NAME} ${PLSSVM_OPENCL_TEST_SOURCES})
+add_executable(${PLSSVM_OPENCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_OPENCL_TEST_SOURCES})
 
 # link against test library
 target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
