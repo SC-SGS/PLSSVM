@@ -24,6 +24,10 @@ class mock_opencl_csvm : public plssvm::opencl::csvm {
   public:
     using base_type::device_ptr_type;
 
+    // constructors necessary to compile the correct kernel functions
+    mock_opencl_csvm() = default;
+    explicit mock_opencl_csvm(plssvm::parameter params) : base_type{ params } { }
+
     // make protected member functions public
     using base_type::calculate_w;
     using base_type::device_reduction;

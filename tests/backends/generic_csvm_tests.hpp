@@ -70,7 +70,7 @@ TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
     const std::vector<real_type> rhs{ real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } };
 
     // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
-    const mock_csvm_type svm{};
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // solve the system of linear equations using the CG algorithm:
     // | Q  1 |  *  | a |  =  | y |
@@ -115,7 +115,7 @@ TYPED_TEST_P(GenericCSVM, predict_values) {
     };
 
     // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
-    const mock_csvm_type svm{};
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // predict the values using the previously learned support vectors and weights
     const std::vector<real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
@@ -147,7 +147,7 @@ TYPED_TEST_P(GenericCSVM, predict) {
     const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
 
     // create C-SVM
-    const csvm_type svm{ params };
+    const csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // predict label
     const std::vector<int> calculated = svm.predict(model, test_data);
@@ -175,7 +175,7 @@ TYPED_TEST_P(GenericCSVM, score) {
     const plssvm::model<real_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}.libsvm.model", kernel) };
 
     // create C-SVM
-    const csvm_type svm{ params };
+    const csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // predict label
     const real_type calculated = svm.score(model, test_data);
@@ -199,8 +199,8 @@ TYPED_TEST_P(GenericCSVMDeathTest, solve_system_of_linear_equations) {
     constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
-    const mock_csvm_type svm{};
     const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     const std::vector<real_type> b{ real_type{ 1.0 }, real_type{ 2.0 } };
 
@@ -238,8 +238,8 @@ TYPED_TEST_P(GenericCSVMDeathTest, predict_values) {
     constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
-    const mock_csvm_type svm{};
     const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     const std::vector<std::vector<real_type>> data = {
         { real_type{ 1.0 }, real_type{ 2.0 } },
@@ -305,7 +305,7 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
     const std::vector<real_type> ground_truth = compare::generate_q(params, data.data());
 
     // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::generate_q is protected
-    const mock_csvm_type svm{};
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // perform the data setup on the device
     constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
@@ -375,7 +375,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_device_kernel) {
     const real_type QA_cost = compare::kernel_function(params, data.data().back(), data.data().back()) + 1 / params.cost;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::calculate_w is protected
-    const mock_csvm_type svm{};
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // perform the data setup on the device
     constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
@@ -446,7 +446,6 @@ TYPED_TEST_P(GenericGPUCSVM, device_reduction) {
         EXPECT_FLOATING_POINT_VECTOR_NEAR(device_data, data * static_cast<real_type>(svm.devices_.size()));
     }
 
-    //
     // test reduction of a single device
     data_d.resize(1);
     calculated.assign(data.size(), real_type{ 0.0 });
@@ -616,7 +615,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, generate_q) {
     const plssvm::detail::parameter<real_type> params{ kernel, 2, 0.001, 1.0, 0.1 };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::generate_q is protected
-    const mock_csvm_type svm{};
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // valid feature_range
     const std::vector<std::size_t> feature_range{ 0, 1 };
@@ -720,7 +719,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, run_device_kernel) {
     const plssvm::detail::parameter<real_type> params{ kernel, 2, 0.001, 1.0, 0.1 };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::run_device_kernel is protected
-    const mock_csvm_type svm{};
+    const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     // valid feature_range
     const std::vector<std::size_t> feature_range{ 0, 1 };

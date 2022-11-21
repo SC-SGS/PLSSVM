@@ -22,6 +22,9 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type = plssvm::openmp::csvm;
 
   public:
+    mock_openmp_csvm() = default;
+    explicit mock_openmp_csvm(plssvm::parameter params) : base_type{ params } { }
+
     // make protected member functions public
     using base_type::calculate_w;
     using base_type::generate_q;

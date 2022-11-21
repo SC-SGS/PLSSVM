@@ -36,6 +36,7 @@
 #include <fstream>      // std::ifstream, std::ofstream
 #include <functional>   // std::hash
 #include <ios>          // std::ios_base, std::streamsize
+#include <iostream>     // std::cout, std::endl
 #include <iterator>     // istreambuf_iterator
 #include <limits>       // std::numeric_limits
 #include <map>          // std::map
@@ -199,7 +200,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
 }
 
 template <typename real_type>
-std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names, const bool print_info) {
+void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
         std::size_t log_size;
@@ -240,8 +241,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
     // create caching folder in the temporary directory and change the permissions such that everybody has read/write access
-    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}_{}", target, checksum);
-    std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all);
+    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}_{}_{}", checksum, target, ::plssvm::detail::arithmetic_type_name<real_type>());
 
     // potential reasons why OpenCL caching could fail
     enum class caching_status {
@@ -279,8 +279,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     }
 
     if (use_cached_binaries != caching_status::success) {
-        if (print_info) {
-            fmt::print("Building OpenCL kernels from source (reason: {}).\n", caching_status_to_string(use_cached_binaries));
+        if (verbose) {
+            std::cout << fmt::format("Building OpenCL kernels from source (reason: {}).", caching_status_to_string(use_cached_binaries)) << std::endl;
         }
 
         // create and build program
@@ -309,13 +309,14 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         if (!std::filesystem::exists(cache_dir_name)) {
             std::filesystem::create_directories(cache_dir_name);
         }
+        std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all, std::filesystem::perm_options::add);
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
-        if (print_info) {
-            fmt::print("Cached OpenCL kernel binaries in {}.\n", cache_dir_name);
+        if (verbose) {
+            std::cout << fmt::format("Cached OpenCL kernel binaries in {}.", cache_dir_name) << std::endl;
         }
 
         // release resource
@@ -323,8 +324,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources");
         }
     } else {
-        if (print_info) {
-            fmt::print("Using cached OpenCL kernel binaries from {}.\n", cache_dir_name);
+        if (verbose) {
+            std::cout << fmt::format("Using cached OpenCL kernel binaries from {}.", cache_dir_name) << std::endl;
         }
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
@@ -369,15 +370,12 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     }
 
     // build all kernels, one for each device
-    std::vector<command_queue> queues;
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
-        command_queue queue(contexts[0], contexts[0].devices[device]);
         for (std::vector<std::vector<kernel>>::size_type i = 0; i < kernel_names.size(); ++i) {
             // create kernel
-            queue.add_kernel(kernel_names[i].first, kernel{ clCreateKernel(binary_program, kernel_names[i].second.c_str(), &err) });
+            queues[device].add_kernel<real_type>(kernel_names[i].first, kernel{ clCreateKernel(binary_program, kernel_names[i].second.c_str(), &err) });
             PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i].second, device));
         }
-        queues.push_back(std::move(queue));
     }
 
     // release resource
@@ -387,11 +385,16 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     for (unsigned char *binary : binaries) {
         delete[] binary;
     }
-
-    return queues;
 }
 
-template std::vector<command_queue> create_command_queues<float>(const std::vector<context> &, const target_platform, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
-template std::vector<command_queue> create_command_queues<double>(const std::vector<context> &, const target_platform, const std::vector<std::pair<compute_kernel_name, std::string>> &, const bool);
+std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
+    std::vector<command_queue> queues;
+    for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
+        queues.emplace_back(contexts[0], contexts[0].devices[device]);
+    }
+    fill_command_queues_with_kernels<float>(queues, contexts, target, kernel_names);
+    fill_command_queues_with_kernels<double>(queues, contexts, target, kernel_names);
+    return queues;
+}
 
 }  // namespace plssvm::opencl::detail

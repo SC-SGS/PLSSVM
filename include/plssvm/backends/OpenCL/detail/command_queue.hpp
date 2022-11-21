@@ -12,6 +12,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
+#include "plssvm/detail/utility.hpp"                 // plssvm::detail::always_false_v
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
 
@@ -74,15 +75,28 @@ class command_queue {
 
     /**
      * @brief Add a new OpenCL @p compute_kernel used for @p name to this command queue.
+     * @tparam real_type the floating point type used as type in the kernel
      * @param[in] name the name of the kernel that is to be added
      * @param[in] compute_kernel the kernel to add
      */
+    template <typename real_type>
     void add_kernel(compute_kernel_name name, kernel &&compute_kernel);
+
+    /**
+     * @brief Get the OpenCL kernel used for @p name.
+     * @tparam real_type the floating point type used as type in the kernel
+     * @param[in] name the name of the kernel
+     * @return the compiled kernel (`[[nodiscard]]`)
+     */
+    template <typename real_type>
+    [[nodiscard]] const kernel &get_kernel(compute_kernel_name name) const;
 
     /// The wrapped cl_command_queue.
     cl_command_queue queue{};
-    /// All OpenCL device kernel associated with the device corresponding to this command queue.
-    std::map<compute_kernel_name, kernel> kernels{};
+    /// All OpenCL device kernel associated with the device corresponding to this command queue using `float` as `real_type`.
+    std::map<compute_kernel_name, kernel> float_kernels{};
+    /// All OpenCL device kernel associated with the device corresponding to this command queue using `double` as `real_type`.
+    std::map<compute_kernel_name, kernel> double_kernels{};
 };
 
 }  // namespace plssvm::opencl::detail
