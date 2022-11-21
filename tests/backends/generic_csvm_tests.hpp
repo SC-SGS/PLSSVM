@@ -199,7 +199,10 @@ TYPED_TEST_P(GenericCSVMDeathTest, solve_system_of_linear_equations) {
     constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
-    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+    plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+    if (params.kernel_type != plssvm::kernel_function_type::linear) {
+        params.gamma = real_type{ 0.1 };
+    }
     const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     const std::vector<real_type> b{ real_type{ 1.0 }, real_type{ 2.0 } };
@@ -238,7 +241,10 @@ TYPED_TEST_P(GenericCSVMDeathTest, predict_values) {
     constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::solve_system_of_linear_equations_impl is protected
-    const plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+    plssvm::detail::parameter<real_type> params{ plssvm::kernel_type = kernel };
+    if (params.kernel_type != plssvm::kernel_function_type::linear) {
+        params.gamma = real_type{ 0.1 };
+    }
     const mock_csvm_type svm{ static_cast<plssvm::parameter>(params) };
 
     const std::vector<std::vector<real_type>> data = {
