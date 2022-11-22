@@ -48,8 +48,8 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     }
     const size_type rnum_bytes = std::min(num_bytes, (size_ - pos) * sizeof(value_type));
     error_code err;
-    const value_type correct_value = static_cast<value_type>(pattern);
-    err = clEnqueueFillBuffer(queue_->queue, data_, &correct_value, sizeof(value_type), pos * sizeof(value_type), rnum_bytes, 0, nullptr, nullptr);
+    const auto correct_value = static_cast<unsigned char>(pattern);
+    err = clEnqueueFillBuffer(queue_->queue, data_, &correct_value, sizeof(unsigned char), pos * sizeof(value_type), rnum_bytes, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err);
     PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
 }
