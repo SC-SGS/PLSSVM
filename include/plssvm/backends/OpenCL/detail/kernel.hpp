@@ -63,7 +63,7 @@ class kernel {
      * @param[in,out] other the kernel to move the resources from
      * @return `*this`
      */
-    kernel &operator=(kernel &&other);
+    kernel &operator=(kernel &&other) noexcept;
 
     /**
      * @brief Release the cl_kernel resources on destruction.

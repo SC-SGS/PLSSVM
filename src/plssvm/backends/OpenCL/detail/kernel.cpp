@@ -23,7 +23,7 @@ kernel::kernel(cl_kernel p_compute_kernel) noexcept :
 kernel::kernel(kernel &&other) noexcept :
     compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}
 
-kernel &kernel::operator=(kernel &&other) {
+kernel &kernel::operator=(kernel &&other) noexcept {
     if (this != std::addressof(other)) {
         compute_kernel = std::exchange(other.compute_kernel, nullptr);
     }
@@ -32,7 +32,7 @@ kernel &kernel::operator=(kernel &&other) {
 
 kernel::~kernel() {
     if (compute_kernel) {
-        PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error realising cl_kernel");
+        PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error releasing cl_kernel");
     }
 }
 
