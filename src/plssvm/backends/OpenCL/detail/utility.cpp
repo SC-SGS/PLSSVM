@@ -51,9 +51,9 @@ namespace plssvm::opencl::detail {
 void device_assert(const error_code ec, const std::string_view msg) {
     if (!ec) {
         if (msg.empty()) {
-            throw backend_exception{ fmt::format("OpenCL assert ({})!", ec) };
+            throw backend_exception{ fmt::format("OpenCL assert '{}' ({})!", ec.message(), ec.value()) };
         } else {
-            throw backend_exception{ fmt::format("OpenCL assert ({}): {}!", ec, msg) };
+            throw backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", ec.message(), ec.value(), msg) };
         }
     }
 }
@@ -201,6 +201,8 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
 
 template <typename real_type>
 void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
+    PLSSVM_ASSERT(!queues.empty(), "At least one command queue must be available!");
+
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
         std::size_t log_size;
