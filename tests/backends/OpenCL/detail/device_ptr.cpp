@@ -13,11 +13,11 @@
 #include "plssvm/backends/OpenCL/detail/utility.hpp"
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"
 
-#include "../generic_device_ptr_tests.h"
+#include "backends/generic_device_ptr_tests.h"
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
-#include <cstddef>  // std::size_t
+#include <vector>  // std::vector
 
 bool operator==(const plssvm::opencl::detail::command_queue* lhs, const plssvm::opencl::detail::command_queue &rhs) noexcept {
     return lhs->queue == rhs.queue;

@@ -9,11 +9,11 @@ set(PLSSVM_OPENCL_TEST_NAME OpenCL_tests)
 
 # list all necessary sources
 set(PLSSVM_OPENCL_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/opencl_csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/opencl_csvm.cpp
 )
 
 # add test executable

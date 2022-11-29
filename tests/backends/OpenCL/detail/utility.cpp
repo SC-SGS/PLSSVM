@@ -14,7 +14,7 @@
 
 #include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
 
-#include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 

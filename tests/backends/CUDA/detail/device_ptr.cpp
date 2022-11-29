@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 
-#include "../generic_device_ptr_tests.h"
+#include "backends/generic_device_ptr_tests.h"
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
