@@ -107,7 +107,7 @@ class device_kernel_predict_poly {
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
             for (kernel_index_type feature_index = 0; feature_index < num_features_; ++feature_index) {
-                if (data_point_index == num_data_points_) {
+                if (data_point_index == num_data_points_ - 1) {
                     temp += data_last_d_[feature_index] * points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
                 } else {
                     temp += data_d_[data_point_index + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] * points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
@@ -172,7 +172,7 @@ class device_kernel_predict_radial {
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
             for (kernel_index_type feature_index = 0; feature_index < num_features_; ++feature_index) {
-                if (data_point_index == num_data_points_) {
+                if (data_point_index == num_data_points_ - 1) {
                     temp += (data_last_d_[feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d_[feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
                 } else {
                     temp += (data_d_[data_point_index + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_d_[data_point_index + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);

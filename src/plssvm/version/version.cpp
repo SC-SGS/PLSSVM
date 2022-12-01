@@ -38,7 +38,8 @@ std::string get_version_info(const std::string_view executable_name, const bool 
         backend_specifics += fmt::format("  PLSSVM_TARGET_PLATFORMS: {}\n", target_platforms);
         backend_specifics += fmt::format("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-        backend_specifics += fmt::format("  available SYCL implementations: {}\n", fmt::join(sycl::list_available_sycl_implementations(), ", "));
+// TODO:
+//        backend_specifics += fmt::format("  available SYCL implementations: {}\n", fmt::join(::plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION::detail::list_available_sycl_implementations(), ", "));
 #endif
     }
 

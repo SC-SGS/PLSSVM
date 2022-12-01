@@ -8,7 +8,6 @@ message(CHECK_START "Checking for SYCL backend")
 
 #explicitly set sources that must not be configured
 set(PLSSVM_SYCL_SHARED_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 

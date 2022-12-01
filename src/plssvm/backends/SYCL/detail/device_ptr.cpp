@@ -23,7 +23,7 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
 
     template <typename T>
     device_ptr<T>::device_ptr(const size_type size, const std::unique_ptr<detail::sycl::queue> &queue) :
-        base_type{ queue.get(), size } {
+        base_type{ size, queue.get() } {
         data_ = detail::sycl::malloc_device<value_type>(size_, *queue_);
     }
 
@@ -35,7 +35,19 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
     }
 
     template <typename T>
-    void device_ptr<T>::memset(const int value, const size_type pos, const size_type count) {
+    void device_ptr<T>::memset(const int pattern, const size_type pos, const size_type num_bytes) {
+        PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
+        PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
+
+        if (pos >= size_) {
+            throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+        }
+        const size_type rnum_bytes = std::min(num_bytes, (size_ - pos) * sizeof(value_type));
+        queue_->memset(static_cast<void *>(data_ + pos), pattern, rnum_bytes).wait();
+    }
+
+    template <typename T>
+    void device_ptr<T>::fill(const value_type value, const size_type pos, const size_type count) {
         PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
         PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
@@ -43,11 +55,11 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
             throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
         }
         const size_type rcount = std::min(count, size_ - pos);
-        queue_->memset(static_cast<void *>(data_ + pos), value, rcount * sizeof(value_type)).wait();
+        queue_->fill(static_cast<void*>(data_ + pos), value, rcount).wait();
     }
 
     template <typename T>
-    void device_ptr<T>::memcpy_to_device(const_host_pointer_type data_to_copy, const size_type pos, const size_type count) {
+    void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const size_type pos, const size_type count) {
         PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
         PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
@@ -56,7 +68,7 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
     }
 
     template <typename T>
-    void device_ptr<T>::memcpy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
+    void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
         PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
         PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
