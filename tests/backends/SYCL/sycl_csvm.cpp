@@ -156,7 +156,7 @@ using csvm_test_types = ::testing::Types<
     csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@Backend, GenericCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@BackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@Backend, GenericGPUCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@BackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@Backend, GenericCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@BackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@Backend, GenericGPUCSVM, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@BackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);
