@@ -63,18 +63,18 @@ namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::detail {
         PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
         PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
-        const size_type rcount = std::min(count, size_ - pos);
-        queue_->copy(data_to_copy, data_, rcount).wait();
-    }
+    const size_type rcount = std::min(count, size_ - pos);
+    queue_->copy(data_to_copy, data_ + pos, rcount).wait();
+}
 
     template <typename T>
     void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
         PLSSVM_ASSERT(queue_ != nullptr, "Invalid sycl::queue!");
         PLSSVM_ASSERT(data_ != nullptr, "Invalid USM data pointer!");
 
-        const size_type rcount = std::min(count, size_ - pos);
-        queue_->copy(data_, buffer, rcount).wait();
-    }
+    const size_type rcount = std::min(count, size_ - pos);
+    queue_->copy(data_ + pos, buffer, rcount).wait();
+}
 
     template class device_ptr<float>;
     template class device_ptr<double>;
