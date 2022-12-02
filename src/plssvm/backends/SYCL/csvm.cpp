@@ -55,22 +55,22 @@ void csvm::init(const target_platform target) {
             break;
         case target_platform::cpu:
         #if !defined(PLSSVM_HAS_CPU_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
         #endif
             break;
         case target_platform::gpu_nvidia:
         #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
         #endif
             break;
         case target_platform::gpu_amd:
         #if !defined(PLSSVM_HAS_AMD_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
         #endif
             break;
         case target_platform::gpu_intel:
         #if !defined(PLSSVM_HAS_INTEL_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform {} that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
         #endif
             break;
     }
@@ -95,9 +95,9 @@ void csvm::init(const target_platform target) {
 #elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
         const auto sycl_compiler_version =  __SYCL_COMPILER_VERSION;
 #endif
-        fmt::print("Using SYCL ({}, {}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, sycl_compiler_version, invocation_type_);
+        std::cout << fmt::format("Using SYCL ({}, {}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, sycl_compiler_version, invocation_type_);
         if (target == target_platform::automatic) {
-            fmt::print("Using {} as automatic target platform.\n", used_target);
+            std::cout << fmt::format("Using {} as automatic target platform.", used_target) << std::endl;
         }
     }
 
@@ -108,11 +108,11 @@ void csvm::init(const target_platform target) {
 
     if (plssvm::verbose) {
         // print found SYCL devices
-        fmt::print("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), used_target);
+        std::cout << fmt::format("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), used_target);
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            fmt::print("  [{}, {}]\n", device, devices_[device]->get_device().template get_info<detail::sycl::info::device::name>());
+            std::cout << fmt::format("  [{}, {}]\n", device, devices_[device]->get_device().template get_info<detail::sycl::info::device::name>());
         }
-        fmt::print("\n");
+        std::cout << std::endl;
     }
 }
 
