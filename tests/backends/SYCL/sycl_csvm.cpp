@@ -23,45 +23,6 @@
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST
 
-
-//// check whether the std::string <-> plssvm::sycl::kernel_invocation_type conversions are correct
-//TEST(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@_CSVM, kernel_invocation_type) {
-//    // check conversions to std::string
-//    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl_generic::kernel_invocation_type::automatic, "automatic");
-//    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl_generic::kernel_invocation_type::nd_range, "nd_range");
-//    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl_generic::kernel_invocation_type::hierarchical, "hierarchical");
-//    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::sycl_generic::kernel_invocation_type>(3), "unknown");
-//
-//    // check conversion from std::string
-//    util::gtest_expect_string_to_enum_conversion("automatic", plssvm::sycl_generic::kernel_invocation_type::automatic);
-//    util::gtest_expect_string_to_enum_conversion("AUTOMATIC", plssvm::sycl_generic::kernel_invocation_type::automatic);
-//    util::gtest_expect_string_to_enum_conversion("nd_range", plssvm::sycl_generic::kernel_invocation_type::nd_range);
-//    util::gtest_expect_string_to_enum_conversion("ND_RANGE", plssvm::sycl_generic::kernel_invocation_type::nd_range);
-//    util::gtest_expect_string_to_enum_conversion("hierarchical", plssvm::sycl_generic::kernel_invocation_type::hierarchical);
-//    util::gtest_expect_string_to_enum_conversion("HIERARCHICAL", plssvm::sycl_generic::kernel_invocation_type::hierarchical);
-//    util::gtest_expect_string_to_enum_conversion<plssvm::sycl_generic::kernel_invocation_type>("foo");
-//}
-//
-//// check whether the std::string <-> plssvm::sycl_generic::implementation_type conversions are correct
-//TEST(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@_CSVM, implementation_type) {
-//    // check conversions to std::string
-//    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl_generic::implementation_type::automatic, "automatic");
-//    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl_generic::implementation_type::dpcpp, "dpcpp");
-//    util::gtest_expect_enum_to_string_string_conversion(plssvm::sycl_generic::implementation_type::hipsycl, "hipsycl");
-//    util::gtest_expect_enum_to_string_string_conversion(static_cast<plssvm::sycl_generic::implementation_type>(3), "unknown");
-//
-//    // check conversion from std::string
-//    util::gtest_expect_string_to_enum_conversion("automatic", plssvm::sycl_generic::implementation_type::automatic);
-//    util::gtest_expect_string_to_enum_conversion("AUTOMATIC", plssvm::sycl_generic::implementation_type::automatic);
-//    util::gtest_expect_string_to_enum_conversion("dpcpp", plssvm::sycl_generic::implementation_type::dpcpp);
-//    util::gtest_expect_string_to_enum_conversion("DPCPP", plssvm::sycl_generic::implementation_type::dpcpp);
-//    util::gtest_expect_string_to_enum_conversion("dpc++", plssvm::sycl_generic::implementation_type::dpcpp);
-//    util::gtest_expect_string_to_enum_conversion("DPC++", plssvm::sycl_generic::implementation_type::dpcpp);
-//    util::gtest_expect_string_to_enum_conversion("hipsycl", plssvm::sycl_generic::implementation_type::hipsycl);
-//    util::gtest_expect_string_to_enum_conversion("hipSYCL", plssvm::sycl_generic::implementation_type::hipsycl);
-//    util::gtest_expect_string_to_enum_conversion<plssvm::sycl::implementation_type>("foo");
-//}
-
 class @PLSSVM_SYCL_BACKEND_INCLUDE_NAME@CSVM : public ::testing::Test, private util::redirect_output {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
