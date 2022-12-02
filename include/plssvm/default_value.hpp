@@ -326,7 +326,6 @@ struct is_default_value : detail::is_default_value<std::remove_cv_t<std::remove_
 /**
  * @brief Test whether the given type @p T is of type `plssvm::default_value`.
  * @details A shorthand for `plssvm::is_default_value<T>::value`.
- * @tparam T the type to check whether it is a `plssvm::default_value`
  */
 template <typename T>
 constexpr bool is_default_value_v = is_default_value<T>::value;

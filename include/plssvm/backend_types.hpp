@@ -157,7 +157,6 @@ struct csvm_to_backend_type : detail::csvm_to_backend_type<detail::remove_cvref_
 /**
  * @brief Get the `plssvm::backend_type` of the C-SVM class of type @p T. Ignores all const, volatile, and reference qualifiers.
  * @details A shorthand for `plssvm::csvm_to_backend_type::value`.
- * @tparam T the type of the C-SVM to get the backend type from
  */
 template <typename T>
 constexpr backend_type csvm_to_backend_type_v = csvm_to_backend_type<T>::value;

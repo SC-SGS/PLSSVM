@@ -370,7 +370,6 @@ struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<
 
 /**
  * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
- * @tparam T the type of the C-SVM
  */
 template <typename T>
 constexpr bool csvm_backend_exists_v = csvm_backend_exists<T>::value;

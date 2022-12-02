@@ -89,9 +89,9 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     EXPECT_FALSE(params.degree.is_default());
     EXPECT_EQ(params.degree.value(), 2);
     EXPECT_FALSE(params.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(params.gamma.value(), real_type{ 0.25 });
+    EXPECT_FLOATING_POINT_EQ(params.gamma.value(), 0.25);
     EXPECT_FALSE(params.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(params.coef0.value(), real_type{ 1.5 });
+    EXPECT_FLOATING_POINT_EQ(params.coef0.value(), 1.5);
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });

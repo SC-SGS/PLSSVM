@@ -184,9 +184,6 @@ TYPED_TEST(ScalingFactorsRead, invalid_number) {
 
 TYPED_TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
     using real_type = TypeParam;
-    // define data to write
-    const std::pair<real_type, real_type> interval{ -1.5, 1.5 };
-    const std::vector<factors_type<real_type>> scaling_factors{ factors_type<real_type>{} };  // at least one scaling factor must be given!
 
     // create temporary file containing the scaling factors
     const plssvm::detail::io::file_reader reader{};
