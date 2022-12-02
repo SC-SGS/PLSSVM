@@ -1,14 +1,16 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*
-* @brief Defines all currently supported SYCL implementations.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Defines all currently supported SYCL implementations.
+ */
 
+#ifndef PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
+#define PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
@@ -17,8 +19,8 @@
 namespace plssvm::sycl_generic {
 
 /**
-* @brief Enum class for all possible SYCL kernel invocation types.
-*/
+ * @brief Enum class for all possible SYCL kernel invocation types.
+ */
 enum class implementation_type {
     /** Use the available SYCL implementation. If more than one implementation is available, use PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION. */
     automatic,
@@ -36,19 +38,21 @@ enum class implementation_type {
 [[nodiscard]] std::vector<implementation_type> list_available_sycl_implementations();
 
 /**
-* @brief Output the @p impl type to the given output-stream @p out.
-* @param[in,out] out the output-stream to write the backend type to
-* @param[in] impl the SYCL implementation type
-* @return the output-stream
-*/
+ * @brief Output the @p impl type to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the backend type to
+ * @param[in] impl the SYCL implementation type
+ * @return the output-stream
+ */
 std::ostream &operator<<(std::ostream &out, implementation_type impl);
 
 /**
-* @brief Use the input-stream @p in to initialize the @p impl type.
-* @param[in,out] in input-stream to extract the backend type from
-* @param[in] impl the SYCL implementation type
-* @return the input-stream
-*/
+ * @brief Use the input-stream @p in to initialize the @p impl type.
+ * @param[in,out] in input-stream to extract the backend type from
+ * @param[in] impl the SYCL implementation type
+ * @return the input-stream
+ */
 std::istream &operator>>(std::istream &in, implementation_type &impl);
 
 }  // namespace plssvm::sycl_generic
+
+#endif  // PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_

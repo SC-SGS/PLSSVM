@@ -9,11 +9,13 @@
  * @brief Defines the kernel functions for the C-SVM using the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_SVM_KERNEL_HIERARCHICAL_HPP_
+#define PLSSVM_BACKENDS_SYCL_SVM_KERNEL_HIERARCHICAL_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"    // plssvm::sycl::atomic_op
-#include "plssvm/constants.hpp"                       // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
-#include "plssvm/detail/execution_range.hpp"          // plssvm::detail::execution_range
+#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
+#include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/detail/execution_range.hpp"        // plssvm::detail::execution_range
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::handler, sycl::h_item, sycl::range, sycl::private_memory, sycl::pow, sycl::exp
 
@@ -476,3 +478,5 @@ class hierarchical_device_kernel_radial {
 };
 
 }  // namespace plssvm::sycl_generic
+
+#endif  // PLSSVM_BACKENDS_SYCL_SVM_KERNEL_HIERARCHICAL_HPP_

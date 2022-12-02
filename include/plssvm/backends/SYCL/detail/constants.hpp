@@ -9,6 +9,8 @@
  * @brief Global compile-time constants specific to the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_
+#define PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_
 #pragma once
 
 /**
@@ -20,3 +22,5 @@
  * @brief Macro identifying the used SYCL compiler as [DPC++](https://github.com/intel/llvm).
  */
 #define PLSSVM_SYCL_BACKEND_COMPILER_DPCPP 0
+
+#endif  // PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_

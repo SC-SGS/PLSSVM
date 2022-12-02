@@ -9,6 +9,8 @@
  * @brief Defines the functions used for prediction for the C-SVM using the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
+#define PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
@@ -198,3 +200,5 @@ class device_kernel_predict_radial {
 };
 
 }  // namespace plssvm::sycl_generic
+
+#endif  // PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_

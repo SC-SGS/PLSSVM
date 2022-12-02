@@ -9,6 +9,8 @@
  * @brief Defines all available kernel invoke types when using SYCL.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
 #pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
@@ -44,3 +46,5 @@ std::ostream &operator<<(std::ostream &out, kernel_invocation_type invocation);
 std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation);
 
 }  // namespace plssvm::sycl_generic
+
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_

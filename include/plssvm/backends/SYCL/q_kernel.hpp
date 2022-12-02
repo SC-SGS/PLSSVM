@@ -9,6 +9,8 @@
  * @brief Defines SYCL functions for generating the `q` vector.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_Q_KERNEL_HPP_
+#define PLSSVM_BACKENDS_SYCL_Q_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
@@ -155,3 +157,5 @@ class device_kernel_q_radial {
 };
 
 }  // namespace plssvm::sycl_generic
+
+#endif  // PLSSVM_BACKENDS_SYCL_Q_KERNEL_HPP_
