@@ -18,7 +18,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::range, sycl::pow, sycl::exp
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl {
 
 /**
  * @brief Calculate the `w` vector to speed up the prediction of the labels for data points using the linear kernel function.
@@ -199,6 +199,6 @@ class device_kernel_predict_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl
 
 #endif  // PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_

@@ -17,7 +17,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl {
 
 /**
  * @brief Functor to calculate the `q` vector using the linear C-SVM kernel.
@@ -156,6 +156,6 @@ class device_kernel_q_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl
 
 #endif  // PLSSVM_BACKENDS_SYCL_Q_KERNEL_HPP_

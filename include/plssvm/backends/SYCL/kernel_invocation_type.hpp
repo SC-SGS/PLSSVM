@@ -15,7 +15,7 @@
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl {
 
 /**
  * @brief Enum class for all possible SYCL kernel invocation types.
@@ -45,6 +45,6 @@ std::ostream &operator<<(std::ostream &out, kernel_invocation_type invocation);
  */
 std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation);
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl
 
 #endif  // PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_

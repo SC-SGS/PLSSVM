@@ -18,7 +18,7 @@
 
 namespace plssvm {
 
-namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
+namespace sycl {
 
 /**
  * @brief Exception type thrown if a problem with the SYCL backend occurs.

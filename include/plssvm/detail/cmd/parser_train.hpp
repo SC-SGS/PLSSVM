@@ -26,10 +26,6 @@
 
 namespace plssvm::detail::cmd {
 
-namespace sycl {
-using namespace ::plssvm::sycl_generic;
-}
-
 /**
  * @brief Class for encapsulating all necessary parameters for training possibly provided through command line arguments.
  */

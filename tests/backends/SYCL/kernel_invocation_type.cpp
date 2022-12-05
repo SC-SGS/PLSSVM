@@ -16,32 +16,32 @@
 
 #include <sstream>  // std::istringstream
 
-// check whether the plssvm::sycl_generic::kernel_invocation_type -> std::string conversions are correct
+// check whether the plssvm::sycl::kernel_invocation_type -> std::string conversions are correct
 TEST(KernelInvocationType, to_string) {
     // check conversions to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::sycl_generic::kernel_invocation_type::automatic), "automatic");
-    EXPECT_EQ(util::convert_to_string(plssvm::sycl_generic::kernel_invocation_type::nd_range), "nd_range");
-    EXPECT_EQ(util::convert_to_string(plssvm::sycl_generic::kernel_invocation_type::hierarchical), "hierarchical");
+    EXPECT_EQ(util::convert_to_string(plssvm::sycl::kernel_invocation_type::automatic), "automatic");
+    EXPECT_EQ(util::convert_to_string(plssvm::sycl::kernel_invocation_type::nd_range), "nd_range");
+    EXPECT_EQ(util::convert_to_string(plssvm::sycl::kernel_invocation_type::hierarchical), "hierarchical");
 }
 TEST(KernelInvocationType, to_string_unknown) {
     // check conversions to std::string from unknown file_format_type
-    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::sycl_generic::kernel_invocation_type>(3)), "unknown");
+    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::sycl::kernel_invocation_type>(3)), "unknown");
 }
 
-// check whether the std::string -> plssvm::sycl_generic::kernel_invocation_type conversions are correct
+// check whether the std::string -> plssvm::sycl::kernel_invocation_type conversions are correct
 TEST(KernelInvocationType, from_string) {
     // check conversion from std::string
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>("automatic"), plssvm::sycl_generic::kernel_invocation_type::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>("AUTOMATIC"), plssvm::sycl_generic::kernel_invocation_type::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>("nd_range"), plssvm::sycl_generic::kernel_invocation_type::nd_range);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>("ND_RANGE"), plssvm::sycl_generic::kernel_invocation_type::nd_range);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>("hierarchical"), plssvm::sycl_generic::kernel_invocation_type::hierarchical);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>("HIERARCHICAL"), plssvm::sycl_generic::kernel_invocation_type::hierarchical);
+    EXPECT_EQ(util::convert_from_string<plssvm::sycl::kernel_invocation_type>("automatic"), plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(util::convert_from_string<plssvm::sycl::kernel_invocation_type>("AUTOMATIC"), plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(util::convert_from_string<plssvm::sycl::kernel_invocation_type>("nd_range"), plssvm::sycl::kernel_invocation_type::nd_range);
+    EXPECT_EQ(util::convert_from_string<plssvm::sycl::kernel_invocation_type>("ND_RANGE"), plssvm::sycl::kernel_invocation_type::nd_range);
+    EXPECT_EQ(util::convert_from_string<plssvm::sycl::kernel_invocation_type>("hierarchical"), plssvm::sycl::kernel_invocation_type::hierarchical);
+    EXPECT_EQ(util::convert_from_string<plssvm::sycl::kernel_invocation_type>("HIERARCHICAL"), plssvm::sycl::kernel_invocation_type::hierarchical);
 }
 TEST(KernelInvocationType, from_string_unknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };
-    plssvm::sycl_generic::kernel_invocation_type invocation_type;
+    plssvm::sycl::kernel_invocation_type invocation_type;
     input >> invocation_type;
     EXPECT_TRUE(input.fail());
 }

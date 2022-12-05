@@ -21,7 +21,7 @@
 
 #include <cstddef>  // std::size_t
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl {
 
 // TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
 /**
@@ -407,6 +407,6 @@ class nd_range_device_kernel_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl
 
 #endif  // PLSSVM_BACKENDS_SYCL_SVM_KERNEL_ND_RANGE_HPP_

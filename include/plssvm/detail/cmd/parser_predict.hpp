@@ -22,10 +22,6 @@
 
 namespace plssvm::detail::cmd {
 
-namespace sycl {
-using namespace ::plssvm::sycl_generic;
-}
-
 /**
  * @brief Class for encapsulating all necessary parameters for prediction normally provided through command line arguments.
  */

@@ -21,7 +21,7 @@
 
 #include <cstddef>  // std::size_t
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl {
 
 /**
  * @brief Calculates the C-SVM kernel using the hierarchical formulation and the linear kernel function.
@@ -477,6 +477,6 @@ class hierarchical_device_kernel_radial {
     const real_type gamma_;
 };
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl
 
 #endif  // PLSSVM_BACKENDS_SYCL_SVM_KERNEL_HIERARCHICAL_HPP_

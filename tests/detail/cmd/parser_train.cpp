@@ -44,8 +44,8 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_EQ(parser.max_iter.value(), 0);
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl_generic::kernel_invocation_type::automatic);
-    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl_generic::implementation_type::automatic);
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
     EXPECT_FALSE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
@@ -96,11 +96,11 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl_generic::kernel_invocation_type::nd_range);
-    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl_generic::implementation_type::dpcpp);
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::nd_range);
+    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl_generic::kernel_invocation_type::automatic);
-    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl_generic::implementation_type::automatic);
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_TRUE(parser.float_as_real_type);
@@ -337,7 +337,7 @@ class ParserTrainSYCLKernelInvocation : public ParserTrain, public ::testing::Wi
 TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to sycl::kernel_invocation_type
-    const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl_generic::kernel_invocation_type>(value);
+    const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl::kernel_invocation_type>(value);
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm", flag, value));
     // create parameter object
@@ -356,7 +356,7 @@ class ParserTrainSYCLImplementation : public ParserTrain, public ::testing::With
 TEST_P(ParserTrainSYCLImplementation, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to sycl::implementation_type
-    const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl_generic::implementation_type>(value);
+    const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl::implementation_type>(value);
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(fmt::format("./plssvm-predict {}={} data.libsvm", flag, value));
     // create parameter object
