@@ -26,8 +26,6 @@
 
 namespace plssvm {
 
-using namespace sycl;
-
 namespace detail {
 
 // forward declare execution_range class
@@ -35,7 +33,7 @@ class execution_range;
 
 }  // namespace detail
 
-namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
+namespace sycl::detail {
 
 /**
  * @brief A C-SVM implementation using SYCL as backend.
@@ -199,14 +197,14 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::sycl::detail::device_pt
 
 namespace detail {
 
-/**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL are available.
- */
-template <>
-struct csvm_backend_exists<@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::csvm> : std::true_type {};
+///**
+// * @brief Sets the `value` to `true` since C-SVMs using the SYCL are available.
+// */
+//template <>
+//struct csvm_backend_exists<@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::csvm> : std::true_type {};
 
 template <>
-struct csvm_backend_exists<sycl::csvm> : std::true_type {};
+struct csvm_backend_exists<sycl::detail::csvm> : std::true_type {};  // TODO:
 
 }  // namespace detail
 

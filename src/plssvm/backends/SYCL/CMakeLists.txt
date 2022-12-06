@@ -10,18 +10,20 @@ message(CHECK_START "Checking for SYCL backend")
 set(PLSSVM_SYCL_SHARED_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
 #    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 
 # explicitly set sources for configuration
 set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 # explicitly set header for configuration
 set(PLSSVM_SYCL_INCLUDES
-    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/csvm.hpp
+#    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/csvm.hpp
 #    ${PROJECT_SOURCE_DIR}/include/plssvm/backends/SYCL/exceptions.hpp
 )
 
