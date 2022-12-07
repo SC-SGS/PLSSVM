@@ -238,7 +238,6 @@ if(DEFINED PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION)
     if(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION IN_LIST PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
         # possible value found -> set preferred SYCL implementation
         target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION})
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_BACKEND_PREFERRED_COMPILER=1) # TODO: not hardcoded
         message(STATUS "Setting preferred SYCL implementation to \"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\".")
     else()
         # value not recognized
@@ -253,7 +252,6 @@ else()
     else()
         # use only available SYCL implementation as preferred implementation
         target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_BACKEND_PREFERRED_COMPILER=1) # TODO: not hardcoded
         message(STATUS "Setting preferred SYCL implementation to \"${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}\".")
     endif()
 endif()

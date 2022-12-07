@@ -32,14 +32,6 @@ class csvm : public ::plssvm::sycl::detail::csvm {
     explicit csvm(Args &&...args) :
         base_type{ std::forward<Args>(args)... } {}
 
-    static constexpr bool is_preferred() {
-#if PLSSVM_SYCL_BACKEND_PREFERRED_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-        return true;
-#else
-        return false;
-#endif
-    }
-
   protected:
     /**
      * @copydoc plssvm::sycl::detail::csvm::compiler_info
