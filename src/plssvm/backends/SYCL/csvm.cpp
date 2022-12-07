@@ -8,22 +8,22 @@
 
 #include "plssvm/backends/SYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/predict_kernel.hpp"                                                 // plssvm::sycl_generic::kernel_w, plssvm::sycl_generic::predict_points_poly, plssvm::sycl_generic::predict_points_rbf
-#include "plssvm/backends/SYCL/q_kernel.hpp"                                                       // plssvm::sycl_generic::device_kernel_q_linear, plssvm::sycl_generic::device_kernel_q_poly, plssvm::sycl_generic::device_kernel_q_radial
-#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"                                        // plssvm::sycl_generic::hierarchical_device_kernel_linear, plssvm::sysycl_genericcl::hierarchical_device_kernel_poly, plssvm::sycl_generic::hierarchical_device_kernel_radial
-#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"                                            // plssvm::sycl_generic::nd_range_device_kernel_linear, plssvm::sycl_generic::nd_range_device_kernel_poly, plssvm::sycl_generic::nd_range_device_kernel_radial
-#include "plssvm/backends/SYCL/detail/constants.hpp"   // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_ptr
-#include "plssvm/backends/SYCL/detail/utility.hpp"     // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::get_device_list, plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_synchronize
-#include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
-#include "plssvm/backends/gpu_csvm.hpp"                                                            // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                                                                    // plssvm::kernel_index_type
-#include "plssvm/detail/assert.hpp"                                                                // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"                                                       // plssvm::detail::execution_range
-#include "plssvm/exceptions/exceptions.hpp"                                                        // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                                                        // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                                                                    // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                                                             // plssvm::target_platform
+#include "plssvm/backends/SYCL/detail/constants.hpp"         // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"        // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_ptr
+#include "plssvm/backends/SYCL/detail/utility.hpp"           // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::get_device_list, plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_synchronize
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
+#include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl_generic::kernel_w, plssvm::sycl_generic::predict_points_poly, plssvm::sycl_generic::predict_points_rbf
+#include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl_generic::device_kernel_q_linear, plssvm::sycl_generic::device_kernel_q_poly, plssvm::sycl_generic::device_kernel_q_radial
+#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl_generic::hierarchical_device_kernel_linear, plssvm::sysycl_genericcl::hierarchical_device_kernel_poly, plssvm::sycl_generic::hierarchical_device_kernel_radial
+#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"      // plssvm::sycl_generic::nd_range_device_kernel_linear, plssvm::sycl_generic::nd_range_device_kernel_poly, plssvm::sycl_generic::nd_range_device_kernel_radial
+#include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                              // plssvm::kernel_index_type
+#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/detail/execution_range.hpp"                 // plssvm::detail::execution_range
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                              // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "plssvm/backends/SYCL/detail/queue_impl.hpp"
 
@@ -38,17 +38,17 @@
 
 namespace plssvm::sycl::detail {
 
-//template <typename T>
-//csvm<T>::csvm(target_platform target, kernel_invocation_type invocation_type, parameter<real_type> params) :
-//    base_type{ params }, invocation_type_{ invocation_type } {
-//    this->init(target);
-//}
+// template <typename T>
+// csvm<T>::csvm(target_platform target, kernel_invocation_type invocation_type, parameter<real_type> params) :
+//     base_type{ params }, invocation_type_{ invocation_type } {
+//     this->init(target);
+// }
 //
-//template <typename T>
-//csvm<T>::csvm(target_platform target, parameter<real_type> params) :
-//    base_type{ params }, invocation_type_{ kernel_invocation_type::automatic } {
-//    this->init(target);
-//}
+// template <typename T>
+// csvm<T>::csvm(target_platform target, parameter<real_type> params) :
+//     base_type{ params }, invocation_type_{ kernel_invocation_type::automatic } {
+//     this->init(target);
+// }
 
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
@@ -56,24 +56,24 @@ void csvm::init(const target_platform target) {
         case target_platform::automatic:
             break;
         case target_platform::cpu:
-        #if !defined(PLSSVM_HAS_CPU_TARGET)
+#if !defined(PLSSVM_HAS_CPU_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-        #endif
+#endif
             break;
         case target_platform::gpu_nvidia:
-        #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-        #endif
+#endif
             break;
         case target_platform::gpu_amd:
-        #if !defined(PLSSVM_HAS_AMD_TARGET)
+#if !defined(PLSSVM_HAS_AMD_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-        #endif
+#endif
             break;
         case target_platform::gpu_intel:
-        #if !defined(PLSSVM_HAS_INTEL_TARGET)
+#if !defined(PLSSVM_HAS_INTEL_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-        #endif
+#endif
             break;
     }
 
@@ -84,7 +84,7 @@ void csvm::init(const target_platform target) {
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == kernel_invocation_type::automatic) {
         // always use nd_range except for hipSYCL on the CPU
-        if (used_target == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) {
+        if (used_target == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) { // TODO: investigate
             invocation_type_ = kernel_invocation_type::hierarchical;
         } else {
             invocation_type_ = kernel_invocation_type::nd_range;
@@ -92,12 +92,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (plssvm::verbose) {
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-        const auto sycl_compiler_version = ::hipsycl::sycl::detail::version_string();
-#elif PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-        const auto sycl_compiler_version =  __SYCL_COMPILER_VERSION;
-#endif
-        std::cout << fmt::format("Using SYCL ({}, {}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", PLSSVM_SYCL_BACKEND_COMPILER_NAME, sycl_compiler_version, invocation_type_);
+        std::cout << fmt::format("Using SYCL ({}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", this->compiler_info(), invocation_type_);
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.", used_target) << std::endl;
         }
@@ -121,7 +116,7 @@ void csvm::init(const target_platform target) {
 csvm::~csvm() {
     try {
         // be sure that all operations on the SYCL queues have finished before destruction
-        for (queue_type& q : devices_) {
+        for (queue_type &q : devices_) {
             device_synchronize(q);
         }
     } catch (const plssvm::exception &e) {
@@ -131,7 +126,7 @@ csvm::~csvm() {
 }
 
 void csvm::device_synchronize(const queue_type &queue) const {
-    queue_type& q = const_cast<queue_type&>(queue);
+    queue_type &q = const_cast<queue_type &>(queue);
     sycl::detail::device_synchronize(q);
 }
 
@@ -227,9 +222,8 @@ void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail:
     }
 }
 
-template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &,  const device_ptr_type<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, float, float, std::size_t, std::size_t) const;
-template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &,  const device_ptr_type<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, double, double, std::size_t, std::size_t) const;
-
+template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, float, float, std::size_t, std::size_t) const;
+template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, double, double, std::size_t, std::size_t) const;
 
 template <typename real_type>
 void csvm::run_w_kernel_impl(const std::size_t device, [[maybe_unused]] const ::plssvm::detail::execution_range &range, device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points, const std::size_t num_features) const {
@@ -238,7 +232,6 @@ void csvm::run_w_kernel_impl(const std::size_t device, [[maybe_unused]] const ::
 
 template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t) const;
 template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t) const;
-
 
 template <typename real_type>
 void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_support_vectors, const std::size_t num_predict_points, const std::size_t num_features) const {
@@ -259,4 +252,4 @@ void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &rang
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const;
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
-}  // namespace plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
+}  // namespace plssvm::sycl::detail

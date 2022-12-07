@@ -8,11 +8,11 @@
 
 #include "plssvm/backends/SYCL/detail/device_ptr.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"                                        // forward declaration and namespace alias
-#include "plssvm/backends/SYCL/detail/queue_impl.hpp"                                       // plssvm::sycl::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"                                               // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"                                                         // PLSSVM_ASSERT
+#include "plssvm/backends/SYCL/detail/constants.hpp"   // forward declaration and namespace alias
+#include "plssvm/backends/SYCL/detail/queue_impl.hpp"  // plssvm::sycl::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
+#include "plssvm/backends/gpu_device_ptr.hpp"          // plssvm::detail::gpu_device_ptr
+#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::malloc_device, sycl::free
@@ -21,8 +21,6 @@
 #include <memory>     // std::unique_ptr
 
 namespace plssvm::sycl::detail {
-
-//using namespace ::plssvm::@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@;
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :

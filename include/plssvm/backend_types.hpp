@@ -77,7 +77,6 @@ namespace openmp { class csvm; }
 namespace cuda { class csvm; }
 namespace hip { class csvm; }
 namespace opencl { class csvm; }
-namespace sycl { class csvm; }
 namespace hipsycl { class csvm; }
 namespace dpcpp { class csvm; }
 // clang-format on
@@ -120,14 +119,6 @@ template <>
 struct csvm_to_backend_type<opencl::csvm> {
     /// The enum value representing the OpenCL backend.
     static constexpr backend_type value = backend_type::opencl;
-};
-/**
- * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM.
- */
-template <>
-struct csvm_to_backend_type<sycl::csvm> {
-    /// The enum value representing the SYCL backend.
-    static constexpr backend_type value = backend_type::sycl;
 };
 /**
  * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using hipSYCL as SYCL implementation.

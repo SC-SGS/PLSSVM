@@ -53,8 +53,8 @@ using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 #include <type_traits>  // std::is_same_v, std::enable_if_t
 #include <utility>      // std::forward
 
-
 #include "plssvm/detail/utility.hpp"
+#include <iostream>
 
 namespace plssvm {
 
@@ -93,8 +93,7 @@ template <typename... Args>
 [[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
     // TODO: look at it
     // test whether the SYCL backend is available
-    if constexpr (csvm_backend_exists_v<sycl::detail::csvm>) {
-//        if constexpr (std::is_constructible_v<hipsycl::csvm, Args...>) {
+    if constexpr (csvm_backend_exists_v<hipsycl::csvm> || csvm_backend_exists_v<dpcpp::csvm>) {
         if constexpr (std::is_constructible_v<sycl::detail::csvm, Args...>) {
             // check igor parameter
             igor::parser parser{ args... };
@@ -107,27 +106,18 @@ template <typename... Args>
                 static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
                 impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
             }
-#if defined(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION)
-#if PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-            fmt::print("hipSYCL\n");
-#endif
-    #if PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION == PLSSVM_SYCL_BACKEND_COMPILER_DPCPP
-            fmt::print("DPC++\n");
-    #endif
-#endif
             switch (impl_type) {
                 case sycl::implementation_type::automatic:
-//                    return std::make_unique<sycl::csvm>(std::forward<Args>(args)...);
-                    return std::make_unique<plssvm::hipsycl::csvm>(std::forward<Args>(args)...); // TODO:
+                    return std::make_unique<::plssvm::sycl::csvm>(std::forward<Args>(args)...);
                 case sycl::implementation_type::dpcpp:
-                    if constexpr (csvm_backend_exists_v<plssvm::dpcpp::csvm>) {
+                    if constexpr (csvm_backend_exists_v<dpcpp::csvm>) {
                         return std::make_unique<dpcpp::csvm>(std::forward<Args>(args)...);
                     } else {
                         throw unsupported_backend_exception{ "No sycl backend available using DPC++!" };
                     }
 
                 case sycl::implementation_type::hipsycl:
-                    if constexpr (csvm_backend_exists_v<plssvm::hipsycl::csvm>) {
+                    if constexpr (csvm_backend_exists_v<hipsycl::csvm>) {
                         return std::make_unique<hipsycl::csvm>(std::forward<Args>(args)...);
                     } else {
                         throw unsupported_backend_exception{ "No sycl backend available using hipSYCL!" };
@@ -136,9 +126,8 @@ template <typename... Args>
         } else {
             throw unsupported_backend_exception{ "Provided invalid (named) arguments for the sycl backend!" };
         }
-    } else {
-        throw unsupported_backend_exception{ "No sycl backend available!" };
     }
+    throw unsupported_backend_exception{ "No sycl backend available!" };
 }
 
 /**
@@ -168,8 +157,6 @@ template <typename... Args>
 }
 
 }  // namespace detail
-
-// TODO: investigate with
 
 /**
  * @brief Create a new C-SVM using the @p backend type, the automatic target platform, and additional parameter @p args.

@@ -6,20 +6,22 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines a C-SVM using the SYCL backend.
+ * @brief Defines a base C-SVM used for the different SYCL backends.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_CSVM_HPP_
+#define PLSSVM_BACKENDS_SYCL_CSVM_HPP_
 #pragma once
 
-#include "plssvm/detail/utility.hpp"
-#include "plssvm/kernel_function_types.hpp"                                                  // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
-#include "plssvm/parameter.hpp"
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // forward declaration and namespace alias
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp" // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::detail::device_ptr
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"                                        // plssvm::sycl_generic::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                                                           // plssvm::detail::gpu_csvm
+#include "plssvm/backends/SYCL/detail/constants.hpp"   // forward declaration and namespace alias
+#include "plssvm/backends/SYCL/detail/device_ptr.hpp"  // plssvm::sycl::detail::device_ptr
 #include "plssvm/backends/SYCL/detail/queue.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/detail/utility.hpp"
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_type
+#include "plssvm/parameter.hpp"
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include <memory>   // std::unique_ptr
 #include <utility>  // std::forward
@@ -87,33 +89,34 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::sycl::detail::device_pt
         this->init(target);
     }
 
-//    /**
-//     * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
-//     * @param[in] params struct encapsulating all possible parameters
-//     * @throws plssvm::csvm::csvm() exceptions
-//     * @throws plssvm::sycl::backend_exception if the requested plssvm::target_platform isn't available
-//     * @throws plssvm::sycl::backend_exception if no possible OpenCL devices could be found
-//     */
-//    explicit csvm(target_platform target, kernel_invocation_type invocation_type = kernel_invocation_type::automatic, parameter<real_type> params = {});
-//    explicit csvm(target_platform target, parameter<real_type> params);
-//
-//    template <typename... Args>
-//    csvm(target_platform target, kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, named_args... } {
-//        // set kernel invocation type
-//        igor::parser p{ std::forward<Args>(named_args)... };
-//
-//        // compile time check: only some named parameters are allowed
-//        static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
-//
-//        if constexpr (p.has(sycl_kernel_invocation_type)) {
-//            // compile time check: the value must have the correct type
-//            static_assert(std::is_convertible_v<plssvm::detail::remove_cvref_t<decltype(p(sycl_kernel_invocation_type))>, decltype(invocation_type_)>, "sycl_kernel_invocation_type must be convertible to a kernel_invocation_type!");
-//            // set value
-//            invocation_type_ = static_cast<decltype(invocation_type_)>(p(sycl_kernel_invocation_type));
-//        }
-//
-//        this->init(target);
-//    }
+    // TODO: SYCL specific flags
+    //    /**
+    //     * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
+    //     * @param[in] params struct encapsulating all possible parameters
+    //     * @throws plssvm::csvm::csvm() exceptions
+    //     * @throws plssvm::sycl::backend_exception if the requested plssvm::target_platform isn't available
+    //     * @throws plssvm::sycl::backend_exception if no possible OpenCL devices could be found
+    //     */
+    //    explicit csvm(target_platform target, kernel_invocation_type invocation_type = kernel_invocation_type::automatic, parameter<real_type> params = {});
+    //    explicit csvm(target_platform target, parameter<real_type> params);
+    //
+    //    template <typename... Args>
+    //    csvm(target_platform target, kernel_function_type kernel, Args&&... named_args) : base_type{ kernel, named_args... } {
+    //        // set kernel invocation type
+    //        igor::parser p{ std::forward<Args>(named_args)... };
+    //
+    //        // compile time check: only some named parameters are allowed
+    //        static_assert(!p.has_other_than(gamma, degree, coef0, cost, sycl_implementation_type, sycl_kernel_invocation_type), "An illegal named parameter has been passed!");
+    //
+    //        if constexpr (p.has(sycl_kernel_invocation_type)) {
+    //            // compile time check: the value must have the correct type
+    //            static_assert(std::is_convertible_v<plssvm::detail::remove_cvref_t<decltype(p(sycl_kernel_invocation_type))>, decltype(invocation_type_)>, "sycl_kernel_invocation_type must be convertible to a kernel_invocation_type!");
+    //            // set value
+    //            invocation_type_ = static_cast<decltype(invocation_type_)>(p(sycl_kernel_invocation_type));
+    //        }
+    //
+    //        this->init(target);
+    //    }
 
     /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
@@ -122,6 +125,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::sycl::detail::device_pt
     ~csvm() override;
 
   protected:
+    /**
+     * @brief Return a SYCL implementation specific compiler string.
+     * @return the SYCL implementation specific string (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual std::string compiler_info() const { return "WONT WORK"; } // TODO: this won't work
+
     /**
      * @copydoc plssvm::detail::gpu_csvm::device_synchronize
      */
@@ -190,22 +199,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::sycl::detail::device_pt
     /// The SYCL kernel invocation type for the svm kernel. Either nd_range or hierarchical.
     kernel_invocation_type invocation_type_{ kernel_invocation_type::automatic };
 };
-
-
-}  // namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
-
-
-namespace detail {
-
-///**
-// * @brief Sets the `value` to `true` since C-SVMs using the SYCL are available.
-// */
-//template <>
-//struct csvm_backend_exists<@PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@::csvm> : std::true_type {};
-
-template <>
-struct csvm_backend_exists<sycl::detail::csvm> : std::true_type {};  // TODO:
-
-}  // namespace detail
-
+}  // namespace sycl::detail
 }  // namespace plssvm
+
+#endif  // PLSSVM_BACKENDS_SYCL_CSVM_HPP_
