@@ -8,11 +8,7 @@
  * @brief Tests for the OpenCL backend device pointer.
  */
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // forward declaration and namespace alias
-#include "plssvm/target_platforms.hpp"
-
-#include "plssvm/backends/SYCL/detail/queue_impl.hpp"
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include "backends/generic_device_ptr_tests.h"
 
@@ -22,24 +18,40 @@
 
 #include <memory>  // std::unique_ptr
 
-template <typename T>
+template <typename device_ptr_t, typename queue_t>
 struct device_ptr_test_type {
-    using device_ptr_type = plssvm::sycl::detail::device_ptr<T>;
-    using queue_type = plssvm::sycl::detail::queue;
+    using device_ptr_type = device_ptr_t;
+    using queue_type = queue_t;
 
     static const queue_type &default_queue() {
-        static queue_type queue{ std::make_unique<plssvm::sycl::detail::queue::queue_impl>() };
-//        static queue_type queue{ plssvm::sycl::detail::get_device_list(plssvm::target_platform::automatic).first.front() };
+        // TODO: linker error because of constructor call
+        static queue_type queue{ std::make_unique<typename queue_type::queue_impl>() };
         return queue;
     }
 };
 
-using device_ptr_test_types = ::testing::Types<
-    device_ptr_test_type<float>,
-    device_ptr_test_type<double>>;
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"
+    #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"
+
+using dpcpp_device_ptr_test_types = ::testing::Types<
+    device_ptr_test_type<plssvm::dpcpp::detail::device_ptr<float>, plssvm::dpcpp::detail::queue>,
+    device_ptr_test_type<plssvm::dpcpp::detail::device_ptr<double>, plssvm::dpcpp::detail::queue>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(SYCLBackend, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(SYCLBackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, DevicePtr, dpcpp_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_test_types);
+#endif
 
-// TODO: linker error because of constructor call
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
+    #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"
+
+using hipsycl_device_ptr_test_types = ::testing::Types<
+    device_ptr_test_type<plssvm::hipsycl::detail::device_ptr<float>, plssvm::hipsycl::detail::queue>,
+    device_ptr_test_type<plssvm::hipsycl::detail::device_ptr<double>, plssvm::hipsycl::detail::queue>>;
+
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackend, DevicePtr, hipsycl_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackendDeathTest, DevicePtrDeathTest, hipsycl_device_ptr_test_types);
+#endif

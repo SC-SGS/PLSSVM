@@ -13,9 +13,8 @@
 #include "backends/generic_csvm_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
 #include "utility.hpp"                      // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"        // forward declaration and namespace alias
-#include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::csvm
-#include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"            // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::csvm
+#include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"            // plssvm::hipsycl::csvm
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_type
