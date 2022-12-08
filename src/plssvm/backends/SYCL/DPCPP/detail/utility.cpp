@@ -6,12 +6,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/detail/utility.hpp"
+#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"   // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
-#include "plssvm/backends/SYCL/detail/queue_impl.hpp"  // plssvm::sycl::detail::queue (PImpl implementation)
-#include "plssvm/detail/string_utility.hpp"            // sycl::detail::to_lower_case, sycl::detail::contains
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
+#include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::sycl::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/detail/constants.hpp"         // PLSSVM_SYCL_BACKEND_COMPILER_DPCPP, PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
+#include "plssvm/detail/string_utility.hpp"                  // sycl::detail::to_lower_case, sycl::detail::contains
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::platform, sycl::device, sycl::property::queue, sycl::info, sycl::gpu_selector
 
@@ -20,7 +20,7 @@
 #include <utility>  // std::pair, std::make_pair
 #include <vector>   // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::dpcpp::detail {
 
 [[nodiscard]] std::vector<queue> get_device_list_impl(const target_platform target) {
     std::vector<queue> target_devices;
@@ -113,4 +113,4 @@ void device_synchronize(queue &q) {
     q.impl->sycl_queue.wait_and_throw();
 }
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::dpcpp::detail

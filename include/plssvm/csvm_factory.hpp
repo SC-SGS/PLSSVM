@@ -91,10 +91,10 @@ template <typename csvm_type, typename... Args>
  */
 template <typename... Args>
 [[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
-    // TODO: look at it
+    // TODO: look at it, reimplement
     // test whether the SYCL backend is available
     if constexpr (csvm_backend_exists_v<hipsycl::csvm> || csvm_backend_exists_v<dpcpp::csvm>) {
-        if constexpr (std::is_constructible_v<sycl::detail::csvm, Args...>) {
+        if constexpr (std::is_constructible_v<sycl::csvm, Args...>) {
             // check igor parameter
             igor::parser parser{ args... };
 

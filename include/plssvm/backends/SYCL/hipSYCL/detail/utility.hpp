@@ -9,17 +9,17 @@
  * @brief Utility functions specific to the SYCL backend.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_DETAIL_UTILITY_HPP_
-#define PLSSVM_BACKENDS_SYCL_DETAIL_UTILITY_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_
+#define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
-#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
+#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
+#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::hipsycl::detail {
 
 /**
  * @brief Returns the list devices matching the target platform @p target and the actually used target platform
@@ -40,6 +40,6 @@ namespace plssvm::sycl::detail {
  */
 void device_synchronize(queue &q);
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::hipsycl::detail
 
-#endif  // PLSSVM_BACKENDS_SYCL_DETAIL_UTILITY_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_

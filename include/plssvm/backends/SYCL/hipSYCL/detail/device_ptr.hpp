@@ -9,14 +9,14 @@
  * @brief Small wrapper around a SYCL device pointer.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_DETAIL_DEVICE_PTR_HPP_
-#define PLSSVM_BACKENDS_SYCL_DETAIL_DEVICE_PTR_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_
+#define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
-#include "plssvm/backends/gpu_device_ptr.hpp"     // plssvm::detail::gpu_device_ptr
+#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
+#include "plssvm/backends/gpu_device_ptr.hpp"             // plssvm::detail::gpu_device_ptr
 
-namespace plssvm::sycl::detail {
+namespace plssvm::hipsycl::detail {
 
 /**
  * @brief Small wrapper class around a SYCL device pointer together with commonly used device functions.
@@ -100,6 +100,6 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
 extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::hipsycl::detail
 
-#endif  // PLSSVM_BACKENDS_SYCL_DETAIL_DEVICE_PTR_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_

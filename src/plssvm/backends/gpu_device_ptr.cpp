@@ -15,7 +15,12 @@
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // used for explicitly instantiating the SYCL backend
-    #include "plssvm/backends/SYCL/detail/queue.hpp"
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+        #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"
+    #endif
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+        #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"
+    #endif
 #endif
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -129,8 +134,14 @@ template class gpu_device_ptr<float, const ::plssvm::opencl::detail::command_que
 template class gpu_device_ptr<double, const ::plssvm::opencl::detail::command_queue *, cl_mem>;
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-template class gpu_device_ptr<float, ::plssvm::sycl::detail::queue>;
-template class gpu_device_ptr<double, ::plssvm::sycl::detail::queue>;
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+template class gpu_device_ptr<float, ::plssvm::dpcpp::detail::queue>;
+template class gpu_device_ptr<double, ::plssvm::dpcpp::detail::queue>;
+    #endif
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+template class gpu_device_ptr<float, ::plssvm::hipsycl::detail::queue>;
+template class gpu_device_ptr<double, ::plssvm::hipsycl::detail::queue>;
+    #endif
 #endif
 
 }  // namespace plssvm::detail

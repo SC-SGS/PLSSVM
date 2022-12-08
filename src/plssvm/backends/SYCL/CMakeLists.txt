@@ -9,9 +9,9 @@ message(CHECK_START "Checking for SYCL backend")
 # explicitly set sources
 set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 
@@ -48,9 +48,16 @@ if(hipSYCL_FOUND)
     message(STATUS "Setting HIPSYCL_TARGETS to \"${HIPSYCL_TARGETS}\".")
     list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "hipsycl")
 
+    # set hipSYCL specific targets
+    set(PLSSVM_SYCL_HIPSYCL_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/detail/utility.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/csvm.cpp
+    )
+
     # set target properties
     set_local_and_parent(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME plssvm-SYCL_hipsycl)
-    add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES})
+    add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_HIPSYCL_SOURCES})
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME}")
 
     # necessary target_*_directories if more than one SYCL implementation could be found
@@ -105,9 +112,16 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     message(CHECK_PASS "found")
     list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
 
+    # set hipSYCL specific targets
+    set(PLSSVM_SYCL_DPCPP_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/DPCPP/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/DPCPP/detail/utility.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/DPCPP/csvm.cpp
+    )
+
     # set target properties
     set_local_and_parent(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp)
-    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES})
+    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_DPCPP_SOURCES})
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
 
     # necessary target_*_directories if more than one SYCL implementation could be found

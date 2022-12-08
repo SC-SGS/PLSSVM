@@ -6,26 +6,26 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/csvm.hpp"
+#include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"         // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"        // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_ptr
-#include "plssvm/backends/SYCL/detail/utility.hpp"           // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::get_device_list, plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_synchronize
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::backend_exception
-#include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl_generic::kernel_w, plssvm::sycl_generic::predict_points_poly, plssvm::sycl_generic::predict_points_rbf
-#include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl_generic::device_kernel_q_linear, plssvm::sycl_generic::device_kernel_q_poly, plssvm::sycl_generic::device_kernel_q_radial
-#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl_generic::hierarchical_device_kernel_linear, plssvm::sysycl_genericcl::hierarchical_device_kernel_poly, plssvm::sycl_generic::hierarchical_device_kernel_radial
-#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"      // plssvm::sycl_generic::nd_range_device_kernel_linear, plssvm::sycl_generic::nd_range_device_kernel_poly, plssvm::sycl_generic::nd_range_device_kernel_radial
-#include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                              // plssvm::kernel_index_type
-#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"                 // plssvm::detail::execution_range
-#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                              // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/detail/constants.hpp"           // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
+#include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"             // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::get_device_list, plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_synchronize
+#include "plssvm/backends/SYCL/exceptions.hpp"                 // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::sycl::backend_exception
+#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_ptr
+#include "plssvm/backends/SYCL/predict_kernel.hpp"             // plssvm::sycl_generic::kernel_w, plssvm::sycl_generic::predict_points_poly, plssvm::sycl_generic::predict_points_rbf
+#include "plssvm/backends/SYCL/q_kernel.hpp"                   // plssvm::sycl_generic::device_kernel_q_linear, plssvm::sycl_generic::device_kernel_q_poly, plssvm::sycl_generic::device_kernel_q_radial
+#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"    // plssvm::sycl_generic::hierarchical_device_kernel_linear, plssvm::sysycl_genericcl::hierarchical_device_kernel_poly, plssvm::sycl_generic::hierarchical_device_kernel_radial
+#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"        // plssvm::sycl_generic::nd_range_device_kernel_linear, plssvm::sycl_generic::nd_range_device_kernel_poly, plssvm::sycl_generic::nd_range_device_kernel_radial
+#include "plssvm/backends/gpu_csvm.hpp"                        // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                                // plssvm::kernel_index_type
+#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
+#include "plssvm/detail/execution_range.hpp"                   // plssvm::detail::execution_range
+#include "plssvm/exceptions/exceptions.hpp"                    // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                                // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                         // plssvm::target_platform
 
-#include "plssvm/backends/SYCL/detail/queue_impl.hpp"
+#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"
 
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
@@ -36,17 +36,17 @@
 #include <tuple>      // std::tie
 #include <vector>     // std::vector
 
-namespace plssvm::sycl::detail {
+namespace plssvm::hipsycl {
 
 // template <typename T>
-// csvm<T>::csvm(target_platform target, kernel_invocation_type invocation_type, parameter<real_type> params) :
+// csvm<T>::csvm(target_platform target, sycl::kernel_invocation_type invocation_type, parameter<real_type> params) :
 //     base_type{ params }, invocation_type_{ invocation_type } {
 //     this->init(target);
 // }
 //
 // template <typename T>
 // csvm<T>::csvm(target_platform target, parameter<real_type> params) :
-//     base_type{ params }, invocation_type_{ kernel_invocation_type::automatic } {
+//     base_type{ params }, invocation_type_{ sycl::kernel_invocation_type::automatic } {
 //     this->init(target);
 // }
 
@@ -57,42 +57,43 @@ void csvm::init(const target_platform target) {
             break;
         case target_platform::cpu:
 #if !defined(PLSSVM_HAS_CPU_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_nvidia:
 #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_amd:
 #if !defined(PLSSVM_HAS_AMD_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_intel:
 #if !defined(PLSSVM_HAS_INTEL_TARGET)
-            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
     }
 
     // get all available devices wrt the requested target platform
     target_platform used_target;
-    std::tie(devices_, used_target) = sycl::detail::get_device_list(target);
+    std::tie(devices_, used_target) = hipsycl::detail::get_device_list(target);
 
     // set correct kernel invocation type if "automatic" has been provided
-    if (invocation_type_ == kernel_invocation_type::automatic) {
+    if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
         // always use nd_range except for hipSYCL on the CPU
-        if (used_target == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) { // TODO: investigate
-            invocation_type_ = kernel_invocation_type::hierarchical;
+        if (used_target == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) {  // TODO: investigate
+            invocation_type_ = sycl::kernel_invocation_type::hierarchical;
         } else {
-            invocation_type_ = kernel_invocation_type::nd_range;
+            invocation_type_ = sycl::kernel_invocation_type::nd_range;
         }
     }
 
     if (plssvm::verbose) {
-        std::cout << fmt::format("Using SYCL ({}) as backend with the kernel invocation type \"{}\" for the svm_kernel.\n", this->compiler_info(), invocation_type_);
+        // TODO:
+        std::cout << fmt::format("Using hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", ::hipsycl::sycl::detail::version_string(), invocation_type_);
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.", used_target) << std::endl;
         }
@@ -100,7 +101,7 @@ void csvm::init(const target_platform target) {
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
-        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", used_target) };
+        throw sycl::backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", used_target) };
     }
 
     if (plssvm::verbose) {
@@ -127,24 +128,24 @@ csvm::~csvm() {
 
 void csvm::device_synchronize(const queue_type &queue) const {
     queue_type &q = const_cast<queue_type &>(queue);
-    sycl::detail::device_synchronize(q);
+    detail::device_synchronize(q);
 }
 
 template <std::size_t I>
-::sycl::nd_range<I> execution_range_to_native(const ::plssvm::detail::execution_range &range, const kernel_invocation_type invocation_type) {
-    PLSSVM_ASSERT(invocation_type != kernel_invocation_type::automatic, "The SYCL kernel invocation type may not be automatic anymore at this point!");
+::sycl::nd_range<I> execution_range_to_native(const ::plssvm::detail::execution_range &range, const sycl::kernel_invocation_type invocation_type) {
+    PLSSVM_ASSERT(invocation_type != sycl::kernel_invocation_type::automatic, "The SYCL kernel invocation type may not be automatic anymore at this point!");
 
     // set grid value based on used kernel invocation type
     const auto fill_grid = [&](const std::size_t i) {
         switch (invocation_type) {
-            case kernel_invocation_type::nd_range:
+            case sycl::kernel_invocation_type::nd_range:
                 return range.grid[i] * range.block[i];
-            case kernel_invocation_type::hierarchical:
+            case sycl::kernel_invocation_type::hierarchical:
                 return range.grid[i];
-            case kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't create native execution range from kernel invocation type automatic!" };
+            case sycl::kernel_invocation_type::automatic:
+                throw sycl::backend_exception{ "Can't create native execution range from kernel invocation type automatic!" };
             default:
-                throw backend_exception{ "Illegal kernel invocation type!" };
+                throw sycl::backend_exception{ "Illegal kernel invocation type!" };
         }
     };
 
@@ -170,15 +171,15 @@ void csvm::run_q_kernel_impl(const std::size_t device, [[maybe_unused]] const ::
     constexpr std::size_t boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, device_kernel_q_linear(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features)));
+            devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, sycl::device_kernel_q_linear(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features)));
             break;
         case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, device_kernel_q_poly(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value()));
+            devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, sycl::device_kernel_q_poly(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value()));
             break;
         case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, device_kernel_q_radial(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value()));
+            devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, sycl::device_kernel_q_radial(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value()));
             break;
     }
 }
@@ -192,30 +193,30 @@ void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail:
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             devices_[device].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                if (invocation_type_ == kernel_invocation_type::nd_range) {
-                    cgh.parallel_for(execution_range, nd_range_device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device)));
-                } else if (invocation_type_ == kernel_invocation_type::hierarchical) {
-                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), hierarchical_device_kernel_linear(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device)));
+                if (invocation_type_ == sycl::kernel_invocation_type::nd_range) {
+                    cgh.parallel_for(execution_range, sycl::nd_range_device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device)));
+                } else if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::hierarchical_device_kernel_linear(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device)));
                 }
             });
             break;
         case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
             devices_[device].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                if (invocation_type_ == kernel_invocation_type::nd_range) {
-                    cgh.parallel_for(execution_range, nd_range_device_kernel_poly(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value()));
-                } else if (invocation_type_ == kernel_invocation_type::hierarchical) {
-                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), hierarchical_device_kernel_poly(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value()));
+                if (invocation_type_ == sycl::kernel_invocation_type::nd_range) {
+                    cgh.parallel_for(execution_range, sycl::nd_range_device_kernel_poly(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value()));
+                } else if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::hierarchical_device_kernel_poly(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value()));
                 }
             });
             break;
         case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
             devices_[device].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                if (invocation_type_ == kernel_invocation_type::nd_range) {
-                    cgh.parallel_for(execution_range, nd_range_device_kernel_radial(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value()));
-                } else if (invocation_type_ == kernel_invocation_type::hierarchical) {
-                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), hierarchical_device_kernel_radial(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value()));
+                if (invocation_type_ == sycl::kernel_invocation_type::nd_range) {
+                    cgh.parallel_for(execution_range, sycl::nd_range_device_kernel_radial(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value()));
+                } else if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                    cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::hierarchical_device_kernel_radial(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value()));
                 }
             });
             break;
@@ -227,7 +228,7 @@ template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::exe
 
 template <typename real_type>
 void csvm::run_w_kernel_impl(const std::size_t device, [[maybe_unused]] const ::plssvm::detail::execution_range &range, device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points, const std::size_t num_features) const {
-    devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_features }, device_kernel_w_linear(w_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features)));
+    devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_features }, sycl::device_kernel_w_linear(w_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features)));
 }
 
 template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t) const;
@@ -235,16 +236,16 @@ template void csvm::run_w_kernel_impl(std::size_t device, const ::plssvm::detail
 
 template <typename real_type>
 void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_support_vectors, const std::size_t num_predict_points, const std::size_t num_features) const {
-    const ::sycl::nd_range execution_range = execution_range_to_native<2>(range, kernel_invocation_type::nd_range);
+    const ::sycl::nd_range execution_range = execution_range_to_native<2>(range, sycl::kernel_invocation_type::nd_range);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             break;
         case kernel_function_type::polynomial:
-            devices_[0].impl->sycl_queue.parallel_for(execution_range, device_kernel_predict_poly(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value()));
+            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::device_kernel_predict_poly(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value()));
 
             break;
         case kernel_function_type::rbf:
-            devices_[0].impl->sycl_queue.parallel_for(execution_range, device_kernel_predict_radial(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value()));
+            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::device_kernel_predict_radial(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value()));
             break;
     }
 }
@@ -252,4 +253,4 @@ void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &rang
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const;
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::hipsycl

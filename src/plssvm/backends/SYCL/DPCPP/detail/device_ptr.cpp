@@ -6,13 +6,13 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/detail/device_ptr.hpp"
+#include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"   // forward declaration and namespace alias
-#include "plssvm/backends/SYCL/detail/queue_impl.hpp"  // plssvm::sycl::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/exceptions.hpp"         // plssvm::sycl::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"          // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
+#include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::sycl::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/detail/constants.hpp"         // forward declaration and namespace alias
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/gpu_device_ptr.hpp"                // plssvm::detail::gpu_device_ptr
+#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::malloc_device, sycl::free
@@ -20,7 +20,7 @@
 #include <algorithm>  // std::min
 #include <memory>     // std::unique_ptr
 
-namespace plssvm::sycl::detail {
+namespace plssvm::dpcpp::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
@@ -41,7 +41,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
     if (pos >= size_) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+        throw sycl::backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
     }
     const size_type rnum_bytes = std::min(num_bytes, (size_ - pos) * sizeof(value_type));
     queue_.impl->sycl_queue.memset(static_cast<void *>(data_ + pos), pattern, rnum_bytes).wait();
@@ -53,7 +53,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
     if (pos >= size_) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+        throw sycl::backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
     }
     const size_type rcount = std::min(count, size_ - pos);
     queue_.impl->sycl_queue.fill(static_cast<void *>(data_ + pos), value, rcount).wait();
@@ -82,4 +82,4 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 template class device_ptr<float>;
 template class device_ptr<double>;
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::dpcpp::detail
