@@ -82,6 +82,8 @@ template <typename csvm_type, typename... Args>
         throw unsupported_backend_exception{ fmt::format("No {} backend available!", plssvm::csvm_to_backend_type_v<csvm_type>) };
     }
 }
+
+
 /**
  * @brief Construct a SYCL C-SVM using the parameters @p args.
  * @details The special case for the SYCL backend to handle the SYCL specific parameters.
@@ -91,43 +93,26 @@ template <typename csvm_type, typename... Args>
  */
 template <typename... Args>
 [[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
-    // TODO: look at it, reimplement
-    // test whether the SYCL backend is available
-    if constexpr (csvm_backend_exists_v<hipsycl::csvm> || csvm_backend_exists_v<dpcpp::csvm>) {
-        if constexpr (std::is_constructible_v<sycl::csvm, Args...>) {
-            // check igor parameter
-            igor::parser parser{ args... };
+    // check igor parameter
+    igor::parser parser{ args... };
 
-            // get the SYCL implementation type to use
-            sycl::implementation_type impl_type = sycl::implementation_type::automatic;
-            // check whether a specific SYCL implementation type has been requested
-            if constexpr (parser.has(sycl_implementation_type)) {
-                // compile time check: the value must have the correct type TODO:
-                static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
-                impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
-            }
-            switch (impl_type) {
-                case sycl::implementation_type::automatic:
-                    return std::make_unique<::plssvm::sycl::csvm>(std::forward<Args>(args)...);
-                case sycl::implementation_type::dpcpp:
-                    if constexpr (csvm_backend_exists_v<dpcpp::csvm>) {
-                        return std::make_unique<dpcpp::csvm>(std::forward<Args>(args)...);
-                    } else {
-                        throw unsupported_backend_exception{ "No sycl backend available using DPC++!" };
-                    }
-
-                case sycl::implementation_type::hipsycl:
-                    if constexpr (csvm_backend_exists_v<hipsycl::csvm>) {
-                        return std::make_unique<hipsycl::csvm>(std::forward<Args>(args)...);
-                    } else {
-                        throw unsupported_backend_exception{ "No sycl backend available using hipSYCL!" };
-                    }
-            }
-        } else {
-            throw unsupported_backend_exception{ "Provided invalid (named) arguments for the sycl backend!" };
-        }
+    // get the SYCL implementation type to use
+    sycl::implementation_type impl_type = sycl::implementation_type::automatic;
+    // check whether a specific SYCL implementation type has been requested
+    if constexpr (parser.has(sycl_implementation_type)) {
+        // compile time check: the value must have the correct type
+        static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
+        impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
     }
-    throw unsupported_backend_exception{ "No sycl backend available!" };
+    // TODO: check incomplete type (after constructor fix)
+    switch (impl_type) {
+        case sycl::implementation_type::automatic:
+            return make_csvm_default_impl<sycl::csvm>(std::forward<Args>(args)...);
+        case sycl::implementation_type::dpcpp:
+            return make_csvm_default_impl<dpcpp::csvm>(std::forward<Args>(args)...);
+        case sycl::implementation_type::hipsycl:
+            return make_csvm_default_impl<hipsycl::csvm>(std::forward<Args>(args)...);
+    }
 }
 
 /**
