@@ -6,14 +6,14 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions specific to the SYCL backend.
+ * @brief Utility functions specific to the SYCL backend using DPC++ as SYCL implementation.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_DPCPP_DETAIL_UTILITY_HPP_
 #define PLSSVM_BACKENDS_SYCL_DPCPP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
+#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
 #include <utility>  // std::pair

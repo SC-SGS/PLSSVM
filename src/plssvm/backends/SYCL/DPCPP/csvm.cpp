@@ -8,14 +8,15 @@
 
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"
 
-#include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_ptr
-#include "plssvm/backends/SYCL/detail/constants.hpp"         // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL, forward declaration and namespace alias
-#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"           // plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::get_device_list, plssvm::detail::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::device_synchronize
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@::sycl::backend_exception
-#include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl_generic::kernel_w, plssvm::sycl_generic::predict_points_poly, plssvm::sycl_generic::predict_points_rbf
-#include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl_generic::device_kernel_q_linear, plssvm::sycl_generic::device_kernel_q_poly, plssvm::sycl_generic::device_kernel_q_radial
-#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl_generic::hierarchical_device_kernel_linear, plssvm::sysycl_genericcl::hierarchical_device_kernel_poly, plssvm::sycl_generic::hierarchical_device_kernel_radial
-#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"      // plssvm::sycl_generic::nd_range_device_kernel_linear, plssvm::sycl_generic::nd_range_device_kernel_poly, plssvm::sycl_generic::nd_range_device_kernel_radial
+#include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::::device_ptr
+#include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::get_device_list, plssvm::dpcpp::device_synchronize
+
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
+#include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
+#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl::hierarchical_device_kernel_linear, plssvm::sycl::hierarchical_device_kernel_poly, plssvm::sycl::hierarchical_device_kernel_radial
+#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"      // plssvm::sycl::nd_range_device_kernel_linear, plssvm::sycl::nd_range_device_kernel_poly, plssvm::sycl::nd_range_device_kernel_radial
 #include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                              // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
@@ -24,8 +25,6 @@
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
-
-#include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"
 
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
@@ -79,16 +78,13 @@ void csvm::init(const target_platform target) {
 
     // get all available devices wrt the requested target platform
     target_platform used_target;
-    std::tie(devices_, used_target) = dpcpp::detail::get_device_list(target);
+    std::tie(devices_, used_target) = detail::get_device_list(target);
 
     // set correct kernel invocation type if "automatic" has been provided
+    const sycl::kernel_invocation_type provided_invocation_type = invocation_type_;
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        // always use nd_range except for hipSYCL on the CPU
-        if (used_target == target_platform::cpu && PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL) {  // TODO: investigate
-            invocation_type_ = sycl::kernel_invocation_type::hierarchical;
-        } else {
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-        }
+        // always use nd_range for DPC++
+        invocation_type_ = sycl::kernel_invocation_type::nd_range;
     }
 
     if (plssvm::verbose) {
@@ -96,6 +92,9 @@ void csvm::init(const target_platform target) {
         std::cout << fmt::format("Using DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", __SYCL_COMPILER_VERSION, invocation_type_);
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.", used_target) << std::endl;
+        }
+        if (provided_invocation_type == sycl::kernel_invocation_type::automatic) {
+            std::cout << fmt::format("Using {} as automatic kernel invocation type.", invocation_type_) << std::endl;
         }
     }
 

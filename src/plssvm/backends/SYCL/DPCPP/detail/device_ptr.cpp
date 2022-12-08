@@ -8,11 +8,11 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"
 
-#include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::sycl::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/detail/constants.hpp"         // forward declaration and namespace alias
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"                // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
+
+#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::sycl::backend_exception
+#include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
+#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::malloc_device, sycl::free
