@@ -13,7 +13,7 @@
 #define PLSSVM_CSVM_FACTORY_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                      // plssvm::backend
+#include "plssvm/backend_types.hpp"                      // plssvm::backend, plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/csvm.hpp"                               // plssvm::csvm, plssvm::csvm_backend_exists_v
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::remove_cvref_t
@@ -24,24 +24,26 @@
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
-    #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
+    #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
-    #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm
+    #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_HIP_BACKEND)
-    #include "plssvm/backends/HIP/csvm.hpp"  // plssvm::hip::csvm
+    #include "plssvm/backends/HIP/csvm.hpp"  // plssvm::hip::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
-    #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
+    #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-        #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
+        #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm, plssvm::csvm_backend_exists_v
     #endif
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm
+        #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm, plssvm::csvm_backend_exists_v
     #endif
+
+// define the default used SYCL implementation
 namespace plssvm::sycl {
 using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 }
@@ -50,11 +52,8 @@ using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
 
 #include <memory>       // std::unique_ptr, std::make_unique
-#include <type_traits>  // std::is_same_v, std::enable_if_t
+#include <type_traits>  // std::is_same_v, std::is_constructible_v
 #include <utility>      // std::forward
-
-#include "plssvm/detail/utility.hpp"
-#include <iostream>
 
 namespace plssvm {
 
@@ -83,7 +82,6 @@ template <typename csvm_type, typename... Args>
     }
 }
 
-
 /**
  * @brief Construct a SYCL C-SVM using the parameters @p args.
  * @details The special case for the SYCL backend to handle the SYCL specific parameters.
@@ -104,7 +102,7 @@ template <typename... Args>
         static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
         impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
     }
-    // TODO: check incomplete type (after constructor fix)
+
     switch (impl_type) {
         case sycl::implementation_type::automatic:
             return make_csvm_default_impl<sycl::csvm>(std::forward<Args>(args)...);
@@ -113,6 +111,7 @@ template <typename... Args>
         case sycl::implementation_type::hipsycl:
             return make_csvm_default_impl<hipsycl::csvm>(std::forward<Args>(args)...);
     }
+    throw unsupported_backend_exception{ "No sycl backend available!" };
 }
 
 /**
