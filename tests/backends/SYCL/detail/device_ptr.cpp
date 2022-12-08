@@ -39,7 +39,7 @@ using device_ptr_test_types = ::testing::Types<
     device_ptr_test_type<double>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@Backend, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@BackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(SYCLBackend, DevicePtr, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(SYCLBackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
 
 // TODO: linker error because of constructor call

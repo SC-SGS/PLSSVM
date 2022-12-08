@@ -17,7 +17,7 @@
 
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 
-TEST(@PLSSVM_SYCL_BACKEND_INCLUDE_NAME@Utility, get_device_list) {
+TEST(SYCLUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::sycl::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be provided
     EXPECT_FALSE(queues.empty());
