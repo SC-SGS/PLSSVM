@@ -14,17 +14,18 @@ set(PLSSVM_SYCL_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/implementation_type.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sycl_csvm.cpp
 )
 
-#if(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
-#    # add hipSYCL specific test files
-#    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/sycl_csvm.cpp)
-#endif()
-#
-#if(TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
-#    # add DPC++ specific test files
-#    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/sycl_csvm.cpp)
-#endif()
+if(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
+    # add hipSYCL specific test files
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/sycl_csvm.cpp)
+endif()
+
+if(TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
+    # add DPC++ specific test files
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/sycl_csvm.cpp)
+endif()
 
 # add test executable
 add_executable(${PLSSVM_SYCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_SYCL_TEST_SOURCES})

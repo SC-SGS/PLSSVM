@@ -98,25 +98,3 @@
 //                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 // #endif
 // }
-
-template <typename T, plssvm::kernel_function_type kernel>
-struct csvm_test_type {
-    using mock_csvm_type = mock_dpcpp_csvm;
-    using csvm_type = plssvm::dpcpp::csvm;
-    using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
-};
-
-using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
-
-// instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericGPUCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);
