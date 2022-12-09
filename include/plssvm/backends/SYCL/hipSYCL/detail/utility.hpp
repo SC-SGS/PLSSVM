@@ -40,6 +40,13 @@ namespace plssvm::hipsycl::detail {
  */
 void device_synchronize(queue &q);
 
+/**
+ * @brief Get the default SYCL queue.
+ * @details Only used in the tests, but must be defined and implemented here!
+ * @return the default queue (`[[nodiscard]]`)
+ */
+[[nodiscard]] queue get_default_queue();
+
 }  // namespace plssvm::hipsycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_

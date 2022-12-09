@@ -16,15 +16,15 @@ set(PLSSVM_SYCL_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
 )
 
-if(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
-    # add hipSYCL specific test files
-    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/sycl_csvm.cpp)
-endif()
-
-if(TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
-    # add DPC++ specific test files
-    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/sycl_csvm.cpp)
-endif()
+#if(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
+#    # add hipSYCL specific test files
+#    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/sycl_csvm.cpp)
+#endif()
+#
+#if(TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
+#    # add DPC++ specific test files
+#    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/sycl_csvm.cpp)
+#endif()
 
 # add test executable
 add_executable(${PLSSVM_SYCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_SYCL_TEST_SOURCES})
@@ -35,7 +35,8 @@ target_link_libraries(${PLSSVM_SYCL_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRAR
 
 # add tests to google test
 include(GoogleTest)
-gtest_add_tests(TARGET ${PLSSVM_SYCL_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+gtest_discover_tests(${PLSSVM_SYCL_TEST_NAME})
+
 
 # add test as coverage dependency
 if(TARGET coverage)

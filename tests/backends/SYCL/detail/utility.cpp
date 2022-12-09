@@ -10,8 +10,6 @@
 
 #include "plssvm/target_platforms.hpp"
 
-#include "sycl/sycl.hpp"
-
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
@@ -29,7 +27,7 @@ TEST(DPCPPUtility, get_device_list) {
 #endif
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    #include "plssvm/backends/SYCL/hipSYCL//detail/utility.hpp"
+    #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"
 
 TEST(hipSYCLUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::hipsycl::detail::get_device_list(plssvm::target_platform::automatic);

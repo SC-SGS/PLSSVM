@@ -108,4 +108,10 @@ void device_synchronize(queue &q) {
     q.impl->sycl_queue.wait_and_throw();
 }
 
+queue get_default_queue() {
+    queue q;
+    q.impl = std::make_unique<queue::queue_impl>();
+    return q;
+}
+
 }  // namespace plssvm::dpcpp::detail

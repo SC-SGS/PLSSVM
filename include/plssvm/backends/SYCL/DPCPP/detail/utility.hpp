@@ -40,6 +40,13 @@ namespace plssvm::dpcpp::detail {
  */
 void device_synchronize(queue &q);
 
+/**
+ * @brief Get the default SYCL queue.
+ * @details Only used in the tests, but must be defined and implemented here!
+ * @return the default queue (`[[nodiscard]]`)
+ */
+[[nodiscard]] queue get_default_queue();
+
 }  // namespace plssvm::dpcpp::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_DPCPP_DETAIL_UTILITY_HPP_
