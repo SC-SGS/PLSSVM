@@ -10,6 +10,7 @@
 
 #include "plssvm/backend_types.hpp"
 
+#include "plssvm/core.hpp"            // namespace plssvm::sycl
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
@@ -115,9 +116,9 @@ TEST(BackendType, csvm_to_backend_type) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::cuda::csvm>, plssvm::backend_type::cuda);
-    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm&>, plssvm::backend_type::hip);
-    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::opencl::csvm&>, plssvm::backend_type::opencl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm &>, plssvm::backend_type::hip);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::opencl::csvm &>, plssvm::backend_type::opencl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<volatile plssvm::sycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::hipsycl::csvm>, plssvm::backend_type::sycl);
-    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm&>, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm &>, plssvm::backend_type::sycl);
 }

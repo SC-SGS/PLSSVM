@@ -37,8 +37,6 @@ std::string GetTypeName<plssvm::hip::csvm>() { return "hip_csvm"; }
 template <>
 std::string GetTypeName<plssvm::opencl::csvm>() { return "opencl_csvm"; }
 template <>
-std::string GetTypeName<plssvm::sycl::csvm>() { return "sycl_csvm"; }
-template <>
 std::string GetTypeName<plssvm::dpcpp::csvm>() { return "sycl_dpcpp_csvm"; }
 template <>
 std::string GetTypeName<plssvm::hipsycl::csvm>() { return "sycl_hipsycl_csvm"; }
