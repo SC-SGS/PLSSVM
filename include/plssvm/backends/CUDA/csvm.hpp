@@ -36,7 +36,6 @@ namespace cuda {
 
 /**
  * @brief A C-SVM implementation using CUDA as backend.
- * @tparam T the type of the data
  */
 class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::cuda::detail::device_ptr, int> {
   protected:
