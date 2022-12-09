@@ -147,14 +147,11 @@ set(PLSSVM_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${PLSSVM_CMAKE_BUILD_TYPE_UPPER_CA
 if (PLSSVM_ENABLE_ASSERTS OR NOT "${PLSSVM_CMAKE_CXX_FLAGS}" MATCHES ".*NDEBUG.*")
     # assertions are enabled -> enable Google death tests
     message(STATUS "Enabling GTest's death tests.")
-    gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME}
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+    gtest_discover_tests(${PLSSVM_BASE_TEST_NAME})
 else()
     # assertions are disabled -> disable Google death tests
     message(STATUS "Disabling GTest's death tests.")
-    gtest_add_tests(TARGET ${PLSSVM_BASE_TEST_NAME}
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests
-            EXTRA_ARGS --gtest_filter -*DeathTest)
+    gtest_discover_tests(${PLSSVM_BASE_TEST_NAME} EXTRA_ARGS --gtest_filter -*DeathTest)
 endif()
 
 

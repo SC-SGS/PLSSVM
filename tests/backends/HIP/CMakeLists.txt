@@ -24,7 +24,7 @@ target_link_libraries(${PLSSVM_HIP_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY
 
 # add tests to google test
 include(GoogleTest)
-gtest_add_tests(TARGET ${PLSSVM_HIP_TEST_NAME} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+gtest_discover_tests(${PLSSVM_HIP_TEST_NAME})
 
 # add test as coverage dependency
 if(TARGET coverage)
