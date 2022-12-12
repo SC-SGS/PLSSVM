@@ -18,9 +18,18 @@
 
 namespace plssvm::hip::detail {
 
+/**
+ * @brief Fill the array @p data with @p count values @p value starting at position @p pos.
+ * @tparam value_type the type of the array
+ * @tparam size_type  the unsigned size_type
+ * @param[in,out] data the array to fill
+ * @param[in] value the value to fill the array with
+ * @param[in] pos the position at which to start te filling
+ * @param[in] count the number of values to fill in the array starting at @p pos
+ */
 template <typename value_type, typename size_type>
 __global__ void fill_array(value_type *data, value_type value, size_type pos, size_type count) {
-    const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_type idx = blockIdx.x * blockDim.x + threadIdx.x;
     // fill the array
     if (idx < count) {
         data[pos + idx] = value;

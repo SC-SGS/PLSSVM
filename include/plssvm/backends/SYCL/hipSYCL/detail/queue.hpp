@@ -18,11 +18,11 @@
 namespace plssvm::hipsycl::detail {
 
 /**
- * @brief PImpl class to hide the ::sycl::queue class from the public interface (and, therefore, the "sycl/sycl.hpp" header).
+ * @brief PImpl class to hide the SYCL queue class from the public interface (and, therefore, the "sycl/sycl.hpp" header).
  */
 class queue {
   public:
-    /// The struct used in the PImpl idiom (encapsulates the actual ::sycl::queue).
+    /// The struct used in the PImpl idiom (encapsulates the actual SYCL queue).
     struct queue_impl;
     /// A pointer to the implementation hidden in a private header.
     std::shared_ptr<queue_impl> impl{};

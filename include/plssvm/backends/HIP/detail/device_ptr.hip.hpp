@@ -83,7 +83,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
      */
-    void memset(int pattern, size_type pos, size_type count) override;
+    void memset(int pattern, size_type pos, size_type num_bytes) override;
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::fill(value_type, size_type, size_type)
      */

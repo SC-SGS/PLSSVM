@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief PImpl implementation encapsulating a single ::sycl::queue.
+ * @brief PImpl implementation encapsulating a single SYCL queue.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_DPCPP_DETAIL_QUEUE_IMPL_HPP_
@@ -22,19 +22,19 @@
 namespace plssvm::dpcpp::detail {
 
 /**
- * @brief The PImpl implementation struct encapsulating a single ::sycl::queue.
+ * @brief The PImpl implementation struct encapsulating a single SYCL queue.
  */
 struct queue::queue_impl {
     /**
-     * @brief Construct a ::sycl::queue by forwarding all parameters in @p args.
+     * @brief Construct a SYCL queue by forwarding all parameters in @p args.
      * @tparam Args the type of the parameters
-     * @param[in] args the parameters to construct a ::sycl::queue
+     * @param[in] args the parameters to construct a SYCL queue
      */
     template <typename... Args>
     explicit queue_impl(Args... args) :
         sycl_queue{ std::forward<Args>(args)... } {}
 
-    /// The wrapped ::sycl::queue.
+    /// The wrapped SYCL queue.
     ::sycl::queue sycl_queue;
 };
 
