@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
-#include "plssvm/detail/utility.hpp"         // plssvm::always_false_v
+#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include "fmt/core.h"     // fmt::format

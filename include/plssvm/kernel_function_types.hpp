@@ -15,7 +15,8 @@
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
+#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::get
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 
 #include <cmath>   // std::pow, std::exp, std::fma

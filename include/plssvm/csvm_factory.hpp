@@ -16,7 +16,7 @@
 #include "plssvm/backend_types.hpp"                      // plssvm::backend, plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/csvm.hpp"                               // plssvm::csvm, plssvm::csvm_backend_exists_v
-#include "plssvm/detail/utility.hpp"                     // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/type_traits.hpp"             // plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_backend_exception
 #include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                          // plssvm::parameter

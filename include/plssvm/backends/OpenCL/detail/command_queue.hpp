@@ -12,7 +12,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
-#include "plssvm/detail/utility.hpp"                 // plssvm::detail::always_false_v
+#include "plssvm/detail/type_traits.hpp"             // plssvm::detail::always_false_v
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
 

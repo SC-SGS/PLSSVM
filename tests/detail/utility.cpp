@@ -24,6 +24,7 @@
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
 
+// TODO: move to other file
 TEST(Utility, always_false) {
     EXPECT_FALSE(plssvm::detail::always_false_v<void>);
     EXPECT_FALSE(plssvm::detail::always_false_v<int>);

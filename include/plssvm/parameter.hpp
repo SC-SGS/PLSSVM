@@ -14,7 +14,8 @@
 #pragma once
 
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::{remove_cvref_t, always_false_v, unreachable}
+#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 
 #include "fmt/core.h"     // fmt::format

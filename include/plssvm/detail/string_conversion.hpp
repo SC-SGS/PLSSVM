@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left}
-#include "plssvm/detail/utility.hpp"               // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/type_traits.hpp"       // plssvm::detail::remove_cvref_t
 
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format

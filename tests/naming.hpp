@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
-#include "plssvm/detail/utility.hpp"               // plssvm::detail::always_false_v
+#include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
 
 #include "exceptions/utility.hpp"  // util::exception_type_name
 #include "types_to_test.hpp"       // util::real_type_label_type_combination

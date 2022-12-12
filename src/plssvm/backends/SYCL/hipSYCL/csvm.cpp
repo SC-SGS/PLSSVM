@@ -86,7 +86,7 @@ void csvm::init(const target_platform target) {
     const sycl::kernel_invocation_type provided_invocation_type = invocation_type_;
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
         // always use nd_range except on the CPU
-        if (used_target == target_platform::cpu) {  // TODO: what if omp.accelerated is used?
+        if (used_target == target_platform::cpu) {  // TODO: what if omp.accelerated is used? __HIPSYCL_USE_ACCELERATED_CPU__
             invocation_type_ = sycl::kernel_invocation_type::hierarchical;
         } else {
             invocation_type_ = sycl::kernel_invocation_type::nd_range;

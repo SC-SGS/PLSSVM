@@ -18,7 +18,8 @@
 #include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init, plssvm::is_default_value_v
 #include "plssvm/detail/operators.hpp"       // plssvm::operators::sign
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, remove_cvref_t, always_false_v, unreachable}, PLSSVM_REQUIRES
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, unreachable}, PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/model.hpp"                  // plssvm::model

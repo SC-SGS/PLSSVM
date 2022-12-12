@@ -12,8 +12,8 @@
 #ifndef PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
 #define PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
 
-#include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
+#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::always_false_v
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::StrEq

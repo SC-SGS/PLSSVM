@@ -63,6 +63,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
 
     // function to add a key value pair to a map, where the value is added to a std::vector
     const auto add_to_map = [](auto &map, const auto &key, auto value) {
+        // TODO: use multimap?
         // if key currently doesn't exist, add a new std::vector
         if (map.count(key) == 0) {
             map[key] = std::vector<decltype(value)>();
@@ -111,6 +112,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
                 ::plssvm::detail::to_lower_case(vendor_string);
 
                 // check vendor string and insert to correct target platform
+                // TODO: std::vector::contains???
                 if (::plssvm::detail::contains(vendor_string, "nvidia")) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
                     add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_nvidia), device);
@@ -129,6 +131,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     }
 
     // determine target if provided target_platform is automatic
+    // TODO: move to platforms header (to reduce code duplication)
     if (target == target_platform::automatic) {
         const auto has_target_platform = [](const auto &map, const target_platform tp) {
             return std::count_if(map.begin(), map.end(), [tp](const auto &item) { return item.first.second == tp; }) > 0;
