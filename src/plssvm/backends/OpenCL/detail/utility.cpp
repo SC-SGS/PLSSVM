@@ -63,7 +63,6 @@ void device_assert(const error_code ec, const std::string_view msg) {
 
     // function to add a key value pair to a map, where the value is added to a std::vector
     const auto add_to_map = [](auto &map, const auto &key, auto value) {
-        // TODO: use multimap?
         // if key currently doesn't exist, add a new std::vector
         if (map.count(key) == 0) {
             map[key] = std::vector<decltype(value)>();
@@ -81,6 +80,9 @@ void device_assert(const error_code ec, const std::string_view msg) {
     std::vector<cl_platform_id> platform_ids(num_platforms);
     PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(num_platforms, platform_ids.data(), nullptr), "error retrieving platform IDs");
 
+    // get the available target_platforms
+    const std::vector<target_platform> available_target_platforms = list_available_target_platforms();
+
     // enumerate all available platforms and retrieve the associated devices
     for (const cl_platform_id &platform : platform_ids) {
         // get devices associated with current platform
@@ -96,56 +98,43 @@ void device_assert(const error_code ec, const std::string_view msg) {
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type");
 
             if (device_type == CL_DEVICE_TYPE_CPU) {
-                // is CPU device
-#if defined(PLSSVM_HAS_CPU_TARGET)
-                add_to_map(platform_devices, std::make_pair(platform, target_platform::cpu), device);
-#endif
+                // the current device is a CPU
+                // -> check if the CPU target has been enabled
+                if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
+                    add_to_map(platform_devices, std::make_pair(platform, target_platform::cpu), device);
+                }
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
-                // is GPU device
+                // the current device is a GPU
                 // get vendor string
                 std::size_t vendor_string_size;
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size");
                 std::string vendor_string(vendor_string_size, '\0');
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string_size, vendor_string.data(), nullptr), "error retrieving device vendor name");
-
                 // convert vendor name to lower case
                 ::plssvm::detail::to_lower_case(vendor_string);
 
                 // check vendor string and insert to correct target platform
-                // TODO: std::vector::contains???
-                if (::plssvm::detail::contains(vendor_string, "nvidia")) {
-#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+                if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
                     add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_nvidia), device);
-#endif
-                } else if (::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) {
-#if defined(PLSSVM_HAS_AMD_TARGET)
+                } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
+                           && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
                     add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_amd), device);
-#endif
-                } else if (::plssvm::detail::contains(vendor_string, "intel")) {
-#if defined(PLSSVM_HAS_INTEL_TARGET)
+                } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
                     add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_intel), device);
-#endif
                 }
             }
         }
     }
 
     // determine target if provided target_platform is automatic
-    // TODO: move to platforms header (to reduce code duplication)
     if (target == target_platform::automatic) {
-        const auto has_target_platform = [](const auto &map, const target_platform tp) {
-            return std::count_if(map.begin(), map.end(), [tp](const auto &item) { return item.first.second == tp; }) > 0;
-        };
-        // check for devices in order gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
-        if (has_target_platform(platform_devices, target_platform::gpu_nvidia)) {
-            target = target_platform::gpu_nvidia;
-        } else if (has_target_platform(platform_devices, target_platform::gpu_amd)) {
-            target = target_platform::gpu_amd;
-        } else if (has_target_platform(platform_devices, target_platform::gpu_intel)) {
-            target = target_platform::gpu_intel;
-        } else {
-            target = target_platform::cpu;
+        // get the target_platforms available on this system from the platform_devices map
+        std::vector<target_platform> system_devices;
+        for (const auto &[key, value] : platform_devices) {
+            system_devices.push_back(key.second);
         }
+        // determine the target_platform
+        target = determine_default_target_platform(system_devices);
     }
 
     // only interested in devices on the target platform
