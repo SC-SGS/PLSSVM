@@ -16,20 +16,11 @@
 #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
 #include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
-#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::handler, sycl::accessor, sycl::access::mode, sycl::access::target, sycl::range, sycl::group_barrier, sycl::pow,
-                          // sycl::exp, sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
+#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::local_accessor, sycl::range, sycl::group_barrier, sycl::pow, sycl::exp, sycl::atomic_ref
 
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl {
-
-// TODO: change to ::sycl::local_accessor once implemented in the SYCL implementations
-/**
- * @brief Shortcut alias for a SYCL local accessor.
- * @tparam T the type of the accessed values
- */
-template <typename T>
-using local_accessor = ::sycl::accessor<T, 2, ::sycl::access::mode::read_write, ::sycl::access::target::local>;
 
 /**
  * @brief Calculates the C-SVM kernel using the nd_range formulation and the linear kernel function.
@@ -146,8 +137,8 @@ class nd_range_device_kernel_linear {
     }
 
   private:
-    local_accessor<real_type> data_intern_i_;
-    local_accessor<real_type> data_intern_j_;
+    ::sycl::local_accessor<real_type, 2> data_intern_i_;
+    ::sycl::local_accessor<real_type, 2> data_intern_j_;
 
     const real_type *q_;
     real_type *ret_;
@@ -269,8 +260,8 @@ class nd_range_device_kernel_poly {
     }
 
   private:
-    local_accessor<real_type> data_intern_i_;
-    local_accessor<real_type> data_intern_j_;
+    ::sycl::local_accessor<real_type, 2> data_intern_i_;
+    ::sycl::local_accessor<real_type, 2> data_intern_j_;
 
     const real_type *q_;
     real_type *ret_;
@@ -392,8 +383,8 @@ class nd_range_device_kernel_radial {
     }
 
   private:
-    local_accessor<real_type> data_intern_i_;
-    local_accessor<real_type> data_intern_j_;
+    ::sycl::local_accessor<real_type, 2> data_intern_i_;
+    ::sycl::local_accessor<real_type, 2> data_intern_j_;
 
     const real_type *q_;
     real_type *ret_;
