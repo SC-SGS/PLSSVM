@@ -9,6 +9,7 @@
 #include "plssvm/target_platforms.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
 
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
@@ -33,6 +34,18 @@ std::vector<target_platform> list_available_target_platforms() {
     available_targets.push_back(target_platform::gpu_intel);
 #endif
     return available_targets;
+}
+
+target_platform determine_default_target_platform(const std::vector<target_platform> &platform_device_list) {
+    // check for devices in order gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
+    if (::plssvm::detail::contains(platform_device_list, target_platform::gpu_nvidia)) {
+        return target_platform::gpu_nvidia;
+    } else if (::plssvm::detail::contains(platform_device_list, target_platform::gpu_amd)) {
+        return target_platform::gpu_amd;
+    } else if (::plssvm::detail::contains(platform_device_list, target_platform::gpu_intel)) {
+        return target_platform::gpu_intel;
+    }
+    return target_platform::cpu;
 }
 
 std::ostream &operator<<(std::ostream &out, const target_platform target) {
