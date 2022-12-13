@@ -19,28 +19,9 @@
 
 #include <map>            // std::map
 #include <set>            // std::set
-#include <type_traits>    // std::is_same_v
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
-
-// TODO: move to other file
-TEST(Utility, always_false) {
-    EXPECT_FALSE(plssvm::detail::always_false_v<void>);
-    EXPECT_FALSE(plssvm::detail::always_false_v<int>);
-    EXPECT_FALSE(plssvm::detail::always_false_v<double>);
-}
-
-TEST(Utility, remove_cvref_t) {
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double &>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double &>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double &>>) );
-    EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double &>>) );
-}
 
 TEST(Utility, get) {
     EXPECT_EQ(plssvm::detail::get<0>(0, 1, 2, 3, 4), 0);

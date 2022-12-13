@@ -113,6 +113,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
