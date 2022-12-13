@@ -137,11 +137,6 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="DPC++")
 
-    # TODO: remove if DPC++ bug is fixed
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(WARNING "Our library currently may not compile in Debug mode with DPC++ due to an internal compiler error. If this is the case, please use another CMAKE_BUILD_TYPE (like RelWithDebInfo).")
-    endif()
-
     # enable DPC++ SYCL support
     target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
     target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl)
