@@ -42,7 +42,7 @@ parser_scale::parser_scale(int argc, char **argv) {
            ("u,upper", "upper is the highest (maximal) value allowed in each dimension", cxxopts::value<decltype(upper)>()->default_value(fmt::format("{}", upper)))
            ("f,format", "the file format to output the scaled data set to", cxxopts::value<decltype(format)>()->default_value(fmt::format("{}", format)))
            ("s,save_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
-           ("r,restore_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
+           ("r,restore_filename", "the file from which previous scaling factors should be loaded", cxxopts::value<decltype(restore_filename)>())
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(fmt::format("{}", !plssvm::verbose_default)))
