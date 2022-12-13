@@ -606,7 +606,9 @@ if(NOT fmt_FOUND)
     )
 endif()
 ## mark man pages to install
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1 ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
+              ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+              ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1
         DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
 )
 

@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-predict.
-.TH PLSSVM-PREDICT 1 "20 April 2022" "1.2.0" "plssvm-predict Manual"
+.TH PLSSVM-PREDICT 1 "13 December 2022" "2.0.0" "plssvm-predict Manual"
 
 .SH NAME
 plssvm-predict - LS-SVM with multiple (GPU-)backends
@@ -21,6 +21,14 @@ choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 
 @PLSSVM_SYCL_MANPAGE_ENTRY@
+
+.TP
+.B --use_string_as_labels arg
+must be specified if the labels should be interpreted as strings instead of integers
+
+.TP
+.B --use_float_as_real_type arg
+must be specified if float should be used instead of double as floating point type
 
 .TP
 .B -q, --quiet
