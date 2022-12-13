@@ -64,6 +64,12 @@ template <typename... Args>
 constexpr bool has_only_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost);
 
 /**
+ * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct including SYCL specific named-parameters.
+ */
+template <typename... Args>
+constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type);
+
+/**
  * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
  * @tparam ExpectedType the type the value of the named argument should be converted to
  * @tparam IgorParser the type of the named argument parser
@@ -122,6 +128,19 @@ struct parameter {
         coef0 = coef0_p;
         cost = cost_p;
     }
+
+    /**
+     * @brief Construct a parameter by using the values in @p params and overwriting all values using the provided named arguments.
+     * @tparam Args the type of the named-parameters
+     * @param[in] params the parameters used to overwrite the default values
+     * @param[in] named_args the potential named-parameters
+     */
+    template <typename... Args, PLSSVM_REQUIRES(has_only_named_args_v<Args...>)>
+    constexpr explicit parameter(const parameter &params, Args &&...named_args) :
+        parameter{ params } {
+        this->set_named_arguments(std::forward<Args>(named_args)...);
+    }
+
     /**
      * @brief Construct a parameter set by overwriting the SVM parameters' default values that are provided using named arguments.
      * @tparam Args the type of the named-parameters
@@ -129,54 +148,7 @@ struct parameter {
      */
     template <typename... Args, PLSSVM_REQUIRES(has_only_named_args_v<Args...>)>
     constexpr explicit parameter(Args &&...named_args) noexcept {
-        igor::parser parser{ std::forward<Args>(named_args)... };
-
-        // compile time check: only named parameter are permitted
-        static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
-        // compile time check: each named parameter must only be passed once
-        static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
-        // compile time check: only some named parameters are allowed // TODO: SYCL
-        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type),
-                      "An illegal named parameter has been passed!");
-
-        // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
-        [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
-            std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_function_type_to_math_string(kernel)) << std::endl;
-        };
-
-        // compile time/runtime check: the values must have the correct types
-        if constexpr (parser.has(plssvm::kernel_type)) {
-            // get the value of the provided named parameter
-            kernel_type = get_value_from_named_parameter<typename decltype(kernel_type)::value_type>(parser, plssvm::kernel_type);
-        }
-        if constexpr (parser.has(plssvm::gamma)) {
-            // get the value of the provided named parameter
-            gamma = get_value_from_named_parameter<typename decltype(gamma)::value_type>(parser, plssvm::gamma);
-            // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear) {
-                print_warning("gamma", kernel_type);
-            }
-        }
-        if constexpr (parser.has(plssvm::degree)) {
-            // get the value of the provided named parameter
-            degree = get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
-            // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
-                print_warning("degree", kernel_type);
-            }
-        }
-        if constexpr (parser.has(plssvm::coef0)) {
-            // get the value of the provided named parameter
-            coef0 = get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
-            // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
-                print_warning("coef0", kernel_type);
-            }
-        }
-        if constexpr (parser.has(plssvm::cost)) {
-            // get the value of the provided named parameter
-            cost = get_value_from_named_parameter<typename decltype(cost)::value_type>(parser, plssvm::cost);
-        }
+        this->set_named_arguments(std::forward<Args>(named_args)...);
     }
 
     /// The used kernel function: linear, polynomial or radial basis functions (rbf).
@@ -230,6 +202,65 @@ struct parameter {
                 return gamma == other.gamma && cost == other.cost;
         }
         return false;
+    }
+
+  private:
+    /**
+     * @brief Overwrite the default values of this parameter object with the potential provided named arguments @p named_args.
+     * @tparam Args the type of the named-parameters
+     * @param[in] named_args the potential named-parameters
+     */
+    template <typename... Args>
+    void set_named_arguments(Args &&...named_args) {
+        igor::parser parser{ std::forward<Args>(named_args)... };
+
+        // compile time check: only named parameter are permitted
+        static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
+        // compile time check: each named parameter must only be passed once
+        static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
+        // compile time check: only some named parameters are allowed
+        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost,
+                                             plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type),
+                      "An illegal named parameter has been passed!");
+
+        // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
+        [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
+            std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_function_type_to_math_string(kernel)) << std::endl;
+        };
+
+        // compile time/runtime check: the values must have the correct types
+        if constexpr (parser.has(plssvm::kernel_type)) {
+            // get the value of the provided named parameter
+            kernel_type = get_value_from_named_parameter<typename decltype(kernel_type)::value_type>(parser, plssvm::kernel_type);
+        }
+        if constexpr (parser.has(plssvm::gamma)) {
+            // get the value of the provided named parameter
+            gamma = get_value_from_named_parameter<typename decltype(gamma)::value_type>(parser, plssvm::gamma);
+            // runtime check: the value may only be used with a specific kernel type
+            if (kernel_type == kernel_function_type::linear) {
+                print_warning("gamma", kernel_type);
+            }
+        }
+        if constexpr (parser.has(plssvm::degree)) {
+            // get the value of the provided named parameter
+            degree = get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
+            // runtime check: the value may only be used with a specific kernel type
+            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+                print_warning("degree", kernel_type);
+            }
+        }
+        if constexpr (parser.has(plssvm::coef0)) {
+            // get the value of the provided named parameter
+            coef0 = get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
+            // runtime check: the value may only be used with a specific kernel type
+            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+                print_warning("coef0", kernel_type);
+            }
+        }
+        if constexpr (parser.has(plssvm::cost)) {
+            // get the value of the provided named parameter
+            cost = get_value_from_named_parameter<typename decltype(cost)::value_type>(parser, plssvm::cost);
+        }
     }
 };
 

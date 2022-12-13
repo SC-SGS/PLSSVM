@@ -58,7 +58,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @brief Construct a new C-SVM using one of the GPU backend with the optionally provided @p named_args.
      * @param[in] named_args the additional optional named arguments
      */
-    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args>
     explicit gpu_csvm(Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {}
 

@@ -52,9 +52,9 @@ int main(int argc, char *argv[]) {
             // create SVM
             std::unique_ptr<plssvm::csvm> svm;
             if (cmd_parser.backend == plssvm::backend_type::sycl) {
-                svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);//,
-//                                        plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type,
-//                                        plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
+                svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params,
+                                        plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type,
+                                        plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
             } else {
                 svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
             }
