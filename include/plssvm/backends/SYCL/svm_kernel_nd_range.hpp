@@ -62,7 +62,6 @@ class nd_range_device_kernel_linear {
         real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
         real_type data_j[INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
-        // TODO: profile: warp access optimal?
         if (nd_idx.get_local_range(0) < THREAD_BLOCK_SIZE && nd_idx.get_local_range(1) == 0) {
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
@@ -194,7 +193,6 @@ class nd_range_device_kernel_poly {
         real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
         real_type data_j[INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
-        // TODO: profile: warp access optimal?
         if (nd_idx.get_local_range(0) < THREAD_BLOCK_SIZE && nd_idx.get_local_range(1) == 0) {
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
@@ -317,7 +315,6 @@ class nd_range_device_kernel_radial {
         real_type matr[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
         real_type data_j[INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
-        // TODO: profile: warp access optimal?
         if (nd_idx.get_local_range(0) < THREAD_BLOCK_SIZE && nd_idx.get_local_range(1) == 0) {
             #pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
