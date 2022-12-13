@@ -13,9 +13,30 @@
 
 #include <string>  // std::string
 
-namespace plssvm::sycl {
+namespace plssvm {
+
+namespace sycl {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
     ::plssvm::exception{ msg, "sycl::backend_exception", loc } {}
 
-}  // namespace plssvm::sycl
+backend_exception::backend_exception(const std::string &msg, const std::string_view class_name, source_location loc) :
+    ::plssvm::exception{ msg, class_name, loc } {}
+
+}  // namespace sycl
+
+namespace hipsycl {
+
+backend_exception::backend_exception(const std::string &msg, source_location loc) :
+    sycl::backend_exception{ msg, "hipsycl::backend_exception", loc } {}
+
+}  // namespace hipsycl
+
+namespace dpcpp {
+
+backend_exception::backend_exception(const std::string &msg, source_location loc) :
+    sycl::backend_exception{ msg, "dpcpp::backend_exception", loc } {}
+
+}  // namespace dpcpp
+
+}  // namespace plssvm

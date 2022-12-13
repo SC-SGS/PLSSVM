@@ -12,7 +12,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::get_device_list, plssvm::dpcpp::device_synchronize
 
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::dpcpp::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl::kernel_w, plssvm::sycl::predict_points_poly, plssvm::sycl::predict_points_rbf
 #include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl::device_kernel_q_linear, plssvm::sycl::device_kernel_q_poly, plssvm::sycl::device_kernel_q_radial
 #include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl::hierarchical_device_kernel_linear, plssvm::sycl::hierarchical_device_kernel_poly, plssvm::sycl::hierarchical_device_kernel_radial
@@ -37,18 +37,6 @@
 
 namespace plssvm::dpcpp {
 
-// template <typename T>
-// csvm<T>::csvm(target_platform target, sycl::kernel_invocation_type invocation_type, parameter<real_type> params) :
-//     base_type{ params }, invocation_type_{ invocation_type } {
-//     this->init(target);
-// }
-//
-// template <typename T>
-// csvm<T>::csvm(target_platform target, parameter<real_type> params) :
-//     base_type{ params }, invocation_type_{ sycl::kernel_invocation_type::automatic } {
-//     this->init(target);
-// }
-
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
@@ -56,22 +44,22 @@ void csvm::init(const target_platform target) {
             break;
         case target_platform::cpu:
 #if !defined(PLSSVM_HAS_CPU_TARGET)
-            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_nvidia:
 #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_amd:
 #if !defined(PLSSVM_HAS_AMD_TARGET)
-            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
         case target_platform::gpu_intel:
 #if !defined(PLSSVM_HAS_INTEL_TARGET)
-            throw sycl::backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
     }
@@ -95,7 +83,7 @@ void csvm::init(const target_platform target) {
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
-        throw sycl::backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", used_target) };
+        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", used_target) };
     }
 
     if (plssvm::verbose) {
@@ -137,9 +125,9 @@ template <std::size_t I>
             case sycl::kernel_invocation_type::hierarchical:
                 return range.grid[i];
             case sycl::kernel_invocation_type::automatic:
-                throw sycl::backend_exception{ "Can't create native execution range from kernel invocation type automatic!" };
+                throw backend_exception{ "Can't create native execution range from kernel invocation type automatic!" };
             default:
-                throw sycl::backend_exception{ "Illegal kernel invocation type!" };
+                throw backend_exception{ "Illegal kernel invocation type!" };
         }
     };
 
