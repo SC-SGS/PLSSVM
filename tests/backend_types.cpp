@@ -121,4 +121,7 @@ TEST(BackendType, csvm_to_backend_type) {
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<volatile plssvm::sycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::hipsycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm &>, plssvm::backend_type::sycl);
+
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hipsycl::csvm>::impl, plssvm::sycl::implementation_type::hipsycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
 }

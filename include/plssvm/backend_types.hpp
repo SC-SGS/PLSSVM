@@ -13,8 +13,9 @@
 #define PLSSVM_BACKEND_TYPES_HPP_
 #pragma once
 
-#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
-#include "plssvm/target_platforms.hpp"        // plssvm::list_available_target_platforms
+#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
+#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector
@@ -127,6 +128,8 @@ template <>
 struct csvm_to_backend_type<hipsycl::csvm> {
     /// The enum value representing the SYCL (hipSYCL) backend.
     static constexpr backend_type value = backend_type::sycl;
+    /// The enum value representing the SYCL implementation for the (hipSYCL) SYCL backend.
+    static constexpr sycl::implementation_type impl = sycl::implementation_type::hipsycl;
 };
 /**
  * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using DPC++ as SYCL implementation.
@@ -135,6 +138,8 @@ template <>
 struct csvm_to_backend_type<dpcpp::csvm> {
     /// The enum value representing the SYCL (DPC++) backend.
     static constexpr backend_type value = backend_type::sycl;
+    /// The enum value representing the SYCL implementation for the (DPC++) SYCL backend.
+    static constexpr sycl::implementation_type impl = sycl::implementation_type::dpcpp;
 };
 
 }  // namespace detail
