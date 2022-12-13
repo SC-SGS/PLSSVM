@@ -81,20 +81,15 @@ void csvm::init(const target_platform target) {
     std::tie(devices_, used_target) = detail::get_device_list(target);
 
     // set correct kernel invocation type if "automatic" has been provided
-    const sycl::kernel_invocation_type provided_invocation_type = invocation_type_;
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
         // always use nd_range for DPC++
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
     }
 
     if (plssvm::verbose) {
-        // TODO:
         std::cout << fmt::format("Using DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", __SYCL_COMPILER_VERSION, invocation_type_);
         if (target == target_platform::automatic) {
-            std::cout << fmt::format("Using {} as automatic target platform.", used_target) << std::endl;
-        }
-        if (provided_invocation_type == sycl::kernel_invocation_type::automatic) {
-            std::cout << fmt::format("Using {} as automatic kernel invocation type.", invocation_type_) << std::endl;
+            std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
         }
     }
 
