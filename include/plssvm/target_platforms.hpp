@@ -44,10 +44,10 @@ enum class target_platform {
 /**
  * @brief Return the default target platform given the available devices in @p platform_device_list.
  * @details Does not take the currently available backends into account!
- * @param[in] platform_device_list all target_platforms found in the current setup
+ * @param[in] platform_device_list list of target_platforms found in the current setup, if no target_platforms are provided, queries all available target_platforms
  * @return the default target_platform (`[[nodiscard]]`)
  */
-[[nodiscard]] target_platform determine_default_target_platform(const std::vector<target_platform> &platform_device_list);
+[[nodiscard]] target_platform determine_default_target_platform(const std::vector<target_platform> &platform_device_list = list_available_target_platforms());
 
 /**
  * @brief Output the @p target platform to the given output-stream @p out.

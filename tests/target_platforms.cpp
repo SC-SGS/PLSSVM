@@ -65,3 +65,9 @@ TEST(TargetPlatform, minimal_available_target_platform) {
     // the automatic backend must always be present
     EXPECT_TRUE(plssvm::detail::contains(platform, plssvm::target_platform::automatic));
 }
+
+TEST(TargetPlatform, determine_default_target_platform) {
+    // the determined default platform must not be target_platform::automatic
+    const plssvm::target_platform target = plssvm::determine_default_target_platform();
+    EXPECT_NE(target, plssvm::target_platform::automatic);
+}
