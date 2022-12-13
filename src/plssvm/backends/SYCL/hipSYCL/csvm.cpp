@@ -83,7 +83,6 @@ void csvm::init(const target_platform target) {
     std::tie(devices_, used_target) = detail::get_device_list(target);
 
     // set correct kernel invocation type if "automatic" has been provided
-    const sycl::kernel_invocation_type provided_invocation_type = invocation_type_;
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
         if (used_target != target_platform::cpu) {
             // always use nd_range on GPUs
