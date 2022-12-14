@@ -10,16 +10,15 @@
 
 #include "plssvm/model.hpp"
 
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
-#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, instantiate_template_file}
-#include "utility.hpp"             // util::temporary_file, util::redirect_output
+#include "types_to_test.hpp"       // util::real_type_label_type_combination_gtest
+#include "utility.hpp"             // util::{temporary_file, redirect_output}
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
-                          // ::testing::{Types, StaticAssertTypeEq, Test, TestWithParam, Values}
+                          // ::testing::{StaticAssertTypeEq, Test, TestWithParam, Values}
 
 #include <cstddef>      // std::size_t
 #include <regex>        // std::regex, std::regex_match, std::regex::extended

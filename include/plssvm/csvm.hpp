@@ -13,36 +13,32 @@
 #define PLSSVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"          // plssvm::backend_type
 #include "plssvm/constants.hpp"              // plssvm::verbose
 #include "plssvm/data_set.hpp"               // plssvm::data_set
-#include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init, plssvm::is_default_value_v
+#include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/operators.hpp"       // plssvm::operators::sign
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::{to_underlying, unreachable}, PLSSVM_REQUIRES
-#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 
-#include "fmt/core.h"     // fmt::format, fmt::print
+#include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
-#include <cstddef>      // std::size_t
-#include <iostream>     // std::clog, std::endl
-#include <string_view>  // std::string_view
+#include <iostream>     // std::cout, std::endl
 #include <tuple>        // std::tie
-#include <type_traits>  // std::is_same_v, std::is_convertible_v, std::false_type
-#include <utility>      // std::move, std::forward
+#include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
+#include <utility>      // std::pair, std::forward
 #include <vector>       // std::vector
 
 namespace plssvm {
 
-// TODO: exception docu
-
 /**
  * @brief Base class for all C-SVM backends.
+ * @details This class implements all features shared between all C-SVM backends. It defines the whole public API of a C-SVM.
  */
 class csvm {
   public:
@@ -53,12 +49,12 @@ class csvm {
      */
     explicit csvm(parameter params = {});
     /**
-     * @brief Construct a C-SVM using named-parameters with the @p kernel type.
-     * @tparam Args the type of the named-parameters
-     * @param[in] named_args the potential named-parameters
+     * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
+     * @tparam Args the type of the (named-)parameters
+     * @param[in] args the parameters used to construct a plssvm::parameter
      */
     template <typename... Args>
-    explicit csvm(Args &&...named_args);
+    explicit csvm(Args &&...args);
 
     /**
      * @brief Default copy-constructor since a virtual destructor has been declared.
@@ -80,40 +76,48 @@ class csvm {
     [[nodiscard]] parameter get_params() const noexcept { return params_; }
 
     /**
-     * @brief Override the old SVM parameter with the new @p params.
+     * @brief Override the old SVM parameter with the new plssvm::parameter @p params.
      * @param[in] params the new SVM parameter to use
      */
     void set_params(parameter params) noexcept { params_ = params; }
     /**
-     * @brief Override the old SVM parameter with the new ones given as named parameters in @ named_args.
+     * @brief Override the old SVM parameter with the new ones given as named parameters in @p named_args.
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
     void set_params(Args &&...named_args);
 
-    ////////////////////////////////////////////////////////////////////////////////
-    ////                               fit model                                ////
-    ////////////////////////////////////////////////////////////////////////////////
+    //*************************************************************************************************************************************//
+    //                                                              fit model                                                              //
+    //*************************************************************************************************************************************//
     /**
      * @brief Fit a model using the current SVM on the @p data.
+     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @tparam Args the type of the potential additional parameters
      * @param[in] data the data used to train the SVM model
      * @param[in] named_args the potential additional parameters (`epsilon` and/or `max_iter`)
+     * @throws plssvm::invalid_parameter_exception if the provided value for `epsilon` is greater or equal than zero
+     * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
+     * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_system_of_linear_equations`
      * @return the learned model (`[[nodiscard]]`)
      */
     template <typename real_type, typename label_type, typename... Args>
     [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args) const;
 
-    ////////////////////////////////////////////////////////////////////////////////
-    ////                           predict and score                            ////
-    ////////////////////////////////////////////////////////////////////////////////
+    //*************************************************************************************************************************************//
+    //                                                          predict and score                                                          //
+    //*************************************************************************************************************************************//
     /**
      * @brief Predict the labels for the @p data set using the @p model.
+     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
-     * @param[in] model a previously learnt model
+     * @param[in] model a previously learned model
      * @param[in] data the data to predict the labels for
+     * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the predicted labels (`[[nodiscard]]`)
      */
     template <typename real_type, typename label_type>
@@ -121,35 +125,42 @@ class csvm {
 
     /**
      * @brief Calculate the accuracy of the @p model.
+     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
-     * @param[in] model a previously learnt model
+     * @param[in] model a previously learned model
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
     template <typename real_type, typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
+     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
-     * @param[in] model a previously learnt model
-     * @param data the labeled data set to score
+     * @param[in] model a previously learned model
+     * @param[in] data the labeled data set to score
+     * @throws plssvm::invalid_parameter_exception if the @p data to score has no labels
+     * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename real_type, typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
   protected:
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    ////  pure virtual functions, must be implemented for all subclasses; doing the actual work  ////
-    /////////////////////////////////////////////////////////////////////////////////////////////////
+    //*************************************************************************************************************************************//
+    //                        pure virtual functions, must be implemented for all subclasses; doing the actual work                        //
+    //*************************************************************************************************************************************//
     /**
      * @brief Solves the equation \f$Ax = b\f$ using the Conjugated Gradients algorithm.
-     * @details Solves using a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
+     * @details Uses a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
      * \image html cg.png
      * @param[in] params the SVM parameters used in the respective kernel functions
      * @param[in] A the matrix of the equation \f$Ax = b\f$ (symmetric positive definite)
      * @param[in] b the right-hand side of the equation \f$Ax = b\f$
-     * @param[in] eps error tolerance
+     * @param[in] eps the error tolerance
      * @param[in] max_iter the maximum number of CG iterations
+     * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const = 0;
@@ -165,6 +176,7 @@ class csvm {
      * @param[in] rho the rho value determined after training the model
      * @param[in,out] w the normal vector to speedup prediction in case of the linear kernel function, an empty vector in case of the polynomial or rbf kernel
      * @param[in] predict_points the points to predict
+     * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<float> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const = 0;
@@ -176,6 +188,8 @@ class csvm {
   private:
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.
+     * @throws plssvm::invalid_parameter_exception if the kernel function is invalid
+     * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
      */
     void sanity_check_parameter() const;
 
@@ -218,7 +232,7 @@ void csvm::set_params(Args &&...named_args) {
         params_.cost = provided_params.cost.value();
     }
 
-    // check if parameters make sense
+    // check if the new parameters make sense
     this->sanity_check_parameter();
 }
 
@@ -351,6 +365,7 @@ inline void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
+/// @cond Doxygen_suppress
 namespace detail {
 
 /**
@@ -361,16 +376,17 @@ template <typename T>
 struct csvm_backend_exists : std::false_type {};
 
 }  // namespace detail
+/// @endcond
 
 /**
- * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
+ * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any top-level const, volatile, and reference qualifiers.
  * @tparam T the type of the C-SVM
  */
 template <typename T>
 struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<T>> {};
 
 /**
- * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any const, volatile, and reference qualifiers.
+ * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any top-level const, volatile, and reference qualifiers.
  */
 template <typename T>
 constexpr bool csvm_backend_exists_v = csvm_backend_exists<T>::value;

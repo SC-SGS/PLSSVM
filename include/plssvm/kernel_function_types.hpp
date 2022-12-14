@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines all available kernel types.
+ * @brief Defines an enumeration holding all possible kernel function types.
  */
 
-#ifndef PLSSVM_KERNEL_TYPES_HPP_
-#define PLSSVM_KERNEL_TYPES_HPP_
+#ifndef PLSSVM_KERNEL_FUNCTION_TYPES_HPP_
+#define PLSSVM_KERNEL_FUNCTION_TYPES_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -49,9 +49,9 @@ std::ostream &operator<<(std::ostream &out, kernel_function_type kernel);
  * @brief Return the mathematical representation of the kernel_type @p kernel.
  * @details Uses placeholders for the scalar values and vectors.
  * @param[in] kernel the kernel type
- * @return the mathematical representation of @p kernel
+ * @return the mathematical representation of @p kernel (`[[nodiscard]]`)
  */
-std::string_view kernel_function_type_to_math_string(kernel_function_type kernel) noexcept;
+[[nodiscard]] std::string_view kernel_function_type_to_math_string(kernel_function_type kernel) noexcept;
 
 /**
  * @brief Use the input-stream @p in to initialize the @p kernel type.
@@ -108,6 +108,7 @@ struct parameter;
  * @param[in] xi the first vector
  * @param[in] xj the second vector
  * @param[in] params class encapsulating the kernel type and kernel parameters
+ * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
 template <typename real_type>
@@ -115,4 +116,4 @@ template <typename real_type>
 
 }  // namespace plssvm
 
-#endif  // PLSSVM_KERNEL_TYPES_HPP_
+#endif  // PLSSVM_KERNEL_FUNCTION_TYPES_HPP_

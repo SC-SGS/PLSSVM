@@ -14,8 +14,8 @@
 #include "types_to_test.hpp"  // util::label_type_gtest
 #include "utility.hpp"        // util::{convert_to_string, convert_from_string}
 
-#include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
-                          // ::testing::{Test, Types, WithParamInterface, Values, TestParamInfo}
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
+                          // ::testing::{Test, WithParamInterface, Values}
 
 #include <functional>   // std::hash
 #include <string>       // std::string
@@ -24,9 +24,9 @@
 #include <utility>      // std::move, std::swap
 #include <vector>       // std::vector
 
-////////////////////////////////////////////////////////////////////////////////
-////                              default_init                              ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                            default_init                                                             //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class DefaultInitDefault : public ::testing::Test {};
@@ -67,9 +67,9 @@ TEST_P(DefaultInitString, explicit_construct) {
 }
 INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitString, ::testing::Values("", "foo", "bar", "baz", "Hello World"), naming::pretty_print_escaped_string<DefaultInitString>);
 
-////////////////////////////////////////////////////////////////////////////////
-////                              default_value                             ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                            default_value                                                            //
+//*************************************************************************************************************************************//
 
 TEST(DefaultValue, default_init) {
     // create default_value

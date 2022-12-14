@@ -15,16 +15,15 @@
 #include "backends/compare.hpp"    // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR
 #include "naming.hpp"              // naming::real_type_to_name
-#include "utility.hpp"             // util::{convert_to_string, convert_from_string, util::generate_random_vector, gtest_assert_floating_point_near}
+#include "utility.hpp"             // util::{convert_to_string, convert_from_string, generate_random_vector}
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
 
-#include <algorithm>  // std::generate
-#include <array>      // std::array
-#include <cstddef>    // std::size_t
-#include <sstream>    // std::istringstream
-#include <tuple>      // std::ignore
-#include <vector>     // std::vector
+#include <array>    // std::array
+#include <cstddef>  // std::size_t
+#include <sstream>  // std::istringstream
+#include <tuple>    // std::ignore
+#include <vector>   // std::vector
 
 // check whether the plssvm::kernel_function_type -> std::string conversions are correct
 TEST(KernelType, to_string) {

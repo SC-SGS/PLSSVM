@@ -9,6 +9,8 @@
  */
 
 #include "plssvm/core.hpp"
+#include "plssvm/detail/cmd/data_set_variants.hpp"
+#include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // std::format

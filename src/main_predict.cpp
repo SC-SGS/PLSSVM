@@ -9,6 +9,8 @@
  */
 
 #include "plssvm/core.hpp"
+#include "plssvm/detail/cmd/data_set_variants.hpp"
+#include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange

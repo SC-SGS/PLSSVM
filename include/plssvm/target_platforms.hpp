@@ -6,7 +6,8 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines all possible targets. Can also include targets not available on the current target platform.
+ * @brief Defines an enumeration holding all possible target platforms.
+ *        Can also include targets not available on the current target platform.
  */
 
 #ifndef PLSSVM_TARGET_PLATFORMS_HPP_
@@ -44,7 +45,7 @@ enum class target_platform {
 /**
  * @brief Return the default target platform given the available devices in @p platform_device_list.
  * @details Does not take the currently available backends into account!
- * @param[in] platform_device_list list of target_platforms found in the current setup, if no target_platforms are provided, queries all available target_platforms
+ * @param[in] platform_device_list list of target_platforms found in the current setup; if no target_platforms are provided, queries all available target_platforms
  * @return the default target_platform (`[[nodiscard]]`)
  */
 [[nodiscard]] target_platform determine_default_target_platform(const std::vector<target_platform> &platform_device_list = list_available_target_platforms());

@@ -10,11 +10,10 @@
 
 #include "plssvm/target_platforms.hpp"
 
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-
 #include "utility.hpp"  // util::{convert_to_string, convert_from_string}
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_GE
 
 #include <sstream>  // std::istringstream
 #include <vector>   // std::vector
@@ -63,7 +62,7 @@ TEST(TargetPlatform, minimal_available_target_platform) {
     EXPECT_GE(platform.size(), 2);
 
     // the automatic backend must always be present
-    EXPECT_TRUE(plssvm::detail::contains(platform, plssvm::target_platform::automatic));
+    EXPECT_THAT(platform, ::testing::Contains(plssvm::target_platform::automatic));
 }
 
 TEST(TargetPlatform, determine_default_target_platform) {

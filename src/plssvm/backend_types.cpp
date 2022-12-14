@@ -11,12 +11,10 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
-#include "plssvm/target_platforms.hpp"       // plssvm::list_available_target_platforms
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "fmt/ostream.h"  // be able to format types with an operator<< overload
 
-#include <algorithm>  // std::find
 #include <array>      // std::array
 #include <ios>        // std::ios::failbit
 #include <istream>    // std::istream

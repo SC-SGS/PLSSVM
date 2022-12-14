@@ -40,4 +40,4 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
 template std::ostream &operator<<(std::ostream &, const parameter<float> &);
 template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
-}  // namespace plssvm
+}  // namespace plssvm::detail

@@ -13,12 +13,14 @@
 #define PLSSVM_DEFAULT_VALUE_HPP_
 #pragma once
 
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
+
 #include <cstddef>      // std::size_t
 #include <functional>   // std::hash
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream
 #include <type_traits>  // std::is_nothrow_default_constructible_v, std::is_nothrow_move_constructible_v, std::is_nothrow_move_assignable_v, std::is_nothrow_swappable_v,
-                        // std::enable_if_t, std::is_convertible_v, std::true_type, std::false_type, std::remove_reference_t, std::remove_cv_t
+                        // std::is_convertible_v, std::true_type, std::false_type, std::remove_reference_t, std::remove_cv_t
 #include <utility>      // std::move_if_noexcept, std::swap
 
 namespace plssvm {
@@ -28,23 +30,23 @@ namespace plssvm {
 //*************************************************************************************************************************************//
 
 /**
- * @brief This class denotes an explicit default value used to distinguish between the default value or user provided value in the `default_value`class.
+ * @brief This class denotes an explicit default value initialization used to distinguish between the default value or user provided initialization in the `default_value` class.
  * @tparam T the type of the default value
  */
 template <typename T>
 struct default_init {
     /**
-     * @brief Default construct the default value.
+     * @brief Default construct the default initialization value.
      */
     constexpr default_init() noexcept(std::is_nothrow_default_constructible_v<T>) = default;
     /**
-     * @brief Set the default value to @p val.
-     * @param[in] val the explicit default value
+     * @brief Set the initialization value to @p val.
+     * @param[in] val the explicit default initialization value
      */
     constexpr explicit default_init(T val) noexcept(std::is_nothrow_move_constructible_v<T>) :
         value{ std::move_if_noexcept(val) } {}
 
-    /// The explicit default value.
+    /// The explicit default initialization value.
     T value;
 };
 
@@ -70,7 +72,7 @@ class default_value {
     using value_type = T;
 
     /**
-     * @brief Construct a default_value object using the provided **default** value.
+     * @brief Copy construct a default_value object using the provided **default** value.
      * @details Afterward, `is_default()` will return `true`!
      * @param[in] default_val set the default value of this default_value wrapper
      */
@@ -78,6 +80,7 @@ class default_value {
         default_init_{ std::move_if_noexcept(default_val) } {}
     /**
      * @brief **Override** the previously provided default value with the new, non-default value.
+     * @details Afterward, `is_default()` will return `false`!
      * @param[in] non_default_val the non-default value
      * @return `*this`
      */
@@ -93,7 +96,7 @@ class default_value {
      * @param[in] other the other default_value potentially wrapping another type
      * @note `U` must be convertible to `value_type`!
      */
-    template <typename U, std::enable_if_t<std::is_convertible_v<U, value_type>, bool> = true>
+    template <typename U, PLSSVM_REQUIRES(std::is_convertible_v<U, value_type>)>
     constexpr explicit default_value(const default_value<U> &other) noexcept(std::is_nothrow_copy_constructible_v<U>) :
         value_{ static_cast<value_type>(other.value_) },
         use_default_init_{ other.use_default_init_ },
@@ -104,7 +107,7 @@ class default_value {
      * @param[in,out] other the other default_value potentially wrapping another type
      * @note `U` must be convertible to `value_type`!
      */
-    template <typename U, std::enable_if_t<std::is_convertible_v<U, value_type>, bool> = true>
+    template <typename U, PLSSVM_REQUIRES(std::is_convertible_v<U, value_type>)>
     constexpr explicit default_value(default_value<U> &&other) noexcept(std::is_nothrow_move_constructible_v<U>) :
         value_{ static_cast<value_type>(std::move_if_noexcept(other.value_)) },
         use_default_init_{ other.use_default_init_ },
@@ -116,7 +119,7 @@ class default_value {
      * @note `U` must be convertible to `value_type`!
      * @return `*this`
      */
-    template <typename U, std::enable_if_t<std::is_convertible_v<U, value_type>, bool> = true>
+    template <typename U, PLSSVM_REQUIRES(std::is_convertible_v<U, value_type>)>
     constexpr default_value &operator=(const default_value<U> &other) noexcept(std::is_nothrow_copy_assignable_v<U>) {
         value_ = static_cast<value_type>(other.value_);
         use_default_init_ = other.use_default_init_;
@@ -130,7 +133,7 @@ class default_value {
      * @note `U` must be convertible to `value_type`!
      * @return `*this`
      */
-    template <typename U, std::enable_if_t<std::is_convertible_v<U, value_type>, bool> = true>
+    template <typename U, PLSSVM_REQUIRES(std::is_convertible_v<U, value_type>)>
     constexpr default_value &operator=(default_value<U> &&other) noexcept(std::is_nothrow_move_assignable_v<U>) {
         value_ = static_cast<value_type>(std::move_if_noexcept(other.value_));
         use_default_init_ = other.use_default_init_;
@@ -139,17 +142,16 @@ class default_value {
     }
 
     /**
-     * @brief Get the currently active value: the user provided value if provided, else the default value.
+     * @brief Get the currently active value: the user provided value if provided, otherwise the default value is returned.
      * @return the active value (`[[nodiscard]]`)
      */
     [[nodiscard]] constexpr const value_type &value() const noexcept {
         return this->is_default() ? default_init_.value : value_;
     }
     /**
-     * @brief Get the currently active value: the user provided value if provided, else the default value.
-     * @return the active value (`[[nodiscard]]`)
+     * @copydoc plssvm::default_value::value()
      */
-    [[nodiscard]] operator const value_type &() const noexcept {
+    [[nodiscard]] constexpr operator const value_type &() const noexcept {
         return this->value();
     }
     /**
@@ -206,7 +208,7 @@ inline std::ostream &operator<<(std::ostream &out, const default_value<T> &val) 
 }
 /**
  * @brief Use the input-stream @p in to initialize the default_value @p val.
- * @details Sets the user defined value, i.e., `is_default()` will return `false` and the default value will **not** be used.
+ * @details Sets the user defined value, i.e., `plssvm::default_value::is_default()` will return `false` and the default value will **not** be used.
  * @tparam T the type of the wrapped value
  * @param[in,out] in input-stream to extract the wrapped default_value value from
  * @param[in] val the default_value
@@ -296,6 +298,7 @@ template <typename T>
     return !(lhs < rhs);
 }
 
+/// @cond Doxygen_suppress
 namespace detail {
 
 /**
@@ -314,17 +317,16 @@ template <typename T>
 struct is_default_value<default_value<T>> : std::true_type {};
 
 }  // namespace detail
+/// @endcond
 
 /**
- * @brief Test whether the given type @p T is of type `plssvm::default_value` ignoring all const, volatile, and reference qualifiers.
- * @details Inherits from `std::false_type`.
+ * @brief Test whether the given type @p T is of type `plssvm::default_value` ignoring all top-level const, volatile, and reference qualifiers.
  * @tparam T the type to check whether it is a `plssvm::default_value`
  */
 template <typename T>
 struct is_default_value : detail::is_default_value<std::remove_cv_t<std::remove_reference_t<T>>> {};  // can't use detail::remove_cvref_t because of circular dependencies
-
 /**
- * @brief Test whether the given type @p T is of type `plssvm::default_value`.
+ * @brief Test whether the given type @p T is of type `plssvm::default_value` ignoring all top-level const, volatile, and reference qualifiers.
  * @details A shorthand for `plssvm::is_default_value<T>::value`.
  */
 template <typename T>
@@ -342,6 +344,7 @@ template <typename T>
 struct hash<plssvm::default_value<T>> {
     /**
      * @brief Overload the function call operator for a default_value.
+     * @details Hashes the currently active value of @p val using its default hash function.
      * @param[in] val the default_value to hash
      * @return the hash value of @p val
      */

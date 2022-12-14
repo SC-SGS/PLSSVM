@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements a data set class encapsulating all data points and potential features.
+ * @brief Implements a data set class encapsulating all data points, features, and potential labels.
  */
 
 #ifndef PLSSVM_DATA_SET_HPP_
@@ -24,8 +24,7 @@
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
 
 #include "fmt/chrono.h"   // directly output std::chrono times via fmt
-#include "fmt/core.h"     // fmt::format, fmt::print
-#include "fmt/os.h"       // fmt::ostream, fmt::output_file
+#include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
 
 #include <algorithm>    // std::all_of, std::max, std::min, std::sort, std::adjacent_find
@@ -41,13 +40,13 @@
 #include <string>       // std::string
 #include <tuple>        // std::tie
 #include <type_traits>  // std::is_same_v, std::is_arithmetic_v
-#include <utility>      // std::move, std::pair
+#include <utility>      // std::move, std::pair, std::make_pair
 #include <vector>       // std::vector
 
 namespace plssvm {
 
 /**
- * @brief Type alias for an optional reference (since `std::optional<T&>` is not allowed.
+ * @brief Type alias for an optional reference (since `std::optional<T&>` is not allowed).
  * @tparam T the type to wrap as a reference
  */
 template <typename T>
@@ -56,8 +55,9 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
 /**
  * @brief Encapsulate all necessary data that is needed for training or predicting using an SVM.
  * @details May or may not contain labels!
- * @tparam T the floating point type of the data (either `float` or `double`)
- * @tparam U the label type of the data (any arithmetic type (except bool) or `std::string`)
+ *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::data_set relatively cheap to copy!
+ * @tparam T the floating point type of the data (must either be `float` or `double`)
+ * @tparam U the label type of the data (must be an arithmetic type or `std::string`; default: `int`)
  */
 template <typename T, typename U = int>
 class data_set {
@@ -74,7 +74,7 @@ class data_set {
   public:
     /// The type of the data points: either `float` or `double`.
     using real_type = T;
-    /// The type of the labels: any arithmetic type (except bool) or `std::string`.
+    /// The type of the labels: any arithmetic type or `std::string`.
     using label_type = U;
     /// An unsigned integer type.
     using size_type = std::size_t;
@@ -86,49 +86,67 @@ class data_set {
 
     /**
      * @brief Read the data points from the file @p filename.
-     *        Automatically determines the @p plssvm::file_format_type based on the file extension.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
      * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
      * @param[in] filename the file to read the data points from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */
     explicit data_set(const std::string &filename);
     /**
      * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
      * @param[in] filename the file to read the data points from
      * @param[in] format the assumed file format used to parse the data points
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */
     data_set(const std::string &filename, file_format_type format);
     /**
      * @brief Read the data points from the file @p filename and scale it using the provided @p scale_parameter.
-     *        Automatically determines the @p plssvm::file_format_type based on the file extension.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
      * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
      * @param[in] filename the file to read the data points from
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(const std::string &filename, scaling scale_parameter);
     /**
-     * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type and
+     * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
      *        scale it using the provided @p scale_parameter.
      * @param[in] filename the file to read the data points from
      * @param[in] format the assumed file format used to parse the data points
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
 
     /**
-     * @brief Create a new data set using the the provided @p data_points.
+     * @brief Create a new data set using the provided @p data_points.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvm::fit!
      * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
      */
     explicit data_set(std::vector<std::vector<real_type>> data_points);
     /**
      * @brief Create a new data set using the provided @p data_points and @p labels.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
     data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels);
     /**
      * @brief Create a new data set using the the provided @p data_points and scale them using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(std::vector<std::vector<real_type>> data_points, scaling scale_parameter);
     /**
@@ -136,6 +154,11 @@ class data_set {
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels, scaling scale_parameter);
 
@@ -158,12 +181,14 @@ class data_set {
     [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
     /**
      * @brief Returns an optional reference to the labels in this data set.
+     * @details If the labels are present, they can be retrieved as `std::vector` using: `dataset.labels()->%get()`.
      * @return if this data set contains labels, returns a reference to them, otherwise returns a `std::nullopt` (`[[nodiscard]]`)
      */
     [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept;
     /**
-     * @brief Returns an optional reference to the **different** labels in this data set.
-     * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `std::vector<int>{ -1, 1 }`.
+     * @brief Returns an optional to the **different** labels in this data set.
+     * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the labels `{ -1, 1 }`.
+     * @note Must not return a optional reference, since it would bind to a temporary!
      * @return if this data set contains labels, returns a reference to all **different** labels, otherwise returns a `std::nullopt` (`[[nodiscard]]`)
      */
     [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const noexcept;
@@ -181,19 +206,21 @@ class data_set {
     /**
      * @brief Returns the number of **different** labels in this data set.
      * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
+     *          It is the same as: `dataset.different_labels()->size()`
      * @return the number of **different** labels (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_different_labels() const noexcept { return mapping_ != nullptr ? mapping_->num_mappings() : 0; }
 
     /**
      * @brief Returns whether this data set has been scaled or not.
-     * @details The used scaling factors can be retrieved using `plssvm::scaling_factors()`.
+     * @details The used scaling factors can be retrieved using plssvm::data_set::scaling_factors().
      * @return `true` if this data set has been scaled, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
     /**
-     * @brief Returns the scaling factors used to scale the data points in this data set.
+     * @brief Returns the scaling factors as an optional reference used to scale the data points in this data set.
      * @details Can be used to scale another data set in the same way (e.g., a test data set).
+     *          If the data set has been scaled, the scaling factors can be retrieved as using: `dataset.scaling_factors()->%get()`.
      * @return the scaling factors (`[[nodiscard]]`)
      */
     [[nodiscard]] optional_ref<const scaling> scaling_factors() const noexcept;
@@ -207,16 +234,25 @@ class data_set {
 
     /**
      * @brief Create the mapping between the provided labels and the internally used mapped values, i.e., { -1, 1 }.
+     * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
     void create_mapping();
     /**
      * @brief Scale the feature values of the data set to the provided range.
+     * @details Scales all data points feature wise, i.e., one scaling factor is responsible, e.g., for the first feature of **all** data points. <br>
+     *          Scaling a data value \f$x\f$ to the range \f$[a, b]\f$ is done with the formular:
+     *          \f$x_{scaled} = a + (b - a) \cdot \frac{x - min(x)}{max(x) - min(x)}\f$
+     * @throws plssvm::data_set_exception if more scaling factors than features are present
+     * @throws plssvm::data_set_exception if the largest scaling factor index is larger than the number of features
+     * @throws plssvm::data_set_exception if for any feature more than one scaling factor is present
      */
     void scale();
     /**
-     * @brief Read the data points and potential labels from the file @p filename assuming the file_format_type @p format.
+     * @brief Read the data points and potential labels from the file @p filename assuming the plssvm::file_format_type @p format.
      * @param[in] filename the filename to read the data from
      * @param[in] format the assumed file format type
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by the respective functions in the plssvm::detail::io namespace
+     * @throws plssvm::data_set_exception if labels are present in @p filename, all exceptions thrown by plssvm::data_set::create_mapping
      */
     void read_file(const std::string &filename, file_format_type format);
 
@@ -232,18 +268,18 @@ class data_set {
     /// The number of features in this data set.
     size_type num_features_{ 0 };
 
-    /// The mapping used to convert from the original label to its mapped value and vice versa; may be `nullptr` if no labels have been provided.
+    /// The mapping used to convert the original label to its mapped value and vice versa; may be `nullptr` if no labels have been provided.
     std::shared_ptr<const label_mapper> mapping_{ nullptr };
     /// The scaling parameters used to scale the data points in this data set; may be `nullptr` if no data point scaling was requested.
     std::shared_ptr<scaling> scale_parameters_{ nullptr };
 };
 
-////////////////////////////////////////////////////////////////////////////////
-////                          scaling nested-class                          ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                         scaling nested-class                                                        //
+//*************************************************************************************************************************************//
 
 /**
- * @brief Implements all necessary data needed for scaling a data set to an user-defined range.
+ * @brief Implements all necessary data and functions needed for scaling a plssvm::data_set to an user-defined range.
  */
 template <typename T, typename U>
 class data_set<T, U>::scaling {
@@ -257,32 +293,33 @@ class data_set<T, U>::scaling {
          */
         factors() = default;
         /**
-         * @brief Construct new scaling factors with the provided values.
-         * @param[in] p_feature the feature index for which the bounds are valid
-         * @param[in] p_lower the lowest value of the feature @p p_feature for all data points
-         * @param[in] p_upper the maximum value of the feature @p p_feature for all data points
+         * @brief Construct new scaling factors struct with the provided values.
+         * @param[in] feature_index the feature index for which the bounds are valid
+         * @param[in] lower_bound the lowest value of the feature @p feature_index for all data points
+         * @param[in] upper_bound the maximum value of the feature @p feature_index for all data points
          */
-        factors(const size_type p_feature, const real_type p_lower, const real_type p_upper) :
-            feature{ p_feature }, lower{ p_lower }, upper{ p_upper } {}
+        factors(const size_type feature_index, const real_type lower_bound, const real_type upper_bound) :
+            feature{ feature_index }, lower{ lower_bound }, upper{ upper_bound } {}
 
         /// The feature index for which the scaling factors are valid.
         size_type feature{};
-        /// The lowest value of the feature for all data points.
+        /// The lowest value of the @p feature for all data points.
         real_type lower{};
-        /// The maximum value of the feature for all data points.
+        /// The maximum value of the @p feature for all data points.
         real_type upper{};
     };
 
     /**
      * @brief Create a new scaling class that can be used to scale all features of a data set to the interval [lower, upper].
-     * @param[in] lower the lower bound of all features
-     * @param[in] upper the upper bound of all features
+     * @param[in] lower the lower bound value of all features
+     * @param[in] upper the upper bound value of all features
      * @throws plssvm::data_set_exception if lower is greater or equal than upper
      */
     scaling(real_type lower, real_type upper);
     /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
      * @param[in] filename the filename to read the scaling information from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
     scaling(const std::string &filename);
 
@@ -334,12 +371,13 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////                       label mapper nested-class                        ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                      label mapper nested-class                                                      //
+//*************************************************************************************************************************************//
 
 /**
  * @brief Implements all necessary functionality to map arbitrary labels to labels usable by the C-SVMs.
+ * @details Currently maps all labels to { -1 , 1 }.
  */
 template <typename T, typename U>
 class data_set<T, U>::label_mapper {
@@ -348,7 +386,7 @@ class data_set<T, U>::label_mapper {
      * @brief Create a mapping from all labels to { -1 , 1 } and vice versa.
      * @param[in] labels the labels to map
      * @note Currently only binary classification is supported, i.e., only two different labels may be provided!
-     * @throws plssvm::data_set_exception only two different labels are currently supported
+     * @throws plssvm::data_set_exception if not exatcly two different labels are provided
      */
     explicit label_mapper(const std::vector<label_type> &labels);
 
@@ -372,7 +410,7 @@ class data_set<T, U>::label_mapper {
      */
     [[nodiscard]] size_type num_mappings() const noexcept;
     /**
-     * @brief Return the original labels of the current data set.
+     * @brief Return a vector containing the different, original labels of the current data set.
      * @return the original labels (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<label_type> labels() const;
@@ -435,9 +473,9 @@ auto data_set<T, U>::label_mapper::labels() const -> std::vector<label_type> {
     return available_labels;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////                             data_set class                             ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                           data set class                                                            //
+//*************************************************************************************************************************************//
 
 template <typename T, typename U>
 data_set<T, U>::data_set(const std::string &filename) {
@@ -585,14 +623,15 @@ auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scal
     return std::nullopt;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////                        PRIVATE MEMBER FUNCTIONS                        ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                      PRIVATE MEMBER FUNCTIONS                                                       //
+//*************************************************************************************************************************************//
 
 template <typename T, typename U>
 void data_set<T, U>::create_mapping() {
     PLSSVM_ASSERT(labels_ptr_ != nullptr, "Can't create mapping if no labels are provided!");
 
+    // create label mapping
     label_mapper mapper{ *labels_ptr_ };
 
     // convert input labels to now mapped values

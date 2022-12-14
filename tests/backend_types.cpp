@@ -17,6 +17,8 @@
 #include "naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
 #include "utility.hpp"             // util::{convert_to_string, convert_from_string}
 
+#include "fmt/core.h" // fmt::format
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
 
 #include <sstream>  // std::istringstream
@@ -70,7 +72,13 @@ TEST(BackendType, minimal_available_backend) {
     EXPECT_GE(backends.size(), 2);
 
     // the automatic backend must always be present
-    EXPECT_TRUE(plssvm::detail::contains(backends, plssvm::backend_type::automatic));
+    EXPECT_THAT(backends, ::testing::Contains(plssvm::backend_type::automatic));
+}
+
+TEST(v, determine_default_backend_type) {
+    // the determined default backend must not be backend_type::automatic
+    const plssvm::backend_type backend = plssvm::determine_default_backend();
+    EXPECT_NE(backend, plssvm::backend_type::automatic);
 }
 
 using unsupported_combination_type = std::pair<std::vector<plssvm::backend_type>, std::vector<plssvm::target_platform>>;
@@ -114,6 +122,19 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing
 
 TEST(BackendType, csvm_to_backend_type) {
     // test the type_trait
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::openmp::csvm>::value, plssvm::backend_type::openmp);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::cuda::csvm>::value, plssvm::backend_type::cuda);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hip::csvm &>::value, plssvm::backend_type::hip);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::opencl::csvm &>::value, plssvm::backend_type::opencl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<volatile plssvm::sycl::csvm>::value, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::hipsycl::csvm>::value, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::dpcpp::csvm &>::value, plssvm::backend_type::sycl);
+
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hipsycl::csvm>::impl, plssvm::sycl::implementation_type::hipsycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
+}
+TEST(BackendType, csvm_to_backend_type_v) {
+    // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::cuda::csvm>, plssvm::backend_type::cuda);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm &>, plssvm::backend_type::hip);
@@ -121,7 +142,4 @@ TEST(BackendType, csvm_to_backend_type) {
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<volatile plssvm::sycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::hipsycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm &>, plssvm::backend_type::sycl);
-
-    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hipsycl::csvm>::impl, plssvm::sycl::implementation_type::hipsycl);
-    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
 }

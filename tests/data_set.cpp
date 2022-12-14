@@ -11,32 +11,28 @@
 #include "plssvm/data_set.hpp"
 
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
-#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::as_lowercase
+#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_2D_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_NEAR
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
 #include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, instantiate_template_file}
-#include "utility.hpp"             // util::{temporary_file, redirect_output, gtest_expect_floating_point_vector_near}
+#include "utility.hpp"             // util::{temporary_file, redirect_output}
 
-#include "gmock/gmock-matchers.h"  // ::testing::{ContainsRegex, StartsWith}
-#include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT, ASSERT_EQ, ASSERT_GT, TEST, TYPED_TEST, TYPED_TEST_SUITE
-                                   // ::testing::{Types, Test}
+#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
+#include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, TEST, TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test
 
 #include <cstddef>      // std::size_t
-#include <limits>       // std::numeric_limits::{lowest, max}
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::make_tuple, std::get
+#include <tuple>        // std::ignore, std::get
 #include <type_traits>  // std::is_same_v, std::is_integral_v
 #include <vector>       // std::vector
 
-////////////////////////////////////////////////////////////////////////////////
-////                          scaling nested-class                          ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                         scaling nested-class                                                        //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class DataSetScaling : public ::testing::Test, private util::redirect_output {};
@@ -168,9 +164,9 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////                       label mapper nested-class                        ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                      label mapper nested-class                                                      //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class DataSetLabelMapper : public ::testing::Test {};
@@ -321,9 +317,9 @@ TYPED_TEST(DataSetLabelMapper, labels) {
     EXPECT_EQ(mapper.labels(), different_labels);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////                             data_set class                             ////
-////////////////////////////////////////////////////////////////////////////////
+//*************************************************************************************************************************************//
+//                                                           data set class                                                            //
+//*************************************************************************************************************************************//
 
 template <typename T>
 const std::vector<std::vector<T>> correct_data_points = {
@@ -922,7 +918,7 @@ class DataSetSave : public ::testing::Test, private util::redirect_output, prote
         { T{ 3.1 }, T{ 3.2 }, T{ 3.3 }, T{ 3.4 } },
         { T{ 4.1 }, T{ 4.2 }, T{ 4.3 }, T{ 4.4 } }
     };
-    std::vector<U> label;
+    std::vector<U> label{};
 };
 TYPED_TEST_SUITE(DataSetSave, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 

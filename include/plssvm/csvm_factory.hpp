@@ -16,11 +16,8 @@
 #include "plssvm/backend_types.hpp"                      // plssvm::backend, plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/csvm.hpp"                               // plssvm::csvm, plssvm::csvm_backend_exists_v
-#include "plssvm/detail/type_traits.hpp"             // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_backend_exception
-#include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                          // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -49,6 +46,7 @@ using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 }
 #endif
 
+#include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
 
 #include <memory>       // std::unique_ptr, std::make_unique
@@ -65,20 +63,21 @@ namespace detail {
  * @tparam csvm_type the type of the C-SVM
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] args the parameters used to initialize the C-SVM
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename... Args>
-[[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm_default_impl([[maybe_unused]] Args &&...args) {
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm_default_impl([[maybe_unused]] Args &&...args) {
     // test whether the backend is available
     if constexpr (csvm_backend_exists_v<csvm_type>) {
         // test whether the backend can be constructed with the provided parameter
         if constexpr (std::is_constructible_v<csvm_type, Args...>) {
             return std::make_unique<csvm_type>(std::forward<Args>(args)...);
         } else {
-            throw unsupported_backend_exception{ fmt::format("Provided invalid (named) arguments for the {} backend!", plssvm::csvm_to_backend_type_v<csvm_type>) };
+            throw unsupported_backend_exception{ fmt::format("Provided invalid (named) arguments for the {} backend!", csvm_to_backend_type_v<csvm_type>) };
         }
     } else {
-        throw unsupported_backend_exception{ fmt::format("No {} backend available!", plssvm::csvm_to_backend_type_v<csvm_type>) };
+        throw unsupported_backend_exception{ fmt::format("No {} backend available!", csvm_to_backend_type_v<csvm_type>) };
     }
 }
 
@@ -87,10 +86,11 @@ template <typename csvm_type, typename... Args>
  * @details The special case for the SYCL backend to handle the SYCL specific parameters.
  * @tparam Args the types of the parameters to initialize the SYCL C-SVM
  * @param[in] args the parameters used to initialize the SYCL C-SVM
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the SYCL C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
     // check igor parameter
     igor::parser parser{ args... };
 
@@ -99,7 +99,7 @@ template <typename... Args>
     // check whether a specific SYCL implementation type has been requested
     if constexpr (parser.has(sycl_implementation_type)) {
         // compile time check: the value must have the correct type
-        static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
+        static_assert(std::is_same_v<detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
         impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
     }
 
@@ -119,10 +119,11 @@ template <typename... Args>
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
  * @param[in] args the parameters used to initialize the respective C-SVM
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm_impl(const backend_type backend, Args &&...args) {
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm_impl(const backend_type backend, Args &&...args) {
     switch (backend) {
         case backend_type::automatic:
             return make_csvm_impl(determine_default_backend(), std::forward<Args>(args)...);
@@ -143,25 +144,27 @@ template <typename... Args>
 }  // namespace detail
 
 /**
- * @brief Create a new C-SVM using the @p backend type, the automatic target platform, and additional parameter @p args.
+ * @brief Create a new C-SVM using the @p backend type and additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
  * @param[in] args the parameters used to initialize the respective C-SVM
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] std::unique_ptr<::plssvm::csvm> make_csvm(const backend_type backend, Args &&...args) {
-    return ::plssvm::detail::make_csvm_impl(backend, std::forward<Args>(args)...);
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args &&...args) {
+    return detail::make_csvm_impl(backend, std::forward<Args>(args)...);
 }
 /**
- * @brief Create a new C-SVM using the automatic backend type, the automatic target platform, and the additional parameter @p args.
+ * @brief Create a new C-SVM using the automatic backend type and the additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] args the parameters used to initialize the respective C-SVM
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<::plssvm::csvm> make_csvm(Args &&...args) {
-    return ::plssvm::detail::make_csvm_impl(backend_type::automatic, std::forward<Args>(args)...);
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args &&...args) {
+    return detail::make_csvm_impl(backend_type::automatic, std::forward<Args>(args)...);
 }
 
 }  // namespace plssvm

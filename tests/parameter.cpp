@@ -10,6 +10,9 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ
 #include "naming.hpp"              // naming::real_type_to_name
 #include "utility.hpp"             // util::convert_to_string
@@ -112,6 +115,42 @@ TYPED_TEST(Parameter, construct_named_args) {
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
     EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
+    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::linear);
+
+    EXPECT_TRUE(param.degree.is_default());
+    EXPECT_EQ(param.degree.value(), 3);
+    EXPECT_EQ(param.degree.get_default(), 3);
+
+    EXPECT_FALSE(param.gamma.is_default());
+    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.gamma.get_default(), real_type{ 0.0 });
+
+    EXPECT_TRUE(param.coef0.is_default());
+    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0.get_default(), real_type{ 0.0 });
+
+    EXPECT_FALSE(param.cost.is_default());
+    EXPECT_FLOATING_POINT_EQ(param.cost.value(), real_type{ 0.05 });
+    EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), real_type{ 1.0 });
+}
+TYPED_TEST(Parameter, construct_parameter_and_named_args) {
+    using real_type = TypeParam;
+    // construct a parameter set
+    const plssvm::detail::parameter<real_type> param_base{
+        plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
+        plssvm::cost = 0.05,
+        plssvm::gamma = -1.0
+    };
+
+    // create new parameter set using a previous parameter set together with some named parameters
+    const plssvm::detail::parameter<real_type> param{ param_base,
+                                                      plssvm::kernel_type = plssvm::kernel_function_type::rbf,
+                                                      plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::hipsycl,
+                                                      plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::hierarchical };
+
+    // test default values
+    EXPECT_FALSE(param.kernel_type.is_default());
+    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::rbf);
     EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::linear);
 
     EXPECT_TRUE(param.degree.is_default());

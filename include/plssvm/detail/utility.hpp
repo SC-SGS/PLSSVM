@@ -23,17 +23,12 @@
 #include <set>            // std::set
 #include <string>         // std::string
 #include <tuple>          // std::forward_as_tuple, std::get
-#include <type_traits>    // std::underlying_type_t, std::is_enum_v, std::enable_if_t
+#include <type_traits>    // std::underlying_type_t, std::is_enum_v
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
 
 namespace plssvm::detail {
-
-/**
- * @brief A shorthand macro for the `std::enable_if_t` type trait.
- */
-#define PLSSVM_REQUIRES(...) std::enable_if_t<__VA_ARGS__, bool> = true
 
 /**
  * @brief Invokes undefined behavior. Used to mark code paths that may never be reachable.

@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines all supported file formats.
+ * @brief Defines an enumeration holding all supported file formats.
  */
 
 #ifndef PLSSVM_FILE_FORMAT_TYPES_HPP_

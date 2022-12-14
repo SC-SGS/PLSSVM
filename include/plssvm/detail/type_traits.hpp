@@ -20,11 +20,17 @@
 #include <map>            // std::map, std::multimap
 #include <set>            // std::set, std::multiset
 #include <type_traits>    // std::remove_cv_t, std::remove_reference_t
+#include <type_traits>    // std::enable_if_t
 #include <unordered_map>  // std::unordered_map, std::unordered_multimap
 #include <unordered_set>  // std::unordered_set, std::unordered_multiset
 #include <vector>         // std:.vector
 
 namespace plssvm::detail {
+
+/**
+ * @brief A shorthand macro for the `std::enable_if_t` type trait.
+ */
+#define PLSSVM_REQUIRES(...) std::enable_if_t<__VA_ARGS__, bool> = true
 
 /**
  * @brief Type-dependent expression that always evaluates to `false`.

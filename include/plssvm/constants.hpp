@@ -15,7 +15,7 @@
 
 namespace plssvm {
 
-// TODO: replace with logging library?!
+// TODO: replace "verbose" flag with a dedicated logging library?!
 
 /// Per default use a verbose output of all information.
 constexpr bool verbose_default = true;
@@ -23,23 +23,23 @@ constexpr bool verbose_default = true;
 inline bool verbose = verbose_default;
 
 /// Integer type used inside kernels.
-using kernel_index_type = int;  // TODO: remove?
+using kernel_index_type = int;  // TODO: remove and replace by backend specific type?
 
-/// Global compile-time constant used for internal caching.
+/// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
 constexpr kernel_index_type THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 #else
 constexpr kernel_index_type THREAD_BLOCK_SIZE = 16;
 #endif
 
-/// Global compile-time constant used for internal caching.
+/// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
 constexpr kernel_index_type INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 #else
 constexpr kernel_index_type INTERNAL_BLOCK_SIZE = 6;
 #endif
 
-/// Global compile-time constant used for internal caching in the OpenMP kernel.
+/// Global compile-time constant used for internal caching in the OpenMP kernel. May be changed during the CMake configuration step.
 #if defined(PLSSVM_OPENMP_BLOCK_SIZE)
 constexpr kernel_index_type OPENMP_BLOCK_SIZE = PLSSVM_OPENMP_BLOCK_SIZE;
 #else

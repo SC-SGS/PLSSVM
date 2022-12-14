@@ -9,6 +9,8 @@
  */
 
 #include "plssvm/core.hpp"
+#include "plssvm/detail/cmd/data_set_variants.hpp"
+#include "plssvm/detail/cmd/parser_scale.hpp"
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 

@@ -15,6 +15,7 @@
 
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 
@@ -22,13 +23,14 @@
 #include "fmt/ostream.h"  // be able to output custom types with an operator<< overload using fmt
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <iosfwd>       // forward declare std::ostream
-#include <iostream>     // std::clog, std::endl
+#include <iostream>     // std::clog, std::endl, std::ostream
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v, std::is_convertible_v
+#include <utility>      // std::forward
 
 namespace plssvm {
 
+/// @cond Doxygen_suppress
 // create named arguments
 /// Create a named argument for the `kernel` SVM parameter.
 IGOR_MAKE_NAMED_ARGUMENT(kernel_type);
@@ -48,6 +50,7 @@ IGOR_MAKE_NAMED_ARGUMENT(max_iter);
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type (nd_range or hierarchical).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
+/// @endcond
 
 namespace detail {
 
@@ -72,10 +75,10 @@ constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args
 /**
  * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
  * @tparam ExpectedType the type the value of the named argument should be converted to
- * @tparam IgorParser the type of the named argument parser
- * @tparam NamedArgType the type of the named argument (necessary since their are struct tags)
- * @param[in] parser the named argument parser
- * @param[in] named_arg the named argument
+ * @tparam IgorParser the type of the named-parameter parser
+ * @tparam NamedArgType the type of the named-parameter (necessary since they are struct tags)
+ * @param[in] parser the named-parameter parser
+ * @param[in] named_arg the named-parameter argument
  * @return the value of @p named_arg converted to @p ExpectedType (`[[nodiscard]]`)
  */
 template <typename ExpectedType, typename IgorParser, typename NamedArgType>
@@ -90,14 +93,14 @@ ExpectedType get_value_from_named_parameter(const IgorParser &parser, const Name
         // an unwrapped value has been provided (e.g., double)
         return static_cast<ExpectedType>(parser(named_arg));
     } else {
-        static_assert(detail::always_false_v<ExpectedType>, "The named parameter must be of type plssvm::default_value or a built-in type!");
+        static_assert(detail::always_false_v<ExpectedType>, "The named parameter must be of type plssvm::default_value or a fundamental type!");
     }
-    // may never been reached
+    // may never be reached
     detail::unreachable();
 }
 
 /**
- * @brief Base class for encapsulating all important C-SVM parameters.
+ * @brief Class for encapsulating all important C-SVM parameters.
  * @tparam T the used real_type, must either be `float` or `double`
  */
 template <typename T>
@@ -108,7 +111,7 @@ struct parameter {
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
-    /**double
+    /**
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
     constexpr parameter() noexcept = default;
@@ -130,7 +133,7 @@ struct parameter {
     }
 
     /**
-     * @brief Construct a parameter by using the values in @p params and overwriting all values using the provided named arguments.
+     * @brief Construct a parameter by using the values in @p params and overwriting all values using the provided named-parameters.
      * @tparam Args the type of the named-parameters
      * @param[in] params the parameters used to overwrite the default values
      * @param[in] named_args the potential named-parameters
@@ -142,7 +145,7 @@ struct parameter {
     }
 
     /**
-     * @brief Construct a parameter set by overwriting the SVM parameters' default values that are provided using named arguments.
+     * @brief Construct a parameter set by overwriting the SVM parameters' default values that are provided using named-parameters.
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
@@ -151,7 +154,7 @@ struct parameter {
         this->set_named_arguments(std::forward<Args>(named_args)...);
     }
 
-    /// The used kernel function: linear, polynomial or radial basis functions (rbf).
+    /// The used kernel function: linear, polynomial, or radial basis functions (rbf).
     default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::linear } };
     /// The degree parameter used in the polynomial kernel function.
     default_value<int> degree{ default_init<int>{ 3 } };
@@ -183,7 +186,7 @@ struct parameter {
      * @details Compares the member variables based on the `kernel`, i.e., for example for the rbf kernel both parameter sets
      *          must **only** have the same `gamma` and `cost` values **but** may differ in the values of `degree` or `coef0`.
      *          If all members should be compared regardless of the kernel type, one can use the operator== overload.
-     * @param[in] other the other parameter set to compare this one with
+     * @param[in] other the other parameter set compared to this one
      * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] constexpr bool equivalent(const parameter &other) const noexcept {
@@ -206,7 +209,7 @@ struct parameter {
 
   private:
     /**
-     * @brief Overwrite the default values of this parameter object with the potential provided named arguments @p named_args.
+     * @brief Overwrite the default values of this parameter object with the potential provided named-parameters @p named_args.
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
@@ -219,8 +222,7 @@ struct parameter {
         // compile time check: each named parameter must only be passed once
         static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
         // compile time check: only some named parameters are allowed
-        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost,
-                                             plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type),
+        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type),
                       "An illegal named parameter has been passed!");
 
         // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
@@ -293,7 +295,7 @@ template <typename T>
 }
 
 /**
- * @brief Checks whether the two parameter sets @p lhs and @p rhs ares **equivalent**.
+ * @brief Checks whether the two parameter sets @p lhs and @p rhs are **equivalent**.
  * @details Compares the member variables based on the `kernel`, i.e., for example for the rbf kernel both parameter sets
  *          must **only** have the same `gamma` and `cost` values **but** may differ in the values of `degree` or `coef0`.
  *          If all members should be compared regardless of the kernel type, one can use the operator== overload.

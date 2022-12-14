@@ -10,25 +10,26 @@
 
 #include "mock_csvm.hpp"  // mock_csvm
 
-#include "plssvm/core.hpp"                   // necessary for type_traits
+#include "plssvm/core.hpp"                   // necessary for type_traits, plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v
 #include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/model.hpp"                  // plssvm::model
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
-#include "naming.hpp"              // naming::{real_type_to_name, real_type_label_type_combination_to_name}
-#include "types_to_test.hpp"       // util::{real_type_gtest, real_type_label_type_combination_gtest}
+#include "naming.hpp"              // naming::real_type_label_type_combination_to_name
+#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, real_type_label_type_combination_gtest}
 #include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file}
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_CALL
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_CALL, ::testing::{Test, An}
 
 #include <iostream>   // std::clog
 #include <sstream>    // std::stringstream
 #include <streambuf>  // std::streambuf
 #include <string>     // std::string
 #include <tuple>      // std::ignore
+#include <utility>    // std::pair
 #include <vector>     // std::vector
 
 class BaseCSVM : public ::testing::Test {};
@@ -53,8 +54,7 @@ TEST(BaseCSVM, construct_from_parameter) {
 
 TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
     // create parameter class
-    plssvm::parameter params{};
-    params.kernel_type = static_cast<plssvm::kernel_function_type>(3);
+    const plssvm::parameter params{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(3) };
 
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid kernel type must throw
     EXPECT_THROW_WHAT(mock_csvm{ params },
@@ -63,9 +63,7 @@ TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
 }
 TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
     // create parameter class
-    plssvm::parameter params{};
-    params.kernel_type = plssvm::kernel_function_type::polynomial;
-    params.gamma = -1.0;
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 };
 
     // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
     EXPECT_THROW_WHAT(mock_csvm{ params },
@@ -75,8 +73,7 @@ TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
 
 TEST(BaseCSVM, construct_linear_from_named_parameters) {
     // correct parameters
-    plssvm::parameter params{};
-    params.cost = 2.0;
+    const plssvm::parameter params{ plssvm::cost = 2.0 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = params.cost };
@@ -100,10 +97,7 @@ TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
 }
 TEST(BaseCSVM, construct_rbf_from_named_parameters) {
     // correct parameters
-    plssvm::parameter params{};
-    params.kernel_type = plssvm::kernel_function_type::rbf;
-    params.gamma = 0.00001;
-    params.cost = 10.0;
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::rbf, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
@@ -255,8 +249,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
     // check whether the model has been created correctly
     EXPECT_EQ(model.num_support_vectors(), 5);
     EXPECT_EQ(model.num_features(), 4);
-    plssvm::parameter params{};
-    params.gamma = 1.0 / 4.0;
+    const plssvm::parameter params{ plssvm::gamma = 1.0 / 4.0 };
     EXPECT_EQ(model.get_params(), params);
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first);
@@ -289,8 +282,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     // check whether the model has been created correctly
     EXPECT_EQ(model.num_support_vectors(), 5);
     EXPECT_EQ(model.num_features(), 4);
-    plssvm::parameter params{};
-    params.gamma = 1.0 / 4.0;
+    const plssvm::parameter params{ plssvm::gamma = 1.0 / 4.0 };
     EXPECT_EQ(model.get_params(), params);
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first);
@@ -581,43 +573,59 @@ TEST(BaseCSVM, csvm_backend_exists) {
     // test whether the given C-SVM backend exist
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::openmp::csvm>::value);
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::openmp::csvm>::value);
 #endif
 
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::cuda::csvm>::value);
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::cuda::csvm>::value);
 #endif
 
 #if defined(PLSSVM_HAS_HIP_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hip::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::hip::csvm>::value);
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hip::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::hip::csvm>::value);
 #endif
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::opencl::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::opencl::csvm>::value);
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::opencl::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::opencl::csvm>::value);
 #endif
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::sycl::csvm>::value);
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::dpcpp::csvm>::value);
     #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::dpcpp::csvm>::value);
     #endif
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::hipsycl::csvm>::value);
     #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::hipsycl::csvm>::value);
     #endif
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::sycl::csvm>::value);
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::dpcpp::csvm>::value);
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::hipsycl::csvm>::value);
 #endif
 }

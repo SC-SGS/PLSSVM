@@ -9,31 +9,28 @@
  * @brief Core header including all other necessary headers.
  */
 
+#ifndef PLSSVM_CORE_HPP_
+#define PLSSVM_CORE_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"
-#include "plssvm/csvm_factory.hpp"
+#include "plssvm/csvm.hpp"          // the base C-SVM every backend is inheriting from
+#include "plssvm/csvm_factory.hpp"  // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 
-#include "plssvm/constants.hpp"
-#include "plssvm/parameter.hpp"
+#include "plssvm/constants.hpp"  // verbosity flag und compile-time constants
+#include "plssvm/parameter.hpp"  // the C-SVM parameter
 
-#include "plssvm/backend_types.hpp"
-#include "plssvm/kernel_function_types.hpp"
-#include "plssvm/target_platforms.hpp"
+#include "plssvm/data_set.hpp"  // a data set used for training a C-SVM
+#include "plssvm/model.hpp"     // the model as a result of training a C-SVM
 
-#include "plssvm/exceptions/exceptions.hpp"
-#include "plssvm/version/version.hpp"
+#include "plssvm/backend_types.hpp"          // all supported backend types
+#include "plssvm/kernel_function_types.hpp"  // all supported kernel function types
+#include "plssvm/target_platforms.hpp"       // all supported target platforms
 
-#include "plssvm/backends/SYCL/implementation_type.hpp"
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // the SYCL specific kernel invocation typ
 
-#include "plssvm/detail/cmd/data_set_variants.hpp"
-#include "plssvm/detail/cmd/parser_predict.hpp"
-#include "plssvm/detail/cmd/parser_scale.hpp"
-#include "plssvm/detail/cmd/parser_train.hpp"
-
-#include "plssvm/data_set.hpp"
-#include "plssvm/model.hpp"
+#include "plssvm/exceptions/exceptions.hpp"  // exception hierarchy
+#include "plssvm/version/version.hpp"        // version information
 
 /// The main namespace containing all public API functions.
 namespace plssvm {}
@@ -43,8 +40,9 @@ namespace plssvm::version {}
 
 /// Namespace containing implementation details. **Should not** directly be used by users.
 namespace plssvm::detail {}
-
+/// Namespace containing implementation details for the IO related functions. **Should not** directly be used by users.
 namespace plssvm::detail::io {}
+/// Namespace containing implementation details for the command line interface functionality. **Should not** directly be used by users.
 namespace plssvm::detail::cmd {}
 
 /// Namespace containing operator overloads for [std::vector](https://en.cppreference.com/w/cpp/container/vector) and other mathematical functions on vectors.
@@ -55,19 +53,16 @@ namespace plssvm::openmp {}
 
 /// Namespace containing the C-SVM using the CUDA backend.
 namespace plssvm::cuda {}
-
 /// Namespace containing CUDA backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::cuda::detail {}
 
 /// Namespace containing the C-SVM using the HIP backend.
 namespace plssvm::hip {}
-
 /// Namespace containing HIP backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::hip::detail {}
 
 /// Namespace containing the C-SVM using the OpenCL backend.
 namespace plssvm::opencl {}
-
 /// Namespace containing OpenCL backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::opencl::detail {}
 
@@ -75,7 +70,6 @@ namespace plssvm::opencl::detail {}
 namespace plssvm::dpcpp {
 using namespace plssvm::sycl;
 }
-
 /// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::dpcpp::detail {}
 
@@ -83,7 +77,6 @@ namespace plssvm::dpcpp::detail {}
 namespace plssvm::hipsycl {
 using namespace plssvm::sycl;
 }
-
 /// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::hipsycl::detail {}
 
@@ -92,7 +85,8 @@ namespace plssvm::sycl {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 #endif
-}
-
+}  // namespace plssvm::sycl
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::sycl::detail {}
+
+#endif  // PLSSVM_CORE_HPP_

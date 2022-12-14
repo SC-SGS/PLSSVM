@@ -37,23 +37,22 @@ namespace plssvm {
 
 /**
  * @brief Implements a class encapsulating the result of a call to the SVM fit function. A model is used to predict the labels of a new data set.
- * @tparam T the floating point type of the data
- * @tparam U the type of the used labels
+ * @tparam T the floating point type of the data (must either be `float` or `double`)
+ * @tparam U the type of the used labels (must be an arithmetic type or `std:string`; default: `int`)
  */
 template <typename T, typename U = int>
 class model {
-    // real_type may only be a float or double
+    // make sure only valid template types are used
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
-    // the label_type may be any arithmetic type (except bool) or a string.
     static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
 
-    // plssvm::csvm needs the constructor
+    // plssvm::csvm needs the private constructor
     friend class csvm;
 
   public:
-    /// The floating point type used for the data.
+    /// The type of the data points: either `float` or `double`.
     using real_type = T;
-    /// The type of the used labels.
+    /// The type of the labels: any arithmetic type or `std::string`.
     using label_type = U;
     /// The unsigned size type.
     using size_type = std::size_t;
@@ -61,6 +60,7 @@ class model {
     /**
      * @brief Read a previously learned model from the LIBSVM model file @p filename.
      * @param[in] filename the model file to read
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::detail::io::parse_libsvm_model_header and plssvm::detail::io::parse_libsvm_data
      */
     explicit model(const std::string &filename);
 
@@ -76,7 +76,7 @@ class model {
      */
     [[nodiscard]] size_type num_support_vectors() const noexcept { return num_support_vectors_; }
     /**
-     * @brief The number of features of the support vectors used in this model
+     * @brief The number of features of the support vectors used in this model.
      * @return the number of features (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
@@ -88,11 +88,13 @@ class model {
     [[nodiscard]] const parameter &get_params() const noexcept { return params_; }
     /**
      * @brief The support vectors representing the learned model.
+     * @details The support vectors are of dimension `num_support_vectors()` x `num_features()`.
      * @return the support vectors (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::vector<real_type>> &support_vectors() const noexcept { return data_.data(); }
     /**
-     * The learned weights for the support vectors.
+     * @brief The learned weights for the support vectors.
+     * @details It is of size `num_support_vectors()`.
      * @return the weights (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<real_type> &weights() const noexcept {
@@ -109,6 +111,7 @@ class model {
     /**
      * @brief Create a new model using the SVM parameter @p params and the @p data.
      * @details Default initializes the weights, i.e., no weights have currently been learned.
+     * @note This constructor may only be used in the befriended base C-SVM class!
      * @param[in] params the SVM parameters used to learn this model
      * @param[in] data the data used to learn this model
      */
@@ -130,7 +133,7 @@ class model {
 
     /**
      * @brief A vector used to speedup the prediction in case of the linear kernel function.
-     * @details Will be reused be subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
+     * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
     std::shared_ptr<std::vector<real_type>> w_{ std::make_shared<std::vector<real_type>>() };
