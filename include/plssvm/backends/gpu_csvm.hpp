@@ -279,6 +279,7 @@ std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kerne
     return num_used_devices;
 }
 
+/// @cond Doxygen_suppress
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 std::tuple<std::vector<device_ptr_t<real_type>>, std::vector<device_ptr_t<real_type>>, std::vector<std::size_t>>
@@ -324,6 +325,7 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vec
 
     return std::make_tuple(std::move(data_d), std::move(data_last_d), std::move(feature_ranges));
 }
+/// @endcond
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>

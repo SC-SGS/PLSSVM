@@ -422,6 +422,7 @@ class data_set<T, U>::label_mapper {
     std::map<real_type, label_type> mapped_to_label_{};
 };
 
+/// @cond Doxygen_suppress
 template <typename T, typename U>
 data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &labels) {
     // we are only interested in unique labels
@@ -440,6 +441,7 @@ data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_typ
     label_to_mapped_[*iter] = +1;
     mapped_to_label_[+1] = *iter;
 }
+/// @endcond
 
 template <typename T, typename U>
 auto data_set<T, U>::label_mapper::get_mapped_value_by_label(const label_type &label) const -> const real_type & {

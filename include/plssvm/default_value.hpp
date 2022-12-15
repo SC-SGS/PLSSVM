@@ -60,12 +60,14 @@ struct default_init {
  */
 template <typename T>
 class default_value {
+    /// @cond Doxygen_suppress
     // befriend a default_value encapsulating another type (used to be able to convert between, e.g., default_value<int> and default_value<float>)
     template <typename>
     friend class default_value;
     // befriend input stream operator to be able to construct a default_value from a std::istream
     template <typename U>
     friend std::istream &operator>>(std::istream &in, default_value<U> &);
+    /// @endcond
 
   public:
     /// The type encapsulated by this default_value.
@@ -327,7 +329,6 @@ template <typename T>
 struct is_default_value : detail::is_default_value<std::remove_cv_t<std::remove_reference_t<T>>> {};  // can't use detail::remove_cvref_t because of circular dependencies
 /**
  * @brief Test whether the given type @p T is of type `plssvm::default_value` ignoring all top-level const, volatile, and reference qualifiers.
- * @details A shorthand for `plssvm::is_default_value<T>::value`.
  */
 template <typename T>
 constexpr bool is_default_value_v = is_default_value<T>::value;
