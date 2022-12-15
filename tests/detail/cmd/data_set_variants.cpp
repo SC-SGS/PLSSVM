@@ -14,9 +14,9 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include "../../naming.hpp"         // naming::pretty_print_data_set_factory
-#include "../../utility.hpp"        // util::{temporary_file, instantiate_template_file}
-#include "utility.hpp"              // util::ParameterBase
+#include "../../naming.hpp"   // naming::pretty_print_data_set_factory
+#include "../../utility.hpp"  // util::{temporary_file, instantiate_template_file}
+#include "utility.hpp"        // util::ParameterBase
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}

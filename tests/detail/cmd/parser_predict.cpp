@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
                                    // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
+#include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILRE
 #include <string>  // std::string
 #include <tuple>   // std::tuple
 

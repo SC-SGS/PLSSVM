@@ -27,7 +27,7 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for training possibly provided through command line arguments.
+ * @brief Class for encapsulating all necessary parameters for training; normally provided through command line arguments.
  */
 class parser_train {
   public:

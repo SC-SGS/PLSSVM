@@ -67,13 +67,6 @@ parser_predict::parser_predict(int argc, char **argv) {
         std::exit(EXIT_FAILURE);
     }
 
-    // check if the number of positional arguments is not too large
-    if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
     // print help message and exit
     if (result.count("help")) {
         std::cout << options.help() << std::endl;
@@ -84,6 +77,13 @@ parser_predict::parser_predict(int argc, char **argv) {
     if (result.count("version")) {
         std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
         std::exit(EXIT_SUCCESS);
+    }
+
+    // check if the number of positional arguments is not too large
+    if (!result.unmatched().empty()) {
+        std::cerr << fmt::format("Only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cout << options.help() << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 
     // parse backend_type and cast the value to the respective enum

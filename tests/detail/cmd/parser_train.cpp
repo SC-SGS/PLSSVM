@@ -23,6 +23,7 @@
                                    // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Range, ::testing::Bool, ::testing::ExitedWithCode
 
 #include <cstddef>  // std::size_t
+#include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILRE
 #include <string>   // std::string
 #include <tuple>    // std::tuple
 

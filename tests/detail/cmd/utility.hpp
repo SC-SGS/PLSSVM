@@ -14,29 +14,26 @@
 #pragma once
 
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
-#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::replace_all
 
 #include "../../utility.hpp"  // util::redirect_output
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // :testing::TestParamInfo
+#include "gtest/gtest.h"  // :testing::Test
 
 #include <cstring>      // std::strcpy
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <tuple>        // std::get
 #include <vector>       // std::vector
 
 namespace util {
 
 /**
- * Fixture class for testing the parameter_* classes' implementation.
+ * @brief Fixture class for testing the parameter_* classes' implementation.
  */
 class ParameterBase : public ::testing::Test, private redirect_output<> {
   protected:
     /**
-     * @brief Create artificial argc and argv from the given string.
-     * @param[in] cmd_line the command line argument to create the argc and argv from.
+     * @brief Create artificial argc and argv from the given command line string.
+     * @param[in] cmd_line the command line argument to create the argc and argv from
      */
     virtual void CreateCMDArgs(const std::string_view cmd_line) {
         // create argc and argv from a std::string
@@ -49,7 +46,7 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
         }
     }
     /**
-     * Free memory used for argv and end capturing std::cout. Automatically called at the end of a test.
+     * @brief Free memory used for argv and end capturing std::cout. Automatically called at the end of a test.
      */
     void TearDown() override {
         // free memory at the end

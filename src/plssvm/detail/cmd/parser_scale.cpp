@@ -63,13 +63,6 @@ parser_scale::parser_scale(int argc, char **argv) {
         std::exit(EXIT_FAILURE);
     }
 
-    // check if the number of positional arguments is not too large
-    if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
     // print help message and exit
     if (result.count("help")) {
         std::cout << options.help() << std::endl;
@@ -80,6 +73,13 @@ parser_scale::parser_scale(int argc, char **argv) {
     if (result.count("version")) {
         std::cout << version::detail::get_version_info("plssvm-scale", false) << std::endl;
         std::exit(EXIT_SUCCESS);
+    }
+
+    // check if the number of positional arguments is not too large
+    if (!result.unmatched().empty()) {
+        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cout << options.help() << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 
     // parse the lowest allowed value

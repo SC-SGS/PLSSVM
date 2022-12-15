@@ -24,10 +24,10 @@
 #include "fmt/core.h"     // ffmt::format, fmt::join
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <iostream>    // std::cout, std::cerr, std::clog, std::endl
 #include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>   // std::exception
 #include <filesystem>  // std::filesystem::path
+#include <iostream>    // std::cout, std::cerr, std::clog, std::endl
 
 namespace plssvm::detail::cmd {
 
@@ -78,13 +78,6 @@ parser_train::parser_train(int argc, char **argv) {
         std::exit(EXIT_FAILURE);
     }
 
-    // check if the number of positional arguments is not too large
-    if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
     // print help message and exit
     if (result.count("help")) {
         std::cout << options.help() << std::endl;
@@ -95,6 +88,13 @@ parser_train::parser_train(int argc, char **argv) {
     if (result.count("version")) {
         std::cout << version::detail::get_version_info("plssvm-train") << std::endl;
         std::exit(EXIT_SUCCESS);
+    }
+
+    // check if the number of positional arguments is not too large
+    if (!result.unmatched().empty()) {
+        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cout << options.help() << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 
     // parse kernel_type and cast the value to the respective enum

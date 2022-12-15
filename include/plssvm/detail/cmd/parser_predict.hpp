@@ -23,7 +23,7 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for prediction normally provided through command line arguments.
+ * @brief Class for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
  */
 class parser_predict {
   public:
@@ -39,7 +39,7 @@ class parser_predict {
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
 
-    /// The SYCL implementation to use with --backend=sycl.
+    /// The SYCL implementation to use with `--backend sycl`: automatic (depending on the SYCL implementation defined during the CMake configuration), hipsycl, or dpcpp.
     sycl::implementation_type sycl_implementation_type{ sycl::implementation_type::automatic };
 
     /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
@@ -49,7 +49,7 @@ class parser_predict {
 
     /// The name of the data file to predict.
     std::string input_filename{};
-    /// The name of the model file containing the support vectors used for prediction.
+    /// The name of the model file containing the support vectors and weights used for prediction.
     std::string model_filename{};
     /// The name of the file to write the predicted labels to.
     std::string predict_filename{};
