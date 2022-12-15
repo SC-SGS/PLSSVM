@@ -13,6 +13,7 @@
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
+#include <string>   // std::string
 
 namespace plssvm::detail {
 

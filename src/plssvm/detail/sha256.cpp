@@ -30,7 +30,7 @@ std::string sha256::operator()(std::string input) const {
     // append a single '1' byte
     input.append(1, static_cast<char>(0x80));
 
-    // append K '0' byte, where K is the minimum number >= 0 such that (L + 1 + K + 8) is a multiple of 512 / 8 = 64
+    // append K '0' bytes, where K is the minimum number >= 0 such that (L + 1 + K + 8) is a multiple of 512 / 8 = 64
     const std::uint32_t K = CHUNK_SIZE - (L + 1 + 8) % CHUNK_SIZE;
     input.resize(L + 1 + K + 8);
 

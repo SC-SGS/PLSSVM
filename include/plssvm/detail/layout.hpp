@@ -40,7 +40,7 @@ enum class layout_type {
 };
 
 /**
- * Output the @p layout to the given output-stream @p out.
+ * @brief Output the @p layout to the given output-stream @p out.
  * @param[in, out] out the output-stream to write the layout type to
  * @param[in] layout the layout type
  * @return the output-stream

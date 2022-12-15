@@ -13,12 +13,13 @@
 #define PLSSVM_DETAIL_EXECUTION_RANGE_HPP_
 #pragma once
 
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
+
 #include <algorithm>         // std::copy
 #include <array>             // std::array
 #include <cstddef>           // std::size_t
 #include <initializer_list>  // std::initializer_list
 #include <iosfwd>            // forward declare std::ostream
-#include <type_traits>       // std::enable_if_t
 
 namespace plssvm::detail {
 
@@ -44,15 +45,15 @@ class execution_range {
      * @param[in] p_grid specifies the grid sizes
      * @param[in] p_block specifies the block sizes
      */
-    template <std::size_t I, std::size_t J, std::enable_if_t<(0 < I && I <= 3 && 0 < J && J <= 3), bool> = true>
+    template <std::size_t I, std::size_t J, PLSSVM_REQUIRES((0 < I && I <= 3 && 0 < J && J <= 3))>
     execution_range(const std::array<std::size_t, I> &p_grid, const std::array<std::size_t, J> &p_block) {
         std::copy(p_grid.cbegin(), p_grid.cend(), grid.begin());
         std::copy(p_block.cbegin(), p_block.cend(), block.begin());
     }
 
-    /// The grid sizes.
+    /// The grid sizes (using the CUDA definition).
     std::array<std::size_t, 3> grid = { 1, 1, 1 };
-    /// The block sizes.
+    /// The block sizes (using the CUDA definition).
     std::array<std::size_t, 3> block = { 1, 1, 1 };
 };
 

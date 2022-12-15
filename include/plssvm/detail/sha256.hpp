@@ -14,9 +14,9 @@
 #pragma once
 
 #include <array>        // std::array
-#include <cstdint>      // std::uint32_t, std::uint64_t
+#include <cstdint>      // std::uint32_t
 #include <string>       // std::string
-#include <type_traits>  // std::is_unsigned_v
+#include <type_traits>  // std::enable_if_t, std::is_unsigned_v
 
 namespace plssvm::detail {
 
@@ -47,7 +47,7 @@ class sha256 {
         }
     }
     /**
-     * @brief Pack four byte of the @p str into the 32-bit unsigned integer @x.
+     * @brief Pack four byte of the @p str into the 32-bit unsigned integer @p x.
      * @param[in] str the string to pack
      * @param[out] x the 32-bit unsigned integer to pack the bytes to
      */

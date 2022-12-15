@@ -14,8 +14,8 @@
 #pragma once
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left}
-#include "plssvm/detail/type_traits.hpp"       // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case}
+#include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format
@@ -25,7 +25,7 @@
 #include <string>        // std::string, std::stold
 #include <string_view>   // std::string_view
 #include <system_error>  // std:errc
-#include <type_traits>   // std::enable_if_t, std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
+#include <type_traits>   // std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
 #include <vector>        // std::vector
 
 namespace plssvm::detail {
@@ -43,7 +43,7 @@ namespace plssvm::detail {
  * @throws Exception if @p str can't be converted to a value of type @p T
  * @return the value of type @p T denoted by @p str (`[[nodiscard]]`)
  */
-template <typename T, typename Exception = std::runtime_error, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<remove_cvref_t<T>, std::string>, bool> = true>
+template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((std::is_arithmetic_v<T> || std::is_same_v<remove_cvref_t<T>, std::string>) )>
 [[nodiscard]] inline T convert_to(const std::string_view str) {
     if constexpr (std::is_same_v<remove_cvref_t<T>, std::string>) {
         // convert string_view to string
@@ -87,7 +87,7 @@ template <typename T, typename Exception = std::runtime_error, std::enable_if_t<
         T val;
         auto res = convert_from_chars(trimmed_str, val);
         if (res.ec != std::errc{}) {
-            throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, plssvm::detail::arithmetic_type_name<T>()) };
+            throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>()) };
         }
         return val;
     }

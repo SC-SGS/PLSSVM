@@ -16,10 +16,10 @@
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
 #include "fmt/color.h"  // fmt::emphasis, fmt::fg, fmt::color
-#include "fmt/core.h"   // fmt::print, fmt::format
+#include "fmt/core.h"   // fmt::format
 
-#include <cstdio>       // stderr
 #include <cstdlib>      // std::abort
+#include <iostream>     // std::cerr, std::endl
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward
 
@@ -40,17 +40,18 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
     // check if assertion holds
     if (!cond) {
         // print assertion error message
-        fmt::print(stderr,
-                   "Assertion '{}' failed!\n"
-                   "  in file      {}\n"
-                   "  in function  {}\n"
-                   "  @ line       {}\n\n"
-                   "{}\n",
-                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), "{}", cond_str),
-                   loc.file_name(),
-                   loc.function_name(),
-                   loc.line(),
-                   fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::red), msg, std::forward<Args>(args)...));
+        std::cerr << fmt::format(
+            "Assertion '{}' failed!\n"
+            "  in file      {}\n"
+            "  in function  {}\n"
+            "  @ line       {}\n\n"
+            "{}\n",
+            fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), "{}", cond_str),
+            loc.file_name(),
+            loc.function_name(),
+            loc.line(),
+            fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::red), msg, std::forward<Args>(args)...))
+                  << std::endl;
 
         // abort further execution
         std::abort();

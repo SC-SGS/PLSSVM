@@ -14,24 +14,20 @@
 #pragma once
 
 #include "plssvm/default_value.hpp"       // plssvm::default_value
-#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::always_false_v
 
-#include <algorithm>      // std::remove_if
-#include <cstddef>        // std::size_t
-#include <iterator>       // std::distance
-#include <map>            // std::map
-#include <set>            // std::set
-#include <string>         // std::string
-#include <tuple>          // std::forward_as_tuple, std::get
-#include <type_traits>    // std::underlying_type_t, std::is_enum_v
-#include <unordered_map>  // std::unordered_map
-#include <unordered_set>  // std::unordered_set
-#include <vector>         // std::vector
+#include <algorithm>    // std::remove_if, std::find
+#include <cstddef>      // std::size_t
+#include <iterator>     // std::distance
+#include <string>       // std::string
+#include <tuple>        // std::forward_as_tuple, std::get
+#include <type_traits>  // std::underlying_type_t, std::is_enum_v
 
 namespace plssvm::detail {
 
 /**
  * @brief Invokes undefined behavior. Used to mark code paths that may never be reachable.
+ * @details See: C++23 [`std::unreachable`](https://en.cppreference.com/w/cpp/utility/unreachable)
  */
 [[noreturn]] inline void unreachable() {
     // Uses compiler specific extensions if possible.
@@ -45,7 +41,7 @@ namespace plssvm::detail {
 }
 
 /**
- * @brief Get the @p I-th element of the parameter pack @p args.
+ * @brief Get the @p I-th element of the parameter pack @p args at compile-time.
  * @tparam I the index of the element to get
  * @tparam Types the types inside the parameter pack
  * @param[in] args the values of the parameter pack
@@ -92,11 +88,13 @@ template <typename Enum>
 template <typename Container, typename Pred, PLSSVM_REQUIRES(is_container_v<Container>)>
 inline typename Container::size_type erase_if(Container &c, Pred pred) {
     if constexpr (is_vector_v<Container>) {
+        // use optimized version for std::vector
         auto iter = std::remove_if(c.begin(), c.end(), pred);
         auto dist = std::distance(iter, c.end());
         c.erase(iter, c.end());
         return dist;
     } else {
+        // generic version otherwise
         auto old_size = c.size();
         for (auto i = c.begin(), last = c.end(); i != last;) {
             if (pred(*i)) {
@@ -120,8 +118,10 @@ inline typename Container::size_type erase_if(Container &c, Pred pred) {
 template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Container>)>
 [[nodiscard]] inline bool contains(const Container &c, const T &val) {
     if constexpr (is_sequence_container_v<Container>) {
+        // use std::find for sequence containers
         return std::find(c.cbegin(), c.cend(), val) != c.cend();
     } else {
+        // use count otherwise
         return c.count(val) > 0;
     }
 }
