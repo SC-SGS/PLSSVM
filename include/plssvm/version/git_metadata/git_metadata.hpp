@@ -39,12 +39,12 @@ namespace plssvm::version::git_metadata {
  */
 [[nodiscard]] std::string_view author_email();
 /**
- * @brief The full has of the current commit.
+ * @brief The full hash of the current commit.
  * @return the configured commit hash (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view commit_sha1();
 /**
- * @brief The ISE08601 commit date.
+ * @brief The ISO 8601 commit date.
  * @return the configured commit date (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view commit_date();

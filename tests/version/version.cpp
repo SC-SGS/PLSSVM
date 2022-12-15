@@ -14,8 +14,9 @@
 #include "../naming.hpp"  // naming::pretty_print_version_info
 
 #include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubStr
-#include "gtest/gtest.h"           // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_THAT, ASSERT_TRUE, ASSERT_FALSE, ::testing::TestWithParam
+#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_THAT, ASSERT_TRUE, ASSERT_FALSE,
+                                   // ::testing::{TestWithParam, Combine, Values, Bool}
 
 #include <optional>  // std::optional
 #include <string>    // std::string
