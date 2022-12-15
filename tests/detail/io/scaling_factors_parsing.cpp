@@ -12,6 +12,7 @@
 
 #include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
 #include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
 #include "../../naming.hpp"              // naming::real_type_to_name
@@ -22,12 +23,11 @@
 #include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ
                                    // ::testing::{Test, Types}
 
-#include <cstddef>     // std::size_t
-#include <filesystem>  // std::filesystem::remove
-#include <string>      // std::string
-#include <tuple>       // std::ignore
-#include <utility>     // std::pair
-#include <vector>      // std::vector
+#include <cstddef>    // std::size_t
+#include <stdexcept>  // std::runtime_error
+#include <tuple>      // std::ignore
+#include <utility>    // std::pair
+#include <vector>     // std::vector
 
 // typedef nested struct
 template <typename T>

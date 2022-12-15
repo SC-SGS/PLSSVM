@@ -12,7 +12,6 @@
 
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 
@@ -26,12 +25,10 @@
 #include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
                                    // ::testing::{Test, Types, Values}
 
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::remove
-#include <string>       // std::string
-#include <tuple>        // std::ignore
-#include <type_traits>  // std::is_same_v
-#include <vector>       // std::vector
+#include <cstddef>  // std::size_t
+#include <string>   // std::string
+#include <tuple>    // std::ignore
+#include <vector>   // std::vector
 
 template <typename T>
 class LIBSVMModelHeaderParse : public ::testing::Test {};

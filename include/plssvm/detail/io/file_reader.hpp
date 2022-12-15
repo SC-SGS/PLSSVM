@@ -28,6 +28,7 @@
 
 #include <filesystem>   // std::filesystem::path
 #include <ios>          // std::streamsize
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
@@ -69,19 +70,21 @@ class file_reader {
      */
     file_reader(const file_reader &) = delete;
     /**
-     * @brief Default the move-constructor since file_reader is move-only.
+     * @brief Implement the move-constructor since file_reader is move-only.
+     * @param[in,out] other the file_reader to move the values from
      */
-    file_reader(file_reader &&) noexcept;
+    file_reader(file_reader &&other) noexcept;
     /**
      * @brief Delete the copy-assignment operator since file_reader is move-only.
      * @return *this
      */
     file_reader &operator=(const file_reader &) = delete;
     /**
-     * @brief Default the move-assignment operator since file_reader is move-only.
-     * @return *this
+     * @brief Implement the move-assignment operator since file_reader is move-only.
+     * @param[in,out] other the file_reader to move the values from
+     * @return `*this`
      */
-    file_reader &operator=(file_reader &&) noexcept;
+    file_reader &operator=(file_reader &&other) noexcept;
 
     /**
      * @brief Associates the current file_reader with the file denoted by @p filename, i.e., opens the file @p filename (possible memory mapping it).
@@ -112,13 +115,13 @@ class file_reader {
     void close();
 
     /**
-     * @brief Element-wise swap all contents of *this with @p other.
+     * @brief Element-wise swap all contents of `*this` with @p other.
      * @param[in,out] other the other file_reader to swap the contents with
      */
     void swap(file_reader &other);
 
     /**
-     * @brief Read the content of the associated file and splits it into lines, ignoring empty lines and lines starting with the @p comment.
+     * @brief Read the content of the associated file and split it into lines, ignoring empty lines and lines starting with the @p comment.
      * @param[in] comment a character (sequence) at the beginning of a line that causes this line to be ignored (used to filter comments)
      * @throws plssvm::file_reader_exception if no file is currently associated to this file_reader
      * @return the split lines, ignoring empty lines and lines starting with the @p comment
@@ -131,20 +134,20 @@ class file_reader {
 
     /**
      * @brief Return the number of parsed lines (where all empty lines or lines starting with a comment are ignored).
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_kines() function has not been called yet.
+     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @return the number of lines after preprocessing (`[[nodiscard]]`)
      */
     [[nodiscard]] typename std::vector<std::string_view>::size_type num_lines() const noexcept;
     /**
      * @brief Return the @p pos line of the parsed file.
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_kines() function has not been called yet.
+     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @param[in] pos the line to return
      * @return the line without leading whitespaces (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string_view line(typename std::vector<std::string_view>::size_type pos) const;
     /**
      * @brief Return all lines present after the preprocessing.
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_kines() function has not been called yet.
+     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @return all lines after preprocessing (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::string_view> &lines() const noexcept;
@@ -157,7 +160,7 @@ class file_reader {
   private:
     /**
      * @brief Try to open the file @p filename and "read" its content using memory mapped IO on UNIX systems.
-     * @details Currently memory mapped IO is only supported under Linux systems. If the file could not be memory mapped, automatically falls back to open_file().
+     * @details If the file could not be memory mapped, automatically falls back to open_file().
      * @param[in] filename the file to open
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
      */
@@ -165,7 +168,7 @@ class file_reader {
 
     /**
      * @brief Try to open the file @p filename and "read" its content using memory mapped IO on Windows systems.
-     * @details Currently memory mapped IO is only supported under Linux systems. If the file could not be memory mapped, automatically falls back to open_file().
+     * @details If the file could not be memory mapped, automatically falls back to open_file().
      * @param[in] filename the file to open
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
      */

@@ -33,7 +33,7 @@
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
 #include <iostream>     // std::cerr, std::endl
-#include <limits>       // std::numeric_limits
+#include <limits>       // std::numeric_limits::max
 #include <memory>       // std::addressof
 #include <string>       // std::string
 #include <string_view>  // std::string_view

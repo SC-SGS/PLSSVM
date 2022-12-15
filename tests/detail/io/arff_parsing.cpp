@@ -24,7 +24,7 @@
                                    // ::testing::{Test, Types, TestWithParam, Values}
 
 #include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::remove
+#include <set>          // std::set
 #include <string>       // std::string
 #include <tuple>        // std::tuple, std::make_tuple, std::ignore
 #include <type_traits>  // std::is_same_v
