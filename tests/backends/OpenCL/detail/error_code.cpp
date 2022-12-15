@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"
 
-#include "utility.hpp"  // util::convert_to_string
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 
 #include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
 
@@ -71,8 +71,8 @@ TEST(OpenCLErrorCode, operator_bool) {
 }
 
 TEST(OpenCLErrorCode, operator_ostream) {
-    EXPECT_EQ(util::convert_to_string(plssvm::opencl::detail::error_code{ CL_SUCCESS }), "0: CL_SUCCESS");
-    EXPECT_EQ(util::convert_to_string(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }), "-1: CL_DEVICE_NOT_FOUND");
+    EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::error_code{ CL_SUCCESS }, "0: CL_SUCCESS");
+    EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }, "-1: CL_DEVICE_NOT_FOUND");
 }
 TEST(OpenCLErrorCode, operator_equal) {
     // test two error codes for equality

@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
 
-#include "../utility.hpp"  // util::convert_to_string
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_DEATH
 
@@ -77,15 +77,15 @@ TEST(ExecutionRange, array) {
 TEST(ExecutionRange, to_string) {
     using plssvm::detail::execution_range;
 
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 11 }, { 11 } }), "grid: [11, 1, 1]; block: [11, 1, 1]");
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 11 }, { 21, 22 } }), "grid: [11, 1, 1]; block: [21, 22, 1]");
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 11 }, { 31, 32, 33 } }), "grid: [11, 1, 1]; block: [31, 32, 33]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 11 }, { 11 } }), "grid: [11, 1, 1]; block: [11, 1, 1]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 11 }, { 21, 22 } }), "grid: [11, 1, 1]; block: [21, 22, 1]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 11 }, { 31, 32, 33 } }), "grid: [11, 1, 1]; block: [31, 32, 33]");
 
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 21, 22 }, { 11 } }), "grid: [21, 22, 1]; block: [11, 1, 1]");
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 21, 22 }, { 21, 22 } }), "grid: [21, 22, 1]; block: [21, 22, 1]");
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 21, 22 }, { 31, 32, 33 } }), "grid: [21, 22, 1]; block: [31, 32, 33]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 21, 22 }, { 11 } }), "grid: [21, 22, 1]; block: [11, 1, 1]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 21, 22 }, { 21, 22 } }), "grid: [21, 22, 1]; block: [21, 22, 1]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 21, 22 }, { 31, 32, 33 } }), "grid: [21, 22, 1]; block: [31, 32, 33]");
 
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 31, 32, 33 }, { 11 } }), "grid: [31, 32, 33]; block: [11, 1, 1]");
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 31, 32, 33 }, { 21, 22 } }), "grid: [31, 32, 33]; block: [21, 22, 1]");
-    EXPECT_EQ(util::convert_to_string(execution_range{ { 31, 32, 33 }, { 31, 32, 33 } }), "grid: [31, 32, 33]; block: [31, 32, 33]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 31, 32, 33 }, { 11 } }), "grid: [31, 32, 33]; block: [11, 1, 1]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 31, 32, 33 }, { 21, 22 } }), "grid: [31, 32, 33]; block: [21, 22, 1]");
+    EXPECT_CONVERSION_TO_STRING((execution_range{ { 31, 32, 33 }, { 31, 32, 33 } }), "grid: [31, 32, 33]; block: [31, 32, 33]");
 }

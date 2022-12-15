@@ -10,9 +10,9 @@
 
 #include "plssvm/default_value.hpp"
 
-#include "naming.hpp"         // naming::label_type_to_name
-#include "types_to_test.hpp"  // util::label_type_gtest
-#include "utility.hpp"        // util::{convert_to_string, convert_from_string}
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "naming.hpp"              // naming::label_type_to_name
+#include "types_to_test.hpp"       // util::label_type_gtest
 
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
                           // ::testing::{Test, WithParamInterface, Values}
@@ -338,34 +338,34 @@ TEST(DefaultValue, reset_non_default) {
 
 TEST(DefaultValue, to_string) {
     // check conversions to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ 1 } }), "1");
-    EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ 3.1415 } }), "3.1415");
-    EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ -4 } }), "-4");
-    EXPECT_EQ(util::convert_to_string(plssvm::default_value{ plssvm::default_init{ "Hello World" } }), "Hello World");
+    EXPECT_CONVERSION_TO_STRING(plssvm::default_value{ plssvm::default_init{ 1 } }, "1");
+    EXPECT_CONVERSION_TO_STRING(plssvm::default_value{ plssvm::default_init{ 3.1415 } }, "3.1415");
+    EXPECT_CONVERSION_TO_STRING(plssvm::default_value{ plssvm::default_init{ -4 } }, "-4");
+    EXPECT_CONVERSION_TO_STRING(plssvm::default_value{ plssvm::default_init{ "Hello World" } }, "Hello World");
 }
 TEST(DefaultValue, from_string) {
     // check conversion from std::string
     plssvm::default_value<int> val1{};
     val1 = 1;
-    EXPECT_EQ(util::convert_from_string<plssvm::default_value<int>>("1"), val1);
+    EXPECT_CONVERSION_FROM_STRING("1", val1);
     EXPECT_FALSE(val1.is_default());
     EXPECT_EQ(val1.get_default(), 0);
 
     plssvm::default_value<double> val2{};
     val2 = 3.1415;
-    EXPECT_EQ(util::convert_from_string<plssvm::default_value<double>>("3.1415"), val2);
+    EXPECT_CONVERSION_FROM_STRING("3.1415", val2);
     EXPECT_FALSE(val2.is_default());
     EXPECT_DOUBLE_EQ(val2.get_default(), 0.0);
 
     plssvm::default_value<int> val3{ plssvm::default_init{ 42 } };
     val3 = -4;
-    EXPECT_EQ(util::convert_from_string<plssvm::default_value<int>>("-4"), val3);
+    EXPECT_CONVERSION_FROM_STRING("-4", val3);
     EXPECT_FALSE(val3.is_default());
     EXPECT_EQ(val3.get_default(), 42);
 
     plssvm::default_value<std::string> val4{};
     val4 = "foo";
-    EXPECT_EQ(util::convert_from_string<plssvm::default_value<std::string>>("foo"), val4);
+    EXPECT_CONVERSION_FROM_STRING("foo", val4);
     EXPECT_FALSE(val4.is_default());
     EXPECT_EQ(val4.get_default(), std::string{ "" });
 }

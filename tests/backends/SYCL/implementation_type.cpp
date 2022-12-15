@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 
-#include "utility.hpp"  // util::{convert_to_string, convert_from_string}
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 
@@ -19,26 +19,26 @@
 // check whether the plssvm::sycl::implementation_type -> std::string conversions are correct
 TEST(SYCLImplementationType, to_string) {
     // check conversions to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::sycl::implementation_type::automatic), "automatic");
-    EXPECT_EQ(util::convert_to_string(plssvm::sycl::implementation_type::hipsycl), "hipsycl");
-    EXPECT_EQ(util::convert_to_string(plssvm::sycl::implementation_type::dpcpp), "dpcpp");
+    EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::automatic, "automatic");
+    EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::hipsycl, "hipsycl");
+    EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::dpcpp, "dpcpp");
 }
 TEST(SYCLImplementationType, to_string_unknown) {
     // check conversions to std::string from unknown file_format_type
-    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::sycl::implementation_type>(3)), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::sycl::implementation_type>(3), "unknown");
 }
 
 // check whether the std::string -> plssvm::sycl::implementation_type conversions are correct
 TEST(SYCLImplementationType, from_string) {
     // check conversion from std::string
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("automatic"), plssvm::sycl::implementation_type::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("AUTOMATIC"), plssvm::sycl::implementation_type::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("hipsycl"), plssvm::sycl::implementation_type::hipsycl);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("hipSYCL"), plssvm::sycl::implementation_type::hipsycl);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("dpcpp"), plssvm::sycl::implementation_type::dpcpp);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("DPCPP"), plssvm::sycl::implementation_type::dpcpp);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("dpc++"), plssvm::sycl::implementation_type::dpcpp);
-    EXPECT_EQ(util::convert_from_string<plssvm::sycl::implementation_type>("DPC++"), plssvm::sycl::implementation_type::dpcpp);
+    EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::sycl::implementation_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::implementation_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("hipsycl", plssvm::sycl::implementation_type::hipsycl);
+    EXPECT_CONVERSION_FROM_STRING("hipSYCL", plssvm::sycl::implementation_type::hipsycl);
+    EXPECT_CONVERSION_FROM_STRING("dpcpp", plssvm::sycl::implementation_type::dpcpp);
+    EXPECT_CONVERSION_FROM_STRING("DPCPP", plssvm::sycl::implementation_type::dpcpp);
+    EXPECT_CONVERSION_FROM_STRING("dpc++", plssvm::sycl::implementation_type::dpcpp);
+    EXPECT_CONVERSION_FROM_STRING("DPC++", plssvm::sycl::implementation_type::dpcpp);
 }
 TEST(SYCLImplementationType, from_string_unknown) {
     // foo isn't a valid file_format_type

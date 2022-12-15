@@ -68,7 +68,7 @@ class redirect_output {
 };
 
 /**
- * @brief A class encapsulating unique temporary file's name.
+ * @brief A class encapsulating an unique temporary file's name.
  * @details On UNIX systems use `mkstemp` to create a unique file in the temporary directory. On non-UNIX system create
  *          a file in the current directory using a random `unsigned long long` number.
  */
@@ -106,30 +106,11 @@ class temporary_file {
         std::filesystem::remove(filename);
     }
 
-    std::string filename;
+    std::string filename{};
 };
 
 /**
- * @brief Convert the parameter @p value to a std::string using a std::ostringstream.
- * @details Calls `ASSERT_FALSE` if the @p value couldn't be converted to its std::string representation.
- * @tparam T the type of the value that should be converted to a std::string
- * @param[in] value the value to convert
- * @return the std::string representation of @p value (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] inline std::string convert_to_string(const T &value) {
-    std::ostringstream output;
-    output << value;
-    // test if output was successful
-    [&]() {
-        // need immediate invoked lambda because of void return in ASSERT_FALSE
-        ASSERT_FALSE(output.fail());
-    }();
-    return output.str();
-}
-/**
  * @brief Convert the std::string @p str to a value of type T using a std::istringstream.
- * @details Calls `ASSERT_FALSE` if the @p str couldn't be converted to a value of type @p T.
  * @tparam T the type of the value to which the std::string should be converted
  * @param[in] str the std::string to convert
  * @return the value represented by @p value (`[[nodiscard]]`)
@@ -139,11 +120,6 @@ template <typename T>
     std::istringstream input{ str };
     T value{};
     input >> value;
-    // test if input was successful
-    [&]() {
-        // need immediate invoked lambda because of void return in ASSERT_FALSE
-        ASSERT_FALSE(input.fail());
-    }();
     return value;
 }
 

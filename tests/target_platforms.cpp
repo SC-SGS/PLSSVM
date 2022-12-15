@@ -10,7 +10,7 @@
 
 #include "plssvm/target_platforms.hpp"
 
-#include "utility.hpp"  // util::{convert_to_string, convert_from_string}
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_GE
@@ -21,30 +21,30 @@
 // check whether the plssvm::target_platform -> std::string conversions are correct
 TEST(TargetPlatform, to_string) {
     // check conversions to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::target_platform::automatic), "automatic");
-    EXPECT_EQ(util::convert_to_string(plssvm::target_platform::cpu), "cpu");
-    EXPECT_EQ(util::convert_to_string(plssvm::target_platform::gpu_nvidia), "gpu_nvidia");
-    EXPECT_EQ(util::convert_to_string(plssvm::target_platform::gpu_amd), "gpu_amd");
-    EXPECT_EQ(util::convert_to_string(plssvm::target_platform::gpu_intel), "gpu_intel");
+    EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::automatic, "automatic");
+    EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::cpu, "cpu");
+    EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::gpu_nvidia, "gpu_nvidia");
+    EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::gpu_amd, "gpu_amd");
+    EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::gpu_intel, "gpu_intel");
 }
 TEST(TargetPlatform, to_string_unknown) {
     // check conversions to std::string from unknown target_platform
-    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::target_platform>(5)), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::target_platform>(5), "unknown");
 }
 
 // check whether the std::string -> plssvm::target_platform conversions are correct
 TEST(TargetPlatform, from_string) {
     // check conversion from std::string
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("automatic"), plssvm::target_platform::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("AUTOmatic"), plssvm::target_platform::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("cpu"), plssvm::target_platform::cpu);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("CPU"), plssvm::target_platform::cpu);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("gpu_nvidia"), plssvm::target_platform::gpu_nvidia);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("GPU_NVIDIA"), plssvm::target_platform::gpu_nvidia);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("gpu_amd"), plssvm::target_platform::gpu_amd);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("GPU_AMD"), plssvm::target_platform::gpu_amd);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("gpu_intel"), plssvm::target_platform::gpu_intel);
-    EXPECT_EQ(util::convert_from_string<plssvm::target_platform>("GPU_INTEL"), plssvm::target_platform::gpu_intel);
+    EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::target_platform::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::target_platform::automatic);
+    EXPECT_CONVERSION_FROM_STRING("cpu", plssvm::target_platform::cpu);
+    EXPECT_CONVERSION_FROM_STRING("CPU", plssvm::target_platform::cpu);
+    EXPECT_CONVERSION_FROM_STRING("gpu_nvidia", plssvm::target_platform::gpu_nvidia);
+    EXPECT_CONVERSION_FROM_STRING("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia);
+    EXPECT_CONVERSION_FROM_STRING("gpu_amd", plssvm::target_platform::gpu_amd);
+    EXPECT_CONVERSION_FROM_STRING("GPU_AMD", plssvm::target_platform::gpu_amd);
+    EXPECT_CONVERSION_FROM_STRING("gpu_intel", plssvm::target_platform::gpu_intel);
+    EXPECT_CONVERSION_FROM_STRING("GPU_INTEL", plssvm::target_platform::gpu_intel);
 }
 TEST(TargetPlatform, from_string_unknown) {
     // foo isn't a valid target_platform

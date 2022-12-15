@@ -13,9 +13,9 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
 #include "backends/compare.hpp"    // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR
 #include "naming.hpp"              // naming::real_type_to_name
-#include "utility.hpp"             // util::{convert_to_string, convert_from_string, generate_random_vector}
+#include "utility.hpp"             // util::generate_random_vector
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
 
@@ -28,27 +28,27 @@
 // check whether the plssvm::kernel_function_type -> std::string conversions are correct
 TEST(KernelType, to_string) {
     // check conversions to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::kernel_function_type::linear), "linear");
-    EXPECT_EQ(util::convert_to_string(plssvm::kernel_function_type::polynomial), "polynomial");
-    EXPECT_EQ(util::convert_to_string(plssvm::kernel_function_type::rbf), "rbf");
+    EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::linear, "linear");
+    EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::polynomial, "polynomial");
+    EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::rbf, "rbf");
 }
 TEST(KernelType, to_string_unknown) {
     // check conversions to std::string from unknown kernel_type
-    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::kernel_function_type>(3)), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kernel_function_type>(3), "unknown");
 }
 
 // check whether the std::string -> plssvm::kernel_function_type conversions are correct
 TEST(KernelType, from_string) {
     // check conversion from std::string
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("linear"), plssvm::kernel_function_type::linear);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("LINEAR"), plssvm::kernel_function_type::linear);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("0"), plssvm::kernel_function_type::linear);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("polynomial"), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("POLynomIAL"), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("1"), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("rbf"), plssvm::kernel_function_type::rbf);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("rBf"), plssvm::kernel_function_type::rbf);
-    EXPECT_EQ(util::convert_from_string<plssvm::kernel_function_type>("2"), plssvm::kernel_function_type::rbf);
+    EXPECT_CONVERSION_FROM_STRING("linear", plssvm::kernel_function_type::linear);
+    EXPECT_CONVERSION_FROM_STRING("LINEAR", plssvm::kernel_function_type::linear);
+    EXPECT_CONVERSION_FROM_STRING("0", plssvm::kernel_function_type::linear);
+    EXPECT_CONVERSION_FROM_STRING("polynomial", plssvm::kernel_function_type::polynomial);
+    EXPECT_CONVERSION_FROM_STRING("POLynomIAL", plssvm::kernel_function_type::polynomial);
+    EXPECT_CONVERSION_FROM_STRING("1", plssvm::kernel_function_type::polynomial);
+    EXPECT_CONVERSION_FROM_STRING("rbf", plssvm::kernel_function_type::rbf);
+    EXPECT_CONVERSION_FROM_STRING("rBf", plssvm::kernel_function_type::rbf);
+    EXPECT_CONVERSION_FROM_STRING("2", plssvm::kernel_function_type::rbf);
 }
 TEST(KernelType, from_string_unknown) {
     // foo isn't a valid kernel_type

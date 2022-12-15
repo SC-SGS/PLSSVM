@@ -13,9 +13,8 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 #include "naming.hpp"              // naming::real_type_to_name
-#include "utility.hpp"             // util::convert_to_string
 
 #include "fmt/core.h"  // fmt::format
 
@@ -326,11 +325,11 @@ TYPED_TEST(Parameter, to_string) {
     using real_type = TypeParam;
     // check conversions to std::string
     const plssvm::detail::parameter<real_type> param{ plssvm::kernel_function_type::linear, 3, 0.0, 0.0, 1.0 };
-    EXPECT_EQ(util::convert_to_string(param), fmt::format("kernel_type                 linear\n"
-                                                          "degree                      3\n"
-                                                          "gamma                       0\n"
-                                                          "coef0                       0\n"
-                                                          "cost                        1\n"
-                                                          "real_type                   {}\n",
-                                                          plssvm::detail::arithmetic_type_name<real_type>()));
+    EXPECT_CONVERSION_TO_STRING(param, fmt::format("kernel_type                 linear\n"
+                                                   "degree                      3\n"
+                                                   "gamma                       0\n"
+                                                   "coef0                       0\n"
+                                                   "cost                        1\n"
+                                                   "real_type                   {}\n",
+                                                   plssvm::detail::arithmetic_type_name<real_type>()));
 }

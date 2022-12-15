@@ -13,9 +13,8 @@
 #include "plssvm/core.hpp"            // namespace plssvm::sycl
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
 #include "naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
-#include "utility.hpp"             // util::{convert_to_string, convert_from_string}
 
 #include "fmt/core.h" // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
@@ -29,33 +28,34 @@
 // check whether the plssvm::backend_type -> std::string conversions are correct
 TEST(BackendType, to_string) {
     // check conversions to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::backend_type::automatic), "automatic");
-    EXPECT_EQ(util::convert_to_string(plssvm::backend_type::openmp), "openmp");
-    EXPECT_EQ(util::convert_to_string(plssvm::backend_type::cuda), "cuda");
-    EXPECT_EQ(util::convert_to_string(plssvm::backend_type::hip), "hip");
-    EXPECT_EQ(util::convert_to_string(plssvm::backend_type::opencl), "opencl");
-    EXPECT_EQ(util::convert_to_string(plssvm::backend_type::sycl), "sycl");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::automatic, "automatic");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::automatic, "automatic");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::openmp, "openmp");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::cuda, "cuda");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::hip, "hip");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::opencl, "opencl");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::sycl, "sycl");
 }
 TEST(BackendType, to_string_unknown) {
     // check conversions to std::string from unknown backend_type
-    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::backend_type>(6)), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(6), "unknown");
 }
 
 // check whether the std::string -> plssvm::backend_type conversions are correct
 TEST(BackendType, from_string) {
     // check conversion from std::string
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("automatic"), plssvm::backend_type::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("AUTOmatic"), plssvm::backend_type::automatic);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("openmp"), plssvm::backend_type::openmp);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("OpenMP"), plssvm::backend_type::openmp);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("cuda"), plssvm::backend_type::cuda);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("CUDA"), plssvm::backend_type::cuda);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("hip"), plssvm::backend_type::hip);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("HIP"), plssvm::backend_type::hip);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("opencl"), plssvm::backend_type::opencl);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("OpenCL"), plssvm::backend_type::opencl);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("sycl"), plssvm::backend_type::sycl);
-    EXPECT_EQ(util::convert_from_string<plssvm::backend_type>("SYCL"), plssvm::backend_type::sycl);
+    EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::backend_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::backend_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("openmp", plssvm::backend_type::openmp);
+    EXPECT_CONVERSION_FROM_STRING("OpenMP", plssvm::backend_type::openmp);
+    EXPECT_CONVERSION_FROM_STRING("cuda", plssvm::backend_type::cuda);
+    EXPECT_CONVERSION_FROM_STRING("CUDA", plssvm::backend_type::cuda);
+    EXPECT_CONVERSION_FROM_STRING("hip", plssvm::backend_type::hip);
+    EXPECT_CONVERSION_FROM_STRING("HIP", plssvm::backend_type::hip);
+    EXPECT_CONVERSION_FROM_STRING("opencl", plssvm::backend_type::opencl);
+    EXPECT_CONVERSION_FROM_STRING("OpenCL", plssvm::backend_type::opencl);
+    EXPECT_CONVERSION_FROM_STRING("sycl", plssvm::backend_type::sycl);
+    EXPECT_CONVERSION_FROM_STRING("SYCL", plssvm::backend_type::sycl);
 }
 TEST(BackendType, from_string_unknown) {
     // foo isn't a valid backend_type

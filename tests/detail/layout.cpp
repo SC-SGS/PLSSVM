@@ -10,10 +10,10 @@
 
 #include "plssvm/detail/layout.hpp"
 
-#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
+#include "../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "../naming.hpp"              // util::real_type_to_name
 #include "../types_to_test.hpp"       // util::real_type_gtest
-#include "../utility.hpp"             // util::{convert_to_string, convert_from_string, redirect_output}
+#include "../utility.hpp"             // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
@@ -26,21 +26,21 @@
 // check whether the plssvm::detail::layout_type -> std::string conversions are correct
 TEST(Layout, to_string) {
     // check conversion to std::string
-    EXPECT_EQ(util::convert_to_string(plssvm::detail::layout_type::aos), "Array-of-Structs (AoS)");
-    EXPECT_EQ(util::convert_to_string(plssvm::detail::layout_type::soa), "Struct-of-Arrays (SoA)");
+    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::aos, "Array-of-Structs (AoS)");
+    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::soa, "Struct-of-Arrays (SoA)");
 }
 TEST(Layout, to_string_unknown) {
     // check conversions to std::string from unknown layout_type
-    EXPECT_EQ(util::convert_to_string(static_cast<plssvm::detail::layout_type>(2)), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::detail::layout_type>(2), "unknown");
 }
 
 // check whether the std::string -> plssvm::detail::layout_type conversions are correct
 TEST(Layout, from_string) {
     // check conversion from std::string
-    EXPECT_EQ(util::convert_from_string<plssvm::detail::layout_type>("aos"), plssvm::detail::layout_type::aos);
-    EXPECT_EQ(util::convert_from_string<plssvm::detail::layout_type>("Array-of-Structs"), plssvm::detail::layout_type::aos);
-    EXPECT_EQ(util::convert_from_string<plssvm::detail::layout_type>("soa"), plssvm::detail::layout_type::soa);
-    EXPECT_EQ(util::convert_from_string<plssvm::detail::layout_type>("Struct-of-Arrays"), plssvm::detail::layout_type::soa);
+    EXPECT_CONVERSION_FROM_STRING("aos", plssvm::detail::layout_type::aos);
+    EXPECT_CONVERSION_FROM_STRING("Array-of-Structs", plssvm::detail::layout_type::aos);
+    EXPECT_CONVERSION_FROM_STRING("soa", plssvm::detail::layout_type::soa);
+    EXPECT_CONVERSION_FROM_STRING("Struct-of-Arrays", plssvm::detail::layout_type::soa);
 }
 TEST(Layout, from_string_unknown) {
     // foo isn't a valid layout_type

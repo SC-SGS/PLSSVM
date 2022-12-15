@@ -8,14 +8,14 @@
  * @brief Tests for the train cmd parameter parsing.
  */
 
-
 #include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
-#include "../../naming.hpp"   // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
-#include "../../utility.hpp"  // util::{convert_to_string, convert_from_string}
-#include "utility.hpp"        // util::ParameterBase
+#include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+#include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
+#include "../../utility.hpp"             // util::convert_from_string
+#include "utility.hpp"                   // util::ParameterBase
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
@@ -68,7 +68,7 @@ TEST_F(ParserTrain, minimal_output) {
         "real_type: double (default)\n"
         "input file (data set): 'data.libsvm'\n"
         "output file (model): 'data.libsvm.model'\n";
-    EXPECT_EQ(util::convert_to_string(parser), correct);
+    EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
 TEST_F(ParserTrain, all_arguments) {
@@ -131,7 +131,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "real_type: float\n"
         "input file (data set): 'data.libsvm'\n"
         "output file (model): 'data.libsvm.model'\n";
-    EXPECT_EQ(util::convert_to_string(parser), correct);
+    EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
 // test all command line parameter separately

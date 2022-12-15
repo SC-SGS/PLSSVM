@@ -23,6 +23,8 @@
 #include <cmath>        // std::abs
 #include <limits>       // std::numeric_limits::{epsilon, max, min}
 #include <type_traits>  // std::is_same_v
+#include <string_view>
+#include <string>
 
 namespace detail {
 
@@ -163,6 +165,54 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     }
 }
 
+/**
+ * @brief Tries to convert the @p value to a string using std::ostringstream. If it succeeds, compares the value to @p expected_str.
+ * @tparam T the type of the value to convert
+ * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
+ * @param[in] value the value to convert to a string
+ * @param[in] expected_str the expected string representation of @p value
+ */
+template <typename T, bool expect>
+inline void convert_to_string(const T &value, const std::string_view expected_str) {
+    // convert value to a string
+    std::ostringstream output;
+    output << value;
+
+    // test if the failbit has been set
+    ASSERT_FALSE(output.fail());
+
+    // check if the conversion was successful
+    if constexpr (expect) {
+        EXPECT_EQ(output.str(), expected_str);
+    } else {
+        ASSERT_EQ(output.str(), expected_str);
+    }
+}
+/**
+ * @brief Tries to convert the string @p str to a value of type T using std::istringstream. If it succeeds, compares the value to @p expected_value.
+ * @tparam T the type to which the string should be converted
+ * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
+ * @param[in] str the string to convert to a value of type T
+ * @param[in] expected_value the expected value after conversion
+ */
+template <typename T, bool expect>
+inline void convert_from_string(const std::string &str, const T& expected_value) {
+    // convert a string to a value of type T
+    std::istringstream input{ str };
+    T value{};
+    input >> value;
+
+    // test if the failbit has been set
+    ASSERT_FALSE(input.fail());
+
+    // check if the conversion was successful
+    if constexpr (expect) {
+        EXPECT_EQ(value, expected_value);
+    } else {
+        ASSERT_EQ(value, expected_value);
+    }
+}
+
 }  // namespace detail
 
 /**
@@ -175,7 +225,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_eq<decltype(val1), true>(val1, val2)
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal".
- * @details Other tests in the test case are aborted even if this test fails.
+ * @details Other tests in the test case are aborted if this test fails.
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
@@ -192,7 +242,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal".
- * @details Other tests in the test case are aborted even if this test fails.
+ * @details Other tests in the test case are aborted if this test fails.
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
@@ -209,7 +259,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal".
- * @details Other tests in the test case are aborted even if this test fails.
+ * @details Other tests in the test case are aborted if this test fails.
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
@@ -226,7 +276,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_near<decltype(val1), true>(val1, val2)
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
- * @details Other tests in the test case are aborted even if this test fails.
+ * @details Other tests in the test case are aborted if this test fails.
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
@@ -243,7 +293,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
- * @details Other tests in the test case are aborted even if this test fails.
+ * @details Other tests in the test case are aborted if this test fails.
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
@@ -260,12 +310,47 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
     detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
- * @details Other tests in the test case are aborted even if this test fails.
+ * @details Other tests in the test case are aborted if this test fails.
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2, msg) \
     detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+
+
+/**
+ * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val the value to convert to a string
+ * @param[in] str the expected string representation of @p value
+ */
+#define EXPECT_CONVERSION_TO_STRING(val, str) \
+    detail::convert_to_string<decltype(val), true>(val, str);
+/**
+ * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] val the value to convert to a string
+ * @param[in] str the expected string representation of @p value
+ */
+#define ASSERT_CONVERSION_TO_STRING(val, str) \
+    detail::convert_to_string<decltype(val), false>(val, str);
+
+/**
+ * @brief Tries to convert the string @p str to a value of type `decltype(T)`. If it succeeds, compares the value to @p val.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] str the string to convert to a value of type T
+ * @param[in] val the expected value after conversion
+ */
+#define EXPECT_CONVERSION_FROM_STRING(str, val) \
+    detail::convert_from_string<decltype(val), true>(str, val);
+/**
+ * @brief Tries to convert the string @p str to a value of type `decltype(T)`. If it succeeds, compares the value to @p val.
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] str the string to convert to a value of type T
+ * @param[in] val the expected value after conversion
+ */
+#define ASSERT_CONVERSION_FROM_STRING(str, val) \
+    detail::convert_from_string<decltype(val), false>(str, val);
 
 /**
  * @brief Check whether @p statement throws an exception of type @p expected_exception and the exception's `what()` message matches the GTest @p matcher.

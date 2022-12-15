@@ -12,9 +12,10 @@
 
 #include "plssvm/constants.hpp"  // plssvm::verbose
 
-#include "../../naming.hpp"   // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
-#include "../../utility.hpp"  // util::{convert_to_string, convert_from_string}
-#include "utility.hpp"        // util::ParameterBase
+#include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+#include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
+#include "../../utility.hpp"             // util::convert_from_string
+#include "utility.hpp"                   // util::ParameterBase
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
@@ -63,7 +64,7 @@ TEST_F(ParserScale, minimal_output) {
         "scaled file: 'data.libsvm.scaled'\n"
         "save file (scaling factors): ''\n"
         "restore file (scaling factors): ''\n";
-    EXPECT_EQ(util::convert_to_string(parser), correct);
+    EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
 TEST_F(ParserScale, all_arguments) {
@@ -102,7 +103,7 @@ TEST_F(ParserScale, all_arguments_output) {
         "scaled file: 'data.libsvm.scaled'\n"
         "save file (scaling factors): 'data.libsvm.save'\n"
         "restore file (scaling factors): ''\n";
-    EXPECT_EQ(util::convert_to_string(parser), correct);
+    EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
 // test all command line parameter separately
