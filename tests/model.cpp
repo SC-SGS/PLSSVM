@@ -27,7 +27,7 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class Model : public ::testing::Test, private util::redirect_output {};
+class Model : public ::testing::Test, private util::redirect_output<> {};
 TYPED_TEST_SUITE(Model, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(Model, typedefs) {
@@ -133,7 +133,7 @@ TYPED_TEST(Model, rho) {
     EXPECT_FLOATING_POINT_EQ(model.rho(), real_type{ 0.37330625882191915 });
 }
 
-class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output, protected util::temporary_file {};
+class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output<>, protected util::temporary_file {};
 TEST_P(ModelSave, save) {
     // create a model using an existing LIBSVM model file
     const plssvm::model<double, int> model{ fmt::format("{}{}", PLSSVM_TEST_PATH, GetParam()) };

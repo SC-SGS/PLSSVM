@@ -27,7 +27,7 @@
 #include <algorithm>    // std::generate
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::temp_directory_path, std::filesystem::exists, std::filesystem::remove
-#include <iostream>     // std::cout
+#include <iostream>     // std::ostream
 #include <limits>       // std::numeric_limits{max, lowest}
 #include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution
 #include <sstream>      // std:stringstream, std::ostringstream, std::istringstream
@@ -41,25 +41,36 @@
 namespace util {
 
 /**
- * @brief Class used to redirect the standard output inside test cases.
+ * @brief Class used to redirect the output of the std::ostream @p out inside test cases.
+ * @tparam out the output-stream to capture
  */
+template <std::ostream* out = &std::cout>
 class redirect_output {
   public:
     /**
-     * @brief Redirect the output and store the original standard output location.
+     * @brief Redirect the output and store the original output location of @p out.
      */
     redirect_output() {
-        // capture std::cout
-        sbuf_ = std::cout.rdbuf();
-        std::cout.rdbuf(buffer_.rdbuf());
+        // capture the output from the out stream
+        sbuf_ = out->rdbuf();
+        out->rdbuf(buffer_.rdbuf());
     }
     /**
-     * @brief Restore the original standard output location.
+     * @brief Restore the original output location of @p out.
      */
     virtual ~redirect_output() {
-        // end capturing std::cout
-        std::cout.rdbuf(sbuf_);
+        // end capturing the output from the out stream
+        out->rdbuf(sbuf_);
         sbuf_ = nullptr;
+    }
+    /**
+     * @brief Return the captured content.
+     * @return the captured content (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::string get_capture() {
+        // be sure that every captured output is available
+        buffer_.flush();
+        return buffer_.str();
     }
 
   private:

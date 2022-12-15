@@ -50,7 +50,7 @@ std::string GetTypeName<plssvm::hipsycl::csvm>() { return "sycl_hipsycl_csvm"; }
 }  // namespace testing::internal
 
 template <typename T>
-class CSVMFactory : public ::testing::Test, private util::redirect_output {};
+class CSVMFactory : public ::testing::Test, private util::redirect_output<> {};
 TYPED_TEST_SUITE(CSVMFactory, csvm_types);
 
 TYPED_TEST(CSVMFactory, factory_backend) {

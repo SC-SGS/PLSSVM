@@ -51,7 +51,7 @@ TEST(Layout, from_string_unknown) {
 }
 
 template <typename T>
-class Layout : public ::testing::Test, private util::redirect_output {
+class Layout : public ::testing::Test, private util::redirect_output<> {
   protected:
     void SetUp() override {
         // create matrix

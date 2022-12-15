@@ -108,55 +108,26 @@ TEST(BaseCSVM, construct_rbf_from_named_parameters) {
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
 
-class BaseCSVMWarning : public BaseCSVM {
-  public:
-    void start_capturing() {
-        sbuf = std::clog.rdbuf();
-        std::clog.rdbuf(buffer.rdbuf());
-    }
-    void end_capturing() {
-        std::clog.rdbuf(sbuf);
-        sbuf = nullptr;
-    }
-    std::string get_capture() {
-        return buffer.str();
-    }
-
-  private:
-    std::stringstream buffer{};
-    std::streambuf *sbuf{};
-};
+class BaseCSVMWarning : public BaseCSVM, protected util::redirect_output<&std::clog> {};
 
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     // start capture of std::clog
-    this->start_capturing();
-
     const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
-
     // end capture of std::clog
-    this->end_capturing();
 
     EXPECT_EQ(this->get_capture(), "degree parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     // start capture of std::clog
-    this->start_capturing();
-
     const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
-
     // end capture of std::clog
-    this->end_capturing();
 
     EXPECT_EQ(this->get_capture(), "gamma parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     // start capture of std::clog
-    this->start_capturing();
-
     const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
-
     // end capture of std::clog
-    this->end_capturing();
 
     EXPECT_EQ(this->get_capture(), "coef0 parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
@@ -219,7 +190,7 @@ TEST(BaseCSVM, set_params_from_named_parameters) {
 }
 
 template <typename T>
-class BaseCSVMFit : public BaseCSVM, private util::redirect_output, protected util::temporary_file {};
+class BaseCSVMFit : public BaseCSVM, private util::redirect_output<>, protected util::temporary_file {};
 TYPED_TEST_SUITE(BaseCSVMFit, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(BaseCSVMFit, fit) {
@@ -367,7 +338,7 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
 }
 
 template <typename T>
-class BaseCSVMPredict : public BaseCSVM, private util::redirect_output {};
+class BaseCSVMPredict : public BaseCSVM, private util::redirect_output<> {};
 TYPED_TEST_SUITE(BaseCSVMPredict, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(BaseCSVMPredict, predict) {
@@ -438,7 +409,7 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
 }
 
 template <typename T>
-class BaseCSVMScore : public BaseCSVM, private util::redirect_output {};
+class BaseCSVMScore : public BaseCSVM, private util::redirect_output<> {};
 TYPED_TEST_SUITE(BaseCSVMScore, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(BaseCSVMScore, score_model) {

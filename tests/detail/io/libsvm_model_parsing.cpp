@@ -475,7 +475,7 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, empty) {
 }
 
 template <typename T>
-class LIBSVMModelWriteBase : public ::testing::Test, private util::redirect_output, protected util::temporary_file {};
+class LIBSVMModelWriteBase : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {};
 
 template <typename T>
 class LIBSVMModelHeaderWrite : public LIBSVMModelWriteBase<T> {};

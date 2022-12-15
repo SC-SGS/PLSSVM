@@ -28,7 +28,7 @@
 
 #include <vector>  // std::vector
 
-class OpenMPCSVM : public ::testing::Test, private util::redirect_output {};
+class OpenMPCSVM : public ::testing::Test, private util::redirect_output<> {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(OpenMPCSVM, construct_parameter) {

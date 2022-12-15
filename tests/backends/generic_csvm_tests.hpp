@@ -41,7 +41,7 @@
 // TODO: add non-trivial test
 
 template <typename T>
-class GenericCSVM : public ::testing::Test, protected util::redirect_output {};
+class GenericCSVM : public ::testing::Test, protected util::redirect_output<> {};
 TYPED_TEST_SUITE_P(GenericCSVM);
 
 TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
@@ -293,7 +293,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMDeathTest,
 // clang-format on
 
 template <typename T>
-class GenericGPUCSVM : public ::testing::Test, protected util::redirect_output {};
+class GenericGPUCSVM : public ::testing::Test, protected util::redirect_output<> {};
 TYPED_TEST_SUITE_P(GenericGPUCSVM);
 
 TYPED_TEST_P(GenericGPUCSVM, generate_q) {

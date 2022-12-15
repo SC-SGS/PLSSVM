@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST
 
-class OpenCLCSVM : public ::testing::Test, private util::redirect_output {};
+class OpenCLCSVM : public ::testing::Test, private util::redirect_output<> {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(OpenCLCSVM, construct_parameter) {

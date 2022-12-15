@@ -32,7 +32,7 @@ namespace util {
 /**
  * Fixture class for testing the parameter_* classes' implementation.
  */
-class ParameterBase : public ::testing::Test, private redirect_output {
+class ParameterBase : public ::testing::Test, private redirect_output<> {
   protected:
     /**
      * @brief Create artificial argc and argv from the given string.

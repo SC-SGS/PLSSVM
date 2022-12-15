@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, ::testing::Test
 
-class CUDACSVM : public ::testing::Test, private util::redirect_output {};
+class CUDACSVM : public ::testing::Test, private util::redirect_output<> {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(CUDACSVM, construct_parameter) {

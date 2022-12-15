@@ -35,7 +35,7 @@
 //*************************************************************************************************************************************//
 
 template <typename T>
-class DataSetScaling : public ::testing::Test, private util::redirect_output {};
+class DataSetScaling : public ::testing::Test, private util::redirect_output<> {};
 TYPED_TEST_SUITE(DataSetScaling, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSetScaling, default_construct_factor) {
@@ -341,7 +341,7 @@ std::vector<T> correct_different_labels() {
 }
 
 template <typename T>
-class DataSet : public ::testing::Test, private util::redirect_output, protected util::temporary_file {};
+class DataSet : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {};
 TYPED_TEST_SUITE(DataSet, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
 TYPED_TEST(DataSet, typedefs) {
@@ -902,7 +902,7 @@ TYPED_TEST(DataSet, construct_scaled_from_vector_with_label) {
 }
 
 template <typename TypeParam>
-class DataSetSave : public ::testing::Test, private util::redirect_output, protected util::temporary_file {
+class DataSetSave : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {
   protected:
     void SetUp() override {
         const auto [first_label, second_label] = util::get_distinct_label<U>();
@@ -1020,7 +1020,7 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
 }
 
 template <typename TypeParam>
-class DataSetGetter : public ::testing::Test, private util::redirect_output {
+class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
   protected:
     void SetUp() override {
         const auto [first_label, second_label] = util::get_distinct_label<U>();
