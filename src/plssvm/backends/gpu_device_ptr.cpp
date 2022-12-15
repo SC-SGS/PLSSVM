@@ -8,6 +8,8 @@
 
 #include "plssvm/backends/gpu_device_ptr.hpp"
 
+// no includes for CUDA and HIP since they both use simple ints
+
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     // used for explicitly instantiating the OpenCL backend
     #include "CL/cl.h"                                          // cl_mem
@@ -16,10 +18,10 @@
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // used for explicitly instantiating the SYCL backend
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-        #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"
+        #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue
     #endif
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"
+        #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue
     #endif
 #endif
 
@@ -29,7 +31,8 @@
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
-#include <utility>    // std::exchange, std::move, std::swap
+#include <memory>     // std::addressof
+#include <utility>    // std::exchange, std::swap
 #include <vector>     // std::vector
 
 namespace plssvm::detail {

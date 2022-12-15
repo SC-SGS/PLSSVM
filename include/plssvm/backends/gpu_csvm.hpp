@@ -35,7 +35,7 @@ namespace plssvm::detail {
 
 /**
  * @brief A C-SVM implementation for all GPU backends to reduce code duplication.
- * @details Implements all virtual functions defined in plssvm::csvm. The GPU backends only have to implement the actual kernel launches.
+ * @details Implements all virtual functions defined in plssvm::csvm. The GPU backends only have to implement the actual kernel (launches).
  * @tparam device_ptr_t the type of the device pointer (dependent on the used backend)
  * @tparam queue_t the type of the device queue (dependent on the used backend)
  */
@@ -49,21 +49,21 @@ class gpu_csvm : public ::plssvm::csvm {
     using queue_type = queue_t;
 
     /**
-     * @brief Construct a new C-SVM using one of the GPU backends with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible parameters
+     * @copydoc plssvm::csvm::csvm()
      */
     explicit gpu_csvm(plssvm::parameter params = {}) :
         ::plssvm::csvm{ params } {}
     /**
-     * @brief Construct a new C-SVM using one of the GPU backend with the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
+     * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
+     * @tparam Args the type of the (named-)parameters
+     * @param[in] args the parameters used to construct a plssvm::parameter
      */
     template <typename... Args>
-    explicit gpu_csvm(Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... } {}
+    explicit gpu_csvm(Args &&...args) :
+        ::plssvm::csvm{ std::forward<Args>(args)... } {}
 
     /**
-     * @brief Virtual destructor to enable safe inheritance.
+     * @copydoc plssvm::csvm::~csvm()
      */
     ~gpu_csvm() override = default;
 
@@ -105,12 +105,12 @@ class gpu_csvm : public ::plssvm::csvm {
     [[nodiscard]] std::vector<real_type> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const;
 
     /**
-     * @brief Returns the number of usable devices given the kernel function @p kernel_type and the number of features @p num_features.
+     * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
      * @details Only the linear kernel supports multi-GPU execution, i.e., for the polynomial and rbf kernel, this function **always** returns 1.
      *          In addition, at most @p num_features devices may be used (i.e., if **more** devices than features are present not all devices are used).
      * @param[in] kernel the kernel function type
      * @param[in] num_features the number of features
-     * @return the number of usable devices, may be less than the discovered devices in the system (`[[nodiscard]]`)
+     * @return the number of usable devices; may be less than the discovered devices in the system (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
     /**
@@ -130,12 +130,12 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
      * @tparam real_type the type of the data points (either `float` or `double`)
-     * @param params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param data_d the data points used in the dimensional reduction located on the device(s)
-     * @param data_last_d the last data point of the data set located on the device(s)
-     * @param num_data_points the number of data points in @p data_p
-     * @param feature_ranges the range of features a specific device is responsible for
-     * @param boundary_size the size of the padding boundary
+     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] data_last_d the last data point of the data set located on the device(s)
+     * @param[in] num_data_points the number of data points in @p data_p
+     * @param[in] feature_ranges the range of features a specific device is responsible for
+     * @param[in] boundary_size the size of the padding boundary
      * @return the `q` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
@@ -180,6 +180,8 @@ class gpu_csvm : public ::plssvm::csvm {
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
+    // Note: there are two versions of each function (one for float and one for double) since virtual template functions are not allowed in C++!
+
     /**
      * @brief Synchronize the device denoted by @p queue.
      * @param[in] queue the queue denoting the device to synchronize

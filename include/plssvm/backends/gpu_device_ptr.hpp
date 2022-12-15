@@ -29,8 +29,6 @@ template <typename T, typename queue_t, typename device_pointer_t = T *>
 class gpu_device_ptr {
     // any non-reference arithmetic type
     static_assert(std::is_same_v<float, T> || std::is_same_v<double, T>, "Currently only 'float' or 'double' are allowed!");
-//    static_assert(std::is_arithmetic_v<T>, "Only arithmetic types are allowed!");
-//    static_assert(!std::is_reference_v<T>, "T must not be a reference!");
 
   public:
     /// The type of the values used in the device_ptr.
@@ -53,7 +51,7 @@ class gpu_device_ptr {
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the size @p size.
      * @param[in] size the size of the managed memory
-     * @param[in] queue the queue to manage the device_ptr
+     * @param[in] queue the queue (or similar) to manage the device_ptr
      */
     gpu_device_ptr(size_type size, const queue_type queue);
 
@@ -118,7 +116,7 @@ class gpu_device_ptr {
     }
     /**
      * @brief Get the number of elements in the wrapped device_ptr.
-     * @return the size (`[[nodiscard]]`)
+     * @return the number of elements (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type size() const noexcept {
         return size_;
@@ -142,7 +140,7 @@ class gpu_device_ptr {
     /**
      * @brief Memset all bytes using the @p pattern starting at position @p pos.
      * @param[in] pattern the memset pattern
-     * @param[in] pos the position to start the memset
+     * @param[in] pos the position to start the memset operation
      * @throws plssvm::gpu_device_ptr_exception if @p pos is greater or equal than device_ptr::size()
      */
     void memset(int pattern, size_type pos = 0);
@@ -183,7 +181,7 @@ class gpu_device_ptr {
      * @brief Copy up-to @p count many values from @p data_to_copy to the device starting at device pointer position @p pos.
      * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[in] data_to_copy the data to copy onto the device
-     * @param[in] pos the starting position for the copying in the CUDA device pointer
+     * @param[in] pos the starting position for the copying in the device pointer
      * @param[in] count the number of elements to copy
      * @throws plssvm::gpu_device_ptr_exception if @p data_to_copy is too small to satisfy the copy
      */
