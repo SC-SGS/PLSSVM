@@ -19,7 +19,7 @@
 namespace plssvm {
 
 /**
- * @brief The plssvm::source_location class represents certain information about the source code, such as file names, line numbers or function names.
+ * @brief The plssvm::source_location class represents certain information about the source code, such as file names, line numbers, or function names.
  * @details Based on [`std::source_location`](https://en.cppreference.com/w/cpp/utility/source_location).
  */
 class source_location {
@@ -71,10 +71,14 @@ class source_location {
     [[nodiscard]] constexpr std::uint_least32_t column() const noexcept { return column_; }
 
   private:
-    std::string_view function_name_{ "unknown" };
-    std::string_view file_name_{ "unknown" };
+    /// The line number as retrieved by `__builtin_LINE()`.
     std::uint_least32_t line_{ 0 };
+    /// The column number (always `0`).
     std::uint_least32_t column_{ 0 };
+    /// The file name as retrieved by `__builtin_FILE()`.
+    const char *file_name_{ "unknown" };
+    /// The function name as retrieved by `__builtin_FUNCTION()`.
+    const char *function_name_{ "unknown" };
 };
 
 }  // namespace plssvm

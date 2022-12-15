@@ -6,7 +6,8 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements custom exception classes derived from [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error) including source location information.
+ * @brief Implements custom exception classes derived from [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error)
+ *        including source location information.
  */
 
 #ifndef PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
@@ -42,7 +43,7 @@ class exception : public std::runtime_error {
     [[nodiscard]] const source_location &loc() const noexcept;
 
     /**
-     * @brief Returns a sting containing the exception's `what()` message, the name of the thrown exception class, and information about the call
+     * @brief Returns a string containing the exception's `what()` message, the name of the thrown exception class, and information about the call
      *        side where the exception has been thrown.
      * @return the exception's `what()` message including source location information (`[[nodiscard]]`)
      */
@@ -108,8 +109,7 @@ class file_not_found_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if the provided file has an invalid format for the selected parser
- *        (e.g. if the arff parser tries to parse a LIBSVM file).
+ * @brief Exception type thrown if the provided file has an invalid format for the selected parser (e.g. if the arff parser tries to parse a LIBSVM file).
  */
 class invalid_file_format_exception : public exception {
   public:
@@ -148,7 +148,7 @@ class unsupported_kernel_type_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if an error in the generic `plssvm::detail::gpu_device_ptr` occurred.
+ * @brief Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.
  */
 class gpu_device_ptr_exception : public exception {
   public:

@@ -10,8 +10,8 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_THAT
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ
 
 // dummy function to be able to specify the function name
 constexpr plssvm::source_location dummy() {
