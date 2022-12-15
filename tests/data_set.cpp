@@ -17,8 +17,8 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_2D_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_NEAR
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
-#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, instantiate_template_file}
-#include "utility.hpp"             // util::{temporary_file, redirect_output}
+#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest}
+#include "utility.hpp"             // util::{temporary_file, redirect_output, instantiate_template_file, get_distinct_label}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, TEST, TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test

@@ -15,11 +15,11 @@
 
 #include "plssvm/csvm.hpp"                   // plssvm::csvm
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
-#include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
+#include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
 
-#include <utility>  // std::pair
+#include <utility>  // std::pair, std::forward
 #include <vector>   // std::vector
 
 template <typename real_type>

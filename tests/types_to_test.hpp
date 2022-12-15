@@ -13,19 +13,12 @@
 #define PLSSVM_TESTS_TYPES_TO_TEST_HPP_
 #pragma once
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
-#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // ::testing::Types, FAIL()
+#include "gtest/gtest.h"  // ::testing::Types
 
-#include <filesystem>   // std::filesystem::exists
-#include <fstream>      // std::ifstream, std::ofstream
-#include <string>       // std::string
-#include <tuple>        // std::tuple
-#include <type_traits>  // std::is_same_v, std::is_signed_v, std::is_unsigned_v, std::is_floating_point_v
-#include <utility>      // std::pair, std::make_pair
+#include <string>  // std::string
+#include <tuple>   // std::tuple
 
 namespace util {
 
@@ -145,56 +138,6 @@ using real_type_kernel_function_gtest = ::testing::Types<
     parameter_definition<double, plssvm::kernel_function_type::linear>,
     parameter_definition<double, plssvm::kernel_function_type::polynomial>,
     parameter_definition<double, plssvm::kernel_function_type::rbf>>;
-
-/**
- * @brief Get two distinct labels based on the provided label type.
- * @details The distinct label values must be provided in increasing order (for a defined order in `std::map`).
- * @tparam T the label type
- * @return two distinct label (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] inline std::pair<T, T> get_distinct_label() {
-    if constexpr (std::is_same_v<T, bool>) {
-        return std::make_pair(false, true);
-    } else if constexpr (sizeof(T) == sizeof(char)) {
-        return std::make_pair('a', 'b');
-    } else if constexpr (std::is_signed_v<T>) {
-        return std::make_pair(-1, 1);
-    } else if constexpr (std::is_unsigned_v<T>) {
-        return std::make_pair(1, 2);
-    } else if constexpr (std::is_floating_point_v<T>) {
-        return std::make_pair(-1.5, 1.5);
-    } else if constexpr (std::is_same_v<T, std::string>) {
-        return std::make_pair("cat", "dog");
-    } else {
-        static_assert(plssvm::detail::always_false_v<T>, "Unknown label type provided!");
-    }
-}
-
-/**
- * @brief Replace the label placeholders in @p template_filename with the labels based on the template type @p T and
- *        write the instantiated template file to @p output_filename.
- * @tparam T the type of the labels to instantiate the file for
- * @param[in] template_filename the file used as template
- * @param[in] output_filename the file to save the instantiate template to
- */
-template <typename T>
-inline void instantiate_template_file(const std::string &template_filename, const std::string &output_filename) {
-    // check whether the template_file exists
-    if (!std::filesystem::exists(template_filename)) {
-        FAIL() << fmt::format("The template file {} does not exist!", template_filename);
-    }
-    // get a label pair based on the current label type
-    const auto [first_label, second_label] = util::get_distinct_label<T>();
-    // read the data set template and replace the label placeholder with the correct labels
-    std::ifstream input{ template_filename };
-    std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-    plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
-    plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
-    // write the data set with the correct labels to the temporary file
-    std::ofstream out{ output_filename };
-    out << str;
-}
 
 }  // namespace util
 

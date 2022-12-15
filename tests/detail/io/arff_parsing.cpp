@@ -15,8 +15,8 @@
 
 #include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_THROW_WHAT
 #include "../../naming.hpp"              // naming::real_type_label_type_combination_to_name
-#include "../../types_to_test.hpp"       // util::{instantiate_template_file, real_type_label_type_combination_gtest}
-#include "../../utility.hpp"             // util::temporary_file
+#include "../../types_to_test.hpp"       // util::real_type_label_type_combination_gtest
+#include "../../utility.hpp"             // util::{temporary_file, instantiate_template_file, get_distinct_label}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr

@@ -21,9 +21,9 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::cost, plssvm::kernel_type, plssvm::detail::parameter
 
-#include "compare.hpp"             // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "utility.hpp"             // util::redirect_output
+#include "compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
+#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "../utility.hpp"             // util::{redirect_output, generate_random_vector}
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads

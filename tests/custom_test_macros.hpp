@@ -13,18 +13,20 @@
 #define PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
 
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
-#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::always_false_v
+#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::{always_false_v, remove_cvref_t}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::StrEq
-#include "gtest/gtest.h"           // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, SUCCESS, FAIL, EXPECT_LT, ASSERT_LT
+#include "gtest/gtest.h"           // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, FAIL, EXPECT_LT, ASSERT_LT
 
-#include <algorithm>    // std::max
+#include <algorithm>    // std::max, std::min
 #include <cmath>        // std::abs
 #include <limits>       // std::numeric_limits::{epsilon, max, min}
+#include <sstream>      // std::ostringstream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v
-#include <string_view>
-#include <string>
+#include <vector>       // std::vector
 
 namespace detail {
 
@@ -196,7 +198,7 @@ inline void convert_to_string(const T &value, const std::string_view expected_st
  * @param[in] expected_value the expected value after conversion
  */
 template <typename T, bool expect>
-inline void convert_from_string(const std::string &str, const T& expected_value) {
+inline void convert_from_string(const std::string &str, const T &expected_value) {
     // convert a string to a value of type T
     std::istringstream input{ str };
     T value{};
@@ -316,7 +318,6 @@ inline void convert_from_string(const std::string &str, const T& expected_value)
  */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2, msg) \
     detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
-
 
 /**
  * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.

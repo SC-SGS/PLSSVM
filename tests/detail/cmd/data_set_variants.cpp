@@ -15,8 +15,7 @@
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
 #include "../../naming.hpp"         // naming::pretty_print_data_set_factory
-#include "../../types_to_test.hpp"  // util::instantiate_template_file
-#include "../../utility.hpp"        // util::temporary_file
+#include "../../utility.hpp"        // util::{temporary_file, instantiate_template_file}
 #include "utility.hpp"              // util::ParameterBase
 
 #include "fmt/core.h"     // fmt::format

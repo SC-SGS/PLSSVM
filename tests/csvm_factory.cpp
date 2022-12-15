@@ -8,7 +8,7 @@
  * @brief Tests for the CSVM factory function.
  */
 
-#include "plssvm/csvm_factory.hpp"
+#include "plssvm/csvm_factory.hpp" // TODO: sycl:: using somewhere als
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::csvm_to_backend_type_v
 #include "plssvm/csvm.hpp"                   // plssvm::csvm_backend_exists_v
@@ -28,11 +28,18 @@
 #include <string>  // std::string
 #include <tuple>   // std::ignore
 
+namespace util {
+
 // clang-format off
-using csvm_types = ::testing::Types<plssvm::openmp::csvm,
+/// A type list of all supported C-SVMs.
+using csvm_types_gtest = ::testing::Types<plssvm::openmp::csvm,
                                     plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm,
                                     plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
+/// A type list of all supported SYCL C-SVMs.
+using sycl_csvm_types_gtest = ::testing::Types<plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
 // clang-format on
+
+}  // namespace util
 
 namespace testing::internal {  // dirty hack to have type names for incomplete types
 template <>
@@ -51,7 +58,7 @@ std::string GetTypeName<plssvm::hipsycl::csvm>() { return "sycl_hipsycl_csvm"; }
 
 template <typename T>
 class CSVMFactory : public ::testing::Test, private util::redirect_output<> {};
-TYPED_TEST_SUITE(CSVMFactory, csvm_types);
+TYPED_TEST_SUITE(CSVMFactory, util::csvm_types_gtest);
 
 TYPED_TEST(CSVMFactory, factory_backend) {
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
@@ -190,11 +197,9 @@ TEST(CSVMFactory, factory_named_parameter) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm(plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01));
 }
 
-using sycl_csvm_types = ::testing::Types<plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
-
 template <typename T>
 class SYCLCSVMFactory : public CSVMFactory<T> {};
-TYPED_TEST_SUITE(SYCLCSVMFactory, sycl_csvm_types);
+TYPED_TEST_SUITE(SYCLCSVMFactory, util::sycl_csvm_types_gtest);
 
 TYPED_TEST(SYCLCSVMFactory, factory_sycl_implementation) {
     // the backend to use
