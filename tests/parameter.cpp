@@ -15,6 +15,7 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 #include "naming.hpp"              // naming::real_type_to_name
+#include "types_to_test.hpp"       // util::real_type_gtest
 
 #include "fmt/core.h"  // fmt::format
 
