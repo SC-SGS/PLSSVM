@@ -51,19 +51,6 @@ class csvm : public ::plssvm::csvm {
     explicit csvm(target_platform target, parameter params = {});
 
     /**
-     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] named_args the additional optional named-parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
-     */
-    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... } {
-        this->init(target);
-    }
-    /**
      * @brief Construct a new C-SVM using the OpenMP backend and the optionally provided @p named_args.
      * @param[in] named_args the additional optional named-parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
@@ -75,6 +62,19 @@ class csvm : public ::plssvm::csvm {
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         // the default target is the automatic one
         this->init(plssvm::target_platform::automatic);
+    }
+    /**
+     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     */
+    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvm(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... } {
+        this->init(target);
     }
 
   protected:
