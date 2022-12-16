@@ -25,7 +25,7 @@ template __global__ void device_kernel_q_linear(float *, const float *, const fl
 template __global__ void device_kernel_q_linear(double *, const double *, const double *, const kernel_index_type, const kernel_index_type);
 
 template <typename real_type>
-__global__ void device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) {
+__global__ void device_kernel_q_polynomial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) {
     const kernel_index_type index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp{ 0.0 };
     for (kernel_index_type i = 0; i < num_cols; ++i) {
@@ -33,11 +33,11 @@ __global__ void device_kernel_q_poly(real_type *q, const real_type *data_d, cons
     }
     q[index] = pow(gamma * temp + coef0, degree);
 }
-template __global__ void device_kernel_q_poly(float *, const float *, const float *, const kernel_index_type, const kernel_index_type, const int, const float, const float);
-template __global__ void device_kernel_q_poly(double *, const double *, const double *, const kernel_index_type, const kernel_index_type, const int, const double, const double);
+template __global__ void device_kernel_q_polynomial(float *, const float *, const float *, const kernel_index_type, const kernel_index_type, const int, const float, const float);
+template __global__ void device_kernel_q_polynomial(double *, const double *, const double *, const kernel_index_type, const kernel_index_type, const int, const double, const double);
 
 template <typename real_type>
-__global__ void device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) {
+__global__ void device_kernel_q_rbf(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) {
     const kernel_index_type index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp{ 0.0 };
     for (kernel_index_type i = 0; i < num_cols; ++i) {
@@ -45,7 +45,7 @@ __global__ void device_kernel_q_radial(real_type *q, const real_type *data_d, co
     }
     q[index] = exp(-gamma * temp);
 }
-template __global__ void device_kernel_q_radial(float *, const float *, const float *, const kernel_index_type, const kernel_index_type, const float);
-template __global__ void device_kernel_q_radial(double *, const double *, const double *, const kernel_index_type, const kernel_index_type, const double);
+template __global__ void device_kernel_q_rbf(float *, const float *, const float *, const kernel_index_type, const kernel_index_type, const float);
+template __global__ void device_kernel_q_rbf(double *, const double *, const double *, const kernel_index_type, const kernel_index_type, const double);
 
 }  // namespace plssvm::cuda

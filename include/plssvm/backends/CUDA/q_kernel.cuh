@@ -44,7 +44,7 @@ __global__ void device_kernel_q_linear(real_type *q, const real_type *data_d, co
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0);
+__global__ void device_kernel_q_polynomial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0);
 
 /**
  * @brief Calculates the `q` vector using the radial basis functions C-SVM kernel.
@@ -58,7 +58,7 @@ __global__ void device_kernel_q_poly(real_type *q, const real_type *data_d, cons
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma);
+__global__ void device_kernel_q_rbf(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma);
 
 }  // namespace plssvm::cuda
 

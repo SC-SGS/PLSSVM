@@ -25,7 +25,7 @@ namespace plssvm::cuda::detail {
  * @param[in] count the number of values to fill
  */
 template <typename value_type, typename size_type>
-__global__ void fill_array(value_type* data, value_type value, size_type pos, size_type count) {
+__global__ void fill_array(value_type* data, const value_type value, const size_type pos, const size_type count) {
     const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     // fill the array
     if (idx < count) {

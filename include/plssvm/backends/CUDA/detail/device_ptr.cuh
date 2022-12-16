@@ -23,7 +23,7 @@ namespace plssvm::cuda::detail {
  */
 template <typename T>
 class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
-    /// The template base type of the OpenCL device_ptr class.
+    /// The template base type of the CUDA device_ptr class.
     using base_type = ::plssvm::detail::gpu_device_ptr<T, int>;
 
     using base_type::data_;

@@ -48,7 +48,7 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *data_d, 
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0);
+__global__ void device_kernel_predict_polynomial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0);
 
 /**
  * @brief Predicts the labels for data points using the radial basis functions kernel function.
@@ -65,7 +65,7 @@ __global__ void device_kernel_predict_poly(real_type *out_d, const real_type *da
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma);
+__global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma);
 
 }  // namespace plssvm::cuda
 
