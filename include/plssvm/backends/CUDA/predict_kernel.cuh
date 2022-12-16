@@ -35,7 +35,7 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *data_d, 
  * @brief Predicts the labels for data points using the polynomial kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam real_type the type of the data
- * @param[in] out_d the calculated predictions
+ * @param[out] out_d the calculated predictions
  * @param[in] data_d the one-dimension support vector matrix
  * @param[in] data_last_d the last row of the support vector matrix
  * @param[in] alpha_d the previously calculated weight for each data point
@@ -54,7 +54,7 @@ __global__ void device_kernel_predict_polynomial(real_type *out_d, const real_ty
  * @brief Predicts the labels for data points using the radial basis functions kernel function.
  * @details Currently only single GPU execution is supported.
  * @tparam real_type the type of the data
- * @param[in] out_d the calculated predictions
+ * @param[out] out_d the calculated predictions
  * @param[in] data_d the one-dimension support vector matrix
  * @param[in] data_last_d the last row of the support vector matrix
  * @param[in] alpha_d the previously calculated weight for each data point
