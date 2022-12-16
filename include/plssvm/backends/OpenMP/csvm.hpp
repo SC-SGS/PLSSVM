@@ -142,7 +142,9 @@ class csvm : public ::plssvm::csvm {
   private:
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.
-     * @param[in] target the platform to run on (must be plssvm::target_platform::cpu or plssvm::target_platform::automatic for the OpenMP backend).
+     * @param[in] target the target platform to use
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
     void init(target_platform target);
 };

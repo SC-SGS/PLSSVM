@@ -163,6 +163,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @brief Initialize all important states related to the CUDA backend.
      * @param[in] target the target platform to use
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
      */
     void init(target_platform target);
 };

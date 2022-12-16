@@ -52,6 +52,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @brief Construct a new C-SVM using the HIP backend with the parameters given through @p params.
      * @details Currently only tested with AMD GPUs.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
      * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
      * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
@@ -62,6 +63,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @details Currently only tested with AMD GPUs.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
      * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
      * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
@@ -72,6 +74,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @brief Construct a new C-SVM using the HIP backend and the optionally provided @p named_args.
      * @details Currently only tested with AMD GPUs.
      * @param[in] named_args the additional optional named-parameter
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
      * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
      * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
@@ -84,6 +87,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @details Currently only tested with AMD GPUs.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named-parameter
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
      * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
      * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
@@ -163,6 +167,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @brief Initialize all important states related to the HIP backend.
      * @param[in] target the target platform to use
+     * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
+     * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
+     * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
      */
     void init(target_platform target);
 };
