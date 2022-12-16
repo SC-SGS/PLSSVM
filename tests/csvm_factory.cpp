@@ -8,7 +8,7 @@
  * @brief Tests for the CSVM factory function.
  */
 
-#include "plssvm/csvm_factory.hpp" // TODO: sycl:: using somewhere als
+#include "plssvm/csvm_factory.hpp"
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::csvm_to_backend_type_v
 #include "plssvm/csvm.hpp"                   // plssvm::csvm_backend_exists_v

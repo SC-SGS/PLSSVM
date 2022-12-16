@@ -19,6 +19,9 @@
 #include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_backend_exception
 
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // alias plssvm::sycl to the PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION
+                                                      // or to plssvm::dpcpp if no SYCL backend is available
+
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm, plssvm::csvm_backend_exists_v
@@ -39,11 +42,6 @@
     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
         #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm, plssvm::csvm_backend_exists_v
     #endif
-
-// define the default used SYCL implementation
-namespace plssvm::sycl {
-using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
-}
 #endif
 
 #include "fmt/core.h"     // fmt::format
