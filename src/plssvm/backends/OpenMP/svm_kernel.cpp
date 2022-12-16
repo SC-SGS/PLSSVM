@@ -29,6 +29,7 @@ void device_kernel(const std::vector<real_type> &q, std::vector<real_type> &ret,
 
     const auto dept = static_cast<kernel_index_type>(d.size());
 
+    // can't use default(none) due to the parameter pack Args (args)
     #pragma omp parallel for collapse(2) schedule(dynamic)
     for (kernel_index_type i = 0; i < dept; i += OPENMP_BLOCK_SIZE) {
         for (kernel_index_type j = 0; j < dept; j += OPENMP_BLOCK_SIZE) {

@@ -9,26 +9,30 @@
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/q_kernel.hpp"    // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_poly, plssvm::openmp::device_kernel_q_radial
-#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_poly, plssvm::openmp::device_kernel_radial
+#include "plssvm/backends/OpenMP/q_kernel.hpp"    // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
+#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_polynomial, plssvm::openmp::device_kernel_rbf
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
-#include "plssvm/exceptions/exceptions.hpp"       // plssvm::unsupported_kernel_type_exception
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <algorithm>  // std::fill, std::all_of
-#include <chrono>     // std::chrono
+#include <algorithm>  // std::fill, std::all_of, std::min
+#include <chrono>     // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
+#include <cmath>      // std::fma
 #include <iostream>   // std::cout, std::endl
+#include <utility>    // std::pair, std::make_pair, std::move
 #include <vector>     // std::vector
 
 namespace plssvm::openmp {
+
+csvm::csvm(parameter params) :
+    csvm{ plssvm::target_platform::automatic, params } {}
 
 csvm::csvm(const target_platform target, parameter params) :
     ::plssvm::csvm{ params } {

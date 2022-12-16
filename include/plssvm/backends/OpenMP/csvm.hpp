@@ -13,13 +13,13 @@
 #define PLSSVM_BACKENDS_OPENMP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"                   // plssvm::csvm
-#include "plssvm/detail/utility.hpp"         // PLSSVM_REQUIRES
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+#include "plssvm/csvm.hpp"                // plssvm::csvm
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
+#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
+#include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
 #include <type_traits>  // std::true_type
+#include <utility>      // std::forward, std::pair
 #include <vector>       // std::vector
 
 namespace plssvm {
@@ -34,18 +34,17 @@ class csvm : public ::plssvm::csvm {
   public:
     /**
      * @brief Construct a new C-SVM using the OpenMP backend with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible parameters
-     * @throws plssvm::csvm::csvm() exceptions
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    explicit csvm(parameter params = {}) :
-        csvm{ plssvm::target_platform::automatic, params } {}
+    explicit csvm(parameter params = {});
     /**
      * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform with the parameters given through @p params.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
-     * @throws plssvm::csvm::csvm() exceptions
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
@@ -54,8 +53,8 @@ class csvm : public ::plssvm::csvm {
     /**
      * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
-     * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::csvm::csvm() exceptions
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
@@ -66,8 +65,8 @@ class csvm : public ::plssvm::csvm {
     }
     /**
      * @brief Construct a new C-SVM using the OpenMP backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::csvm::csvm() exceptions
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
@@ -127,7 +126,7 @@ class csvm : public ::plssvm::csvm {
     [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const;
 
     /**
-     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the CPU using OpenMP.
+     * @brief Select the correct kernel based on the value of plssvm::parameter::kernel_type and run it on the CPU using OpenMP.
      * @tparam real_type the type of the data points (either `float` or `double`)
      * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
      * @param[in] q the `q` vector used in the dimensional reduction
@@ -143,7 +142,7 @@ class csvm : public ::plssvm::csvm {
   private:
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.
-     * @param[in] target the platform to run on (must be `plssvm::target_platform::cpu` or `plssvm::target_platform::automatic` for the OpenMP backend).
+     * @param[in] target the platform to run on (must be plssvm::target_platform::cpu or plssvm::target_platform::automatic for the OpenMP backend).
      */
     void init(target_platform target);
 };
@@ -153,7 +152,7 @@ class csvm : public ::plssvm::csvm {
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the OpenMP are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the OpenMP backend are available.
  */
 template <>
 struct csvm_backend_exists<openmp::csvm> : std::true_type {};

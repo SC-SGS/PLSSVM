@@ -21,7 +21,7 @@ namespace plssvm::openmp {
  * @brief Calculates the C-SVM kernel using the linear kernel function.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -35,7 +35,7 @@ void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type
  * @brief Calculates the C-SVM kernel using the polynomial kernel function.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
  * @param[in] QA_cost the bottom right matrix entry multiplied by cost
@@ -52,7 +52,7 @@ void device_kernel_polynomial(const std::vector<real_type> &q, std::vector<real_
  * @brief Calculates the C-SVM kernel using the radial basis function kernel function.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
