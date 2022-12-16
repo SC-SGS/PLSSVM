@@ -15,10 +15,6 @@ set(PLSSVM_SYCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 
-# set target properties
-set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME plssvm-SYCL)
-add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE)
-
 # list of found SYCL implementations
 set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 
@@ -87,7 +83,6 @@ if(hipSYCL_FOUND)
     endif()
 
     target_link_libraries(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
-    target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
 else()
     message(CHECK_FAIL "not found")
 endif()
@@ -214,7 +209,6 @@ if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     endif()
 
     target_link_libraries(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
-    target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
 else()
     message(CHECK_FAIL "not found")
 endif()
@@ -226,6 +220,18 @@ if(NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
         message(SEND_ERROR "Cannot find requested backend: SYCL!")
     endif()
     return()
+endif()
+
+
+# set target properties
+set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME plssvm-SYCL)
+add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE)
+
+if(hipSYCL_FOUND)
+    target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
+endif()
+if(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
+    target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
 endif()
 
 ## check if environment variables are correctly set if more than one SYCL implementation has been found
