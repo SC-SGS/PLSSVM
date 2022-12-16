@@ -25,7 +25,7 @@ namespace plssvm::hip::detail {
 
 /**
  * @brief Check the HIP error @p code. If @p code signals an error, throw a plssvm::hip::backend_exception.
- * @details The exception contains the error name and error string.
+ * @details The exception contains the following message: "CUDA assert 'HIP_ERROR_NAME' (HIP_ERROR_CODE): HIP_ERROR_STRING".
  * @param[in] code the HIP error code to check
  * @throws plssvm::hip::backend_exception if the error code signals a failure
  */
@@ -38,7 +38,7 @@ void gpu_assert(hipError_t code);
 [[nodiscard]] int get_device_count();
 
 /**
- * @brief Set the device @p device to the active HIP device.
+ * @brief Set the @p device to the active HIP device.
  * @param[in] device the now active device
  * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
  */

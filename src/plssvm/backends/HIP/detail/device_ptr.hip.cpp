@@ -14,7 +14,7 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"              // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 
-#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime_api.h"  // HIP runtime functions
 
 #include "fmt/core.h"  // fmt::format
 

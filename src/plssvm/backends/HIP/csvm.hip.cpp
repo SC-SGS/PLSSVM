@@ -9,30 +9,39 @@
 #include "plssvm/backends/HIP/csvm.hpp"
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
-#include "plssvm/backends/HIP/detail/utility.hip.hpp"     // plssvm::hip::detail::device_synchronize, plssvm::detail::hip::get_device_count, plssvm::detail::hip::set_device, plssvm::detail::hip::peek_at_last_error
+#include "plssvm/backends/HIP/detail/utility.hip.hpp"     // plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
 #include "plssvm/backends/HIP/exceptions.hpp"             // plssvm::hip::backend_exception
-#include "plssvm/backends/HIP/predict_kernel.hip.hpp"     // plssvm::hip::kernel_w, plssvm::hip::predict_points_poly, plssvm::hip::predict_points_rbf
-#include "plssvm/backends/HIP/q_kernel.hip.hpp"           // plssvm::hip::device_kernel_q_linear, plssvm::hip::device_kernel_q_poly, plssvm::hip::device_kernel_q_radial
-#include "plssvm/backends/HIP/svm_kernel.hip.hpp"         // plssvm::hip::device_kernel_linear, plssvm::hip::device_kernel_poly, plssvm::hip::device_kernel_radial
+#include "plssvm/backends/HIP/predict_kernel.hip.hpp"     // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/backends/HIP/q_kernel.hip.hpp"           // plssvm::hip::detail::{device_kernel_q_linear, device_kernel_q_polynomial, device_kernel_q_rbf}
+#include "plssvm/backends/HIP/svm_kernel.hip.hpp"         // plssvm::hip::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/detail/assert.hpp"                       // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"              // plssvm::detail::execution_range
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"               // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include "hip/hip_runtime_api.h"
 
-#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
 #include <utility>    // std::pair, std::make_pair
 #include <vector>     // std::vector
 
 namespace plssvm::hip {
+
+csvm::csvm(parameter params) :
+    csvm{ plssvm::target_platform::automatic, params } {}
+
+csvm::csvm(target_platform target, parameter params) :
+    base_type{ params } {
+    this->init(target);
+}
 
 void csvm::init(const target_platform target) {
     // check if supported target platform has been selected
@@ -102,11 +111,11 @@ void csvm::run_q_kernel_impl(const std::size_t device, const ::plssvm::detail::e
             break;
         case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            hip::device_kernel_q_poly<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            hip::device_kernel_q_polynomial<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            hip::device_kernel_q_radial<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            hip::device_kernel_q_rbf<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -126,11 +135,11 @@ void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail:
             break;
         case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            hip::device_kernel_poly<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value());
+            hip::device_kernel_polynomial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            hip::device_kernel_radial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value());
+            hip::device_kernel_rbf<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -160,10 +169,10 @@ void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &rang
         case kernel_function_type::linear:
             break;
         case kernel_function_type::polynomial:
-            hip::device_kernel_predict_poly<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            hip::device_kernel_predict_polynomial<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            hip::device_kernel_predict_radial<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            hip::device_kernel_predict_rbf<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();

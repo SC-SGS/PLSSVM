@@ -6,15 +6,15 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions for the HIP backend.
+ * @brief Defines a HIP function for filling a device pointer with a specific value.
  */
 
 #ifndef PLSSVM_BACKENDS_HIP_DETAIL_FILL_KERNEL_HPP_
 #define PLSSVM_BACKENDS_HIP_DETAIL_FILL_KERNEL_HPP_
 #pragma once
 
-#include "hip/hip_runtime.h"
-#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"      // HIP runtime functions
+#include "hip/hip_runtime_api.h"  // HIP runtime functions
 
 namespace plssvm::hip::detail {
 
@@ -29,7 +29,7 @@ namespace plssvm::hip::detail {
  */
 template <typename value_type, typename size_type>
 __global__ void fill_array(value_type *data, value_type value, size_type pos, size_type count) {
-    const size_type idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     // fill the array
     if (idx < count) {
         data[pos + idx] = value;

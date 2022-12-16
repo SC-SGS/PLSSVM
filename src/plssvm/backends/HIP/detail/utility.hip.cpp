@@ -44,7 +44,7 @@ void device_synchronize(const int device) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", get_device_count(), device) };
     }
     peek_at_last_error();
-    PLSSVM_HIP_ERROR_CHECK(hipSetDevice(device));
+    set_device(device);
     PLSSVM_HIP_ERROR_CHECK(hipDeviceSynchronize());
 }
 
