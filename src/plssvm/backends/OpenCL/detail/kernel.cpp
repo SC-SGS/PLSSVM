@@ -17,8 +17,8 @@
 
 namespace plssvm::opencl::detail {
 
-kernel::kernel(cl_kernel p_compute_kernel) noexcept :
-    compute_kernel{ p_compute_kernel } {}
+kernel::kernel(cl_kernel compute_kernel_p) noexcept :
+    compute_kernel{ compute_kernel_p } {}
 
 kernel::kernel(kernel &&other) noexcept :
     compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}

@@ -11,8 +11,8 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts, plssvm::opencl::detail::create_command_queues, plssvm::opencl::detail::run_kernel, plssvm::opencl::detail::kernel_type_to_function_name, plssvm::opencl::detail::device_synchronize
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{compute_kernel_name, kernel}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize}
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                             // plssvm::kernel_index_type
@@ -20,22 +20,31 @@
 #include "plssvm/detail/execution_range.hpp"                // plssvm::detail::execution_range
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "fmt/chrono.h"   // can directly print std::chrono literals
-#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono
 #include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
 #include <string>     // std::string
 #include <tuple>      // std::tie
 #include <utility>    // std::pair, std::make_pair, std::move
 #include <vector>     // std::vector
 
 namespace plssvm::opencl {
+
+csvm::csvm(parameter params) :
+    csvm{ plssvm::target_platform::automatic, params } {}
+
+csvm::csvm(target_platform target, parameter params) :
+    base_type{ params } {
+    this->init(target);
+}
 
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled

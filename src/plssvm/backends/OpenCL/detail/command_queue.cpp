@@ -16,8 +16,9 @@
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clCreateCommandQueueWithProperties, clCreateCommandQueue, clReleaseCommandQueue
 
-#include <memory>   // std::addressof
-#include <utility>  // std::exchange
+#include <memory>       // std::addressof
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::exchange, std::move
 
 namespace plssvm::opencl::detail {
 

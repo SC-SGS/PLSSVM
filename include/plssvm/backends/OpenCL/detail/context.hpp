@@ -1,14 +1,16 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*
-* @brief Defines a very small RAII wrapper around a cl_context including all associated devices and one command queue per device.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Defines a very small RAII wrapper around a cl_context including all associated devices and one command queue per device.
+ */
 
+#ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_CONTEXT_HPP_
+#define PLSSVM_BACKENDS_OPENCL_DETAIL_CONTEXT_HPP_
 #pragma once
 
 #include "CL/cl.h"  // cl_context, cl_platform_id, cl_device_id
@@ -80,3 +82,5 @@ class context {
 };
 
 }  // namespace plssvm::opencl::detail
+
+#endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_CONTEXT_HPP_

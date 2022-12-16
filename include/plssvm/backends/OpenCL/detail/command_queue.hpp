@@ -9,10 +9,11 @@
  * @brief Defines a very small RAII wrapper around a cl_command_queue including information about its associated OpenCL context and device.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_COMMAND_QUEUE_HPP_
+#define PLSSVM_BACKENDS_OPENCL_DETAIL_COMMAND_QUEUE_HPP_
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
-#include "plssvm/detail/type_traits.hpp"             // plssvm::detail::always_false_v
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
 
@@ -75,7 +76,7 @@ class command_queue {
 
     /**
      * @brief Add a new OpenCL @p compute_kernel used for @p name to this command queue.
-     * @tparam real_type the floating point type used as type in the kernel
+     * @tparam real_type the floating point type used as type in the kernel (either `float` or `double`)
      * @param[in] name the name of the kernel that is to be added
      * @param[in] compute_kernel the kernel to add
      */
@@ -84,8 +85,9 @@ class command_queue {
 
     /**
      * @brief Get the OpenCL kernel used for @p name.
-     * @tparam real_type the floating point type used as type in the kernel
+     * @tparam real_type the floating point type used as type in the kernel (either `float` or `double`)
      * @param[in] name the name of the kernel
+     * @throws std::out_of_range if a kernel with @p name is requested that has not been compiled for this command queue
      * @return the compiled kernel (`[[nodiscard]]`)
      */
     template <typename real_type>
@@ -100,3 +102,5 @@ class command_queue {
 };
 
 }  // namespace plssvm::opencl::detail
+
+#endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_COMMAND_QUEUE_HPP_

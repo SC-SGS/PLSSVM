@@ -17,8 +17,7 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -40,11 +39,11 @@ namespace opencl {
 /**
  * @brief A C-SVM implementation using OpenCL as backend.
  */
-class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::opencl::detail::device_ptr, ::plssvm::opencl::detail::command_queue> {
+class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::command_queue> {
   protected:
     // protected for test MOCK class
     /// The template base type of the OpenCL C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<::plssvm::opencl::detail::device_ptr, ::plssvm::opencl::detail::command_queue>;
+    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::command_queue>;
 
     using base_type::devices_;
 
@@ -55,31 +54,42 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::opencl::detail::device_
     /**
      * @brief Construct a new C-SVM using the OpenCL backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::opencl::backend_exception if the requested target is not available
+     * @throws plssvm::opencl::backend_exception if more than one OpenCL context for the requested target was found
+     * @throws plssvm::opencl::backend_exception if no device for the requested target was found
      */
-    explicit csvm(parameter params = {}) :
-        csvm{ plssvm::target_platform::automatic, params } {}
+    explicit csvm(parameter params = {});
     /**
      * @brief Construct a new C-SVM using the OpenCL backend on the @p target platform with the parameters given through @p params.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::opencl::backend_exception if the requested target is not available
+     * @throws plssvm::opencl::backend_exception if more than one OpenCL context for the requested target was found
+     * @throws plssvm::opencl::backend_exception if no device for the requested target was found
      */
-    explicit csvm(target_platform target, parameter params = {}) :
-        base_type{ params } {
-        this->init(target);
-    }
+    explicit csvm(target_platform target, parameter params = {});
 
     /**
      * @brief Construct a new C-SVM using the OpenCL backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
+     * @param[in] named_args the additional optional named-parameter
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::opencl::backend_exception if the requested target is not available
+     * @throws plssvm::opencl::backend_exception if more than one OpenCL context for the requested target was found
+     * @throws plssvm::opencl::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
         csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
-
     /**
      * @brief Construct a new C-SVM using the OpenCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
-     * @param[in] named_args the additional optional named arguments
+     * @param[in] named_args the additional optional named-parameter
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::opencl::backend_exception if the requested target is not available
+     * @throws plssvm::opencl::backend_exception if more than one OpenCL context for the requested target was found
+     * @throws plssvm::opencl::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
@@ -159,6 +169,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::opencl::detail::device_
     /**
      * @brief Initialize all important states related to the OpenCL backend.
      * @param[in] target the target platform to use
+     * @throws plssvm::opencl::backend_exception if the requested target is not available
+     * @throws plssvm::opencl::backend_exception if more than one OpenCL context for the requested target was found
+     * @throws plssvm::opencl::backend_exception if no device for the requested target was found
      */
     void init(target_platform target);
 };
@@ -168,7 +181,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<::plssvm::opencl::detail::device_
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the OpenCL are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the OpenCL backend are available.
  */
 template <>
 struct csvm_backend_exists<opencl::csvm> : std::true_type {};

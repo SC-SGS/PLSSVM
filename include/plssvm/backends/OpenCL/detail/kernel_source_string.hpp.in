@@ -13,6 +13,8 @@
 
 #include <string>  // std::string
 
+// TODO: move to runtime? -> the CMake approach is rather ugly :/
+
 namespace plssvm::opencl::detail {
 
 /// An std::string containing all OpenCL kernel sources. Created and configured during CMake configuration.
