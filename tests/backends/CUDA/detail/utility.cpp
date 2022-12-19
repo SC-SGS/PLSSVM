@@ -8,8 +8,10 @@
  * @brief Tests for the custom utility functions related to the CUDA backend.
  */
 
-// necessary only for compiling the tests // TODO: check
-#include "cuda_runtime.h"  // cudaError_t
+// necessary only for compiling the tests
+#if __has_include("cuda_runtime.h")
+    #include "cuda_runtime.h"  // cudaError_t
+#endif
 
 #include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
 
@@ -20,6 +22,8 @@
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
+
+#if __has_include("cuda_runtime.h")
 
 TEST(CUDAUtility, gpu_assert) {
     // cudaSuccess must not throw
@@ -34,6 +38,8 @@ TEST(CUDAUtility, gpu_assert) {
                               plssvm::cuda::backend_exception,
                               ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
 }
+
+#endif
 
 TEST(CUDAUtility, get_device_count) {
     // must not return a negative number
