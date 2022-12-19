@@ -80,7 +80,7 @@ namespace plssvm::hipsycl::detail {
     return std::make_pair(std::move(queues), target);
 }
 
-void device_synchronize(queue &q) {
+void device_synchronize(const queue &q) {
     q.impl->sycl_queue.wait_and_throw();
 }
 

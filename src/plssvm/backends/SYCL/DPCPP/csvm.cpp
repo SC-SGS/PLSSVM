@@ -118,8 +118,7 @@ csvm::~csvm() {
 }
 
 void csvm::device_synchronize(const queue_type &queue) const {
-    queue_type &q = const_cast<queue_type &>(queue); // TODO: remove UB const_cast
-    detail::device_synchronize(q);
+    detail::device_synchronize(queue);
 }
 
 template <std::size_t I>

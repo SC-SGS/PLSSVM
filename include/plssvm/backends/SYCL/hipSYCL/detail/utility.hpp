@@ -39,7 +39,7 @@ namespace plssvm::hipsycl::detail {
  * @brief Wait for the compute device associated with @p q to finish.
  * @param[in] q the SYCL queue to synchronize
  */
-void device_synchronize(queue &q);
+void device_synchronize(const queue &q);
 
 /**
  * @brief Get the default SYCL queue.
