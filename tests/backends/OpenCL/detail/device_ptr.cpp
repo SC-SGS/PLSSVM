@@ -8,18 +8,18 @@
  * @brief Tests for the OpenCL backend device pointer.
  */
 
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"
-#include "plssvm/backends/OpenCL/detail/context.hpp"
-#include "plssvm/backends/OpenCL/detail/utility.hpp"
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
 
-#include "backends/generic_device_ptr_tests.h"
+#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
 #include <vector>  // std::vector
 
-bool operator==(const plssvm::opencl::detail::command_queue* lhs, const plssvm::opencl::detail::command_queue &rhs) noexcept {
+bool operator==(const plssvm::opencl::detail::command_queue *lhs, const plssvm::opencl::detail::command_queue &rhs) noexcept {
     return lhs->queue == rhs.queue;
 }
 

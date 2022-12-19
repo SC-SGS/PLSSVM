@@ -26,6 +26,7 @@ target_link_libraries(${PLSSVM_OPENMP_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBR
 include(GoogleTest)
 gtest_discover_tests(${PLSSVM_OPENMP_TEST_NAME})
 
+
 # add test as coverage dependency
 if(TARGET coverage)
     add_dependencies(coverage ${PLSSVM_OPENMP_TEST_NAME})

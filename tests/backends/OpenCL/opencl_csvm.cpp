@@ -8,15 +8,17 @@
 
 #include "backends/OpenCL/mock_opencl_csvm.hpp"
 
-#include "backends/generic_csvm_tests.hpp"  // generic::write_model_test, generic::generate_q_test, generic::device_kernel_test, generic::predict_test, generic::accuracy_test
-#include "utility.hpp"                      // util::google_test::parameter_definition, util::google_test::parameter_definition_to_name
-
 #include "plssvm/backends/OpenCL/csvm.hpp"        // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/exceptions.hpp"  // plssvm::opencl::backend_exception
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::kernel_type, plssvm::cost
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST
+#include "backends/generic_csvm_tests.hpp"  // generic CSVM tests to instantiate
+#include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT
+#include "utility.hpp"                      // util::redirect_output
+
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
 class OpenCLCSVM : public ::testing::Test, private util::redirect_output<> {};
 

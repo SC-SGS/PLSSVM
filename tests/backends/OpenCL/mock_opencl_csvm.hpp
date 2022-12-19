@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
+#include "plssvm/parameter.hpp"             // plssvm::parameter
 
 /**
  * @brief GTest mock class for the OpenCL CSVM.
@@ -26,7 +27,8 @@ class mock_opencl_csvm : public plssvm::opencl::csvm {
 
     // constructors necessary to compile the correct kernel functions
     mock_opencl_csvm() = default;
-    explicit mock_opencl_csvm(plssvm::parameter params) : base_type{ params } { }
+    explicit mock_opencl_csvm(plssvm::parameter params) :
+        base_type{ params } {}
 
     // make protected member functions public
     using base_type::calculate_w;

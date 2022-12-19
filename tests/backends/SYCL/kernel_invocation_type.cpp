@@ -8,11 +8,11 @@
  * @brief Tests for functions related to the different SYCL kernel invocation types.
  */
 
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
+#include "gtest/gtest.h"  // TEST, EXPECT_TRUE
 
 #include <sstream>  // std::istringstream
 

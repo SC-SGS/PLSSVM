@@ -8,14 +8,12 @@
  * @brief Tests for the custom utility functions related to the SYCL backends.
  */
 
-#include "plssvm/target_platforms.hpp"
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
+    #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::get_device_list
 
 TEST(DPCPPUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);
@@ -27,7 +25,7 @@ TEST(DPCPPUtility, get_device_list) {
 #endif
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"
+    #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"  // plssvm::hipsycl::detail::get_device_list
 
 TEST(hipSYCLUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::hipsycl::detail::get_device_list(plssvm::target_platform::automatic);

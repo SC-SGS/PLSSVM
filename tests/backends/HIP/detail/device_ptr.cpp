@@ -8,13 +8,11 @@
  * @brief Tests for the HIP backend device pointer.
  */
 
-#include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"
+#include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 
-#include "backends/generic_device_ptr_tests.h"
+#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
-
-#include <cstddef>  // std::size_t
 
 template <typename T>
 struct device_ptr_test_type {
@@ -32,5 +30,5 @@ using device_ptr_test_types = ::testing::Types<
     device_ptr_test_type<double>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, DevicePtr, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);

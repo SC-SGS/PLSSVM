@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
+#include "plssvm/parameter.hpp"             // plssvm::parameter
 
 /**
  * @brief GTest mock class for the OpenMP CSVM.
@@ -23,7 +24,8 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
 
   public:
     mock_openmp_csvm() = default;
-    explicit mock_openmp_csvm(plssvm::parameter params) : base_type{ params } { }
+    explicit mock_openmp_csvm(plssvm::parameter params) :
+        base_type{ params } {}
 
     // make protected member functions public
     using base_type::calculate_w;

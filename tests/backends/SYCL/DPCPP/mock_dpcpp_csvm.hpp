@@ -9,11 +9,12 @@
  * @brief MOCK class for the C-SVM class using the SYCL backend with DPC++ as SYCL implementation.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_SYCL_HIPSYCL_MOCK_DPCPP_CSVM_HPP_
-#define PLSSVM_TESTS_BACKENDS_SYCL_HIPSYCL_MOCK_DPCPP_CSVM_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_SYCL_DPCPP_MOCK_DPCPP_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_SYCL_DPCPP_MOCK_DPCPP_CSVM_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 /**
  * @brief GTest mock class for the SYCL CSVM using DPC++ as SYCL implementation.
@@ -41,4 +42,4 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
     using base_type::devices_;
 };
 
-#endif  // PLSSVM_TESTS_BACKENDS_SYCL_HIPSYCL_MOCK_DPCPP_CSVM_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_SYCL_DPCPP_MOCK_DPCPP_CSVM_HPP_

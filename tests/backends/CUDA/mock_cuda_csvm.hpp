@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm
+#include "plssvm/parameter.hpp"           // plssvm::parameter
 
 /**
  * @brief GTest mock class for the CUDA CSVM.
@@ -25,7 +26,8 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type::device_ptr_type;
 
     mock_cuda_csvm() = default;
-    explicit mock_cuda_csvm(plssvm::parameter params) : base_type{ params } { }
+    explicit mock_cuda_csvm(plssvm::parameter params) :
+        base_type{ params } {}
 
     // make protected member functions public
     using base_type::calculate_w;

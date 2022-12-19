@@ -14,7 +14,6 @@ set(PLSSVM_SYCL_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/implementation_type.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sycl_csvm.cpp
 )
 
 if(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})

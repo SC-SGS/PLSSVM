@@ -14,7 +14,7 @@
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                   // plssvm::detail::data_set
+#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "backends/compare.hpp"             // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}

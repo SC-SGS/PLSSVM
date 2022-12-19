@@ -11,8 +11,8 @@ set(PLSSVM_CUDA_TEST_NAME CUDA_tests)
 set(PLSSVM_CUDA_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cuda_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 
 # add test executable
@@ -25,6 +25,7 @@ target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRAR
 # add tests to google test
 include(GoogleTest)
 gtest_discover_tests(${PLSSVM_CUDA_TEST_NAME})
+
 
 # add test as coverage dependency
 if(TARGET coverage)

@@ -8,9 +8,9 @@
  * @brief Tests for the custom exception classes related to the OpenCL backend.
  */
 
-#include "plssvm/backends/OpenCL/exceptions.hpp"  // plssvm::hip::backend_exception
+#include "plssvm/backends/OpenCL/exceptions.hpp"  // plssvm::opencl::backend_exception
 
-#include "backends/generic_exceptions_tests.hpp"  // Exception
+#include "backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 

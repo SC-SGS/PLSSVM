@@ -13,15 +13,14 @@
 #include "plssvm/backends/HIP/csvm.hpp"        // plssvm::hip::csvm
 #include "plssvm/backends/HIP/exceptions.hpp"  // plssvm::hip::backend_exception
 #include "plssvm/kernel_function_types.hpp"    // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                // plssvm::parameter
+#include "plssvm/parameter.hpp"                // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"         // plssvm::target_platform
 
-#include "backends/generic_csvm_tests.hpp"  // CSVM, CSVMDeathTest
-#include "custom_test_macros.hpp"      // EXPECT_THROW_WHAT
-#include "utility.hpp"                 // util::redirect_output
+#include "backends/generic_csvm_tests.hpp"  // generic CSVM tests to instantiate
+#include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT
+#include "utility.hpp"                      // util::redirect_output
 
-#include "gtest/gtest.h"  // ::testing::StaticAssertTypeEq, ::testing::Test, ::testing::Types, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_NO_THROW
-
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
 class HIPCSVM : public ::testing::Test, private util::redirect_output<> {};
 
@@ -108,6 +107,6 @@ using csvm_test_types = ::testing::Types<
 
 // instantiate type-parameterized tests
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, GenericCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPABackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, GenericGPUCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);;
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);

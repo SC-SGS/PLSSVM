@@ -8,15 +8,13 @@
  * @brief Tests for the custom error code implementation necessary for the OpenCL backend.
  */
 
-#include "plssvm/backends/OpenCL/detail/error_code.hpp"
+#include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 
 #include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW, ::testing::StartsWith
+#include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW, EXPECT_TRUE, EXPECT_FALSE
 
 TEST(OpenCLErrorCode, default_construct) {
     // the default error code should signal success

@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 
 /**
  * @brief GTest mock class for the SYCL CSVM using hipSYCL as SYCL implementation.

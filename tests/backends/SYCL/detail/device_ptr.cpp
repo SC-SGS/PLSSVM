@@ -8,9 +8,7 @@
  * @brief Tests for the SYCL backend device pointer.
  */
 
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
-
-#include "backends/generic_device_ptr_tests.h"
+#include "backends/generic_device_ptr_tests.h"  // plssvm::cuda::detail::device_ptr
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 

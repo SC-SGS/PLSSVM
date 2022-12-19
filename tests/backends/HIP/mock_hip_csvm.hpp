@@ -9,11 +9,12 @@
  * @brief MOCK class for the C-SVM class using the HIP backend.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_
-#define PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_CUDA_MOCK_HIP_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_CUDA_MOCK_HIP_CSVM_HPP_
 #pragma once
 
 #include "plssvm/backends/HIP/csvm.hpp"  // plssvm::hip::csvm
+#include "plssvm/parameter.hpp"          // plssvm::parameter
 
 /**
  * @brief GTest mock class for the HPI CSVM.
@@ -25,7 +26,8 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
     using base_type::device_ptr_type;
 
     mock_hip_csvm() = default;
-    explicit mock_hip_csvm(plssvm::parameter params) : base_type{ params } { }
+    explicit mock_hip_csvm(plssvm::parameter params) :
+        base_type{ params } {}
 
     // make protected member functions public
     using base_type::calculate_w;
@@ -40,4 +42,4 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
     using base_type::devices_;
 };
 
-#endif  // PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_CUDA_MOCK_HIP_CSVM_HPP_
