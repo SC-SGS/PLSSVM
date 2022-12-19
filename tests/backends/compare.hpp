@@ -27,7 +27,7 @@ namespace detail {
  * @tparam real_type the type of the data
  * @param[in] x the first vector
  * @param[in] y the second vector
- * @param[in] num_devices used mimic the floating point operation order in case of multi device execution
+ * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
@@ -64,22 +64,22 @@ template <typename real_type>
  * @param[in] params the parameter used in the kernel function
  * @param[in] x the first vector
  * @param[in] y the second vector
- * @param[in] num_devices used mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
+ * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] real_type kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<real_type> &x, const std::vector<real_type> &y, const std::size_t num_devices = 1);
+[[nodiscard]] real_type kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<real_type> &x, const std::vector<real_type> &y, std::size_t num_devices = 1);
 /**
  * @brief Computes the `q` vector, a subvector of the least-squares matrix equation, using the kernel function determined by @p params.
  * @details Single core execution for a deterministic order of floating point operations.
  * @tparam real_type the type of the data
  * @param[in] params the parameter used in the kernel function
  * @param[in] data the data points
- * @param[in] num_devices used mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
+ * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> generate_q(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> generate_q(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, std::size_t num_devices = 1);
 
 /**
  * @brief Compute the `w` vector used to speedup the prediction when using the linear kernel.
@@ -87,11 +87,11 @@ template <typename real_type>
  * @tparam real_type the type of the data
  * @param[in] support_vectors the previously learned support vectors
  * @param[in] weights the previously learned weights
- * @param[in] num_devices used mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
+ * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the resulting `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights, const std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights, std::size_t num_devices = 1);
 
 /**
  * @brief Computes the device kernel, using the kernel function determined by @p params.
@@ -106,7 +106,7 @@ template <typename real_type>
  * @return the resulting `x` vector of Ax=b (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> device_kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &rhs, const std::vector<real_type> &q, const real_type QA_cost, const real_type add);
+[[nodiscard]] std::vector<real_type> device_kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &rhs, const std::vector<real_type> &q, real_type QA_cost, real_type add);
 
 }  // namespace compare
 

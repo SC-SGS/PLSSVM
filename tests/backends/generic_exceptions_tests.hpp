@@ -19,7 +19,7 @@
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex}
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test, ::testing::Types
+#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
 
 #include <string>       // std::string
 #include <string_view>  // std::string_view

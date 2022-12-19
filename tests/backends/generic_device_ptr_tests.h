@@ -17,12 +17,12 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
+#include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
+                           // ::testing::{Test, hasSubstr}
+
 #include <cstring>  // std::memset
 #include <utility>  // std::move, std::swap
 #include <vector>   // std::vector
-
-#include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
-                           // ::testing::{Test, hasSubstr}
 
 template <typename T>
 class DevicePtr : public ::testing::Test {};
@@ -50,7 +50,7 @@ TYPED_TEST_P(DevicePtr, construct) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-//    EXPECT_EQ(ptr.queue(), queue);
+    //    EXPECT_EQ(ptr.queue(), queue);
     EXPECT_NE(ptr.get(), nullptr);
     EXPECT_EQ(ptr.size(), 42);
     EXPECT_FALSE(ptr.empty());
@@ -66,7 +66,7 @@ TYPED_TEST_P(DevicePtr, move_construct) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-//    EXPECT_EQ(second.queue(), queue);
+    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
     EXPECT_FALSE(second.empty());
@@ -91,7 +91,7 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-//    EXPECT_EQ(second.queue(), queue);
+    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
     EXPECT_FALSE(second.empty());
@@ -117,7 +117,7 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-//    EXPECT_EQ(second.queue(), queue);
+    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
     EXPECT_FALSE(second.empty());
@@ -142,7 +142,7 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-//    EXPECT_EQ(second.queue(), queue);
+    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
     EXPECT_FALSE(second.empty());

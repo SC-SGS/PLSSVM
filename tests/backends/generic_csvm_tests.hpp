@@ -21,12 +21,13 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::cost, plssvm::kernel_type, plssvm::detail::parameter
 
-#include "compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
-#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_EQ
 #include "../utility.hpp"             // util::{redirect_output, generate_random_vector}
+#include "compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
                           // ::testing::Test
 
@@ -34,11 +35,13 @@
 #include <cstddef>   // std::size_t
 #include <fstream>   // std::ifstream
 #include <iterator>  // std::istream_iterator
-#include <limits>    // std::numeric_limits
+#include <limits>    // std::numeric_limits::epsilon
 #include <tuple>     // std::ignore
 #include <vector>    // std::vector
 
-// TODO: add non-trivial test
+//*************************************************************************************************************************************//
+//                                                                 CSVM                                                                //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class GenericCSVM : public ::testing::Test, protected util::redirect_output<> {};
@@ -83,6 +86,8 @@ TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
     // EXPECT_FLOATING_POINT_NEAR(calculated_rho, real_type{ 0.0 });
     EXPECT_FLOATING_POINT_NEAR(std::abs(calculated_rho) - std::numeric_limits<real_type>::epsilon(), std::numeric_limits<real_type>::epsilon());
 }
+
+// TODO: add non-trivial test
 
 TYPED_TEST_P(GenericCSVM, predict_values) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
@@ -131,6 +136,8 @@ TYPED_TEST_P(GenericCSVM, predict_values) {
         EXPECT_TRUE(w.empty());
     }
 }
+
+// TODO: SYCL kernel invocation type tests, constructor: params + kernel invocation type!
 
 TYPED_TEST_P(GenericCSVM, predict) {
     using csvm_type = typename TypeParam::csvm_type;
@@ -188,6 +195,10 @@ TYPED_TEST_P(GenericCSVM, score) {
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
                             solve_system_of_linear_equations_trivial, predict_values, predict, score);
 // clang-format on
+
+//*************************************************************************************************************************************//
+//                                                           CSVM DeathTests                                                           //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class GenericCSVMDeathTest : public GenericCSVM<T> {};
@@ -291,6 +302,10 @@ TYPED_TEST_P(GenericCSVMDeathTest, predict_values) {
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMDeathTest,
                             solve_system_of_linear_equations, predict_values);
 // clang-format on
+
+//*************************************************************************************************************************************//
+//                                                               GPUCSVM                                                               //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class GenericGPUCSVM : public ::testing::Test, protected util::redirect_output<> {};
@@ -593,18 +608,9 @@ REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
                             select_num_used_devices, setup_data_on_device_minimal, setup_data_on_device, num_available_devices);
 // clang-format on
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+//*************************************************************************************************************************************//
+//                                                         GPUCSVM DeathTests                                                          //
+//*************************************************************************************************************************************//
 
 template <typename T>
 class GenericGPUCSVMDeathTest : public GenericGPUCSVM<T> {};
