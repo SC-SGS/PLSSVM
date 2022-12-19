@@ -37,7 +37,7 @@
 #include <functional>   // std::hash
 #include <ios>          // std::ios_base, std::streamsize
 #include <iostream>     // std::cout, std::endl
-#include <iterator>     // istreambuf_iterator
+#include <iterator>     // std::istreambuf_iterator
 #include <limits>       // std::numeric_limits
 #include <map>          // std::map
 #include <string>       // std::string
@@ -211,8 +211,15 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
 
     error_code err, err_bin;
 
-    // use the `raw_kernel_src_string` provided in the kernel_source_string.hpp header
-    std::string kernel_src_string{ raw_kernel_src_string };
+    // create one string from each OpenCL source file in the OpenCL include directory
+    const std::filesystem::path base_path{ PLSSVM_OPENCL_KERNEL_SOURCE_DIR };
+    std::string kernel_src_string{};
+    // note: the detail/atomics.cl file must be included first!
+    for (const auto &path : { base_path / "detail/atomics.cl", base_path / "q_kernel.cl", base_path / "svm_kernel.cl", base_path / "predict_kernel.cl" }) {
+        std::ifstream file{ base_path / path };
+        kernel_src_string.append((std::istreambuf_iterator<char>{ file }),
+                                 std::istreambuf_iterator<char>{});
+    }
 
     // replace types in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
@@ -222,7 +229,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
     // append number of device to influence checksum calculation
-    kernel_src_string.append(fmt::format("\n// num_devices: {}", contexts[0].devices.size()));
+    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY));
 
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
