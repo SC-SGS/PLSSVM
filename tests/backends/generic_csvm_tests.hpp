@@ -137,7 +137,7 @@ TYPED_TEST_P(GenericCSVM, predict_values) {
     }
 }
 
-// TODO: SYCL kernel invocation type tests, constructor: params + kernel invocation type!
+// TODO: SYCL kernel invocation type tests
 
 TYPED_TEST_P(GenericCSVM, predict) {
     using csvm_type = typename TypeParam::csvm_type;
