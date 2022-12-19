@@ -13,15 +13,14 @@
 #define PLSSVM_BACKENDS_SYCL_SVM_KERNEL_HIERARCHICAL_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
+#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 #include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
-#include "plssvm/detail/execution_range.hpp"        // plssvm::detail::execution_range
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::handler, sycl::h_item, sycl::range, sycl::private_memory, sycl::pow, sycl::exp
 
-#include <cstddef>  // std::size_t
+#include <cstddef>  // std::size_t (cant' use kernel_index_type because of comparisons with unsigned long values)
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Calculates the C-SVM kernel using the hierarchical formulation and the linear kernel function.
@@ -149,7 +148,7 @@ class hierarchical_device_kernel_linear {
                         }
                         if (private_i(idx) + x > private_j(idx) + y) {
                             // upper triangular matrix
-                            atomic_op<real_type>{ ret_[private_i(idx) + y] } += temp * d_[private_j(idx) + x];
+                            detail::atomic_op<real_type>{ ret_[private_i(idx) + y] } += temp * d_[private_j(idx) + x];
                             ret_jx += temp * d_[private_i(idx) + y];
                         } else if (private_i(idx) + x == private_j(idx) + y) {
                             // diagonal
@@ -160,13 +159,14 @@ class hierarchical_device_kernel_linear {
                             }
                         }
                     }
-                    atomic_op<real_type>{ ret_[private_j(idx) + x] } += ret_jx;
+                    detail::atomic_op<real_type>{ ret_[private_j(idx) + x] } += ret_jx;
                 }
             }
         });
     }
 
   private:
+    /// @cond Doxygen_suppress
     const real_type *q_;
     real_type *ret_;
     const real_type *d_;
@@ -177,6 +177,7 @@ class hierarchical_device_kernel_linear {
     const kernel_index_type feature_range_;
     const real_type add_;
     const kernel_index_type device_;
+    /// @endcond
 };
 
 /**
@@ -185,7 +186,7 @@ class hierarchical_device_kernel_linear {
  * @tparam T the type of the data
  */
 template <typename T>
-class hierarchical_device_kernel_poly {
+class hierarchical_device_kernel_polynomial {
   public:
     /// The type of the data.
     using real_type = T;
@@ -205,7 +206,7 @@ class hierarchical_device_kernel_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    hierarchical_device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) :
+    hierarchical_device_kernel_polynomial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) :
         q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -302,20 +303,21 @@ class hierarchical_device_kernel_poly {
                         const real_type temp = (::sycl::pow(gamma_ * private_matr(idx)[x][y] + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[private_i(idx) + y] - q_[private_j(idx) + x]) * add_;
                         if (private_i(idx) + x > private_j(idx) + y) {
                             // upper triangular matrix
-                            atomic_op<real_type>{ ret_[private_i(idx) + y] } += temp * d_[private_j(idx) + x];
+                            detail::atomic_op<real_type>{ ret_[private_i(idx) + y] } += temp * d_[private_j(idx) + x];
                             ret_jx += temp * d_[private_i(idx) + y];
                         } else if (private_i(idx) + x == private_j(idx) + y) {
                             // diagonal
                             ret_jx += (temp + cost_ * add_) * d_[private_i(idx) + y];
                         }
                     }
-                    atomic_op<real_type>{ ret_[private_j(idx) + x] } += ret_jx;
+                    detail::atomic_op<real_type>{ ret_[private_j(idx) + x] } += ret_jx;
                 }
             }
         });
     }
 
   private:
+    /// @cond Doxygen_suppress
     const real_type *q_;
     real_type *ret_;
     const real_type *d_;
@@ -328,6 +330,7 @@ class hierarchical_device_kernel_poly {
     const int degree_;
     const real_type gamma_;
     const real_type coef0_;
+    /// @endcond
 };
 
 /**
@@ -336,7 +339,7 @@ class hierarchical_device_kernel_poly {
  * @tparam T the type of the data
  */
 template <typename T>
-class hierarchical_device_kernel_radial {
+class hierarchical_device_kernel_rbf {
   public:
     /// The type of the data.
     using real_type = T;
@@ -354,7 +357,7 @@ class hierarchical_device_kernel_radial {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
-    hierarchical_device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
+    hierarchical_device_kernel_rbf(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
         q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, gamma_{ gamma } {}
 
     /**
@@ -451,20 +454,21 @@ class hierarchical_device_kernel_radial {
                         const real_type temp = (::sycl::exp(-gamma_ * private_matr(idx)[x][y]) + QA_cost_ - q_[private_i(idx) + y] - q_[private_j(idx) + x]) * add_;
                         if (private_i(idx) + x > private_j(idx) + y) {
                             // upper triangular matrix
-                            atomic_op<real_type>{ ret_[private_i(idx) + y] } += temp * d_[private_j(idx) + x];
+                            detail::atomic_op<real_type>{ ret_[private_i(idx) + y] } += temp * d_[private_j(idx) + x];
                             ret_jx += temp * d_[private_i(idx) + y];
                         } else if (private_i(idx) + x == private_j(idx) + y) {
                             // diagonal
                             ret_jx += (temp + cost_ * add_) * d_[private_i(idx) + y];
                         }
                     }
-                    atomic_op<real_type>{ ret_[private_j(idx) + x] } += ret_jx;
+                    detail::atomic_op<real_type>{ ret_[private_j(idx) + x] } += ret_jx;
                 }
             }
         });
     }
 
   private:
+    /// @cond Doxygen_suppress
     const real_type *q_;
     real_type *ret_;
     const real_type *d_;
@@ -475,8 +479,9 @@ class hierarchical_device_kernel_radial {
     const kernel_index_type num_cols_;
     const real_type add_;
     const real_type gamma_;
+    /// @endcond
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_SVM_KERNEL_HIERARCHICAL_HPP_

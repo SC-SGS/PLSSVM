@@ -15,10 +15,9 @@
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
 #include "fmt/core.h"     // fmt::format
-#include "sycl/sycl.hpp"  // sycl::queue, sycl::malloc_device, sycl::free
+#include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
 
 #include <algorithm>  // std::min
-#include <memory>     // std::unique_ptr
 
 namespace plssvm::dpcpp::detail {
 

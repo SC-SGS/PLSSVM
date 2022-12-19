@@ -9,6 +9,8 @@
  * @brief Implements custom exception classes specific to the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_CSVM_HPP_
+#define PLSSVM_BACKENDS_SYCL_CSVM_HPP_
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
@@ -50,7 +52,7 @@ namespace hipsycl {
 class backend_exception : public sycl::backend_exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::sycl::backend_exception.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -67,7 +69,7 @@ namespace dpcpp {
 class backend_exception : public sycl::backend_exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::sycl::backend_exception.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -77,3 +79,5 @@ class backend_exception : public sycl::backend_exception {
 }  // namespace dpcpp
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_BACKENDS_SYCL_CSVM_HPP_

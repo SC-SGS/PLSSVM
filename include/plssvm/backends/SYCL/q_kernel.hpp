@@ -17,7 +17,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Functor to calculate the `q` vector using the linear C-SVM kernel.
@@ -55,11 +55,13 @@ class device_kernel_q_linear {
     }
 
   private:
+    /// @cond Doxygen_suppress
     real_type *q_;
     const real_type *data_d_;
     const real_type *data_last_;
     const kernel_index_type num_rows_;
     const kernel_index_type feature_range_;
+    /// @endcond
 };
 
 /**
@@ -68,7 +70,7 @@ class device_kernel_q_linear {
  * @tparam T the type of the data
  */
 template <typename T>
-class device_kernel_q_poly {
+class device_kernel_q_polynomial {
   public:
     /// The type of the data.
     using real_type = T;
@@ -84,7 +86,7 @@ class device_kernel_q_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_q_poly(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) :
+    device_kernel_q_polynomial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -101,6 +103,7 @@ class device_kernel_q_poly {
     }
 
   private:
+    /// @cond Doxygen_suppress
     real_type *q_;
     const real_type *data_d_;
     const real_type *data_last_;
@@ -109,6 +112,7 @@ class device_kernel_q_poly {
     const int degree_;
     const real_type gamma_;
     const real_type coef0_;
+    /// @endcond
 };
 
 /**
@@ -117,7 +121,7 @@ class device_kernel_q_poly {
  * @tparam T the type of the data
  */
 template <typename T>
-class device_kernel_q_radial {
+class device_kernel_q_rbf {
   public:
     /// The type of the data.
     using real_type = T;
@@ -131,7 +135,7 @@ class device_kernel_q_radial {
      * @param[in] num_cols the number of columns in the data matrix
      * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
-    device_kernel_q_radial(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) :
+    device_kernel_q_rbf(real_type *q, const real_type *data_d, const real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) :
         q_{ q }, data_d_{ data_d }, data_last_{ data_last }, num_rows_{ num_rows }, num_cols_{ num_cols }, gamma_{ gamma } {}
 
     /**
@@ -148,12 +152,14 @@ class device_kernel_q_radial {
     }
 
   private:
+    /// @cond Doxygen_suppress
     real_type *q_;
     const real_type *data_d_;
     const real_type *data_last_;
     const kernel_index_type num_rows_;
     const kernel_index_type num_cols_;
     const real_type gamma_;
+    /// @endcond
 };
 
 }  // namespace plssvm::sycl

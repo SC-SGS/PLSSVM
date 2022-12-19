@@ -16,17 +16,16 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::dpcpp::detail::queue (PImpl)
 
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-#include "plssvm/detail/type_traits.hpp"                    // plssvm::detail::remove_cvref_t
-#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
 
-#include <memory>       // std::unique_ptr
-#include <type_traits>  // std::is_same_v
+#include <cstddef>      // std::size_t
+#include <type_traits>  // std::is_same_v, std::true_type
 #include <utility>      // std::forward
 
 namespace plssvm {
@@ -41,14 +40,12 @@ class execution_range;
 namespace dpcpp {
 
 /**
- * @brief A C-SVM implementation using SYCL as backend.
- * @details If DPC++ is available, this class also exists in the `plssvm::dpcpp` namespace.
- *          If hipSYCL is available, this class also exists in the `plssvm::hipsycl` namespace.
+ * @brief A C-SVM implementation using DPC++ as SYCL backend.
  */
 class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue> {
   protected:
     // protected for the test MOCK class
-    /// The template base type of the SYCL C-SVM class.
+    /// The template base type of the DPC++ SYCL C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue>;
 
     using base_type::devices_;
@@ -60,31 +57,38 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
+     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
-    explicit csvm(parameter params = {}) :
-        csvm{ plssvm::target_platform::automatic, params } {}
+    explicit csvm(parameter params = {});
     /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform with the parameters given through @p params.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
+     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
-    explicit csvm(target_platform target, parameter params = {}) :
-        base_type{ params } {
-        this->init(target);
-    }
+    explicit csvm(target_platform target, parameter params = {});
 
     /**
      * @brief Construct a new C-SVM using the SYCL backend and the optionally provided @p named_args.
      * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
+     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
         csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
-
     /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
+     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
@@ -170,6 +174,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @brief Initialize all important states related to the SYCL backend.
      * @param[in] target the target platform to use
+     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
+     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
     void init(target_platform target);
 
@@ -181,7 +187,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with hipSYCL as SYCL implementation are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with DPC++ as SYCL implementation are available.
  */
 template <>
 struct csvm_backend_exists<dpcpp::csvm> : std::true_type {};

@@ -34,15 +34,16 @@ namespace plssvm::dpcpp::detail {
  * @return the devices and used target platform (`[[nodiscard]]`)
  */
 [[nodiscard]] std::pair<std::vector<queue>, target_platform> get_device_list(target_platform target);
+
 /**
- * @brief Wait for the compute device associated with @p queue to finish.
+ * @brief Wait for the compute device associated with @p q to finish.
  * @param[in] q the SYCL queue to synchronize
  */
 void device_synchronize(queue &q);
 
 /**
  * @brief Get the default SYCL queue.
- * @details Only used in the tests, but must be defined and implemented here!
+ * @details Only used in the tests, but **must** be defined and implemented here!
  * @return the default queue (`[[nodiscard]]`)
  */
 [[nodiscard]] queue get_default_queue();

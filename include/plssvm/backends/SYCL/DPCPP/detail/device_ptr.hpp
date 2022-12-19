@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
-#include "plssvm/backends/gpu_device_ptr.hpp"     // plssvm::detail::gpu_device_ptr
+#include "plssvm/backends/gpu_device_ptr.hpp"           // plssvm::detail::gpu_device_ptr
 
 namespace plssvm::dpcpp::detail {
 
@@ -50,7 +50,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
      */
     device_ptr() = default;
     /**
-     * @brief Allocates `size * sizeof(T)` bytes on the device associated with @p queue.
+     * @brief Allocates `size * sizeof(T)` bytes on the device associated with @p q.
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] q the associated SYCL queue
      */

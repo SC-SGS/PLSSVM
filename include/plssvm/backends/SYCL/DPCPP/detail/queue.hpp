@@ -28,6 +28,6 @@ class queue {
     std::shared_ptr<queue_impl> impl{};
 };
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::dpcpp::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_DPCPP_DETAIL_QUEUE_HPP_

@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines all currently supported SYCL implementations.
+ * @brief Defines an enumeration holding all possible SYCL implementations.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
@@ -22,7 +22,7 @@ namespace plssvm::sycl {
  * @brief Enum class for all possible SYCL kernel invocation types.
  */
 enum class implementation_type {
-    /** Use the available SYCL implementation. If more than one implementation is available, use PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION. */
+    /** Use the available SYCL implementation. If more than one implementation is available, the macro PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION must be defined. */
     automatic,
     /** Use [DPC++](https://github.com/intel/llvm) as SYCL implementation. */
     dpcpp,

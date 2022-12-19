@@ -13,9 +13,10 @@
 #include "plssvm/detail/utility.hpp"                           // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                         // plssvm::target_platform, plssvm::determine_default_target_platform
 
-#include "sycl/sycl.hpp"  // sycl::queue, sycl::platform, sycl::device, sycl::property::queue, sycl::info
+#include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
 
 #include <map>      // std::multimap
+#include <memory>   // std::make_shared
 #include <string>   // std::string
 #include <utility>  // std::pair, std::make_pair, std::move
 #include <vector>   // std::vector
@@ -85,7 +86,7 @@ void device_synchronize(queue &q) {
 
 queue get_default_queue() {
     queue q;
-    q.impl = std::make_unique<queue::queue_impl>();
+    q.impl = std::make_shared<queue::queue_impl>();
     return q;
 }
 

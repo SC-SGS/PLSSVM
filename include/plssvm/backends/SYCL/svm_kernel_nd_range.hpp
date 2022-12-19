@@ -13,14 +13,14 @@
 #define PLSSVM_BACKENDS_SYCL_SVM_KERNEL_ND_RANGE_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
+#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 #include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::local_accessor, sycl::range, sycl::group_barrier, sycl::pow, sycl::exp, sycl::atomic_ref
 
-#include <cstddef>  // std::size_t
+#include <cstddef>  // std::size_t (cant' use kernel_index_type because of comparisons with unsigned long values)
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Calculates the C-SVM kernel using the nd_range formulation and the linear kernel function.
@@ -119,7 +119,7 @@ class nd_range_device_kernel_linear {
                     }
                     if (i + x > j + y) {
                         // upper triangular matrix
-                        atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
+                        detail::atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
                         ret_jx += temp * d_[i + y];
                     } else if (i + x == j + y) {
                         // diagonal
@@ -130,15 +130,18 @@ class nd_range_device_kernel_linear {
                         }
                     }
                 }
-                atomic_op<real_type>{ ret_[j + x] } += ret_jx;
+                detail::atomic_op<real_type>{ ret_[j + x] } += ret_jx;
             }
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
     ::sycl::local_accessor<real_type, 2> data_intern_i_;
+    /// Local memory used for internal memory access optimizations.
     ::sycl::local_accessor<real_type, 2> data_intern_j_;
 
+    /// @cond Doxygen_suppress
     const real_type *q_;
     real_type *ret_;
     const real_type *d_;
@@ -149,6 +152,7 @@ class nd_range_device_kernel_linear {
     const kernel_index_type feature_range_;
     const real_type add_;
     const kernel_index_type device_;
+    /// @endcond
 };
 
 /**
@@ -157,7 +161,7 @@ class nd_range_device_kernel_linear {
  * @tparam T the type of the data
  */
 template <typename T>
-class nd_range_device_kernel_poly {
+class nd_range_device_kernel_polynomial {
   public:
     /// The type of the data.
     using real_type = T;
@@ -178,7 +182,7 @@ class nd_range_device_kernel_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    nd_range_device_kernel_poly(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) :
+    nd_range_device_kernel_polynomial(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) :
         data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -245,22 +249,25 @@ class nd_range_device_kernel_poly {
                     const real_type temp = (::sycl::pow(gamma_ * matr[x][y] + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
                     if (i + x > j + y) {
                         // upper triangular matrix
-                        atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
+                        detail::atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
                         ret_jx += temp * d_[i + y];
                     } else if (i + x == j + y) {
                         // diagonal
                         ret_jx += (temp + cost_ * add_) * d_[i + y];
                     }
                 }
-                atomic_op<real_type>{ ret_[j + x] } += ret_jx;
+                detail::atomic_op<real_type>{ ret_[j + x] } += ret_jx;
             }
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
     ::sycl::local_accessor<real_type, 2> data_intern_i_;
+    /// Local memory used for internal memory access optimizations.
     ::sycl::local_accessor<real_type, 2> data_intern_j_;
 
+    /// @cond Doxygen_suppress
     const real_type *q_;
     real_type *ret_;
     const real_type *d_;
@@ -273,6 +280,7 @@ class nd_range_device_kernel_poly {
     const int degree_;
     const real_type gamma_;
     const real_type coef0_;
+    /// @endcond
 };
 
 /**
@@ -281,7 +289,7 @@ class nd_range_device_kernel_poly {
  * @tparam T the type of the data
  */
 template <typename T>
-class nd_range_device_kernel_radial {
+class nd_range_device_kernel_rbf {
   public:
     /// The type of the data.
     using real_type = T;
@@ -300,7 +308,7 @@ class nd_range_device_kernel_radial {
      * @param[in] add denotes whether the values are added or subtracted from the result vector
      * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
-    nd_range_device_kernel_radial(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
+    nd_range_device_kernel_rbf(::sycl::handler &cgh, const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) :
         data_intern_i_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, data_intern_j_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE }, cgh }, q_{ q }, ret_{ ret }, d_{ d }, data_d_{ data_d }, QA_cost_{ QA_cost }, cost_{ cost }, num_rows_{ num_rows }, num_cols_{ num_cols }, add_{ add }, gamma_{ gamma } {}
 
     /**
@@ -367,22 +375,25 @@ class nd_range_device_kernel_radial {
                     const real_type temp = (::sycl::exp(-gamma_ * matr[x][y]) + QA_cost_ - q_[i + y] - q_[j + x]) * add_;
                     if (i + x > j + y) {
                         // upper triangular matrix
-                        atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
+                        detail::atomic_op<real_type>{ ret_[i + y] } += temp * d_[j + x];
                         ret_jx += temp * d_[i + y];
                     } else if (i + x == j + y) {
                         // diagonal
                         ret_jx += (temp + cost_ * add_) * d_[i + y];
                     }
                 }
-                atomic_op<real_type>{ ret_[j + x] } += ret_jx;
+                detail::atomic_op<real_type>{ ret_[j + x] } += ret_jx;
             }
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
     ::sycl::local_accessor<real_type, 2> data_intern_i_;
+    /// Local memory used for internal memory access optimizations.
     ::sycl::local_accessor<real_type, 2> data_intern_j_;
 
+    /// @cond Doxygen_suppress
     const real_type *q_;
     real_type *ret_;
     const real_type *d_;
@@ -393,8 +404,9 @@ class nd_range_device_kernel_radial {
     const kernel_index_type num_cols_;
     const real_type add_;
     const real_type gamma_;
+    /// @endcond
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_SVM_KERNEL_ND_RANGE_HPP_

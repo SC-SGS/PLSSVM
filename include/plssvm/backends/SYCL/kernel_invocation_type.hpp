@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines all available kernel invoke types when using SYCL.
+ * @brief Defines an enumeration holding all possible SYCL kernel invocation types.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
@@ -23,9 +23,9 @@ namespace plssvm::sycl {
 enum class kernel_invocation_type {
     /** Use the best kernel invocation type for the current SYCL implementation and target hardware platform. */
     automatic,
-    /** Use the [*nd_range* invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_invoke). */
+    /** Use the [`nd_range` invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_invoke). */
     nd_range,
-    /** Use the SYCL specific [hierarchical invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_hierarchical_invoke). */
+    /** Use the SYCL specific [`hierarchical` invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_hierarchical_invoke). */
     hierarchical
 };
 

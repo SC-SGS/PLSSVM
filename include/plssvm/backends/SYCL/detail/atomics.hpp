@@ -15,7 +15,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::atomic_ref, sycl::memory_order, sycl::memory_scope, sycl::access::address_space
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Shortcut alias for a [`sycl::atomic_ref`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:atomic-references) targeting global memory.
