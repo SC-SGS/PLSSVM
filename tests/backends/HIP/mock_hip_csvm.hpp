@@ -25,9 +25,9 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
   public:
     using base_type::device_ptr_type;
 
-    mock_hip_csvm() = default;
-    explicit mock_hip_csvm(plssvm::parameter params) :
-        base_type{ params } {}
+    template <typename... Args>
+    explicit mock_hip_csvm(Args&&... args) :
+        base_type{ std::forward<Args>(args)... } {}
 
     // make protected member functions public
     using base_type::calculate_w;

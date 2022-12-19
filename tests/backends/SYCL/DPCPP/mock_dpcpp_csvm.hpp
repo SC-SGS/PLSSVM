@@ -25,9 +25,9 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
   public:
     using base_type::device_ptr_type;
 
-    mock_dpcpp_csvm() = default;
-    explicit mock_dpcpp_csvm(plssvm::parameter params) :
-        base_type{ params } {}
+    template <typename... Args>
+    explicit mock_dpcpp_csvm(Args&&... args) :
+        base_type{ std::forward<Args>(args)... } {}
 
     // make protected member functions public
     using base_type::calculate_w;

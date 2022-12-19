@@ -25,9 +25,9 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
   public:
     using base_type::device_ptr_type;
 
-    mock_cuda_csvm() = default;
-    explicit mock_cuda_csvm(plssvm::parameter params) :
-        base_type{ params } {}
+    template <typename... Args>
+    explicit mock_cuda_csvm(Args&&... args) :
+        base_type{ std::forward<Args>(args)... } {}
 
     // make protected member functions public
     using base_type::calculate_w;

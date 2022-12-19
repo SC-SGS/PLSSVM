@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // FAIL
@@ -34,9 +35,9 @@
 #include <sstream>      // std:stringstream, std::ostringstream, std::istringstream
 #include <streambuf>    // std::streambuf
 #include <string>       // std::string
-#include <tuple>        // std::tuple, std::make_tuple, std::get
-#include <type_traits>  // std::is_floating_point_v, std::is_same_v, std::is_signed_v, std::is_unsigned_v
-#include <utility>      // std::pair, std::make_pair, std::move
+#include <tuple>        // std::tuple, std::make_tuple, std::get, std::tuple_size
+#include <type_traits>  // std::is_floating_point_v, std::is_same_v, std::is_signed_v, std::is_unsigned_v, std::decay_t
+#include <utility>      // std::pair, std::make_pair, std::move, std::make_index_sequence, std::index_sequence
 #include <vector>       // std::vector
 
 namespace util {
@@ -237,6 +238,60 @@ template <typename T>
         }
     }
     return std::make_pair(std::move(ret), std::move(factors));
+}
+
+/**
+ * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple.
+ * @tparam T the type to construct
+ * @tparam Tuple the tuple type used to construct @p T
+ * @tparam Is an index sequence used to iterate through the @p tuple
+ * @param params the SVM parameter used to construct @p T
+ * @param tuple the tuple values used to construct @p T
+ * @return an instance of type @p T (`[[nodiscard]]`)
+ */
+template <typename T, typename Tuple, size_t... Is>
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple, std::index_sequence<Is...>) {
+    return T{ params, std::get<Is>(std::forward<Tuple>(tuple))... };
+}
+/**
+ * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple.
+ * @tparam T the type to construct
+ * @tparam real_type the floating point type used for the SVM parameter
+ * @tparam Tuple the tuple type used to construct @p T
+ * @param params the SVM parameter used to construct @p T
+ * @param tuple the tuple values used to construct @p T
+ * @return an instance of type @p T (`[[nodiscard]]`)
+ */
+template <typename T, typename real_type, typename Tuple>
+[[nodiscard]] inline T construct_from_tuple(const plssvm::detail::parameter<real_type> &params, Tuple &&tuple) {
+    return construct_from_tuple<T>(static_cast<plssvm::parameter>(params),
+                                   std::forward<Tuple>(tuple),
+                                   std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
+}
+
+/**
+ * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple.
+ * @tparam T the type to construct
+ * @tparam Tuple the tuple type used to construct @p T
+ * @tparam Is an index sequence used to iterate through the @p tuple
+ * @param tuple the tuple values used to construct @p T
+ * @return an instance of type @p T (`[[nodiscard]]`)
+ */
+template <typename T, typename Tuple, size_t... Is>
+[[nodiscard]] inline T construct_from_tuple(Tuple &&tuple, std::index_sequence<Is...>) {
+    return T{ std::get<Is>(std::forward<Tuple>(tuple))... };
+}
+/**
+ * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple.
+ * @tparam T the type to construct
+ * @tparam Tuple the tuple type used to construct @p T
+ * @param tuple the tuple values used to construct @p T
+ * @return an instance of type @p T (`[[nodiscard]]`)
+ */
+template <typename T, typename Tuple>
+[[nodiscard]] inline T construct_from_tuple(Tuple &&tuple) {
+    return construct_from_tuple<T>(std::forward<Tuple>(tuple),
+                                   std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
 
 }  // namespace util

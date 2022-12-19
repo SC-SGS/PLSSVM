@@ -24,6 +24,8 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
+#include <tuple>  // std::make_tuple
+
 class DPCPPCSVM : public ::testing::Test, private util::redirect_output<> {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
@@ -121,21 +123,29 @@ TEST_F(DPCPPCSVM, construct_target_and_named_args) {
 #endif
 }
 
-template <typename T, plssvm::kernel_function_type kernel>
+template <typename T, plssvm::kernel_function_type kernel, plssvm::sycl::kernel_invocation_type invocation>
 struct csvm_test_type {
     using mock_csvm_type = mock_dpcpp_csvm;
     using csvm_type = plssvm::dpcpp::csvm;
     using real_type = T;
     static constexpr plssvm::kernel_function_type kernel_type = kernel;
+    inline static auto additional_arguments = std::make_tuple(plssvm::sycl_kernel_invocation_type = invocation);
 };
 
 using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
+    csvm_test_type<float, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::nd_range>,
+    csvm_test_type<float, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::nd_range>,
+    csvm_test_type<float, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::nd_range>,
+    csvm_test_type<double, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::nd_range>,
+    csvm_test_type<double, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::nd_range>,
+    csvm_test_type<double, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::nd_range>,
+
+    csvm_test_type<float, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    csvm_test_type<float, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    csvm_test_type<float, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    csvm_test_type<double, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    csvm_test_type<double, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    csvm_test_type<double, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::hierarchical>>;
 
 // instantiate type-parameterized tests
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericCSVM, csvm_test_types);

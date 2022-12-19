@@ -22,6 +22,8 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
+#include <tuple>  // std::make_tuple
+
 class CUDACSVM : public ::testing::Test, private util::redirect_output<> {};
 
 // check whether the constructor correctly fails when using an incompatible target platform
@@ -95,6 +97,7 @@ struct csvm_test_type {
     using csvm_type = plssvm::cuda::csvm;
     using real_type = T;
     static constexpr plssvm::kernel_function_type kernel_type = kernel;
+    inline static auto additional_arguments = std::make_tuple();
 };
 
 using csvm_test_types = ::testing::Types<
