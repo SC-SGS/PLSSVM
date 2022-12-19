@@ -12,7 +12,7 @@
 
 #include "plssvm/backends/HIP/exceptions.hpp"  // plssvm::hip::backend_exception
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
+#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::StartsWith

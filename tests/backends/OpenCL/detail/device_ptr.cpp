@@ -13,7 +13,7 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
 
-#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 

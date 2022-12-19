@@ -16,9 +16,9 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "backends/generic_csvm_tests.hpp"  // generic CSVM tests to instantiate
-#include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT
-#include "utility.hpp"                      // util::redirect_output
+#include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../../utility.hpp"             // util::redirect_output
+#include "../generic_csvm_tests.hpp"     // generic CSVM tests to instantiate
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 

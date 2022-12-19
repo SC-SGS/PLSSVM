@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
 
-#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 

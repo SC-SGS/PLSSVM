@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
-#include "backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
+#include "../generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 

@@ -17,12 +17,12 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "backends/compare.hpp"             // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
-#include "backends/generic_csvm_tests.hpp"  // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
-#include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "naming.hpp"                       // naming::{real_type_kernel_function_to_name, real_type_to_name}
-#include "types_to_test.hpp"                // util::{real_type_kernel_function_gtest, real_type_gtest}
-#include "utility.hpp"                      // util::{redirect_output, generate_random_vector}
+#include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "../../naming.hpp"              // naming::{real_type_kernel_function_to_name, real_type_to_name}
+#include "../../types_to_test.hpp"       // util::{real_type_kernel_function_gtest, real_type_gtest}
+#include "../../utility.hpp"             // util::{redirect_output, generate_random_vector}
+#include "../compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
+#include "../generic_csvm_tests.hpp"     // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, ::testing::Test
 

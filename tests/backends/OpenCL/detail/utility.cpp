@@ -11,13 +11,11 @@
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{device_assert, get_contexts, get_device_name}
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
+#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 
-#include "plssvm/backends/OpenCL/exceptions.hpp"  // plssvm::opencl::backend_exception
+#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
 #include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
-
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 
 TEST(OpenCLUtility, device_assert) {

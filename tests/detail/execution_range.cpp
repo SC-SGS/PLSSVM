@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+#include "../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_DEATH
 
