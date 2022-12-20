@@ -157,6 +157,7 @@ else ()
             $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
+    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fast_float")
     message(STATUS "Installed fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif ()
 
@@ -186,6 +187,7 @@ else ()
             $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
+    list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
 endif ()
 
 ## try finding fmt
@@ -264,7 +266,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
             COMMAND ${CMAKE_MAKE_PROGRAM} test || true
             COMMAND lcov --capture -d . --output-file test_test.info
             COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
-            COMMAND lcov --remove test_total.info '/usr/*' '*/build/*' '*/tests/*' -o test_clean.info
+            COMMAND lcov --remove test_total.info '/usr/*' '*/build/*' '*/tests/*' '*/_deps/*' -o test_clean.info
             COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
             BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
@@ -609,6 +611,13 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
 
 ## mark header to install via 'make install'
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+## install header only libraries fast_float and igor header via 'make install'
+install(DIRECTORY "${fast_float_SOURCE_DIR}/include/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+install(DIRECTORY "${igor_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         )
 ## only mark fmt headers to install if build via FetchContent
