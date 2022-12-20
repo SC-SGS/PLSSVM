@@ -6,29 +6,31 @@
 
 # TODO: only tested on AMD GPUs -> test on NVIDIA GPUs
 
+list(APPEND CMAKE_MESSAGE_INDENT "HIP:  ")
+
 # check if HIP can be enabled
 message(CHECK_START "Checking for HIP backend")
 
 include(CheckLanguage)
 check_language(HIP)
 
-if(NOT CMAKE_HIP_COMPILER)
+if (NOT CMAKE_HIP_COMPILER)
     message(CHECK_FAIL "not found")
-    if(PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+    if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
         message(SEND_ERROR "Cannot find requested backend: HIP!")
-    endif()
+    endif ()
     return()
-else()
-    if(NOT DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        if(PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+else ()
+    if (NOT DEFINED PLSSVM_AMD_TARGET_ARCHS)
+        if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
             message(SEND_ERROR "Found requested HIP backend, but no \"amd\" targets were specified!")
-        else()
+        else ()
             message(STATUS "Found HIP backend, but no \"amd\" targets were specified!")
-        endif()
+        endif ()
         message(CHECK_FAIL "skipped")
         return()
-    endif()
-endif()
+    endif ()
+endif ()
 message(CHECK_PASS "found")
 
 enable_language(HIP)
@@ -43,12 +45,12 @@ set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS} -O3 -ffast-math")
 
 # explicitly set sources
 set(PLSSVM_HIP_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-)
+        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+        )
 
 # set target properties
 set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME plssvm-HIP)
@@ -79,3 +81,5 @@ set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 # generate summary string
 set(PLSSVM_HIP_BACKEND_SUMMARY_STRING " - HIP: amd (${PLSSVM_AMD_TARGET_ARCHS})" PARENT_SCOPE)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)

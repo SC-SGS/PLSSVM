@@ -4,33 +4,35 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
+list(APPEND CMAKE_MESSAGE_INDENT "OpenCL:  ")
+
 # check if OpenCL can be enabled
 message(CHECK_START "Checking for OpenCL backend")
 
 find_package(OpenCL)
 
-if(NOT OpenCL_FOUND)
+if (NOT OpenCL_FOUND)
     message(CHECK_FAIL "not found")
-    if(PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "ON")
+    if (PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "ON")
         message(SEND_ERROR "Cannot find requested backend: OpenCL!")
-    endif()
+    endif ()
     return()
-endif()
+endif ()
 message(CHECK_PASS "found")
 
 
 # explicitly set sources
 set(PLSSVM_OPENCL_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/command_queue.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/context.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-)
+        ${CMAKE_CURRENT_LIST_DIR}/detail/command_queue.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/context.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+        )
 
 # set target properties
 set_local_and_parent(PLSSVM_OPENCL_BACKEND_LIBRARY_NAME plssvm-OpenCL)
@@ -42,11 +44,11 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set OpenCL include path to the *.cl files
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR="${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL")
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR= "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL")
 
 # set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries
 # are recognized by the sha256 caching algorithm)
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_LIBRARY="${OpenCL_LIBRARY}")
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_LIBRARY= "${OpenCL_LIBRARY}")
 
 # set OpenCL target version (to silence compiler warnings)
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)
@@ -73,3 +75,5 @@ string(REPLACE " (${PLSSVM_NVIDIA_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMA
 string(REPLACE " (${PLSSVM_AMD_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
 string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
 set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_COMPILER}${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}" PARENT_SCOPE)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)

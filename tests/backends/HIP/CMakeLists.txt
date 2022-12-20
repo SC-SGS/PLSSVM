@@ -9,11 +9,11 @@ set(PLSSVM_HIP_TEST_NAME HIP_tests)
 
 # list all necessary sources
 set(PLSSVM_HIP_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.cpp
-)
+        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.cpp
+        )
 
 # add test executable
 add_executable(${PLSSVM_HIP_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_HIP_TEST_SOURCES})
@@ -28,6 +28,6 @@ gtest_discover_tests(${PLSSVM_HIP_TEST_NAME})
 
 
 # add test as coverage dependency
-if(TARGET coverage)
+if (TARGET coverage)
     add_dependencies(coverage ${PLSSVM_HIP_TEST_NAME})
-endif()
+endif ()

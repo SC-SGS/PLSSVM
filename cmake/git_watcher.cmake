@@ -59,17 +59,17 @@ endmacro()
 
 # Check that a required variable is set.
 macro(CHECK_REQUIRED_VARIABLE var_name)
-    if(NOT DEFINED ${var_name})
+    if (NOT DEFINED ${var_name})
         message(FATAL_ERROR "The \"${var_name}\" variable must be defined.")
-    endif()
+    endif ()
     PATH_TO_ABSOLUTE(${var_name})
 endmacro()
 
 # Check that an optional variable is set, or, set it to a default value.
 macro(CHECK_OPTIONAL_VARIABLE_NOPATH var_name default_value)
-    if(NOT DEFINED ${var_name})
+    if (NOT DEFINED ${var_name})
         set(${var_name} ${default_value})
-    endif()
+    endif ()
 endmacro()
 
 # Check that an optional variable is set, or, set it to a default value.
@@ -88,9 +88,9 @@ CHECK_OPTIONAL_VARIABLE_NOPATH(GIT_IGNORE_UNTRACKED FALSE)
 
 # Check the optional git variable.
 # If it's not set, we'll try to find it using the CMake packaging system.
-if(NOT DEFINED GIT_EXECUTABLE)
+if (NOT DEFINED GIT_EXECUTABLE)
     find_package(Git QUIET REQUIRED)
-endif()
+endif ()
 CHECK_REQUIRED_VARIABLE(GIT_EXECUTABLE)
 
 
@@ -112,7 +112,6 @@ set(_state_variable_names
         )
 
 
-
 # Macro: RunGitCommand
 # Description: short-hand macro for calling a git function. Outputs are the
 #              "exit_code" and "output" variables. The "_permit_git_failure"
@@ -126,7 +125,7 @@ macro(RunGitCommand)
             OUTPUT_VARIABLE output
             ERROR_VARIABLE stderr
             OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(NOT exit_code EQUAL 0 AND NOT _permit_git_failure)
+    if (NOT exit_code EQUAL 0 AND NOT _permit_git_failure)
         set(ENV{GIT_RETRIEVED_STATE} "false")
 
         # Issue 26: git info not properly set
@@ -135,13 +134,12 @@ macro(RunGitCommand)
         # Most methods have a fall-back default value that's used in case of non-zero
         # exit codes. If you're feeling risky, disable this safety check and use
         # those default values.
-        if(GIT_FAIL_IF_NONZERO_EXIT)
+        if (GIT_FAIL_IF_NONZERO_EXIT)
             string(REPLACE ";" " " args_with_spaces "${ARGV}")
             message(FATAL_ERROR "${stderr} (${GIT_EXECUTABLE} ${args_with_spaces})")
-        endif()
-    endif()
+        endif ()
+    endif ()
 endmacro()
-
 
 
 # Function: GetGitState
@@ -157,91 +155,91 @@ function(GetGitState _working_dir)
     # Get whether or not the working tree is dirty.
     if (GIT_IGNORE_UNTRACKED)
         set(untracked_flag "-uno")
-    else()
+    else ()
         set(untracked_flag "-unormal")
-    endif()
+    endif ()
     RunGitCommand(status --porcelain ${untracked_flag})
-    if(NOT exit_code EQUAL 0)
+    if (NOT exit_code EQUAL 0)
         set(ENV{GIT_IS_DIRTY} "false")
-    else()
-        if(NOT "${output}" STREQUAL "")
+    else ()
+        if (NOT "${output}" STREQUAL "")
             set(ENV{GIT_IS_DIRTY} "true")
-        else()
+        else ()
             set(ENV{GIT_IS_DIRTY} "false")
-        endif()
-    endif()
+        endif ()
+    endif ()
 
     # There's a long list of attributes grabbed from git show.
     set(object HEAD)
     RunGitCommand(show -s "--format=%H" ${object})
-    if(exit_code EQUAL 0)
+    if (exit_code EQUAL 0)
         set(ENV{GIT_HEAD_SHA1} ${output})
-    endif()
+    endif ()
 
     RunGitCommand(show -s "--format=%an" ${object})
-    if(exit_code EQUAL 0)
+    if (exit_code EQUAL 0)
         set(ENV{GIT_AUTHOR_NAME} "${output}")
-    endif()
+    endif ()
 
     RunGitCommand(show -s "--format=%ae" ${object})
-    if(exit_code EQUAL 0)
+    if (exit_code EQUAL 0)
         set(ENV{GIT_AUTHOR_EMAIL} "${output}")
-    endif()
+    endif ()
 
     RunGitCommand(show -s "--format=%ci" ${object})
-    if(exit_code EQUAL 0)
+    if (exit_code EQUAL 0)
         set(ENV{GIT_COMMIT_DATE_ISO8601} "${output}")
-    endif()
+    endif ()
 
     RunGitCommand(show -s "--format=%s" ${object})
-    if(exit_code EQUAL 0)
+    if (exit_code EQUAL 0)
         # Escape \
         string(REPLACE "\\" "\\\\" output "${output}")
         # Escape quotes
         string(REPLACE "\"" "\\\"" output "${output}")
         set(ENV{GIT_COMMIT_SUBJECT} "${output}")
-    endif()
+    endif ()
 
     RunGitCommand(show -s "--format=%b" ${object})
-    if(exit_code EQUAL 0)
-        if(output)
+    if (exit_code EQUAL 0)
+        if (output)
             # Escape \
             string(REPLACE "\\" "\\\\" output "${output}")
             # Escape quotes
             string(REPLACE "\"" "\\\"" output "${output}")
             # Escape line breaks in the commit message.
             string(REPLACE "\r\n" "\\r\\n\\\r\n" safe "${output}")
-            if(safe STREQUAL output)
+            if (safe STREQUAL output)
                 # Didn't have windows lines - try unix lines.
                 string(REPLACE "\n" "\\n\\\n" safe "${output}")
-            endif()
-        else()
+            endif ()
+        else ()
             # There was no commit body - set the safe string to empty.
             set(safe "")
-        endif()
+        endif ()
         set(ENV{GIT_COMMIT_BODY} "${safe}")
-    else()
+    else ()
         set(ENV{GIT_COMMIT_BODY} "") # empty string.
-    endif()
+    endif ()
 
     # Get output of git describe
     RunGitCommand(describe --always ${object})
-    if(NOT exit_code EQUAL 0)
+    if (NOT exit_code EQUAL 0)
         set(ENV{GIT_DESCRIBE} "") # empty string.
-    else()
+    else ()
         set(ENV{GIT_DESCRIBE} "${output}")
-    endif()
+    endif ()
 
     # Convert HEAD to a symbolic ref. This can fail, in which case we just
     # set that variable to HEAD.
     set(_permit_git_failure ON)
     RunGitCommand(symbolic-ref --short -q ${object})
     unset(_permit_git_failure)
-    if(NOT exit_code EQUAL 0)
+    if (NOT exit_code EQUAL 0)
         set(ENV{GIT_BRANCH} "${object}")
-    else()
+    else ()
         set(ENV{GIT_BRANCH} "${output}")
-    endif()
+    endif ()
 
     # >>>
     # 2. Additional git properties can be added here via the
@@ -249,26 +247,24 @@ function(GetGitState _working_dir)
     #    the environment using the same variable name you added
     #    to the "_state_variable_names" list.
     RunGitCommand(config --get remote.origin.url)
-    if(NOT exit_code EQUAL 0)
+    if (NOT exit_code EQUAL 0)
         set(ENV{GIT_REMOTE_URL} "") # empty string.
-    else()
+    else ()
         set(ENV{GIT_REMOTE_URL} "${output}")
-    endif()
+    endif ()
 
 endfunction()
-
 
 
 # Function: GitStateChangedAction
 # Description: this function is executed when the state of the git
 #              repository changes (e.g. a commit is made).
 function(GitStateChangedAction)
-    foreach(var_name ${_state_variable_names})
+    foreach (var_name ${_state_variable_names})
         set(${var_name} $ENV{${var_name}})
-    endforeach()
+    endforeach ()
     configure_file("${PRE_CONFIGURE_FILE}" "${POST_CONFIGURE_FILE}" @ONLY)
 endfunction()
-
 
 
 # Function: HashGitState
@@ -277,12 +273,11 @@ endfunction()
 #   _state (out)  string; a hash computed from the current git state.
 function(HashGitState _state)
     set(ans "")
-    foreach(var_name ${_state_variable_names})
+    foreach (var_name ${_state_variable_names})
         string(SHA256 ans "${ans}$ENV{${var_name}}")
-    endforeach()
+    endforeach ()
     set(${_state} ${ans} PARENT_SCOPE)
 endfunction()
-
 
 
 # Function: CheckGit
@@ -308,14 +303,14 @@ function(CheckGit _working_dir _state_changed)
     string(SHA256 state "${preconfig_hash}${state}")
 
     # Check if the state has changed compared to the backup on disk.
-    if(EXISTS "${GIT_STATE_FILE}")
+    if (EXISTS "${GIT_STATE_FILE}")
         file(READ "${GIT_STATE_FILE}" OLD_HEAD_CONTENTS)
-        if(OLD_HEAD_CONTENTS STREQUAL "${state}")
+        if (OLD_HEAD_CONTENTS STREQUAL "${state}")
             # State didn't change.
             set(${_state_changed} "false" PARENT_SCOPE)
             return()
-        endif()
-    endif()
+        endif ()
+    endif ()
 
     # The state has changed.
     # We need to update the state file on disk.
@@ -323,7 +318,6 @@ function(CheckGit _working_dir _state_changed)
     file(WRITE "${GIT_STATE_FILE}" "${state}")
     set(${_state_changed} "true" PARENT_SCOPE)
 endfunction()
-
 
 
 # Function: SetupGitMonitoring
@@ -352,22 +346,21 @@ function(SetupGitMonitoring)
 endfunction()
 
 
-
 # Function: Main
 # Description: primary entry-point to the script. Functions are selected based
 #              on whether it's configure or build time.
 function(Main)
-    if(_BUILD_TIME_CHECK_GIT)
+    if (_BUILD_TIME_CHECK_GIT)
         # Check if the repo has changed.
         # If so, run the change action.
         CheckGit("${GIT_WORKING_DIR}" changed)
-        if(changed OR NOT EXISTS "${POST_CONFIGURE_FILE}")
+        if (changed OR NOT EXISTS "${POST_CONFIGURE_FILE}")
             GitStateChangedAction()
-        endif()
-    else()
+        endif ()
+    else ()
         # >> Executes at configure time.
         SetupGitMonitoring()
-    endif()
+    endif ()
 endfunction()
 
 # And off we go...
