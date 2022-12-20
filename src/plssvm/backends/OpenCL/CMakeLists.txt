@@ -44,11 +44,11 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set OpenCL include path to the *.cl files
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR= "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL")
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR="${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL")
 
 # set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries
 # are recognized by the sha256 caching algorithm)
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_LIBRARY= "${OpenCL_LIBRARY}")
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_LIBRARY="${OpenCL_LIBRARY}")
 
 # set OpenCL target version (to silence compiler warnings)
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)
