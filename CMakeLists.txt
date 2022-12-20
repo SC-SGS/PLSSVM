@@ -166,10 +166,11 @@ if (igor_FOUND)
     message(STATUS "Found package igor.")
 else ()
     message(STATUS "Couldn't find package igor. Building from source ...")
+    set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
     # fetch named argument library igor
     FetchContent_Declare(igor
             GIT_REPOSITORY https://github.com/bluescarni/igor
-            GIT_TAG master
+            GIT_TAG ${PLSSVM_igor_VERSION}
             GIT_SHALLOW TRUE
             QUIET
 
