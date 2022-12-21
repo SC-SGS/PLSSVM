@@ -13,7 +13,7 @@ project("PLSSVM - Parallel Least Squares Support Vector Machine"
 
 
 ## include some generally used utility scripts
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_custom_build_type.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_coverage_build_type.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/set_local_and_parent.cmake)
 
 
