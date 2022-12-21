@@ -70,3 +70,10 @@ TEST(TargetPlatform, determine_default_target_platform) {
     const plssvm::target_platform target = plssvm::determine_default_target_platform();
     EXPECT_NE(target, plssvm::target_platform::automatic);
 }
+TEST(TargetPlatform, determine_target_platform) {
+    // if only one platform is available, the default platform must be this platform
+    EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::gpu_nvidia }), plssvm::target_platform::gpu_nvidia);
+    EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::gpu_amd }), plssvm::target_platform::gpu_amd);
+    EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::gpu_intel }), plssvm::target_platform::gpu_intel);
+    EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::cpu }), plssvm::target_platform::cpu);
+}

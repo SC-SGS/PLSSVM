@@ -47,3 +47,13 @@ TEST(SYCLImplementationType, from_string_unknown) {
     input >> impl;
     EXPECT_TRUE(input.fail());
 }
+
+TEST(SYCLImplementationType, minimal_available_sycl_implementation_type) {
+    const std::vector<plssvm::sycl::implementation_type> implementation_type = plssvm::sycl::list_available_sycl_implementations();
+
+    // at least one must be available (automatic)!
+    EXPECT_GE(implementation_type.size(), 1);
+
+    // the automatic backend must always be present
+    EXPECT_THAT(implementation_type, ::testing::Contains(plssvm::sycl::implementation_type::automatic));
+}

@@ -385,7 +385,8 @@ TEST(FileReader, swap_free_function) {
     reader2.read_lines('#');
 
     // swap the two file readers
-    std::swap(reader1, reader2);
+    using std::swap;
+    swap(reader1, reader2);
 
     // check both readers for correct values
     EXPECT_TRUE(reader1.is_open());
