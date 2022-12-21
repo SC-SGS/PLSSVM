@@ -54,7 +54,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (plssvm::verbose) {
-        std::cout << fmt::format("Using HIP as backend.") << std::endl;
+        std::cout << fmt::format("\nUsing HIP as backend.") << std::endl;
     }
 
     // get all available devices wrt the requested target platform

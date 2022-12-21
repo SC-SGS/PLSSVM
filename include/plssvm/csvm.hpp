@@ -292,7 +292,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        std::cout << fmt::format("Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time)) << std::endl;
+        std::cout << fmt::format("Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time)) << std::endl;
     }
 
     return csvm_model;

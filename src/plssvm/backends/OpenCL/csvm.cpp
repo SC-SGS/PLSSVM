@@ -92,7 +92,7 @@ void csvm::init(const target_platform target) {
 
     // print OpenCL info
     if (verbose) {
-        std::cout << fmt::format("Using OpenCL as backend.\n");
+        std::cout << fmt::format("\nUsing OpenCL as backend.\n");
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
         }

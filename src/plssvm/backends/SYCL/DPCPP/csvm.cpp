@@ -84,7 +84,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (plssvm::verbose) {
-        std::cout << fmt::format("Using DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", __SYCL_COMPILER_VERSION, invocation_type_);
+        std::cout << fmt::format("\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", __SYCL_COMPILER_VERSION, invocation_type_);
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
         }

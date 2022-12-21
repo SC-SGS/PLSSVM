@@ -58,7 +58,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (verbose) {
-        std::cout << fmt::format("Using OpenMP as backend with {} threads.\n\n", num_omp_threads) << std::endl;
+        std::cout << fmt::format("\nUsing OpenMP as backend with {} threads.\n\n", num_omp_threads) << std::endl;
     }
 }
 
