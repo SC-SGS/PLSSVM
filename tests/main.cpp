@@ -11,6 +11,15 @@
 
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG}
 
+// silence GTest warnings/test errors
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVM);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericSVMDeathTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericGPUCSVM);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericGPUCSVMDeathTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtr);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     // prevent problems with fork() in the presence of multiple threads
