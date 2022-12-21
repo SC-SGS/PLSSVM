@@ -19,10 +19,6 @@
 
 #include <vector>  // std::vector
 
-bool operator==(const plssvm::opencl::detail::command_queue *lhs, const plssvm::opencl::detail::command_queue &rhs) noexcept {
-    return lhs->queue == rhs.queue;
-}
-
 template <typename T>
 struct device_ptr_test_type {
     using device_ptr_type = plssvm::opencl::detail::device_ptr<T>;
