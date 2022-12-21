@@ -764,7 +764,7 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     if (verbose) {
-        std::cout << fmt::format("Read {} data points with {} features in {} using the {} parser from file '{}'.\n\n",
+        std::cout << fmt::format("Read {} data points with {} features in {} using the {} parser from file '{}'.",
                                  num_data_points_,
                                  num_features_,
                                  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
