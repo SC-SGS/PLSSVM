@@ -136,7 +136,7 @@ template <typename... Args>
         case backend_type::sycl:
             return make_csvm_sycl_impl(std::forward<Args>(args)...);
     }
-    throw unsupported_backend_exception{ "Can't recognize backend !" };
+    throw unsupported_backend_exception{ "Unrecognized backend provided!" };
 }
 
 }  // namespace detail
