@@ -9,3 +9,8 @@ macro(set_local_and_parent NAME VALUE)
     set(${ARGV0} ${ARGV1})
     set(${ARGV0} ${ARGV1} PARENT_SCOPE)
 endmacro()
+
+macro(append_local_and_parent LIST_NAME VALUE)
+    list(APPEND ${ARGV0} ${ARGV1})
+    set(${ARGV0} ${${ARGV0}} PARENT_SCOPE)
+endmacro()

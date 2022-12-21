@@ -8,7 +8,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "SYCL:  ")
 
 message(CHECK_START "Checking for SYCL backend")
 
-# explicitly set sources
+# explicitly set sources shared between all SYCL implementations
 set(PLSSVM_SYCL_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
@@ -17,200 +17,13 @@ set(PLSSVM_SYCL_SOURCES
 # list of found SYCL implementations
 set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 
+
 # check if SYCL can be enabled
-message(CHECK_START "Checking for hipSYCL as SYCL implementation")
+## add hipSYCL
+add_subdirectory(hipSYCL)
+## add DPC++
+add_subdirectory(DPCPP)
 
-# reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case hipSYCL may be available)
-set(HIPSYCL_TARGETS "${PLSSVM_TARGET_PLATFORMS}" CACHE STRING "" FORCE)
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "cpu" "omp")
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "nvidia" "cuda")
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "amd" "hip")
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "intel" "spirv")
-# remove CPU and Intel GPU target architectures since they are not supported when using hipSYCL
-if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 0)
-    string(REPLACE ";" "," PLSSVM_CPU_TARGET_ARCHS_COMMA "${PLSSVM_CPU_TARGET_ARCHS}")
-    string(REPLACE ":${PLSSVM_CPU_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
-endif ()
-if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-    string(REPLACE ";" "," PLSSVM_INTEL_TARGET_ARCHS_COMMA "${PLSSVM_INTEL_TARGET_ARCHS}")
-    string(REPLACE ":${PLSSVM_INTEL_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
-endif ()
-
-# check if hipSYCL is used as SYCL compiler
-find_package(hipSYCL CONFIG)
-if (hipSYCL_FOUND)
-    message(CHECK_PASS "found")
-    message(STATUS "Setting HIPSYCL_TARGETS to \"${HIPSYCL_TARGETS}\".")
-    list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "hipsycl")
-
-    # set hipSYCL specific targets
-    set(PLSSVM_SYCL_HIPSYCL_SOURCES
-            ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/detail/device_ptr.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/detail/utility.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/csvm.cpp
-            )
-
-    # set target properties
-    set_local_and_parent(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME plssvm-SYCL_hipsycl)
-    add_library(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_HIPSYCL_SOURCES})
-    list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME}")
-
-    # necessary target_*_directories if more than one SYCL implementation could be found
-    if (DEFINED ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-        message(STATUS "PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR is \"$ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR}\"")
-        target_include_directories(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-    endif ()
-
-    # add target compile definitions for hipSYCL
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="hipSYCL")
-
-    # hipSYCL's way to add SYCL to a target
-    add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/hipSYCL/csvm.cpp)
-
-    # silence unknown options warnings
-    target_compile_options(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
-            )
-
-    # print note that Intel GPU architecture specifications are ignored when using hipSYCL
-    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        message(STATUS "Ignoring specified Intel architectures \"${PLSSVM_INTEL_TARGET_ARCHS}\" in favor of SPIR-V when using hipSYCL!")
-    endif ()
-
-    target_link_libraries(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
-else ()
-    message(CHECK_FAIL "not found")
-endif ()
-
-
-message(CHECK_START "Checking for DPC++ as SYCL implementation")
-
-# check if current compiler is Intel's clang llvm fork aka DPC++
-set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER OFF)
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-    # intel llvm fork must be clang
-    execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} --help
-            OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
-    # check if help message contains DPC++ specific values
-    if ("${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*intel.*" AND "${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*-fsycl.*")
-        set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER ON)
-    endif ()
-endif ()
-
-if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
-    message(CHECK_PASS "found")
-    list(APPEND PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
-
-    # set hipSYCL specific targets
-    set(PLSSVM_SYCL_DPCPP_SOURCES
-            ${CMAKE_CURRENT_LIST_DIR}/DPCPP/detail/device_ptr.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/DPCPP/detail/utility.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/DPCPP/csvm.cpp
-            )
-
-    # set target properties
-    set_local_and_parent(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp)
-    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_DPCPP_SOURCES})
-    list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
-
-    # necessary target_*_directories if more than one SYCL implementation could be found
-    if (DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-        message(STATUS "PLSSVM_SYCL_DPCPP_INCLUDE_DIR is \"$ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR}\"")
-        target_include_directories(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
-    endif ()
-
-    # add target compile definitions for DPC++
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="DPC++")
-
-    # enable DPC++ SYCL support
-    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
-    target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl)
-
-    set(PLSSVM_DPCPP_FSYCL_TARGETS "")
-    # cpu targets
-    if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "spir64_x86_64")
-    endif ()
-    # nvidia targets
-    if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "nvptx64-nvidia-cuda")
-    endif ()
-    # amd targets
-    if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "amdgcn-amd-amdhsa")
-        # add target specific flags for AOT -> must always be specified von amd targets
-        if (NOT PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 1)
-            message(SEND_ERROR "DPC++ currently only supports a single AMD architecture specification but ${PLSSVM_NUM_AMD_TARGET_ARCHS} were provided!")
-        endif ()
-        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
-        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
-    endif ()
-    # intel targets
-    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "spir64_gen")
-    endif ()
-    # set -fsycl-targets
-    list(JOIN PLSSVM_DPCPP_FSYCL_TARGETS "," PLSSVM_DPCPP_FSYCL_TARGETS_STRING)
-    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
-    target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
-
-
-    # add option for DPC++ Ahead-of-Time (AOT) compilation
-    option(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT "Enables Ahead-of-Time compilation for DPC++." ON)
-    if (PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
-        message(STATUS "Enabled Ahead-of-Time (AOT) compilation with DPC++.")
-        ## set AOT compiler flags
-        # cpu targets
-        if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-            # add target specific flags for AOT
-            if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-                target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-            endif ()
-        endif ()
-        # nvidia targets
-        if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-            # add target specific flags for AOT
-            if (NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
-                message(SEND_ERROR "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
-            endif ()
-            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
-            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
-        endif ()
-        # intel targets
-        if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-            # add target specific flags for AOT
-            list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
-            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-        endif ()
-    endif ()
-
-    # be able to choose between the Level-Zero and OpenCL DPC++ backend
-    option(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO "Enable Level-Zero backend in favor of OpenCL when using DPC++." OFF)
-    if (PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO)
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level_zero")
-    else ()
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
-    endif ()
-
-    target_link_libraries(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
-else ()
-    message(CHECK_FAIL "not found")
-endif ()
 
 ## check if ANY SYCL implementation has been found
 if (NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
@@ -226,10 +39,10 @@ endif ()
 set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME plssvm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE)
 
-if (hipSYCL_FOUND)
+if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
     target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
 endif ()
-if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
+if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
 endif ()
 
