@@ -266,6 +266,12 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
     if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         message(FATAL_ERROR "Only GCC is supported for the coverage analysis.")
     endif ()
+    # tests must be available for a coverage analysis
+    message(STATUS "Enabling tests since they are necessary for the coverage analysis.")
+    set(PLSSVM_ENABLE_TESTING ON CACHE BOOL "" FORCE)
+    # assertions must be available for a coverage analysis
+    message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
+    set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
 
     message(STATUS "Enable code coverage analysis using lcov.")
 
