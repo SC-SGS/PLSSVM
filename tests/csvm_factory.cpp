@@ -32,9 +32,7 @@ namespace util {
 
 // clang-format off
 /// A type list of all supported C-SVMs.
-using csvm_types_gtest = ::testing::Types<plssvm::openmp::csvm,
-                                    plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm,
-                                    plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
+using csvm_types_gtest = ::testing::Types<plssvm::openmp::csvm, plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm, plssvm::sycl::csvm>;
 /// A type list of all supported SYCL C-SVMs.
 using sycl_csvm_types_gtest = ::testing::Types<plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
 // clang-format on
@@ -207,22 +205,109 @@ template <typename T>
 class SYCLCSVMFactory : public CSVMFactory<T> {};
 TYPED_TEST_SUITE(SYCLCSVMFactory, util::sycl_csvm_types_gtest);
 
-TYPED_TEST(SYCLCSVMFactory, factory_sycl_implementation) {
-    // the backend to use
-    const plssvm::backend_type backend = plssvm::backend_type::sycl;
-    // the kernel function to use
-    const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
+TYPED_TEST(SYCLCSVMFactory, factory_backend) {
+    const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        const auto csvm = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        const auto csvm = plssvm::make_csvm(backend, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
-        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
                           plssvm::unsupported_backend_exception,
                           fmt::format("No {} backend available!", backend));
     }
 }
+TYPED_TEST(SYCLCSVMFactory, factory_backend_parameter) {
+    // the backend to use
+    const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
+    // create the parameter class used
+    const plssvm::parameter params{};
+    if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
+        // create csvm
+        const auto csvm = plssvm::make_csvm(backend, params, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        // check whether the created csvm has the same type as the expected one
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
+    } else {
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, params, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+                          plssvm::unsupported_backend_exception,
+                          fmt::format("No {} backend available!", backend));
+    }
+}
+TYPED_TEST(SYCLCSVMFactory, factory_backend_target) {
+    // the backend to use
+    const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
+    // the target platform to use
+    const plssvm::target_platform target = plssvm::target_platform::automatic;
+    if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
+        // create csvm
+        const auto csvm = plssvm::make_csvm(backend, target, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        // check whether the created csvm has the same type as the expected one
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
+    } else {
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, target, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+                          plssvm::unsupported_backend_exception,
+                          fmt::format("No {} backend available!", backend));
+    }
+}
+TYPED_TEST(SYCLCSVMFactory, factory_backend_target_and_parameter) {
+    // the backend to use
+    const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
+    // the target platform to use
+    const plssvm::target_platform target = plssvm::target_platform::automatic;
+    // create the parameter class used
+    const plssvm::parameter params{};
+    if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
+        // create csvm
+        const auto csvm = plssvm::make_csvm(backend, target, params, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        // check whether the created csvm has the same type as the expected one
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
+    } else {
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, target, params, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+                          plssvm::unsupported_backend_exception,
+                          fmt::format("No {} backend available!", backend));
+    }
+}
+
+TYPED_TEST(SYCLCSVMFactory, factory_backend_target_and_named_parameter) {
+    // the backend to use
+    const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
+    // the target platform to use
+    const plssvm::target_platform target = plssvm::target_platform::automatic;
+    // the kernel function to use
+    const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
+    if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
+        // create csvm
+        const auto csvm = plssvm::make_csvm(backend, target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
+                                            plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        // check whether the created csvm has the same type as the expected one
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
+    } else {
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
+                                                          plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+                          plssvm::unsupported_backend_exception,
+                          fmt::format("No {} backend available!", backend));
+    }
+}
+TYPED_TEST(SYCLCSVMFactory, factory_backend_named_parameter) {
+    // the backend to use
+    const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<TypeParam>;
+    // the kernel function to use
+    const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
+    if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
+        // create csvm
+        const auto csvm = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
+                                            plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        // check whether the created csvm has the same type as the expected one
+        EXPECT_INSTANCE_OF(TypeParam, csvm);
+    } else {
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
+                                                          plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+                          plssvm::unsupported_backend_exception,
+                          fmt::format("No {} backend available!", backend));
+    }
+}
+
 TEST(SYCLCSVMFactory, invalid_sycl_implementation) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(plssvm::backend_type::sycl, plssvm::sycl_implementation_type = static_cast<plssvm::sycl::implementation_type>(3)),
                       plssvm::unsupported_backend_exception,
