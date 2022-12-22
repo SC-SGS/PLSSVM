@@ -241,7 +241,8 @@ template <typename T>
 }
 
 /**
- * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple.
+ * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
+ *        containing the named-parameter name and value.
  * @tparam T the type to construct
  * @tparam Tuple the tuple type used to construct @p T
  * @tparam Is an index sequence used to iterate through the @p tuple
@@ -251,10 +252,11 @@ template <typename T>
  */
 template <typename T, typename Tuple, size_t... Is>
 [[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple, std::index_sequence<Is...>) {
-    return T{ params, std::get<Is>(std::forward<Tuple>(tuple))... };
+    return T{ params, (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 /**
- * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple.
+ * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
+ *        containing the named-parameter name and value.
  * @tparam T the type to construct
  * @tparam real_type the floating point type used for the SVM parameter
  * @tparam Tuple the tuple type used to construct @p T
@@ -270,7 +272,8 @@ template <typename T, typename real_type, typename Tuple>
 }
 
 /**
- * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple.
+ * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
+ *        containing the named-parameter name and value.
  * @tparam T the type to construct
  * @tparam Tuple the tuple type used to construct @p T
  * @tparam Is an index sequence used to iterate through the @p tuple
@@ -279,10 +282,11 @@ template <typename T, typename real_type, typename Tuple>
  */
 template <typename T, typename Tuple, size_t... Is>
 [[nodiscard]] inline T construct_from_tuple(Tuple &&tuple, std::index_sequence<Is...>) {
-    return T{ std::get<Is>(std::forward<Tuple>(tuple))... };
+    return T{ (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 /**
- * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple.
+ * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
+ *        containing the named-parameter name and value.
  * @tparam T the type to construct
  * @tparam Tuple the tuple type used to construct @p T
  * @param tuple the tuple values used to construct @p T

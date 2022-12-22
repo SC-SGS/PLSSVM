@@ -24,7 +24,8 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
-#include <tuple>  // std::make_tuple
+#include <tuple>    // std::make_tuple
+#include <utility>  // std::make_pair
 
 class DPCPPCSVM : public ::testing::Test, private util::redirect_output<> {};
 
@@ -129,7 +130,7 @@ struct csvm_test_type {
     using csvm_type = plssvm::dpcpp::csvm;
     using real_type = T;
     static constexpr plssvm::kernel_function_type kernel_type = kernel;
-    inline static auto additional_arguments = std::make_tuple(plssvm::sycl_kernel_invocation_type = invocation);
+    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_kernel_invocation_type, invocation));
 };
 
 using csvm_test_types = ::testing::Types<
