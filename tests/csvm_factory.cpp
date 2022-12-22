@@ -200,6 +200,11 @@ TEST(CSVMFactory, invalid_backend) {
                       plssvm::unsupported_backend_exception,
                       "Unrecognized backend provided!");
 }
+TEST(CSVMFactory, invalid_constructor_parameter) {
+    EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(plssvm::backend_type::cuda, plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::automatic),
+                      plssvm::unsupported_backend_exception,
+                      "Provided invalid (named) arguments for the cuda backend!");
+}
 
 template <typename T>
 class SYCLCSVMFactory : public CSVMFactory<T> {};
