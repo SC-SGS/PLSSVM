@@ -52,7 +52,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
     if (pos >= size_) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, size_) };
     }
     const size_type rcount = std::min(count, size_ - pos);
     queue_.impl->sycl_queue.fill(static_cast<void *>(data_ + pos), value, rcount).wait();

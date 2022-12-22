@@ -56,7 +56,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (pos >= size_) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, size_) };
+        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, size_) };
     }
 
     detail::set_device(queue_);
