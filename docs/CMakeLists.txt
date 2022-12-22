@@ -35,6 +35,7 @@ set(DOXYGEN_DOT_IMAGE_FORMAT "svg")
 set(DOXYGEN_INTERACTIVE_SVG "YES")
 set(DOXYGEN_INCLUDE_GRAPH "NO")
 set(DOXYGEN_EXTRACT_PRIVATE "YES")
+set(DOXYGEN_EXAMPLE_PATH "${PROJECT_SOURCE_DIR}/docs/resources/examples")
 
 ## enable processing of specific attributes and macros
 set(DOXYGEN_ENABLE_PREPROCESSING "YES")

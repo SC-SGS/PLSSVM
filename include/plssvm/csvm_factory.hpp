@@ -142,6 +142,11 @@ template <typename... Args>
 }  // namespace detail
 
 /**
+ * @example csvm_factory_examples.cpp
+ * @brief A few examples regarding the plssvm::make_csvm function.
+ */
+
+/**
  * @brief Create a new C-SVM using the @p backend type and additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use

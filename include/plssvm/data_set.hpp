@@ -53,6 +53,11 @@ template <typename T>
 using optional_ref = std::optional<std::reference_wrapper<T>>;
 
 /**
+ * @example data_set_examples.cpp
+ * @brief A few examples regarding the plssvm::data_set class.
+ */
+
+/**
  * @brief Encapsulate all necessary data that is needed for training or predicting using an SVM.
  * @details May or may not contain labels!
  *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::data_set relatively cheap to copy!

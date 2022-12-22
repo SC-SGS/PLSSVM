@@ -319,6 +319,11 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
 
 }  // namespace detail
 
+/**
+ * @example parameter_examples.cpp
+ * @brief A few examples regarding the plssvm::parameter class.
+ */
+
 /// The public parameter type uses `double` to store the SVM parameters.
 using parameter = detail::parameter<double>;
 
