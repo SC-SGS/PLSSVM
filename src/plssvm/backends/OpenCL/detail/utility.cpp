@@ -311,6 +311,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             std::filesystem::create_directories(cache_dir_name);
         }
         std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all, std::filesystem::perm_options::add);
+
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
