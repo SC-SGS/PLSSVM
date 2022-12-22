@@ -87,7 +87,15 @@ TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
     EXPECT_FLOATING_POINT_NEAR(std::abs(calculated_rho) - std::numeric_limits<real_type>::epsilon(), std::numeric_limits<real_type>::epsilon());
 }
 
-// TODO: add non-trivial test, test for the correction scheme after 50 iterations
+TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations) {
+    GTEST_SKIP() << "currently not implemented";
+    // TODO: add non-trivial test
+}
+
+TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_with_correction) {
+    GTEST_SKIP() << "currently not implemented";
+    // TODO: test for the correction scheme after 50 iterations
+}
 
 TYPED_TEST_P(GenericCSVM, predict_values) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
@@ -191,7 +199,8 @@ TYPED_TEST_P(GenericCSVM, score) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
-                            solve_system_of_linear_equations_trivial, predict_values, predict, score);
+                            solve_system_of_linear_equations_trivial, solve_system_of_linear_equations, solve_system_of_linear_equations_with_correction,
+                            predict_values, predict, score);
 // clang-format on
 
 //*************************************************************************************************************************************//
