@@ -175,7 +175,7 @@ TYPED_TEST_P(DevicePtr, memset) {
     std::memset(correct.data() + 2, 1, (correct.size() - 2) * sizeof(value_type));
     EXPECT_EQ(result, correct);
 }
-TYPED_TEST_P(DevicePtr, memset_with_count) {
+TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
     using device_ptr_type = typename TypeParam::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename TypeParam::queue_type;
@@ -196,6 +196,20 @@ TYPED_TEST_P(DevicePtr, memset_with_count) {
     std::vector<value_type> correct(ptr.size());
     std::memset(correct.data() + 2, 1, 4 * sizeof(value_type));
     EXPECT_EQ(result, correct);
+}
+TYPED_TEST_P(DevicePtr, memset_invalid_pos) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // perform invalid memset
+    EXPECT_THROW_WHAT(ptr.memset(0, 10, 1),
+                      plssvm::exception,
+                      "Illegal access in memset!: 10 >= 10");
 }
 
 TYPED_TEST_P(DevicePtr, fill) {
@@ -241,6 +255,21 @@ TYPED_TEST_P(DevicePtr, fill_with_count) {
     std::vector<value_type> correct(ptr.size(), value_type{ 0.0 });
     correct[2] = correct[3] = correct[4] = correct[5] = value_type{ 42.0 };
     EXPECT_EQ(result, correct);
+}
+TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // perform invalid fill
+    EXPECT_THROW_WHAT(ptr.fill(value_type{ 42.0 }, 10, 1),
+                      plssvm::exception,
+                      "Illegal access in fill!: 10 >= 10");
 }
 
 TYPED_TEST_P(DevicePtr, copy_vector) {
@@ -478,8 +507,8 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             default_construct, construct, move_construct, move_assign,
                             swap_member_function, swap_free_function,
-                            memset, memset_with_count,
-                            fill, fill_with_count,
+                            memset, memset_with_numbytes, memset_invalid_pos,
+                            fill, fill_with_count, fill_invalid_pos,
                             copy_vector, copy_vector_with_count_copy_back_all, copy_vector_with_count_copy_back_some, copy_vector_with_count_copy_to_too_many,
                             copy_vector_too_few_host_elements, copy_vector_too_few_buffer_elements, copy_vector_with_count_too_few_host_elements, copy_vector_with_count_too_few_buffer_elements,
                             copy_ptr, copy_ptr_with_count_copy_back_all, copy_ptr_with_count_copy_back_some, copy_ptr_with_count_copy_to_too_many);
