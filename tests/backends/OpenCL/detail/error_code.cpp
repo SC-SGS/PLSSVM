@@ -60,6 +60,23 @@ TEST(OpenCLErrorCode, message) {
     // get the value as a string
     EXPECT_EQ(errc.message(), "CL_SUCCESS");
 }
+TEST(OpenCLErrorCode, possible_message_error_codes) {
+    // any error code greater than zero is unknown
+    std::string msg = std::string{ plssvm::opencl::detail::error_code{ 1 }.message() };
+    EXPECT_EQ(msg, "UNKNOWN ERROR_CODE");
+    // any error code less than -72 is unknown
+    msg = std::string{ plssvm::opencl::detail::error_code{ -73 }.message() };
+    EXPECT_EQ(msg, "UNKNOWN ERROR_CODE");
+    // all other error codes should be available
+    for (cl_int err = 0; err >= -19; --err) {
+        msg = std::string{ plssvm::opencl::detail::error_code{ err }.message() };
+        EXPECT_NE(msg, "UNKNOWN ERROR_CODE") << fmt::format("for OpenCL error code: {}", err);
+    }
+    for (cl_int err = -30; err >= -72; --err) {
+        msg = std::string{ plssvm::opencl::detail::error_code{ err }.message() };
+        EXPECT_NE(msg, "UNKNOWN ERROR_CODE") << fmt::format("for OpenCL error code: {}", err);
+    }
+}
 TEST(OpenCLErrorCode, operator_bool) {
     // conversion to bool must be true if the error code is CL_SUCCESS
     EXPECT_TRUE(static_cast<bool>(plssvm::opencl::detail::error_code{}));
