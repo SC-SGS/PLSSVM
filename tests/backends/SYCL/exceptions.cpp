@@ -30,7 +30,7 @@ struct hipsycl_exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLException, Exception, hipsycl_exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackend, Exception, hipsycl_exception_test_type);
 
 struct dpcpp_exception_test_type {
     using exception_type = plssvm::dpcpp::backend_exception;
@@ -38,4 +38,4 @@ struct dpcpp_exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPException, Exception, dpcpp_exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, Exception, dpcpp_exception_test_type);

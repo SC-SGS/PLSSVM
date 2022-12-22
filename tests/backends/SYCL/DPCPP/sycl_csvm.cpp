@@ -10,10 +10,12 @@
 
 #include "backends/SYCL/DPCPP/mock_dpcpp_csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                         // plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"              // plssvm::dpcpp::csvm
 #include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::dpcpp::backend_exception
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -24,7 +26,7 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
-#include <tuple>    // std::make_tuple
+#include <tuple>    // std::make_tuple, std::get
 #include <utility>  // std::make_pair
 
 class DPCPPCSVM : public ::testing::Test, private util::redirect_output<> {};
@@ -133,6 +135,18 @@ struct csvm_test_type {
     inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_kernel_invocation_type, invocation));
 };
 
+class csvm_test_type_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        return fmt::format("{}_{}_{}_{}",
+                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
+                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
+                           T::kernel_type,
+                           std::get<0>(T::additional_arguments).second);
+    }
+};
+
 using csvm_test_types = ::testing::Types<
     csvm_test_type<float, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::nd_range>,
     csvm_test_type<float, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::nd_range>,
@@ -149,7 +163,7 @@ using csvm_test_types = ::testing::Types<
     csvm_test_type<double, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::hierarchical>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericGPUCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericGPUCSVM, csvm_test_types, csvm_test_type_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);

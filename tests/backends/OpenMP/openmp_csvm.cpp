@@ -10,12 +10,14 @@
 
 #include "backends/OpenMP/mock_openmp_csvm.hpp"
 
-#include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
-#include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/data_set.hpp"                    // plssvm::data_set
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
-#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                // plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/OpenMP/csvm.hpp"         // plssvm::openmp::csvm
+#include "plssvm/backends/OpenMP/exceptions.hpp"   // plssvm::openmp::backend_exception
+#include "plssvm/data_set.hpp"                     // plssvm::data_set
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
+#include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
 #include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
 #include "../../naming.hpp"              // naming::{real_type_kernel_function_to_name, real_type_to_name}
@@ -105,6 +107,17 @@ struct csvm_test_type {
     inline static auto additional_arguments = std::make_tuple();
 };
 
+class csvm_test_type_to_name {
+  public:
+    template <typename T>
+    static std::string GetName(int) {
+        return fmt::format("{}_{}_{}",
+                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
+                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
+                           T::kernel_type);
+    }
+};
+
 using csvm_test_types = ::testing::Types<
     csvm_test_type<float, plssvm::kernel_function_type::linear>,
     csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
@@ -114,8 +127,8 @@ using csvm_test_types = ::testing::Types<
     csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackend, GenericCSVM, csvm_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
 
 template <typename T>
 class OpenMPCSVMGenerateQ : public OpenMPCSVM {};
