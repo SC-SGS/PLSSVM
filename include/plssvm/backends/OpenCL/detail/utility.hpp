@@ -9,6 +9,8 @@
  * @brief Utility functions specific to the OpenCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_UTILITY_HPP_
+#define PLSSVM_BACKENDS_OPENCL_DETAIL_UTILITY_HPP_
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
@@ -16,7 +18,7 @@
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
@@ -38,23 +40,18 @@
 namespace plssvm::opencl::detail {
 
 /**
- * @brief Check the OpenCL error @p code. If @p code signals an error, throw a `plssvm::opencl::backend_exception`.
- * @details The exception contains the error name and additional debug information.
+ * @brief Check the OpenCL error @p code. If @p code signals an error, throw a plssvm::opencl::backend_exception.
+ * @details The exception contains the following message: "OpenCL assert 'OPENCL_ERROR_NAME' (OPENCL_ERROR_CODE): OPTIONAL_OPENCL_ERROR_STRING".
  * @param[in] code the OpenCL error code to check
  * @param[in] msg optional message printed if the error code check failed
- * @throws `plssvm::opencl::backend_exception` if the error code signals a failure
+ * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
 void device_assert(error_code code, std::string_view msg = "");
 
 /**
  * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform
  *        (only interesting if the provided @p target was automatic).
- * @details If the selected target platform is `plssvm::target_platform::automatic` the selector tries to find devices in the following order:
- *          1. NVIDIA GPUs
- *          2. AMD GPUs
- *          3. Intel GPUs
- *          4. CPUs
- *
+ * @details If the selected target platform is plssvm::target_platform::automatic the selector tries to find devices according to plssvm::determine_default_target_platform.
  * @param[in] target the target platform for which the devices must match
  * @return the command queues and used target platform (`[[nodiscard]]`)
  */
@@ -74,18 +71,19 @@ void device_synchronize(const command_queue &queue);
 [[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
- * @brief Convert the kernel type @p kernel to the device function names and return the compute_kernel_name identifier.
+ * @brief Convert the kernel type @p kernel to the device function names and return the plssvm::opencl::detail::compute_kernel_name identifier.
  * @param[in] kernel the kernel type
- * @return the kernel function names with the respective compute_kernel_name identifier (`[[nodiscard]]`)
+ * @return the kernel function names with the respective plssvm::opencl::detail::compute_kernel_name identifier (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_type kernel);
+[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_function_type kernel);
 
 /**
  * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and
  *        the associated compute kernels with respect to the given source files and kernel function names.
+ *        Always builds kernels for `float` and `double` precision floating point types.
  * @details Manually caches the OpenCL JIT compiled code in the current `$TEMP` directory (no special means to prevent race conditions are implemented).
  *          The cached binaries are reused if:
- *          1. cached files already exist
+ *          1. the cached files already exist
  *          2. the number of cached files match the number of needed files
  *          3. the kernel source checksum matches (no changes in the source files since the last caching)
  *
@@ -93,16 +91,13 @@ void device_synchronize(const command_queue &queue);
  *          Additionally, adds the path to the currently used OpenCL library as a comment to the kernel source string (before the checksum calculation) to detect
  *          changes in the used OpenCL implementation and trigger a kernel rebuild.
  *
- * @tparam real_type the floating point type used to replace the placeholders in the kernel file
  * @param[in] contexts the used OpenCL contexts
  * @param[in] target the target platform
  * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
- * @param[in] print_info if `true` prints additional info to the standard output
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return the command queues with all necessary kernels (`[[nodiscard]]`)
  */
-template <typename real_type>
-[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names, bool print_info);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -159,3 +154,5 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, std::size_t
 }
 
 }  // namespace plssvm::opencl::detail
+
+#endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_UTILITY_HPP_

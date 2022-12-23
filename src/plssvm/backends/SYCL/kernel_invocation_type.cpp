@@ -1,10 +1,10 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
 
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
@@ -15,7 +15,7 @@
 #include <ostream>  // std::ostream
 #include <string>   // std::string
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl {
 
 std::ostream &operator<<(std::ostream &out, const kernel_invocation_type target) {
     switch (target) {
@@ -46,4 +46,4 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &target) {
     return in;
 }
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl

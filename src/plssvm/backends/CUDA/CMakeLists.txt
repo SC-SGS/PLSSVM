@@ -4,29 +4,31 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
+list(APPEND CMAKE_MESSAGE_INDENT "CUDA:  ")
+
 # check if CUDA can be enabled
 message(CHECK_START "Checking for CUDA backend")
 
 include(CheckLanguage)
 check_language(CUDA)
 
-if(NOT CMAKE_CUDA_COMPILER)
+if (NOT CMAKE_CUDA_COMPILER)
     message(CHECK_FAIL "not found")
-    if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
+    if (PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
         message(SEND_ERROR "Cannot find requested backend: CUDA!")
-    endif()
+    endif ()
     return()
-else()
-    if(NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        if(PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
+else ()
+    if (NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
             message(SEND_ERROR "Found requested CUDA backend, but no \"nvidia\" targets were specified!")
-        else()
+        else ()
             message(STATUS "Found CUDA backend, but no \"nvidia\" targets were specified!")
-        endif()
+        endif ()
         message(CHECK_FAIL "skipped")
         return()
-    endif()
-endif()
+    endif ()
+endif ()
 message(CHECK_PASS "found")
 
 enable_language(CUDA)
@@ -35,34 +37,33 @@ enable_language(CUDA)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     # use nvcc to compile CUDA code
-    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -lineinfo -Xptxas=-v -Xptxas -dlcm=cg" )
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
     set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math -Wno-attributes")
-elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+elseif (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     # use clang to compile CUDA code
     set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3 -ffast-math")
-endif()
+endif ()
 
 # explicitly set sources
 set(PLSSVM_CUDA_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cu
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cu
-    ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
-    ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-)
+        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
+        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
+        ${CMAKE_CURRENT_LIST_DIR}/csvm.cu
+        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cu
+        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
+        ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
+        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+        )
 
 # set target properties
 set_local_and_parent(PLSSVM_CUDA_BACKEND_LIBRARY_NAME plssvm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
-if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-endif()
+endif ()
 
 # prepare architectures for CMake's CUDA_ARCHITECTURES
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
@@ -87,3 +88,5 @@ set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 # generate summary string
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")
 set(PLSSVM_CUDA_BACKEND_SUMMARY_STRING " - CUDA: nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS})" PARENT_SCOPE)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)

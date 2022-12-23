@@ -91,7 +91,7 @@ template __global__ void device_kernel_linear(const float *, float *, const floa
 template __global__ void device_kernel_linear(const double *, double *, const double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double, const kernel_index_type);
 
 template <typename real_type>
-__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
+__global__ void device_kernel_polynomial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
     kernel_index_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     kernel_index_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -154,11 +154,11 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
     }
 }
 
-template __global__ void device_kernel_poly(const float *, float *, const float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const float, const int, const float, const float);
-template __global__ void device_kernel_poly(const double *, double *, const double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double, const int, const double, const double);
+template __global__ void device_kernel_polynomial(const float *, float *, const float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const float, const int, const float, const float);
+template __global__ void device_kernel_polynomial(const double *, double *, const double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double, const int, const double, const double);
 
 template <typename real_type>
-__global__ void device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) {
+__global__ void device_kernel_rbf(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) {
     kernel_index_type i = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE;
     kernel_index_type j = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE;
 
@@ -220,7 +220,7 @@ __global__ void device_kernel_radial(const real_type *q, real_type *ret, const r
         }
     }
 }
-template __global__ void device_kernel_radial(const float *, float *, const float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const float, const float);
-template __global__ void device_kernel_radial(const double *, double *, const double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double, const double);
+template __global__ void device_kernel_rbf(const float *, float *, const float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const float, const float);
+template __global__ void device_kernel_rbf(const double *, double *, const double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double, const double);
 
 }  // namespace plssvm::cuda

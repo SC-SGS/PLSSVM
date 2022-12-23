@@ -9,6 +9,8 @@
  * @brief Defines the kernel functions for the C-SVM using the OpenMP backend.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENMP_SVM_KERNEL_HPP_
+#define PLSSVM_BACKENDS_OPENMP_SVM_KERNEL_HPP_
 #pragma once
 
 #include <vector>  // std::vector
@@ -19,7 +21,7 @@ namespace plssvm::openmp {
  * @brief Calculates the C-SVM kernel using the linear kernel function.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -33,7 +35,7 @@ void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type
  * @brief Calculates the C-SVM kernel using the polynomial kernel function.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
  * @param[in] QA_cost the bottom right matrix entry multiplied by cost
@@ -44,13 +46,13 @@ void device_kernel_linear(const std::vector<real_type> &q, std::vector<real_type
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, int degree, real_type gamma, real_type coef0);
+void device_kernel_polynomial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, int degree, real_type gamma, real_type coef0);
 
 /**
  * @brief Calculates the C-SVM kernel using the radial basis function kernel function.
  * @tparam real_type the type of the data
  * @param[in] q the `q` vector
- * @param[in] ret the result vector
+ * @param[out] ret the result vector
  * @param[in] d the right-hand side of the equation
  * @param[in] data the data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
@@ -59,6 +61,8 @@ void device_kernel_poly(const std::vector<real_type> &q, std::vector<real_type> 
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-void device_kernel_radial(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, real_type gamma);
+void device_kernel_rbf(const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type add, real_type gamma);
 
 }  // namespace plssvm::openmp
+
+#endif  // PLSSVM_BACKENDS_OPENMP_SVM_KERNEL_HPP_

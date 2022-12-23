@@ -9,14 +9,16 @@
  * @brief Defines the functions used for prediction for the C-SVM using the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
+#define PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::atomic_op
+#include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 #include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::range, sycl::pow, sycl::exp
 
-namespace plssvm::sycl_generic {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Calculate the `w` vector to speed up the prediction of the labels for data points using the linear kernel function.
@@ -59,12 +61,14 @@ class device_kernel_w_linear {
     }
 
   private:
+    /// @cond Doxygen_suppress
     real_type *w_d_;
     const real_type *data_d_;
     const real_type *data_last_d_;
     const real_type *alpha_d_;
     const kernel_index_type num_data_points_;
     const kernel_index_type num_features_;
+    /// @endcond
 };
 
 /**
@@ -73,7 +77,7 @@ class device_kernel_w_linear {
  * @tparam T the type of the data points
  */
 template <typename T>
-class device_kernel_predict_poly {
+class device_kernel_predict_polynomial {
   public:
     /// The type of the data.
     using real_type = T;
@@ -93,7 +97,7 @@ class device_kernel_predict_poly {
      * @param[in] gamma the gamma parameter used in the polynomial kernel function
      * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_predict_poly(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0) :
+    device_kernel_predict_polynomial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -107,7 +111,7 @@ class device_kernel_predict_poly {
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
             for (kernel_index_type feature_index = 0; feature_index < num_features_; ++feature_index) {
-                if (data_point_index == num_data_points_) {
+                if (data_point_index == num_data_points_ - 1) {
                     temp += data_last_d_[feature_index] * points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
                 } else {
                     temp += data_d_[data_point_index + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] * points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index];
@@ -116,11 +120,12 @@ class device_kernel_predict_poly {
 
             temp = alpha_d_[data_point_index] * ::sycl::pow(gamma_ * temp + coef0_, static_cast<real_type>(degree_));
 
-            atomic_op<real_type>{ out_d_[predict_point_index] } += temp;
+            detail::atomic_op<real_type>{ out_d_[predict_point_index] } += temp;
         }
     }
 
   private:
+    /// @cond Doxygen_suppress
     real_type *out_d_;
     const real_type *data_d_;
     const real_type *data_last_d_;
@@ -132,6 +137,7 @@ class device_kernel_predict_poly {
     const int degree_;
     const real_type gamma_;
     const real_type coef0_;
+    /// @endcond
 };
 
 /**
@@ -140,7 +146,7 @@ class device_kernel_predict_poly {
  * @tparam T the type of the data points
  */
 template <typename T>
-class device_kernel_predict_radial {
+class device_kernel_predict_rbf {
   public:
     /// The type of the data.
     using real_type = T;
@@ -158,7 +164,7 @@ class device_kernel_predict_radial {
      * @param[in] num_features the number of features per support vector and point to predict
      * @param[in] gamma the gamma parameter used in the rbf kernel function
      */
-    device_kernel_predict_radial(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma) :
+    device_kernel_predict_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma) :
         out_d_{ out_d }, data_d_{ data_d }, data_last_d_{ data_last_d }, alpha_d_{ alpha_d }, num_data_points_{ num_data_points }, points_{ points }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}
 
     /**
@@ -172,7 +178,7 @@ class device_kernel_predict_radial {
         real_type temp = 0;
         if (predict_point_index < num_predict_points_) {
             for (kernel_index_type feature_index = 0; feature_index < num_features_; ++feature_index) {
-                if (data_point_index == num_data_points_) {
+                if (data_point_index == num_data_points_ - 1) {
                     temp += (data_last_d_[feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_last_d_[feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
                 } else {
                     temp += (data_d_[data_point_index + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]) * (data_d_[data_point_index + (num_data_points_ - 1 + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index] - points_[predict_point_index + (num_predict_points_ + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * feature_index]);
@@ -181,11 +187,12 @@ class device_kernel_predict_radial {
 
             temp = alpha_d_[data_point_index] * ::sycl::exp(-gamma_ * temp);
 
-            atomic_op<real_type>{ out_d_[predict_point_index] } += temp;
+            detail::atomic_op<real_type>{ out_d_[predict_point_index] } += temp;
         }
     }
 
   private:
+    /// @cond Doxygen_suppress
     real_type *out_d_;
     const real_type *data_d_;
     const real_type *data_last_d_;
@@ -195,6 +202,9 @@ class device_kernel_predict_radial {
     const kernel_index_type num_predict_points_;
     const kernel_index_type num_features_;
     const real_type gamma_;
+    /// @endcond
 };
 
-}  // namespace plssvm::sycl_generic
+}  // namespace plssvm::sycl::detail
+
+#endif  // PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_

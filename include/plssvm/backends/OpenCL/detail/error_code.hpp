@@ -9,6 +9,8 @@
  * @brief Small wrapper around OpenCL's error codes.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_ERROR_CODE_HPP_
+#define PLSSVM_BACKENDS_OPENCL_DETAIL_ERROR_CODE_HPP_
 #pragma once
 
 #include "CL/cl.h"  // cl_int, CL_SUCCESS
@@ -67,14 +69,13 @@ class error_code {
      */
     [[nodiscard]] explicit operator bool() const noexcept;
     /**
-     * @brief Overloads the addressof operator to be able to set the wrapped error code value using an out-parameter
-     *        in calls to OpenCL functions.
+     * @brief Overloads the addressof operator to be able to set the wrapped error code value using an out-parameter in calls to OpenCL functions.
      * @return pointer to the wrapped OpenCL error code (`[[nodiscard]]`)
      */
     [[nodiscard]] cl_int *operator&() noexcept;
 
   private:
-    // The wrapped OpenCL error code.
+    /// The wrapped OpenCL error code.
     cl_int err_{ CL_SUCCESS };
 };
 
@@ -105,3 +106,5 @@ std::ostream &operator<<(std::ostream &out, error_code ec);
 [[nodiscard]] bool operator!=(error_code lhs, error_code rhs) noexcept;
 
 }  // namespace plssvm::opencl::detail
+
+#endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_ERROR_CODE_HPP_

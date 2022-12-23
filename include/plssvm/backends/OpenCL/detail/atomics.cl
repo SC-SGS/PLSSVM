@@ -14,6 +14,7 @@
 
 /**
  * @brief Implementation of an atomic add function for double-precision floating point types.
+ * @details Uses the atomic compare-exchange idiom.
  * @param[in,out] addr the source value to add @p val to
  * @param[in] val the value to add to @p addr
  */
@@ -34,6 +35,7 @@ inline void __attribute__((overloadable)) atomicAdd(__global const double *addr,
 
 /**
  * @brief Implementation of an atomic add function for single-precision floating point types.
+ * @details Uses the atomic compare-exchange idiom.
  * @param[in,out] addr the source value to add @p val to
  * @param[in] val the value to add to @p addr
  */

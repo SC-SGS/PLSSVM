@@ -115,7 +115,7 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
  * @param[in] gamma the gamma parameter used in the polynomial kernel function
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
-__kernel void device_kernel_poly(__global const real_type *q, __global real_type *ret, __global const real_type *d, __global const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
+__kernel void device_kernel_polynomial(__global const real_type *q, __global real_type *ret, __global const real_type *d, __global const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0) {
     kernel_index_type i = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE;
     kernel_index_type j = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE;
 
@@ -193,7 +193,7 @@ __kernel void device_kernel_poly(__global const real_type *q, __global real_type
  * @param[in] add denotes whether the values are added or subtracted from the result vector
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
-__kernel void device_kernel_radial(__global const real_type *q, __global real_type *ret, __global const real_type *d, __global const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) {
+__kernel void device_kernel_rbf(__global const real_type *q, __global real_type *ret, __global const real_type *d, __global const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma) {
     kernel_index_type i = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE;
     kernel_index_type j = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE;
 

@@ -11,6 +11,8 @@
 import argparse
 from timeit import default_timer as timer
 import os
+import humanize
+import datetime
 
 # data set creation
 from sklearn.datasets import make_classification
@@ -24,7 +26,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--output", help="the output file to write the samples to (without extension)")
 parser.add_argument(
-    "--format", help="the file format; either arff, libsvm, or csv", required=True)
+    "--format", help="the file format; either arff, libsvm, or csv", default="libsvm")
 parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
                     default="blobs")
 parser.add_argument(
@@ -82,28 +84,39 @@ print("Saving samples... ", end="", flush=True)
 start_time = timer()
 # set file names
 if args.output is not None:
-    rawfile = os.path.join(args.output, "{}x{}".format(args.samples, args.features)) if os.path.isdir(args.output) else args.output
+    rawfile = os.path.join(args.output, "{}x{}".format(args.samples, args.features)) if os.path.isdir(
+        args.output) else args.output
 else:
     rawfile = "{}x{}".format(args.samples, args.features)
 
 if rawfile.endswith(args.format):
-    rawfile = rawfile[:-(len(args.format)+1)]
+    rawfile = rawfile[:-(len(args.format) + 1)]
 file = rawfile + "." + args.format
 if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
 if args.format == "libsvm":
     from sklearn.datasets import dump_svmlight_file
+
     # dump data in libsvm format
     dump_svmlight_file(samples[:args.samples, :],
-                       labels[:args.samples], file)
+                       labels[:args.samples],
+                       file,
+                       comment="This training data set has been created at {}\n{}x{}\n".format(
+                           datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.samples, args.features),
+                       zero_based=False)
     if args.test_samples > 0:
         dump_svmlight_file(samples[args.samples:, :],
-                           labels[args.samples:], test_file)
+                           labels[args.samples:],
+                           test_file,
+                           comment="This test data set has been created at {}\n{}x{}\n".format(
+                               datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.test_samples, args.features),
+                           zero_based=False)
 elif args.format == "arff":
     import numpy
     import arff
     import pandas
+
     # dump data in arff format
     # concatenate features and labels
     data = numpy.c_[samples, labels]
@@ -111,6 +124,7 @@ elif args.format == "arff":
     # convert numpy array to pandas dataframe
     col_names = ["feature_" + str(i) for i in range(args.features)]
     col_names.append("class")
+
 
     def dump_arff_file(out_data, out_file, relation):
         # dump dataframe as arff file
@@ -121,15 +135,20 @@ elif args.format == "arff":
         # replace 'real' with 'numeric' in arff file
         with open(file) as f:
             new_text = f.read().replace('real', 'numeric')
+            new_text = new_text.replace('class numeric', 'class {-1,1}')
+            new_text = "% This data set has been created at {}\n% {}x{}\n".format(
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.samples, args.features) + new_text
         with open(file, "w") as f:
             f.write(new_text)
 
+
     # dump arff files
-    dump_arff_file(data[:args.samples, :], file, 'train data set')
+    dump_arff_file(data[:args.samples, :], file, '\"train data set\"')
     if args.test_samples > 0:
-        dump_arff_file(data[args.samples:, :], test_file, 'test data set')
+        dump_arff_file(data[args.samples:, :], test_file, '\"test data set\"')
 elif args.format == "csv":
     import numpy
+
     # concatenate features and labels of the training data set
     data = numpy.c_[samples, labels]
     numpy.savetxt(file, data[:args.samples, :], delimiter=',')
@@ -138,14 +157,14 @@ elif args.format == "csv":
         data = numpy.c_[samples, labels]
         numpy.savetxt(test_file, data[args.samples:, :], delimiter=',')
 else:
-    raise RuntimeError("Only arff and libsvm supported as file format!")
+    raise RuntimeError("Only arff, libsvm, and csv supported as file formats!")
 
 end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
 # output info
-print("Created training data set '{}' with {} data points and {} features.".format(
-    file, args.samples, args.features))
+print("Created training data set '{}' ({}) with {} data points and {} features.".format(
+    file, humanize.naturalsize(os.path.getsize(file)), args.samples, args.features))
 if args.test_samples > 0:
     print("Created test data set '{}' with {} data points and {} features."
           .format(test_file, args.test_samples, args.features))
@@ -163,5 +182,5 @@ if args.plot:
         fig = plt.figure()
         ax = Axes3D(fig)
         ax.scatter(samples[:args.samples, 0], samples[:args.samples,
-                   1], samples[:args.samples, 2], c=labels)
+                                              1], samples[:args.samples, 2], c=labels)
     plt.show()

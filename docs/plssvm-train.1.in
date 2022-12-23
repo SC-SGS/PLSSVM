@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-train.
-.TH PLSSVM-TRAIN 1 "20 April 2022" "1.2.0" "plssvm-train Manual"
+.TH PLSSVM-TRAIN 1 "13 December 2022" "2.0.0" "plssvm-train Manual"
 
 .SH NAME
 plssvm-train - LS-SVM with multiple (GPU-)backends
@@ -40,6 +40,10 @@ set the parameter C (default: 1)
 set the tolerance of termination criterion (default: 0.001)
 
 .TP
+.B -i, --max_iter arg
+the maximum number of CG iterations (default: #features)
+
+.TP
 .B -b, --backend arg
 choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 
@@ -48,6 +52,14 @@ choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 
 @PLSSVM_SYCL_MANPAGE_ENTRY@
+
+.TP
+.B --use_string_as_labels arg
+must be specified if the labels should be interpreted as strings instead of integers
+
+.TP
+.B --use_float_as_real_type arg
+must be specified if float should be used instead of double as floating point type
 
 .TP
 .B -q, --quiet

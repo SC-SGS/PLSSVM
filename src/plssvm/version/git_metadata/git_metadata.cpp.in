@@ -8,8 +8,7 @@
 
 #include "plssvm/version/git_metadata/git_metadata.hpp"
 
-#include <string_view>
-
+#include <string_view>  // std::string_view
 
 namespace plssvm::version::git_metadata {
 
@@ -47,4 +46,4 @@ std::string_view remote_url() {
     return "@GIT_REMOTE_URL@";
 }
 
-}
+}  // namespace plssvm::version::git_metadata

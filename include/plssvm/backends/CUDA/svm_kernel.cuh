@@ -9,6 +9,8 @@
  * @brief Defines the kernel functions for the C-SVM using the CUDA backend.
  */
 
+#ifndef PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
+#define PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
@@ -51,7 +53,7 @@ __global__ void device_kernel_linear(const real_type *q, real_type *ret, const r
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_poly(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0);
+__global__ void device_kernel_polynomial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const int degree, const real_type gamma, const real_type coef0);
 
 /**
  * @brief Calculates the C-SVM kernel using the radial basis function kernel function.
@@ -69,6 +71,8 @@ __global__ void device_kernel_poly(const real_type *q, real_type *ret, const rea
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-__global__ void device_kernel_radial(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma);
+__global__ void device_kernel_rbf(const real_type *q, real_type *ret, const real_type *d, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type add, const real_type gamma);
 
 }  // namespace plssvm::cuda
+
+#endif  // PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_

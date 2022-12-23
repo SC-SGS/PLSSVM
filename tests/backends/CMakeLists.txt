@@ -5,26 +5,26 @@
 ########################################################################################################################
 
 # create OpenMP tests if the OpenMP backend is available
-if(TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
+if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     add_subdirectory(OpenMP)
-endif()
+endif ()
 
 # create CUDA tests if the CUDA backend is available
-if(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
+if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     add_subdirectory(CUDA)
-endif()
+endif ()
 
 # create HIP tests if the HIP backend is available
-if(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
+if (TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
     add_subdirectory(HIP)
-endif()
+endif ()
 
 # create OpenCL tests if the OpenCL backend is available
-if(TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
+if (TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
     add_subdirectory(OpenCL)
-endif()
+endif ()
 
 # create SYCL tests if the SYCL backend is available
-if(TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     add_subdirectory(SYCL)
-endif()
+endif ()

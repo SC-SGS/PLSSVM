@@ -9,3 +9,4 @@ numpy
 pandas
 arff
 matplotlib
+humanize

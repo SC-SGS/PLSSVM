@@ -9,6 +9,8 @@
  * @brief Global compile-time constants specific to the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_
+#define PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_
 #pragma once
 
 /**
@@ -21,25 +23,16 @@
  */
 #define PLSSVM_SYCL_BACKEND_COMPILER_DPCPP 0
 
-
-// forward declare sycl::queue from hipsycl namespace and create global ::hipsycl namespace
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-namespace hipsycl::sycl {
-class queue;
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+// define the default used SYCL implementation
+namespace plssvm::sycl {
+using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 }
-namespace plssvm::hipsycl::detail {
-    using namespace ::hipsycl;
-}
-#endif
-
-// forward declare sycl::queue from DPC++ namespace and create global ::dpcpp namespace
-#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-inline namespace cl {
-namespace sycl {
-class queue;
-}
-}
-namespace plssvm::dpcpp::detail {
-    using namespace cl;
+#else
+// define dpcpp as default SYCL namespace if no SYCL backend is available (to prevent compiler errors)
+namespace plssvm::sycl {
+using namespace plssvm::dpcpp;
 }
 #endif
+
+#endif  // PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_

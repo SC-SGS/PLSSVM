@@ -9,8 +9,11 @@
  */
 
 #include "plssvm/core.hpp"
+#include "plssvm/detail/cmd/data_set_variants.hpp"
+#include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/format.h"   // fmt::format, fmt::print
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
@@ -19,91 +22,72 @@
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
 #include <iostream>   // std::cerr, std::clog, std::endl
+#include <variant>    // std::visit
 #include <vector>     // std::vector
-
-// perform calculations in single precision if requested
-#ifdef PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION
-using real_type = float;
-#else
-using real_type = double;
-#endif
 
 int main(int argc, char *argv[]) {
     try {
         // parse SVM parameter from command line
-        plssvm::parameter_predict<real_type> params{ argc, argv };
+        plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
 
         // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-        if (params.backend != plssvm::backend_type::sycl && params.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
-            std::clog << fmt::format(
-                "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                params.sycl_implementation_type)
+        if (cmd_parser.backend != plssvm::backend_type::sycl && cmd_parser.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                                     cmd_parser.sycl_implementation_type)
                       << std::endl;
         }
 
         // output used parameter
-        if (params.print_info) {
-            fmt::print("\n");
-            fmt::print("task: prediction\n");
-            fmt::print("kernel type: {} -> ", params.kernel);
-            switch (params.kernel) {
-                case plssvm::kernel_type::linear:
-                    fmt::print("u'*v\n");
-                    break;
-                case plssvm::kernel_type::polynomial:
-                    fmt::print("(gamma*u'*v + coef0)^degree\n");
-                    fmt::print("gamma: {}\n", params.gamma);
-                    fmt::print("coef0: {}\n", params.coef0);
-                    fmt::print("degree: {}\n", params.degree);
-                    break;
-                case plssvm::kernel_type::rbf:
-                    fmt::print("exp(-gamma*|u-v|^2)\n");
-                    fmt::print("gamma: {}\n", params.gamma);
-                    break;
-            }
-            fmt::print("rho: {}\n", params.rho);
-            fmt::print("input file (data set): '{}'\n", params.input_filename);
-            fmt::print("input file (model): '{}'\n", params.model_filename);
-            fmt::print("output file (prediction): '{}'\n", params.predict_filename);
-            fmt::print("\n");
+        if (plssvm::verbose) {
+            fmt::print("\ntask: prediction\n{}\n\n", cmd_parser);
         }
 
-        // create SVM
-        auto svm = plssvm::make_csvm(params);
+        // create data set
+        std::visit([&](auto &&data) {
+            using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
+            using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
-        // predict labels
-        const std::vector<real_type> labels = svm->predict_label(*params.test_data_ptr);
+            // create model
+            plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
+            // create default csvm
+            auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            // predict labels
+            const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
-        // write prediction file
-        {
-            auto start_time = std::chrono::steady_clock::now();
-            std::ofstream out{ params.predict_filename };
-            out << fmt::format("{}", fmt::join(labels, "\n"));
-            auto end_time = std::chrono::steady_clock::now();
-            if (params.print_info) {
-                fmt::print("Wrote prediction file ('{}') with {} labels in {}.\n",
-                           params.predict_filename,
-                           labels.size(),
-                           std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time));
-            }
-        }
+            // write prediction file
+            {
+                std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-        // print achieved accuracy if possible
-        if (params.value_ptr) {
-            unsigned long long correct = 0;
-            for (typename std::vector<real_type>::size_type i = 0; i < labels.size(); ++i) {
-                // check of prediction was correct
-                if ((*params.value_ptr)[i] * labels[i] > real_type{ 0.0 }) {
-                    ++correct;
+                fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
+                out.print("{}", fmt::join(predicted_labels, "\n"));
+
+                std::chrono::time_point end_time = std::chrono::steady_clock::now();
+                if (plssvm::verbose) {
+                    fmt::print("Write {} predictions in {} to the file '{}'.\n",
+                               predicted_labels.size(),
+                               std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
+                               cmd_parser.predict_filename);
                 }
             }
-            // print accuracy
-            fmt::print("Accuracy = {}% ({}/{}) (classification)\n",
-                       static_cast<real_type>(correct) / static_cast<real_type>(params.test_data_ptr->size()) * real_type{ 100 },
-                       correct,
-                       params.test_data_ptr->size());
-        }
 
+            // print achieved accuracy (if possible)
+            if (data.has_labels()) {
+                const std::vector<label_type> &correct_labels = data.labels().value();
+                std::size_t correct{ 0 };
+                for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+                    // check whether prediction is correct
+                    if (predicted_labels[i] == correct_labels[i]) {
+                        ++correct;
+                    }
+                }
+                // print accuracy
+                fmt::print("Accuracy = {}% ({}/{}) (classification)\n",
+                           static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
+                           correct,
+                           data.num_data_points());
+            }
+        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;

@@ -9,6 +9,8 @@
  * @brief Implements conversion functions from arithmetic types to their name as string representation.
  */
 
+#ifndef PLSSVM_DETAIL_ARITHMETIC_TYPE_NAME_HPP_
+#define PLSSVM_DETAIL_ARITHMETIC_TYPE_NAME_HPP_
 #pragma once
 
 #include <string_view>  // std::string_view
@@ -31,7 +33,7 @@
 namespace plssvm::detail {
 
 /**
- * @brief Tries to convert the given type to its name as string representation including possible const and/or volatile attributes.
+ * @brief Tries to convert the given type to its name as string representation including possible const and/or volatile qualifiers.
  * @details The definition is marked as **deleted** if `T` isn't an [arithmetic type](https://en.cppreference.com/w/cpp/types/is_arithmetic).
  * @tparam T the type to convert to a string
  * @return the name of `T` (`[[nodiscard]]`)
@@ -67,3 +69,5 @@ PLSSVM_CREATE_ARITHMETIC_TYPE_NAME(long double)
 }  // namespace plssvm::detail
 
 #undef PLSSVM_CREATE_ARITHMETIC_TYPE_NAME
+
+#endif  // PLSSVM_DETAIL_ARITHMETIC_TYPE_NAME_HPP_

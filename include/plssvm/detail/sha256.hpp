@@ -9,12 +9,14 @@
  * @brief Implementation of the SHA2-256 hashing algorithm.
  */
 
+#ifndef PLSSVM_DETAIL_SHA256_HPP_
+#define PLSSVM_DETAIL_SHA256_HPP_
 #pragma once
 
 #include <array>        // std::array
-#include <cstdint>      // std::uint32_t, std::uint64_t
+#include <cstdint>      // std::uint32_t
 #include <string>       // std::string
-#include <type_traits>  // std::is_unsigned_v
+#include <type_traits>  // std::enable_if_t, std::is_unsigned_v
 
 namespace plssvm::detail {
 
@@ -29,7 +31,7 @@ class sha256 {
      * @param[in] input the string to hash
      * @return the sha256 hash of @p input (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::string operator()(std::string input);
+    [[nodiscard]] std::string operator()(std::string input) const;
 
   private:
     /**
@@ -39,17 +41,17 @@ class sha256 {
      * @param[out] str the string to unpack the bits to
      */
     template <typename T, std::enable_if_t<std::is_unsigned_v<T>, bool> = true>
-    void unpack(const T x, unsigned char *str) {
+    static void unpack(const T x, unsigned char *str) {
         for (std::size_t i = 0; i < sizeof(T); ++i) {
             str[i] = static_cast<unsigned char>(x >> ((sizeof(T) - i - 1) * 8));
         }
     }
     /**
-     * @brief Pack four byte of the @p str into the 32-bit unsigned integer @x.
+     * @brief Pack four byte of the @p str into the 32-bit unsigned integer @p x.
      * @param[in] str the string to pack
      * @param[out] x the 32-bit unsigned integer to pack the bytes to
      */
-    void pack32(const unsigned char *str, std::uint32_t &x);
+    static void pack32(const unsigned char *str, std::uint32_t &x);
     /**
      * @brief Rotate the bits in @p value @ count times to the right.
      * @details Based on: https://en.wikipedia.org/wiki/Circular_shift
@@ -57,7 +59,7 @@ class sha256 {
      * @param[in] count the number of bits to rotate
      * @return the rotated 32-bit integer (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::uint32_t rotr32(std::uint32_t value, unsigned int count) const;
+    [[nodiscard]] static std::uint32_t rotr32(std::uint32_t value, unsigned int count);
 
     /// Number of bytes in the resulting digest.
     static constexpr std::uint32_t DIGEST_SIZE = 256 / 8;
@@ -83,3 +85,5 @@ class sha256 {
 };
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_DETAIL_SHA256_HPP_

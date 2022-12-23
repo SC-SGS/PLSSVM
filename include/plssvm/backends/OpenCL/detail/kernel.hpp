@@ -9,6 +9,8 @@
  * @brief Defines a very small RAII wrapper around a cl_kernel.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_KERNEL_HPP_
+#define PLSSVM_BACKENDS_OPENCL_DETAIL_KERNEL_HPP_
 #pragma once
 
 #include "CL/cl.h"  // cl_kernel
@@ -17,7 +19,7 @@ namespace plssvm::opencl::detail {
 
 /**
  * @brief Enum class for all different OpenCL compute kernels.
- * @details Used to distinguish kernels in the `plssvm::opencl::detail::command_queue` class.
+ * @details Used to distinguish kernels in the plssvm::opencl::detail::command_queue class.
  */
 enum class compute_kernel_name {
     /// The kernels to generate the `q` vector.
@@ -63,7 +65,7 @@ class kernel {
      * @param[in,out] other the kernel to move the resources from
      * @return `*this`
      */
-    kernel &operator=(kernel &&other);
+    kernel &operator=(kernel &&other) noexcept;
 
     /**
      * @brief Release the cl_kernel resources on destruction.
@@ -86,3 +88,5 @@ class kernel {
 };
 
 }  // namespace plssvm::opencl::detail
+
+#endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_KERNEL_HPP_
