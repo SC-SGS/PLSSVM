@@ -88,11 +88,7 @@ pipeline {
         stage('Setup Python Dependencies'){
             steps{
                 sh '''
-                    /usr/bin/python3.8 -m pip install --user arff
-                    /usr/bin/python3.8 -m pip install --user numpy
-                    /usr/bin/python3.8 -m pip install --user pandas
-                    /usr/bin/python3.8 -m pip install --user sklearn
-                    /usr/bin/python3.8 -m pip install --user argparse
+                    python3 -m pip install --user -r install/python_requirements.txt
                 '''
             }
         }
