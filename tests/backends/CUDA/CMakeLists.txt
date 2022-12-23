@@ -10,10 +10,12 @@ set(PLSSVM_CUDA_TEST_NAME CUDA_tests)
 # list all necessary sources
 set(PLSSVM_CUDA_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
         ${CMAKE_CURRENT_LIST_DIR}/cuda_csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         )
+
+enable_language(CUDA)
 
 # add test executable
 add_executable(${PLSSVM_CUDA_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_CUDA_TEST_SOURCES})
