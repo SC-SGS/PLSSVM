@@ -115,7 +115,7 @@ TEST(GitMetadata, remote_url) {
         EXPECT_FALSE(git_metadata::remote_url().empty());
         // check whether the remote URL is valid
         // https://github.com/jonschlinkert/is-git-url
-        EXPECT_THAT(git_metadata::remote_url(), ::testing::ContainsRegex("^(git|ssh|http|https|git@[A-Za-z0-9_\\.\\-]+):(//)?[A-Za-z0-9_\\.@:/-~\\-]+\\.git(/)?$"));
+        EXPECT_THAT(git_metadata::remote_url(), ::testing::ContainsRegex("^(git|ssh|http|https|git@[A-Za-z0-9_\\.\\-]+):(//)?[A-Za-z0-9_\\.@:/-~\\-]+(\\.git(/)?)?$"));
     } else {
         // if we are outside a Git repository, the remote URL must be empty
         EXPECT_TRUE(git_metadata::remote_url().empty());
