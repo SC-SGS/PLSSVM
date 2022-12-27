@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
-// #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl) TODO: @breymar: remove ??
+#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl)
 #include "plssvm/backends/gpu_device_ptr.hpp"             // plssvm::detail::gpu_device_ptr
 
 namespace plssvm::hipsycl::detail {

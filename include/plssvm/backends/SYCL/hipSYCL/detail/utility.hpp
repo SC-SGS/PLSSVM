@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_
 #pragma once
 
-// #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl) TODO: @breymar: remove ??
+#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <utility>  // std::pair

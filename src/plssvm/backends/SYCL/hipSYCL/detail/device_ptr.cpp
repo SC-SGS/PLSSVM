@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
 
-// #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation) TODO: @breymar: remove ??
+#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
 
 #include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::hipsycl::backend_exception
 #include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
