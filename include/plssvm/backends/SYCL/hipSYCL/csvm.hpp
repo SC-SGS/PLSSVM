@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
 #pragma once
 
-// #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr TODO: @breymar: remove ??
+#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
 // #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"       // plssvm::hipsycl::detail::queue (PImpl) TODO: @breymar: remove ??
 
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
