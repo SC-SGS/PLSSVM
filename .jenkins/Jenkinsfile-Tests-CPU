@@ -116,8 +116,9 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
+                rm -rf llvm
 		            if [ ! -d "llvm/build" ]; then
-                        git clone --dept 1 --branch 2022-06 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch 2022-11 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
