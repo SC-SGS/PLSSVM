@@ -106,6 +106,8 @@ pipeline {
         stage('install ninja and cmake') {
             steps{
                 sh '''
+                    cd /data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins
+
                     if [ ! -f ninja ]; then
                         wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                         unzip ninja-linux.zip
@@ -122,8 +124,8 @@ pipeline {
 
                     '''
                     script{
-                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:$PATH"
-                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:$PATH"
+                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$PATH"
                     }
 
             }
