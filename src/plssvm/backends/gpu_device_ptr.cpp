@@ -15,15 +15,15 @@
     #include "CL/cl.h"                                          // cl_mem
     #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #endif
-#if defined(PLSSVM_HAS_SYCL_BACKEND)
-    // used for explicitly instantiating the SYCL backend
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-        #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue
-    #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue
-    #endif
-#endif
+// #if defined(PLSSVM_HAS_SYCL_BACKEND) TODO: @breymar: remove ??
+//     // used for explicitly instantiating the SYCL backend
+//     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+//         #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue
+//     #endif
+//     #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+//         #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue
+//     #endif
+// #endif
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception

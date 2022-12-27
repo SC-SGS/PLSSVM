@@ -9,7 +9,7 @@
 #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"
 
 #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::::device_ptr
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
+// #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation) TODO: @breymar: remove ??
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_device_list, plssvm::hipsycl::device_synchronize
 
 #include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::hipsycl::backend_exception

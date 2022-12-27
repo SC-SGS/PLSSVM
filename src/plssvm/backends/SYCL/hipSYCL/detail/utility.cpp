@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
+// #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation) TODO: @breymar: remove ??
 #include "plssvm/detail/string_utility.hpp"                    // plssvm::detail::{as_lower_case, contains}
 #include "plssvm/detail/utility.hpp"                           // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                         // plssvm::target_platform, plssvm::determine_default_target_platform

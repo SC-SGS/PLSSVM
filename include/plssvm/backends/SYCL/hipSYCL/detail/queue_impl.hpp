@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_IMPL_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue
+// #include "plssvm/backends/SYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue TODO: @breymar: remove ??
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
