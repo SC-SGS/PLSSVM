@@ -47,7 +47,7 @@ pipeline {
         PLSSVM_POSSIBLE_TARGET_PLATFORMS_DPCPP = "cpu;amd:gfx906" // TODO: remove when no longer needed
 
         // ROCM / HIP
-        ROCM_PATH = "/opt/rocm-5.2.0"
+        ROCM_PATH = "/opt/rocm-5.3.3"
 
 
         // DPCPP
