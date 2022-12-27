@@ -95,7 +95,7 @@ TEST(GitMetadata, branch) {
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::StartsWith(".")));                    // must not start with a .a
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith(".lock")));                  // must not end with .lock
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith("..")));                     // must not end with .. anywhere
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("[\\\040-\\\177]+")));  // not contain an ASCII control character anywhere
+        // EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("[\\\040-\\\177]+")));  // not contain an ASCII control character anywhere // TODO:@breyerml fix this no idea what you wanted to test here
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(~|\\^|:)+")));        // must not contain a ~, ^ or : anywhere
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(\\?|\\[|\\*)+")));    // must not contain ?, [ or * anywhere
         EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::StartsWith("/")));                    // must not start with a /
