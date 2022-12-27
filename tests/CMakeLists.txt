@@ -42,10 +42,17 @@ if (PLSSVM_GENERATE_TEST_FILE)
     # set test file name based on requested sizes
     set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
 
-    # check if the requested test file already exists (otherwise create new test file)
+    # check if the requested test file already exists and is not zero based indexed (otherwise create new test file)
     if (EXISTS "${PLSSVM_TEST_FILE}")
-        message(STATUS "Skipped test file generation since it already exists (${PLSSVM_TEST_FILE})!")
-    else ()
+        file(READ "${PLSSVM_TEST_FILE}" PLSSVM_TEST_FILE_CONTENT)
+        if(PLSSVM_TEST_FILE_CONTENT MATCHES " 0:[0-9]")
+            message(STATUS "Test file already exists but is zero based indexed. Generating new test file.")
+            file(REMOVE "${PLSSVM_TEST_FILE}")
+        else()
+            message(STATUS "Skipped test file generation since it already exists (${PLSSVM_TEST_FILE})!")
+        endif()
+    endif()
+    if (NOT EXISTS "${PLSSVM_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
