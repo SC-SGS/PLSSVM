@@ -138,7 +138,6 @@ pipeline {
                 sh '''
                     srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                     module load cuda/11.2.2 &&\
-                    rm -rf llvm &&\
                     git clone --dept 1 --branch  sycl-nightly/20221227  https://github.com/intel/llvm.git llvm  || true; \
                     cd llvm &&\
                     python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\

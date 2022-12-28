@@ -138,7 +138,6 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                rm -rf llvm
 		            if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch  sycl-nightly/20221227  https://github.com/intel/llvm.git llvm
                         cd llvm
