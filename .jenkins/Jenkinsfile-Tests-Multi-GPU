@@ -166,6 +166,7 @@ pipeline {
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                             module load cuda/11.2.2; \
                             mkdir $HIPSYCL_PATH; \
+                            rm -rf hipSYCL ; \
                             git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL  || true; \
                             cd hipSYCL && \
                             mkdir build && \
