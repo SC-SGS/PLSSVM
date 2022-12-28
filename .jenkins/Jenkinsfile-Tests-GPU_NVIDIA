@@ -116,8 +116,9 @@ pipeline {
             steps{
                 sh '''
                     module load cuda/11.2.2
+                    rm -rf llvm
 		            if [ ! -d "llvm/build" ]; then
-                        git clone --dept 1 --branch  2022-WW50  https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch  sycl-nightly/20221227 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
