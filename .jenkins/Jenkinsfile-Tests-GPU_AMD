@@ -138,7 +138,6 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                    rm -rf llvm
 		            if [ ! -d "llvm/build" ]; then
                         git clone --dept 1 --branch  2022-WW50  https://github.com/intel/llvm.git llvm
                         cd llvm
@@ -164,6 +163,7 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
+                rm -rf $HIPSYCL_PATH
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
                         git clone --dept 1 --branch v0.9.3 https://github.com/illuhad/hipSYCL.git hipSYCL
