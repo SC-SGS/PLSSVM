@@ -192,7 +192,7 @@ pipeline {
                         mkdir -p build/Release_HIP
                         cd build/Release_HIP
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DCLANGRT_BUILTINS:FILEPATH=$DPCPP_PATH/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu/libclang_rt.builtins.a ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF ../../
                         make -j
                     '''
                 }
