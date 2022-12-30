@@ -143,9 +143,7 @@ pipeline {
                         cd llvm
                         git checkout 8ca7d50456bde7f144eb5779bc6131bae841c1bb
                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
-                        python buildbot/compile.py
-                        cmake --build build -- omp
-                        cmake --build build -- install
+                        python buildbot/compile.py -t deploy-sycl-toolchain -t omp -t install
                     fi
 
                 '''
