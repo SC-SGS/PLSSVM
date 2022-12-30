@@ -139,8 +139,9 @@ pipeline {
             steps{
                 sh '''
 		            if [ ! -d "llvm/build" ]; then
-                        git clone --dept 1 --branch  sycl-nightly/20221227  https://github.com/intel/llvm.git llvm
+                        git clone https://github.com/intel/llvm.git llvm
                         cd llvm
+                        git checkout 8ca7d50456bde7f144eb5779bc6131bae841c1bb
                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
                         python buildbot/compile.py
                         cmake --build build -- omp
@@ -149,11 +150,11 @@ pipeline {
 
                 '''
                 script{
-                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$LIBRARY_PATH"
                     env.PATH="$DPCPP_PATH/bin:$PATH"
                     env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
                     env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include/sycl:$CPLUS_INCLUDE_PATH"
-                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
                 }
 
             }
@@ -163,7 +164,6 @@ pipeline {
         stage('Build HipSYCL') {
             steps{
                 sh '''
-                rm -rf $HIPSYCL_PATH
 		            if [ ! -d "$HIPSYCL_PATH" ]; then
                         mkdir $HIPSYCL_PATH
                         rm -rf hipSYCL
