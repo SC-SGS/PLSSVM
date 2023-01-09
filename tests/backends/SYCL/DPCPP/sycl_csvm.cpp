@@ -102,7 +102,7 @@ TEST_F(DPCPPCSVM, construct_target_and_named_args) {
 #endif
 #if defined(PLSSVM_HAS_AMD_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
-    // EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_type = plssvm::cost = 2.0 })); // TODO: @breyerml which wone would you like to test?
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 #else
     EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd,
