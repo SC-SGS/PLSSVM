@@ -43,11 +43,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "TRUE"
+        DPCPP_FORCE_REBUILD = "FALSE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "TRUE"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
     }
 
     stages {
@@ -96,7 +96,7 @@ pipeline {
                         rm ninja-linux.zip*
                     fi
 
-                    # download cmake
+                    # download CMake
                     if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
                         wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
                         tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
@@ -116,7 +116,7 @@ pipeline {
                     module load cuda/11.2.2
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
 		                rm -rf llvm
-                        git clone --dept 1 --branch sycl-nightly/20230107 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch sycl-nightly/20221201 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
@@ -127,16 +127,16 @@ pipeline {
                     fi
                 '''
                 script{
-                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
                     env.PATH="$DPCPP_PATH/bin:$PATH"
                     env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
-                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
-                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:$env.CPLUS_INCLUDE_PATH"
                 }
             }
         }
 
-        stage('Build HipSYCL') {
+        stage('Build hipSYCL') {
             steps{
                 sh '''
                     module load cuda/11.2.2
@@ -189,7 +189,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -216,7 +216,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -243,7 +243,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -270,7 +270,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -298,7 +298,7 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -329,7 +329,7 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -356,7 +356,7 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -372,7 +372,7 @@ pipeline {
                         cd build/Debug_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make -j4
+                        make --output-on-failure -j4
                     '''
                 }
             }
@@ -390,6 +390,8 @@ pipeline {
             }
         }
 
+/*
+        // causes a DPC++ (LLVM) internal Segmentation Fault
         stage('Build PLSSVM Debug - DPC++') {
             steps {
                 dir('plssvm') {
@@ -410,13 +412,15 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
             }
         }
+*/
     }
+
     post {
         always {
             // Process the CTest xml output with the xUnit plugin
@@ -424,7 +428,6 @@ pipeline {
                 testTimeMargin: '3000',
                 thresholdMode: 1,
                 thresholds: [
-                    skipped(failureThreshold: '0'),
                     failed(failureThreshold: '0')
                 ],
                 tools: [CTest(
@@ -435,7 +438,6 @@ pipeline {
                     stopProcessingIfError: true
                 )]
             )
-
         }
         success {
             script {

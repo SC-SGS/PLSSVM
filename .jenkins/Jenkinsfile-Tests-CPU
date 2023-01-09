@@ -44,9 +44,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
+        DPCPP_FORCE_REBUILD = "TRUE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
+        HIPSYCL_FORCE_REBUILD = "TRUE"
     }
 
     stages {
@@ -56,11 +58,11 @@ pipeline {
                     sh '''
                         gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                         curl --verbose\
-                            --request POST \
-                            --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                            --header "Content-Type: application/json" \
-                            --header "authorization: Bearer ${gitlab_token}" \
-                            --data "{
+                             --request POST \
+                             --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                             --header "Content-Type: application/json" \
+                             --header "authorization: Bearer ${gitlab_token}" \
+                             --data "{
                                 \\"state\\": \\"pending\\",
                                 \\"context\\": \\"Jenkins CPU tests\\",
                                 \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
@@ -85,44 +87,43 @@ pipeline {
             }
         }
 
-        stage('install ninja and cmake') {
+        stage('Install Ninja and CMake') {
             steps{
                 sh '''
+                    # download Ninja
                     if [ ! -f ninja ]; then
                         wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                         unzip ninja-linux.zip
                         rm ninja-linux.zip*
                     fi
 
-
+                    # download CMake
                     if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
                         wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
                         tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
                         rm cmake-3.24.1-linux-x86_64.tar.gz*
                     fi
-
-
-                    '''
-                    script{
-                        env.PATH="$WORKSPACE:$PATH"
-                        env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
-                    }
-
+                '''
+                script{
+                    env.PATH="$WORKSPACE:$PATH"
+                    env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                }
             }
         }
-
-
 
         stage('Build DPCPP') {
             steps{
                 sh '''
-		            if [ ! -d "llvm/build" ]; then
-                        git clone --dept 1 --branch  sycl-nightly/20221227  https://github.com/intel/llvm.git llvm
+		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+                        rm -rf llvm
+                        git clone --dept 1 --branch  sycl-nightly/20221227 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
                         cmake --build build -- omp
                         cmake --build build -- install
+
+                        rm -rf "$HIPSYCL_PATH"
                     fi
                 '''
                 script{
@@ -132,18 +133,20 @@ pipeline {
                     env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
                     env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
                 }
-
             }
         }
 
-
-        stage('Build HipSYCL') {
+        # TODO: with omp.accelerated?
+        stage('Build hipSYCL') {
             steps{
                 sh '''
-		            if [ ! -d "$HIPSYCL_PATH" ]; then
-                        mkdir $HIPSYCL_PATH
-                        git clone --dept 1 --branch develop https://github.com/illuhad/hipSYCL.git hipSYCL
+		            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                        rm -rf hipSYCL
+                        rm -rf "$HIPSYCL_PATH"
+
+                        git clone https://github.com/illuhad/hipSYCL.git hipSYCL
                         cd hipSYCL
+                        git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4
                         mkdir build
                         cd build
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
@@ -152,8 +155,7 @@ pipeline {
                         cd $WORKSPACE
                         rm -rf hipSYCL
                     fi
-                    '''
-
+                '''
                 script{
                     env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
                     env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
@@ -162,8 +164,7 @@ pipeline {
             }
         }
 
-
-        stage('spack and pocl') {
+        stage('spack and PoCL') {
             steps{
                 sh '''
                     if [ ! -d "spack" ]; then
@@ -175,15 +176,15 @@ pipeline {
                     source spack/share/spack/setup-env.sh
 
                     spack install  pocl@1.8+distro
-                    '''
+                '''
             }
         }
 
-
-
         // TODO: enable DPC++ on CPUs (missing OpenCL CPU runtime)
+        //
         // Release
-        // OpenMP backend
+        //
+
         stage('Build PLSSVM Release - OpenMP') {
             steps {
                 dir('plssvm') {
@@ -202,13 +203,13 @@ pipeline {
                 dir('plssvm/build/Release_OpenMP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
             }
         }
-        // OpenCL backend
+
         stage('Build PLSSVM Release - OpenCL') {
             steps {
                 dir('plssvm') {
@@ -233,13 +234,13 @@ pipeline {
                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
                             export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
             }
         }
-        // SYCL backend: hipSYCL
+
         stage('Build PLSSVM Release - hipSYCL') {
             steps {
                 dir('plssvm') {
@@ -258,7 +259,7 @@ pipeline {
                 dir('plssvm/build/Release_hipSYCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -291,14 +292,17 @@ pipeline {
     //                        spack load pocl
     //                        module load network_hipsycl_cpu_pocl
     //                        cd build/Release
-    //                        ctest -j4 --no-compress-output -T Test
+    //                        ctest --output-on-failure -j4 --no-compress-output -T Test
     //                    '''
     //                }
     //            }
     //        }
     //    }
+
+        //
         // Debug
-        // OpenMP backend
+        //
+
         stage('Build PLSSVM Debug - OpenMP') {
             steps {
                 dir('plssvm') {
@@ -317,13 +321,13 @@ pipeline {
                 dir('plssvm/build/Debug_OpenMP') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
             }
         }
-        // OpenCL backend
+
         stage('Build PLSSVM Debug - OpenCL') {
             steps {
                 dir('plssvm') {
@@ -348,38 +352,39 @@ pipeline {
                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
                             export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
             }
         }
-        // SYCL backend: hipSYCL TODO: fix
-        // stage('Build PLSSVM Debug - hipSYCL') {
-        //     steps {
-        //         dir('plssvm') {
-        //             sh '''
 
-        //                 mkdir -p build/Debug_hipSYCL
-        //                 cd build/Debug_hipSYCL
-        //                 rm -rf *
-        //                 cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-        //                 make -j4
-        //             '''
-        //         }
-        //     }
-        // }
-        // stage('Run Tests Debug - hipSYCL') {
-        //     steps {
-        //         dir('plssvm/build/Debug_hipSYCL') {
-        //             warnError('Release tests failed!') {
-        //                 sh '''
-        //                     ctest -j4 --no-compress-output -T Test
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        // SYCL backend: hipSYCL TODO: fix
+        stage('Build PLSSVM Debug - hipSYCL') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        mkdir -p build/Debug_hipSYCL
+                        cd build/Debug_hipSYCL
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        make -j4
+                    '''
+                }
+            }
+        }
+        stage('Run Tests Debug - hipSYCL') {
+            steps {
+                dir('plssvm/build/Debug_hipSYCL') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
+
         // Coverage Analysis
         stage('Perform Coverage Analysis') {
             steps {
@@ -401,6 +406,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             // Process the CTest xml output with the xUnit plugin
@@ -408,7 +414,6 @@ pipeline {
                 testTimeMargin: '3000',
                 thresholdMode: 1,
                 thresholds: [
-                    skipped(failureThreshold: '0'),
                     failed(failureThreshold: '0')
                 ],
                 tools: [CTest(
@@ -419,7 +424,6 @@ pipeline {
                     stopProcessingIfError: true
                 )]
             )
-
         }
         success {
             script {
@@ -428,11 +432,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"Jenkins CPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
@@ -447,11 +451,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"Jenkins CPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
@@ -466,11 +470,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"Jenkins CPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
