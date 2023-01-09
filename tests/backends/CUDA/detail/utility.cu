@@ -8,11 +8,6 @@
  * @brief Tests for the custom utility functions related to the CUDA backend.
  */
 
-// necessary only for compiling the tests
-#if __has_include("cuda_runtime.h")
-    #include "cuda_runtime.h"  // cudaError_t
-#endif
-
 #include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
