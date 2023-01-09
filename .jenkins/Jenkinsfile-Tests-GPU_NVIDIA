@@ -43,9 +43,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
+        DPCPP_FORCE_REBUILD = "FALSE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
     }
 
     stages {
@@ -54,12 +56,12 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
-                        curl --verbose\
-                            --request POST \
-                            --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                            --header "Content-Type: application/json" \
-                            --header "authorization: Bearer ${gitlab_token}" \
-                            --data "{
+                        curl --verbose \
+                             --request POST \
+                             --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                             --header "Content-Type: application/json" \
+                             --header "authorization: Bearer ${gitlab_token}" \
+                             --data "{
                                 \\"state\\": \\"pending\\",
                                 \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
                                 \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
@@ -84,45 +86,44 @@ pipeline {
             }
         }
 
-        stage('install ninja and cmake') {
+        stage('Install Ninja and CMake') {
             steps{
                 sh '''
+                    # download Ninja
                     if [ ! -f ninja ]; then
                         wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                         unzip ninja-linux.zip
                         rm ninja-linux.zip*
                     fi
 
-
+                    # download cmake
                     if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
                         wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
                         tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
                         rm cmake-3.24.1-linux-x86_64.tar.gz*
                     fi
-
-
-                    '''
-                    script{
-                        env.PATH="$WORKSPACE:$PATH"
-                        env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
-                    }
-
+                '''
+                script{
+                    env.PATH="$WORKSPACE:$PATH"
+                    env.PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                }
             }
         }
-
-
 
         stage('Build DPCPP') {
             steps{
                 sh '''
                     module load cuda/11.2.2
-		            if [ ! -d "llvm/build" ]; then
-                        git clone --dept 1 --branch  sycl-nightly/20221227 https://github.com/intel/llvm.git llvm
+		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+		                rm -rf llvm
+                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
                         cmake --build build -- omp
                         cmake --build build -- install
+
+                        rm -rf "$HIPSYCL_PATH"
                     fi
                 '''
                 script{
@@ -132,19 +133,21 @@ pipeline {
                     env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
                     env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
                 }
-
             }
         }
-
 
         stage('Build HipSYCL') {
             steps{
                 sh '''
                     module load cuda/11.2.2
-		            if [ ! -d "$HIPSYCL_PATH" ]; then
+		            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                        rm -rf hipSYCL
+                        rm -rf "$HIPSYCL_PATH"
+
                         mkdir $HIPSYCL_PATH
-                        git clone --dept 1 --branch develop https://github.com/illuhad/hipSYCL.git hipSYCL
+                        git clone https://github.com/illuhad/hipSYCL.git hipSYCL
                         cd hipSYCL
+                        git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4
                         mkdir build
                         cd build
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
@@ -153,8 +156,7 @@ pipeline {
                         cd $WORKSPACE
                         rm -rf hipSYCL
                     fi
-                    '''
-
+                '''
                 script{
                     env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
                     env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
@@ -162,8 +164,11 @@ pipeline {
                 }
             }
         }
+
+        //
         // Release
-        // CUDA backend
+        //
+
         stage('Build PLSSVM Release - CUDA') {
             steps {
                 dir('plssvm') {
@@ -184,13 +189,13 @@ pipeline {
                     warnError('Release tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                             ctest -j4 --no-compress-output -T Test
+                            ctest -j4 --no-compress-output -T Test
                         '''
                     }
                 }
             }
         }
-        // OpenCL backend
+
         stage('Build PLSSVM Release - OpenCL') {
             steps {
                 dir('plssvm') {
@@ -217,7 +222,7 @@ pipeline {
                 }
             }
         }
-        // hipSYCL backend
+
         stage('Build PLSSVM Release - hipSYCL') {
             steps {
                 dir('plssvm') {
@@ -244,7 +249,7 @@ pipeline {
                 }
             }
         }
-        // DPC++ backend
+
         stage('Build PLSSVM Release - DPC++') {
             steps {
                 dir('plssvm') {
@@ -271,6 +276,7 @@ pipeline {
                 }
             }
         }
+
         // CUDA + OpenCL + hipSYCL + DPC++ backends simultaneously
         stage('Build PLSSVM Release - All Available') {
             steps {
@@ -298,8 +304,11 @@ pipeline {
                 }
             }
         }
+
+        //
         // Debug
-        // CUDA backend
+        //
+
         stage('Build PLSSVM Debug - CUDA') {
             steps {
                 dir('plssvm') {
@@ -326,7 +335,7 @@ pipeline {
                 }
             }
         }
-        // OpenCL backend
+
         stage('Build PLSSVM Debug - OpenCL') {
             steps {
                 dir('plssvm') {
@@ -353,7 +362,7 @@ pipeline {
                 }
             }
         }
-        // hipSYCL backend
+
         stage('Build PLSSVM Debug - hipSYCL') {
             steps {
                 dir('plssvm') {
@@ -440,11 +449,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
@@ -459,11 +468,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
@@ -478,11 +487,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"Jenkins NVIDIA GPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins NVIDIA GPU tests\\",
