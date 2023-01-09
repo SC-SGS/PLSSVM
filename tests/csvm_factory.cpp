@@ -201,8 +201,7 @@ TEST(CSVMFactory, invalid_backend) {
                       "Unrecognized backend provided!");
 }
  TEST(CSVMFactory, invalid_constructor_parameter) {
-    constexpr plssvm::backend_type backend = plssvm::backend_type::cuda;
-    if constexpr (plssvm::csvm_backend_exists_v<plssvm::backend_type::cuda>) {
+    if constexpr (plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>) {
         EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(plssvm::backend_type::cuda, plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::automatic),
                           plssvm::unsupported_backend_exception,
                           "Provided invalid (named) arguments for the cuda backend!");
