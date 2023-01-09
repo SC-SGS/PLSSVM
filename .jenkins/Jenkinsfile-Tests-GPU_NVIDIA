@@ -43,11 +43,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "FALSE"
+        DPCPP_FORCE_REBUILD = "TRUE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "FALSE"
+        HIPSYCL_FORCE_REBUILD = "TRUE"
     }
 
     stages {
@@ -116,7 +116,7 @@ pipeline {
                     module load cuda/11.2.2
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
 		                rm -rf llvm
-                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch sycl-nightly/20230107 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
