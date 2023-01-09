@@ -85,7 +85,7 @@ TEST_F(OpenCLCSVM, construct_target_and_named_args) {
 #endif
 #if defined(PLSSVM_HAS_AMD_TARGET)
     EXPECT_NO_THROW((plssvm::opencl::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::opencl::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_type = plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::opencl::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }));
 #else
     EXPECT_THROW_WHAT((plssvm::opencl::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::opencl::backend_exception,
