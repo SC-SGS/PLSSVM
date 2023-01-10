@@ -116,7 +116,7 @@ pipeline {
                 sh '''
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                         rm -rf llvm
-                        git clone --dept 1 --branch  sycl-nightly/20221227 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch  sycl-nightly/20230109 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
@@ -127,11 +127,11 @@ pipeline {
                     fi
                 '''
                 script{
-                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
                     env.PATH="$DPCPP_PATH/bin:$PATH"
                     env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
-                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
-                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:$env.CPLUS_INCLUDE_PATH"
                 }
             }
         }
@@ -148,7 +148,7 @@ pipeline {
                         git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4
                         mkdir build
                         cd build
-                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+                        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DWITH_ACCELERATED_CPU=ON ..
                         make -j
                         make install
                         cd $WORKSPACE
@@ -156,9 +156,9 @@ pipeline {
                     fi
                 '''
                 script{
-                    env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
-                    env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
-                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR = "${HIPSYCL_PATH}/include"
+                    env.PATH="${HIPSYCL_PATH}/bin:${PATH}"
+                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+                    env.LD_LIBRARY_PATH="${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
                 }
             }
         }
@@ -174,7 +174,7 @@ pipeline {
                     fi
                     source spack/share/spack/setup-env.sh
 
-                    spack install  pocl@1.8+distro
+                    spack install pocl@1.8+distro
                 '''
             }
         }
@@ -232,7 +232,6 @@ pipeline {
                         sh '''
                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
-                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -350,7 +349,6 @@ pipeline {
                         sh '''
                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                             spack load pocl
-                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -358,7 +356,6 @@ pipeline {
             }
         }
 
-        // SYCL backend: hipSYCL TODO: fix
         stage('Build PLSSVM Debug - hipSYCL') {
             steps {
                 dir('plssvm') {
