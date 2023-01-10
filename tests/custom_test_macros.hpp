@@ -129,9 +129,9 @@ inline void floating_point_near(const T val1, const T val2, const std::string &m
     const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
 
     if constexpr (expect) {
-        EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+        EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
     } else {
-        ASSERT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << msg << " correct: " << val1 << " vs. actual: " << val2;
+        ASSERT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
     }
 }
 
