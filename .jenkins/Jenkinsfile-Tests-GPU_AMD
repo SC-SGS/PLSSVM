@@ -206,7 +206,7 @@ pipeline {
                 dir('plssvm/build/Release_HIP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -231,7 +231,7 @@ pipeline {
                 dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -256,7 +256,7 @@ pipeline {
                 dir('plssvm/build/Release_hipSYCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -281,7 +281,7 @@ pipeline {
                 dir('plssvm/build/Release_DPCPP') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -308,7 +308,7 @@ pipeline {
                 dir('plssvm/build/Release') {
                     warnError('Release tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -337,7 +337,7 @@ pipeline {
                 dir('plssvm/build/Debug_HIP') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -363,7 +363,7 @@ pipeline {
                 dir('plssvm/build/Debug_OpenCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -388,7 +388,7 @@ pipeline {
                 dir('plssvm/build/Debug_hipSYCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
@@ -415,7 +415,7 @@ pipeline {
                 dir('plssvm/build/Debug_DPCPP') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
