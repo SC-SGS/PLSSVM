@@ -136,7 +136,6 @@ pipeline {
             }
         }
 
-        # TODO: with omp.accelerated?
         stage('Build hipSYCL') {
             steps{
                 sh '''
