@@ -372,7 +372,7 @@ pipeline {
                         cd build/Debug_hipSYCL
                         rm -rf *
                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
-                        make --output-on-failure -j4
+                        make -j4
                     '''
                 }
             }
@@ -383,7 +383,7 @@ pipeline {
                     warnError('Debug tests failed!') {
                         sh '''
                             module load cuda/11.2.2
-                            ctest -j4 --no-compress-output -T Test
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
                 }
