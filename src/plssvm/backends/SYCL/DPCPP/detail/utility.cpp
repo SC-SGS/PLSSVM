@@ -17,6 +17,7 @@
 
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
+#include <sstream>  // std::ostringstream
 #include <string>   // std::string
 #include <utility>  // std::pair, std::make_pair, std::move
 #include <vector>   // std::vector
@@ -51,9 +52,14 @@ namespace plssvm::dpcpp::detail {
                     platform_devices.insert({ target_platform::gpu_nvidia, device });
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    platform_devices.insert({ target_platform::gpu_amd, device });
+                    // select between DPC++'s OpenCL and HIP backend
+                    std::ostringstream oss;
+                    oss << device.get_backend();
+                    if (::plssvm::detail::contains(oss.str(), PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)) {
+                        platform_devices.insert({ target_platform::gpu_amd, device });
+                    }
                 } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
-                    // select between DPC++'s OpenCL and Level Zero backend
+                    // select between DPC++'s OpenCL and Level-Zero backend
                     if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
                         platform_devices.insert({ target_platform::gpu_intel, device });
                     }
