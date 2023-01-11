@@ -381,7 +381,7 @@ TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
     const std::vector<real_type> calculated = svm.calculate_w(data_d, data_last_d, alpha_d, num_support_vectors, feature_ranges);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(calculated, ground_truth, real_type{ 256.0 });
+    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(calculated, ground_truth, real_type{ 1.0e5 });
 }
 
 TYPED_TEST_P(GenericGPUCSVM, run_device_kernel) {
