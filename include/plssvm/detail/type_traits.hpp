@@ -132,7 +132,6 @@ constexpr bool is_list_v = is_list<T>::value;
 
 /**
  * @brief Type trait to check whether @p T is a sequence container.
- * @tparam T the type to check
  */
 template <typename T>
 constexpr bool is_sequence_container_v = is_array_v<T> || is_vector_v<T> || is_deque_v<T> || is_forward_list_v<T> || is_list_v<T>;
@@ -207,7 +206,6 @@ constexpr bool is_multimap_v = is_multimap<T>::value;
 
 /**
  * @brief Type trait to check whether @p T is a associative container.
- * @tparam T the type to check
  */
 template <typename T>
 constexpr bool is_associative_container_v = is_set_v<T> || is_map_v<T> || is_multimap_v<T> || is_multiset_v<T>;
@@ -282,14 +280,12 @@ constexpr bool is_unordered_multimap_v = is_unordered_multimap<T>::value;
 
 /**
  * @brief Type trait to check whether @p T is a unordered associative container.
- * @tparam T the type to check
  */
 template <typename T>
 constexpr bool is_unordered_associative_container_v = is_unordered_set_v<T> || is_unordered_map_v<T> || is_unordered_multimap_v<T> || is_unordered_multiset_v<T>;
 
 /**
  * @brief Type trait to check whether @p T is a container.
- * @tparam T the type to check
  */
 template <typename T>
 constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_container_v<T> || is_unordered_associative_container_v<T>;
