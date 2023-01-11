@@ -41,11 +41,13 @@ pipeline {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
 
-                // DPCPP
+        // DPCPP
         DPCPP_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/llvm/build"
+        DPCPP_FORCE_REBUILD = "TRUE"
 
         // hipSYCL
         HIPSYCL_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/hipsycl-install"
+        HIPSYCL_FORCE_REBUILD = "TRUE"
     }
 
     stages {
@@ -138,19 +140,22 @@ pipeline {
                 sh '''
                     srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                     module load cuda/11.2.2 &&\
-                    git clone --dept 1 --branch  sycl-nightly/20221227  https://github.com/intel/llvm.git llvm  || true; \
-                    cd llvm &&\
-                    python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
-                    python buildbot/compile.py &&\
-                    cmake --build build -- omp &&\
-                    cmake --build build -- install "
+                    if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then \
+                        rm -rf llvm && \
+                        git clone --dept 1 --branch  sycl-nightly/20230109  https://github.com/intel/llvm.git llvm  || true; \
+                        cd llvm &&\
+                        python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
+                        python buildbot/compile.py &&\
+                        cmake --build build -- omp &&\
+                        cmake --build build -- install  \
+                    fi"
                 '''
                 script{
-                    env.LIBRARY_PATH="$DPCPP_PATH/lib:$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu"
                     env.PATH="$DPCPP_PATH/bin:$PATH"
                     env.PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
-                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:$DPCPP_PATH/install/include:$DPCPP_PATH/install/include/sycl:$env.CPLUS_INCLUDE_PATH"
-                    env.LD_LIBRARY_PATH="$DPCPP_PATH/install/lib/clang/15.0.0/lib/x86_64-unknown-linux-gnu:$DPCPP_PATH/install/lib:$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.LIBRARY_PATH="$DPCPP_PATH/lib"
+                    env.LD_LIBRARY_PATH="$DPCPP_PATH/lib:$env.LD_LIBRARY_PATH"
+                    env.CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:$env.CPLUS_INCLUDE_PATH"
                 }
 
             }
@@ -161,13 +166,14 @@ pipeline {
             steps{
                 sh '''
                     rm -rf $HIPSYCL_PATH
-		            if [ ! -d "$HIPSYCL_PATH" ]; then
+		            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                             module load cuda/11.2.2; \
                             mkdir $HIPSYCL_PATH; \
 
-                            git clone --dept 1 --branch develop https://github.com/illuhad/hipSYCL.git hipSYCL  || true; \
+                            git clone https://github.com/illuhad/hipSYCL.git hipSYCL || true; \
                             cd hipSYCL && \
+                            git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4 && \
                             mkdir build && \
                             cd build && \
                             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \
