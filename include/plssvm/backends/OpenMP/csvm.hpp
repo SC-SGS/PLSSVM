@@ -28,7 +28,6 @@ namespace openmp {
 
 /**
  * @brief A C-SVM implementation using OpenMP as backend.
- * @tparam T the type of the data
  */
 class csvm : public ::plssvm::csvm {
   public:
