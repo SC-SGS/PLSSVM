@@ -56,11 +56,11 @@ pipeline {
                 sh '''
                     gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                     curl --verbose\
-                        --request POST \
-                        --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                        --header "Content-Type: application/json" \
-                        --header "authorization: Bearer ${gitlab_token}" \
-                        --data "{
+                         --request POST \
+                         --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                         --header "Content-Type: application/json" \
+                         --header "authorization: Bearer ${gitlab_token}" \
+                         --data "{
                             \\"state\\": \\"pending\\",
                             \\"context\\": \\"Jenkins Multi-GPU tests\\",
                             \\"description\\": \\"Jenkins CI Job: Jenkins Multi-GPU tests\\",
@@ -105,35 +105,31 @@ pipeline {
             }
         }
 
-        stage('install ninja and cmake') {
+        stage('Install Ninja and CMake') {
             steps{
                 sh '''
                     cd /data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins
 
+                    # download Ninja
                     if [ ! -f ninja ]; then
                         wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                         unzip ninja-linux.zip
                         rm ninja-linux.zip*
                     fi
 
-
+                    # downlaod CMake
                     if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
                         wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
                         tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
                         rm cmake-3.24.1-linux-x86_64.tar.gz*
                     fi
-
-
-                    '''
-                    script{
-                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:$PATH"
-                        env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$PATH"
-                    }
-
+                '''
+                script{
+                    env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins:$PATH"
+                    env.PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$PATH"
+                }
             }
         }
-
-
 
         stage('Build DPCPP') {
             steps{
@@ -142,12 +138,13 @@ pipeline {
                     module load cuda/11.2.2 &&\
                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then \
                         rm -rf llvm && \
-                        git clone --dept 1 --branch  sycl-nightly/20230109  https://github.com/intel/llvm.git llvm  || true; \
+                        git clone --dept 1 --branch sycl-nightly/20230110  https://github.com/intel/llvm.git llvm  || true; \
                         cd llvm &&\
                         python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
                         python buildbot/compile.py &&\
                         cmake --build build -- omp &&\
-                        cmake --build build -- install  \
+                        cmake --build build -- install &&\
+                        rm -rf "$HIPSYCL_PATH"
                     fi"
                 '''
                 script{
@@ -161,33 +158,34 @@ pipeline {
             }
         }
 
-
-        stage('Build HipSYCL') {
+        stage('Build hipSYCL') {
             steps{
                 sh '''
-                    rm -rf $HIPSYCL_PATH
 		            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                        rm -rf hipSYCL
+                        rm -rf "$HIPSYCL_PATH"
+
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
                             module load cuda/11.2.2; \
                             mkdir $HIPSYCL_PATH; \
 
                             git clone https://github.com/illuhad/hipSYCL.git hipSYCL || true; \
                             cd hipSYCL && \
-                            git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4 && \
+                            git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1 && \
                             mkdir build && \
                             cd build && \
                             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \
                             make -j && \
                             make install "
-                        cd $WORKSPACE
+
+                        #cd $WORKSPACE
                         rm -rf hipSYCL
                     fi
-                    '''
-
+                '''
                 script{
-                    env.LD_LIBRARY_PATH = "${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
-                    env.PATH = "${HIPSYCL_PATH}/bin:${PATH}"
-                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR = "${HIPSYCL_PATH}/include"
+                    env.PATH="${HIPSYCL_PATH}/bin:${PATH}"
+                    env.PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+                    env.LD_LIBRARY_PATH="${HIPSYCL_PATH}/lib:${LD_LIBRARY_PATH}"
                 }
             }
         }
@@ -220,7 +218,7 @@ pipeline {
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
                                             module load cuda/11.2.2 &&\
                                             cd build/Release_cuda &&\
-                                            ctest -j4 --no-compress-output -T Test --timeout 1200; \
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing &&\
                                             exit $returncode"
@@ -231,6 +229,7 @@ pipeline {
                         }
                     }
                 }
+
                 // OpenCL backend
                 stage('Build and Test - OpenCL'){
                     stages{
@@ -257,7 +256,7 @@ pipeline {
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
                                             module load cuda/11.2.2 &&\
                                             cd build/Release_opencl &&\
-                                            ctest -j4 --no-compress-output -T Test --timeout 1200; \
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing &&\
                                             exit $returncode"
@@ -268,7 +267,8 @@ pipeline {
                         }
                     }
                 }
-                // hipSYCL backend
+
+                // hipSYCL SYCL backend
                 stage('Build and Test - hipSYCL'){
                     stages{
                         stage('Build PLSSVM Release - hipSYCL') {
@@ -294,7 +294,7 @@ pipeline {
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
                                             module load cuda/11.2.2 &&\
                                             cd build/Release_hipsycl &&\
-                                            ctest -j4 --no-compress-output -T Test --timeout 1200; \
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_hip && \
                                             exit $returncode"
@@ -305,6 +305,8 @@ pipeline {
                         }
                     }
                 }
+
+                // DPC++ SYCL backend
                 stage('Build and Test - DPC++'){
                     stages{
                         stage('Build PLSSVM Release - DPC++') {
@@ -330,7 +332,7 @@ pipeline {
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
                                             module load cuda/11.2.2 &&\
                                             cd build/Release_dpcpp &&\
-                                            ctest -j4 --no-compress-output -T Test --timeout 1200; \
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_dpcpp &&\
                                             exit $returncode"
@@ -344,6 +346,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             // Process the CTest xml output with the xUnit plugin
@@ -351,7 +354,6 @@ pipeline {
                 testTimeMargin: '3000',
                 thresholdMode: 1,
                 thresholds: [
-                    skipped(failureThreshold: '0'),
                     failed(failureThreshold: '0')
                 ],
                 tools: [CTest(
@@ -374,11 +376,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"Jenkins Multi-GPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins Multi-GPU tests\\",
@@ -393,11 +395,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"Jenkins Multi-GPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins Multi-GPU tests\\",
@@ -412,11 +414,11 @@ pipeline {
             sh '''
                 gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
                 curl --verbose\
-                    --request POST \
-                    --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
-                    --header "Content-Type: application/json" \
-                    --header "authorization: Bearer ${gitlab_token}" \
-                    --data "{
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"Jenkins Multi-GPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins Multi-GPU tests\\",
