@@ -179,7 +179,6 @@ pipeline {
             }
         }
 
-        // TODO: enable DPC++ on CPUs (missing OpenCL CPU runtime)
         //
         // Release
         //
@@ -264,8 +263,10 @@ pipeline {
             }
         }
 
-         // OpenMP + OpenCL + hipSYCL backends simultaneously
-         stage('Build PLSSVM Release - All Available') {
+        // TODO: enable DPC++ on CPUs in Release mode (missing OpenCL CPU runtime)
+
+        // OpenMP + OpenCL + hipSYCL backends simultaneously
+        stage('Build PLSSVM Release - All Available') {
             steps {
                 dir('plssvm') {
                     sh '''
@@ -275,9 +276,9 @@ pipeline {
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                         make -j4
-                   '''
+                    '''
                 }
             }
         }
@@ -379,6 +380,8 @@ pipeline {
                 }
             }
         }
+
+        // TODO: enable DPC++ on CPUs in Debug mode (missing OpenCL CPU runtime)
 
         // Coverage Analysis
         stage('Perform Coverage Analysis') {
