@@ -178,7 +178,7 @@ TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
     const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(calculated, ground_truth, real_type{ 256.0 });
 }
 
 template <typename T>

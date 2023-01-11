@@ -108,14 +108,15 @@ inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1,
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 first value to compare (the actual value)
  * @param[in] val2 second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
  * @param[in] msg an optional message
  */
 template <typename T, bool expect>
-inline void floating_point_near(const T val1, const T val2, const std::string &msg = "") {
+inline void floating_point_near(const T val1, const T val2, const T eps_factor = T{ 128.0 }, const std::string &msg = "") {
     // based on: https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
 
     // set epsilon
-    const T eps = 128 * std::numeric_limits<T>::epsilon();
+    const T eps = eps_factor * std::numeric_limits<T>::epsilon();
 
     // sanity checks for picked epsilon value
     PLSSVM_ASSERT(std::numeric_limits<T>::epsilon() <= eps, "Chosen epsilon too small!: {} < {}", eps, std::numeric_limits<T>::epsilon());
@@ -141,12 +142,13 @@ inline void floating_point_near(const T val1, const T val2, const std::string &m
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 the first vector to compare (the actual value)
  * @param[in] val2 the second vector to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 template <typename T, bool expect>
-inline void floating_point_vector_near(const std::vector<T> &val1, const std::vector<T> &val2) {
+inline void floating_point_vector_near(const std::vector<T> &val1, const std::vector<T> &val2, const T eps_factor = T{ 128.0 }) {
     ASSERT_EQ(val1.size(), val2.size());
     for (typename std::vector<T>::size_type col = 0; col < val1.size(); ++col) {
-        floating_point_near<T, expect>(val1[col], val2[col], fmt::format("values at [{}] are not equal enough: ", col));
+        floating_point_near<T, expect>(val1[col], val2[col], eps_factor, fmt::format("values at [{}] are not equal enough: ", col));
     }
 }
 /**
@@ -155,14 +157,15 @@ inline void floating_point_vector_near(const std::vector<T> &val1, const std::ve
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
  * @param[in] val1 the first 2D vector to compare (the actual value)
  * @param[in] val2 the second 2D vector to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 template <typename T, bool expect>
-inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val1, const std::vector<std::vector<T>> &val2) {
+inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val1, const std::vector<std::vector<T>> &val2, const T eps_factor = T{ 128.0 }) {
     ASSERT_EQ(val1.size(), val2.size());
     for (typename std::vector<T>::size_type row = 0; row < val1.size(); ++row) {
         ASSERT_EQ(val1[row].size(), val2[row].size());
         for (typename std::vector<T>::size_type col = 0; col < val1[row].size(); ++col) {
-            floating_point_near<T, expect>(val1[row][col], val2[row][col], fmt::format("values at [{}][{}] are not equal enough: ", row, col));
+            floating_point_near<T, expect>(val1[row][col], val2[row][col], eps_factor, fmt::format("values at [{}][{}] are not equal enough: ", row, col));
         }
     }
 }
@@ -248,7 +251,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
-#define ASSERT_FLOATING_POINT_VECTOR_EQ(val1, val2, msg) \
+#define ASSERT_FLOATING_POINT_VECTOR_EQ(val1, val2) \
     detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
@@ -265,7 +268,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
-#define ASSERT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2, msg) \
+#define ASSERT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2) \
     detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
@@ -282,8 +285,8 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
-#define ASSERT_FLOATING_POINT_NEAR(val1, val2, msg) \
-    detail::floating_point_near<decltype(val1), false>(val1, val2, msg)
+#define ASSERT_FLOATING_POINT_NEAR(val1, val2) \
+    detail::floating_point_near<decltype(val1), false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -299,7 +302,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
-#define ASSERT_FLOATING_POINT_VECTOR_NEAR(val1, val2, msg) \
+#define ASSERT_FLOATING_POINT_VECTOR_NEAR(val1, val2) \
     detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
@@ -316,8 +319,65 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val1 the first value to compare (the actual value)
  * @param[in] val2 the second value to compare (the expected value)
  */
-#define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2, msg) \
+#define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2) \
     detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+
+/**
+ * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
+ */
+#define EXPECT_FLOATING_POINT_NEAR_EPS(val1, val2, eps_factor) \
+    detail::floating_point_near<decltype(val1), true>(val1, val2, eps_factor)
+/**
+ * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
+ */
+#define ASSERT_FLOATING_POINT_NEAR_EPS(val1, val2, eps_factor) \
+    detail::floating_point_near<decltype(val1), false>(val1, val2, eps_factor)
+
+/**
+ * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
+ */
+#define EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
+    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2, eps_factor)
+/**
+ * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
+ */
+#define ASSERT_FLOATING_POINT_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
+    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2, eps_factor)
+
+/**
+ * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
+ */
+#define EXPECT_FLOATING_POINT_2D_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
+    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2, eps_factor)
+/**
+ * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] val1 the first value to compare (the actual value)
+ * @param[in] val2 the second value to compare (the expected value)
+ * @param[in] eps_factor a scaling factor in the floating point near calculation
+ */
+#define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
+    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2, eps_factor)
 
 /**
  * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.
