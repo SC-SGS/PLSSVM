@@ -113,7 +113,7 @@ pipeline {
         stage('Build DPCPP') {
             steps{
                 sh '''
-                    module load cuda/11.2.2
+                    module load cuda/11.4.3
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
 		                rm -rf llvm
                         git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
@@ -139,7 +139,7 @@ pipeline {
         stage('Build hipSYCL') {
             steps{
                 sh '''
-                    module load cuda/11.2.2
+                    module load cuda/11.4.3
 		            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
                         rm -rf hipSYCL
                         rm -rf "$HIPSYCL_PATH"
@@ -173,7 +173,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Release_CUDA
                         cd build/Release_CUDA
                         rm -rf *
@@ -188,7 +188,7 @@ pipeline {
                 dir('plssvm/build/Release_CUDA') {
                     warnError('Release tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -200,7 +200,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Release_OpenCL
                         cd build/Release_OpenCL
                         rm -rf *
@@ -215,7 +215,7 @@ pipeline {
                 dir('plssvm/build/Release_OpenCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -227,7 +227,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Release_hipSYCL
                         cd build/Release_hipSYCL
                         rm -rf *
@@ -242,7 +242,7 @@ pipeline {
                 dir('plssvm/build/Release_hipSYCL') {
                     warnError('Release tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -254,7 +254,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Release_dpcpp
                         cd build/Release_dpcpp
                         rm -rf *
@@ -269,7 +269,7 @@ pipeline {
                 dir('plssvm/build/Release_dpcpp') {
                     warnError('Release tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -282,7 +282,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Release
                         cd build/Release
                         rm -rf *
@@ -297,7 +297,7 @@ pipeline {
                 dir('plssvm/build/Release') {
                     warnError('Release tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -313,7 +313,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Debug_CUDA
                         cd build/Debug_CUDA
                         rm -rf *
@@ -328,7 +328,7 @@ pipeline {
                 dir('plssvm/build/Debug_CUDA') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -340,7 +340,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Debug_OpenCL
                         cd build/Debug_OpenCL
                         rm -rf *
@@ -355,7 +355,7 @@ pipeline {
                 dir('plssvm/build/Debug_OpenCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -367,7 +367,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Debug_hipSYCL
                         cd build/Debug_hipSYCL
                         rm -rf *
@@ -382,7 +382,7 @@ pipeline {
                 dir('plssvm/build/Debug_hipSYCL') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
@@ -394,7 +394,7 @@ pipeline {
             steps {
                 dir('plssvm') {
                     sh '''
-                        module load cuda/11.2.2
+                        module load cuda/11.4.3
                         mkdir -p build/Debug_dpcpp
                         cd build/Debug_dpcpp
                         rm -rf *
@@ -409,7 +409,7 @@ pipeline {
                 dir('plssvm/build/Debug_dpcpp') {
                     warnError('Debug tests failed!') {
                         sh '''
-                            module load cuda/11.2.2
+                            module load cuda/11.4.3
                             ctest --output-on-failure -j4 --no-compress-output -T Test
                         '''
                     }
