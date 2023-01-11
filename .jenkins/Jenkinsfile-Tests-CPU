@@ -116,7 +116,7 @@ pipeline {
                 sh '''
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                         rm -rf llvm
-                        git clone --dept 1 --branch  sycl-nightly/20221201 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch  sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
@@ -145,7 +145,7 @@ pipeline {
 
                         git clone https://github.com/illuhad/hipSYCL.git hipSYCL
                         cd hipSYCL
-                        git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4
+                        git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
                         mkdir build
                         cd build
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DWITH_ACCELERATED_CPU=ON ..
@@ -263,39 +263,38 @@ pipeline {
                 }
             }
         }
-    //    // OpenMP + OpenCL + hipSYCL backends simultaneously
-    //    stage('Build PLSSVM Release - All Available') {
-    //        steps {
-    //            dir('plssvm') {
-    //                sh '''
-    //                     source ${WORKSPACE}/spack/share/spack/setup-env.sh
-    //                     spack load pocl
-    //                     export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
-    //                     mkdir -p build/Release
-    //                     cd build/Release
-    //                     rm -rf *
-    //                     cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
-    //                     make -j4
-    //                '''
-    //            }
-    //        }
-    //    }
-    //    stage('Run Tests Release - All Available') {
-    //        steps {
-    //            dir('plssvm') {
-    //                warnError('Release tests failed!') {
-    //                    sh '''
-    //                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
-    //                        module use /home/breyerml/.modulefiles/
-    //                        spack load pocl
-    //                        module load network_hipsycl_cpu_pocl
-    //                        cd build/Release
-    //                        ctest --output-on-failure -j4 --no-compress-output -T Test
-    //                    '''
-    //                }
-    //            }
-    //        }
-    //    }
+
+         // OpenMP + OpenCL + hipSYCL backends simultaneously
+         stage('Build PLSSVM Release - All Available') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        source ${WORKSPACE}/spack/share/spack/setup-env.sh
+                        spack load pocl
+                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                        mkdir -p build/Release
+                        cd build/Release
+                        rm -rf *
+                        cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=ON -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../../
+                        make -j4
+                   '''
+                }
+            }
+        }
+        stage('Run Tests Release - All Available') {
+            steps {
+                dir('plssvm/build/Release') {
+                    warnError('Release tests failed!') {
+                        sh '''
+                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
+                            module use /home/breyerml/.modulefiles/
+                            spack load pocl
+                            ctest --output-on-failure -j4 --no-compress-output -T Test
+                        '''
+                    }
+                }
+            }
+        }
 
         //
         // Debug

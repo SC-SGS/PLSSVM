@@ -135,7 +135,7 @@ pipeline {
                 sh '''
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
 		                rm -rf llvm
-                        git clone --dept 1 --branch sycl-nightly/20221201 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
                         python buildbot/compile.py
@@ -167,7 +167,7 @@ pipeline {
                         mkdir $HIPSYCL_PATH
                         git clone https://github.com/illuhad/hipSYCL.git hipSYCL
                         cd hipSYCL
-                        git checkout 013ae9c28f3fb59a1774fcf32f323d012d8d39d4
+                        git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
                         mkdir build
                         cd build
                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
@@ -320,7 +320,7 @@ pipeline {
         //
         // Debug
         //
-/*
+
         stage('Build PLSSVM Debug - HIP') {
             steps {
                 dir('plssvm') {
@@ -328,7 +328,7 @@ pipeline {
                         mkdir -p build/Debug_HIP
                         cd build/Debug_HIP
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=hipcc -DPLSSVM_TARGET_PLATFORMS="amd:gfx906" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                         make -j4
                     '''
                 }
@@ -345,7 +345,6 @@ pipeline {
                 }
             }
         }
-*/
 
         stage('Build PLSSVM Debug - OpenCL') {
             steps {
@@ -397,8 +396,6 @@ pipeline {
             }
         }
 
-/*
-        // causes a DPC++ (LLVM) internal Segmentation Fault
         stage('Build PLSSVM Debug - DPC++') {
             steps {
                 dir('plssvm') {
@@ -423,7 +420,6 @@ pipeline {
                 }
             }
         }
-*/
     }
 
     post {
