@@ -116,7 +116,7 @@ pipeline {
                 sh '''
 		            if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                         rm -rf llvm
-                        git clone --dept 1 --branch  sycl-nightly/20230107 https://github.com/intel/llvm.git llvm
+                        git clone --dept 1 --branch  sycl-nightly/20221201 https://github.com/intel/llvm.git llvm
                         cd llvm
                         python buildbot/configure.py --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                         python buildbot/compile.py
