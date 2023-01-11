@@ -51,11 +51,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "TRUE"
+        DPCPP_FORCE_REBUILD = "FALSE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "TRUE"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
     }
 
     stages {
