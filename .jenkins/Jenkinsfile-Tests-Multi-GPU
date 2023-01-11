@@ -43,11 +43,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/llvm/build"
-        DPCPP_FORCE_REBUILD = "TRUE"
+        DPCPP_FORCE_REBUILD = "FALSE"
 
         // hipSYCL
         HIPSYCL_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "TRUE"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
     }
 
     stages {
@@ -162,24 +162,20 @@ pipeline {
             steps{
                 sh '''
 		            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
-                        rm -rf hipSYCL
-                        rm -rf "$HIPSYCL_PATH"
-
                         srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
-                            module load cuda/11.2.2; \
-                            mkdir $HIPSYCL_PATH; \
-
-                            git clone https://github.com/illuhad/hipSYCL.git hipSYCL || true; \
+                            rm -rf hipSYCL && \
+                            rm -rf "$HIPSYCL_PATH" && \
+                            module load cuda/11.2.2 && \
+                            mkdir $HIPSYCL_PATH && \
+                            git clone https://github.com/illuhad/hipSYCL.git hipSYCL && \
                             cd hipSYCL && \
                             git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1 && \
                             mkdir build && \
                             cd build && \
                             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \
                             make -j && \
-                            make install "
-
-                        #cd $WORKSPACE
-                        rm -rf hipSYCL
+                            make install && \
+                            rm -rf hipSYCL "
                     fi
                 '''
                 script{
@@ -192,7 +188,6 @@ pipeline {
 
         stage('Build and Test'){
             parallel {
-                // CUDA backend
                 stage('Build and Test - CUDA'){
                     stages{
                         stage('Build PLSSVM Release - CUDA') {
@@ -201,8 +196,8 @@ pipeline {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:25:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
                                         module load cuda/11.2.2 &&\
-                                        mkdir -p build/Release_cuda &&\
-                                        cd build/Release_cuda &&\
+                                        mkdir -p build/Release_CUDA &&\
+                                        cd build/Release_CUDA &&\
                                         rm -rf * &&\
                                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -S ../../ &&\
                                         make -j4"
@@ -215,10 +210,10 @@ pipeline {
                                 dir('plssvm') {
                                     warnError('Release tests failed!') {
                                         sh '''
-                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
+                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:4 bash -c "\
                                             module load cuda/11.2.2 &&\
-                                            cd build/Release_cuda &&\
-                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
+                                            cd build/Release_CUDA &&\
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 3600; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing &&\
                                             exit $returncode"
@@ -230,7 +225,6 @@ pipeline {
                     }
                 }
 
-                // OpenCL backend
                 stage('Build and Test - OpenCL'){
                     stages{
                         stage('Build PLSSVM Release - OpenCL') {
@@ -239,8 +233,8 @@ pipeline {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:25:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
                                         module load cuda/11.2.2 &&\
-                                        mkdir -p build/Release_opencl &&\
-                                        cd build/Release_opencl &&\
+                                        mkdir -p build/Release_OpenCL &&\
+                                        cd build/Release_OpenCL &&\
                                         rm -rf * &&\
                                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -S ../../ &&\
                                         make -j4"
@@ -253,10 +247,10 @@ pipeline {
                                 dir('plssvm') {
                                     warnError('Release tests failed!') {
                                         sh '''
-                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
+                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:4 bash -c "\
                                             module load cuda/11.2.2 &&\
-                                            cd build/Release_opencl &&\
-                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
+                                            cd build/Release_OpenCL &&\
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 3600; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing &&\
                                             exit $returncode"
@@ -268,7 +262,6 @@ pipeline {
                     }
                 }
 
-                // hipSYCL SYCL backend
                 stage('Build and Test - hipSYCL'){
                     stages{
                         stage('Build PLSSVM Release - hipSYCL') {
@@ -277,8 +270,8 @@ pipeline {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:25:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
                                         module load cuda/11.2.2 &&\
-                                        mkdir -p build/Release_hipsycl &&\
-                                        cd build/Release_hipsycl &&\
+                                        mkdir -p build/Release_hipSYCL &&\
+                                        cd build/Release_hipSYCL &&\
                                         rm -rf * &&\
                                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -S ../../ &&\
                                         make -j4 "
@@ -291,10 +284,10 @@ pipeline {
                                 dir('plssvm') {
                                     warnError('hipSYCL Release tests failed!') {
                                         sh '''
-                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
+                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:4 bash -c "\
                                             module load cuda/11.2.2 &&\
-                                            cd build/Release_hipsycl &&\
-                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
+                                            cd build/Release_hipSYCL &&\
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 3600; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_hip && \
                                             exit $returncode"
@@ -306,7 +299,6 @@ pipeline {
                     }
                 }
 
-                // DPC++ SYCL backend
                 stage('Build and Test - DPC++'){
                     stages{
                         stage('Build PLSSVM Release - DPC++') {
@@ -315,8 +307,8 @@ pipeline {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:25:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
                                         module load cuda/11.2.2 &&\
-                                        mkdir -p build/Release_dpcpp &&\
-                                        cd build/Release_dpcpp &&\
+                                        mkdir -p build/Release_DPCPP &&\
+                                        cd build/Release_DPCPP &&\
                                         rm -rf * &&\
                                         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON  -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_LTO=OFF -S ../../ &&\
                                         make -j4 "
@@ -329,10 +321,10 @@ pipeline {
                                 dir('plssvm') {
                                     warnError('DPC++ Release tests failed!') {
                                         sh '''
-                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:2 bash -c "\
+                                            srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:4 bash -c "\
                                             module load cuda/11.2.2 &&\
-                                            cd build/Release_dpcpp &&\
-                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 1200; \
+                                            cd build/Release_DPCPP &&\
+                                            ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 3600; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_dpcpp &&\
                                             exit $returncode"
