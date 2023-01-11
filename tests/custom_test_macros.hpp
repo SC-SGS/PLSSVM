@@ -47,23 +47,23 @@ using get_value_type_t = typename get_value_type<T>::type;
  * @details Wrapper around GoogleTest's `EXPECT_FLOAT_EQ` and `ASSERT_DOUBLE_EQ` if @p expect is `true`, otherwise wraps `ASSERT_FLOAT_EQ` and `ASSERT_DOUBLE_EQ`.
  * @tparam T the floating point type
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
- * @param[in] val1 first value to compare
- * @param[in] val2 second value to compare
+ * @param[in] val1 first value to compare (the actual value)
+ * @param[in] val2 second value to compare (the expected value)
  * @param[in] msg an optional message
  */
 template <typename T, bool expect>
 inline void floating_point_eq(const T val1, const T val2, const std::string &msg = "") {
     if constexpr (std::is_same_v<plssvm::detail::remove_cvref_t<T>, float>) {
         if constexpr (expect) {
-            EXPECT_FLOAT_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
+            EXPECT_FLOAT_EQ(val1, val2) << fmt::format("{}{} (actual) vs {} (expected)", msg, val1, val2);
         } else {
-            ASSERT_FLOAT_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
+            ASSERT_FLOAT_EQ(val1, val2) << fmt::format("{}{} (actual) vs {} (expected)", msg, val1, val2);
         }
     } else if constexpr (std::is_same_v<plssvm::detail::remove_cvref_t<T>, double>) {
         if constexpr (expect) {
-            EXPECT_DOUBLE_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
+            EXPECT_DOUBLE_EQ(val1, val2) << fmt::format("{}{} (actual) vs {} (expected)", msg, val1, val2);
         } else {
-            ASSERT_DOUBLE_EQ(val1, val2) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
+            ASSERT_DOUBLE_EQ(val1, val2) << fmt::format("{}{} (actual) vs {} (expected)", msg, val1, val2);
         }
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "T must be either float or double!");
@@ -74,8 +74,8 @@ inline void floating_point_eq(const T val1, const T val2, const std::string &msg
  * @brief Compares the two vectors of floating point values @p val1 and @p val2.
  * @tparam T the floating point type
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
- * @param[in] val1 the first vector to compare
- * @param[in] val2 the second vector to compare
+ * @param[in] val1 the first vector to compare (the actual value)
+ * @param[in] val2 the second vector to compare (the expected value)
  */
 template <typename T, bool expect>
 inline void floating_point_vector_eq(const std::vector<T> &val1, const std::vector<T> &val2) {
@@ -88,8 +88,8 @@ inline void floating_point_vector_eq(const std::vector<T> &val1, const std::vect
  * @brief Compares the two 2D vectors of floating point values @p val1 and @p val2.
  * @tparam T the floating point type
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
- * @param[in] val1 the first 2D vector to compare
- * @param[in] val2 the second 2D vector to compare
+ * @param[in] val1 the first 2D vector to compare (the actual value)
+ * @param[in] val2 the second 2D vector to compare (the expected value)
  */
 template <typename T, bool expect>
 inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1, const std::vector<std::vector<T>> &val2) {
@@ -106,8 +106,8 @@ inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1,
  * @brief Compares the two floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
  * @tparam T the floating point type
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
- * @param[in] val1 first value to compare
- * @param[in] val2 second value to compare
+ * @param[in] val1 first value to compare (the actual value)
+ * @param[in] val2 second value to compare (the expected value)
  * @param[in] msg an optional message
  */
 template <typename T, bool expect>
@@ -129,9 +129,9 @@ inline void floating_point_near(const T val1, const T val2, const std::string &m
     const T norm = std::min((std::abs(val1) + std::abs(val2)), std::numeric_limits<T>::max());
 
     if constexpr (expect) {
-        EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
+        EXPECT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << fmt::format("{}{} (actual) vs {} (expected)", msg, val1, val2);
     } else {
-        ASSERT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << fmt::format("{}{} (expected) vs {} (actual)", msg, val2, val1);
+        ASSERT_LT(diff, std::max(std::numeric_limits<T>::min(), eps * norm)) << fmt::format("{}{} (actual) vs {} (expected)", msg, val1, val2);
     }
 }
 
@@ -139,8 +139,8 @@ inline void floating_point_near(const T val1, const T val2, const std::string &m
  * @brief Compares the two vectors of floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
  * @tparam T the floating point type
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
- * @param[in] val1 the first vector to compare
- * @param[in] val2 the second vector to compare
+ * @param[in] val1 the first vector to compare (the actual value)
+ * @param[in] val2 the second vector to compare (the expected value)
  */
 template <typename T, bool expect>
 inline void floating_point_vector_near(const std::vector<T> &val1, const std::vector<T> &val2) {
@@ -153,8 +153,8 @@ inline void floating_point_vector_near(const std::vector<T> &val1, const std::ve
  * @brief Compares the two 2D vectors of floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
  * @tparam T the floating point type
  * @tparam expect if `false` maps to `EXPECT_*`, else maps to `ASSERT_*`
- * @param[in] val1 the first 2D vector to compare
- * @param[in] val2 the second 2D vector to compare
+ * @param[in] val1 the first 2D vector to compare (the actual value)
+ * @param[in] val2 the second 2D vector to compare (the expected value)
  */
 template <typename T, bool expect>
 inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val1, const std::vector<std::vector<T>> &val2) {

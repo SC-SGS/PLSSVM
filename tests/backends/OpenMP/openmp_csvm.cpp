@@ -154,7 +154,7 @@ TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
     const std::vector<real_type> calculated = svm.generate_q(params, data.data());
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
 }
 
 template <typename T>
@@ -178,7 +178,7 @@ TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
     const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
 }
 
 template <typename T>
@@ -210,6 +210,6 @@ TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
         svm.run_device_kernel(params, q, calculated, rhs, data.data(), QA_cost, add);
 
         // check the calculated result for correctness
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
     }
 }

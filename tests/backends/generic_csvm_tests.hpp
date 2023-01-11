@@ -344,7 +344,7 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
     const std::vector<real_type> calculated = svm.generate_q(params, data_d, data_last_d, data.num_data_points() - 1, feature_ranges, boundary_size);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
 }
 
 TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
@@ -381,7 +381,7 @@ TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
     const std::vector<real_type> calculated = svm.calculate_w(data_d, data_last_d, alpha_d, num_support_vectors, feature_ranges);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
 }
 
 TYPED_TEST_P(GenericGPUCSVM, run_device_kernel) {
@@ -436,7 +436,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_device_kernel) {
         }
 
         // check the calculated result for correctness
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
     }
 }
 
