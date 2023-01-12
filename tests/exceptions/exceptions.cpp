@@ -72,6 +72,6 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     EXPECT_EQ(what_lines[0], "exception message");
     EXPECT_EQ(what_lines[1], fmt::format("{} thrown:", util::exception_type_name<exception_type>()));
     EXPECT_EQ(what_lines[2], "  in file      " __FILE__);
-    EXPECT_THAT(what_lines[3], ::testing::ContainsRegex("  in function  .*dummy.*"));
+    EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
     EXPECT_EQ(what_lines[4], "  @ line       28");
 }

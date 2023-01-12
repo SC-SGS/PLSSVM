@@ -13,7 +13,8 @@
 #include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, Not, StartsWith, EndsWith}
 #include "gtest/gtest.h"           // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT
 
-#include <regex>  // std::regex, std::regex::extended, std::regex_match
+#include <regex>   // std::regex, std::regex::extended, std::regex_match
+#include <string>  // std::string
 
 using namespace plssvm::version;
 
@@ -96,16 +97,16 @@ TEST(GitMetadata, branch) {
         EXPECT_FALSE(git_metadata::branch().empty());
         // check whether the branch name is valid
         // https://git-scm.com/docs/git-check-ref-format
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::StartsWith(".")));       // must not start with a .a
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith(".lock")));     // must not end with .lock
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith("..")));        // must not end with .. anywhere
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::StartsWith(".")));  // must not start with a .a
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::EndsWith(".lock")));  // must not end with .lock
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::EndsWith("..")));     // must not end with .. anywhere
         // EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("[\\\040-\\\177]+")));  // not contain an ASCII control character anywhere
         EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
                                       std::regex{ "(~|\\^|:)+", std::regex::extended }));      // must not contain a ~, ^ or : anywhere
         EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
                                       std::regex{ "(\\?|\\[|\\*)+", std::regex::extended }));  // must not contain ?, [ or * anywhere
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::StartsWith("/")));       // must not start with a /
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith("/")));         // must not end with a /
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::StartsWith("/")));  // must not start with a /
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::EndsWith("/")));    // must not end with a /
         EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
                                       std::regex{ "/{2,}", std::regex::extended }));           // must not contain multiple consecutive /
         EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
