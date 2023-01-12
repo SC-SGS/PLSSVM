@@ -390,6 +390,8 @@ pipeline {
             }
         }
 
+/*
+        // results in more or less random SegFaults in the DPC++ LLVM compiler
         stage('Build PLSSVM Debug - DPC++') {
             steps {
                 dir('plssvm') {
@@ -417,6 +419,7 @@ pipeline {
             }
         }
     }
+*/
 
     post {
         always {
