@@ -418,8 +418,8 @@ pipeline {
                 }
             }
         }
-    }
 */
+    }
 
     post {
         always {

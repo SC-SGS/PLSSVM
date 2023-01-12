@@ -422,8 +422,8 @@ pipeline {
                 }
             }
         }
-    }
 */
+    }
 
     post {
         always {
