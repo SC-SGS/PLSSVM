@@ -350,6 +350,7 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
 TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
     using real_type = typename TypeParam::real_type;
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     using device_ptr_type = typename mock_csvm_type::template device_ptr_type<real_type>;
     using queue_type = typename mock_csvm_type::queue_type;
@@ -367,7 +368,7 @@ TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
     // perform the data setup on the device
     constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
     const std::size_t num_support_vectors = support_vectors.num_data_points();
-    const std::size_t num_used_devices = svm.select_num_used_devices(plssvm::kernel_function_type::linear, support_vectors.num_features());
+    const std::size_t num_used_devices = svm.select_num_used_devices(kernel, support_vectors.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(support_vectors.data(), num_support_vectors - 1, support_vectors.num_features(), boundary_size, num_used_devices);
 
     std::vector<device_ptr_type> alpha_d(num_used_devices);
