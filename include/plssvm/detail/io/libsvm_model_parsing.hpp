@@ -391,14 +391,14 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // separators: 2 chars (: between index and feature + whitespace after feature value)
     // -> 40 chars in total
     // -> increased to 48 chars to be on the safe side
-    constexpr std::size_t CHARS_PER_BLOCK = 48;
+    static constexpr std::size_t CHARS_PER_BLOCK = 48;
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
-    constexpr std::size_t BLOCK_SIZE = 128;
+    static constexpr std::size_t BLOCK_SIZE = 128;
     // use 1 MiB as buffer per thread
     constexpr std::size_t STRING_BUFFER_SIZE = 1024 * 1024;
 
     // format one output-line
-    auto format_libsvm_line = [=](std::string &output, const real_type a, const std::vector<real_type> &d) {
+    auto format_libsvm_line = [](std::string &output, const real_type a, const std::vector<real_type> &d) {
         static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static char buffer[STACK_BUFFER_SIZE];
         #pragma omp threadprivate(buffer)
