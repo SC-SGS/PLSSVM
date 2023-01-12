@@ -83,7 +83,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
-        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005>
         )
 ## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
