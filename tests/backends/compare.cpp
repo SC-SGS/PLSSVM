@@ -124,8 +124,8 @@ std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &su
     }
     return result;
 }
-template std::vector<float> calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &, std::size_t);
-template std::vector<double> calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &, std::size_t);
+template std::vector<float> calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &);
+template std::vector<double> calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &);
 
 template <typename real_type>
 std::vector<real_type> device_kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &rhs, const std::vector<real_type> &q, const real_type QA_cost, const real_type add) {
