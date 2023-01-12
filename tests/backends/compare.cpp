@@ -113,7 +113,7 @@ template std::vector<float> generate_q(const plssvm::detail::parameter<float> &,
 template std::vector<double> generate_q(const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::size_t);
 
 template <typename real_type>
-std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights, [[maybe_unused]] const std::size_t num_devices) {
+std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights) {
     PLSSVM_ASSERT(support_vectors.size() == weights.size(), "Sizes mismatch!: {} != {}", support_vectors.size(), weights.size());
 
     std::vector<real_type> result(support_vectors.front().size());

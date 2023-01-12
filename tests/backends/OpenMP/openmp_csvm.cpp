@@ -166,7 +166,7 @@ TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
 
     // create the data that should be used
     const plssvm::data_set<real_type> support_vectors{ PLSSVM_TEST_FILE };
-    const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points());
+    const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points(), real_type{ 0.0 }, real_type{ 1.0 });
 
     // calculate the correct w vector
     const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);

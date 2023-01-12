@@ -87,11 +87,10 @@ template <typename real_type>
  * @tparam real_type the type of the data
  * @param[in] support_vectors the previously learned support vectors
  * @param[in] weights the previously learned weights
- * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the resulting `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights);
 
 /**
  * @brief Computes the device kernel, using the kernel function determined by @p params.
