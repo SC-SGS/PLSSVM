@@ -245,6 +245,21 @@ template <typename T>
     return lhs.value() == rhs.value();
 }
 /**
+ * @copydoc constexpr bool operator==(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator==(const default_value<T> &lhs, const T &rhs) noexcept {
+    return lhs.value() == rhs;
+}
+/**
+ * @copydoc constexpr bool operator==(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator==(const T &lhs, const default_value<T> &rhs) noexcept {
+    return lhs == rhs.value();
+}
+
+/**
  * @brief Compares **the two active** values @p lhs and @p rhs for inequality.
  * @tparam T the type of the wrapped value
  * @param[in] lhs the first default_value
@@ -255,6 +270,21 @@ template <typename T>
 [[nodiscard]] constexpr bool operator!=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs == rhs);
 }
+/**
+ * @copydoc constexpr bool operator!=(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator!=(const default_value<T> &lhs, const T &rhs) noexcept {
+    return !(lhs == rhs);
+}
+/**
+ * @copydoc constexpr bool operator!=(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator!=(const T &lhs, const default_value<T> &rhs) noexcept {
+    return !(lhs == rhs);
+}
+
 /**
  * @brief Compares **the two active** values: @p lhs < @p rhs.
  * @tparam T the type of the wrapped value
@@ -267,6 +297,21 @@ template <typename T>
     return lhs.value() < rhs.value();
 }
 /**
+ * @copydoc constexpr bool operator<(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator<(const default_value<T> &lhs, const T &rhs) noexcept {
+    return lhs.value() < rhs;
+}
+/**
+ * @copydoc constexpr bool operator<(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator<(const T &lhs, const default_value<T> &rhs) noexcept {
+    return lhs < rhs.value();
+}
+
+/**
  * @brief Compares **the two active** values: @p lhs > @p rhs.
  * @tparam T the type of the wrapped value
  * @param[in] lhs the first default_value
@@ -277,6 +322,23 @@ template <typename T>
 [[nodiscard]] constexpr bool operator>(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return rhs < lhs;
 }
+
+/**
+ * @copydoc constexpr bool operator>(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator>(const default_value<T> &lhs, const T &rhs) noexcept {
+    return lhs.value() > rhs;
+}
+
+/**
+ * @copydoc constexpr bool operator>(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator>(const T &lhs, const default_value<T> &rhs) noexcept {
+    return lhs > rhs.value();
+}
+
 /**
  * @brief Compares **the two active** values: @p lhs <= @p rhs.
  * @tparam T the type of the wrapped value
@@ -289,6 +351,21 @@ template <typename T>
     return !(lhs > rhs);
 }
 /**
+ * @copydoc constexpr bool operator<=(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator<=(const default_value<T> &lhs, const T &rhs) noexcept {
+    return !(lhs.value() > rhs);
+}
+/**
+ * @copydoc constexpr bool operator<=(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator<=(const T &lhs, const default_value<T> &rhs) noexcept {
+    return !(lhs > rhs.value());
+}
+
+/**
  * @brief Compares **the two active** values: @p lhs >= @p rhs.
  * @tparam T the type of the wrapped value
  * @param[in] lhs the first default_value
@@ -298,6 +375,20 @@ template <typename T>
 template <typename T>
 [[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs < rhs);
+}
+/**
+ * @copydoc constexpr bool operator>=(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const T &rhs) noexcept {
+    return !(lhs.value() < rhs);
+}
+/**
+ * @copydoc constexpr bool operator>=(const default_value<T>, const default_value<T>)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator>=(const T &lhs, const default_value<T> &rhs) noexcept {
+    return !(lhs < rhs.value());
 }
 
 /// @cond Doxygen_suppress
