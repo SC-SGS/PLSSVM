@@ -200,6 +200,7 @@ namespace detail {
     plssvm::detail::replace_all(str, "-", "_M_");
     plssvm::detail::replace_all(str, " ", "_W_");
     plssvm::detail::replace_all(str, ".", "_D_");
+    plssvm::detail::replace_all(str, ":", "_S_");
     plssvm::detail::replace_all(str, "/", "_");
     if (str.empty()) {
         str = "EMPTY";
