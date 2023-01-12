@@ -643,7 +643,7 @@ void data_set<T, U>::create_mapping() {
 
     // convert input labels to now mapped values
     std::vector<real_type> tmp(labels_ptr_->size());
-    #pragma omp parallel for default(none) shared(tmp, labels_ptr_, mapper)
+    #pragma omp parallel for default(shared) shared(tmp, mapper)
     for (typename std::vector<real_type>::size_type i = 0; i < tmp.size(); ++i) {
         tmp[i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
     }
@@ -669,7 +669,7 @@ void data_set<T, U>::scale() {
             real_type max_value = std::numeric_limits<real_type>::lowest();
 
             // calculate min/max values of all data points at the specific feature
-            #pragma omp parallel for default(none) shared(X_ptr_) firstprivate(num_features_, feature) reduction(min : min_value) reduction(max : max_value)
+            #pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
             for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
                 min_value = std::min(min_value, (*X_ptr_)[data_point][feature]);
                 max_value = std::max(max_value, (*X_ptr_)[data_point][feature]);
@@ -701,7 +701,7 @@ void data_set<T, U>::scale() {
     }
 
     // scale values
-    #pragma omp parallel for default(none) shared(scale_parameters_, X_ptr_) firstprivate(lower, upper, num_data_points_)
+    #pragma omp parallel for default(shared) firstprivate(lower, upper)
     for (size_type i = 0; i < scale_parameters_->scaling_factors.size(); ++i) {
         // extract feature-wise min and max values
         const typename scaling::factors factor = scale_parameters_->scaling_factors[i];
