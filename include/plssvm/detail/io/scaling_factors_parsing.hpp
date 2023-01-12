@@ -82,7 +82,6 @@ template <typename real_type, typename factors_type>
     {
         #pragma omp for
         for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
-            #pragma omp cancellation point for
             try {
                 // parse the current line
                 const std::string_view line = reader.line(i + 2);
@@ -108,8 +107,6 @@ template <typename real_type, typename factors_type>
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
             }
         }
     }
