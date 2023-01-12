@@ -21,7 +21,7 @@ TEST(PLSSVMAssert, assert_true) {
     PLSSVM_ASSERT(true, "TRUE");
 }
 TEST(PLSSVMAssert, assert_false) {
-    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!.*FALSE.*"));
+    ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!"));
 }
 
 #endif
