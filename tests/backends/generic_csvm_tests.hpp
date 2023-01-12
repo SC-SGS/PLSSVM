@@ -544,20 +544,25 @@ TYPED_TEST_P(GenericGPUCSVM, setup_data_on_device_minimal) {
 TYPED_TEST_P(GenericGPUCSVM, setup_data_on_device) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
     using real_type = typename TypeParam::real_type;
-
-    // minimal example
-    const std::vector<std::vector<real_type>> input = {
-        { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 }, real_type{ 6.0 } },
-        { real_type{ 7.0 }, real_type{ 8.0 }, real_type{ 9.0 } },
-    };
+    constexpr plssvm::kernel_function_type kernel = TypeParam::kernel_type;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(TypeParam::additional_arguments);
 
     // perform data setup on the device
     const std::size_t boundary_size = 2;
-    const std::size_t num_devices = svm.select_num_used_devices(plssvm::kernel_function_type::linear, input.front().size());
+    const std::size_t num_devices = svm.select_num_used_devices(kernel, std::numeric_limits<std::size_t>::max());
+
+    // minimal example
+    std::vector<std::vector<real_type>> input(3);
+    for (std::size_t row = 0; row < input.size(); ++row) {
+        std::vector<real_type> column(num_devices * 2);
+        for (std::size_t col = 0; col < column.size(); ++col) {
+            column[col] = row * num_devices + col;
+        }
+        input[row] = std::move(column);
+    }
+
     const std::size_t num_data_points = input.size();
     const std::size_t num_features = input.front().size();
 
