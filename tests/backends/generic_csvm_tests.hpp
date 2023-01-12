@@ -329,9 +329,6 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
     // create the data that should be used
     const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
 
-    // calculate correct q vector (ground truth)
-    const std::vector<real_type> ground_truth = compare::generate_q(params, data.data());
-
     // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::generate_q is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
@@ -342,6 +339,9 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
 
     // calculate the q vector using a GPU backend
     const std::vector<real_type> calculated = svm.generate_q(params, data_d, data_last_d, data.num_data_points() - 1, feature_ranges, boundary_size);
+
+    // calculate correct q vector (ground truth)
+    const std::vector<real_type> ground_truth = compare::generate_q(params, data.data(), num_used_devices);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
