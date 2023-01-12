@@ -136,9 +136,9 @@ TYPED_TEST(DataSetScaling, save) {
     // check file content
     ASSERT_GE(reader.num_lines(), 2);
     EXPECT_EQ(reader.line(0), "x");
-    EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+    EXPECT_THAT(std::string{ reader.line(1) }, ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     for (std::size_t i = 2; i < reader.num_lines(); ++i) {
-        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+        EXPECT_THAT(std::string{ reader.line(i) }, ::testing::ContainsRegex("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     }
 }
 TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
@@ -161,7 +161,7 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     // check the content
     ASSERT_EQ(reader.num_lines(), 2);
     EXPECT_EQ(reader.line(0), "x");
-    EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+    EXPECT_THAT(std::string{ reader.line(1) }, ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
 }
 
 //*************************************************************************************************************************************//
@@ -938,7 +938,7 @@ TYPED_TEST(DataSetSave, save_libsvm_with_label) {
     // create regex to check for the correct output
     ASSERT_EQ(reader.num_lines(), this->data_points.size());
     for (const std::string_view line : reader.lines()) {
-        EXPECT_THAT(line, ::testing::ContainsRegex(".+ ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
+        EXPECT_THAT(std::string{ line }, ::testing::ContainsRegex(".+ ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
     }
 }
 TYPED_TEST(DataSetSave, save_libsvm_without_label) {
@@ -957,7 +957,7 @@ TYPED_TEST(DataSetSave, save_libsvm_without_label) {
     // create regex to check for the correct output
     ASSERT_EQ(reader.num_lines(), this->data_points.size());
     for (const std::string_view line : reader.lines()) {
-        EXPECT_THAT(line, ::testing::ContainsRegex("([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
+        EXPECT_THAT(std::string{ line }, ::testing::ContainsRegex("([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
     }
 }
 
@@ -987,7 +987,7 @@ TYPED_TEST(DataSetSave, save_arff_with_label) {
     EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features + 1)), ::testing::StartsWith("@data"));
     // check data points
     for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
-        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){4}.+"));
+        EXPECT_THAT(std::string{ reader.line(i) }, ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){4}.+"));
     }
 }
 TYPED_TEST(DataSetSave, save_arff_without_label) {
@@ -1015,7 +1015,7 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
     EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::StartsWith("@data"));
     // check data points
     for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
-        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+        EXPECT_THAT(std::string{ reader.line(i) }, ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
     }
 }
 
