@@ -476,6 +476,7 @@ TYPED_TEST_P(GenericGPUCSVM, device_reduction) {
 
     // test reduction of a single device
     data_d.resize(1);
+    data_d.front().copy_to_device(data);
     calculated.assign(data.size(), real_type{ 0.0 });
     svm.device_reduction(data_d, calculated);
 
