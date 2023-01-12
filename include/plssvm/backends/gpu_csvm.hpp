@@ -386,7 +386,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::v
     const std::size_t num_used_devices = data_d.size();
 
     // create w vector and fill with zeros
-    std::vector<real_type> w(feature_ranges.back(), std::size_t{ 0 }), real_type{ 0.0 });
+    std::vector<real_type> w(feature_ranges.back(), real_type{ 0.0 });
 
     #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
