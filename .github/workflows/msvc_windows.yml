@@ -18,7 +18,7 @@ jobs:
         run: |
           mkdir PLSSVM/build
           cd PLSSVM/build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_ASSERTS=ON..
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_ASSERTS=ON ..
       - name: "Build Step"
         run: |
           cd PLSSVM/build
@@ -26,4 +26,4 @@ jobs:
       - name: "Test Step"
         run: |
           cd PLSSVM/build
-          ctest -C Debug -V
+          ctest --output-on-failure -C Debug

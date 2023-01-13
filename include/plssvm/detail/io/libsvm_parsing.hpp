@@ -52,7 +52,6 @@ namespace plssvm::detail::io {
     {
         #pragma omp for reduction(max : num_features)
         for (std::size_t i = skipped_lines; i < lines.size(); ++i) {
-            #pragma omp cancellation point for
             try {
                 const std::string_view line = lines[i];
 
@@ -78,8 +77,6 @@ namespace plssvm::detail::io {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
             }
         }
     }
@@ -144,7 +141,6 @@ template <typename real_type, typename label_type>
     {
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
-            #pragma omp cancellation point for
             try {
                 std::string_view line = reader.line(skipped_lines + i);
                 unsigned long last_index = 0;
@@ -208,8 +204,6 @@ template <typename real_type, typename label_type>
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
             }
         }
     }

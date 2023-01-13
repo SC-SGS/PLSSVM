@@ -14,11 +14,13 @@
 
 #include "../naming.hpp"  // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
 
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
+#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
 #include <map>            // std::map
+#include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <set>            // std::set
+#include <string>         // std::string
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
@@ -28,7 +30,7 @@ TEST(Utility, get) {
     EXPECT_EQ(plssvm::detail::get<1>(0, 1.5, 2, 3, 4), 1.5);
     EXPECT_EQ(plssvm::detail::get<2>(0, 1, -2, 3, 4), -2);
     EXPECT_EQ(plssvm::detail::get<3>(0, 1, 2, 'a', 4), 'a');
-    EXPECT_EQ(plssvm::detail::get<4>(0, 1, 2, 3, "abc"), "abc");
+    EXPECT_EQ(plssvm::detail::get<4>(0, 1, 2, 3, std::string{ "abc" }), std::string{ "abc" });
 }
 
 TEST(Utility, to_underlying_int) {
@@ -171,5 +173,6 @@ TYPED_TEST(UtilityVectorContainer, contains) {
 
 TEST(Utility, current_date_time) {
     // test if the current date time matches the pattern
-    EXPECT_THAT(plssvm::detail::current_date_time(), ::testing::ContainsRegex("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"));
+    EXPECT_TRUE(std::regex_match(std::string{ plssvm::detail::current_date_time() },
+                                 std::regex{ "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", std::regex::extended }));
 }

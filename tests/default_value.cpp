@@ -261,7 +261,7 @@ TEST(DefaultValue, get_default_default) {
 }
 TEST(DefaultValue, get_default_non_default) {
     // create default_value
-    plssvm::default_value val{ plssvm::default_init{ "Hello, World!" } };
+    plssvm::default_value val{ plssvm::default_init<std::string>{ "Hello, World!" } };
     val = "foo bar baz";
 
     // default value overwritten -> must not be default

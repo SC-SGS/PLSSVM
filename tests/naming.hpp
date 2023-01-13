@@ -144,7 +144,8 @@ class real_type_to_name {
   public:
     template <typename T>
     static std::string GetName(int) {
-        return std::string{ plssvm::detail::arithmetic_type_name<T>() };
+        std::string name{ plssvm::detail::arithmetic_type_name<T>() };
+        return plssvm::detail::replace_all(name, " ", "_");
     }
 };
 /**
@@ -157,7 +158,7 @@ class label_type_to_name {
         if constexpr (std::is_same_v<T, std::string>) {
             return "string";
         } else {
-            return std::string{ plssvm::detail::arithmetic_type_name<T>() };
+            return real_type_to_name::GetName<T>(0);
         }
     }
 };
@@ -179,7 +180,7 @@ class real_type_kernel_function_to_name {
   public:
     template <typename T>
     static std::string GetName(int) {
-        return fmt::format("{}__{}", plssvm::detail::arithmetic_type_name<typename T::real_type>(), T::kernel_type);
+        return fmt::format("{}__{}", real_type_to_name::GetName<typename T::real_type>(0), T::kernel_type);
     }
 };
 
@@ -200,6 +201,7 @@ namespace detail {
     plssvm::detail::replace_all(str, "-", "_M_");
     plssvm::detail::replace_all(str, " ", "_W_");
     plssvm::detail::replace_all(str, ".", "_D_");
+    plssvm::detail::replace_all(str, ":", "_S_");
     plssvm::detail::replace_all(str, "/", "_");
     if (str.empty()) {
         str = "EMPTY";

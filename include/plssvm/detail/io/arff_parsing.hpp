@@ -258,7 +258,6 @@ template <typename real_type, typename label_type>
     {
         #pragma omp for
         for (std::size_t i = 0; i < data.size(); ++i) {
-            #pragma omp cancellation point for
             try {
                 std::string_view line = reader.line(i + num_header_lines);
                 // there must not be any @ inside the data section
@@ -364,8 +363,6 @@ template <typename real_type, typename label_type>
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
             }
         }
     }

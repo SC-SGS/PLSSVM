@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, TEST, TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test
 
 #include <cstddef>      // std::size_t
+#include <regex>        // std::regex, std::regex::extended, std::regex_match
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::ignore, std::get
@@ -136,9 +137,11 @@ TYPED_TEST(DataSetScaling, save) {
     // check file content
     ASSERT_GE(reader.num_lines(), 2);
     EXPECT_EQ(reader.line(0), "x");
-    EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+    std::regex reg{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
+    reg = std::regex{ "\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?", std::regex::extended };
     for (std::size_t i = 2; i < reader.num_lines(); ++i) {
-        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("\\+?[1-9]+[0-9]* [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+        EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
 }
 TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
@@ -161,7 +164,8 @@ TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     // check the content
     ASSERT_EQ(reader.num_lines(), 2);
     EXPECT_EQ(reader.line(0), "x");
-    EXPECT_THAT(reader.line(1), ::testing::ContainsRegex("[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+    const std::regex reg{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
 }
 
 //*************************************************************************************************************************************//
@@ -937,8 +941,9 @@ TYPED_TEST(DataSetSave, save_libsvm_with_label) {
 
     // create regex to check for the correct output
     ASSERT_EQ(reader.num_lines(), this->data_points.size());
+    const std::regex reg{ ".+ ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}", std::regex::extended };
     for (const std::string_view line : reader.lines()) {
-        EXPECT_THAT(line, ::testing::ContainsRegex(".+ ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
+        EXPECT_TRUE(std::regex_match(std::string{ line }, reg));
     }
 }
 TYPED_TEST(DataSetSave, save_libsvm_without_label) {
@@ -956,8 +961,9 @@ TYPED_TEST(DataSetSave, save_libsvm_without_label) {
 
     // create regex to check for the correct output
     ASSERT_EQ(reader.num_lines(), this->data_points.size());
+    const std::regex reg{ "([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}", std::regex::extended };
     for (const std::string_view line : reader.lines()) {
-        EXPECT_THAT(line, ::testing::ContainsRegex("([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}"));
+        EXPECT_TRUE(std::regex_match(std::string{ line }, reg));
     }
 }
 
@@ -986,8 +992,9 @@ TYPED_TEST(DataSetSave, save_arff_with_label) {
     EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::ContainsRegex("@attribute class \\{.*,.*\\}"));
     EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features + 1)), ::testing::StartsWith("@data"));
     // check data points
+    const std::regex reg{ "([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){4}.+", std::regex::extended };
     for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
-        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){4}.+"));
+        EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
 }
 TYPED_TEST(DataSetSave, save_arff_without_label) {
@@ -1014,8 +1021,9 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
     }
     EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::StartsWith("@data"));
     // check data points
+    const std::regex reg{ "([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?", std::regex::extended };
     for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
-        EXPECT_THAT(reader.line(i), ::testing::ContainsRegex("([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?"));
+        EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
 }
 
