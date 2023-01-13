@@ -33,14 +33,24 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     // get parameter
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
-    // create artificial command line arguments in test fixture
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     } else {
         util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     }
-    const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
-    this->CreateCMDArgs(fmt::format("./plssvm-predict {}{} data.libsvm.model", cmd_params, this->filename));
+
+    // assemble command line strings
+    std::vector<std::string> cmd_args = { "./plssvm-predict" };
+    if (strings_as_labels) {
+        cmd_args.push_back("--use_strings_as_labels");
+    }
+    if (float_as_real_type) {
+        cmd_args.push_back("--use_float_as_real_type");
+    }
+    cmd_args.insert(cmd_args.end(), { this->filename, "data.libsvm.model" });
+
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(cmd_args);
     // create parameter object
     const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
@@ -52,14 +62,24 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     // get parameter
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
-    // create artificial command line arguments in test fixture
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     } else {
         util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     }
-    const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
-    this->CreateCMDArgs(fmt::format("./plssvm-scale {}{}", cmd_params, this->filename));
+
+    // assemble command line strings
+    std::vector<std::string> cmd_args = { "./plssvm-scale" };
+    if (strings_as_labels) {
+        cmd_args.push_back("--use_strings_as_labels");
+    }
+    if (float_as_real_type) {
+        cmd_args.push_back("--use_float_as_real_type");
+    }
+    cmd_args.push_back(this->filename);
+
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(cmd_args);
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
@@ -71,14 +91,24 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // get parameter
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
-    // create artificial command line arguments in test fixture
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     } else {
         util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     }
-    const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
-    this->CreateCMDArgs(fmt::format("./plssvm-scale -r {} {}{}", PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt", cmd_params, this->filename));
+
+    // assemble command line strings
+    std::vector<std::string> cmd_args = { "./plssvm-scale", "-r", PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt" };
+    if (strings_as_labels) {
+        cmd_args.push_back("--use_strings_as_labels");
+    }
+    if (float_as_real_type) {
+        cmd_args.push_back("--use_float_as_real_type");
+    }
+    cmd_args.push_back(this->filename);
+
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(cmd_args);
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
@@ -90,14 +120,24 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     // get parameter
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
-    // create artificial command line arguments in test fixture
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     } else {
         util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
     }
-    const std::string cmd_params = fmt::format("{}{}", strings_as_labels ? "--use_strings_as_labels " : "", float_as_real_type ? "--use_float_as_real_type " : "");
-    this->CreateCMDArgs(fmt::format("./plssvm-train {}{}", cmd_params, this->filename));
+
+    // assemble command line strings
+    std::vector<std::string> cmd_args = { "./plssvm-train" };
+    if (strings_as_labels) {
+        cmd_args.push_back("--use_strings_as_labels");
+    }
+    if (float_as_real_type) {
+        cmd_args.push_back("--use_float_as_real_type");
+    }
+    cmd_args.push_back(this->filename);
+
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(cmd_args);
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
 

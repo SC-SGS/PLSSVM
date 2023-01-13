@@ -33,11 +33,10 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
   protected:
     /**
      * @brief Create artificial argc and argv from the given command line string.
-     * @param[in] cmd_line the command line argument to create the argc and argv from
+     * @param[in] cmd_line_split the command line argument to create the argc and argv from
      */
-    virtual void CreateCMDArgs(const std::string_view cmd_line) {
+    void CreateCMDArgs(const std::vector<std::string> &cmd_line_split) {
         // create argc and argv from a std::string
-        const std::vector<std::string> cmd_line_split = plssvm::detail::split_as<std::string>(cmd_line);
         argc = static_cast<int>(cmd_line_split.size());
         argv = new char *[argc];
         for (int i = 0; i < argc; ++i) {
