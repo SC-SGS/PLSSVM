@@ -20,6 +20,7 @@
 #include <map>            // std::map
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <set>            // std::set
+#include <string>         // std::string
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
@@ -29,7 +30,7 @@ TEST(Utility, get) {
     EXPECT_EQ(plssvm::detail::get<1>(0, 1.5, 2, 3, 4), 1.5);
     EXPECT_EQ(plssvm::detail::get<2>(0, 1, -2, 3, 4), -2);
     EXPECT_EQ(plssvm::detail::get<3>(0, 1, 2, 'a', 4), 'a');
-    EXPECT_EQ(plssvm::detail::get<4>(0, 1, 2, 3, "abc"), "abc");
+    EXPECT_EQ(plssvm::detail::get<4>(0, 1, 2, 3, std::string{ "abc" }), std::string{ "abc" });
 }
 
 TEST(Utility, to_underlying_int) {
