@@ -1021,7 +1021,7 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
     }
     EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::StartsWith("@data"));
     // check data points
-    const std::regex reg{ "([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?", std::regex::extended };
+    const std::regex reg{ "([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){3}[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?", std::regex::extended };
     for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
