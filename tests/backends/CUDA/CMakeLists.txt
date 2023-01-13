@@ -26,7 +26,8 @@ target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRAR
 
 # add tests to google test
 include(GoogleTest)
-gtest_discover_tests(${PLSSVM_CUDA_TEST_NAME})
+include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
+discover_tests_with_death_test_filter(${PLSSVM_CUDA_TEST_NAME})
 
 
 # add test as coverage dependency

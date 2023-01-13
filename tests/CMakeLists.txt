@@ -155,19 +155,23 @@ add_executable(${PLSSVM_BASE_TEST_NAME} main.cpp ${PLSSVM_BASE_TEST_SOURCES})
 target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
 
 
-# add tests to google test
-include(GoogleTest)
+# check whether death tests should be activated or not
 string(TOUPPER "${CMAKE_BUILD_TYPE}" PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE)
 set(PLSSVM_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE}}")
 if (PLSSVM_ENABLE_ASSERTS OR NOT "${PLSSVM_CMAKE_CXX_FLAGS}" MATCHES ".*NDEBUG.*")
     # assertions are enabled -> enable Google death tests
     message(STATUS "Enabling GTest's death tests.")
-    gtest_discover_tests(${PLSSVM_BASE_TEST_NAME})
+    set(PLSSVM_ENABLE_DEATH_TESTS ON)
 else ()
     # assertions are disabled -> disable Google death tests
     message(STATUS "Disabling GTest's death tests.")
-    gtest_discover_tests(${PLSSVM_BASE_TEST_NAME} EXTRA_ARGS --gtest_filter -*DeathTest)
+    set(PLSSVM_ENABLE_DEATH_TESTS OFF)
 endif ()
+
+# add tests to google test
+include(GoogleTest)
+include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
+discover_tests_with_death_test_filter(${PLSSVM_BASE_TEST_NAME})
 
 
 # add test for help messages

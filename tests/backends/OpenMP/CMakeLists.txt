@@ -24,7 +24,8 @@ target_link_libraries(${PLSSVM_OPENMP_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBR
 
 # add tests to google test
 include(GoogleTest)
-gtest_discover_tests(${PLSSVM_OPENMP_TEST_NAME})
+include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
+discover_tests_with_death_test_filter(${PLSSVM_OPENMP_TEST_NAME})
 
 
 # add test as coverage dependency

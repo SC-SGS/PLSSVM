@@ -24,7 +24,8 @@ target_link_libraries(${PLSSVM_HIP_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY
 
 # add tests to google test
 include(GoogleTest)
-gtest_discover_tests(${PLSSVM_HIP_TEST_NAME})
+include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
+discover_tests_with_death_test_filter(${PLSSVM_HIP_TEST_NAME})
 
 
 # add test as coverage dependency
