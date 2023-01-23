@@ -24,7 +24,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     message(CHECK_PASS "found")
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
 
-    # set hipSYCL specific targets
+    # set DPC++ specific targets
     set(PLSSVM_SYCL_DPCPP_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
             ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp

@@ -19,7 +19,7 @@
 namespace plssvm::sycl {
 
 /**
- * @brief Enum class for all possible SYCL kernel invocation types.
+ * @brief Enum class for all possible SYCL implementation types.
  */
 enum class implementation_type {
     /** Use the available SYCL implementation. If more than one implementation is available, the macro PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION must be defined. */
