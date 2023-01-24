@@ -317,6 +317,8 @@ pipeline {
                 dir('plssvm/build/Release_OpenCL') {
                     warnError('Make install tests failed!') {
                         sh '''
+                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
+                            spack load pocl
                             export PATH=$MAKE_INSTALL_PATH/OpenCL/bin:$PATH
                             export LD_LIBRARY_PATH=$MAKE_INSTALL_PATH/OpenCL/lib:$LD_LIBRARY_PATH
                             export CPLUS_INCLUDE_PATH=$MAKE_INSTALL_PATH/OpenCL/include:$CPLUS_INCLUDE_PATH
@@ -428,6 +430,8 @@ pipeline {
                 dir('plssvm/build/Release') {
                     warnError('Make install tests failed!') {
                         sh '''
+                            source ${WORKSPACE}/spack/share/spack/setup-env.sh
+                            spack load pocl
                             export PATH=$MAKE_INSTALL_PATH/All/bin:$PATH
                             export LD_LIBRARY_PATH=$MAKE_INSTALL_PATH/All/lib:$LD_LIBRARY_PATH
                             export CPLUS_INCLUDE_PATH=$MAKE_INSTALL_PATH/All/include:$CPLUS_INCLUDE_PATH
