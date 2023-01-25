@@ -1,6 +1,6 @@
 ### optional and required python packages
 argparse
-sklearn
+scikit-learn
 py-cpuinfo
 GPUtil
 pyamdgpuinfo
