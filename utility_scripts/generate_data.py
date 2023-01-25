@@ -75,7 +75,7 @@ else:
 # map labels to -1 and 1
 labels = labels * 2 - 1
 
-minmax_scale(samples, feature_range=[-1, 1], copy=False)
+minmax_scale(samples, feature_range=(-1, 1), copy=False)
 
 end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
