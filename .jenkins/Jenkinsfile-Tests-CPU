@@ -207,6 +207,11 @@ pipeline {
                                 cd spack
                                 git checkout f52f6e99dbf1131886a80112b8c79dfc414afb7c -- var/spack/repos/builtin/packages/pocl/package.py
                                 cd ..
+
+                                # clean spack cache
+                                source spack/share/spack/setup-env.sh
+                                spack clean -ab
+                                spack clean -fmps
                             fi
                         '''
                     }
@@ -370,6 +375,7 @@ pipeline {
                                         sh '''
                                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
                                             spack load pocl
+                                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
 
                                             # installed executable
                                             plssvm-scale -l -1.0 -u 1.0 ../../tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
