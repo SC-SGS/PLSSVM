@@ -528,6 +528,7 @@ pipeline {
                 LIBRARY_PATH="$DPCPP_PATH/lib:${env.LIBRARY_PATH}"
                 LD_LIBRARY_PATH="$DPCPP_PATH/lib:${env.LD_LIBRARY_PATH}"
                 CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
+                PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
             }
             parallel {
 
