@@ -17,6 +17,8 @@
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/detail/assert.hpp"                       // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"              // plssvm::detail::execution_range
+#include "plssvm/detail/logger.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"          // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"               // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::parameter
@@ -53,9 +55,9 @@ void csvm::init(const target_platform target) {
 #endif
     }
 
-    if (plssvm::verbose) {
-        std::cout << fmt::format("\nUsing HIP as backend.") << std::endl;
-    }
+    plssvm::detail::log("\nUsing HIP as backend.\n");
+    PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::hip }));
+    PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_amd }));
 
     // get all available devices wrt the requested target platform
     devices_.resize(detail::get_device_count());
@@ -66,16 +68,14 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ "HIP backend selected but no HIP capable devices were found!" };
     }
 
-    if (plssvm::verbose) {
-        // print found HIP devices
-        std::cout << fmt::format("Found {} HIP device(s):\n", devices_.size());
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            hipDeviceProp_t prop{};
-            PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[device]));
-            std::cout << fmt::format("  [{}, {}, {}.{}]\n", devices_[device], prop.name, prop.major, prop.minor);
-        }
-        std::cout << std::endl;
+    // print found HIP devices
+    plssvm::detail::log("Found {} HIP device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        hipDeviceProp_t prop{};
+        PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[device]));
+        plssvm::detail::log("  [{}, {}, {}.{}]\n\n", devices_[device], prop.name, prop.major, prop.minor);
     }
+    plssvm::detail::log("\n");
 }
 
 csvm::~csvm() {

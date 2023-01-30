@@ -74,14 +74,14 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ## set library cxx standard
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
-        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor
-        -Wextra-semi -Wunreachable-code -Wuninitialized>
-        $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>
-        )
+#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+#        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
+#        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor
+#        -Wextra-semi -Wunreachable-code -Wuninitialized>
+#        $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+#        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+#        $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>
+#        )
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
@@ -101,20 +101,20 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ##                                    check for optional and necessary dependencies                                   ##
 ########################################################################################################################
 # check for OpenMP (not for the backend!)
-find_package(OpenMP 4.0 QUIET)
-if (OpenMP_FOUND)
-    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
-    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
-else ()
-    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
-            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
-            )
-endif ()
+#find_package(OpenMP 4.0 QUIET)
+#if (OpenMP_FOUND)
+#    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
+#    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
+#    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
+#    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
+#    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+#else ()
+#    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
+#    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+#            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+#            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+#            )
+#endif ()
 
 ## setup dependencies
 include(FetchContent)
@@ -503,6 +503,16 @@ if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
     else ()
         message(SEND_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
     endif ()
+endif ()
+
+## enable or disable the performance tracker
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKER "Enables PLSSVM performance tracking for the executables: plssvm-train, plssvm-predict, and plssvm-scale." ON)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKER)
+    message(STATUS "Enable performance tracking to the file \"${PLSSVM_ENABLE_PERFORMANCE_TRACKER}\"for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
+
+    # add target definitions
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE="${PLSSVM_ENABLE_PERFORMANCE_TRACKER}")
 endif ()
 
 ########################################################################################################################
