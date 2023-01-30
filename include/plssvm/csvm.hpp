@@ -13,27 +13,28 @@
 #define PLSSVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::verbose
-#include "plssvm/data_set.hpp"               // plssvm::data_set
-#include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::default_init
-#include "plssvm/detail/operators.hpp"       // plssvm::operators::sign
-#include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/model.hpp"                  // plssvm::model
-#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+#include "plssvm/data_set.hpp"                    // plssvm::data_set
+#include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log
+#include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
+#include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
+#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
+#include "plssvm/model.hpp"                       // plssvm::model
+#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "fmt/core.h"                        // fmt::format
-#include "igor/igor.hpp"                     // igor::parser
+#include "fmt/core.h"                             // fmt::format
+#include "igor/igor.hpp"                          // igor::parser
 
-#include <chrono>                            // std::chrono::{time_point, steady_clock, duration_cast}
-#include <iostream>                          // std::cout, std::endl
-#include <tuple>                             // std::tie
-#include <type_traits>                       // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
-#include <utility>                           // std::pair, std::forward
-#include <vector>                            // std::vector
+#include <chrono>                                 // std::chrono::{time_point, steady_clock, duration_cast}
+#include <iostream>                               // std::cout, std::endl
+#include <tuple>                                  // std::tie
+#include <type_traits>                            // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
+#include <utility>                                // std::pair, std::forward
+#include <vector>                                 // std::vector
 
 namespace plssvm {
 
@@ -314,9 +315,8 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time)) << std::endl;
-    }
+    detail::log("Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n\n",
+                detail::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return csvm_model;
 }
@@ -333,7 +333,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(predicted_values.size());
 
-    #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
+#pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
     }
@@ -364,7 +364,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
 
     // calculate the accuracy
     typename std::vector<label_type>::size_type correct{ 0 };
-    #pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
+#pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
             ++correct;

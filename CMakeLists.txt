@@ -507,6 +507,16 @@ if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
     endif ()
 endif ()
 
+## enable or disable the performance tracker
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKER "Enables PLSSVM performance tracking for the executables: plssvm-train, plssvm-predict, and plssvm-scale." ON)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKER)
+    message(STATUS "Enable performance tracking to the file \"${PLSSVM_ENABLE_PERFORMANCE_TRACKER}\"for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
+
+    # add target definitions
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE="${PLSSVM_ENABLE_PERFORMANCE_TRACKER}")
+endif ()
+
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
 ########################################################################################################################

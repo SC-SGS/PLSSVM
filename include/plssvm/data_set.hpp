@@ -13,11 +13,12 @@
 #define PLSSVM_DATA_SET_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                          // plssvm::verbose
 #include "plssvm/detail/io/arff_parsing.hpp"             // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
 #include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
+#include "plssvm/detail/logger.hpp"                      // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
@@ -367,13 +368,10 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
     detail::io::write_scaling_factors(filename, scaling_interval, scaling_factors);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Write {} scaling factors in {} to the file '{}'.",
-                                 scaling_factors.size(),
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 filename)
-                  << std::endl;
-    }
+    detail::log("Write {} scaling factors in {} to the file '{}'.\n",
+                detail::tracking_entry{ "scaling_factors_write", "num_scaling_factors", scaling_factors.size() },
+                detail::tracking_entry{ "scaling_factors_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "scaling_factors_write", "filename", filename });
 }
 
 //*************************************************************************************************************************************//
@@ -595,15 +593,12 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Write {} data points with {} features in {} to the {} file '{}'.",
-                                 num_data_points_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 format,
-                                 filename)
-                  << std::endl;
-    }
+    detail::log("Write {} data points with {} features in {} to the {} file '{}'.\n",
+                detail::tracking_entry{ "data_set_write", "num_data_points", num_data_points_ },
+                detail::tracking_entry{ "data_set_write", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "data_set_write", "format", format },
+                detail::tracking_entry{ "data_set_write", "filename", filename });
 }
 
 template <typename T, typename U>
@@ -712,13 +707,10 @@ void data_set<T, U>::scale() {
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Scaled the data set to the range [{}, {}] in {}.",
-                                 lower,
-                                 upper,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time))
-                  << std::endl;
-    }
+    detail::log("Scaled the data set to the range [{}, {}] in {}.\n",
+                detail::tracking_entry{ "data_set_scale", "lower", lower },
+                detail::tracking_entry{ "data_set_scale", "upper", upper },
+                detail::tracking_entry{ "data_set_scale", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 }
 
 template <typename T, typename U>
@@ -768,15 +760,12 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Read {} data points with {} features in {} using the {} parser from file '{}'.",
-                                 num_data_points_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 format,
-                                 filename)
-                  << std::endl;
-    }
+    detail::log("Read {} data points with {} features in {} using the {} parser from file '{}'.\n",
+                detail::tracking_entry{ "data_set_read", "num_data_points", num_data_points_ },
+                detail::tracking_entry{ "data_set_read", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "data_set_read", "format", format },
+                detail::tracking_entry{ "data_set_read", "filename", filename });
 }
 
 }  // namespace plssvm

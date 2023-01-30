@@ -11,17 +11,22 @@
 #include "plssvm/core.hpp"
 #include "plssvm/detail/cmd/data_set_variants.hpp"
 #include "plssvm/detail/cmd/parser_train.hpp"
+#include "plssvm/detail/logger.hpp"
+#include "plssvm/detail/performance_tracker.hpp"
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // std::format
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
+#include <chrono>         // std::chrono::{steady_clock, duration}
 #include <cstdlib>        // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>      // std::exception
 #include <iostream>       // std::cerr, std::clog, std::endl
 #include <variant>        // std::visit
 
 int main(int argc, char *argv[]) {
+    const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
     try {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
@@ -42,9 +47,7 @@ int main(int argc, char *argv[]) {
         }
 
         // output used parameter
-        if (plssvm::verbose) {
-            fmt::print("\ntask: training\n{}\n\n", cmd_parser);
-        }
+        plssvm::detail::log("\ntask: training\n{}\n\n\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
 
         // create data set
         std::visit([&](auto &&data) {
@@ -54,9 +57,7 @@ int main(int argc, char *argv[]) {
             // create SVM
             std::unique_ptr<plssvm::csvm> svm;
             if (cmd_parser.backend == plssvm::backend_type::sycl) {
-                svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params,
-                                        plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type,
-                                        plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
+                svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
             } else {
                 svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
             }
@@ -67,7 +68,8 @@ int main(int argc, char *argv[]) {
             const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter);
             // save model to file
             model.save(cmd_parser.model_filename);
-        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
+        },
+                   plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
@@ -75,5 +77,10 @@ int main(int argc, char *argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    plssvm::detail::log("\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+
+    PLSSVM_PERFORMANCE_TRACKER_SAVE();
     return EXIT_SUCCESS;
 }

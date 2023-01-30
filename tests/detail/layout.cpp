@@ -26,8 +26,8 @@
 // check whether the plssvm::detail::layout_type -> std::string conversions are correct
 TEST(Layout, to_string) {
     // check conversion to std::string
-    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::aos, "Array-of-Structs (AoS)");
-    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::soa, "Struct-of-Arrays (SoA)");
+    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::aos, "Array-of-Structs");
+    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::soa, "Struct-of-Arrays");
 }
 TEST(Layout, to_string_unknown) {
     // check conversions to std::string from unknown layout_type
