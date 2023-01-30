@@ -11,17 +11,22 @@
 #include "plssvm/core.hpp"
 #include "plssvm/detail/cmd/data_set_variants.hpp"
 #include "plssvm/detail/cmd/parser_train.hpp"
+#include "plssvm/detail/logger.hpp"
+#include "plssvm/detail/performance_tracker.hpp"
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // std::format
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
+#include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::clog, std::endl
 #include <variant>    // std::visit
 
 int main(int argc, char *argv[]) {
+    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
     try {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
@@ -42,9 +47,7 @@ int main(int argc, char *argv[]) {
         }
 
         // output used parameter
-        if (plssvm::verbose) {
-            fmt::print("\ntask: training\n{}\n\n", cmd_parser);
-        }
+        plssvm::detail::log("\ntask: training\n{}\n\n\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
 
         // create data set
         std::visit([&](auto &&data) {
@@ -75,5 +78,10 @@ int main(int argc, char *argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    plssvm::detail::log("\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+
+    PLSSVM_PERFORMANCE_TRACKER_SAVE();
     return EXIT_SUCCESS;
 }

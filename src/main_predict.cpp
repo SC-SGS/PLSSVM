@@ -11,13 +11,15 @@
 #include "plssvm/core.hpp"
 #include "plssvm/detail/cmd/data_set_variants.hpp"
 #include "plssvm/detail/cmd/parser_predict.hpp"
+#include "plssvm/detail/logger.hpp"
+#include "plssvm/detail/performance_tracker.hpp"
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/format.h"   // fmt::format, fmt::print
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
-#include <chrono>     // std::chrono
+#include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
@@ -26,6 +28,8 @@
 #include <vector>     // std::vector
 
 int main(int argc, char *argv[]) {
+    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
     try {
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
@@ -39,9 +43,7 @@ int main(int argc, char *argv[]) {
         }
 
         // output used parameter
-        if (plssvm::verbose) {
-            fmt::print("\ntask: prediction\n{}\n\n", cmd_parser);
-        }
+        plssvm::detail::log("\ntask: prediction\n{}\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
 
         // create data set
         std::visit([&](auto &&data) {
@@ -57,18 +59,16 @@ int main(int argc, char *argv[]) {
 
             // write prediction file
             {
-                std::chrono::time_point start_time = std::chrono::steady_clock::now();
+                const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
                 fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
                 out.print("{}", fmt::join(predicted_labels, "\n"));
 
-                std::chrono::time_point end_time = std::chrono::steady_clock::now();
-                if (plssvm::verbose) {
-                    fmt::print("Write {} predictions in {} to the file '{}'.\n",
-                               predicted_labels.size(),
-                               std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                               cmd_parser.predict_filename);
-                }
+                const std::chrono::time_point end_time = std::chrono::steady_clock::now();
+                plssvm::detail::log("Write {} predictions in {} to the file '{}'.\n",
+                                    plssvm::detail::tracking_entry{ "predictions_write", "num_predictions", predicted_labels.size() },
+                                    plssvm::detail::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                                    plssvm::detail::tracking_entry{ "predictions_write", "filename", cmd_parser.predict_filename });
             }
 
             // print achieved accuracy (if possible)
@@ -95,5 +95,10 @@ int main(int argc, char *argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    plssvm::detail::log("\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+
+    PLSSVM_PERFORMANCE_TRACKER_SAVE();
     return EXIT_SUCCESS;
 }

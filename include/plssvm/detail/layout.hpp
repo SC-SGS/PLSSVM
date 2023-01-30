@@ -13,8 +13,9 @@
 #define PLSSVM_DETAIL_LAYOUT_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"      // plssvm::verbose
-#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
+#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
 
 #include "fmt/chrono.h"   // format std::chrono types
 #include "fmt/core.h"     // fmt::format
@@ -139,9 +140,9 @@ template <typename real_type>
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Transformed dataset from 2D to 1D {} in {}.", layout, std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time)) << std::endl;
-    }
+    detail::log("Transformed dataset from 2D to 1D {} in {}.\n",
+                detail::tracking_entry{ "transform", "layout", layout },
+                detail::tracking_entry{ "transform", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return ret;
 }

@@ -13,10 +13,12 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"                    // plssvm::csvm
-#include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
-#include "plssvm/detail/layout.hpp"           // plssvm::detail::{transform_to_layout, layout_type}
-#include "plssvm/parameter.hpp"               // plssvm::parameter
+#include "plssvm/csvm.hpp"                        // plssvm::csvm
+#include "plssvm/detail/execution_range.hpp"      // plssvm::detail::execution_range
+#include "plssvm/detail/layout.hpp"               // plssvm::detail::{transform_to_layout, layout_type}
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 
 #include "fmt/chrono.h"  // output std::chrono times using {fmt}
 #include "fmt/core.h"    // fmt::format
@@ -540,15 +542,13 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     const auto output_iteration_duration = [&]() {
         auto iteration_end_time = std::chrono::steady_clock::now();
         auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
+        detail::log("Done in {}.\n", iteration_duration);
         average_iteration_time += iteration_duration;
     };
 
     unsigned long long run = 0;
     for (; run < max_iter; ++run) {
-        if (verbose) {
-            std::cout << fmt::format("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
-        }
+        detail::log("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * r (q = A * d)
@@ -598,9 +598,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
-            if (verbose) {
-                output_iteration_duration();
-            }
+            output_iteration_duration();
             break;
         }
 
@@ -615,18 +613,14 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
             r_d[device].copy_to_device(d, 0, dept);
         }
 
-        if (verbose) {
-            output_iteration_duration();
-        }
+        output_iteration_duration();
     }
-    if (verbose) {
-        std::cout << fmt::format("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.",
-                                 std::min(run + 1, max_iter),
-                                 delta,
-                                 eps * eps * delta0,
-                                 average_iteration_time / std::min(run + 1, max_iter))
-                  << std::endl;
-    }
+    detail::log("Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
+                detail::tracking_entry{ "cg", "iterations", std::min(run + 1, max_iter) },
+                detail::tracking_entry{ "cg", "iterations", max_iter },
+                detail::tracking_entry{ "cg", "residuum", delta },
+                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
+                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(run + 1, max_iter) });
 
     // calculate bias
     std::vector<real_type> alpha(x.begin(), x.begin() + dept);
