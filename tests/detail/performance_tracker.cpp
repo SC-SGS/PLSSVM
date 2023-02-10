@@ -10,6 +10,58 @@
 
 #include "plssvm/detail/performance_tracker.hpp"
 
+#include "../naming.hpp"         // naming::label_type_to_name
+#include "../types_to_test.hpp"  // util::label_type_gtest
+#include "../utility.hpp"        // util::redirect_output
+
+#include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
 
-// TODO: implement tests
+#include <iostream>  // std::cout
+
+template <typename T>
+class TrackingEntry : public ::testing::Test, public util::redirect_output<> {};
+TYPED_TEST_SUITE(TrackingEntry, util::label_type_gtest, naming::label_type_to_name);
+
+TYPED_TEST(TrackingEntry, construct) {
+    using type = TypeParam;
+
+    // construct a tracking entry
+    plssvm::detail::tracking_entry e{ "category", "name", type{} };
+
+    // check the values
+    EXPECT_EQ(e.entry_category, "category");
+    EXPECT_EQ(e.entry_name, "name");
+    EXPECT_EQ(e.entry_value, type{});
+}
+
+TYPED_TEST(TrackingEntry, output_operator) {
+    using type = TypeParam;
+
+    // construct a tracking entry
+    plssvm::detail::tracking_entry e{ "category", "name", type{} };
+
+    // output the value
+    std::cout << e;
+
+    // check the output value
+    EXPECT_EQ(this->get_capture(), fmt::format("{}", type{}));
+}
+
+TEST(TrackingEntry, is_tracking_entry) {
+    // check whether the provided type is a tracking entry or not, ignoring any top-level const, reference, and volatile qualifiers
+    EXPECT_TRUE(plssvm::detail::is_tracking_entry<plssvm::detail::tracking_entry<int>>::value);
+    EXPECT_TRUE(plssvm::detail::is_tracking_entry_v<plssvm::detail::tracking_entry<int>>);
+    EXPECT_TRUE(plssvm::detail::is_tracking_entry<plssvm::detail::tracking_entry<const int &>>::value);
+    EXPECT_TRUE(plssvm::detail::is_tracking_entry_v<plssvm::detail::tracking_entry<const int &>>);
+    EXPECT_TRUE(plssvm::detail::is_tracking_entry<plssvm::detail::tracking_entry<std::string>>::value);
+    EXPECT_TRUE(plssvm::detail::is_tracking_entry_v<plssvm::detail::tracking_entry<std::string>>);
+
+    // the following types are NOT tracking entries
+    EXPECT_FALSE(plssvm::detail::is_tracking_entry<int>::value);
+    EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<int>);
+    EXPECT_FALSE(plssvm::detail::is_tracking_entry<const int &>::value);
+    EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<const int &>);
+    EXPECT_FALSE(plssvm::detail::is_tracking_entry<std::string>::value);
+    EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<std::string>);
+}
