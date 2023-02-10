@@ -14,39 +14,53 @@
 #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
-#include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
-#include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
+#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
 
 #include "fmt/chrono.h"   // format std::chrono types
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // format types with an operator<< overload
 
-#include <fstream>        // std::ofstream
-#include <iostream>       // std::ostream, std::ios_base::app
 #include <string>         // std::string
 #include <string_view>    // std::string_view
 #include <type_traits>    // std::false_type, std::true_type
-#include <unordered_map>  // std::unordered_map
-#include <utility>        // std::move, std::pair
+#include <unordered_map>  // std::unordered_multimap
+#include <utility>        // std::move
 
 namespace plssvm::detail {
 
+/**
+ * @brief A single tracking entry containing a specific category, a unique name, and the actual value to be tracked.
+ * @tparam T the type of the value to be tracked
+ */
 template <typename T>
 struct tracking_entry {
+    /**
+     * @brief Create a new tracking entry.
+     * @param[in] category the category to which this tracking entry belongs; used for grouping in the resulting YAML file
+     * @param[in] name the name of the tracking entry
+     * @param[in] value the tracked value
+     */
     tracking_entry(const std::string_view category, const std::string_view name, const T value) :
         entry_category{ category }, entry_name{ name }, entry_value{ std::move(value) } {}
 
+    /// The category to which this tracking entry belongs; used for grouping in the resulting YAML file.
     const std::string entry_category{};
+    /// The name of the tracking entry displayed in the YAML file.
     const std::string_view entry_name{};
+    /// The tracked value in the YAML file.
     const T entry_value{};
 };
 
+/**
+ * @brief Output the tracking @p entry to the given output-stream @p out. Only the tracked value is output **excluding** the category and name.
+ * @tparam T the type of the value tracked in the tracking @p entry
+ * @param[in,out] out the output-stream to write the tracking entry to
+ * @param[in] entry the tracking entry
+ * @return the output-stream
+ */
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const tracking_entry<T> &entry) {
     return out << fmt::format("{}", entry.entry_value);
@@ -54,15 +68,29 @@ std::ostream &operator<<(std::ostream &out, const tracking_entry<T> &entry) {
 
 namespace impl {
 
+/**
+ * @brief Sets the `value` to `false` since it **isn't** a tracking entry.
+ */
 template <typename T>
 struct is_tracking_entry : std::false_type {};
+/**
+ * @brief Sets the `value` to `false` since it **is** a tracking entry.
+ */
 template <typename T>
 struct is_tracking_entry<tracking_entry<T>> : std::true_type {};
 
 }  // namespace impl
 
+/**
+ * @brief Check whether @p T is a tracking entry. Ignores all top-level const, volatile, and reference qualifiers.
+ * @tparam T the type to check whether it is a tracking entry or not
+ */
 template <typename T>
 struct is_tracking_entry : impl::is_tracking_entry<detail::remove_cvref_t<T>> {};
+/**
+ * @copydoc plssvm::is_tracking_entry
+ * @details A shorthand for `plssvm::is_tracking_entry::value`.
+ */
 template <typename T>
 constexpr bool is_tracking_entry_v = is_tracking_entry<T>::value;
 
@@ -98,148 +126,35 @@ class performance_tracker {
      *          Adds quotes around the entry's value
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<std::string> &entry) {
-        tracking_statistics.insert({ entry.entry_category, fmt::format("{}{}: \"{}\"\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value) });
-    }
-
+    void add_tracking_entry(const tracking_entry<std::string> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
      *          Adds all values stored in the plssvm::detail::cmd::parser_train as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<cmd::parser_train> &entry) {
-        tracking_statistics.insert({ entry.entry_category, fmt::format("  task:                        train\n"
-                                                                       "  kernel_type:                 {}\n"
-                                                                       "  degree:                      {}\n"
-                                                                       "  gamma:                       {}\n"
-                                                                       "  coef0:                       {}\n"
-                                                                       "  cost:                        {}\n"
-                                                                       "  epsilon:                     {}\n"
-                                                                       "  max_iter:                    {}\n"
-                                                                       "  backend:                     {}\n"
-                                                                       "  target:                      {}\n"
-                                                                       "  sycl_kernel_invocation_type: {}\n"
-                                                                       "  sycl_implementation_type:    {}\n"
-                                                                       "  strings_as_labels:           {}\n"
-                                                                       "  float_as_real_type:          {}\n"
-                                                                       "  input_filename:              \"{}\"\n"
-                                                                       "  model_filename:              \"{}\"\n\n",
-                                                                       entry.entry_value.csvm_params.kernel_type.value(),
-                                                                       entry.entry_value.csvm_params.degree.value(),
-                                                                       entry.entry_value.csvm_params.gamma.value(),
-                                                                       entry.entry_value.csvm_params.coef0.value(),
-                                                                       entry.entry_value.csvm_params.cost.value(),
-                                                                       entry.entry_value.epsilon.value(),
-                                                                       entry.entry_value.max_iter.value(),
-                                                                       entry.entry_value.backend,
-                                                                       entry.entry_value.target,
-                                                                       entry.entry_value.sycl_kernel_invocation_type,
-                                                                       entry.entry_value.sycl_implementation_type,
-                                                                       entry.entry_value.strings_as_labels,
-                                                                       entry.entry_value.float_as_real_type,
-                                                                       entry.entry_value.input_filename,
-                                                                       entry.entry_value.model_filename) });
-    }
+    void add_tracking_entry(const tracking_entry<cmd::parser_train> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_predict to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
      *          Adds all values stored in the plssvm::detail::cmd::parser_predict as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<cmd::parser_predict> &entry) {
-        tracking_statistics.insert({ entry.entry_category, fmt::format("  task:                     predict\n"
-                                                                       "  backend:                  {}\n"
-                                                                       "  target:                   {}\n"
-                                                                       "  sycl_implementation_type: {}\n"
-                                                                       "  strings_as_labels:        {}\n"
-                                                                       "  float_as_real_type:       {}\n"
-                                                                       "  input_filename:           \"{}\"\n"
-                                                                       "  model_filename:           \"{}\"\n"
-                                                                       "  predict_filename:         \"{}\"\n\n",
-                                                                       entry.entry_value.backend,
-                                                                       entry.entry_value.target,
-                                                                       entry.entry_value.sycl_implementation_type,
-                                                                       entry.entry_value.strings_as_labels,
-                                                                       entry.entry_value.float_as_real_type,
-                                                                       entry.entry_value.input_filename,
-                                                                       entry.entry_value.model_filename,
-                                                                       entry.entry_value.predict_filename) });
-    }
+    void add_tracking_entry(const tracking_entry<cmd::parser_predict> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_scale to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
      *          Adds all values stored in the plssvm::detail::cmd::parser_scale as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry) {
-        tracking_statistics.insert({ entry.entry_category, fmt::format("  task:               scale\n"
-                                                                       "  lower:              {}\n"
-                                                                       "  upper:              {}\n"
-                                                                       "  format:             {}\n"
-                                                                       "  strings_as_labels:  {}\n"
-                                                                       "  float_as_real_type: {}\n"
-                                                                       "  input_filename:     \"{}\"\n"
-                                                                       "  scaled_filename:    \"{}\"\n"
-                                                                       "  save_filename:      \"{}\"\n"
-                                                                       "  restore_filename:   \"{}\"\n\n",
-                                                                       entry.entry_value.lower,
-                                                                       entry.entry_value.upper,
-                                                                       entry.entry_value.format,
-                                                                       entry.entry_value.strings_as_labels,
-                                                                       entry.entry_value.float_as_real_type,
-                                                                       entry.entry_value.input_filename,
-                                                                       entry.entry_value.scaled_filename,
-                                                                       entry.entry_value.save_filename,
-                                                                       entry.entry_value.restore_filename) });
-    }
+    void add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry);
 
     /**
      * @brief Write all stored tracking entries to the [YAML](https://yaml.org/) file @p filename.
      * @details Appends all entries at the end of the file creating a new YAML document.
      * @param[in] filename the file to add the performance tracking results to
      */
-    void save(const std::string filename) {
-        // append the current performance statistics to an already existing file if possible
-        std::ofstream out{ filename, std::ios_base::app };
-        PLSSVM_ASSERT(out.good(), fmt::format("Couldn't save performance tracking results in '{}'!", filename));
-
-        // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
-        out << "---\n";
-
-        // output metadata information
-        out << fmt::format(
-            "meta_data:\n"
-            "  date:                    \"{}\"\n"
-            "  PLSSVM_TARGET_PLATFORMS: \"{}\"\n"
-            "  commit:                  {}\n"
-            "  version:                 {}\n"
-            "\n",
-            plssvm::detail::current_date_time(),
-            version::detail::target_platforms,
-            version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
-            version::version);
-
-        // output the actual (performance) statistics
-        std::unordered_multimap<std::string, std::string>::iterator group_iter;  // iterate over all groups
-        std::unordered_multimap<std::string, std::string>::iterator entry_iter;  // iterate over all entries in a specific group
-        for (group_iter = tracking_statistics.begin(); group_iter != tracking_statistics.end(); group_iter = entry_iter) {
-            // get the current group
-            const std::string &group = group_iter->first;
-            // find the range of all entries in the current group
-            const std::pair key_range = tracking_statistics.equal_range(group);
-
-            // output the group name, if it is not the empty string
-            if (!group.empty()) {
-                out << group << ":\n";
-            }
-            // output all performance statistic entries of the current group
-            for (entry_iter = key_range.first; entry_iter != key_range.second; ++entry_iter) {
-                out << fmt::format("{}", entry_iter->second);
-            }
-            out << '\n';
-        }
-    }
+    void save(const std::string &filename);
 
   private:
     /**

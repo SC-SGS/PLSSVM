@@ -40,6 +40,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/layout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
