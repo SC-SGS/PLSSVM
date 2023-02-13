@@ -43,7 +43,7 @@ struct tracking_entry {
      * @param[in] name the name of the tracking entry
      * @param[in] value the tracked value
      */
-    tracking_entry(const std::string_view category, const std::string_view name, const T value) :
+    tracking_entry(const std::string_view category, const std::string_view name, T value) :
         entry_category{ category }, entry_name{ name }, entry_value{ std::move(value) } {}
 
     /// The category to which this tracking entry belongs; used for grouping in the resulting YAML file.
