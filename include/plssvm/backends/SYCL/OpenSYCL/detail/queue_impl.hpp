@@ -9,17 +9,17 @@
  * @brief PImpl implementation encapsulating a single SYCL queue.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_IMPL_HPP_
-#define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_IMPL_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_OPENSYCL_DETAIL_QUEUE_IMPL_HPP_
+#define PLSSVM_BACKENDS_SYCL_OPENSYCL_DETAIL_QUEUE_IMPL_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue
+#include "plssvm/backends/SYCL/OpenSYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue
 
 #include "sycl/sycl.hpp"  // sycl::queue
 
 #include <utility>  // std::forward
 
-namespace plssvm::hipsycl::detail {
+namespace plssvm::opensycl::detail {
 
 /**
  * @brief The PImpl implementation struct encapsulating a single SYCL queue.
@@ -38,6 +38,6 @@ struct queue::queue_impl {
     ::sycl::queue sycl_queue;
 };
 
-}  // namespace plssvm::hipsycl::detail
+}  // namespace plssvm::opensycl::detail
 
-#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_IMPL_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_OPENSYCL_DETAIL_QUEUE_IMPL_HPP_

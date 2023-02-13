@@ -34,7 +34,7 @@ namespace util {
 /// A type list of all supported C-SVMs.
 using csvm_types_gtest = ::testing::Types<plssvm::openmp::csvm, plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm, plssvm::sycl::csvm>;
 /// A type list of all supported SYCL C-SVMs.
-using sycl_csvm_types_gtest = ::testing::Types<plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
+using sycl_csvm_types_gtest = ::testing::Types<plssvm::sycl::csvm, plssvm::opensycl::csvm, plssvm::dpcpp::csvm>;
 // clang-format on
 
 }  // namespace util
@@ -51,7 +51,7 @@ std::string GetTypeName<plssvm::opencl::csvm>() { return "opencl_csvm"; }
 template <>
 std::string GetTypeName<plssvm::dpcpp::csvm>() { return "sycl_dpcpp_csvm"; }
 template <>
-std::string GetTypeName<plssvm::hipsycl::csvm>() { return "sycl_hipsycl_csvm"; }
+std::string GetTypeName<plssvm::opensycl::csvm>() { return "sycl_opensycl_csvm"; }
 }  // namespace testing::internal
 
 template <typename T>

@@ -145,7 +145,7 @@ TYPED_TEST(Parameter, construct_parameter_and_named_args) {
     // create new parameter set using a previous parameter set together with some named parameters
     const plssvm::detail::parameter<real_type> param{ param_base,
                                                       plssvm::kernel_type = plssvm::kernel_function_type::rbf,
-                                                      plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::hipsycl,
+                                                      plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::opensycl,
                                                       plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::hierarchical };
 
     // test default values

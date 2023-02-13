@@ -370,7 +370,7 @@ TEST_P(ParserTrainSYCLImplementation, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::Combine(
                 ::testing::Values("--sycl_implementation_type"),
-                ::testing::Values("automatic", "hipSYCL", "DPCPP")),
+                ::testing::Values("automatic", "OpenSYCL", "DPCPP")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLImplementation>);
 // clang-format on
 

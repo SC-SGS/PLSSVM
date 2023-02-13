@@ -39,7 +39,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and hipSYCL commit [eb67fc4](https://github.com/illuhad/hipSYCL/commit/eb67fc46d6732b5c4f137ce5564f6adfba57eaa1))
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [OpenSYCL](https://github.com/OpenSYCL/OpenSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and OpenSYCL commit [eb67fc4](https://github.com/illuhad/hipSYCL/commit/eb67fc46d6732b5c4f137ce5564f6adfba57eaa1))
 
 ## Getting Started
 
@@ -75,7 +75,7 @@ Additional dependencies for the OpenCL backend:
 
 Additional dependencies for the SYCL backend:
 
-- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
+- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [OpenSYCL](https://github.com/OpenSYCL/OpenSYCL)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 
@@ -215,10 +215,10 @@ If the SYCL implementation is DPC++ the following additional options are availab
 - `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 
-If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
+If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_OPENSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
 **must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
 
-- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`hipsycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::hipsycl` namespace respectively
+- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`opensycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::opensycl` namespace respectively
 
 ### Running the tests
 
@@ -328,7 +328,7 @@ Usage:
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
       --sycl_implementation_type arg
-                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|opensycl (default: automatic)
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
   -q, --quiet                   quiet mode (no outputs)
@@ -378,7 +378,7 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for hipSYCL on CPUs where the hierarchical formulation is used instead (if hipSYCL wasn't build with `omp.accelerated`).
+If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for OpenSYCL on CPUs where the hierarchical formulation is used instead (if OpenSYCL wasn't build with `omp.accelerated`).
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
 
 ### Predicting
@@ -392,7 +392,7 @@ Usage:
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
-                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|opensycl (default: automatic)
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
   -q, --quiet                   quiet mode (no outputs)

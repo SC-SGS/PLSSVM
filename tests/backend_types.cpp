@@ -127,10 +127,10 @@ TEST(BackendType, csvm_to_backend_type) {
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hip::csvm &>::value, plssvm::backend_type::hip);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::opencl::csvm &>::value, plssvm::backend_type::opencl);
     EXPECT_EQ(plssvm::csvm_to_backend_type<volatile plssvm::sycl::csvm>::value, plssvm::backend_type::sycl);
-    EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::hipsycl::csvm>::value, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::opensycl::csvm>::value, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::dpcpp::csvm &>::value, plssvm::backend_type::sycl);
 
-    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hipsycl::csvm>::impl, plssvm::sycl::implementation_type::hipsycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::opensycl::csvm>::impl, plssvm::sycl::implementation_type::opensycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
 }
 TEST(BackendType, csvm_to_backend_type_v) {
@@ -140,6 +140,6 @@ TEST(BackendType, csvm_to_backend_type_v) {
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm &>, plssvm::backend_type::hip);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::opencl::csvm &>, plssvm::backend_type::opencl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<volatile plssvm::sycl::csvm>, plssvm::backend_type::sycl);
-    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::hipsycl::csvm>, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::opensycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm &>, plssvm::backend_type::sycl);
 }
