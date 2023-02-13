@@ -121,7 +121,7 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
 
     unsigned long long iter = 0;
     for (; iter < max_iter; ++iter) {
-        detail::log("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
+        detail::log("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * d (q = A * d)
@@ -162,11 +162,11 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
         output_iteration_duration();
     }
     detail::log("Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
-                detail::tracking_entry{ "cg", "iterations", std::min(run + 1, max_iter) },
+                detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "iterations", max_iter },
                 detail::tracking_entry{ "cg", "residuum", delta },
                 detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
-                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(run + 1, max_iter) });
+                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
 
     // calculate bias
     const real_type bias = b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha);
