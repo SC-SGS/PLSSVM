@@ -156,7 +156,7 @@ class gpu_csvm : public ::plssvm::csvm {
     [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, const std::vector<device_ptr_type<real_type>> &alpha_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges) const;
 
     /**
-     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the device denoted by @p device.
+     * @brief Select the correct kernel based on the value of @p kernel_ and iter it on the device denoted by @p device.
      * @param[in] device the device ID denoting the device on which the kernel should be executed
      * @param[in] params the SVM parameter used (e.g., kernel_type)
      * @param[in] q_d subvector of the least-squares matrix equation located on the device(s)
@@ -546,9 +546,9 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         average_iteration_time += iteration_duration;
     };
 
-    unsigned long long run = 0;
-    for (; run < max_iter; ++run) {
-        detail::log("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
+    unsigned long long iter = 0;
+    for (; iter < max_iter; ++iter) {
+        detail::log("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * r (q = A * d)
@@ -573,7 +573,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
             x_d[device].copy_to_device(x, 0, dept);
         }
 
-        if (run % 50 == 49) {
+        if (iter % 50 == 49) {
             #pragma omp parallel for default(none) shared(devices_, r_d, b, q_d, x_d, params, data_d, feature_ranges) firstprivate(QA_cost, dept)
             for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
                 if (device == 0) {
@@ -616,11 +616,11 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         output_iteration_duration();
     }
     detail::log("Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
-                detail::tracking_entry{ "cg", "iterations", std::min(run + 1, max_iter) },
+                detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "iterations", max_iter },
                 detail::tracking_entry{ "cg", "residuum", delta },
                 detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
-                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(run + 1, max_iter) });
+                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
 
     // calculate bias
     std::vector<real_type> alpha(x.begin(), x.begin() + dept);
