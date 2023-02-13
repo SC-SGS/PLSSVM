@@ -24,11 +24,11 @@ TEST(DPCPPUtility, get_device_list) {
 }
 #endif
 
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"  // plssvm::hipsycl::detail::get_device_list
+#if defined(PLSSVM_SYCL_BACKEND_HAS_OPENSYCL)
+    #include "plssvm/backends/SYCL/OpenSYCL/detail/utility.hpp"  // plssvm::opensycl::detail::get_device_list
 
-TEST(hipSYCLUtility, get_device_list) {
-    const auto &[queues, actual_target] = plssvm::hipsycl::detail::get_device_list(plssvm::target_platform::automatic);
+TEST(OpenSYCLUtility, get_device_list) {
+    const auto &[queues, actual_target] = plssvm::opensycl::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be provided
     EXPECT_FALSE(queues.empty());
     // the returned target must not be the automatic one

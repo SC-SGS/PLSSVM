@@ -6,15 +6,15 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines a base C-SVM used for the different SYCL backends using hipSYCL as SYCL implementation.
+ * @brief Defines a base C-SVM used for the different SYCL backends using OpenSYCL as SYCL implementation.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
-#define PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_OPENSYCL_CSVM_HPP_
+#define PLSSVM_BACKENDS_SYCL_OPENSYCL_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"       // plssvm::hipsycl::detail::queue (PImpl)
+#include "plssvm/backends/SYCL/OpenSYCL/detail/device_ptr.hpp"
+#include "plssvm/backends/SYCL/OpenSYCL/detail/queue.hpp"  // plssvm::opensycl::detail::queue (PImpl)
 
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
@@ -37,15 +37,15 @@ class execution_range;
 
 }  // namespace detail
 
-namespace hipsycl {
+namespace opensycl {
 
 /**
- * @brief A C-SVM implementation using hipSYCL as SYCL backend.
+ * @brief A C-SVM implementation using OpenSYCL (formerly hipSYCL) as SYCL backend.
  */
 class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue> {
   protected:
     // protected for the test MOCK class
-    /// The template base type of the hipSYCL SYCL C-SVM class.
+    /// The template base type of the OpenSYCL SYCL C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue>;
 
     using base_type::devices_;
@@ -189,13 +189,13 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with hipSYCL as SYCL implementation are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with OpenSYCL as SYCL implementation are available.
  */
 template <>
-struct csvm_backend_exists<hipsycl::csvm> : std::true_type {};
+struct csvm_backend_exists<opensycl::csvm> : std::true_type {};
 
 }  // namespace detail
 
 }  // namespace plssvm
 
-#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_OPENSYCL_CSVM_HPP_

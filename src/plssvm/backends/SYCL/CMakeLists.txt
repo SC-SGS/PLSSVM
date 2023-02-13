@@ -19,8 +19,8 @@ set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 
 
 # check if SYCL can be enabled
-## add hipSYCL
-add_subdirectory(hipSYCL)
+## add OpenSYCL (formerly hipSYCL)
+add_subdirectory(OpenSYCL)
 ## add DPC++
 add_subdirectory(DPCPP)
 
@@ -39,8 +39,8 @@ endif ()
 set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME plssvm-SYCL)
 add_library(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE)
 
-if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
-    target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
+if (TARGET ${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME})
+    target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME})
 endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
@@ -49,8 +49,8 @@ endif ()
 ## check if environment variables are correctly set if more than one SYCL implementation has been found
 list(LENGTH PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS)
 if (PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS GREATER 1)
-    if (NOT DEFINED ENV{PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR})
-        message(SEND_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR\" isn't set!")
+    if (NOT DEFINED ENV{PLSSVM_SYCL_OPENSYCL_INCLUDE_DIR})
+        message(SEND_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_OPENSYCL_INCLUDE_DIR\" isn't set!")
     endif ()
     if (NOT DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
         message(SEND_ERROR "Found more than one SYCL implementation, but the environment variable \"PLSSVM_SYCL_DPCPP_INCLUDE_DIR\" isn't set!")
@@ -110,8 +110,8 @@ foreach (SYCL_IMPLEMENTATION ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
     endif ()
 
     assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
-    # do not print CPU and Intel GPU target architectures when using hipSYCL
-    if ("${SYCL_IMPLEMENTATION}" MATCHES "^hipsycl")
+    # do not print CPU and Intel GPU target architectures when using OpenSYCL
+    if ("${SYCL_IMPLEMENTATION}" MATCHES "^opensycl")
         string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
         string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
     endif ()

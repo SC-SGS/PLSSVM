@@ -18,9 +18,9 @@ set(PLSSVM_SYCL_TEST_SOURCES
 #        ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
         )
 
-if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
-    # add hipSYCL specific test files
-    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/sycl_csvm.cpp)
+if (TARGET ${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME})
+    # add OpenSYCL specific test files
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/OpenSYCL/sycl_csvm.cpp)
 endif ()
 
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})

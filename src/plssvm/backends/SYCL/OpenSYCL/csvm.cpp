@@ -6,13 +6,13 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"
+#include "plssvm/backends/SYCL/OpenSYCL/csvm.hpp"
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::::device_ptr
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_device_list, plssvm::hipsycl::device_synchronize
+#include "plssvm/backends/SYCL/OpenSYCL/detail/device_ptr.hpp"  // plssvm::opensycl::detail::::device_ptr
+#include "plssvm/backends/SYCL/OpenSYCL/detail/queue_impl.hpp"  // plssvm::opensycl::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/OpenSYCL/detail/utility.hpp"     // plssvm::opensycl::detail::get_device_list, plssvm::opensycl::device_synchronize
 
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::hipsycl::backend_exception
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::opensycl::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl::detail::{device_kernel_q_linear, device_kernel_q_polynomial, device_kernel_q_rbf}
 #include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl::detail::{hierarchical_device_kernel_linear, hierarchical_device_kernel_polynomial, hierarchical_device_kernel_rbf}
@@ -26,8 +26,6 @@
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"
-
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 #include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
@@ -38,7 +36,7 @@
 #include <tuple>      // std::tie
 #include <vector>     // std::vector
 
-namespace plssvm::hipsycl {
+namespace plssvm::opensycl {
 
 csvm::csvm(parameter params) :
     csvm{ plssvm::target_platform::automatic, params } {}
@@ -86,7 +84,7 @@ void csvm::init(const target_platform target) {
             invocation_type_ = sycl::kernel_invocation_type::nd_range;
         } else {
             // on CPUs: use hierarchical, except if omp.accelerated is present then also use nd_range
-#if defined(__HIPSYCL_USE_ACCELERATED_CPU__)
+#if defined(__HIPSYCL_USE_ACCELERATED_CPU__) // TODO: check
             invocation_type_ = sycl::kernel_invocation_type::nd_range;
 #else
             invocation_type_ = sycl::kernel_invocation_type::hierarchical;
@@ -95,7 +93,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (plssvm::verbose) {
-        std::cout << fmt::format("\nUsing hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", ::hipsycl::sycl::detail::version_string(), invocation_type_);
+        std::cout << fmt::format("\nUsing OpenSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", ::hipsycl::sycl::detail::version_string(), invocation_type_); // TODO: check
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
         }
@@ -254,4 +252,4 @@ void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &rang
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const;
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
-}  // namespace plssvm::hipsycl
+}  // namespace plssvm::opensycl

@@ -8,7 +8,7 @@
  * @brief Tests for the SYCL backend device pointer.
  */
 
-#include "backends/generic_device_ptr_tests.h"  // plssvm::cuda::detail::device_ptr
+#include "backends/generic_device_ptr_tests.h"
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
@@ -36,26 +36,26 @@ INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtr, DevicePtr, dpcpp_device_ptr_test_
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtrDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_test_types);
 #endif
 
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr
-    #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_default_device
+#if defined(PLSSVM_SYCL_BACKEND_HAS_OPENSYCL)
+    #include "plssvm/backends/SYCL/OpenSYCL/detail/device_ptr.hpp"  // plssvm::opensycl::detail::device_ptr
+    #include "plssvm/backends/SYCL/OpenSYCL/detail/utility.hpp"     // plssvm::opensycl::detail::get_default_device
 
 template <typename device_ptr_t>
-struct hipsycl_device_ptr_test_type {
+struct opensycl_device_ptr_test_type {
     using device_ptr_type = device_ptr_t;
     using queue_type = typename device_ptr_type::queue_type;
 
     static const queue_type &default_queue() {
-        static queue_type queue = plssvm::hipsycl::detail::get_default_queue();
+        static queue_type queue = plssvm::opensycl::detail::get_default_queue();
         return queue;
     }
 };
 
-using hipsycl_device_ptr_test_types = ::testing::Types<
-    hipsycl_device_ptr_test_type<plssvm::hipsycl::detail::device_ptr<float>>,
-    hipsycl_device_ptr_test_type<plssvm::hipsycl::detail::device_ptr<double>>>;
+using opensycl_device_ptr_test_types = ::testing::Types<
+    opensycl_device_ptr_test_type<plssvm::opensycl::detail::device_ptr<float>>,
+    opensycl_device_ptr_test_type<plssvm::opensycl::detail::device_ptr<double>>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtr, hipsycl_device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtrDeathTest, DevicePtrDeathTest, hipsycl_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(openSYCLDevicePtr, DevicePtr, opensycl_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(openSYCLDevicePtrDeathTest, DevicePtrDeathTest, opensycl_device_ptr_test_types);
 #endif

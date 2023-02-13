@@ -45,7 +45,7 @@ IGOR_MAKE_NAMED_ARGUMENT(cost);
 IGOR_MAKE_NAMED_ARGUMENT(epsilon);
 /// Create a named argument for the maximum number of iterations `max_iter` performed in the CG algorithm.
 IGOR_MAKE_NAMED_ARGUMENT(max_iter);
-/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
+/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or OpenSYCL).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type (nd_range or hierarchical).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);

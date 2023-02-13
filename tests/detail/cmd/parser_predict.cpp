@@ -167,7 +167,7 @@ TEST_P(ParserPredictSYCLImplementation, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLImplementation, ::testing::Combine(
                 ::testing::Values("--sycl_implementation_type"),
-                ::testing::Values("automatic", "hipSYCL", "DPCPP")),
+                ::testing::Values("automatic", "OpenSYCL", "DPCPP")),
                 naming::pretty_print_parameter_flag_and_value<ParserPredictSYCLImplementation>);
 // clang-format on
 
