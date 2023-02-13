@@ -25,7 +25,7 @@ if (EXISTS "${cxxopts_INCLUDE_DIR}")
     include(FindPackageHandleStandardArgs)
     mark_as_advanced(cxxopts_INCLUDE_DIR)
 else ()
-    message(WARNING "Can't find package cxxopts!")
+    #message(WARNING "Can't find package cxxopts!")
 endif ()
 
 # set the _FOUND variable to the correct value

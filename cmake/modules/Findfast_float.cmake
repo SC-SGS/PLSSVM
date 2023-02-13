@@ -25,7 +25,7 @@ if (EXISTS "${fast_float_INCLUDE_DIR}")
     include(FindPackageHandleStandardArgs)
     mark_as_advanced(fast_float_INCLUDE_DIR)
 else ()
-    message(WARNING "Can't find required package fast_float!")
+    #message(WARNING "Can't find required package fast_float!")
 endif ()
 
 # set the _FOUND variable to the correct value

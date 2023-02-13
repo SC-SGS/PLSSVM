@@ -25,7 +25,7 @@ if (EXISTS "${igor_INCLUDE_DIR}")
     include(FindPackageHandleStandardArgs)
     mark_as_advanced(igor_INCLUDE_DIR)
 else ()
-    message(WARNING "Can't find required package igor!")
+    #message(WARNING "Can't find required package igor!")
 endif ()
 
 # set the _FOUND variable to the correct value
