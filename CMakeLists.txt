@@ -73,14 +73,14 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ## set library cxx standard
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
-#target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-#        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
-#        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor
-#        -Wextra-semi -Wunreachable-code -Wuninitialized>
-#        $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-#        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
-#        $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>
-#        )
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
+        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor
+        -Wextra-semi -Wunreachable-code -Wuninitialized>
+        $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>
+        )
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
@@ -100,20 +100,20 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ##                                    check for optional and necessary dependencies                                   ##
 ########################################################################################################################
 # check for OpenMP (not for the backend!)
-#find_package(OpenMP 4.0 QUIET)
-#if (OpenMP_FOUND)
-#    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
-#    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-#    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-#    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
-#    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
-#else ()
-#    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
-#    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-#            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
-#            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
-#            )
-#endif ()
+find_package(OpenMP 4.0 QUIET)
+if (OpenMP_FOUND)
+    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
+    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
+    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+else ()
+    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+            )
+endif ()
 
 ## setup dependencies
 include(FetchContent)
