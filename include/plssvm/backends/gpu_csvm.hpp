@@ -172,7 +172,7 @@ class gpu_csvm : public ::plssvm::csvm {
     [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, const std::vector<device_ptr_type<real_type>> &alpha_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges) const;
 
     /**
-     * @brief Select the correct kernel based on the value of @p kernel_ and iter it on the device denoted by @p device.
+     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the device denoted by @p device.
      * @param[in] device the device ID denoting the device on which the kernel should be executed
      * @param[in] params the SVM parameter used (e.g., kernel_type)
      * @param[in] q_d subvector of the least-squares matrix equation located on the device(s)
