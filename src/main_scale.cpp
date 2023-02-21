@@ -22,7 +22,7 @@
 #include <variant>    // std::visit
 
 int main(int argc, char *argv[]) {
-    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+    const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
     try {
         // create default parameters
