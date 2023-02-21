@@ -91,7 +91,7 @@ void csvm::init(const target_platform target) {
     if (contexts_[0].devices.empty()) {
         throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target) };
     }
-fu
+
     // print OpenCL info
     plssvm::detail::log("\nUsing OpenCL as backend.\n");
     if (target == target_platform::automatic) {
