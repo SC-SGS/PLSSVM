@@ -63,8 +63,7 @@ int main(int argc, char *argv[]) {
             if (!cmd_parser.save_filename.empty() && data.scaling_factors().has_value()) {
                 data.scaling_factors()->get().save(cmd_parser.save_filename);
             }
-        },
-                   plssvm::detail::cmd::data_set_factory(cmd_parser));
+        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
