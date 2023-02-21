@@ -90,7 +90,7 @@ void csvm::init(const target_platform target) {
     if (contexts_[0].devices.empty()) {
         throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target) };
     }
-
+fu
     // print OpenCL info
     plssvm::detail::log("\nUsing OpenCL as backend.\n");
     if (target == target_platform::automatic) {
@@ -100,14 +100,14 @@ void csvm::init(const target_platform target) {
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
 
     // create command_queues and JIT compile OpenCL kernels
-    auto jit_start_time = std::chrono::steady_clock::now();
+    const auto jit_start_time = std::chrono::steady_clock::now();
 
     // get kernel names
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel);
     // compile all kernels for float and double
     devices_ = detail::create_command_queues(contexts_, target_, kernel_names);
 
-    auto jit_end_time = std::chrono::steady_clock::now();
+    const auto jit_end_time = std::chrono::steady_clock::now();
     plssvm::detail::log("OpenCL kernel JIT compilation done in {}.\n",
                         plssvm::detail::tracking_entry{ "backend", "jit_compilation_time", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time) });
 
