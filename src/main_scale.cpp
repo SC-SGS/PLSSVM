@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     plssvm::detail::log("\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     PLSSVM_PERFORMANCE_TRACKER_SAVE();
