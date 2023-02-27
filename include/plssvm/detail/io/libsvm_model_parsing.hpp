@@ -450,7 +450,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                 out.print(out_string);
                 out_string.clear();
             }
-            counts[0]++;
+            counts[0] = counts[0] + 1;
             #pragma omp flush(counts, out)
         }
 
@@ -488,7 +488,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     out.print(out_string);
                     out_string.clear();
                 }
-                counts[l]++;
+                counts[l] = counts[l] + 1;
                 #pragma omp flush(counts, out)
             }
         }
