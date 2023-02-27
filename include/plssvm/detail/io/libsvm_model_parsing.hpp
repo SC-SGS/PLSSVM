@@ -336,7 +336,7 @@ template <typename real_type, typename label_type>
     std::cout << '\n'
               << out_string << '\n';
     // write model header to file
-    out.print(out_string);
+    out.print("{}", out_string);
 
     return label_values;
 }
@@ -435,7 +435,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                 if (out_string.size() > STRING_BUFFER_SIZE) {
                     #pragma omp critical
                     {
-                        out.print(out_string);
+                        out.print("{}", out_string);
                         #pragma omp flush(out)
                     }
                     // clear buffer
@@ -447,7 +447,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
         #pragma omp critical
         {
             if (!out_string.empty()) {
-                out.print(out_string);
+                out.print("{}", out_string);
                 out_string.clear();
             }
             counts[0] = counts[0] + 1;
@@ -466,7 +466,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     if (out_string.size() > STRING_BUFFER_SIZE) {
                         #pragma omp critical
                         {
-                            out.print(out_string);
+                            out.print("{}", out_string);
                             #pragma omp flush(out)
                         }
                         // clear buffer
@@ -485,7 +485,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             #pragma omp critical
             {
                 if (!out_string.empty()) {
-                    out.print(out_string);
+                    out.print("{}", out_string);
                     out_string.clear();
                 }
                 counts[l] = counts[l] + 1;
