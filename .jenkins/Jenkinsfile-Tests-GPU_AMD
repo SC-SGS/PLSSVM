@@ -44,7 +44,7 @@ pipeline {
         WORKSPACE = "${env.WORKSPACE}"
 
         // ROCM / HIP
-        ROCM_PATH = "/opt/rocm-5.3.3"
+        ROCM_PATH = "/opt/rocm-5.4.2"
         LD_LIBRARY_PATH = "${env.ROCM_PATH}/lib64:${env.ROCM_PATH}/lib:${env.ROCM_PATH}/opencl/lib/x86_64:${env.ROCM_PATH}/hsa/lib:${env.ROCM_PATH}/hip/lib:${env.LD_LIBRARY_PATH}"
         CPLUS_INCLUDE_PATH = "${env.ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
         CMAKE_PREFIX_PATH = "${env.ROCM_PATH}/hip:${env.ROCM_PATH}:${env.CMAKE_PREFIX_PATH}"
