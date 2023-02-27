@@ -337,8 +337,8 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                        spack load pocl
-                                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                                        spack load pocl@3.1
+                                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LIBRARY_PATH
                                         mkdir -p build/Release_OpenCL
                                         cd build/Release_OpenCL
                                         rm -rf *
@@ -355,7 +355,8 @@ pipeline {
                                     warnError('Release tests failed!') {
                                         sh '''
                                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                            spack load pocl
+                                            spack load pocl@3.1
+                                            export LD_LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LD_LIBRARY_PATH
                                             ctest --output-on-failure -j4 --no-compress-output -T Test
                                         '''
                                     }
@@ -374,8 +375,8 @@ pipeline {
                                     warnError('Make install tests failed!') {
                                         sh '''
                                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                            spack load pocl
-                                            export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                                            spack load pocl@3.1
+                                            export LD_LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LD_LIBRARY_PATH
 
                                             # installed executable
                                             plssvm-scale -l -1.0 -u 1.0 ../../tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
@@ -403,8 +404,8 @@ pipeline {
                                 dir('plssvm') {
                                     sh '''
                                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                        spack load pocl
-                                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                                        spack load pocl@3.1
+                                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LIBRARY_PATH
                                         mkdir -p build/Debug_OpenCL
                                         cd build/Debug_OpenCL
                                         rm -rf *
@@ -420,7 +421,8 @@ pipeline {
                                     warnError('Debug tests failed!') {
                                         sh '''
                                             source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                            spack load pocl
+                                            spack load pocl@3.1
+                                            export LD_LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LD_LIBRARY_PATH
                                             ctest --output-on-failure -j4 --no-compress-output -T Test
                                         '''
                                     }
@@ -549,8 +551,8 @@ pipeline {
                         dir('plssvm') {
                             sh '''
                                 source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                spack load pocl
-                                export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                                spack load pocl@3.1
+                                export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LIBRARY_PATH
                                 mkdir -p build/Release
                                 cd build/Release
                                 rm -rf *
@@ -567,7 +569,8 @@ pipeline {
                             warnError('Release tests failed!') {
                                 sh '''
                                     source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                    spack load pocl
+                                    spack load pocl@3.1
+                                    export LD_LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LD_LIBRARY_PATH
                                     ctest --output-on-failure -j4 --no-compress-output -T Test
                                 '''
                             }
@@ -586,7 +589,8 @@ pipeline {
                             warnError('Make install tests failed!') {
                                 sh '''
                                     source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                                    spack load pocl
+                                    spack load pocl@3.1
+                                    export LD_LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LD_LIBRARY_PATH
 
                                     # installed executable
                                     plssvm-scale -l -1.0 -u 1.0 ../../tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
@@ -616,8 +620,8 @@ pipeline {
                 dir('plssvm') {
                     sh '''
                         source ${WORKSPACE}/spack/share/spack/setup-env.sh
-                        spack load pocl
-                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl)/lib:$LIBRARY_PATH
+                        spack load pocl@3.1
+                        export LIBRARY_PATH=$(spack find --loaded --format "{prefix}" pocl@3.1)/lib:$LIBRARY_PATH
                         mkdir -p build/Debug_cov
                         cd build/Debug_cov
                         rm -rf *
