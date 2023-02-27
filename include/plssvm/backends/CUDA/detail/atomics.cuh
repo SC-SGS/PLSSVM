@@ -13,8 +13,6 @@
 #define PLSSVM_BACKENDS_CUDA_DETAIL_ATOMICS_HPP_
 #pragma once
 
-namespace plssvm::cuda::detail {
-
 #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600
 /**
  * @brief Atomically add the double precision @p val to the value denoted by @p addr.
@@ -33,7 +31,5 @@ __device__ __forceinline__ double atomicAdd(double *addr, const double val) {
     return __longlong_as_double(old);
 }
 #endif
-
-}  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_DETAIL_ATOMICS_HPP_
