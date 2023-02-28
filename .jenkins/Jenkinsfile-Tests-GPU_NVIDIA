@@ -40,6 +40,9 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        WORKSPACE = "${env.WORKSPACE}"
+
+        TMPDIR = "${env.WORKSPACE}/tmp"
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
@@ -47,7 +50,7 @@ pipeline {
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "TRUE"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
 
         // install path
         MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
@@ -169,7 +172,7 @@ pipeline {
                             module load cuda/11.4.3
                             if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                 rm -rf llvm
-                                git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                 cd llvm
                                 python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                 python buildbot/compile.py
@@ -198,7 +201,7 @@ pipeline {
                                 mkdir $HIPSYCL_PATH
                                 git clone https://github.com/illuhad/hipSYCL.git hipSYCL
                                 cd hipSYCL
-                                git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
+                                git checkout 012e16d6d3d57330c176d7d536f657b0d8a9a197
                                 mkdir build
                                 cd build
                                 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
@@ -543,7 +546,7 @@ pipeline {
                                         cd build/Release_DPCPP
                                         rm -rf *
                                         rm -rf $MAKE_INSTALL_PATH/DPCPP
-                                        cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/DPCPP -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp ../../
+                                        cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/DPCPP -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                                         make -j4 install
                                     '''
                                 }
@@ -653,7 +656,7 @@ pipeline {
                                 cd build/Release
                                 rm -rf *
                                 rm -rf $MAKE_INSTALL_PATH/All
-                                cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/All -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DOpenCL_INCLUDE_DIR=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/include/sycl -DOpenCL_LIBRARY=/import/sgs.local/scratch/breyerml/sycl/dpcpp/cuda/build/lib -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
+                                cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/All -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=ON -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=200 ../..
                                 make -j4 install
                             '''
                         }
