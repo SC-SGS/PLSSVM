@@ -38,7 +38,7 @@ enum class backend_type {
     hip,
     /** [OpenCL](https://www.khronos.org/opencl/) to target CPUs and GPUs from different vendors. */
     opencl,
-    /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [OpenSYCL](https://github.com/OpenSYCL/OpenSYCL). */
+    /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [Open SYCL](https://github.com/OpenSYCL/OpenSYCL). */
     sycl
 };
 
@@ -126,14 +126,14 @@ struct csvm_to_backend_type<opencl::csvm> {
     static constexpr backend_type value = backend_type::opencl;
 };
 /**
- * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using OpenSYCL as SYCL implementation.
+ * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using Open SYCL as SYCL implementation.
  * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::opensycl` (only present for SYCL backends!).
  */
 template <>
 struct csvm_to_backend_type<opensycl::csvm> {
-    /// The enum value representing the SYCL (OpenSYCL) backend.
+    /// The enum value representing the SYCL (Open SYCL) backend.
     static constexpr backend_type value = backend_type::sycl;
-    /// The enum value representing the SYCL implementation for the (OpenSYCL) SYCL backend.
+    /// The enum value representing the SYCL implementation for the (Open SYCL) SYCL backend.
     static constexpr sycl::implementation_type impl = sycl::implementation_type::opensycl;
 };
 /**

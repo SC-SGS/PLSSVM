@@ -40,12 +40,12 @@ if (PLSSVM_HAS_OPENCL_BACKEND)
     find_dependency(OpenCL REQUIRED)
 endif ()
 
-# check if the SYCL implementation hipSYCL backend is required
-set(PLSSVM_HAS_SYCL_BACKEND_HIPSYCL @PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME@)
-if (PLSSVM_HAS_SYCL_BACKEND_HIPSYCL)
-    set(HIPSYCL_TARGETS @HIPSYCL_TARGETS@)
-    find_dependency(hipSYCL CONFIG REQUIRED)
-    message(STATUS "Found hipSYCL with ${HIPSYCL_TARGETS}")
+# check if the SYCL implementation Open SYCL backend is required
+set(PLSSVM_HAS_SYCL_BACKEND_OPENSYCL @PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME@)
+if (PLSSVM_HAS_SYCL_BACKEND_OPENSYCL)
+    set(OPENSYCL_TARGETS @OPENSYCL_TARGETS@)
+    find_dependency(hipSYCL CONFIG REQUIRED) # TODO: change to Open SYCL when possible
+    message(STATUS "Found Open SYCL with ${OPENSYCL_TARGETS}")
 endif ()
 
 include("${CMAKE_CURRENT_LIST_DIR}/plssvmTargets.cmake")

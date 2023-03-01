@@ -56,6 +56,6 @@ using opensycl_device_ptr_test_types = ::testing::Types<
     opensycl_device_ptr_test_type<plssvm::opensycl::detail::device_ptr<double>>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(openSYCLDevicePtr, DevicePtr, opensycl_device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(openSYCLDevicePtrDeathTest, DevicePtrDeathTest, opensycl_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenSYCLDevicePtr, DevicePtr, opensycl_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenSYCLDevicePtrDeathTest, DevicePtrDeathTest, opensycl_device_ptr_test_types);
 #endif

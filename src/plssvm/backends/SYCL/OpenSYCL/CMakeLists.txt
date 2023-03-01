@@ -5,16 +5,16 @@
 ########################################################################################################################
 
 
-message(CHECK_START "Checking for OpenSYCL as SYCL implementation")
+message(CHECK_START "Checking for Open SYCL as SYCL implementation")
 
-# reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case OpenSYCL may be available)
-# TODO: check
+# reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case Open SYCL may be available)
+# TODO: change to Open SYCL when possible
 set(HIPSYCL_TARGETS "${PLSSVM_TARGET_PLATFORMS}" CACHE STRING "" FORCE)
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "cpu" "omp")
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "nvidia" "cuda")
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "amd" "hip")
 list(TRANSFORM HIPSYCL_TARGETS REPLACE "intel" "spirv")
-# remove CPU and Intel GPU target architectures since they are not supported when using OpenSYCL
+# remove CPU and Intel GPU target architectures since they are not supported when using Open SYCL
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 0)
     string(REPLACE ";" "," PLSSVM_CPU_TARGET_ARCHS_COMMA "${PLSSVM_CPU_TARGET_ARCHS}")
     string(REPLACE ":${PLSSVM_CPU_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
@@ -24,14 +24,14 @@ if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
     string(REPLACE ":${PLSSVM_INTEL_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
 endif ()
 
-# check if OpenSYCL is used as SYCL compiler
+# check if Open SYCL is used as SYCL compiler
 find_package(hipSYCL CONFIG)
 if (hipSYCL_FOUND)
     message(CHECK_PASS "found")
     message(STATUS "Setting HIPSYCL_TARGETS to \"${HIPSYCL_TARGETS}\".")
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "opensycl")
 
-    # set OpenSYCL specific targets
+    # set Open SYCL specific targets
     set(PLSSVM_SYCL_OPENSYCL_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
             ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
@@ -49,14 +49,14 @@ if (hipSYCL_FOUND)
         target_include_directories(${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} PUBLIC $ENV{PLSSVM_SYCL_OPENSYCL_INCLUDE_DIR})
     endif ()
 
-    # add target compile definitions for OpenSYCL
+    # add target compile definitions for Open SYCL
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} PUBLIC PLSSVM_HAS_SYCL_BACKEND)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_HAS_OPENSYCL)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_HAS_OPENSYCL)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="OpenSYCL")
 
-    # OpenSYCL's way to add SYCL to a target
+    # Open SYCL's way to add SYCL to a target
     add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/OpenSYCL/csvm.cpp)
 
     # silence unknown options warnings
@@ -64,9 +64,9 @@ if (hipSYCL_FOUND)
             $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
             )
 
-    # print note that Intel GPU architecture specifications are ignored when using OpenSYCL
+    # print note that Intel GPU architecture specifications are ignored when using Open SYCL
     if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        message(STATUS "Ignoring specified Intel architectures \"${PLSSVM_INTEL_TARGET_ARCHS}\" in favor of SPIR-V when using OpenSYCL!")
+        message(STATUS "Ignoring specified Intel architectures \"${PLSSVM_INTEL_TARGET_ARCHS}\" in favor of SPIR-V when using Open SYCL!")
     endif ()
 
     target_link_libraries(${PLSSVM_SYCL_BACKEND_OPENSYCL_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})

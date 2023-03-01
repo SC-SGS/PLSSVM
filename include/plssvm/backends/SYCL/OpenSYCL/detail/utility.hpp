@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions specific to the SYCL backend using OpenSYCL as SYCL implementation.
+ * @brief Utility functions specific to the SYCL backend using Open SYCL as SYCL implementation.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_OPENSYCL_DETAIL_UTILITY_HPP_

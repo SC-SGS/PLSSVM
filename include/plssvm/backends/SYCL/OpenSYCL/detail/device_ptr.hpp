@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Small wrapper around a SYCL device pointer for the OpenSYCL SYCL implementation.
+ * @brief Small wrapper around a SYCL device pointer for the Open SYCL SYCL implementation.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_OPENSYCL_DETAIL_DEVICE_PTR_HPP_
@@ -19,12 +19,12 @@
 namespace plssvm::opensycl::detail {
 
 /**
- * @brief Small wrapper class around a OpenSYCL (formerly hipSYCL) device pointer together with commonly used device functions.
+ * @brief Small wrapper class around a Open SYCL (formerly hipSYCL) device pointer together with commonly used device functions.
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
 class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
-    /// The template base type of the OpenSYCL device_ptr class.
+    /// The template base type of the Open SYCL device_ptr class.
     using base_type = ::plssvm::detail::gpu_device_ptr<T, queue>;
 
     using base_type::data_;
