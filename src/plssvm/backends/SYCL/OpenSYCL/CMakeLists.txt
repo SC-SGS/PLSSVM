@@ -28,7 +28,7 @@ endif ()
 find_package(hipSYCL CONFIG)
 if (hipSYCL_FOUND)
     message(CHECK_PASS "found")
-    message(STATUS "Setting HIPSYCL_TARGETS to \"${HIPSYCL_TARGETS}\".")
+    message(STATUS "Setting OPENSYCL_TARGETS (HIPSYCL_TARGETS) to \"${HIPSYCL_TARGETS}\".")
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "opensycl")
 
     # set Open SYCL specific targets
