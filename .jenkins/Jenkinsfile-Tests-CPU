@@ -42,8 +42,6 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
         WORKSPACE= "${env.WORKSPACE}"
 
-        TMPDIR = "${env.WORKSPACE}/tmp"
-
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
         DPCPP_FORCE_REBUILD = "FALSE"
