@@ -215,12 +215,12 @@ pipeline {
                         sh '''
                             if [ ! -d "spack" ]; then
                                 git clone https://github.com/spack/spack.git || true
-
-                                # clean spack cache
-                                source spack/share/spack/setup-env.sh
-                                spack clean -ab
-                                spack clean -fmps
                             fi
+
+                            # clean spack cache
+                            source spack/share/spack/setup-env.sh
+                            spack clean -ab
+                            spack clean -fmps
                         '''
                     }
                 }
