@@ -46,9 +46,9 @@ pipeline {
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
         DPCPP_FORCE_REBUILD = "FALSE"
 
-        // hipSYCL
-        HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "FALSE"
+        // Open SYCL
+        OPENSYCL_PATH = "${env.WORKSPACE}/opensycl-install"
+        OPENSYCL_FORCE_REBUILD = "FALSE"
 
         // install path
         MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
@@ -173,28 +173,28 @@ pipeline {
                                 cmake --build build -- omp
                                 cmake --build build -- install
 
-                                rm -rf "$HIPSYCL_PATH"
+                                rm -rf "$OPENSYCL_PATH"
                             fi
                         '''
                     }
                 }
-                stage('Dependency - hipSYCL') {
+                stage('Dependency - Open SYCL') {
                     steps {
                         sh '''
-                            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
-                                rm -rf hipSYCL
-                                rm -rf "$HIPSYCL_PATH"
+                            if [ ! -d "$OPENSYCL_PATH" ] || [ "$OPENSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                                rm -rf OpenSYCL
+                                rm -rf "$OPENSYCL_PATH"
 
-                                git clone https://github.com/illuhad/hipSYCL.git hipSYCL
-                                cd hipSYCL
+                                git clone https://github.com/OpenSYCL/OpenSYCL OpenSYCL
+                                cd OpenSYCL
                                 git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
                                 mkdir build
                                 cd build
-                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DWITH_ACCELERATED_CPU=ON ..
+                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$OPENSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DWITH_ACCELERATED_CPU=ON ..
                                 make -j
                                 make install
                                 cd $WORKSPACE
-                                rm -rf hipSYCL
+                                rm -rf OpenSYCL
                             fi
                         '''
                     }
@@ -434,33 +434,33 @@ pipeline {
         } // end OpenCL
 
 
-        stage('hipSYCL') {
+        stage('Open SYCL') {
             environment {
-                PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$HIPSYCL_PATH/bin:${env.PATH}"
-                LD_LIBRARY_PATH="$DPCPP_PATH/lib:$HIPSYCL_PATH/lib:${env.LD_LIBRARY_PATH}"
+                PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$OPENSYCL_PATH/bin:${env.PATH}"
+                LD_LIBRARY_PATH="$DPCPP_PATH/lib:$OPENSYCL_PATH/lib:${env.LD_LIBRARY_PATH}"
                 CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
             }
             parallel {
 
-                stage('hipSYCL - Release') {
+                stage('Open SYCL - Release') {
                     stages {
-                        stage('hipSYCL - Release - build') {
+                        stage('Open SYCL - Release - build') {
                             steps {
                                 dir('plssvm') {
                                     sh '''
-                                        mkdir -p build/Release_hipSYCL
-                                        cd build/Release_hipSYCL
+                                        mkdir -p build/Release_OpenSYCL
+                                        cd build/Release_OpenSYCL
                                         rm -rf *
-                                        rm -rf $MAKE_INSTALL_PATH/hipSYCL
-                                        cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/hipSYCL -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
+                                        rm -rf $MAKE_INSTALL_PATH/OpenSYCL
+                                        cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/OpenSYCL -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF ../../
                                         make -j4 install
                                     '''
                                 }
                             }
                         }
-                        stage('hipSYCL - Release - test') {
+                        stage('Open SYCL - Release - test') {
                             steps {
-                                dir('plssvm/build/Release_hipSYCL') {
+                                dir('plssvm/build/Release_OpenSYCL') {
                                     warnError('Release tests failed!') {
                                         sh '''
                                             ctest --output-on-failure -j4 --no-compress-output -T Test
@@ -469,21 +469,21 @@ pipeline {
                                 }
                             }
                         }
-                        stage('hipSYCL - Release - install') {
+                        stage('OpenSYCL - Release - install') {
                             environment {
-                                PATH="$MAKE_INSTALL_PATH/hipSYCL/bin:${PATH}"
-                                LD_LIBRARY_PATH="$MAKE_INSTALL_PATH/hipSYCL/lib:${LD_LIBRARY_PATH}"
-                                CPLUS_INCLUDE_PATH="$MAKE_INSTALL_PATH/hipSYCL/include:${CPLUS_INCLUDE_PATH}"
-                                CMAKE_PREFIX_PATH="$MAKE_INSTALL_PATH/hipSYCL/share/plssvm/cmake:${CMAKE_PREFIX_PATH}"
+                                PATH="$MAKE_INSTALL_PATH/OpenSYCL/bin:${PATH}"
+                                LD_LIBRARY_PATH="$MAKE_INSTALL_PATH/OpenSYCL/lib:${LD_LIBRARY_PATH}"
+                                CPLUS_INCLUDE_PATH="$MAKE_INSTALL_PATH/OpenSYCL/include:${CPLUS_INCLUDE_PATH}"
+                                CMAKE_PREFIX_PATH="$MAKE_INSTALL_PATH/OpenSYCL/share/plssvm/cmake:${CMAKE_PREFIX_PATH}"
                             }
                             steps {
-                                dir('plssvm/build/Release_hipSYCL') {
+                                dir('plssvm/build/Release_OpenSYCL') {
                                     warnError('Make install tests failed!') {
                                         sh '''
                                             # installed executable
                                             plssvm-scale -l -1.0 -u 1.0 ../../tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
-                                            plssvm-train --backend sycl --sycl_implementation_type hipsycl scaled_5x4.libsvm
-                                            plssvm-predict --backend sycl --sycl_implementation_type hipsycl scaled_5x4.libsvm scaled_5x4.libsvm.model
+                                            plssvm-train --backend sycl --sycl_implementation_type opensycl scaled_5x4.libsvm
+                                            plssvm-predict --backend sycl --sycl_implementation_type opensycl scaled_5x4.libsvm scaled_5x4.libsvm.model
 
                                             # library version
                                             mkdir install_test
@@ -497,16 +497,16 @@ pipeline {
                             }
                         }
                     }
-                } // end hipSYCL Release
+                } // end Open SYCL Release
 
-                stage('hipSYCL - Debug') {
+                stage('Open SYCL - Debug') {
                     stages {
-                        stage('hipSYCL - Debug - build') {
+                        stage('Open SYCL - Debug - build') {
                             steps {
                                 dir('plssvm') {
                                     sh '''
-                                        mkdir -p build/Debug_hipSYCL
-                                        cd build/Debug_hipSYCL
+                                        mkdir -p build/Debug_OpenSYCL
+                                        cd build/Debug_OpenSYCL
                                         rm -rf *
                                         cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                                         make -j4
@@ -514,9 +514,9 @@ pipeline {
                                 }
                             }
                         }
-                        stage('hipSYCL - Debug - test') {
+                        stage('Open SYCL - Debug - test') {
                             steps {
-                                dir('plssvm/build/Debug_hipSYCL') {
+                                dir('plssvm/build/Debug_OpenSYCL') {
                                     warnError('Release tests failed!') {
                                         sh '''
                                             ctest --output-on-failure -j4 --no-compress-output -T Test
@@ -526,22 +526,22 @@ pipeline {
                             }
                         }
                     }
-                } // end hipSYCL Debug
+                } // end Open SYCL Debug
 
-            } // end hipSYCL parallel
-        } // end hipSYCL
+            } // end Open SYCL parallel
+        } // end Open SYCL
 
 
         // TODO: enable DPC++ on CPUs in Release and Debug mode (missing OpenCL CPU runtime)
 
-        // OpenMP + OpenCL + hipSYCL backends simultaneously
+        // OpenMP + OpenCL + Open SYCL backends simultaneously
         stage('All Available') {
             environment {
-                PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$HIPSYCL_PATH/bin:${env.PATH}"
-                LD_LIBRARY_PATH="$DPCPP_PATH/lib:$HIPSYCL_PATH/lib:${env.LD_LIBRARY_PATH}"
+                PATH="$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:$OPENSYCL_PATH/bin:${env.PATH}"
+                LD_LIBRARY_PATH="$DPCPP_PATH/lib:$OPENSYCL_PATH/lib:${env.LD_LIBRARY_PATH}"
                 CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
                 PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
-                PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+                PLSSVM_SYCL_OPENSYCL_INCLUDE_DIR="${OPENSYCL_PATH}/include"
             }
             stages {
                 stage('All Available - Release - build') {

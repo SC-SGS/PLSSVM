@@ -45,9 +45,9 @@ pipeline {
         DPCPP_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/llvm/build"
         DPCPP_FORCE_REBUILD = "FALSE"
 
-        // hipSYCL
-        HIPSYCL_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "FALSE"
+        // Open SYCL
+        OPENSYCL_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/opensycl-install"
+        OPENSYCL_FORCE_REBUILD = "FALSE"
     }
 
     stages {
@@ -149,12 +149,12 @@ pipeline {
                                 python buildbot/compile.py &&\
                                 cmake --build build -- omp &&\
                                 cmake --build build -- install &&\
-                                rm -rf "$HIPSYCL_PATH"
+                                rm -rf "$OPENSYCL_PATH"
                             fi"
                         '''
                     }
                 }
-                stage('Dependency - hipSYCL') {
+                stage('Dependency - Open SYCL') {
                     environment {
                         PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$DPCPP_PATH/bin:${env.PATH}"
                         LIBRARY_PATH="$DPCPP_PATH/lib:${env.LIBRARY_PATH}"
@@ -163,21 +163,21 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                            if [ ! -d "$OPENSYCL_PATH" ] || [ "$OPENSYCL_FORCE_REBUILD" = "TRUE" ]; then
                                 srun -w argon-gtx -N 1 -n 1 -t 00:05:00 -D /data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins bash -c "\
-                                    rm -rf hipSYCL && \
-                                    rm -rf "$HIPSYCL_PATH" && \
+                                    rm -rf OpenSYCL && \
+                                    rm -rf "$OPENSYCL_PATH" && \
                                     module load cuda/11.2.2 && \
-                                    mkdir $HIPSYCL_PATH && \
-                                    git clone https://github.com/illuhad/hipSYCL.git hipSYCL && \
-                                    cd hipSYCL && \
+                                    mkdir $OPENSYCL_PATH && \
+                                    git clone https://github.com/OpenSYCL/OpenSYCL OpenSYCL && \
+                                    cd OpenSYCL && \
                                     git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1 && \
                                     mkdir build && \
                                     cd build && \
-                                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \
+                                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$OPENSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \
                                     make -j && \
                                     make install && \
-                                    rm -rf hipSYCL "
+                                    rm -rf OpenSYCL "
                             fi
                         '''
                     }
@@ -269,21 +269,21 @@ pipeline {
                     }
                 } // end OpenCL Release
 
-                stage('hipSYCL - Release') {
+                stage('Open SYCL - Release') {
                     environment {
-                        PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$HIPSYCL_PATH/bin:${env.PATH}"
-                        LD_LIBRARY_PATH="$DPCPP_PATH/lib:$HIPSYCL_PATH/lib:${env.LD_LIBRARY_PATH}"
+                        PATH="/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:/data/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/cmake-3.24.1-linux-x86_64/bin:$OPENSYCL_PATH/bin:${env.PATH}"
+                        LD_LIBRARY_PATH="$DPCPP_PATH/lib:$OPENSYCL_PATH/lib:${env.LD_LIBRARY_PATH}"
                         CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
                     }
                     stages {
-                        stage('hipSYCL - Release - build') {
+                        stage('Open SYCL - Release - build') {
                             steps {
                                 dir('plssvm') {
                                     sh '''
                                         srun -w argon-gtx -N 1 -n 1 -t 00:25:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM bash -c "\
                                         module load cuda/11.2.2 &&\
-                                        mkdir -p build/Release_hipSYCL &&\
-                                        cd build/Release_hipSYCL &&\
+                                        mkdir -p build/Release_OpenSYCL &&\
+                                        cd build/Release_OpenSYCL &&\
                                         rm -rf * &&\
                                         cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS='nvidia:sm_61' -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -S ../../ &&\
                                         make -j4 "
@@ -291,14 +291,14 @@ pipeline {
                                 }
                             }
                         }
-                        stage('hipSYCL - Release - test') {
+                        stage('Open SYCL - Release - test') {
                             steps {
                                 dir('plssvm') {
-                                    warnError('hipSYCL Release tests failed!') {
+                                    warnError('Open SYCL Release tests failed!') {
                                         sh '''
                                             srun -w argon-gtx -N 1 -n 1 -t 01:00:00 -D /scratch/jenkins/plssvm/${BUILD_TAG}/PLSSVM --gres=gpu:4 bash -c "\
                                             module load cuda/11.2.2 &&\
-                                            cd build/Release_hipSYCL &&\
+                                            cd build/Release_OpenSYCL &&\
                                             ctest --output-on-failure -j4 --no-compress-output -T Test --timeout 3600; \
                                             returncode=$? && \
                                             cp -r Testing /data/argon-fs/sgs/jenkins/workspace/$(basename ${WORKSPACE})/${BUILD_TAG}/Testing_hip && \
@@ -309,7 +309,7 @@ pipeline {
                             }
                         }
                     }
-                } // end hipSYCL Release
+                } // end Open SYCL Release
 
                 stage('DPC++ - Release') {
                     environment {
