@@ -93,7 +93,7 @@ void csvm::init(const target_platform target) {
     }
 
     if (plssvm::verbose) {
-        std::cout << fmt::format("\nUsing OpenSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", ::hipsycl::sycl::detail::version_string(), invocation_type_); // TODO: check
+        std::cout << fmt::format("\nUsing OpenSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", ::hipsycl::sycl::detail::version_string(), invocation_type_); // TODO: change to Open SYCL when possible
         if (target == target_platform::automatic) {
             std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
         }

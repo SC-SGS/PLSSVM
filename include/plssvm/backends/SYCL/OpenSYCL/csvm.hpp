@@ -184,7 +184,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /// The SYCL kernel invocation type for the svm kernel. Either nd_range or hierarchical.
     sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
 };
-}  // namespace hipsycl
+}  // namespace opensycl
 
 namespace detail {
 
