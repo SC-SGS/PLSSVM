@@ -150,7 +150,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Directory containing the implementation for the SYCL backend using OpenSYCL as SYCL implementation.
+ * @brief Directory containing the implementation for the SYCL backend using Open SYCL as SYCL implementation.
  */
 
 /**
@@ -161,7 +161,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Directory containing implementation details for the SYCL backend using OpenSYCL as SYCL implementation.
+ * @brief Directory containing implementation details for the SYCL backend using Open SYCL as SYCL implementation.
  */
 
 

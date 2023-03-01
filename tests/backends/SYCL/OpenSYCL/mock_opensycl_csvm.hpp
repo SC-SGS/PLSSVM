@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief MOCK class for the C-SVM class using the SYCL backend with OpenSYCL as SYCL implementation.
+ * @brief MOCK class for the C-SVM class using the SYCL backend with Open SYCL as SYCL implementation.
  */
 
 #ifndef PLSSVM_TESTS_BACKENDS_SYCL_OPENSYCL_MOCK_OPENSYCL_CSVM_HPP_
@@ -17,7 +17,7 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 /**
- * @brief GTest mock class for the SYCL CSVM using OpenSYCL (formerly hipSYCL) as SYCL implementation.
+ * @brief GTest mock class for the SYCL CSVM using Open SYCL (formerly hipSYCL) as SYCL implementation.
  */
 class mock_opensycl_csvm final : public plssvm::opensycl::csvm {
     using base_type = plssvm::opensycl::csvm;

@@ -26,7 +26,7 @@ enum class implementation_type {
     automatic,
     /** Use [DPC++](https://github.com/intel/llvm) as SYCL implementation. */
     dpcpp,
-    /** Use [OpenSYCL](https://github.com/OpenSYCL/OpenSYCL) as SYCL implementation. */
+    /** Use [Open SYCL](https://github.com/OpenSYCL/OpenSYCL) as SYCL implementation. */
     opensycl
 };
 

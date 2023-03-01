@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines a base C-SVM used for the different SYCL backends using OpenSYCL as SYCL implementation.
+ * @brief Defines a base C-SVM used for the different SYCL backends using Open SYCL as SYCL implementation.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_OPENSYCL_CSVM_HPP_
@@ -40,12 +40,12 @@ class execution_range;
 namespace opensycl {
 
 /**
- * @brief A C-SVM implementation using OpenSYCL (formerly hipSYCL) as SYCL backend.
+ * @brief A C-SVM implementation using Open SYCL (formerly hipSYCL) as SYCL backend.
  */
 class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue> {
   protected:
     // protected for the test MOCK class
-    /// The template base type of the OpenSYCL SYCL C-SVM class.
+    /// The template base type of the Open SYCL SYCL C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue>;
 
     using base_type::devices_;
@@ -58,8 +58,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::opensycl::backend_exception if the requested target is not available
+     * @throws plssvm::opensycl::backend_exception if no device for the requested target was found
      */
     explicit csvm(parameter params = {});
     /**
@@ -67,8 +67,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::opensycl::backend_exception if the requested target is not available
+     * @throws plssvm::opensycl::backend_exception if no device for the requested target was found
      */
     explicit csvm(target_platform target, parameter params = {});
 
@@ -77,8 +77,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @details Additionally sets the SYCL specific kernel invocation type.
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::opensycl::backend_exception if the requested target is not available
+     * @throws plssvm::opensycl::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
@@ -89,8 +89,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::opensycl::backend_exception if the requested target is not available
+     * @throws plssvm::opensycl::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
@@ -176,8 +176,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @brief Initialize all important states related to the SYCL backend.
      * @param[in] target the target platform to use
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::opensycl::backend_exception if the requested target is not available
+     * @throws plssvm::opensycl::backend_exception if no device for the requested target was found
      */
     void init(target_platform target);
 
@@ -189,7 +189,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with OpenSYCL as SYCL implementation are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with Open SYCL as SYCL implementation are available.
  */
 template <>
 struct csvm_backend_exists<opensycl::csvm> : std::true_type {};

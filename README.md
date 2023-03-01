@@ -39,7 +39,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [OpenSYCL](https://github.com/OpenSYCL/OpenSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and OpenSYCL commit [eb67fc4](https://github.com/illuhad/hipSYCL/commit/eb67fc46d6732b5c4f137ce5564f6adfba57eaa1))
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [Open SYCL](https://github.com/OpenSYCL/OpenSYCL); specifically the versions [sycl-nightly/20221102](https://github.com/intel/llvm/tree/sycl-nightly/20221102) and Open SYCL commit [eb67fc4](https://github.com/OpenSYCL/OpenSYCL/commit/012e16d6d3d57330c176d7d536f657b0d8a9a197))
 
 ## Getting Started
 
@@ -75,7 +75,7 @@ Additional dependencies for the OpenCL backend:
 
 Additional dependencies for the SYCL backend:
 
-- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [OpenSYCL](https://github.com/OpenSYCL/OpenSYCL)
+- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [Open SYCL](https://github.com/OpenSYCL/OpenSYCL)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 
@@ -378,7 +378,7 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for OpenSYCL on CPUs where the hierarchical formulation is used instead (if OpenSYCL wasn't build with `omp.accelerated`).
+If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for Open SYCL on CPUs where the hierarchical formulation is used instead (if OpenSYCL wasn't build with `omp.accelerated`).
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
 
 ### Predicting

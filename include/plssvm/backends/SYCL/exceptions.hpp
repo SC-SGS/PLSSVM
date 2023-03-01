@@ -47,7 +47,7 @@ class backend_exception : public exception {
 namespace opensycl {
 
 /**
- * @brief Exception type thrown if a problem with the hipSYCL SYCL backend occurs.
+ * @brief Exception type thrown if a problem with the Open SYCL SYCL backend occurs.
  */
 class backend_exception : public sycl::backend_exception {
   public:

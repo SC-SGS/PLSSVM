@@ -122,7 +122,7 @@ foreach (SYCL_IMPLEMENTATION ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
     endif ()
 
     assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
-    # do not print CPU and Intel GPU target architectures when using OpenSYCL
+    # do not print CPU and Intel GPU target architectures when using Open SYCL
     if ("${SYCL_IMPLEMENTATION}" MATCHES "^opensycl")
         string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
         string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
