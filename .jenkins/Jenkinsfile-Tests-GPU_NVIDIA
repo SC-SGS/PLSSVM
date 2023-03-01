@@ -40,9 +40,6 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
-        WORKSPACE = "${env.WORKSPACE}"
-
-        TMPDIR = "${env.WORKSPACE}/tmp"
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
@@ -546,7 +543,7 @@ pipeline {
                                         cd build/Release_DPCPP
                                         rm -rf *
                                         rm -rf $MAKE_INSTALL_PATH/DPCPP
-                                        cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/DPCPP -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
+                                        cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/DPCPP -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp ../../
                                         make -j4 install
                                     '''
                                 }
@@ -610,7 +607,7 @@ pipeline {
                                         mkdir -p build/Debug_DPCPP
                                         cd build/Debug_DPCPP
                                         rm -rf *
-                                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp ../../
+                                        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_OPENMP_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=ON -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_HIP_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=dpcpp  -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=100 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 ../../
                                         make -j4
                                     '''
                                 }
