@@ -183,8 +183,8 @@ parser_train::parser_train(int argc, char **argv) {
     if (result.count("model")) {
         model_filename = result["model"].as<decltype(model_filename)>();
     } else {
-        std::filesystem::path input_path{ input_filename };
-        model_filename = input_path.replace_filename(input_path.filename().string() + ".model").string();
+        const std::filesystem::path input_path{ input_filename };
+        model_filename = input_path.filename().string() + ".model";
     }
 }
 

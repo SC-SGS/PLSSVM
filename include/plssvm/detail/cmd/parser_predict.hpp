@@ -29,6 +29,7 @@ class parser_predict {
   public:
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
+     * @details If no output filename is given, uses the input filename and appends a ".predict". The output file is than saved in the current working directory.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */

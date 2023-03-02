@@ -119,8 +119,8 @@ parser_scale::parser_scale(int argc, char **argv) {
     if (result.count("scaled")) {
         scaled_filename = result["scaled"].as<decltype(scaled_filename)>();
     } else {
-        std::filesystem::path input_path{ input_filename };
-        scaled_filename = input_path.replace_filename(input_path.filename().string() + ".scaled").string();
+        const std::filesystem::path input_path{ input_filename };
+        scaled_filename = input_path.filename().string() + ".scaled";
     }
 
     // can only use one of save_filename or restore_filename
