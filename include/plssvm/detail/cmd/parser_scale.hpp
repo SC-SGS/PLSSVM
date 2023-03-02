@@ -27,7 +27,7 @@ class parser_scale {
   public:
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the scale parameters accordingly.
-     * @details If no scaled filename is given, uses the input filename and appends a ".scaled". The scaled file is than saved in the current working directory.
+     * @details If no scaled filename is given, the scaled data is directly output to the terminal (the default behavior of LIBSVM).
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
