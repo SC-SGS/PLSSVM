@@ -85,7 +85,7 @@ void csvm::init(const target_platform target) {
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
     }
 
-    plssvm::detail::log("\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n"
+    plssvm::detail::log("\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
                         plssvm::detail::tracking_entry{ "backend", "version", __SYCL_COMPILER_VERSION },
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
