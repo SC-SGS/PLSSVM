@@ -96,7 +96,7 @@ void csvm::init(const target_platform target) {
         }
     }
 
-    plssvm::detail::log("\nUsing hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n"
+    plssvm::detail::log("\nUsing hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
                         plssvm::detail::tracking_entry{ "backend", "version", ::hipsycl::sycl::detail::version_string() },
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
