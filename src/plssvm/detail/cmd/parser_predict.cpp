@@ -16,13 +16,14 @@
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format, fmt::join
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>   // std::exception
 #include <filesystem>  // std::filesystem::path
-#include <iostream>    // std::cout, std::cerr, std::endl
+#include <iostream>    // std::cout, std::cerr, std::clog, std::endl
 
 namespace plssvm::detail::cmd {
 
@@ -95,6 +96,14 @@ parser_predict::parser_predict(int argc, char **argv) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // parse SYCL implementation used in the SYCL backend
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+
+    // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
+    if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                 "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                                 sycl_implementation_type)
+                  << std::endl;
+    }
 #endif
 
     // parse whether strings should be used as labels

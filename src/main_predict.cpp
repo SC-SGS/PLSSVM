@@ -9,15 +9,14 @@
  */
 
 #include "plssvm/core.hpp"
-#include "plssvm/detail/cmd/data_set_variants.hpp"
-#include "plssvm/detail/cmd/parser_predict.hpp"
-#include "plssvm/detail/logger.hpp"
-#include "plssvm/detail/performance_tracker.hpp"
 
-#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/format.h"   // fmt::format, fmt::print
-#include "fmt/ostream.h"  // use operator<< to output enum class
+#include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
+#include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/logger.hpp"                 // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_PERFORMANCE_TRACKER_SAVE, plssvm::detail::tracking_entry
+
+#include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/format.h"  // fmt::print, fmt::join
 
 #include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
@@ -32,15 +31,7 @@ int main(int argc, char *argv[]) {
 
     try {
         // parse SVM parameter from command line
-        plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
-
-        // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-        if (cmd_parser.backend != plssvm::backend_type::sycl && cmd_parser.sycl_implementation_type != plssvm::sycl::implementation_type::automatic) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                     cmd_parser.sycl_implementation_type)
-                      << std::endl;
-        }
+        const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
 
         // output used parameter
         plssvm::detail::log("\ntask: prediction\n{}\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
@@ -51,9 +42,9 @@ int main(int argc, char *argv[]) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create model
-            plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
+            const plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
             // create default csvm
-            auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
