@@ -21,6 +21,7 @@
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"                                   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
+#include "fmt/color.h"                                   // fmt::fg, fmt::color::orange
 #include "fmt/core.h"                                    // ffmt::format, fmt::join
 #include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
 
@@ -158,8 +159,24 @@ parser_train::parser_train(int argc, char **argv) {
     // parse kernel invocation type when using SYCL as backend
     sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
+    // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
+    if (backend != backend_type::sycl && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                 "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
+                                 sycl_kernel_invocation_type)
+                  << std::endl;
+    }
+
     // parse SYCL implementation used in the SYCL backend
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+
+    // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
+    if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                 "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                                 sycl_implementation_type)
+                  << std::endl;
+    }
 #endif
 
     // parse whether strings should be used as labels

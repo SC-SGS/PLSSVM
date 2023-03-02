@@ -9,10 +9,11 @@
  */
 
 #include "plssvm/core.hpp"
-#include "plssvm/detail/cmd/data_set_variants.hpp"
-#include "plssvm/detail/cmd/parser_scale.hpp"
-#include "plssvm/detail/logger.hpp"
-#include "plssvm/detail/performance_tracker.hpp"
+
+#include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
+#include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/logger.hpp"                 // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_PERFORMANCE_TRACKER_SAVE, plssvm::detail::tracking_entry
 
 #include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     try {
         // create default parameters
-        plssvm::detail::cmd::parser_scale cmd_parser{ argc, argv };
+        const plssvm::detail::cmd::parser_scale cmd_parser{ argc, argv };
 
         // output used parameter
         plssvm::detail::log("\ntask: scaling\n{}\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );

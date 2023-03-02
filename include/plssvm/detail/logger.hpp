@@ -18,7 +18,7 @@
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 
 #include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // format types with an operator<< overload
 
 #include <iostream>     // std::cout
