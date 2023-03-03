@@ -95,14 +95,16 @@ pipeline {
                             dir('plssvm') {
                                 sh '''
                                     export PATH=${WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH
-
+                                    if [  $BACKEND == "CUDA" ]; then
+                                        module load cuda/11.4.3
+                                    fi
                                     mkdir -p build/${BUILD_TYPE}_${BACKEND}
                                     cd build/${BUILD_TYPE}_${BACKEND}
                                     rm -rf *
                                     rm -rf $MAKE_INSTALL_PATH/${BACKEND}
                                     cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                        -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86"  \
+                                        -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || echo "nvidia:sm_86")  \
                                         -DPLSSVM_ENABLE_ASSERTS=ON \
                                         -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
                                         -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == SYCL ]] && echo "ON" || echo "OFF") \
