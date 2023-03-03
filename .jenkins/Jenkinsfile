@@ -78,30 +78,29 @@ pipeline {
                 }
 
                 agent { label "${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05'}"}
-
-
-
                 stages{
                     stage('Build PLSSVM ${BACKEND} -- ${BUILD_TYPE}'){
-                        dir('plssvm') {
-                            sh '''
-                                module load cuda/11.4.3
-                                mkdir -p build/${BUILD_TYPE}_${BACKEND}
-                                cd build/${BUILD_TYPE}_${BACKEND}
-                                rm -rf *
-                                rm -rf $MAKE_INSTALL_PATH/${BACKEND}
-                                cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
-                                    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                    -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86"  \
-                                    -DPLSSVM_ENABLE_ASSERTS=ON \
-                                    -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
-                                    -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == SYCL ]] && echo "ON" || echo "OFF") \
-                                    -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
-                                    -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
-                                    -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
-                                    ../../
-                                make -j4 install
-                            '''
+                        steps{
+                            dir('plssvm') {
+                                sh '''
+                                    module load cuda/11.4.3
+                                    mkdir -p build/${BUILD_TYPE}_${BACKEND}
+                                    cd build/${BUILD_TYPE}_${BACKEND}
+                                    rm -rf *
+                                    rm -rf $MAKE_INSTALL_PATH/${BACKEND}
+                                    cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
+                                        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+                                        -DPLSSVM_TARGET_PLATFORMS="nvidia:sm_86"  \
+                                        -DPLSSVM_ENABLE_ASSERTS=ON \
+                                        -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
+                                        -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == SYCL ]] && echo "ON" || echo "OFF") \
+                                        -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
+                                        -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
+                                        -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
+                                        ../../
+                                    make -j4 install
+                                '''
+                            }
                         }
                     }
                 }
