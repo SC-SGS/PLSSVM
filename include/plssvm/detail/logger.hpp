@@ -14,7 +14,6 @@
 #define PLSSVM_DETAIL_LOGGER_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                   // plssvm::verbose
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 
 #include "fmt/chrono.h"   // format std::chrono types
@@ -25,20 +24,74 @@
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward
 
-namespace plssvm::detail {
+namespace plssvm {
+
+/**
+ * @brief Enum class for all possible verbosity levels.
+ */
+enum class verbosity_level {
+    /** Nothing is logged to the standard output. */
+    quiet = 0b000,
+    /** Log the same messages as LIBSVM (used for better LIBSVM conformity). */
+    libsvm = 0b001,
+    /** Log all messages related to timing information. */
+    timing = 0b010,
+    /** Log all messages. */
+    full = 0b100
+};
+
+/// The verbosity level used in the logging function. My be changed by the user.
+inline verbosity_level verbosity = verbosity_level::full;
+
+/**
+ * @brief Output the @p verb to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the backend type to
+ * @param[in] verb the verbosity level
+ * @return the output-stream
+ */
+std::ostream &operator<<(std::ostream &out, verbosity_level verb);
+
+/**
+ * @brief Use the input-stream @p in to initialize the @p verb level.
+ * @param[in,out] in input-stream to extract the backend type from
+ * @param[in] verb the verbosity level
+ * @return the input-stream
+ */
+std::istream &operator>>(std::istream &in, verbosity_level &verb);
+
+/**
+ * @brief Bitwise-or to set multiple verbosity levels at once for a logging message.
+ * @param[in] lhs the first verbosity level
+ * @param[in] rhs the second verbosity level
+ * @return the logical-or of the two verbosity levels (`[[nodiscard]]`)
+ */
+[[nodiscard]] verbosity_level operator|(verbosity_level lhs, verbosity_level rhs);
+
+/**
+ * @brief Bitwise-and to check verbosity levels for a logging message.
+ * @param[in] lhs the first verbosity level
+ * @param[in] rhs the second verbosity level
+ * @return the logical-and of the two verbosity levels (`[[nodiscard]]`)
+ */
+[[nodiscard]] verbosity_level operator&(verbosity_level lhs, verbosity_level rhs);
+
+namespace detail {
 
 /**
  * @breif Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
  * @details If a value in @p Args is of type plssvm::detail::tracking_entry and performance tracking is enabled,
  *          this is also added to the plssvm::detail::performance_tracker.
+ *          Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
  * @tparam Args the types of the placeholder values
+ * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
  * @param[in] msg the message to print on the standard output stream if requested (i.e., plssvm::verbose is `true`)
  * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
  */
 template <typename... Args>
-void log(const std::string_view msg, Args &&...args) {
-    // output message only if the verbose flag is set to true
-    if (verbose) {
+void log(const verbosity_level verb, const std::string_view msg, Args &&...args) {
+    // if the verbosity level is quiet, nothing is logged
+    // otherwise verb must contain the bit-flag set by plssvm::verbosity
+    if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {
         std::cout << fmt::format(msg, args...);
     }
 
@@ -51,6 +104,8 @@ void log(const std::string_view msg, Args &&...args) {
      ...);
 }
 
-}  // namespace plssvm::detail
+}  // namespace detail
+
+}  // namespace plssvm
 
 #endif  // PLSSVM_DETAIL_LOGGER_HPP_

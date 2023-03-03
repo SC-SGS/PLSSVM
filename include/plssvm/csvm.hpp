@@ -15,7 +15,7 @@
 
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
@@ -297,7 +297,8 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     std::tie(*csvm_model.alpha_ptr_, csvm_model.rho_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log("Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n\n",
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n\n",
                 detail::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return csvm_model;

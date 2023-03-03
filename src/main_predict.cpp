@@ -12,11 +12,11 @@
 
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/logger.hpp"                 // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                 // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_PERFORMANCE_TRACKER_SAVE, plssvm::detail::tracking_entry
 
-#include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/format.h"  // fmt::print, fmt::join
+#include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
 #include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
@@ -34,7 +34,9 @@ int main(int argc, char *argv[]) {
         const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
 
         // output used parameter
-        plssvm::detail::log("\ntask: prediction\n{}\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
+        plssvm::detail::log(plssvm::verbosity_level::full,
+                            "\ntask: prediction\n{}\n",
+                            plssvm::detail::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set
         std::visit([&](auto &&data) {
@@ -56,7 +58,8 @@ int main(int argc, char *argv[]) {
                 out.print("{}", fmt::join(predicted_labels, "\n"));
 
                 const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-                plssvm::detail::log("Write {} predictions in {} to the file '{}'.\n",
+                plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
+                                    "Write {} predictions in {} to the file '{}'.\n",
                                     plssvm::detail::tracking_entry{ "predictions_write", "num_predictions", predicted_labels.size() },
                                     plssvm::detail::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                                     plssvm::detail::tracking_entry{ "predictions_write", "filename", cmd_parser.predict_filename });
@@ -73,10 +76,11 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 // print accuracy
-                fmt::print("Accuracy = {}% ({}/{}) (classification)\n",
-                           static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
-                           correct,
-                           data.num_data_points());
+                plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm,
+                                    "Accuracy = {}% ({}/{}) (classification)\n",
+                                    static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
+                                    correct,
+                                    data.num_data_points());
             }
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));
     } catch (const plssvm::exception &e) {
@@ -88,7 +92,9 @@ int main(int argc, char *argv[]) {
     }
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
-    plssvm::detail::log("\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+    plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
+                        "\nTotal runtime: {}\n",
+                        plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     PLSSVM_PERFORMANCE_TRACKER_SAVE();
     return EXIT_SUCCESS;

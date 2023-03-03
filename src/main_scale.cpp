@@ -12,7 +12,7 @@
 
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/logger.hpp"                 // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                 // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_PERFORMANCE_TRACKER_SAVE, plssvm::detail::tracking_entry
 
 #include <chrono>     // std::chrono::{steady_clock, duration}
@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
         const plssvm::detail::cmd::parser_scale cmd_parser{ argc, argv };
 
         // output used parameter
-        plssvm::detail::log("\ntask: scaling\n{}\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
+        plssvm::detail::log(plssvm::verbosity_level::full,
+                            "\ntask: scaling\n{}\n", plssvm::detail::tracking_entry{ "parameter", "", cmd_parser} );
 
         // create data set and scale
         std::visit([&](auto &&data) {
@@ -72,7 +73,8 @@ int main(int argc, char *argv[]) {
     }
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
-    plssvm::detail::log("\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+    plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
+                        "\nTotal runtime: {}\n", plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     PLSSVM_PERFORMANCE_TRACKER_SAVE();
     return EXIT_SUCCESS;

@@ -15,7 +15,7 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
@@ -280,7 +280,8 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
     }
 
     if (use_cached_binaries != caching_status::success) {
-        plssvm::detail::log("Building OpenCL kernels from source (reason: {}).", caching_status_to_string(use_cached_binaries));
+        plssvm::detail::log(verbosity_level::full,
+                            "Building OpenCL kernels from source (reason: {}).", caching_status_to_string(use_cached_binaries));
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
@@ -315,14 +316,16 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
-        plssvm::detail::log("Cached OpenCL kernel binaries in {}.", cache_dir_name);
+        plssvm::detail::log(verbosity_level::full,
+                            "Cached OpenCL kernel binaries in {}.", cache_dir_name);
 
         // release resource
         if (program) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources");
         }
     } else {
-        plssvm::detail::log("Using cached OpenCL kernel binaries from {}.", cache_dir_name);
+        plssvm::detail::log(verbosity_level::full,
+                            "Using cached OpenCL kernel binaries from {}.", cache_dir_name);
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
             std::ifstream f{ file };

@@ -16,7 +16,7 @@
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
-#include "plssvm/detail/logger.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                    // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"       // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
@@ -55,7 +55,8 @@ void csvm::init(const target_platform target) {
 #endif
     }
 
-    plssvm::detail::log("\nUsing CUDA as backend.\n");
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing CUDA as backend.\n");
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
 
@@ -69,13 +70,16 @@ void csvm::init(const target_platform target) {
     }
 
     // print found CUDA devices
-    plssvm::detail::log("Found {} CUDA device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+    plssvm::detail::log(verbosity_level::full,
+                        "Found {} CUDA device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
     for (const queue_type &device : devices_) {
         cudaDeviceProp prop{};
         cudaGetDeviceProperties(&prop, device);
-        plssvm::detail::log("  [{}, {}, {}.{}]\n\n", device, prop.name, prop.major, prop.minor);
+        plssvm::detail::log(verbosity_level::full,
+                            "  [{}, {}, {}.{}]\n\n", device, prop.name, prop.major, prop.minor);
     }
-    plssvm::detail::log("\n");
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 }
 
 csvm::~csvm() {

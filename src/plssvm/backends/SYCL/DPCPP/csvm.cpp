@@ -21,7 +21,7 @@
 #include "plssvm/constants.hpp"                              // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"                 // plssvm::detail::execution_range
-#include "plssvm/detail/logger.hpp"                          // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                          // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"             // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type
@@ -85,13 +85,14 @@ void csvm::init(const target_platform target) {
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
     }
 
-    plssvm::detail::log("\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
                         plssvm::detail::tracking_entry{ "backend", "version", __SYCL_COMPILER_VERSION },
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
-        plssvm::detail::log("Using {} as automatic target platform.\n", used_target);
+        plssvm::detail::log(verbosity_level::full,
+                            "Using {} as automatic target platform.\n", used_target);
     }
-    plssvm::detail::log("\n");
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::dpcpp }));
 
@@ -101,13 +102,16 @@ void csvm::init(const target_platform target) {
     }
 
     // print found SYCL devices
-    plssvm::detail::log("Found {} SYCL device(s) for the target platform {}:\n",
+    plssvm::detail::log(verbosity_level::full,
+                        "\nFound {} SYCL device(s) for the target platform {}:\n",
                         plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() },
                         plssvm::detail::tracking_entry{ "backend", "target_platform", used_target });
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        plssvm::detail::log("  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+        plssvm::detail::log(verbosity_level::full,
+                            "  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
     }
-    plssvm::detail::log("\n");
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 }
 
 csvm::~csvm() {

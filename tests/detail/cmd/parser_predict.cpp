@@ -10,8 +10,6 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::verbose
-
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "../../utility.hpp"             // util::convert_from_string
@@ -25,6 +23,8 @@
 #include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILRE
 #include <string>  // std::string
 #include <tuple>   // std::tuple
+
+// TODO: new tests for verbosity_level
 
 class ParserPredict : public util::ParameterBase {};
 class ParserPredictDeathTest : public util::ParameterBase {};
@@ -215,7 +215,7 @@ TEST_P(ParserPredictQuiet, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
     // test for correctness
-    EXPECT_EQ(plssvm::verbose, flag.empty());
+    EXPECT_EQ(plssvm::verbosity, flag.empty() ? plssvm::verbosity_level::full : plssvm::verbosity_level::quiet);
 }
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserPredictQuiet>);
 
