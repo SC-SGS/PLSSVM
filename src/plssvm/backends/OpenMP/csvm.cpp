@@ -13,7 +13,7 @@
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_polynomial, plssvm::openmp::device_kernel_rbf
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
@@ -53,13 +53,14 @@ void csvm::init(const target_platform target) {
 
     // get the number of used OpenMP threads
     int num_omp_threads = 0;
-    #pragma omp parallel default(none) shared(num_omp_threads)
+#pragma omp parallel default(none) shared(num_omp_threads)
     {
-        #pragma omp master
+#pragma omp master
         num_omp_threads = omp_get_num_threads();
     }
 
-    plssvm::detail::log("\nUsing OpenMP as backend with {} threads.\n\n", plssvm::detail::tracking_entry{ "backend", "num_threads", num_omp_threads });
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing OpenMP as backend with {} threads.\n\n", plssvm::detail::tracking_entry{ "backend", "num_threads", num_omp_threads });
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
 
@@ -115,13 +116,15 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     const auto output_iteration_duration = [&]() {
         const std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
         const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        detail::log("Done in {}.\n", iteration_duration);
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Done in {}.\n", iteration_duration);
         average_iteration_time += iteration_duration;
     };
 
     unsigned long long iter = 0;
     for (; iter < max_iter; ++iter) {
-        detail::log("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * d (q = A * d)
@@ -161,12 +164,15 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
 
         output_iteration_duration();
     }
-    detail::log("Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "iterations", max_iter },
                 detail::tracking_entry{ "cg", "residuum", delta },
                 detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
                 detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
+    detail::log(verbosity_level::libsvm,
+                "optimization finished, #iter = {}\n", std::min(iter + 1, max_iter));
 
     // calculate bias
     const real_type bias = b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha);
@@ -199,7 +205,7 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
         w = calculate_w(support_vectors, alpha);
     }
 
-    #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
+#pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
     for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
         switch (params.kernel_type) {
             case kernel_function_type::linear:
@@ -208,7 +214,7 @@ std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_ty
             case kernel_function_type::polynomial:
             case kernel_function_type::rbf: {
                 real_type temp{ 0.0 };
-                #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
                 for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < support_vectors.size(); ++data_index) {
                     temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params);
                 }
@@ -259,11 +265,11 @@ std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type
     // create w vector and fill with zeros
     std::vector<real_type> w(num_features, real_type{ 0.0 });
 
-    // calculate the w vector
-    #pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
+// calculate the w vector
+#pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
     for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
         real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
         for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
             temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
         }

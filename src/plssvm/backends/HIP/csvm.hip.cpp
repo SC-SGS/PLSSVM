@@ -17,7 +17,7 @@
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/detail/assert.hpp"                       // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"              // plssvm::detail::execution_range
-#include "plssvm/detail/logger.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                       // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"          // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"               // plssvm::kernel_function_type
@@ -54,7 +54,8 @@ void csvm::init(const target_platform target) {
 #endif
     }
 
-    plssvm::detail::log("\nUsing HIP as backend.\n");
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing HIP as backend.\n");
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::hip }));
     PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_amd }));
 
@@ -71,13 +72,16 @@ void csvm::init(const target_platform target) {
     }
 
     // print found HIP devices
-    plssvm::detail::log("Found {} HIP device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+    plssvm::detail::log(verbosity_level::full,
+                        "Found {} HIP device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         hipDeviceProp_t prop{};
         PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[device]));
-        plssvm::detail::log("  [{}, {}, {}.{}]\n", devices_[device], prop.name, prop.major, prop.minor);
+        plssvm::detail::log(verbosity_level::full,
+                            "  [{}, {}, {}.{}]\n", devices_[device], prop.name, prop.major, prop.minor);
     }
-    plssvm::detail::log("\n");
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 }
 
 csvm::~csvm() {

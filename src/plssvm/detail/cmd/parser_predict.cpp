@@ -10,8 +10,8 @@
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
-#include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
@@ -49,7 +49,8 @@ parser_predict::parser_predict(int argc, char **argv) {
 #endif
             ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
             ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(fmt::format("{}", !verbose_default)))
+            ("verbosity", fmt::format("choose the level of verbosity: full|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
+            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("v,version", "print version information", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -113,7 +114,23 @@ parser_predict::parser_predict(int argc, char **argv) {
     float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
 
     // parse whether output is quiet or not
-    plssvm::verbose = !result["quiet"].as<bool>();
+    const bool quiet = result["quiet"].as<bool>();
+
+    // -q/--quiet has precedence over --verbosity
+    if (result["verbosity"].count()) {
+        const verbosity_level verb = result["verbosity"].as<verbosity_level>();
+        if (quiet && verb != verbosity_level::quiet) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet",
+                                     verb)
+                      << std::endl;
+            verbosity = verbosity_level::quiet;
+        } else {
+            verbosity = verb;
+        }
+    } else if (quiet) {
+        verbosity = verbosity_level::quiet;
+    }
 
     // parse test data filename
     if (!result.count("test")) {

@@ -15,6 +15,7 @@
 
 #include "plssvm/data_set.hpp"        // plssvm::data_set
 #include "plssvm/detail/assert.hpp"   // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::current_date_time
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
@@ -27,7 +28,6 @@
 
 #include <algorithm>    // std::min, std::fill
 #include <cstddef>      // std::size_t
-#include <iostream>     // std::cout
 #include <map>          // std::map
 #include <memory>       // std::unique_ptr
 #include <numeric>      // std::accumulate
@@ -333,8 +333,8 @@ template <typename real_type, typename label_type>
                               rho);
 
     // print model header
-    std::cout << '\n'
-              << out_string << '\n';
+    detail::log(verbosity_level::full | verbosity_level::libsvm,
+                "\n{}\n", out_string);
     // write model header to file
     out.print("{}", out_string);
 

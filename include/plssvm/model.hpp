@@ -17,7 +17,7 @@
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, write_libsvm_model_data}
 #include "plssvm/detail/io/libsvm_parsing.hpp"        // plssvm::detail::io::parse_libsvm_data
-#include "plssvm/detail/logger.hpp"                   // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
@@ -184,7 +184,8 @@ model<T, U>::model(const std::string &filename) {
     alpha_ptr_ = std::make_shared<decltype(alphas)>(std::move(alphas));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
                 detail::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
@@ -204,7 +205,8 @@ void model<T, U>::save(const std::string &filename) const {
     detail::io::write_libsvm_model_data(filename, params_, rho_, *alpha_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log("Write {} support vectors with {} features in {} to the libsvm model file '{}'.\n",
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Write {} support vectors with {} features in {} to the libsvm model file '{}'.\n",
                 detail::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },

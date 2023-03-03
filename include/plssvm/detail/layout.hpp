@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
 
 #include "fmt/chrono.h"              // format std::chrono types
@@ -140,7 +140,8 @@ template <typename real_type>
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log("Transformed dataset from 2D to 1D {} in {}.\n",
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Transformed dataset from 2D to 1D {} in {}.\n",
                 detail::tracking_entry{ "transform", "layout", layout },
                 detail::tracking_entry{ "transform", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
