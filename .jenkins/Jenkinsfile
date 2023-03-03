@@ -83,12 +83,12 @@ pipeline {
                         steps {
                             sh '''
 
-                                if [ ! -d cmake-3.26.0-linux-x86_64 ] && [ ! -f cmake-3.26.0-linux-x86_64.tar.gz* ]; then
-                                    wget https://github.com/Kitware/CMake/releases/download/v3.26.0/cmake-3.26.0-linux-x86_64.tar.gz
-                                    tar xvzf cmake-3.26.0-linux-x86_64.tar.gz
-                                    rm cmake-3.26.0-linux-x86_64.tar.gz*
+                                if [ ! -d cmake-3.25.2-linux-x86_64 ] && [ ! -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
+                                    wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz
+                                    tar xvzf cmake-3.25.2-linux-x86_64.tar.gz
+                                    rm cmake-3.25.2-linux-x86_64.tar.gz*
                                 fi
-                                while [ -f cmake-3.26.0-linux-x86_64.tar.gz* ]; do
+                                while [ -f cmake-3.25.2-linux-x86_64.tar.gz* ]; do
                                     sleep 1
                                 done
                             '''
@@ -98,7 +98,7 @@ pipeline {
                         steps{
                             dir('plssvm') {
                                 sh '''
-                                    export PATH=${WORKSPACE}/cmake-3.26.0-linux-x86_64/bin:$PATH
+                                    export PATH=${WORKSPACE}/cmake-3.25.2-linux-x86_64/bin:$PATH
                                     if [  $BACKEND == "CUDA" ]; then
                                         module load cuda/11.4.3
                                     fi
