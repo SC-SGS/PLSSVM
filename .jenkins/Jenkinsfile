@@ -90,12 +90,12 @@ pipeline {
                             '''
                         }
                     }
-                    stage('Build PLSSVM ${BACKEND} -- ${BUILD_TYPE}'){
+                    stage('Build PLSSVM'){
                         steps{
                             dir('plssvm') {
                                 sh '''
                                     export PATH=${WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH
-                                    if( [[ "${BACKEND}" == "CUDA" ]] ) {
+                                    if [[ "${BACKEND}" == "CUDA" ]]  {
                                         module load cuda/11.4.3
                                     }
                                     mkdir -p build/${BUILD_TYPE}_${BACKEND}
