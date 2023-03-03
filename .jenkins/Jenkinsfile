@@ -76,11 +76,8 @@ pipeline {
                         values 'OPENMP', 'CUDA', 'HIP', 'OPENCL', 'SYCL'
                     }
                 }
-                if("${BACKEND}" == "HIP"){
-                    agent { label 'pcsgs09' }
-                } else {
-                    agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
-                }
+
+                agent { label $([[ "${BACKEND}" == "HIP"]] && echo "pcsgs09"  || echo "pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05" }
                 stages{
                     stage('Build PLSSVM ${BACKEND} -- ${BUILD_TYPE}'){
                         dir('plssvm') {
