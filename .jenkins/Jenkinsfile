@@ -56,13 +56,6 @@ pipeline {
     }
 
     stages{
-        stage('Checkout PLSSVM') {
-            steps {
-                dir('plssvm') {
-                    checkout scm
-                }
-            }
-        }
         stage('Build'){
             matrix{
                 axes {
@@ -79,6 +72,13 @@ pipeline {
 
                 agent { label "${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05'}"}
                 stages{
+                    stage('Checkout PLSSVM') {
+                        steps {
+                            dir('plssvm') {
+                                checkout scm
+                            }
+                        }
+                    }
                     stage('Build PLSSVM ${BACKEND} -- ${BUILD_TYPE}'){
                         steps{
                             dir('plssvm') {
