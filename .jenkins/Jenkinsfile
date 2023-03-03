@@ -76,7 +76,7 @@ pipeline {
                         values 'OPENMP', 'CUDA', 'HIP', 'OPENCL', 'SYCL'
                     }
                 }
-                if(${BACKEND} == "HIP"){
+                if("${BACKEND}" == "HIP"){
                     agent { label 'pcsgs09' }
                 } else {
                     agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
