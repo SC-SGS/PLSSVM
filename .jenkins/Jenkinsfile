@@ -83,7 +83,7 @@ pipeline {
                         steps {
                             sh '''
 
-                                if [ ! -d cmake-3.26.0-linux-x86_64  && ! -f cmake-3.26.0-linux-x86_64.tar.gz* ]; then
+                                if [ ! -d cmake-3.26.0-linux-x86_64 ] && [ ! -f cmake-3.26.0-linux-x86_64.tar.gz* ]; then
                                     wget https://github.com/Kitware/CMake/releases/download/v3.26.0/cmake-3.26.0-linux-x86_64.tar.gz
                                     tar xvzf cmake-3.26.0-linux-x86_64.tar.gz
                                     rm cmake-3.26.0-linux-x86_64.tar.gz*
