@@ -77,7 +77,7 @@ pipeline {
                     }
                 }
 
-                agent { label $([[ '${BACKEND}' == 'HIP']] && echo 'pcsgs09'  || echo 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05') }
+                agent { label sh "$([[ '${BACKEND}' == 'HIP']] && echo 'pcsgs09'  || echo 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05')" }
                 stages{
                     stage('Build PLSSVM ${BACKEND} -- ${BUILD_TYPE}'){
                         dir('plssvm') {
