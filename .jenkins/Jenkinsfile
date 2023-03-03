@@ -82,11 +82,15 @@ pipeline {
                     stage('Dependency - CMake') {
                         steps {
                             sh '''
-                                if [ ! -d cmake-3.24.1-linux-x86_64 ]; then
-                                    wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz
-                                    tar xvzf cmake-3.24.1-linux-x86_64.tar.gz
-                                    rm cmake-3.24.1-linux-x86_64.tar.gz*
+
+                                if [ ! -d cmake-3.26.0-linux-x86_64  && ! -f cmake-3.26.0-linux-x86_64.tar.gz* ]; then
+                                    wget https://github.com/Kitware/CMake/releases/download/v3.26.0/cmake-3.26.0-linux-x86_64.tar.gz
+                                    tar xvzf cmake-3.26.0-linux-x86_64.tar.gz
+                                    rm cmake-3.26.0-linux-x86_64.tar.gz*
                                 fi
+                                while [ -f cmake-3.26.0-linux-x86_64.tar.gz* ]; do
+                                    sleep 1
+                                done
                             '''
                         }
                     }
@@ -94,7 +98,7 @@ pipeline {
                         steps{
                             dir('plssvm') {
                                 sh '''
-                                    export PATH=${WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH
+                                    export PATH=${WORKSPACE}/cmake-3.26.0-linux-x86_64/bin:$PATH
                                     if [  $BACKEND == "CUDA" ]; then
                                         module load cuda/11.4.3
                                     fi
@@ -104,7 +108,7 @@ pipeline {
                                     rm -rf $MAKE_INSTALL_PATH/${BACKEND}
                                     cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                        -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || echo "nvidia:sm_86")  \
+                                        -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || [[ $BACKEND == HIP ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
                                         -DPLSSVM_ENABLE_ASSERTS=ON \
                                         -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
                                         -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == SYCL ]] && echo "ON" || echo "OFF") \
