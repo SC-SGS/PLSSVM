@@ -95,9 +95,7 @@ pipeline {
                             dir('plssvm') {
                                 sh '''
                                     export PATH=${WORKSPACE}/cmake-3.24.1-linux-x86_64/bin:$PATH
-                                    if [[ "${BACKEND}" == "CUDA" ]]  {
-                                        module load cuda/11.4.3
-                                    }
+
                                     mkdir -p build/${BUILD_TYPE}_${BACKEND}
                                     cd build/${BUILD_TYPE}_${BACKEND}
                                     rm -rf *
