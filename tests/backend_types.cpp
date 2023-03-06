@@ -29,7 +29,6 @@
 TEST(BackendType, to_string) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::automatic, "automatic");
-    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::openmp, "openmp");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::cuda, "cuda");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::hip, "hip");
