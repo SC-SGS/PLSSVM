@@ -103,9 +103,9 @@ pipeline {
                                 sh '''
                                     if [ -f pocl.tar.gz* ]; then
                                         rm pocl.tar.gz*
-                                        rm -rf pocl.tar.gz
-                                     fi
-                                     if [ ! -d $POCL_PATH ]; then
+                                        rm -rf pocl.tar.gz*
+                                    fi
+                                    if [ ! -d $POCL_PATH ]; then
                                         wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
                                         tar xvzf pocl.tar.gz
                                         cd pocl-3.1
@@ -113,8 +113,9 @@ pipeline {
                                         cd build
                                         cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH ..
                                         make -j 4 install
+                                        cd ../..
                                         rm pocl.tar.gz*
-                                     fi
+                                    fi
                                 '''
                             }
 
