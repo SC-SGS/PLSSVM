@@ -241,9 +241,15 @@ pipeline {
                 }
         stage('Dependency -- PoCL')
         {
+             environment {
+                PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$DPCPP_PATH/bin:${env.PATH}"
+                LIBRARY_PATH="$DPCPP_PATH/lib:${env.LIBRARY_PATH}"
+                LD_LIBRARY_PATH="$DPCPP_PATH/lib:${env.LD_LIBRARY_PATH}"
+                CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
+            }
             steps{
                 script{
-                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs03', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
