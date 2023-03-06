@@ -90,6 +90,81 @@ pipeline {
                 }
             }
         }
+        stage('Dependency -- Ninja')
+        {
+            steps{
+                script{
+                    def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                   if [ ! -f ninja ]; then
+                                       wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+                                       unzip ninja-linux.zip
+                                       rm ninja-linux.zip*
+                                   fi
+                                '''
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
+        stage('Dependency -- DPC++')
+        {
+            steps{
+                script{
+                    def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                    module load cuda/11.4.3
+                                    if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+                                        rm -rf llvm
+                                        git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                        cd llvm
+                                        python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
+                                        python buildbot/compile.py
+                                        cmake --build build -- omp
+                                        cmake --build build -- install
+
+                                        rm -rf "$HIPSYCL_PATH"
+                                    fi
+
+                                '''
+                            }
+                        }
+                        builders['pcsgs09'] = {
+                        node('pcsgs09') {
+                            sh '''
+                                 if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+                                     rm -rf llvm
+                                     git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                     cd llvm
+                                     python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                                     python buildbot/compile.py
+                                     cmake --build build -- omp
+                                     cmake --build build -- install
+
+                                     rm -rf "$HIPSYCL_PATH"
+                                 fi
+
+                            '''
+                        }
+
+                    }
+                    parallel builders
+                }
+            }
+        }
         stage('Dependency -- PoCL')
         {
             steps{
