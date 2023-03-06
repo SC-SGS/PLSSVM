@@ -42,7 +42,7 @@ std::ostream &operator<<(std::ostream &out, const verbosity_level verb) {
     if (level_names.empty()) {
         return out << "unknown";
     } else {
-        return out << fmt::format("{}", fmt::join(level_names, " & "));
+        return out << fmt::format("{}", fmt::join(level_names, " | "));
     }
 }
 
