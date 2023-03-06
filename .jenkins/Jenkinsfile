@@ -105,7 +105,7 @@ pipeline {
                                         rm pocl.tar.gz*
                                         rm -rf pocl.tar.gz
                                      fi
-                                     if [ ! -d $POCL_PATH ] then
+                                     if [ ! -d $POCL_PATH ]; then
                                         wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
                                         tar xvzf pocl.tar.gz
                                         cd pocl-3.1
