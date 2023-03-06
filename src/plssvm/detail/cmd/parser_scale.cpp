@@ -46,7 +46,7 @@ parser_scale::parser_scale(int argc, char **argv) {
            ("r,restore_filename", "the file from which previous scaling factors should be loaded", cxxopts::value<decltype(restore_filename)>())
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
-           ("verbosity", fmt::format("choose the level of verbosity: full|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
+           ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("v,version", "print version information", cxxopts::value<bool>())
