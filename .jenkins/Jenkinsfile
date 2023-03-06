@@ -185,7 +185,7 @@ pipeline {
                     }
                     steps{
                         script{
-                            def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']  // 'pcsgs02'
+                            def labels = [ 'pcsgs03',  'pcsgs05',  'pcsgs11']  // 'pcsgs02'
                             def builders = [: ]
                             for (x in labels){
                                 def label = x
