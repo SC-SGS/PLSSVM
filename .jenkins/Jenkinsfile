@@ -262,8 +262,6 @@ pipeline {
                                     fi
                                     if [ ! -d $POCL_PATH ]; then
                                         wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
-                                        ls -l $DPCPP_PATH/bin
-                                        $DPCPP_PATH/bin/llvm-config
                                         tar xzf pocl.tar.gz
                                         cd pocl-3.1
                                         mkdir -p build
