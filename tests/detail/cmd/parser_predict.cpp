@@ -237,6 +237,16 @@ TEST_P(ParserPredictQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserPredictQuiet>);
 
+class ParserPredictVerbosityAndQuiet : public ParserPredict {};
+TEST_F(ParserPredictVerbosityAndQuiet, parsing) {
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-predict", "--quiet", "--verbosity", "full", "data.libsvm", "data.libsvm.model" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
+    // the quiet flag overrides the verbosity flag
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
+}
+
 class ParserPredictHelp : public ParserPredict, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParserPredictHelp, parsing) {
     const std::string &flag = GetParam();
