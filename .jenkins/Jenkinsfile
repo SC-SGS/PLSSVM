@@ -58,22 +58,23 @@ pipeline {
     stages{
         stage('Build PoCL')
         {
-            agent { label 'pcsgs02 && pcsgs03 && pcsgs04 && pcsgs05 && pcsgs09 && pcsgs11' }
             steps{
-                sh '''
-                    if [ ! -d pocl ] && [ ! -f pocl.tar.gz* ]; then
-                        wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
-                        tar xvzf pocl.tar.gz
-                        cd pocl
-                        mkdir build
-                        cd build
-                        cmake ..
-                        make -j 4
-                        # make install
-                        cd ../..
-                        rm pocl.tar.gz
+                script{
+                    def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                    echo "hostname:`hostname`"
+                                    echo "whoami:`whoami`"
+                                '''
+                            }
 
-                     '''
+                        }
+                    }
+                }
             }
         }
 
