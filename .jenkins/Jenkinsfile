@@ -57,7 +57,7 @@ pipeline {
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "TRUE"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
 
         // install path
         MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
@@ -266,7 +266,7 @@ pipeline {
                                         cd pocl-3.1
                                         mkdir -p build
                                         cd build
-                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DDENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF ..
                                         make -j 4 install
                                         cd ../..
                                         rm pocl.tar.gz*
