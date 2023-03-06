@@ -321,6 +321,7 @@ Usage:
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
   -v, --version                 print version information
@@ -385,6 +386,7 @@ Usage:
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
   -v, --version                 print version information
@@ -421,6 +423,7 @@ Usage:
   -r, --restore_filename arg    the file from which previous scaling factors should be loaded
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs)
   -h, --help                    print this helper message
   -v, --version                 print version information
