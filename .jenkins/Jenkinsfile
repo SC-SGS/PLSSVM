@@ -143,23 +143,23 @@ pipeline {
                             }
                         }
                         builders['pcsgs09'] = {
-                        node('pcsgs09') {
-                            sh '''
-                                 if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
-                                     rm -rf llvm
-                                     git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
-                                     cd llvm
-                                     python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
-                                     python buildbot/compile.py
-                                     cmake --build build -- omp
-                                     cmake --build build -- install
+                            node('pcsgs09') {
+                                sh '''
+                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+                                         rm -rf llvm
+                                         git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                         cd llvm
+                                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                                         python buildbot/compile.py
+                                         cmake --build build -- omp
+                                         cmake --build build -- install
 
-                                     rm -rf "$HIPSYCL_PATH"
-                                 fi
+                                         rm -rf "$HIPSYCL_PATH"
+                                     fi
 
-                            '''
+                                '''
+                            }
                         }
-
                     }
                     parallel builders
                 }
