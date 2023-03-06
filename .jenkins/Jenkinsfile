@@ -53,7 +53,7 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "TRUE"
+        DPCPP_FORCE_REBUILD = "FALSE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
@@ -71,7 +71,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -128,7 +128,7 @@ pipeline {
             }
             steps{
                 script{
-                    def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
+                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11'] // 'pcsgs02'
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -136,7 +136,6 @@ pipeline {
                             node(label) {
                                 sh '''
                                     module load cuda/11.4.3
-                                    echo $WORKSPACE
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
                                         git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
@@ -175,6 +174,71 @@ pipeline {
                 }
             }
         }
+
+        stage('Dependency -- hipSYCL')
+                {
+                     environment {
+                        PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$DPCPP_PATH/bin:${env.PATH}"
+                        LIBRARY_PATH="$DPCPP_PATH/lib:${env.LIBRARY_PATH}"
+                        LD_LIBRARY_PATH="$DPCPP_PATH/lib:${env.LD_LIBRARY_PATH}"
+                        CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
+                    }
+                    steps{
+                        script{
+                            def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']  // 'pcsgs02'
+                            def builders = [: ]
+                            for (x in labels){
+                                def label = x
+                                builders[label] = {
+                                    node(label) {
+                                        sh '''
+                                            module load cuda/11.4.3
+                                            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                                                rm -rf hipSYCL
+                                                rm -rf "$HIPSYCL_PATH"
+
+                                                mkdir $HIPSYCL_PATH
+                                                git clone https://github.com/illuhad/hipSYCL.git hipSYCL
+                                                cd hipSYCL
+                                                git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
+                                                mkdir build
+                                                cd build
+                                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+                                                make -j
+                                                make install
+                                                cd $WORKSPACE
+                                                rm -rf hipSYCL
+                                            fi
+                                        '''
+                                    }
+                                }
+                                builders['pcsgs09'] = {
+                                    node('pcsgs09') {
+                                        sh '''
+                                            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                                                rm -rf hipSYCL
+                                                rm -rf "$HIPSYCL_PATH"
+
+                                                mkdir $HIPSYCL_PATH
+                                                git clone https://github.com/illuhad/hipSYCL.git hipSYCL
+                                                cd hipSYCL
+                                                git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
+                                                mkdir build
+                                                cd build
+                                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+                                                make -j
+                                                make install
+                                                cd $WORKSPACE
+                                                rm -rf hipSYCL
+                                            fi
+                                        '''
+                                    }
+                                }
+                            }
+                            parallel builders
+                        }
+                    }
+                }
         stage('Dependency -- PoCL')
         {
             steps{
@@ -196,7 +260,7 @@ pipeline {
                                         cd pocl-3.1
                                         mkdir -p build
                                         cd build
-                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH ..
+                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
                                         make -j 4 install
                                         cd ../..
                                         rm pocl.tar.gz*
