@@ -117,6 +117,9 @@ pipeline {
         }
         stage('Dependency -- DPC++')
         {
+            environment {
+                PATH="$WORKSPACE:$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:${env.PATH}"
+            }
             steps{
                 script{
                     def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
