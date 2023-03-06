@@ -26,8 +26,6 @@
 #include <string>   // std::string
 #include <tuple>    // std::tuple
 
-// TODO: new tests for verbosity_level
-
 class ParserScale : public util::ParameterBase {};
 class ParserScaleDeathTest : public util::ParameterBase {};
 
@@ -72,7 +70,7 @@ TEST_F(ParserScale, minimal_output) {
 
 TEST_F(ParserScale, all_arguments) {
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "data.libsvm", "data.libsvm.scaled" });
+    this->CreateCMDArgs({ "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "full", "data.libsvm", "data.libsvm.scaled" });
 
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
@@ -87,10 +85,11 @@ TEST_F(ParserScale, all_arguments) {
     EXPECT_EQ(parser.scaled_filename, "data.libsvm.scaled");
     EXPECT_EQ(parser.save_filename, "data.libsvm.save");
     EXPECT_EQ(parser.restore_filename, "");
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 TEST_F(ParserScale, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "data.libsvm", "data.libsvm.scaled" });
+    this->CreateCMDArgs({ "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "full", "data.libsvm", "data.libsvm.scaled" });
 
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
@@ -114,7 +113,7 @@ class ParserScaleLower : public ParserScale, public ::testing::WithParamInterfac
 TEST_P(ParserScaleLower, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-scale", flag, fmt::format("{}", value), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
     // test for correctness
@@ -131,7 +130,7 @@ class ParserScaleUpper : public ParserScale, public ::testing::WithParamInterfac
 TEST_P(ParserScaleUpper, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-scale", flag, fmt::format("{}", value), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
     // test for correctness
@@ -150,7 +149,7 @@ TEST_P(ParserScaleFileFormat, parsing) {
     // convert string to backend
     const auto backend = util::convert_from_string<plssvm::file_format_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-scale", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
     // test for correctness
@@ -167,7 +166,7 @@ class ParserScaleSaveFilename : public ParserScale, public ::testing::WithParamI
 TEST_P(ParserScaleSaveFilename, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-scale", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
     // test for correctness
@@ -184,7 +183,7 @@ class ParserScaleRestoreFilename : public ParserScale, public ::testing::WithPar
 TEST_P(ParserScaleRestoreFilename, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-scale", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
     // test for correctness
@@ -231,11 +230,28 @@ INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleUseFloatAsRealType, ::testing::
                 naming::pretty_print_parameter_flag_and_value<ParserScaleUseFloatAsRealType>);
 // clang-format on
 
+class ParserScaleVerbosity : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+TEST_P(ParserScaleVerbosity, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-scale", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    // test for correctness
+    EXPECT_EQ(fmt::format("{}", plssvm::verbosity), value);
+}
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleVerbosity, ::testing::Combine(
+                ::testing::Values("--verbosity"),
+                ::testing::Values("quiet", "libsvm", "timing", "full")),
+                naming::pretty_print_parameter_flag_and_value<ParserScaleVerbosity>);
+// clang-format on
+
 class ParserScaleQuiet : public ParserScale, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParserScaleQuiet, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-scale", flag, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
     // test for correctness
@@ -247,7 +263,7 @@ class ParserScaleHelp : public ParserScale, public ::testing::WithParamInterface
 TEST_P(ParserScaleHelp, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag) });
+    this->CreateCMDArgs({ "./plssvm-scale", flag });
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
@@ -257,7 +273,7 @@ class ParserScaleVersion : public ParserScale, public ::testing::WithParamInterf
 TEST_P(ParserScaleVersion, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}", flag) });
+    this->CreateCMDArgs({ "./plssvm-scale", flag });
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
