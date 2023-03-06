@@ -53,7 +53,7 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "FALSE"
+        DPCPP_FORCE_REBUILD = "TRUE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
@@ -138,7 +138,7 @@ pipeline {
                                     module load cuda/11.4.3
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
-                                        git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
                                         python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         python buildbot/compile.py
@@ -151,24 +151,24 @@ pipeline {
                                 '''
                             }
                         }
-                        builders['pcsgs09'] = {
-                            node('pcsgs09') {
-                                sh '''
-                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
-                                         rm -rf llvm
-                                         git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
-                                         cd llvm
-                                         python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
-                                         python buildbot/compile.py
-                                         cmake --build build -- omp
-                                         cmake --build build -- install
-
-                                         rm -rf "$HIPSYCL_PATH"
-                                     fi
-
-                                '''
-                            }
-                        }
+//                         builders['pcsgs09'] = {
+//                             node('pcsgs09') {
+//                                 sh '''
+//                                      if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+//                                          rm -rf llvm
+//                                          git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+//                                          cd llvm
+//                                          python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+//                                          python buildbot/compile.py
+//                                          cmake --build build -- omp
+//                                          cmake --build build -- install
+//
+//                                          rm -rf "$HIPSYCL_PATH"
+//                                      fi
+//
+//                                 '''
+//                             }
+//                         }
                     }
                     parallel builders
                 }
@@ -212,27 +212,27 @@ pipeline {
                                         '''
                                     }
                                 }
-                                builders['pcsgs09'] = {
-                                    node('pcsgs09') {
-                                        sh '''
-                                            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
-                                                rm -rf hipSYCL
-                                                rm -rf "$HIPSYCL_PATH"
-
-                                                mkdir $HIPSYCL_PATH
-                                                git clone https://github.com/illuhad/hipSYCL.git hipSYCL
-                                                cd hipSYCL
-                                                git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
-                                                mkdir build
-                                                cd build
-                                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
-                                                make -j
-                                                make install
-                                                cd $WORKSPACE
-                                                rm -rf hipSYCL
-                                            fi
-                                        '''
-                                    }
+//                                 builders['pcsgs09'] = {
+//                                     node('pcsgs09') {
+//                                         sh '''
+//                                             if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+//                                                 rm -rf hipSYCL
+//                                                 rm -rf "$HIPSYCL_PATH"
+//
+//                                                 mkdir $HIPSYCL_PATH
+//                                                 git clone https://github.com/illuhad/hipSYCL.git hipSYCL
+//                                                 cd hipSYCL
+//                                                 git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1
+//                                                 mkdir build
+//                                                 cd build
+//                                                 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+//                                                 make -j
+//                                                 make install
+//                                                 cd $WORKSPACE
+//                                                 rm -rf hipSYCL
+//                                             fi
+//                                         '''
+//                                     }
                                 }
                             }
                             parallel builders
@@ -249,7 +249,7 @@ pipeline {
             }
             steps{
                 script{
-                    def labels = [ 'pcsgs03', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs03', 'pcsgs05',  'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
