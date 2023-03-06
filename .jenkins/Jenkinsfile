@@ -47,11 +47,11 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "FALSE"
+        DPCPP_FORCE_REBUILD = "TRUE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "FALSE"
+        HIPSYCL_FORCE_REBUILD = "TRUE"
 
         // install path
         MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
@@ -130,6 +130,7 @@ pipeline {
                             node(label) {
                                 sh '''
                                     module load cuda/11.4.3
+                                    export PATH=$WORKSPACE:$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:${env.PATH}
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
                                         git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
@@ -148,6 +149,8 @@ pipeline {
                         builders['pcsgs09'] = {
                             node('pcsgs09') {
                                 sh '''
+                                    export PATH=$WORKSPACE:$WORKSPACE/cmake-3.24.1-linux-x86_64/bin:${env.PATH}
+
                                      if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                          rm -rf llvm
                                          git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
