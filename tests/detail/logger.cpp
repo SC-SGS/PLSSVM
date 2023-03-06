@@ -131,3 +131,15 @@ TEST_F(Logger, disabled_logging_with_args) {
     // since logging has been disabled, nothing should have been captured
     EXPECT_TRUE(this->get_capture().empty());
 }
+
+TEST_F(Logger, mismatching_verbosity_level) {
+    // set verbosity_level to libsvm
+    plssvm::verbosity = plssvm::verbosity_level::libsvm;
+
+    // log message with full
+    plssvm::detail::log(plssvm::verbosity_level::full, "Hello, World!");
+    plssvm::detail::log(plssvm::verbosity_level::full, "int: {}, float: {}, str: {}", 42, 1.5, "abc");
+
+    // there should not be any output
+    EXPECT_TRUE(this->get_capture().empty());
+}
