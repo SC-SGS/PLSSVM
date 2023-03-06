@@ -52,16 +52,16 @@ int main(int argc, char *argv[]) {
 
             // write prediction file
             {
-                const std::chrono::time_point start_time = std::chrono::steady_clock::now();
+                const std::chrono::time_point write_start_time = std::chrono::steady_clock::now();
 
                 fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
                 out.print("{}", fmt::join(predicted_labels, "\n"));
 
-                const std::chrono::time_point end_time = std::chrono::steady_clock::now();
+                const std::chrono::time_point write_end_time = std::chrono::steady_clock::now();
                 plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
                                     "Write {} predictions in {} to the file '{}'.\n",
                                     plssvm::detail::tracking_entry{ "predictions_write", "num_predictions", predicted_labels.size() },
-                                    plssvm::detail::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                                    plssvm::detail::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(write_end_time - write_start_time) },
                                     plssvm::detail::tracking_entry{ "predictions_write", "filename", cmd_parser.predict_filename });
             }
 
