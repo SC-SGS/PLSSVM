@@ -42,6 +42,12 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
         WORKSPACE= "${env.WORKSPACE}"
 
+        // ROCM / HIP
+        ROCM_PATH = "/opt/rocm-5.3.3"
+        LD_LIBRARY_PATH = "${env.ROCM_PATH}/lib64:${env.ROCM_PATH}/lib:${env.ROCM_PATH}/opencl/lib/x86_64:${env.ROCM_PATH}/hsa/lib:${env.ROCM_PATH}/hip/lib:${env.LD_LIBRARY_PATH}"
+        CPLUS_INCLUDE_PATH = "${env.ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
+        CMAKE_PREFIX_PATH = "${env.ROCM_PATH}/hip:${env.ROCM_PATH}:${env.CMAKE_PREFIX_PATH}"
+
         // PoCL
         POCL_PATH = "${env.WORKSPACE}/pocl-install"
 
@@ -130,7 +136,6 @@ pipeline {
                             node(label) {
                                 sh '''
                                     module load cuda/11.4.3
-                                    export PATH=$WORKSPACE:$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$PATH
                                     echo $WORKSPACE
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
@@ -150,8 +155,6 @@ pipeline {
                         builders['pcsgs09'] = {
                             node('pcsgs09') {
                                 sh '''
-                                    export PATH=$WORKSPACE:$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$PATH
-
                                      if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                          rm -rf llvm
                                          git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
