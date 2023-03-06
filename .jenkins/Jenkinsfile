@@ -82,7 +82,8 @@ pipeline {
                     stage('Dependency - CMake') {
                         steps {
                             sh '''
-
+                                rm -rf cmake-3.25.2-linux-x86_64
+                                sleep $[ ( $RANDOM % 10 )  + 1 ]s
                                 if [ ! -d cmake-3.25.2-linux-x86_64 ] && [ ! -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
                                     wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz
                                     tar xvzf cmake-3.25.2-linux-x86_64.tar.gz
@@ -108,6 +109,7 @@ pipeline {
                                     rm -rf $MAKE_INSTALL_PATH/${BACKEND}
                                     cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+                                        -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || echo "g++") \
                                         -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || [[ $BACKEND == HIP ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
                                         -DPLSSVM_ENABLE_ASSERTS=ON \
                                         -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
