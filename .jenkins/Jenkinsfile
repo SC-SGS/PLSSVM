@@ -261,10 +261,11 @@ pipeline {
                                         rm -rf pocl.tar.gz*
                                     fi
                                     if [ ! -d $POCL_PATH ]; then
-                                        wget https://github.com/pocl/pocl/archive/refs/tags/v3.0.tar.gz -O pocl.tar.gz
+                                        wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
+                                        ls -l $DPCPP_PATH/bin
+                                        $DPCPP_PATH/bin/llvm-config
                                         tar xzf pocl.tar.gz
-                                        ls -l
-                                        cd pocl-3.0
+                                        cd pocl-3.1
                                         mkdir -p build
                                         cd build
                                         cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF ..
