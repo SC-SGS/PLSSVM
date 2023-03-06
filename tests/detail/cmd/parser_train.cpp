@@ -28,8 +28,6 @@
 #include <string>                        // std::string
 #include <tuple>                         // std::tuple
 
-// TODO: new tests for verbosity_level
-
 class ParserTrain : public util::ParameterBase {};
 class ParserTrainDeathTest : public util::ParameterBase {};
 
@@ -147,7 +145,7 @@ TEST_P(ParserTrainKernel, parsing) {
     // convert string to kernel_type
     const auto kernel_type = util::convert_from_string<plssvm::kernel_function_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -165,7 +163,7 @@ class ParserTrainDegree : public ParserTrain, public ::testing::WithParamInterfa
 TEST_P(ParserTrainDegree, parsing) {
     const auto &[flag, degree] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", degree), "data.libsvm" });;
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", degree), "data.libsvm" });;
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -183,7 +181,7 @@ class ParserTrainGamma : public ParserTrain, public ::testing::WithParamInterfac
 TEST_P(ParserTrainGamma, parsing) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", gamma), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", gamma), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -201,7 +199,7 @@ class ParserTrainGammaDeathTest : public ParserTrain, public ::testing::WithPara
 TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", gamma), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", gamma), "data.libsvm" });
     // create parser_train object
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->argc, this->argv }), ::testing::HasSubstr(fmt::format("gamma must be greater than 0.0, but is {}!", gamma)));
 }
@@ -216,7 +214,7 @@ class ParserTrainCoef0 : public ParserTrain, public ::testing::WithParamInterfac
 TEST_P(ParserTrainCoef0, parsing) {
     const auto &[flag, coef0] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", coef0), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", coef0), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -234,7 +232,7 @@ class ParserTrainCost : public ParserTrain, public ::testing::WithParamInterface
 TEST_P(ParserTrainCost, parsing) {
     const auto &[flag, cost] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", cost), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", cost), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -252,7 +250,7 @@ class ParserTrainEpsilon : public ParserTrain, public ::testing::WithParamInterf
 TEST_P(ParserTrainEpsilon, parsing) {
     const auto &[flag, eps] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", eps), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", eps), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -270,7 +268,7 @@ class ParserTrainMaxIter : public ParserTrain, public ::testing::WithParamInterf
 TEST_P(ParserTrainMaxIter, parsing) {
     const auto &[flag, max_iter] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", max_iter), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -288,7 +286,7 @@ class ParserTrainMaxIterDeathTest : public ParserTrain, public ::testing::WithPa
 TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
     const auto &[flag, max_iter] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", max_iter), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
     // create parameter object
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->argc, this->argv }), ::testing::HasSubstr(fmt::format("max_iter must be greater than 0, but is {}!", max_iter)));
 }
@@ -305,7 +303,7 @@ TEST_P(ParserTrainBackend, parsing) {
     // convert string to backend
     const auto backend = util::convert_from_string<plssvm::backend_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -324,7 +322,7 @@ TEST_P(ParserTrainTargetPlatform, parsing) {
     // convert string to target_platform
     const auto target_platform = util::convert_from_string<plssvm::target_platform>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), fmt::format("{}", value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -345,7 +343,7 @@ TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
     // convert string to sycl::kernel_invocation_type
     const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl::kernel_invocation_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}={}", flag, value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -364,7 +362,7 @@ TEST_P(ParserTrainSYCLImplementation, parsing) {
     // convert string to sycl::implementation_type
     const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl::implementation_type>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}={}", flag, value), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -413,11 +411,28 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainUseFloatAsRealType, ::testing::
                 naming::pretty_print_parameter_flag_and_value<ParserTrainUseFloatAsRealType>);
 // clang-format on
 
+class ParserTrainVerbosity : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+TEST_P(ParserTrainVerbosity, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    // test for correctness
+    EXPECT_EQ(fmt::format("{}", plssvm::verbosity), value);
+}
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVerbosity, ::testing::Combine(
+                ::testing::Values("--verbosity"),
+                ::testing::Values("quiet", "libsvm", "timing", "full")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainVerbosity>);
+// clang-format on
+
 class ParserTrainQuiet : public ParserTrain, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParserTrainQuiet, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag), "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-train", flag, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
@@ -429,7 +444,7 @@ class ParserTrainHelp : public ParserTrain, public ::testing::WithParamInterface
 TEST_P(ParserTrainHelp, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag) });
+    this->CreateCMDArgs({ "./plssvm-train", flag });
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
@@ -439,7 +454,7 @@ class ParserTrainVersion : public ParserTrain, public ::testing::WithParamInterf
 TEST_P(ParserTrainVersion, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}", flag) });
+    this->CreateCMDArgs({ "./plssvm-train", flag });
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
