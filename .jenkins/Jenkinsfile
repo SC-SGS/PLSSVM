@@ -263,6 +263,7 @@ pipeline {
                                     if [ ! -d $POCL_PATH ]; then
                                         wget https://github.com/pocl/pocl/archive/refs/tags/v3.0.tar.gz -O pocl.tar.gz
                                         tar xzf pocl.tar.gz
+                                        ls -l
                                         cd pocl-3.0
                                         mkdir -p build
                                         cd build
