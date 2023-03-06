@@ -74,6 +74,7 @@ pipeline {
 
                         }
                     }
+                    parallel builders
                 }
             }
         }
