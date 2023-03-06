@@ -56,6 +56,27 @@ pipeline {
     }
 
     stages{
+        stage('Build PoCL')
+        {
+            agent { label 'pcsgs02 && pcsgs03 && pcsgs04 && pcsgs05 && pcsgs09 && pcsgs11' }
+            steps{
+                sh '''
+                    if [ ! -d pocl ] && [ ! -f pocl.tar.gz* ]; then
+                        wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
+                        tar xvzf pocl.tar.gz
+                        cd pocl
+                        mkdir build
+                        cd build
+                        cmake ..
+                        make -j 4
+                        # make install
+                        cd ../..
+                        rm pocl.tar.gz
+
+                     '''
+            }
+        }
+
         stage('Build'){
             matrix{
                 axes {
@@ -82,8 +103,6 @@ pipeline {
                     stage('Dependency - CMake') {
                         steps {
                             sh '''
-                                rm -rf cmake-3.25.2-linux-x86_64
-                                sleep $[ ( $RANDOM % 10 )  + 1 ]s
                                 if [ ! -d cmake-3.25.2-linux-x86_64 ] && [ ! -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
                                     wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz
                                     tar xvzf cmake-3.25.2-linux-x86_64.tar.gz
@@ -118,7 +137,7 @@ pipeline {
                                         -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
                                         -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
                                         ../../
-                                    make -j4 install
+                                    make -j4 #install
                                 '''
                             }
                         }
