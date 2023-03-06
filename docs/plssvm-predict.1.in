@@ -31,6 +31,10 @@ must be specified if the labels should be interpreted as strings instead of inte
 must be specified if float should be used instead of double as floating point type
 
 .TP
+.B --verbosity arg
+choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+
+.TP
 .B -q, --quiet
 quiet mode (no outputs)
 
