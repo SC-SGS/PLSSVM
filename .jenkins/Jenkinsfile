@@ -42,6 +42,9 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
         WORKSPACE= "${env.WORKSPACE}"
 
+        // PoCL
+        POCL_PATH = "${env.WORKSPACE}/pocl-install"
+
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
         DPCPP_FORCE_REBUILD = "FALSE"
@@ -53,10 +56,12 @@ pipeline {
         // install path
         MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
         MAKE_INSTALL_LIBRARY_SAMPLE_REBUILD = "FALSE"
+
+
     }
 
     stages{
-        stage('Build PoCL')
+        stage('Dependency -- CMake')
         {
             steps{
                 script{
@@ -67,8 +72,49 @@ pipeline {
                         builders[label] = {
                             node(label) {
                                 sh '''
-                                    echo "hostname:`hostname`"
-                                    echo "whoami:`whoami`"
+                                    if [ -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
+                                        rm cmake-3.25.2-linux-x86_64.tar.gz*
+                                        rm -rf cmake-3.25.2-linux-x86_64
+                                    fi
+                                    if [ ! -d cmake-3.25.2-linux-x86_64  ]; then
+                                        wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz
+                                        tar xvzf cmake-3.25.2-linux-x86_64.tar.gz
+                                        rm cmake-3.25.2-linux-x86_64.tar.gz*
+                                    fi
+                                '''
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
+        stage('Dependency -- PoCL')
+        {
+            steps{
+                script{
+                    def labels = ['pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                    if [ -f pocl.tar.gz* ]; then
+                                        rm pocl.tar.gz*
+                                        rm -rf pocl.tar.gz
+                                     fi
+                                     if [ ! -d $POCL_PATH ] then
+                                        wget https://github.com/pocl/pocl/archive/refs/tags/v3.1.tar.gz -O pocl.tar.gz
+                                        tar xvzf pocl.tar.gz
+                                        cd pocl-3.1
+                                        mkdir build
+                                        cd build
+                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH ..
+                                        make -j 4 install
+                                        rm pocl.tar.gz*
+                                     fi
                                 '''
                             }
 
@@ -102,20 +148,7 @@ pipeline {
                             }
                         }
                     }
-                    stage('Dependency - CMake') {
-                        steps {
-                            sh '''
-                                if [ ! -d cmake-3.25.2-linux-x86_64 ] && [ ! -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
-                                    wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz
-                                    tar xvzf cmake-3.25.2-linux-x86_64.tar.gz
-                                    rm cmake-3.25.2-linux-x86_64.tar.gz*
-                                fi
-                                while [ -f cmake-3.25.2-linux-x86_64.tar.gz* ]; do
-                                    sleep 1
-                                done
-                            '''
-                        }
-                    }
+
                     stage('Build PLSSVM'){
                         steps{
                             dir('plssvm') {
