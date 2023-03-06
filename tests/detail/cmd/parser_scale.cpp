@@ -259,6 +259,16 @@ TEST_P(ParserScaleQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserScaleQuiet>);
 
+class ParserScaleVerbosityAndQuiet : public ParserScale {};
+TEST_F(ParserScaleVerbosityAndQuiet, parsing) {
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-scale", "--quiet", "--verbosity", "full", "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    // the quiet flag overrides the verbosity flag
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
+}
+
 class ParserScaleHelp : public ParserScale, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParserScaleHelp, parsing) {
     const std::string &flag = GetParam();

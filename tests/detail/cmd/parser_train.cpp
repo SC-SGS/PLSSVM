@@ -439,6 +439,16 @@ TEST_P(ParserTrainQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserTrainQuiet>);
 
+class ParserTrainVerbosityAndQuiet : public ParserTrain {};
+TEST_F(ParserTrainVerbosityAndQuiet, parsing) {
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", "--quiet", "--verbosity", "full", "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    // the quiet flag overrides the verbosity flag
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
+}
+
 class ParserTrainHelp : public ParserTrain, public ::testing::WithParamInterface<std::string> {};
 TEST_P(ParserTrainHelp, parsing) {
     const std::string &flag = GetParam();
