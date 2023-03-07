@@ -140,7 +140,7 @@ pipeline {
                                         rm -rf llvm
                                         git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
-                                        python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi,libunwind" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
+                                        CXX=clang++ CC=clang python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi,libunwind" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         python buildbot/compile.py
                                         cmake --build build -- omp
                                         cmake --build build -- install
