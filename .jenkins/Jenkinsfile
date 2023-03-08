@@ -136,7 +136,7 @@ pipeline {
                             node(label) {
                                 sh '''
                                     module load cuda/11.4.3
-                                    if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+//                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         #rm -rf llvm
                                         #git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
@@ -146,7 +146,7 @@ pipeline {
                                         cmake --build build -- projects/openmp/install
 
                                         rm -rf "$HIPSYCL_PATH"
-                                    fi
+//                                     fi
 
                                 '''
                             }
