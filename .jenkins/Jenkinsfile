@@ -138,7 +138,7 @@ pipeline {
                                     module load cuda/11.4.3
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         #rm -rf llvm
-                                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
+                                        #git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
                                         CXX=clang++ CC=clang python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         python buildbot/compile.py
