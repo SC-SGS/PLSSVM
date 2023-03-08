@@ -140,16 +140,17 @@ pipeline {
                                         #rm -rf llvm
                                         #git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
-                                        rm -rf build
+#rm -rf build
                                         CXX=clang++ CC=clang python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         sed -i 's/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(100)))/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(101)))/g' libcxx/include/__config
-                                                                                                                                                                                                                      python buildbot/compile.py
-
+                                        python buildbot/compile.py
                                         cmake --build build -- omp
                                         cmake --build build -- projects/openmp/install
                                         cmake --build build -- tools/clang/install
                                         cmake --build build -- install-llvm-config
                                         cmake --build build -- projects/libcxx/install
+                                        cmake --build build -- tools/llvm-config/install
+
                                         rm -rf "$HIPSYCL_PATH"
 #                                    fi
 
