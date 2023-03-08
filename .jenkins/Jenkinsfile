@@ -144,7 +144,7 @@ pipeline {
                                         python buildbot/compile.py
                                         cmake --build build -- omp
                                         cmake --build build -- projects/openmp/install
-
+                                        cmake --build build -- tools/clang/install
                                         rm -rf "$HIPSYCL_PATH"
 #                                    fi
 
