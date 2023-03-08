@@ -51,6 +51,9 @@ pipeline {
         // PoCL
         POCL_PATH = "${env.WORKSPACE}/pocl-install"
 
+        // GCC
+        GCC_PATH = "${env.WORKSPACE}/gcc-install"
+
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
         DPCPP_FORCE_REBUILD = "TRUE"
@@ -121,10 +124,43 @@ pipeline {
                 }
             }
         }
+        stage('Dependency -- gcc')
+        {
+                    steps{
+                        script{
+                            def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                                def builders = [: ]
+                                for (x in labels){
+                        def label = x
+                            builders[label] = {
+                                node(label) {
+                                    sh '''
+                                    if [ ! -d "$GCC_PATH" ] || [ "$GCC_FORCE_REBUILD" = "TRUE" ]; then
+                                        wget ftp://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-12.2.0/gcc-12.2.0.tar.xz
+                                        tar xf gcc-12.2.0.tar.xz
+                                        cd gcc-12.2.0
+                                        ./contrib/download_prerequisites
+                                        mkdir -p build-gcc
+                                        cd build-gcc
+                                        ../configure --prefix="$GCC_PATH" --disable-nls --enable-languages=c,c++
+                                        make -j $(nproc)
+                                        make install
+                                        cd ../..
+                                       rm -rf gcc-12.2.0*
+                                   fi
+                                '''
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
         stage('Dependency -- DPC++')
         {
             environment {
-                PATH="$WORKSPACE:$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:${env.PATH}"
+                PATH="$WORKSPACE:$GCC_PATH/bin:$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:${env.PATH}"
             }
             steps{
                 script{
@@ -140,8 +176,9 @@ pipeline {
                                         #rm -rf llvm
                                         #git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
-#rm -rf build
-                                        CXX=clang++ CC=clang python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
+                                        rm -rf build
+                                        whereis g++
+                                        python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         sed -i 's/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(100)))/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(101)))/g' libcxx/include/__config
                                         python buildbot/compile.py
                                         cmake --build build -- omp
