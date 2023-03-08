@@ -144,7 +144,7 @@ pipeline {
 
                                         mkdir -p build-gcc
                                         cd build-gcc
-                                        ../gcc-12.2.0/configure --prefix="$GCC_PATH" --disable-nls --enable-languages=c,c++
+                                        ../gcc-12.2.0/configure --prefix="$GCC_PATH" --disable-nls --enable-languages=c,c++ --disable-multilib
                                         make -j $(nproc)
                                         make install
                                         cd /..
