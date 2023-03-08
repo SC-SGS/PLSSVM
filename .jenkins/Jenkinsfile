@@ -142,8 +142,8 @@ pipeline {
                                         cd llvm
                                         CXX=clang++ CC=clang python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         python buildbot/compile.py
-#                                         cmake --build build -- omp
-#                                         cmake --build build -- install
+                                        cmake --build build -- omp
+                                        cmake --build build -- projects/openmp/install
 
                                         rm -rf "$HIPSYCL_PATH"
                                     fi
