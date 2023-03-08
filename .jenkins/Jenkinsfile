@@ -140,13 +140,16 @@ pipeline {
                                         tar xf gcc-12.2.0.tar.xz
                                         cd gcc-12.2.0
                                         ./contrib/download_prerequisites
+                                        cd ..
+
                                         mkdir -p build-gcc
                                         cd build-gcc
-                                        ../configure --prefix="$GCC_PATH" --disable-nls --enable-languages=c,c++
+                                        ../gcc-12.2.0/configure --prefix="$GCC_PATH" --disable-nls --enable-languages=c,c++
                                         make -j $(nproc)
                                         make install
-                                        cd ../..
+                                        cd /..
                                        rm -rf gcc-12.2.0*
+                                                                                      rm -rf build-gcc
                                    fi
                                 '''
                             }
