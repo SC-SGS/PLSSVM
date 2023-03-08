@@ -149,6 +149,7 @@ pipeline {
                                         cmake --build build -- tools/clang/install
                                         cmake --build build -- install-llvm-config
                                         cmake --build build -- projects/libcxx/install
+                                        cmake --build build -- projects/libcxxabi/install
                                         cmake --build build -- tools/llvm-config/install
 
                                         rm -rf "$HIPSYCL_PATH"
