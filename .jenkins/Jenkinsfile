@@ -172,13 +172,7 @@ pipeline {
                                         sed -i 's/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(100)))/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(101)))/g' libcxx/include/__config
                                         python buildbot/compile.py
                                         cmake --build build -- omp
-                                        cmake --build build -- projects/openmp/install
-                                        cmake --build build -- tools/clang/install
-                                        cmake --build build -- install-llvm-config
-                                        cmake --build build -- projects/libcxx/install
-                                        cmake --build build -- projects/libcxxabi/install
-                                        cmake --build build -- tools/llvm-config/install
-                                        cmake --build build -- install-libclang
+
                                         cmake --build build -- install
 
                                         rm -rf "$HIPSYCL_PATH"
