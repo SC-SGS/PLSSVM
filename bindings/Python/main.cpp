@@ -8,6 +8,8 @@ void init_backend_types(py::module &);
 void init_file_format_types(py::module &);
 void init_kernel_function_types(py::module &);
 void init_parameter(py::module &);
+void init_model(py::module &);
+void init_data_set(py::module &);
 
 PYBIND11_MODULE(plssvm, m) {
     // NOTE: the order matters. DON'T CHANGE IT!
@@ -16,4 +18,6 @@ PYBIND11_MODULE(plssvm, m) {
     init_file_format_types(m);
     init_kernel_function_types(m);
     init_parameter(m);
+    init_model(m);
+    init_data_set(m);
 }
