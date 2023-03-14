@@ -41,6 +41,8 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         )
 

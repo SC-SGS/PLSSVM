@@ -10,6 +10,8 @@ void init_kernel_function_types(py::module &);
 void init_parameter(py::module &);
 void init_model(py::module &);
 void init_data_set(py::module &);
+void init_version(py::module &);
+void init_exceptions(py::module &);
 
 PYBIND11_MODULE(plssvm, m) {
     // NOTE: the order matters. DON'T CHANGE IT!
@@ -20,4 +22,6 @@ PYBIND11_MODULE(plssvm, m) {
     init_parameter(m);
     init_model(m);
     init_data_set(m);
+    init_version(m);
+    init_exceptions(m);
 }
