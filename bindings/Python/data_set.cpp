@@ -1,12 +1,17 @@
 #include "plssvm/data_set.hpp"
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::init, py::return_value_policy
+#include "utility.hpp"  // check_kwargs_for_correctness
+
+#include "pybind11/pybind11.h"  // py::module, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
 #include "pybind11/stl.h"       // support for STL types
 
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <optional>  // std::optional, std::nullopt
+#include <string>    // std::string
+#include <utility>   // std::move
+#include <vector>    // std::vector
 
 namespace py = pybind11;
+using namespace std::literals;
 
 void init_data_set(py::module &m) {
     // bind data_set class
@@ -34,12 +39,7 @@ void init_data_set(py::module &m) {
     py::class_<data_set_type>(m, "data_set")
         .def(py::init([](const std::string &file_name, py::kwargs args) {
             // check for valid keys
-            constexpr static std::array valid_keys = { "file_format", "scaling" };
-            for (const auto &[key, value] : args) {
-                if (!plssvm::detail::contains(valid_keys, key.cast<std::string>())) {
-                    throw py::value_error(fmt::format("Invalid argument \"{}={}\" provided!", key.cast<std::string>(), value.cast<std::string>()));
-                }
-            }
+            check_kwargs_for_correctness(args, { "file_format"sv, "scaling"sv });
 
             // call the constructor corresponding to the provided named arguments
             if (args.contains("file_format") && args.contains("scaling")) {
@@ -55,7 +55,7 @@ void init_data_set(py::module &m) {
         .def(py::init([](std::vector<std::vector<real_type>> data, py::list labels, std::optional<data_set_type::scaling> scaling) {
             std::vector<std::string> tmp(py::len(labels));
             #pragma omp parallel for
-            for (std::size_t i = 0; i < py::len(labels); ++i) {
+            for (std::vector<std::string>::size_type i = 0; i < py::len(labels); ++i) {
                 tmp[i] = labels[i].cast<py::str>().cast<std::string>();
             }
             if (scaling.has_value()) {
@@ -63,14 +63,21 @@ void init_data_set(py::module &m) {
             } else {
                 return data_set_type{ std::move(data), std::move(tmp) };
             }
-        }), py::arg("data"), py::arg("labels"), py::pos_only(), py::arg("scaling") = std::nullopt)
+            }),
+            py::arg("data"),
+            py::arg("labels"),
+            py::pos_only(),
+            py::arg("scaling") = std::nullopt)
         .def(py::init([](std::vector<std::vector<real_type>> data, std::optional<data_set_type::scaling> scaling) {
             if (scaling.has_value()) {
                 return data_set_type{ std::move(data), scaling.value() };
             } else {
                 return data_set_type{ std::move(data) };
             }
-        }), py::arg("data"), py::pos_only(), py::arg("scaling") = std::nullopt)
+            }),
+            py::arg("data"),
+            py::pos_only(),
+            py::arg("scaling") = std::nullopt)
         .def("save", &data_set_type::save)
         .def("data", &data_set_type::data, py::return_value_policy::reference_internal)
         .def("has_labels", &data_set_type::has_labels)
