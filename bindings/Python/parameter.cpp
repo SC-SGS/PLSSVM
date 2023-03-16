@@ -47,3 +47,24 @@ void init_parameter(py::module &m) {
     // bind free functions
     m.def("equivalent", &plssvm::detail::equivalent<double>);
 }
+
+//.def(py::init([](const std::string &file_name, py::kwargs args) {
+//    // check for valid keys
+//    constexpr static std::array valid_keys = { "file_format", "scaling" };
+//    for (const auto &[key, value] : args) {
+//        if (!plssvm::detail::contains(valid_keys, key.cast<std::string>())) {
+//            throw py::value_error(fmt::format("Invalid argument \"{}={}\" provided!", key.cast<std::string>(), value.cast<std::string>()));
+//        }
+//    }
+//
+//    // call the constructor corresponding to the provided named arguments
+//    if (args.contains("file_format") && args.contains("scaling")) {
+//        return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), std::move(args["scaling"].cast<data_set_type::scaling>()) };
+//    } else if (args.contains("file_format")) {
+//        return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
+//    } else if (args.contains("scaling")) {
+//        return data_set_type{ file_name, std::move(args["scaling"].cast<data_set_type::scaling>()) };
+//    } else {
+//        return data_set_type{ file_name };
+//    }
+//}))
