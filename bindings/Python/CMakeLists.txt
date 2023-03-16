@@ -43,12 +43,16 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
         ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/backends/cuda_csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         )
 
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
-target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
+target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRARY_NAME})
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
 find_package(PythonLibs REQUIRED)
