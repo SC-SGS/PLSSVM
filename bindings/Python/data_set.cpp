@@ -53,6 +53,7 @@ void init_data_set(py::module &m) {
             }
         }))
         .def(py::init([](std::vector<std::vector<real_type>> data, py::list labels, std::optional<data_set_type::scaling> scaling) {
+            // TODO: investigate performance implications?
             std::vector<std::string> tmp(py::len(labels));
             #pragma omp parallel for
             for (std::vector<std::string>::size_type i = 0; i < py::len(labels); ++i) {
