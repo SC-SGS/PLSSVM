@@ -5,7 +5,6 @@
 #include "pybind11/pybind11.h"  // py::module, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
 #include "pybind11/stl.h"       // support for STL types
 
-#include <optional>  // std::optional, std::nullopt
 #include <string>    // std::string
 #include <utility>   // std::move
 #include <vector>    // std::vector
@@ -52,33 +51,33 @@ void init_data_set(py::module &m) {
                 return data_set_type{ file_name };
             }
         }))
-        .def(py::init([](std::vector<std::vector<real_type>> data, py::list labels, std::optional<data_set_type::scaling> scaling) {
+        .def(py::init([](std::vector<std::vector<real_type>> data, py::list labels, py::kwargs args) {
+            // check named arguments
+            check_kwargs_for_correctness(args, { "scaling" });
+
             // TODO: investigate performance implications?
             std::vector<std::string> tmp(py::len(labels));
             #pragma omp parallel for
             for (std::vector<std::string>::size_type i = 0; i < py::len(labels); ++i) {
                 tmp[i] = labels[i].cast<py::str>().cast<std::string>();
             }
-            if (scaling.has_value()) {
-                return data_set_type{ std::move(data), std::move(tmp), scaling.value() };
+
+            if (args.contains("scaling")) {
+                return data_set_type{ std::move(data), std::move(tmp), args["scaling"].cast<data_set_type::scaling>() };
             } else {
                 return data_set_type{ std::move(data), std::move(tmp) };
             }
-            }),
-            py::arg("data"),
-            py::arg("labels"),
-            py::pos_only(),
-            py::arg("scaling") = std::nullopt)
-        .def(py::init([](std::vector<std::vector<real_type>> data, std::optional<data_set_type::scaling> scaling) {
-            if (scaling.has_value()) {
-                return data_set_type{ std::move(data), scaling.value() };
+        }))
+        .def(py::init([](std::vector<std::vector<real_type>> data, py::kwargs args) {
+            // check named arguments
+            check_kwargs_for_correctness(args, { "scaling" });
+
+            if (args.contains("scaling")) {
+                return data_set_type{ std::move(data), args["scaling"].cast<data_set_type::scaling>() };
             } else {
                 return data_set_type{ std::move(data) };
             }
-            }),
-            py::arg("data"),
-            py::pos_only(),
-            py::arg("scaling") = std::nullopt)
+        }))
         .def("save", &data_set_type::save)
         .def("data", &data_set_type::data, py::return_value_policy::reference_internal)
         .def("has_labels", &data_set_type::has_labels)
