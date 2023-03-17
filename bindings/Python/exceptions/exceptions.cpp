@@ -2,7 +2,7 @@
 
 #include "utility.hpp"  // PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module, py::exception, py::register_exception_translator
+#include "pybind11/pybind11.h"  // py::module
 #include "pybind11/stl.h"       // support for STL types
 
 namespace py = pybind11;

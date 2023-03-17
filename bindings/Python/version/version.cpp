@@ -1,6 +1,6 @@
 #include "plssvm/version/version.hpp"
 
-#include "pybind11/pybind11.h"  // py::module, py::enum_
+#include "pybind11/pybind11.h"  // py::module, py::class_, py::object
 #include "pybind11/stl.h"       // support for STL types
 
 namespace py = pybind11;
