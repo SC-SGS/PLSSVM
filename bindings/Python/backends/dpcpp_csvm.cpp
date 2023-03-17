@@ -26,15 +26,18 @@ void init_dpcpp_csvm(py::module &m) {
         .def(py::init<plssvm::target_platform, plssvm::parameter>())
         .def(py::init([](py::kwargs args) {
             // check for valid keys
-            check_kwargs_for_correctness(args, { "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost" });
+            check_kwargs_for_correctness(args, { "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
 
             // if one of the value named parameter is provided, set the respective value
             const plssvm::parameter params = convert_kwargs_to_parameter(args);
 
-            if (args.contains("target_platform")) {
-                return std::make_unique<plssvm::dpcpp::csvm>(args["target_platform"].cast<plssvm::target_platform>(), params);
+            // set target platform
+            const plssvm::target_platform target = args.contains("target_platform") ? args["target_platform"].cast<plssvm::target_platform>() : plssvm::target_platform::automatic;
+
+            if (args.contains("sycl_kernel_invocation_type")) {
+                return std::make_unique<plssvm::dpcpp::csvm>(target, params, plssvm::sycl_kernel_invocation_type = args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>());
             } else {
-                return std::make_unique<plssvm::dpcpp::csvm>(params);
+                return std::make_unique<plssvm::dpcpp::csvm>(target, params);
             }
         }));
 

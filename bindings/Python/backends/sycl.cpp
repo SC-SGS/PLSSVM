@@ -10,7 +10,7 @@
 namespace py = pybind11;
 
 void init_sycl(py::module &m) {
-    // use its own submodule for the DPCPP CSVM bindings
+    // use its own submodule for the SYCL specific bindings
     py::module sycl_module = m.def_submodule("sycl");
 
     // register SYCL backend specific exceptions
