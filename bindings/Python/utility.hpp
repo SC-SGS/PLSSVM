@@ -42,16 +42,16 @@ inline plssvm::parameter convert_kwargs_to_parameter(py::kwargs args, plssvm::pa
     return params;
 }
 
-#define PLSSVM_REGISTER_EXCEPTION(exception_type, py_exception_name)               \
-    static py::exception<exception_type> py_exception_name(m, #py_exception_name); \
-    py::register_exception_translator([](std::exception_ptr p) {                   \
-        try {                                                                      \
-            if (p) {                                                               \
-                std::rethrow_exception(p);                                         \
-            }                                                                      \
-        } catch (const exception_type &e) {                                        \
-            py_exception_name(e.what_with_loc().c_str());                          \
-        }                                                                          \
+#define PLSSVM_REGISTER_EXCEPTION(exception_type, py_module, py_exception_name)            \
+    static py::exception<exception_type> py_exception_name(py_module, #py_exception_name); \
+    py::register_exception_translator([](std::exception_ptr p) {                           \
+        try {                                                                              \
+            if (p) {                                                                       \
+                std::rethrow_exception(p);                                                 \
+            }                                                                              \
+        } catch (const exception_type &e) {                                                \
+            py_exception_name(e.what_with_loc().c_str());                                  \
+        }                                                                                  \
     });
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
