@@ -31,7 +31,6 @@ else ()
 #    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
-#target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
@@ -45,10 +44,20 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/backends/cuda_csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         )
+if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/cuda_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/hip_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/opencl_csvm.cpp)
+endif ()
 
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})

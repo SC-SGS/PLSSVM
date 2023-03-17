@@ -16,6 +16,8 @@ void init_exceptions(py::module &);
 void init_csvm(py::module &);
 void init_openmp_csvm(py::module &);
 void init_cuda_csvm(py::module &);
+void init_hip_csvm(py::module &);
+void init_opencl_csvm(py::module &);
 
 PYBIND11_MODULE(plssvm, m) {
     // NOTE: the order matters. DON'T CHANGE IT!
@@ -35,5 +37,11 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     init_cuda_csvm(m);
+#endif
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+    init_hip_csvm(m);
+#endif
+#if defined(PLSSVM_HAS_OPENCL_BACKEND)
+    init_opencl_csvm(m);
 #endif
 }
