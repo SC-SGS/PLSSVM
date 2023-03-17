@@ -6,9 +6,10 @@
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "fmt/format.h"         // std::format
-#include "pybind11/pybind11.h"  // py::kwargs, py::value_error
+#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception
 #include "pybind11/stl.h"       // support for STL types
 
+#include <exception>    // std::exception_ptr, std::rethrow_exception
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
@@ -40,5 +41,17 @@ inline plssvm::parameter convert_kwargs_to_parameter(py::kwargs args, plssvm::pa
     }
     return params;
 }
+
+#define PLSSVM_REGISTER_EXCEPTION(exception_type, py_exception_name)               \
+    static py::exception<exception_type> py_exception_name(m, #py_exception_name); \
+    py::register_exception_translator([](std::exception_ptr p) {                   \
+        try {                                                                      \
+            if (p) {                                                               \
+                std::rethrow_exception(p);                                         \
+            }                                                                      \
+        } catch (const exception_type &e) {                                        \
+            py_exception_name(e.what_with_loc().c_str());                          \
+        }                                                                          \
+    });
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
