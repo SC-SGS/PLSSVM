@@ -22,13 +22,13 @@ else ()
             QUIET
             )
     FetchContent_MakeAvailable(pybind11)
-#    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} pybind11)
+    #    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} pybind11)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
-#    # append pybind11 to installed targets if build from source
-#    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
+    #    # append pybind11 to installed targets if build from source
+    #    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
@@ -57,6 +57,15 @@ if (TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
 endif ()
 if (TARGET ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/opencl_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/sycl.cpp)
+endif ()
+if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/hipsycl_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/dpcpp_csvm.cpp)
 endif ()
 
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)

@@ -18,6 +18,9 @@ void init_openmp_csvm(py::module &);
 void init_cuda_csvm(py::module &);
 void init_hip_csvm(py::module &);
 void init_opencl_csvm(py::module &);
+void init_sycl(py::module &);
+void init_hipsycl_csvm(py::module &);
+void init_dpcpp_csvm(py::module &);
 
 PYBIND11_MODULE(plssvm, m) {
     // NOTE: the order matters. DON'T CHANGE IT!
@@ -43,5 +46,14 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     init_opencl_csvm(m);
+#endif
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    init_sycl(m);
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    init_hipsycl_csvm(m);
+    #endif
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    init_dpcpp_csvm(m);
+    #endif
 #endif
 }
