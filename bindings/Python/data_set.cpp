@@ -42,11 +42,11 @@ void init_data_set(py::module &m) {
 
             // call the constructor corresponding to the provided named arguments
             if (args.contains("file_format") && args.contains("scaling")) {
-                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), std::move(args["scaling"].cast<data_set_type::scaling>()) };
+                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), args["scaling"].cast<data_set_type::scaling>() };
             } else if (args.contains("file_format")) {
                 return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
             } else if (args.contains("scaling")) {
-                return data_set_type{ file_name, std::move(args["scaling"].cast<data_set_type::scaling>()) };
+                return data_set_type{ file_name, args["scaling"].cast<data_set_type::scaling>() };
             } else {
                 return data_set_type{ file_name };
             }
