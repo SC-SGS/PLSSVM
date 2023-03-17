@@ -1,6 +1,6 @@
 #include "plssvm/csvm.hpp"
 
-#include "utility.hpp"  // check_kwargs_for_correctness
+#include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
 #include "pybind11/pybind11.h"  // py::module, py::class_, py::kwargs, py::overload_cast, py::const_
 #include "pybind11/stl.h"       // support for STL types
@@ -23,24 +23,8 @@ void init_csvm(py::module &m) {
         .def("set_params", [](plssvm::csvm &self, py::kwargs args) {
             // check named arguments
             check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
-
-            plssvm::parameter params = self.get_params();
-            if (args.contains("kernel_type")) {
-                params.kernel_type = args["kernel_type"].cast<plssvm::kernel_function_type>();
-            }
-            if (args.contains("degree")) {
-                params.degree = args["degree"].cast<int>();
-            }
-            if (args.contains("gamma")) {
-                params.gamma = args["gamma"].cast<real_type>();
-            }
-            if (args.contains("coef0")) {
-                params.coef0 = args["coef0"].cast<real_type>();
-            }
-            if (args.contains("cost")) {
-                params.cost = args["cost"].cast<real_type>();
-            }
-            self.set_params(params);
+            // convert kwargs to parameter and update csvm internal parameter
+            self.set_params(convert_kwargs_to_parameter(args, self.get_params()));
         })
         .def("fit", [](const plssvm::csvm &self, const plssvm::data_set<real_type, label_type> &data, py::kwargs args) {
             // check named arguments
