@@ -33,5 +33,7 @@ PYBIND11_MODULE(plssvm, m) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     init_openmp_csvm(m);
 #endif
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
     init_cuda_csvm(m);
+#endif
 }
