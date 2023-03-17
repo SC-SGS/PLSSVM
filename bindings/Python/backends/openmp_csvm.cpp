@@ -13,10 +13,11 @@
 namespace py = pybind11;
 
 void init_openmp_csvm(py::module &m) {
-    // TODO: own module?
-    // TODO: only if OpenMP backend is available
+    // use its own submodule for the OpenMP CSVM bindings
+    py::module openmp_module = m.def_submodule("openmp");
 
-    py::class_<plssvm::openmp::csvm, plssvm::csvm>(m, "openmp_csvm")
+    // bind the CSVM using the OpenMP backend
+    py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_module, "csvm")
         .def(py::init<>())
         .def(py::init<plssvm::target_platform>())
         .def(py::init<plssvm::parameter>())
@@ -28,7 +29,6 @@ void init_openmp_csvm(py::module &m) {
             // if one of the value named parameter is provided, set the respective value
             const plssvm::parameter params = convert_kwargs_to_parameter(args);
 
-            // TODO: necessary for the Python API?
             if (args.contains("target_platform")) {
                 return std::make_unique<plssvm::openmp::csvm>(args["target_platform"].cast<plssvm::target_platform>(), params);
             } else {
