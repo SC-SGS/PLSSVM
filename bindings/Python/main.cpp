@@ -1,4 +1,4 @@
-#include "pybind11/pybind11.h"  // PYBIND11_MODULE
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module
 
 namespace py = pybind11;
 
@@ -35,6 +35,8 @@ PYBIND11_MODULE(plssvm, m) {
     init_version(m);
     init_exceptions(m);
     init_csvm(m);
+
+    // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     init_openmp_csvm(m);
 #endif
