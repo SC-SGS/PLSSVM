@@ -22,6 +22,8 @@ void init_sycl(py::module &m) {
         .value("dpcpp", plssvm::sycl::implementation_type::dpcpp)
         .value("hipsycl", plssvm::sycl::implementation_type::hipsycl);
 
+    sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations);
+
     py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "kernel_invocation_type")
         .value("automatic", plssvm::sycl::kernel_invocation_type::automatic)
         .value("nd_range", plssvm::sycl::kernel_invocation_type::nd_range)
