@@ -2,6 +2,8 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
+#include "../utility.hpp"  // PLSSVM_REGISTER_EXCEPTION
+
 #include "pybind11/pybind11.h"  // py::module, py::enum_
 #include "pybind11/stl.h"       // support for STL types
 
