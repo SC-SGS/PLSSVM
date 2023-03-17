@@ -4,10 +4,11 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
+include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
 
 message(STATUS "Building Python language bindings for PLSSVM.")
 
-## try finding fmt
+## try finding pybind11
 find_package(pybind11 2.10.3 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
@@ -22,16 +23,14 @@ else ()
             QUIET
             )
     FetchContent_MakeAvailable(pybind11)
-    #    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} pybind11)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
-    #    # append pybind11 to installed targets if build from source
-    #    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
+# set source files that are always used
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
@@ -46,6 +45,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         )
+# set backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
 endif ()
@@ -68,13 +68,20 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/dpcpp_csvm.cpp)
 endif ()
 
+# create pybind11 module
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
-target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRARY_NAME})
+
+# add necessary compile options
+target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${PLSSVM_ALL_LIBRARY_NAME})
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
+# find required python libraries
 find_package(PythonLibs REQUIRED)
 target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${GPU_SAMPLER_LIBRARY_NAME})
 
+# append pybind11 bindings library to installed targets if build from source
+# TODO: doesn't work
+# append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
