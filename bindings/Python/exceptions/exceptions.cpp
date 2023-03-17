@@ -2,12 +2,12 @@
 
 #include "utility.hpp"  // PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module
+#include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // support for STL types
 
 namespace py = pybind11;
 
-void init_exceptions(py::module &m) {
+void init_exceptions(py::module_ &m) {
     // register exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::invalid_parameter_exception, m, invalid_parameter_error)
     PLSSVM_REGISTER_EXCEPTION(plssvm::file_reader_exception, m, file_reader_error)

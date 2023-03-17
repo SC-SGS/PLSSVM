@@ -1,26 +1,26 @@
-#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_
 
 namespace py = pybind11;
 
 // forward declare binding functions
-void init_constants(py::module &);
-void init_target_platforms(py::module &);
-void init_backend_types(py::module &);
-void init_file_format_types(py::module &);
-void init_kernel_function_types(py::module &);
-void init_parameter(py::module &);
-void init_model(py::module &);
-void init_data_set(py::module &);
-void init_version(py::module &);
-void init_exceptions(py::module &);
-void init_csvm(py::module &);
-void init_openmp_csvm(py::module &);
-void init_cuda_csvm(py::module &);
-void init_hip_csvm(py::module &);
-void init_opencl_csvm(py::module &);
-void init_sycl(py::module &);
-void init_hipsycl_csvm(py::module &);
-void init_dpcpp_csvm(py::module &);
+void init_constants(py::module_ &);
+void init_target_platforms(py::module_ &);
+void init_backend_types(py::module_ &);
+void init_file_format_types(py::module_ &);
+void init_kernel_function_types(py::module_ &);
+void init_parameter(py::module_ &);
+void init_model(py::module_ &);
+void init_data_set(py::module_ &);
+void init_version(py::module_ &);
+void init_exceptions(py::module_ &);
+void init_csvm(py::module_ &);
+void init_openmp_csvm(py::module_ &);
+void init_cuda_csvm(py::module_ &);
+void init_hip_csvm(py::module_ &);
+void init_opencl_csvm(py::module_ &);
+void init_sycl(py::module_ &);
+void init_hipsycl_csvm(py::module_ &);
+void init_dpcpp_csvm(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
     // NOTE: the order matters. DON'T CHANGE IT!

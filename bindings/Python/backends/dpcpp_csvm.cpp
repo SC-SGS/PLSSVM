@@ -7,16 +7,16 @@
 
 #include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::init
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types
 
 #include <memory>  // std::make_unique
 
 namespace py = pybind11;
 
-void init_dpcpp_csvm(py::module &m) {
+void init_dpcpp_csvm(py::module_ &m) {
     // use its own submodule for the DPCPP CSVM bindings
-    py::module dpcpp_module = m.def_submodule("dpcpp");
+    py::module_ dpcpp_module = m.def_submodule("dpcpp");
 
     // bind the CSVM using the DPCPP backend
     py::class_<plssvm::dpcpp::csvm, plssvm::csvm>(dpcpp_module, "csvm")

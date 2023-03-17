@@ -7,16 +7,16 @@
 
 #include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::init
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types
 
 #include <memory>  // std::make_unique
 
 namespace py = pybind11;
 
-void init_openmp_csvm(py::module &m) {
+void init_openmp_csvm(py::module_ &m) {
     // use its own submodule for the OpenMP CSVM bindings
-    py::module openmp_module = m.def_submodule("openmp");
+    py::module_ openmp_module = m.def_submodule("openmp");
 
     // bind the CSVM using the OpenMP backend
     py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_module, "csvm")

@@ -2,7 +2,7 @@
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include "fmt/core.h"           // fmt::format
-#include "pybind11/pybind11.h"  // py::module, py::enum_, py::value_error
+#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::value_error
 #include "pybind11/stl.h"       // support for STL types
 
 #include <optional>  // std::optional, std::nullopt
@@ -10,7 +10,7 @@
 
 namespace py = pybind11;
 
-void init_kernel_function_types(py::module &m) {
+void init_kernel_function_types(py::module_ &m) {
     // TODO: performance + types (float)?
     // bind enum class
     py::enum_<plssvm::kernel_function_type>(m, "kernel_function_type")

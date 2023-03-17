@@ -1,12 +1,12 @@
 #include "plssvm/parameter.hpp"
 
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module, py::class_, py::init, py::arg, py::return_value_policy, py::self
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
 #include "pybind11/stl.h"        // support for STL types
 
 namespace py = pybind11;
 
-void init_parameter(py::module &m) {
+void init_parameter(py::module_ &m) {
     const plssvm::parameter default_params{};
 
     // bind parameter class

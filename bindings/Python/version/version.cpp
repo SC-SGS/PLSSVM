@@ -1,6 +1,6 @@
 #include "plssvm/version/version.hpp"
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::object
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::object
 #include "pybind11/stl.h"       // support for STL types
 
 namespace py = pybind11;
@@ -8,7 +8,7 @@ namespace py = pybind11;
 // dummy class
 class version {};
 
-void init_version(py::module &m) {
+void init_version(py::module_ &m) {
     // bind global version information
     // complexity necessary to enforce read-only
     py::class_<version>(m, "version")

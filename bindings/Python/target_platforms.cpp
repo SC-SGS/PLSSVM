@@ -1,11 +1,11 @@
 #include "plssvm/target_platforms.hpp"
 
-#include "pybind11/pybind11.h"  // py::module, py::enum_
+#include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types
 
 namespace py = pybind11;
 
-void init_target_platforms(py::module &m) {
+void init_target_platforms(py::module_ &m) {
     // bind enum class
     py::enum_<plssvm::target_platform>(m, "target_platform")
         .value("automatic", plssvm::target_platform::automatic)

@@ -4,14 +4,14 @@
 
 #include "../utility.hpp"  // PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module, py::enum_
+#include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types
 
 namespace py = pybind11;
 
-void init_sycl(py::module &m) {
+void init_sycl(py::module_ &m) {
     // use its own submodule for the SYCL specific bindings
-    py::module sycl_module = m.def_submodule("sycl");
+    py::module_ sycl_module = m.def_submodule("sycl");
 
     // register SYCL backend specific exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::sycl::backend_exception, sycl_module, backend_error)

@@ -2,14 +2,14 @@
 
 #include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::kwargs, py::overload_cast, py::const_
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 #include "pybind11/stl.h"       // support for STL types
 
 #include <string>  // std::string
 
 namespace py = pybind11;
 
-void init_csvm(py::module &m) {
+void init_csvm(py::module_ &m) {
     using real_type = double;
     using label_type = std::string;
 

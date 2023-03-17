@@ -2,7 +2,7 @@
 
 #include "utility.hpp"  // check_kwargs_for_correctness
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
 #include "pybind11/stl.h"       // support for STL types
 
 #include <string>    // std::string
@@ -12,7 +12,7 @@
 namespace py = pybind11;
 using namespace std::literals;
 
-void init_data_set(py::module &m) {
+void init_data_set(py::module_ &m) {
     // bind data_set class
     using real_type = double;
     using label_type = std::string;

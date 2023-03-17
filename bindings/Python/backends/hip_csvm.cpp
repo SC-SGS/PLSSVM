@@ -7,16 +7,16 @@
 
 #include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::init
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types
 
 #include <memory>  // std::make_unique
 
 namespace py = pybind11;
 
-void init_hip_csvm(py::module &m) {
+void init_hip_csvm(py::module_ &m) {
     // use its own submodule for the HIP CSVM bindings
-    py::module hip_module = m.def_submodule("hip");
+    py::module_ hip_module = m.def_submodule("hip");
 
     // bind the CSVM using the HIP backend
     py::class_<plssvm::hip::csvm, plssvm::csvm>(hip_module, "csvm")

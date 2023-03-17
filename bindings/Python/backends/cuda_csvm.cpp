@@ -7,16 +7,16 @@
 
 #include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module, py::class_, py::init
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types
 
 #include <memory>  // std::make_unique
 
 namespace py = pybind11;
 
-void init_cuda_csvm(py::module &m) {
+void init_cuda_csvm(py::module_ &m) {
     // use its own submodule for the CUDA CSVM bindings
-    py::module cuda_module = m.def_submodule("cuda");
+    py::module_ cuda_module = m.def_submodule("cuda");
 
     // bind the CSVM using the CUDA backend
     py::class_<plssvm::cuda::csvm, plssvm::csvm>(cuda_module, "csvm")
