@@ -1,5 +1,6 @@
 #include "plssvm/model.hpp"
 
+#include "fmt/core.h"           // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
 #include "pybind11/stl.h"       // support for STL types
 
@@ -21,5 +22,9 @@ void init_model(py::module_ &m) {
         .def("get_params", &model_type::get_params, py::return_value_policy::reference_internal)
         .def("support_vectors", &model_type::support_vectors, py::return_value_policy::reference_internal)
         .def("weights", &model_type::weights, py::return_value_policy::reference_internal)
-        .def("rho", &model_type::rho);
+        .def("rho", &model_type::rho)
+        .def("__repr__", [](const model_type &model) {
+            return fmt::format("<plssvm.model with {{ #sv: {}, #features: {}, rho: {} }}>",
+                               model.num_support_vectors(), model.num_features(), model.rho());
+        });
 }

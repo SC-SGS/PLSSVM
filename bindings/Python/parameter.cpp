@@ -1,8 +1,11 @@
 #include "plssvm/parameter.hpp"
 
+#include "fmt/core.h"            // fmt::format
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
 #include "pybind11/stl.h"        // support for STL types
+
+#include <sstream>
 
 namespace py = pybind11;
 
@@ -45,7 +48,11 @@ void init_parameter(py::module_ &m) {
             py::return_value_policy::reference)
         .def("equivalent", &plssvm::parameter::equivalent)
         .def(py::self == py::self)
-        .def(py::self != py::self);
+        .def(py::self != py::self)
+        .def("__repr__", [](const plssvm::parameter &params) {
+            return fmt::format("<plssvm.parameter with {{ kernel_type: {}, degree: {}, gamma:{}, coef0: {}, cost: {} }}>",
+                               params.kernel_type, params.degree, params.gamma, params.coef0, params.cost);
+        });
 
     // bind free functions
     m.def("equivalent", &plssvm::detail::equivalent<double>);

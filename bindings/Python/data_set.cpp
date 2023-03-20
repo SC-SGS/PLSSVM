@@ -2,12 +2,14 @@
 
 #include "utility.hpp"  // check_kwargs_for_correctness
 
+#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::join
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
 #include "pybind11/stl.h"       // support for STL types
 
-#include <string>    // std::string
-#include <utility>   // std::move
-#include <vector>    // std::vector
+#include <string>   // std::string
+#include <utility>  // std::move
+#include <vector>   // std::vector
 
 namespace py = pybind11;
 using namespace std::literals;
@@ -24,7 +26,13 @@ void init_data_set(py::module_ &m) {
         .def(py::init<size_type, real_type, real_type>(), py::arg("feature"), py::arg("lower"), py::arg("upper"))
         .def_readonly("feature", &data_set_type::scaling::factors::feature)
         .def_readonly("lower", &data_set_type::scaling::factors::lower)
-        .def_readonly("upper", &data_set_type::scaling::factors::upper);
+        .def_readonly("upper", &data_set_type::scaling::factors::upper)
+        .def("__repr__", [](const data_set_type::scaling::factors &scaling_factors) {
+            return fmt::format("<plssvm.data_set.scaling.factors with {{ feature: {}, lower: {}, upper: {} }}>",
+                               scaling_factors.feature,
+                               scaling_factors.lower,
+                               scaling_factors.upper);
+        });
 
     // bind the plssvm::data_set internal "scaling" struct
     py::class_<data_set_type::scaling>(m, "data_set_scaling")
@@ -32,7 +40,13 @@ void init_data_set(py::module_ &m) {
         .def(py::init<const std::string &>())
         .def("save", &data_set_type::scaling::save)
         .def_readonly("scaling_interval", &data_set_type::scaling::scaling_interval)
-        .def_readonly("scaling_factors", &data_set_type::scaling::scaling_factors);
+        .def_readonly("scaling_factors", &data_set_type::scaling::scaling_factors)
+        .def("__repr__", [](const data_set_type::scaling &scaling) {
+            return fmt::format("<plssvm.data_set.scaling with {{ lower: {}, upper: {}, #factors: {} }}>",
+                               scaling.scaling_interval.first,
+                               scaling.scaling_interval.second,
+                               scaling.scaling_factors.size());
+        });
 
     // bind the data set class
     py::class_<data_set_type>(m, "data_set")
@@ -87,5 +101,20 @@ void init_data_set(py::module_ &m) {
         .def("num_features", &data_set_type::num_features)
         .def("num_different_labels", &data_set_type::num_different_labels)
         .def("is_scaled", &data_set_type::is_scaled)
-        .def("scaling_factors", &data_set_type::scaling_factors, py::return_value_policy::reference_internal);
+        .def("scaling_factors", &data_set_type::scaling_factors, py::return_value_policy::reference_internal)
+        .def("__repr__", [](const data_set_type &data) {
+            std::string optional_repr{};
+            if (data.has_labels()) {
+                optional_repr += fmt::format(", labels: [{}]", fmt::join(data.different_labels().value(), ", "));
+            }
+            if (data.is_scaled()) {
+                optional_repr += fmt::format(", scaling: [{}, {}]",
+                                             data.scaling_factors()->get().scaling_interval.first,
+                                             data.scaling_factors()->get().scaling_interval.second);
+            }
+            return fmt::format("<plssvm.data_set with {{ #points: {}, #features: {}{} }}>",
+                               data.num_data_points(),
+                               data.num_features(),
+                               optional_repr);
+        });
 }
