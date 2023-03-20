@@ -47,6 +47,35 @@ void init_csvm(py::module_ &m) {
 
     // bind plssvm::make_csvm factory function to a "generic" Python csvm class
     py::class_<plssvm::csvm>(m, "Csvm", pycsvm, py::module_local())
+        .def(py::init([](const plssvm::parameter &params, py::kwargs args) {
+                 // check named arguments
+                 check_kwargs_for_correctness(args, { "backend", "target_platform", "sycl_implementation_type", "sycl_kernel_invocation_type" });
+                 // backend type
+                 plssvm::backend_type backend = plssvm::backend_type::automatic;
+                 if (args.contains("backend")) {
+                     backend = args["backend"].cast<plssvm::backend_type>();
+                 }
+                 // target platform
+                 plssvm::target_platform target = plssvm::target_platform::automatic;
+                 if (args.contains("target_platform")) {
+                     target = args["target_platform"].cast<plssvm::target_platform>();
+                 }
+                 if (backend == plssvm::backend_type::sycl) {
+                     // sycl specific flags
+                     plssvm::sycl::implementation_type impl_type = plssvm::sycl::implementation_type::automatic;
+                     if (args.contains("sycl_implementation_type")) {
+                         impl_type = args["sycl_implementation_type"].cast<plssvm::sycl::implementation_type>();
+                     }
+                     plssvm::sycl::kernel_invocation_type invocation_type = plssvm::sycl::kernel_invocation_type::automatic;
+                     if (args.contains("sycl_kernel_invocation_type")) {
+                         invocation_type = args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>();
+                     }
+
+                     return plssvm::make_csvm(backend, target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_kernel_invocation_type = invocation_type);
+                 } else {
+                     return plssvm::make_csvm(backend, target, params);
+                 }
+             }), "create the 'best' SVM for the available (or provided) backends and target platforms")
         .def(py::init([](py::kwargs args) {
             // check named arguments
             check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
