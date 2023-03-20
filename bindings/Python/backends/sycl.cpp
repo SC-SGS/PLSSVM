@@ -11,7 +11,7 @@ namespace py = pybind11;
 
 void init_sycl(py::module_ &m) {
     // use its own submodule for the SYCL specific bindings
-    py::module_ sycl_module = m.def_submodule("sycl");
+    py::module_ sycl_module = m.def_submodule("sycl", "a module containing all SYCL backend specific functionality");
 
     // register SYCL backend specific exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::sycl::backend_exception, sycl_module, BackendError)

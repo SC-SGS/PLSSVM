@@ -23,6 +23,8 @@ void init_hipsycl_csvm(py::module_ &);
 void init_dpcpp_csvm(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
+    m.doc() = "Parallel Least Squares Support Vector Machine";
+
     // NOTE: the order matters. DON'T CHANGE IT!
     init_constants(m);
     init_target_platforms(m);

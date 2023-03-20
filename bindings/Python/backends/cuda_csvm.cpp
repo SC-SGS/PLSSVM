@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_cuda_csvm(py::module_ &m) {
     // use its own submodule for the CUDA CSVM bindings
-    py::module_ cuda_module = m.def_submodule("cuda");
+    py::module_ cuda_module = m.def_submodule("cuda", "a module containing all CUDA backend specific functionality");
 
     // bind the CSVM using the CUDA backend
     py::class_<plssvm::cuda::csvm, plssvm::csvm>(cuda_module, "Csvm")

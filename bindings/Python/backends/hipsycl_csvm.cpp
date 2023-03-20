@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_hipsycl_csvm(py::module_ &m) {
     // use its own submodule for the hipSYCL CSVM bindings
-    py::module_ hipsycl_module = m.def_submodule("hipsycl");
+    py::module_ hipsycl_module = m.def_submodule("hipsycl", "a module containing all hipSYCL SYCL backend specific functionality");
 
     // bind the CSVM using the hipSYCL backend
     py::class_<plssvm::hipsycl::csvm, plssvm::csvm>(hipsycl_module, "Csvm")

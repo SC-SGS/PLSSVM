@@ -14,9 +14,9 @@ void init_csvm(py::module_ &m) {
     using real_type = double;
     using label_type = std::string;
 
-    py::module_ pure_virtual_model = m.def_submodule("_pure_virtual");
+    py::module_ pure_virtual_model = m.def_submodule("__pure_virtual");
 
-    py::class_<plssvm::csvm> pycsvm(pure_virtual_model, "_pure_virtual_base_csvm");
+    py::class_<plssvm::csvm> pycsvm(pure_virtual_model, "__pure_virtual_base_csvm");
     pycsvm.def("get_params", &plssvm::csvm::get_params, "get the parameter used for this SVM")
         .def("set_params", [](plssvm::csvm &self, const plssvm::parameter &params) {
             self.set_params(params);

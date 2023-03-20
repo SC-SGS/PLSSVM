@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_hip_csvm(py::module_ &m) {
     // use its own submodule for the HIP CSVM bindings
-    py::module_ hip_module = m.def_submodule("hip");
+    py::module_ hip_module = m.def_submodule("hip", "a module containing all HIP backend specific functionality");
 
     // bind the CSVM using the HIP backend
     py::class_<plssvm::hip::csvm, plssvm::csvm>(hip_module, "Csvm")

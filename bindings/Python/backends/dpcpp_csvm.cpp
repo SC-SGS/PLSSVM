@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_dpcpp_csvm(py::module_ &m) {
     // use its own submodule for the DPCPP CSVM bindings
-    py::module_ dpcpp_module = m.def_submodule("dpcpp");
+    py::module_ dpcpp_module = m.def_submodule("dpcpp", "a module containing all DPC++ SYCL backend specific functionality");
 
     // bind the CSVM using the DPCPP backend
     py::class_<plssvm::dpcpp::csvm, plssvm::csvm>(dpcpp_module, "Csvm")

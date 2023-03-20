@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_opencl_csvm(py::module_ &m) {
     // use its own submodule for the OpenCL CSVM bindings
-    py::module_ opencl_module = m.def_submodule("opencl");
+    py::module_ opencl_module = m.def_submodule("opencl", "a module containing all OpenCL backend specific functionality");
 
     // bind the CSVM using the OpenCL backend
     py::class_<plssvm::opencl::csvm, plssvm::csvm>(opencl_module, "Csvm")

@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_openmp_csvm(py::module_ &m) {
     // use its own submodule for the OpenMP CSVM bindings
-    py::module_ openmp_module = m.def_submodule("openmp");
+    py::module_ openmp_module = m.def_submodule("openmp", "a module containing all OpenMP backend specific functionality");
 
     // bind the CSVM using the OpenMP backend
     py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_module, "Csvm")
