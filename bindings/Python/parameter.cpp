@@ -32,17 +32,17 @@ void init_parameter(py::module_ &m) {
             [](plssvm::parameter &param, const int degree) { param.degree = degree; },
             py::return_value_policy::reference)
         .def_property(
-            "degree",
+            "gamma",
             [](const plssvm::parameter &param) { return param.gamma.value(); },
             [](plssvm::parameter &param, const double gamma) { param.gamma = gamma; },
             py::return_value_policy::reference)
         .def_property(
-            "degree",
+            "coef0",
             [](const plssvm::parameter &param) { return param.coef0.value(); },
             [](plssvm::parameter &param, const double coef0) { param.coef0 = coef0; },
             py::return_value_policy::reference)
         .def_property(
-            "degree",
+            "cost",
             [](const plssvm::parameter &param) { return param.cost.value(); },
             [](plssvm::parameter &param, const double cost) { param.cost = cost; },
             py::return_value_policy::reference)
