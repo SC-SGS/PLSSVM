@@ -20,6 +20,8 @@ void init_data_set(py::module_ &m) {
     using data_set_type = plssvm::data_set<real_type, label_type>;
     using size_type = typename data_set_type::size_type;
 
+    // TODO: change def to def_property_readonly based on sklearn.svm.SVC?
+
     // bind the plssvm::data_set::scaling internal "factors" struct
     py::class_<data_set_type::scaling::factors>(m, "DataSetScalingFactors")
         .def(py::init<size_type, real_type, real_type>(), py::arg("feature"), py::arg("lower"), py::arg("upper"))

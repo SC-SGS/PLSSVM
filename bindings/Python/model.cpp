@@ -14,6 +14,8 @@ void init_model(py::module_ &m) {
     using label_type = std::string;
     using model_type = plssvm::model<real_type, label_type>;
 
+    // TODO: change def to def_property_readonly based on sklearn.svm.SVC?
+
     py::class_<model_type>(m, "Model")
         .def(py::init<const std::string &>())
         .def("save", &model_type::save)
