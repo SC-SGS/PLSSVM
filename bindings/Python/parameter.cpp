@@ -1,5 +1,7 @@
 #include "plssvm/parameter.hpp"
 
+#include "utility.hpp"
+
 #include "fmt/core.h"            // fmt::format
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
@@ -10,18 +12,15 @@
 namespace py = pybind11;
 
 void init_parameter(py::module_ &m) {
-    // used to retrieve the default values
-    const plssvm::parameter default_params{};
-
     // bind parameter class
     py::class_<plssvm::parameter>(m, "Parameter")
         .def(py::init<>())
-        .def(py::init<plssvm::kernel_function_type, int, double, double, double>(), "create a new SVM parameter object",
-             py::arg("kernel_type") = default_params.kernel_type.value(),
-             py::arg("degree") = default_params.degree.value(),
-             py::arg("gamma") = default_params.gamma.value(),
-             py::arg("coef0") = default_params.coef0.value(),
-             py::arg("cost") = default_params.cost.value())
+        .def(py::init([](py::kwargs args) {
+            // check for valid keys
+            check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+            // if one of the value named parameter is provided, set the respective value
+            return convert_kwargs_to_parameter(args);
+        }), "create a new SVM parameter object")
         .def_property(
             "kernel_type",
             [](const plssvm::parameter &param) { return param.kernel_type.value(); },
