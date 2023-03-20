@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-void init_opencl_csvm(py::module_ &m) {
+void init_opencl_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the OpenCL CSVM bindings
     py::module_ opencl_module = m.def_submodule("opencl", "a module containing all OpenCL backend specific functionality");
 
@@ -39,5 +39,5 @@ void init_opencl_csvm(py::module_ &m) {
         }), "create an SVM using keyword arguments");
 
     // register OpenCL backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::opencl::backend_exception, opencl_module, BackendError)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::opencl::backend_exception, opencl_module, BackendError, base_exception)
 }

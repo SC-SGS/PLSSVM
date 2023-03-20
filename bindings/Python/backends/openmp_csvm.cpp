@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-void init_openmp_csvm(py::module_ &m) {
+void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the OpenMP CSVM bindings
     py::module_ openmp_module = m.def_submodule("openmp", "a module containing all OpenMP backend specific functionality");
 
@@ -39,5 +39,5 @@ void init_openmp_csvm(py::module_ &m) {
         }), "create an SVM using keyword arguments");
 
     // register OpenMP backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::openmp::backend_exception, openmp_module, BackendError)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::openmp::backend_exception, openmp_module, BackendError, base_exception)
 }

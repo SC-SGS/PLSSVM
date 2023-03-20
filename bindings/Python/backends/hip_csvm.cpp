@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-void init_hip_csvm(py::module_ &m) {
+void init_hip_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the HIP CSVM bindings
     py::module_ hip_module = m.def_submodule("hip", "a module containing all HIP backend specific functionality");
 
@@ -39,5 +39,5 @@ void init_hip_csvm(py::module_ &m) {
         }), "create an SVM using keyword arguments");
 
     // register HIP backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::hip::backend_exception, hip_module, BackendError)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::hip::backend_exception, hip_module, BackendError, base_exception)
 }

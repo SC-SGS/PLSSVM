@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-void init_dpcpp_csvm(py::module_ &m) {
+void init_dpcpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the DPCPP CSVM bindings
     py::module_ dpcpp_module = m.def_submodule("dpcpp", "a module containing all DPC++ SYCL backend specific functionality");
 
@@ -42,5 +42,5 @@ void init_dpcpp_csvm(py::module_ &m) {
         }), "create an SVM using keyword arguments");
 
     // register DPCPP backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::dpcpp::backend_exception, dpcpp_module, BackendError)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::dpcpp::backend_exception, dpcpp_module, BackendError, base_exception)
 }

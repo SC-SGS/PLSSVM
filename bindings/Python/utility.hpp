@@ -56,18 +56,19 @@ inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std:
 
 /**
  * @def PLSSVM_REGISTER_EXCEPTION
- * @brief Register the PLSSVM exception @p exception_type in the Python module @p py_module using the Python name @p py_exception_name.
+ * @brief Register the PLSSVM exception @p exception_type derived from @p base_exception in the Python module
+ *        @p py_module using the Python name @p py_exception_name.
  */
-#define PLSSVM_REGISTER_EXCEPTION(exception_type, py_module, py_exception_name)            \
-    static py::exception<exception_type> py_exception_name(py_module, #py_exception_name); \
-    py::register_exception_translator([](std::exception_ptr p) {                           \
-        try {                                                                              \
-            if (p) {                                                                       \
-                std::rethrow_exception(p);                                                 \
-            }                                                                              \
-        } catch (const exception_type &e) {                                                \
-            py_exception_name(e.what_with_loc().c_str());                                  \
-        }                                                                                  \
+#define PLSSVM_REGISTER_EXCEPTION(exception_type, py_module, py_exception_name, base_exception)                  \
+    static py::exception<exception_type> py_exception_name(py_module, #py_exception_name, base_exception.ptr()); \
+    py::register_exception_translator([](std::exception_ptr p) {                                                 \
+        try {                                                                                                    \
+            if (p) {                                                                                             \
+                std::rethrow_exception(p);                                                                       \
+            }                                                                                                    \
+        } catch (const exception_type &e) {                                                                      \
+            py_exception_name(e.what_with_loc().c_str());                                                        \
+        }                                                                                                        \
     });
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_

@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-void init_cuda_csvm(py::module_ &m) {
+void init_cuda_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the CUDA CSVM bindings
     py::module_ cuda_module = m.def_submodule("cuda", "a module containing all CUDA backend specific functionality");
 
@@ -39,5 +39,5 @@ void init_cuda_csvm(py::module_ &m) {
         }), "create an SVM using keyword arguments");
 
     // register CUDA backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::cuda::backend_exception, cuda_module, BackendError)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::cuda::backend_exception, cuda_module, BackendError, base_exception)
 }
