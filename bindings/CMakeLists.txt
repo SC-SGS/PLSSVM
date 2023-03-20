@@ -17,4 +17,7 @@ if (PLSSVM_ENABLE_PYTHON_BINDINGS)
 endif ()
 
 
+# explicitly update install targets in parent scope
+set(PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_TARGETS_TO_INSTALL}" PARENT_SCOPE)
+
 list(POP_BACK CMAKE_MESSAGE_INDENT)

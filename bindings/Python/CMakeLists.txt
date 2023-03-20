@@ -32,17 +32,20 @@ endif ()
 
 # set source files that are always used
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
+
+        ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
         ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/model.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         )
 # set backends specific source files if the respective backend is used
@@ -82,6 +85,5 @@ find_package(PythonLibs REQUIRED)
 target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${GPU_SAMPLER_LIBRARY_NAME})
 
-# append pybind11 bindings library to installed targets if build from source
-# TODO: doesn't work
-# append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
+# append pybind11 bindings library to installed targets
+ append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
