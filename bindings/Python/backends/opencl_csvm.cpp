@@ -19,7 +19,7 @@ void init_opencl_csvm(py::module_ &m) {
     py::module_ opencl_module = m.def_submodule("opencl");
 
     // bind the CSVM using the OpenCL backend
-    py::class_<plssvm::opencl::csvm, plssvm::csvm>(opencl_module, "csvm")
+    py::class_<plssvm::opencl::csvm, plssvm::csvm>(opencl_module, "Csvm")
         .def(py::init<>())
         .def(py::init<plssvm::target_platform>())
         .def(py::init<plssvm::parameter>())
@@ -39,5 +39,5 @@ void init_opencl_csvm(py::module_ &m) {
         }));
 
     // register OpenCL backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::opencl::backend_exception, opencl_module, backend_error)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::opencl::backend_exception, opencl_module, BackendError)
 }

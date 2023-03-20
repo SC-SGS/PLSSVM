@@ -7,13 +7,13 @@ namespace py = pybind11;
 
 void init_backend_types(py::module_ & m) {
     // bind enum class
-    py::enum_<plssvm::backend_type>(m, "backend_type")
-        .value("automatic", plssvm::backend_type::automatic)
-        .value("openmp", plssvm::backend_type::openmp)
-        .value("cuda", plssvm::backend_type::cuda)
-        .value("hip", plssvm::backend_type::hip)
-        .value("opencl", plssvm::backend_type::opencl)
-        .value("sycl", plssvm::backend_type::sycl);
+    py::enum_<plssvm::backend_type>(m, "BackendType")
+        .value("AUTOMATIC", plssvm::backend_type::automatic)
+        .value("OPENMP", plssvm::backend_type::openmp)
+        .value("CUDA", plssvm::backend_type::cuda)
+        .value("HIP", plssvm::backend_type::hip)
+        .value("OPENCL", plssvm::backend_type::opencl)
+        .value("SYCL", plssvm::backend_type::sycl);
 
     // bind free functions
     m.def("list_available_backends", &plssvm::list_available_backends);

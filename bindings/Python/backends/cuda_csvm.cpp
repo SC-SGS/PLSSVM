@@ -19,7 +19,7 @@ void init_cuda_csvm(py::module_ &m) {
     py::module_ cuda_module = m.def_submodule("cuda");
 
     // bind the CSVM using the CUDA backend
-    py::class_<plssvm::cuda::csvm, plssvm::csvm>(cuda_module, "csvm")
+    py::class_<plssvm::cuda::csvm, plssvm::csvm>(cuda_module, "Csvm")
         .def(py::init<>())
         .def(py::init<plssvm::target_platform>())
         .def(py::init<plssvm::parameter>())
@@ -39,5 +39,5 @@ void init_cuda_csvm(py::module_ &m) {
         }));
 
     // register CUDA backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::cuda::backend_exception, cuda_module, backend_error)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::cuda::backend_exception, cuda_module, BackendError)
 }

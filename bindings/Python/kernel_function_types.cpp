@@ -11,12 +11,11 @@
 namespace py = pybind11;
 
 void init_kernel_function_types(py::module_ &m) {
-    // TODO: performance + types (float)?
     // bind enum class
-    py::enum_<plssvm::kernel_function_type>(m, "kernel_function_type")
-        .value("linear", plssvm::kernel_function_type::linear)
-        .value("polynomial", plssvm::kernel_function_type::polynomial)
-        .value("rbf", plssvm::kernel_function_type::rbf);
+    py::enum_<plssvm::kernel_function_type>(m, "KernelFunctionType")
+        .value("LINEAR", plssvm::kernel_function_type::linear)
+        .value("POLYNOMIAL", plssvm::kernel_function_type::polynomial)
+        .value("RBF", plssvm::kernel_function_type::rbf);
 
     // bind free functions
     m.def("kernel_function_type_to_math_string", &plssvm::kernel_function_type_to_math_string);

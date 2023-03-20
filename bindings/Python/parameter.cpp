@@ -13,7 +13,7 @@ void init_parameter(py::module_ &m) {
     const plssvm::parameter default_params{};
 
     // bind parameter class
-    py::class_<plssvm::parameter>(m, "parameter")
+    py::class_<plssvm::parameter>(m, "Parameter")
         .def(py::init<>())
         .def(py::init<plssvm::kernel_function_type, int, double, double, double>(),
              py::arg("kernel_type") = default_params.kernel_type.value(),
@@ -50,7 +50,7 @@ void init_parameter(py::module_ &m) {
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def("__repr__", [](const plssvm::parameter &params) {
-            return fmt::format("<plssvm.parameter with {{ kernel_type: {}, degree: {}, gamma:{}, coef0: {}, cost: {} }}>",
+            return fmt::format("<plssvm.Parameter with {{ kernel_type: {}, degree: {}, gamma:{}, coef0: {}, cost: {} }}>",
                                params.kernel_type, params.degree, params.gamma, params.coef0, params.cost);
         });
 

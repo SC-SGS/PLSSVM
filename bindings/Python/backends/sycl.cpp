@@ -14,18 +14,18 @@ void init_sycl(py::module_ &m) {
     py::module_ sycl_module = m.def_submodule("sycl");
 
     // register SYCL backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::sycl::backend_exception, sycl_module, backend_error)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::sycl::backend_exception, sycl_module, BackendError)
 
     // bind the two enum classes
-    py::enum_<plssvm::sycl::implementation_type>(sycl_module, "implementation_type")
-        .value("automatic", plssvm::sycl::implementation_type::automatic)
-        .value("dpcpp", plssvm::sycl::implementation_type::dpcpp)
-        .value("hipsycl", plssvm::sycl::implementation_type::hipsycl);
+    py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType")
+        .value("AUTOMATIC", plssvm::sycl::implementation_type::automatic)
+        .value("DPCPP", plssvm::sycl::implementation_type::dpcpp)
+        .value("HIPSYCL", plssvm::sycl::implementation_type::hipsycl);
 
     sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations);
 
-    py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "kernel_invocation_type")
-        .value("automatic", plssvm::sycl::kernel_invocation_type::automatic)
-        .value("nd_range", plssvm::sycl::kernel_invocation_type::nd_range)
-        .value("hierarchical", plssvm::sycl::kernel_invocation_type::hierarchical);
+    py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "KernelInvocationType")
+        .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic)
+        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range)
+        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical);
 }

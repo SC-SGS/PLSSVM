@@ -19,7 +19,7 @@ void init_hip_csvm(py::module_ &m) {
     py::module_ hip_module = m.def_submodule("hip");
 
     // bind the CSVM using the HIP backend
-    py::class_<plssvm::hip::csvm, plssvm::csvm>(hip_module, "csvm")
+    py::class_<plssvm::hip::csvm, plssvm::csvm>(hip_module, "Csvm")
         .def(py::init<>())
         .def(py::init<plssvm::target_platform>())
         .def(py::init<plssvm::parameter>())
@@ -39,5 +39,5 @@ void init_hip_csvm(py::module_ &m) {
         }));
 
     // register HIP backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::hip::backend_exception, hip_module, backend_error)
+    PLSSVM_REGISTER_EXCEPTION(plssvm::hip::backend_exception, hip_module, BackendError)
 }

@@ -14,7 +14,7 @@ void init_model(py::module_ &m) {
     using label_type = std::string;
     using model_type = plssvm::model<real_type, label_type>;
 
-    py::class_<model_type>(m, "model")
+    py::class_<model_type>(m, "Model")
         .def(py::init<const std::string &>())
         .def("save", &model_type::save)
         .def("num_support_vectors", &model_type::num_support_vectors)
@@ -24,7 +24,7 @@ void init_model(py::module_ &m) {
         .def("weights", &model_type::weights, py::return_value_policy::reference_internal)
         .def("rho", &model_type::rho)
         .def("__repr__", [](const model_type &model) {
-            return fmt::format("<plssvm.model with {{ #sv: {}, #features: {}, rho: {} }}>",
+            return fmt::format("<plssvm.Model with {{ #sv: {}, #features: {}, rho: {} }}>",
                                model.num_support_vectors(), model.num_features(), model.rho());
         });
 }

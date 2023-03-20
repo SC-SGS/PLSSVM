@@ -6,7 +6,7 @@ namespace py = pybind11;
 
 void init_file_format_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::file_format_type>(m, "file_format_type")
-        .value("libsvm", plssvm::file_format_type::libsvm)
-        .value("arff", plssvm::file_format_type::arff);
+    py::enum_<plssvm::file_format_type>(m, "FileFormatType")
+        .value("LIBSVM", plssvm::file_format_type::libsvm)
+        .value("ARFF", plssvm::file_format_type::arff);
 }

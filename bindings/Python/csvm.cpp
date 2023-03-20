@@ -14,9 +14,9 @@ void init_csvm(py::module_ &m) {
     using real_type = double;
     using label_type = std::string;
 
-    py::module_ pure_virtual_model = m.def_submodule("pure_virtual");
+    py::module_ pure_virtual_model = m.def_submodule("_pure_virtual");
 
-    py::class_<plssvm::csvm> pycsvm(pure_virtual_model, "pure_virtual_base_csvm");
+    py::class_<plssvm::csvm> pycsvm(pure_virtual_model, "_pure_virtual_base_csvm");
     pycsvm.def("get_params", &plssvm::csvm::get_params)
         .def("set_params", [](plssvm::csvm &self, const plssvm::parameter &params) {
             self.set_params(params);
@@ -46,7 +46,7 @@ void init_csvm(py::module_ &m) {
         .def("score", py::overload_cast<const plssvm::model<real_type, label_type> &, const plssvm::data_set<real_type, label_type> &>(&plssvm::csvm::score<real_type, label_type>, py::const_));
 
     // bind plssvm::make_csvm factory function to a "generic" Python csvm class
-    py::class_<plssvm::csvm>(m, "csvm", pycsvm, py::module_local())
+    py::class_<plssvm::csvm>(m, "Csvm", pycsvm, py::module_local())
         .def(py::init([](py::kwargs args) {
             // check named arguments
             check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
