@@ -1,4 +1,5 @@
 #include "plssvm/csvm.hpp"
+#include "plssvm/csvm_factory.hpp"
 
 #include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
@@ -13,10 +14,10 @@ void init_csvm(py::module_ &m) {
     using real_type = double;
     using label_type = std::string;
 
-    // TODO: rewrite py::kwargs with std::optional?
+    py::module_ pure_virtual_model = m.def_submodule("pure_virtual");
 
-    py::class_<plssvm::csvm>(m, "csvm")
-        .def("get_params", &plssvm::csvm::get_params)
+    py::class_<plssvm::csvm> pycsvm(pure_virtual_model, "pure_virtual_base_csvm");
+    pycsvm.def("get_params", &plssvm::csvm::get_params)
         .def("set_params", [](plssvm::csvm &self, const plssvm::parameter &params) {
             self.set_params(params);
         })
@@ -43,4 +44,38 @@ void init_csvm(py::module_ &m) {
         .def("predict", &plssvm::csvm::predict<real_type, label_type>)
         .def("score", py::overload_cast<const plssvm::model<real_type, label_type> &>(&plssvm::csvm::score<real_type, label_type>, py::const_))
         .def("score", py::overload_cast<const plssvm::model<real_type, label_type> &, const plssvm::data_set<real_type, label_type> &>(&plssvm::csvm::score<real_type, label_type>, py::const_));
+
+    // bind plssvm::make_csvm factory function to a "generic" Python csvm class
+    py::class_<plssvm::csvm>(m, "csvm", pycsvm, py::module_local())
+        .def(py::init([](py::kwargs args) {
+            // check named arguments
+            check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
+            // convert kwargs to parameter and update csvm internal parameter
+            const plssvm::parameter params = convert_kwargs_to_parameter(args);
+            // backend type
+            plssvm::backend_type backend = plssvm::backend_type::automatic;
+            if (args.contains("backend")) {
+                backend = args["backend"].cast<plssvm::backend_type>();
+            }
+            // target platform
+            plssvm::target_platform target = plssvm::target_platform::automatic;
+            if (args.contains("target_platform")) {
+                target = args["target_platform"].cast<plssvm::target_platform>();
+            }
+            if (backend == plssvm::backend_type::sycl) {
+                // sycl specific flags
+                plssvm::sycl::implementation_type impl_type = plssvm::sycl::implementation_type::automatic;
+                if (args.contains("sycl_implementation_type")) {
+                    impl_type = args["sycl_implementation_type"].cast<plssvm::sycl::implementation_type>();
+                }
+                plssvm::sycl::kernel_invocation_type invocation_type = plssvm::sycl::kernel_invocation_type::automatic;
+                if (args.contains("sycl_kernel_invocation_type")) {
+                    invocation_type = args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>();
+                }
+
+                return plssvm::make_csvm(backend, target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_kernel_invocation_type = invocation_type);
+            } else {
+                return plssvm::make_csvm(backend, target, params);
+            }
+        }));
 }
