@@ -55,5 +55,5 @@ void init_parameter(py::module_ &m) {
         });
 
     // bind free functions
-    m.def("equivalent", &plssvm::detail::equivalent<double>);
+    m.def("equivalent", &plssvm::equivalent);
 }
