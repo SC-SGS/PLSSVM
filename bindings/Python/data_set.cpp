@@ -83,7 +83,6 @@ void init_data_set(py::module_ &m) {
 
             // TODO: investigate performance implications?
             std::vector<std::string> tmp(py::len(labels));
-            #pragma omp parallel for
             for (std::vector<std::string>::size_type i = 0; i < py::len(labels); ++i) {
                 tmp[i] = labels[i].cast<py::str>().cast<std::string>();
             }
