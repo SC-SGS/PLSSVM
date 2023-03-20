@@ -15,6 +15,12 @@
 
 namespace py = pybind11;
 
+/**
+ * @brief Check that the Python kwargs @p args only contain keyword arguments with names present in @p valid_named_args.
+ * @param[in] args the Python keyword arguments
+ * @param[in] valid_named_args the valid keyword arguments
+ * @throws pybind11::value_error if an illegal keyword arguments has been provided
+ */
 inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std::string_view> valid_named_args) {
     for (const auto &[key, value] : args) {
         if (!plssvm::detail::contains(valid_named_args, key.cast<std::string_view>())) {
@@ -23,7 +29,13 @@ inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std:
     }
 }
 
-inline plssvm::parameter convert_kwargs_to_parameter(py::kwargs args, plssvm::parameter params = {}) {
+/**
+ * @brief Convert the Python kwargs @p args to an `plssvm::parameter` object.
+ * @param[in] args the Python keyword arguments
+ * @param[in] params the baseline parameter
+ * @return the `plssvm::parameter` object filled with the keyword @p args (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline plssvm::parameter convert_kwargs_to_parameter(py::kwargs args, plssvm::parameter params = {}) {
     if (args.contains("kernel_type")) {
         params.kernel_type = args["kernel_type"].cast<typename decltype(params.kernel_type)::value_type>();
     }
@@ -42,6 +54,10 @@ inline plssvm::parameter convert_kwargs_to_parameter(py::kwargs args, plssvm::pa
     return params;
 }
 
+/**
+ * @def PLSSVM_REGISTER_EXCEPTION
+ * @brief Register the PLSSVM exception @p exception_type in the Python module @p py_module using the Python name @p py_exception_name.
+ */
 #define PLSSVM_REGISTER_EXCEPTION(exception_type, py_module, py_exception_name)            \
     static py::exception<exception_type> py_exception_name(py_module, #py_exception_name); \
     py::register_exception_translator([](std::exception_ptr p) {                           \
