@@ -24,10 +24,11 @@ void init_data_set(py::module_ &m) {
 
     // bind the plssvm::data_set::scaling internal "factors" struct
     py::class_<data_set_type::scaling::factors>(m, "DataSetScalingFactors")
-        .def(py::init<size_type, real_type, real_type>(), py::arg("feature"), py::arg("lower"), py::arg("upper"))
-        .def_readonly("feature", &data_set_type::scaling::factors::feature)
-        .def_readonly("lower", &data_set_type::scaling::factors::lower)
-        .def_readonly("upper", &data_set_type::scaling::factors::upper)
+        .def(py::init<size_type, real_type, real_type>(), "create a new scaling factor",
+            py::arg("feature"), py::arg("lower"), py::arg("upper"))
+        .def_readonly("feature", &data_set_type::scaling::factors::feature, "the feature index for which the factors are valid")
+        .def_readonly("lower", &data_set_type::scaling::factors::lower, "the lower scaling factor")
+        .def_readonly("upper", &data_set_type::scaling::factors::upper, "the upper scaling factor")
         .def("__repr__", [](const data_set_type::scaling::factors &scaling_factors) {
             return fmt::format("<plssvm.DataSetScalingFactors with {{ feature: {}, lower: {}, upper: {} }}>",
                                scaling_factors.feature,
@@ -37,11 +38,11 @@ void init_data_set(py::module_ &m) {
 
     // bind the plssvm::data_set internal "scaling" struct
     py::class_<data_set_type::scaling>(m, "DataSetScaling")
-        .def(py::init<real_type, real_type>(), py::arg("lower"), py::arg("upper"))
-        .def(py::init<const std::string &>())
-        .def("save", &data_set_type::scaling::save)
-        .def_readonly("scaling_interval", &data_set_type::scaling::scaling_interval)
-        .def_readonly("scaling_factors", &data_set_type::scaling::scaling_factors)
+        .def(py::init<real_type, real_type>(), py::arg("lower"), py::arg("upper"), "create new scaling factors for the range [lower, upper]")
+        .def(py::init<const std::string &>(), "read the scaling factors from the file")
+        .def("save", &data_set_type::scaling::save, "save the scaling factors to a file")
+        .def_readonly("scaling_interval", &data_set_type::scaling::scaling_interval, "the interval to which the data points are scaled")
+        .def_readonly("scaling_factors", &data_set_type::scaling::scaling_factors, "the scaling factors for each feature")
         .def("__repr__", [](const data_set_type::scaling &scaling) {
             return fmt::format("<plssvm.DataSetScaling with {{ lower: {}, upper: {}, #factors: {} }}>",
                                scaling.scaling_interval.first,
@@ -65,7 +66,17 @@ void init_data_set(py::module_ &m) {
             } else {
                 return data_set_type{ file_name };
             }
-        }))
+        }), "create a new data set without labels given additional optional parameters")
+        .def(py::init([](std::vector<std::vector<real_type>> data, py::kwargs args) {
+            // check named arguments
+            check_kwargs_for_correctness(args, { "scaling" });
+
+            if (args.contains("scaling")) {
+                return data_set_type{ std::move(data), args["scaling"].cast<data_set_type::scaling>() };
+            } else {
+                return data_set_type{ std::move(data) };
+            }
+        }), "create a new data set with labels given additional optional parameters")
         .def(py::init([](std::vector<std::vector<real_type>> data, py::list labels, py::kwargs args) {
             // check named arguments
             check_kwargs_for_correctness(args, { "scaling" });
@@ -83,26 +94,16 @@ void init_data_set(py::module_ &m) {
                 return data_set_type{ std::move(data), std::move(tmp) };
             }
         }))
-        .def(py::init([](std::vector<std::vector<real_type>> data, py::kwargs args) {
-            // check named arguments
-            check_kwargs_for_correctness(args, { "scaling" });
-
-            if (args.contains("scaling")) {
-                return data_set_type{ std::move(data), args["scaling"].cast<data_set_type::scaling>() };
-            } else {
-                return data_set_type{ std::move(data) };
-            }
-        }))
-        .def("save", &data_set_type::save)
-        .def("data", &data_set_type::data, py::return_value_policy::reference_internal)
-        .def("has_labels", &data_set_type::has_labels)
-        .def("labels", &data_set_type::labels, py::return_value_policy::reference_internal)
-        .def("different_labels", &data_set_type::different_labels)
-        .def("num_data_points", &data_set_type::num_data_points)
-        .def("num_features", &data_set_type::num_features)
-        .def("num_different_labels", &data_set_type::num_different_labels)
-        .def("is_scaled", &data_set_type::is_scaled)
-        .def("scaling_factors", &data_set_type::scaling_factors, py::return_value_policy::reference_internal)
+        .def("save", &data_set_type::save, "save the data set to a file")
+        .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
+        .def("num_features", &data_set_type::num_features, "the number of features per data point")
+        .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")
+        .def("has_labels", &data_set_type::has_labels, "check whether the data set has labels")
+        .def("labels", &data_set_type::labels, py::return_value_policy::reference_internal, "the labels")
+        .def("num_different_labels", &data_set_type::num_different_labels, "the number of different labels")
+        .def("different_labels", &data_set_type::different_labels, "the different labels")
+        .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
+        .def("scaling_factors", &data_set_type::scaling_factors, py::return_value_policy::reference_internal, "the factors used to scale this data set")
         .def("__repr__", [](const data_set_type &data) {
             std::string optional_repr{};
             if (data.has_labels()) {

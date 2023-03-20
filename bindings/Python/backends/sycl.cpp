@@ -18,14 +18,14 @@ void init_sycl(py::module_ &m) {
 
     // bind the two enum classes
     py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType")
-        .value("AUTOMATIC", plssvm::sycl::implementation_type::automatic)
-        .value("DPCPP", plssvm::sycl::implementation_type::dpcpp)
-        .value("HIPSYCL", plssvm::sycl::implementation_type::hipsycl);
+        .value("AUTOMATIC", plssvm::sycl::implementation_type::automatic, "use the available SYCL implementation; if more than one implementation is available, the macro PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION must be defined during the CMake configuration")
+        .value("DPCPP", plssvm::sycl::implementation_type::dpcpp, "use DPC++ as SYCL implementation")
+        .value("HIPSYCL", plssvm::sycl::implementation_type::hipsycl, "use hipSYCL as SYCL implementation");
 
-    sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations);
+    sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations, "list all available SYCL implementations");
 
     py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "KernelInvocationType")
-        .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic)
-        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range)
-        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical);
+        .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
+        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type")
+        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical, "use the hierarchical kernel invocation type");
 }

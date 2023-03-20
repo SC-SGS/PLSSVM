@@ -20,10 +20,10 @@ void init_dpcpp_csvm(py::module_ &m) {
 
     // bind the CSVM using the DPCPP backend
     py::class_<plssvm::dpcpp::csvm, plssvm::csvm>(dpcpp_module, "Csvm")
-        .def(py::init<>())
-        .def(py::init<plssvm::target_platform>())
-        .def(py::init<plssvm::parameter>())
-        .def(py::init<plssvm::target_platform, plssvm::parameter>())
+        .def(py::init<>(), "create an SVM with the automatic target platform and default parameters")
+        .def(py::init<plssvm::target_platform>(), "create an SVM with the default parameters")
+        .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform")
+        .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create a new SVM with the provided target platform and parameters")
         .def(py::init([](py::kwargs args) {
             // check for valid keys
             check_kwargs_for_correctness(args, { "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
@@ -39,7 +39,7 @@ void init_dpcpp_csvm(py::module_ &m) {
             } else {
                 return std::make_unique<plssvm::dpcpp::csvm>(target, params);
             }
-        }));
+        }), "create an SVM using keyword arguments");
 
     // register DPCPP backend specific exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::dpcpp::backend_exception, dpcpp_module, BackendError)

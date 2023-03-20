@@ -6,5 +6,5 @@ namespace py = pybind11;
 
 void init_constants(py::module_ &m) {
     // enable or disable verbose output
-    m.def("quiet", [](const bool verb) { plssvm::verbose = !verb; });
+    m.def("quiet", [](const bool verb) { plssvm::verbose = !verb; }, "if set to true, no command line output is made during calls to PLSSVM functions");
 }

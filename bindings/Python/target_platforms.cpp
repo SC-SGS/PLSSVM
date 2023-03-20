@@ -8,14 +8,14 @@ namespace py = pybind11;
 void init_target_platforms(py::module_ &m) {
     // bind enum class
     py::enum_<plssvm::target_platform>(m, "TargetPlatform")
-        .value("AUTOMATIC", plssvm::target_platform::automatic)
-        .value("CPU", plssvm::target_platform::cpu)
-        .value("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia)
-        .value("GPU_AMD", plssvm::target_platform::gpu_amd)
-        .value("GPU_INTEL", plssvm::target_platform::gpu_intel);
+        .value("AUTOMATIC", plssvm::target_platform::automatic, "the default target with respect to the used backend type; checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs")
+        .value("CPU", plssvm::target_platform::cpu, "target CPUs only (Intel, AMD, IBM, ...)")
+        .value("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia, "target GPUs from NVIDIA")
+        .value("GPU_AMD", plssvm::target_platform::gpu_amd, "target GPUs from AMD")
+        .value("GPU_INTEL", plssvm::target_platform::gpu_intel, "target GPUs from Intel");
 
     // bind free functions
-    m.def("list_available_target_platforms", &plssvm::list_available_target_platforms);
-    m.def("determine_default_target_platform", &plssvm::determine_default_target_platform,
+    m.def("list_available_target_platforms", &plssvm::list_available_target_platforms, "list the available target platforms (as defined during CMake configuration)");
+    m.def("determine_default_target_platform", &plssvm::determine_default_target_platform, "determine the default target platform given the list of available target platforms",
           py::arg("platform_device_list") = plssvm::list_available_target_platforms());
 }
