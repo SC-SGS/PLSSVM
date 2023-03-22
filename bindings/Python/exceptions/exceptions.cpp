@@ -2,7 +2,7 @@
 
 #include "utility.hpp"  // PLSSVM_REGISTER_EXCEPTION
 
-#include "pybind11/pybind11.h"  // py::module_
+#include "pybind11/pybind11.h"  // py::module_, py::exception
 
 namespace py = pybind11;
 
