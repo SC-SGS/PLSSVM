@@ -2,16 +2,20 @@
 
 #include "utility.hpp"  // check_kwargs_for_correctness
 
-#include "fmt/core.h"           // fmt::format
-#include "fmt/format.h"         // fmt::join
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
+#include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
 #include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl_bind.h"
 
 #include <string>   // std::string
 #include <utility>  // std::move
 #include <vector>   // std::vector
 
 namespace py = pybind11;
+
+// PYBIND11_MAKE_OPAQUE(std::vector<std::vector<double>>)
 
 void init_data_set(py::module_ &m) {
     // bind data_set class
@@ -24,8 +28,7 @@ void init_data_set(py::module_ &m) {
 
     // bind the plssvm::data_set::scaling internal "factors" struct
     py::class_<data_set_type::scaling::factors>(m, "DataSetScalingFactors")
-        .def(py::init<size_type, real_type, real_type>(), "create a new scaling factor",
-            py::arg("feature"), py::arg("lower"), py::arg("upper"))
+        .def(py::init<size_type, real_type, real_type>(), "create a new scaling factor", py::arg("feature"), py::arg("lower"), py::arg("upper"))
         .def_readonly("feature", &data_set_type::scaling::factors::feature, "the feature index for which the factors are valid")
         .def_readonly("lower", &data_set_type::scaling::factors::lower, "the lower scaling factor")
         .def_readonly("upper", &data_set_type::scaling::factors::upper, "the upper scaling factor")
@@ -50,49 +53,107 @@ void init_data_set(py::module_ &m) {
                                scaling.scaling_factors.size());
         });
 
+    //    py::bind_vector<std::vector<std::vector<double>>>(m, "2DVectorDouble");
+
     // bind the data set class
     py::class_<data_set_type>(m, "DataSet")
         .def(py::init([](const std::string &file_name, py::kwargs args) {
-            // check for valid keys
-            check_kwargs_for_correctness(args, { "file_format", "scaling" });
+                 // check for valid keys
+                 check_kwargs_for_correctness(args, { "file_format", "scaling" });
 
-            // call the constructor corresponding to the provided named arguments
-            if (args.contains("file_format") && args.contains("scaling")) {
-                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), args["scaling"].cast<data_set_type::scaling>() };
-            } else if (args.contains("file_format")) {
-                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
-            } else if (args.contains("scaling")) {
-                return data_set_type{ file_name, args["scaling"].cast<data_set_type::scaling>() };
-            } else {
-                return data_set_type{ file_name };
-            }
-        }), "create a new data set without labels given additional optional parameters")
-        .def(py::init([](std::vector<std::vector<real_type>> data, py::kwargs args) {
-            // check named arguments
-            check_kwargs_for_correctness(args, { "scaling" });
+                 // call the constructor corresponding to the provided named arguments
+                 if (args.contains("file_format") && args.contains("scaling")) {
+                     return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), args["scaling"].cast<data_set_type::scaling>() };
+                 } else if (args.contains("file_format")) {
+                     return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
+                 } else if (args.contains("scaling")) {
+                     return data_set_type{ file_name, args["scaling"].cast<data_set_type::scaling>() };
+                 } else {
+                     return data_set_type{ file_name };
+                 }
+             }),
+             "create a new data set from the provided file and additional optional parameters")
+        .def(py::init([](py::array_t<double> data, py::kwargs args) {
+                 // check named arguments
+                 check_kwargs_for_correctness(args, { "scaling" });
 
-            if (args.contains("scaling")) {
-                return data_set_type{ std::move(data), args["scaling"].cast<data_set_type::scaling>() };
-            } else {
-                return data_set_type{ std::move(data) };
-            }
-        }), "create a new data set with labels given additional optional parameters")
-        .def(py::init([](std::vector<std::vector<real_type>> data, py::list labels, py::kwargs args) {
-            // check named arguments
-            check_kwargs_for_correctness(args, { "scaling" });
+                 // check dimensions
+                 if (data.ndim() != 2) {
+                     throw py::value_error{ fmt::format("the provided data array must have exactly two dimensions but has {}!", data.ndim()) };
+                 }
 
-            // TODO: investigate performance implications?
-            std::vector<std::string> tmp(py::len(labels));
-            for (std::vector<std::string>::size_type i = 0; i < py::len(labels); ++i) {
-                tmp[i] = labels[i].cast<py::str>().cast<std::string>();
-            }
+                 // convert py::array to std::vector<std::vector<>>
+                 std::vector<std::vector<double>> tmp_data(data.shape(0));
+                 for (std::size_t i = 0; i < tmp_data.size(); ++i) {
+                     tmp_data[i] = std::vector<double>(data.data(i, 0), data.data(i, data.shape(1) - 1));
+                 }
 
-            if (args.contains("scaling")) {
-                return data_set_type{ std::move(data), std::move(tmp), args["scaling"].cast<data_set_type::scaling>() };
-            } else {
-                return data_set_type{ std::move(data), std::move(tmp) };
-            }
-        }))
+                 if (args.contains("scaling")) {
+                     return data_set_type{ std::move(tmp_data), args["scaling"].cast<data_set_type::scaling>() };
+                 } else {
+                     return data_set_type{ std::move(tmp_data) };
+                 }
+             }),
+             "create a new data set without labels given additional optional parameters")
+        .def(py::init([](py::array_t<double> data, py::array_t<double, py::array::forcecast> labels, py::kwargs args) {
+                 // check named arguments
+                 check_kwargs_for_correctness(args, { "scaling" });
+
+                 // check dimensions
+                 if (data.ndim() != 2) {
+                     throw py::value_error{ fmt::format("the provided data array must have exactly two dimensions but has {}!", data.ndim()) };
+                 }
+                 if (labels.ndim() != 1) {
+                     throw py::value_error{ fmt::format("the provided labels array must have exactly one dimension but has {}!", labels.ndim()) };
+                 }
+
+                 // convert py::array to std::vector<std::vector<>>
+                 std::vector<std::vector<double>> tmp_data(data.shape(0));
+                 for (std::size_t i = 0; i < tmp_data.size(); ++i) {
+                     tmp_data[i] = std::vector<double>(data.data(i, 0), data.data(i, data.shape(1) - 1));
+                 }
+
+                 // TODO: investigate performance implications?
+                 std::vector<std::string> tmp_labels(labels.shape(0));
+                 for (std::vector<std::string>::size_type i = 0; i < tmp_labels.size(); ++i) {
+                     tmp_labels[i] = fmt::format("{}", *labels.data(i));
+                 }
+
+                 if (args.contains("scaling")) {
+                     return data_set_type{ std::move(tmp_data), std::move(tmp_labels), args["scaling"].cast<data_set_type::scaling>() };
+                 } else {
+                     return data_set_type{ std::move(tmp_data), std::move(tmp_labels) };
+                 }
+             }),
+             "create a new data set with labels from a numpy array given additional optional parameters")
+        .def(py::init([](py::array_t<double> data, py::list labels, py::kwargs args) {
+                 // check named arguments
+                 check_kwargs_for_correctness(args, { "scaling" });
+
+                 // check dimensions
+                 if (data.ndim() != 2) {
+                     throw py::value_error{ fmt::format("the provided data array must have exactly two dimensions but has {}!", data.ndim()) };
+                 }
+
+                 // convert py::array to std::vector<std::vector<>>
+                 std::vector<std::vector<double>> tmp_data(data.shape(0));
+                 for (std::size_t i = 0; i < tmp_data.size(); ++i) {
+                     tmp_data[i] = std::vector<double>(data.data(i, 0), data.data(i, data.shape(1) - 1));
+                 }
+
+                 // TODO: investigate performance implications?
+                 std::vector<std::string> tmp_labels(py::len(labels));
+                 for (std::vector<std::string>::size_type i = 0; i < py::len(labels); ++i) {
+                     tmp_labels[i] = labels[i].cast<py::str>().cast<std::string>();
+                 }
+
+                 if (args.contains("scaling")) {
+                     return data_set_type{ std::move(tmp_data), std::move(tmp_labels), args["scaling"].cast<data_set_type::scaling>() };
+                 } else {
+                     return data_set_type{ std::move(tmp_data), std::move(tmp_labels) };
+                 }
+             }),
+             "create a new data set with labels from a Python list given additional optional parameters")
         .def("save", &data_set_type::save, "save the data set to a file")
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
