@@ -2,8 +2,8 @@
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include "fmt/core.h"           // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::value_error
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg, py::pos_only
+#include "pybind11/stl.h"       // support for STL types: std::vector, std::optional
 
 #include <optional>  // std::optional, std::nullopt
 #include <vector>    // std::vector
@@ -41,4 +41,12 @@ void init_kernel_function_types(py::module_ &m) {
         py::arg("y"),
         py::pos_only(),
         py::arg("gamma") = std::nullopt);
+
+    m.def("kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, plssvm::parameter params) {
+        // set default gamma value
+        if (params.gamma.is_default()) {
+            params.gamma = 1.0 / x.size();
+        }
+        return plssvm::kernel_function(x, y, params);
+    }, "apply the kernel function defined in the parameter object to two vectors");
 }
