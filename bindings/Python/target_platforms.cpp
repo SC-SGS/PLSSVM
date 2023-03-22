@@ -1,7 +1,7 @@
 #include "plssvm/target_platforms.hpp"
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // support for STL types: std::vector
 
 namespace py = pybind11;
 
