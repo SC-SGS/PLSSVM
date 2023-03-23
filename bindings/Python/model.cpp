@@ -1,7 +1,7 @@
 #include "plssvm/model.hpp"
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
-#include "utility.hpp"  // numpy_name_mapping, types_to_class_name_extension
+#include "utility.hpp"  // assemble_unique_class_name
 
 #include "fmt/core.h"           // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
@@ -15,7 +15,7 @@ template <typename real_type, typename label_type>
 void instantiate_model_bindings_real_type_label_type(py::module_ &m) {
     using model_type = plssvm::model<real_type, label_type>;
 
-    const std::string class_name = types_to_class_name_extension<real_type, label_type>("Model");
+    const std::string class_name = assemble_unique_class_name<real_type, label_type>("Model");
 
     // TODO: change def to def_property_readonly based on sklearn.svm.SVC?
 
@@ -64,5 +64,5 @@ void init_model(py::module_ &m) {
     instantiate_model_bindings_real_type<double>(m);
 
     // create alias
-    m.attr("Model") = m.attr(types_to_class_name_extension<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("Model").c_str());
+    m.attr("Model") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("Model").c_str());
 }

@@ -5,11 +5,12 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
-#include "fmt/format.h"         // std::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception
 #include "pybind11/stl.h"       // support for STL types
 
 #include <exception>    // std::exception_ptr, std::rethrow_exception
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
@@ -71,38 +72,54 @@ inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std:
         }                                                                                                        \
     });
 
+namespace detail {
+
+/**
+ * @def PLSSVM_CREATE_NUMPY_NAME_MAPPING
+ * @brief Map the @p type to its Numpy type name pendant @p numpy_name.
+ */
 #define PLSSVM_CREATE_NUMPY_NAME_MAPPING(type, numpy_name) \
     template <>                                            \
     [[nodiscard]] constexpr inline std::string_view numpy_name_mapping<type>() { return numpy_name; }
 
+/**
+ * @brief Tries to convert the given type to its Numpy name.
+ * @details The definition is marked as **deleted** if `T` isn't a valid mapped type.
+ * @tparam T the type to convert to a string
+ * @return the name of `T` (`[[nodiscard]]`)
+ */
 template <typename T>
 [[nodiscard]] constexpr inline std::string_view numpy_name_mapping() = delete;
 
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(bool, "Bool")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(signed char, "Byte")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned char, "Ubyte")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(short, "Short")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned short, "Ushort")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(int, "Intc")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned int, "Uintc")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(long, "Int")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long, "Uint")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(long long, "Longlong")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long long, "Ulonglong")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(float, "Float")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(double, "Double")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "String")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(bool, "bool")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(signed char, "byte")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned char, "ubyte")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(short, "short")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned short, "ushort")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(int, "intc")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned int, "uintc")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(long, "int")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long, "uint")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(long long, "longlong")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long long, "ulonglong")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(float, "float")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(double, "double")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
 
 #undef PLSSVM_CREATE_NUMPY_NAME_MAPPING
 
+}  // namespace detail
+
+/**
+ * @brief Append the type information to the base @p class_name.
+ * @tparam real_type the type of the data points to convert to its Numpy name
+ * @tparam label_type the type of the labels to convert to its Numpy name
+ * @param class_name the base class name (the type names are appended to it)
+ * @return the unique class name
+ */
 template <typename real_type, typename label_type>
-std::string types_to_class_name_extension(const std::string &class_name) {
-//    if constexpr (std::is_same_v<real_type, PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE>
-//                  && std::is_same_v<label_type, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>) {
-//        return class_name;
-//    } else {
-        return fmt::format("{}{}{}", class_name, numpy_name_mapping<real_type>(), numpy_name_mapping<label_type>());
-//    }
+[[nodiscard]] inline std::string assemble_unique_class_name(const std::string_view class_name) {
+    return fmt::format("{}_{}_{}", class_name, detail::numpy_name_mapping<real_type>(), detail::numpy_name_mapping<label_type>());
 }
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_

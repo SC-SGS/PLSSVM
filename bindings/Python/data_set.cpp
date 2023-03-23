@@ -1,6 +1,6 @@
 #include "plssvm/data_set.hpp"
 
-#include "utility.hpp"  // check_kwargs_for_correctness
+#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name
 
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
@@ -49,9 +49,9 @@ void instantiate_data_set_bindings_real_type_label_type(py::module_ &m) {
 
     // TODO: change def to def_property_readonly based on sklearn.svm.SVC?
     // create the Python type names based on the provided real_type and label_type
-    const std::string class_name_scaling_factors = types_to_class_name_extension<real_type, label_type>("DataSetScalingFactors");
-    const std::string class_name_scaling = types_to_class_name_extension<real_type, label_type>("DataSetScaling");
-    const std::string class_name = types_to_class_name_extension<real_type, label_type>("DataSet");
+    const std::string class_name_scaling_factors = assemble_unique_class_name<real_type, label_type>("DataSetScalingFactors");
+    const std::string class_name_scaling = assemble_unique_class_name<real_type, label_type>("DataSetScaling");
+    const std::string class_name = assemble_unique_class_name<real_type, label_type>("DataSet");
 
     // bind the plssvm::data_set::scaling internal "factors" struct
     py::class_<typename data_set_type::scaling::factors>(m, class_name_scaling_factors.c_str())
@@ -225,7 +225,7 @@ void init_data_set(py::module_ &m) {
     instantiate_data_set_bindings_real_type<double>(m);
 
     // create aliases
-    m.attr("DataSetScalingFactors") = m.attr(types_to_class_name_extension<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScalingFactors").c_str());
-    m.attr("DataSetScaling") = m.attr(types_to_class_name_extension<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScaling").c_str());
-    m.attr("DataSet") = m.attr(types_to_class_name_extension<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSet").c_str());
+    m.attr("DataSetScalingFactors") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScalingFactors").c_str());
+    m.attr("DataSetScaling") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScaling").c_str());
+    m.attr("DataSet") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSet").c_str());
 }
