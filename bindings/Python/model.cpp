@@ -1,18 +1,21 @@
 #include "plssvm/model.hpp"
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
 #include "utility.hpp"  // assemble_unique_class_name
 
 #include "fmt/core.h"           // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // support for STL types: std::vector
 
-#include <string>  // std::string
+#include <cstddef>  // std::size_t
+#include <string>   // std::string
+#include <tuple>    // std::tuple_element_t, std::tuple_size_v
+#include <utility>  // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
 template <typename real_type, typename label_type>
-void instantiate_model_bindings_real_type_label_type(py::module_ &m) {
+void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
     using model_type = plssvm::model<real_type, label_type>;
 
     const std::string class_name = assemble_unique_class_name<real_type, label_type>("Model");
@@ -37,31 +40,19 @@ void instantiate_model_bindings_real_type_label_type(py::module_ &m) {
         });
 }
 
-template <typename real_type>
-void instantiate_model_bindings_real_type(py::module_ &m) {
-    // instantiate for all supported label types (except char -> no direct numpy mapping)
-    instantiate_model_bindings_real_type_label_type<real_type, bool>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, signed char>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, unsigned char>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, short>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, unsigned short>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, int>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, unsigned int>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, long>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, unsigned long>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, long long>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, unsigned long long>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, float>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, double>(m);
-    instantiate_model_bindings_real_type_label_type<real_type, std::string>(m);
+template <typename T, std::size_t... Idx>
+void instantiate_model_bindings(py::module_ &m, std::integer_sequence<std::size_t, Idx...>) {
+    (instantiate_model_bindings(m, std::tuple_element_t<Idx, T>{}), ...);
+}
+
+template <typename T>
+void instantiate_model_bindings(py::module_ &m) {
+    instantiate_model_bindings<T>(m, std::make_integer_sequence<std::size_t, std::tuple_size_v<T>>{});
 }
 
 void init_model(py::module_ &m) {
     // bind all model classes
-
-    // instantiate for all supported real types
-    instantiate_model_bindings_real_type<float>(m);
-    instantiate_model_bindings_real_type<double>(m);
+    instantiate_model_bindings<plssvm::detail::real_type_label_type_combination_list>(m);
 
     // create alias
     m.attr("Model") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("Model").c_str());

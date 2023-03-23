@@ -1,16 +1,18 @@
 #include "plssvm/data_set.hpp"
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
 #include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
-#include "pybind11/numpy.h"
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only
+#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::join
+#include "pybind11/numpy.h"     // py::array_t
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
 #include "pybind11/stl.h"       // support for STL types
-#include "pybind11/stl_bind.h"
 
+#include <cstddef>  // std::size_t
 #include <string>   // std::string
-#include <utility>  // std::move
+#include <tuple>    // std::tuple_element_t, std::tuple_size_v
+#include <utility>  // std::move, std::integer_sequence, std::make_integer_sequence
 #include <vector>   // std::vector
 
 namespace py = pybind11;
@@ -43,7 +45,7 @@ std::vector<T> pyarray_to_vector(py::array_t<T> data) {
 }
 
 template <typename real_type, typename label_type>
-void instantiate_data_set_bindings_real_type_label_type(py::module_ &m) {
+void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
     using data_set_type = plssvm::data_set<real_type, label_type>;
     using size_type = typename data_set_type::size_type;
 
@@ -198,31 +200,19 @@ void instantiate_data_set_bindings_real_type_label_type(py::module_ &m) {
         });
 }
 
-template <typename real_type>
-void instantiate_data_set_bindings_real_type(py::module_ &m) {
-    // instantiate for all supported label types (except char -> no direct numpy mapping)
-    instantiate_data_set_bindings_real_type_label_type<real_type, bool>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, signed char>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, unsigned char>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, short>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, unsigned short>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, int>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, unsigned int>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, long>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, unsigned long>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, long long>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, unsigned long long>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, float>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, double>(m);
-    instantiate_data_set_bindings_real_type_label_type<real_type, std::string>(m);
+template <typename T, std::size_t... Idx>
+void instantiate_data_set_bindings(py::module_ &m, std::integer_sequence<std::size_t, Idx...>) {
+    (instantiate_data_set_bindings(m, std::tuple_element_t<Idx, T>{}), ...);
+}
+
+template <typename T>
+void instantiate_data_set_bindings(py::module_ &m) {
+    instantiate_data_set_bindings<T>(m, std::make_integer_sequence<std::size_t, std::tuple_size_v<T>>{});
 }
 
 void init_data_set(py::module_ &m) {
     // bind all data_set classes
-
-    // instantiate for all supported real types
-    instantiate_data_set_bindings_real_type<float>(m);
-    instantiate_data_set_bindings_real_type<double>(m);
+    instantiate_data_set_bindings<plssvm::detail::real_type_label_type_combination_list>(m);
 
     // create aliases
     m.attr("DataSetScalingFactors") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScalingFactors").c_str());
