@@ -71,4 +71,38 @@ inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std:
         }                                                                                                        \
     });
 
+#define PLSSVM_CREATE_NUMPY_NAME_MAPPING(type, numpy_name) \
+    template <>                                            \
+    [[nodiscard]] constexpr inline std::string_view numpy_name_mapping<type>() { return numpy_name; }
+
+template <typename T>
+[[nodiscard]] constexpr inline std::string_view numpy_name_mapping() = delete;
+
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(bool, "Bool")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(signed char, "Byte")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned char, "Ubyte")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(short, "Short")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned short, "Ushort")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(int, "Intc")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned int, "Uintc")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(long, "Int")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long, "Uint")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(long long, "Longlong")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long long, "Ulonglong")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(float, "Float")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(double, "Double")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "String")
+
+#undef PLSSVM_CREATE_NUMPY_NAME_MAPPING
+
+template <typename real_type, typename label_type>
+std::string types_to_class_name_extension(const std::string &class_name) {
+//    if constexpr (std::is_same_v<real_type, PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE>
+//                  && std::is_same_v<label_type, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>) {
+//        return class_name;
+//    } else {
+        return fmt::format("{}{}{}", class_name, numpy_name_mapping<real_type>(), numpy_name_mapping<label_type>());
+//    }
+}
+
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_

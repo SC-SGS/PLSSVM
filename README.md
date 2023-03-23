@@ -201,6 +201,11 @@ If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can al
 
 - `PLSSVM_ENABLE_PYTHON_BINDINGS=ON|OFF` (default: `PLSSVM_ENABLE_LANGUAGE_BINDINGS`): enable Python bindings using Pybind11
 
+If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can also be set:
+
+- `PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE` (default: `double`): the default `real_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
+- `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
+
 If the SYCL backend is available additional options can be set.
 
 - `PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
