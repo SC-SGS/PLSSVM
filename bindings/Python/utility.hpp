@@ -92,6 +92,7 @@ template <typename T>
 [[nodiscard]] constexpr inline std::string_view numpy_name_mapping() = delete;
 
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(bool, "bool")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(char, "char")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(signed char, "byte")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned char, "ubyte")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(short, "short")
@@ -104,6 +105,7 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(long long, "longlong")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long long, "ulonglong")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(float, "float")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(double, "double")
+PLSSVM_CREATE_NUMPY_NAME_MAPPING(long double, "longdouble")
 PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
 
 #undef PLSSVM_CREATE_NUMPY_NAME_MAPPING
