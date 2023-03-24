@@ -19,6 +19,7 @@
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
+#include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
@@ -27,21 +28,20 @@
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
 
-#include <algorithm>    // std::all_of, std::max, std::min, std::sort, std::adjacent_find
-#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
-#include <cstddef>      // std::size_t
-#include <functional>   // std::reference_wrapper, std::cref
-#include <iostream>     // std::cout, std::endl
-#include <limits>       // std::numeric_limits::{max, lowest}
-#include <map>          // std::map
-#include <memory>       // std::shared_ptr, std::make_shared
-#include <optional>     // std::optional, std::make_optional, std::nullopt
-#include <set>          // std::set
-#include <string>       // std::string
-#include <tuple>        // std::tie
-#include <type_traits>  // std::is_same_v, std::is_arithmetic_v
-#include <utility>      // std::move, std::pair, std::make_pair
-#include <vector>       // std::vector
+#include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
+#include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
+#include <cstddef>     // std::size_t
+#include <functional>  // std::reference_wrapper, std::cref
+#include <iostream>    // std::cout, std::endl
+#include <limits>      // std::numeric_limits::{max, lowest}
+#include <map>         // std::map
+#include <memory>      // std::shared_ptr, std::make_shared
+#include <optional>    // std::optional, std::make_optional, std::nullopt
+#include <set>         // std::set
+#include <string>      // std::string
+#include <tuple>       // std::tie
+#include <utility>     // std::move, std::pair, std::make_pair
+#include <vector>      // std::vector
 
 namespace plssvm {
 
@@ -67,8 +67,8 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
 template <typename T, typename U = int>
 class data_set {
     // make sure only valid template types are used
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
-    static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
+    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::model needs the default constructor
     template <typename, typename>

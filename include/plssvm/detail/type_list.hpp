@@ -13,8 +13,9 @@
 #define PLSSVM_DETAIL_TYPE_LIST_MANIPULATION_HPP_
 #pragma once
 
-#include <string>  // std::string
-#include <tuple>   // std::tuple
+#include <string>       // std::string
+#include <tuple>        // std::tuple
+#include <type_traits>  // std::disjunction, std::is_same_v
 
 namespace plssvm::detail {
 
@@ -86,6 +87,29 @@ using label_type_list = std::tuple<bool, char, signed char, unsigned char, short
 
 /// The cartesian product of all real types and label types as `std::tuple`.
 using real_type_label_type_combination_list = detail::cartesian_type_product_t<real_type_list, label_type_list>;
+
+/**
+ * @brief Checks whether the type @p T is present in the @p Tuple.
+ * @details Not implemented.
+ * @tparam T the type to check if is contained in the tuple
+ * @tparam Tuple the tuple type
+ */
+template <typename T, typename Tuple>
+struct type_list_contains;
+
+/**
+ * @brief Checks whether the type @p T is present in the tuple @p Types.
+ * @tparam T the type to check if is contained in the tuple
+ * @tparam Types the types in the tuple
+ */
+template <typename T, typename... Types>
+struct type_list_contains<T, std::tuple<Types...>> : std::disjunction<std::is_same<T, Types>...> {};
+
+/**
+ * @brief Checks whether the type @p T is present in the @p Tuple.
+ */
+template <typename T, typename Tuple>
+constexpr inline bool type_list_contains_v = type_list_contains<T, Tuple>::value;
 
 }  // namespace plssvm::detail
 
