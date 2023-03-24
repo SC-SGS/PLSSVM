@@ -46,6 +46,8 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
 
+        ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         )
 # set backends specific source files if the respective backend is used

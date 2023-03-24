@@ -26,6 +26,8 @@ void init_sycl(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hipsycl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_dpcpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 
+void init_sklearn(py::module_ &);
+
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "Parallel Least Squares Support Vector Machine";
 
@@ -76,4 +78,6 @@ PYBIND11_MODULE(plssvm, m) {
     init_dpcpp_csvm(m, base_exception);
     #endif
 #endif
+
+    init_sklearn(m);
 }
