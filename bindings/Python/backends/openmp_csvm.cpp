@@ -35,7 +35,7 @@ void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
         .def(py::init([](py::kwargs args) {
                  // check for valid keys
                  check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
-                 // if one of the value named parameter is provided, set the respective value
+                 // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
                  // create CSVM with the default target platform
                  return std::make_unique<plssvm::openmp::csvm>(params);
@@ -44,7 +44,7 @@ void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
         .def(py::init([](const plssvm::target_platform target, py::kwargs args) {
                  // check for valid keys
                  check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
-                 // if one of the value named parameter is provided, set the respective value
+                 // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
                  // create CSVM with the provided target platform
                  return std::make_unique<plssvm::openmp::csvm>(target, params);

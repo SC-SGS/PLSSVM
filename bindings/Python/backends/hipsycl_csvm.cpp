@@ -35,7 +35,7 @@ py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::except
         .def(py::init([](py::kwargs args) {
                  // check for valid keys
                  check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
-                 // if one of the value named parameter is provided, set the respective value
+                 // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
                  // set SYCL kernel invocation type
                  const plssvm::sycl::kernel_invocation_type invoc = args.contains("sycl_kernel_invocation_type") ? args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>() : plssvm::sycl::kernel_invocation_type::automatic;
@@ -46,7 +46,7 @@ py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::except
         .def(py::init([](const plssvm::target_platform target, py::kwargs args) {
                  // check for valid keys
                  check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
-                 // if one of the value named parameter is provided, set the respective value
+                 // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
                  // set SYCL kernel invocation type
                  const plssvm::sycl::kernel_invocation_type invoc = args.contains("sycl_kernel_invocation_type") ? args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>() : plssvm::sycl::kernel_invocation_type::automatic;

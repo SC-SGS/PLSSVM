@@ -46,7 +46,7 @@ struct svc {
 };
 
 void parse_provided_params(svc &self, py::kwargs args) {
-    // check named arguments
+    // check keyword arguments
     check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "probability", "tol", "cache_size", "class_weight", "verbose", "max_iter", "decision_function_shape", "break_ties", "random_state" });
 
     if (args.contains("C")) {

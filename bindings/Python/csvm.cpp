@@ -26,7 +26,7 @@ template <typename real_type, typename label_type>
 void instantiate_csvm_functions(py::class_<plssvm::csvm> &c, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
     c.def(
          "fit", [](const plssvm::csvm &self, const plssvm::data_set<real_type, label_type> &data, py::kwargs args) {
-             // check named arguments
+             // check keyword arguments
              check_kwargs_for_correctness(args, { "epsilon", "max_iter" });
 
              if (args.contains("epsilon") && args.contains("max_iter")) {
@@ -64,9 +64,9 @@ void instantiate_model_bindings(py::class_<plssvm::csvm> &c) {
 }
 
 std::unique_ptr<plssvm::csvm> assemble_csvm(const plssvm::backend_type backend, const plssvm::target_platform target, py::kwargs args) {
-    // check named arguments
+    // check keyword arguments
     check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
-    // if one of the value named parameter is provided, set the respective value
+    // if one of the value keyword parameter is provided, set the respective value
     const plssvm::parameter params = convert_kwargs_to_parameter(args);
     // parse SYCL specific keyword arguments
     if (backend == plssvm::backend_type::sycl) {
@@ -98,7 +98,7 @@ void init_csvm(py::module_ &m) {
             "update the parameter used for this SVM using a plssvm.Parameter object")
         .def(
             "set_params", [](plssvm::csvm &self, py::kwargs args) {
-                // check named arguments
+                // check keyword arguments
                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                 // convert kwargs to parameter and update csvm internal parameter
                 self.set_params(convert_kwargs_to_parameter(args, self.get_params()));
