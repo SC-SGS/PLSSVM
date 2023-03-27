@@ -9,11 +9,12 @@
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
 #include "pybind11/stl.h"       // support for STL types
 
-#include <cstddef>  // std::size_t
-#include <string>   // std::string
-#include <tuple>    // std::tuple_element_t, std::tuple_size_v
-#include <utility>  // std::move, std::integer_sequence, std::make_integer_sequence
-#include <vector>   // std::vector
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <tuple>        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
+#include <vector>       // std::vector
 
 namespace py = pybind11;
 
