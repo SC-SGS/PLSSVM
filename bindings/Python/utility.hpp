@@ -135,21 +135,26 @@ inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std:
 }
 
 /**
- * @def PLSSVM_REGISTER_EXCEPTION
- * @brief Register the PLSSVM exception @p exception_type derived from @p base_exception in the Python module
- *        @p py_module using the Python name @p py_exception_name.
+ * @brief Register the PLSSVM @p Exception type as an Python exception with the @p py_exception_name derived from @p BaseException.
+ * @tparam Exception the PLSSVM exception to register in Python
+ * @tparam BaseException the Python base exception
+ * @param[in, out] m the module in which the Python exception is located
+ * @param[in] py_exception_name the name of the Python exception
+ * @param[in] base_exception the Python exception the new exception should be derived from
  */
-#define PLSSVM_REGISTER_EXCEPTION(exception_type, py_module, py_exception_name, base_exception)                  \
-    static py::exception<exception_type> py_exception_name(py_module, #py_exception_name, base_exception.ptr()); \
-    py::register_exception_translator([](std::exception_ptr p) {                                                 \
-        try {                                                                                                    \
-            if (p) {                                                                                             \
-                std::rethrow_exception(p);                                                                       \
-            }                                                                                                    \
-        } catch (const exception_type &e) {                                                                      \
-            py_exception_name(e.what_with_loc().c_str());                                                        \
-        }                                                                                                        \
+template <typename Exception, typename BaseException>
+void register_py_exception(py::module_ &m, const std::string &py_exception_name, BaseException &base_exception) {
+    static py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
+    py::register_exception_translator([](std::exception_ptr p) {
+        try {
+            if (p) {
+                std::rethrow_exception(p);
+            }
+        } catch (const Exception &e) {
+            py_exception(e.what_with_loc().c_str());
+        }
     });
+}
 
 namespace detail {
 

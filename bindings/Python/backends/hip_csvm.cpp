@@ -5,7 +5,7 @@
 #include "plssvm/parameter.hpp"         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, PLSSVM_REGISTER_EXCEPTION
+#include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types
@@ -44,5 +44,5 @@ void init_hip_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_
              "create an SVM with the provided target platform and keyword arguments");
 
     // register HIP backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::hip::backend_exception, hip_module, BackendError, base_exception)
+    register_py_exception<plssvm::hip::backend_exception>(hip_module, "BackendError", base_exception);
 }

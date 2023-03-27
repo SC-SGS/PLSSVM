@@ -2,7 +2,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
-#include "../utility.hpp"  // PLSSVM_REGISTER_EXCEPTION
+#include "../utility.hpp"  // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
@@ -20,7 +20,7 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     py::module_ sycl_module = m.def_submodule("sycl", "a module containing all SYCL backend specific functionality");
 
     // register SYCL backend specific exceptions
-    PLSSVM_REGISTER_EXCEPTION(plssvm::sycl::backend_exception, sycl_module, BackendError, base_exception)
+    register_py_exception<plssvm::sycl::backend_exception>(sycl_module, "BackendError", base_exception);
 
     // bind the two enum classes
     py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType")
