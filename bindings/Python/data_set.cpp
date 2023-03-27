@@ -1,7 +1,8 @@
 #include "plssvm/data_set.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
+#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
+                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
 #include "fmt/core.h"           // fmt::format
 #include "fmt/format.h"         // fmt::join
@@ -111,21 +112,10 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             // check named arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
-                            // check dimensions
-                            if (labels.ndim() != 1) {
-                                throw py::value_error{ fmt::format("the provided labels array must have exactly one dimension but has {}!", labels.ndim()) };
-                            }
-
-                            // convert labels to strings
-                            std::vector<std::string> tmp(labels.shape(0));
-                            for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-                                tmp[i] = fmt::format("{}", *labels.data(i));
-                            }
-
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
                             } else {
-                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp) };
+                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels) };
                             }
                         }),
                         "create a new data set with labels from a numpy array given additional optional parameters");
@@ -134,16 +124,10 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             // check named arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
-                            // convert a Python list containing strings to a std::vector<std::string>
-                            std::vector<std::string> tmp(py::len(labels));
-                            for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-                                tmp[i] = labels[i].cast<py::str>().cast<std::string>();
-                            }
-
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
                             } else {
-                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp) };
+                                return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels) };
                             }
                         }),
                         "create a new data set with labels from a Python list given additional optional parameters");

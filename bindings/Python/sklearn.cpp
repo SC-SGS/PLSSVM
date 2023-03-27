@@ -92,6 +92,19 @@ void parse_provided_params(svc &self, py::kwargs args) {
     }
 }
 
+void fit(svc &self) {
+    // fit the model using potentially provided keyword arguments
+    if (self.epsilon.has_value() && self.max_iter.has_value()) {
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value(), plssvm::max_iter = self.max_iter.value()));
+    } else if (self.epsilon.has_value()) {
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value()));
+    } else if (self.max_iter.has_value()) {
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::max_iter = self.max_iter.value()));
+    } else {
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_));
+    }
+}
+
 void init_sklearn(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
 
@@ -115,119 +128,78 @@ void init_sklearn(py::module_ &m) {
             throw py::attribute_error{ "'SVC' object has no function 'decision_function' (not implemented)" };
         });
 #if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
-        py_svc.def(
-            "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+    py_svc.def(
+        "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+            if (sample_weight.has_value()) {
+                throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
+            }
+
+            // fit the model using potentially provided keyword arguments
+            self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), pyarray_to_vector(labels));
+            fit(self);
+        },
+        "Fit the SVM model according to the given training data.",
+        py::arg("X"),
+        py::arg("y"),
+        py::pos_only(),
+        py::arg("sample_weight") = std::nullopt);
+#else
+    py_svc.def(
+              "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+                  if (sample_weight.has_value()) {
+                      throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
+                  }
+
+                  // fit the model using potentially provided keyword arguments
+                  self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), pyarray_to_string_vector(labels));
+                  fit(self);
+              },
+              "Fit the SVM model according to the given training data.",
+              py::arg("X"),
+              py::arg("y"),
+              py::pos_only(),
+              py::arg("sample_weight") = std::nullopt)
+        .def(
+            "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
 
                 // fit the model using potentially provided keyword arguments
-                self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), pyarray_to_vector(labels));
-                if (self.epsilon.has_value() && self.max_iter.has_value()) {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value(), plssvm::max_iter = self.max_iter.value()));
-                } else if (self.epsilon.has_value()) {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value()));
-                } else if (self.max_iter.has_value()) {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::max_iter = self.max_iter.value()));
-                } else {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_));
-                }
+                self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), pylist_to_string_vector(labels));
+                fit(self);
             },
             "Fit the SVM model according to the given training data.",
             py::arg("X"),
             py::arg("y"),
             py::pos_only(),
             py::arg("sample_weight") = std::nullopt);
-#else
-        py_svc.def(
-            "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
-                if (sample_weight.has_value()) {
-                    throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
-                }
-
-                // check dimensions
-                if (labels.ndim() != 1) {
-                    throw py::value_error{ fmt::format("the provided labels array must have exactly one dimension but has {}!", labels.ndim()) };
-                }
-
-                // convert labels to strings
-                std::vector<std::string> tmp(labels.shape(0));
-                for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-                    tmp[i] = fmt::format("{}", *labels.data(i));
-                }
-
-                // fit the model using potentially provided keyword arguments
-                self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), std::move(tmp));
-                if (self.epsilon.has_value() && self.max_iter.has_value()) {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value(), plssvm::max_iter = self.max_iter.value()));
-                } else if (self.epsilon.has_value()) {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value()));
-                } else if (self.max_iter.has_value()) {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::max_iter = self.max_iter.value()));
-                } else {
-                    self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_));
-                }
-            },
-            "Fit the SVM model according to the given training data.",
-            py::arg("X"),
-            py::arg("y"),
-            py::pos_only(),
-            py::arg("sample_weight") = std::nullopt)
-            .def(
-                "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
-                    if (sample_weight.has_value()) {
-                        throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
-                    }
-
-                    // convert a Python list containing strings to a std::vector<std::string>
-                    std::vector<std::string> tmp(py::len(labels));
-                    for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-                        tmp[i] = labels[i].cast<py::str>().cast<std::string>();
-                    }
-
-                    // fit the model using potentially provided keyword arguments
-                    self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), std::move(tmp));
-                    if (self.epsilon.has_value() && self.max_iter.has_value()) {
-                        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value(), plssvm::max_iter = self.max_iter.value()));
-                    } else if (self.epsilon.has_value()) {
-                        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value()));
-                    } else if (self.max_iter.has_value()) {
-                        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::max_iter = self.max_iter.value()));
-                    } else {
-                        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_));
-                    }
-                },
-                "Fit the SVM model according to the given training data.",
-                py::arg("X"),
-                py::arg("y"),
-                py::pos_only(),
-                py::arg("sample_weight") = std::nullopt);
 #endif
-        py_svc.def(
-            "get_params", [](const svc &self) {
-                const plssvm::parameter params = self.svm_->get_params();
+    py_svc.def(
+              "get_params", [](const svc &self) {
+                  const plssvm::parameter params = self.svm_->get_params();
 
-                // fill a Python dictionary with the supported keys and values
-                py::dict py_params;
-                py_params["C"] = params.cost.value();
-                py_params["kernel"] = fmt::format("{}", params.kernel_type);
-                py_params["degree"] = params.degree.value();
-                py_params["gamma"] = params.gamma.value();  // TODO: scale, auto, value
-                py_params["coef0"] = params.coef0.value();
-                // py_params["shrinking"];
-                // py_params["probability"];
-                py_params["tol"] = self.epsilon.value_or(typename svc::real_type{ 1e-3 });
-                // py_params["cache_size"];
-                // py_params["class_weight"];
-                py_params["verbose"] = plssvm::verbose;
-                py_params["max_iter"] = self.max_iter.value_or(-1);
-                // py_params["decision_function_shape"];
-                // py_params["break_ties"];
-                // py_params["random_state"];
+                  // fill a Python dictionary with the supported keys and values
+                  py::dict py_params;
+                  py_params["C"] = params.cost.value();
+                  py_params["kernel"] = fmt::format("{}", params.kernel_type);
+                  py_params["degree"] = params.degree.value();
+                  py_params["gamma"] = params.gamma.value();  // TODO: scale, auto, value
+                  py_params["coef0"] = params.coef0.value();
+                  // py_params["shrinking"];
+                  // py_params["probability"];
+                  py_params["tol"] = self.epsilon.value_or(typename svc::real_type{ 1e-3 });
+                  // py_params["cache_size"];
+                  // py_params["class_weight"];
+                  py_params["verbose"] = plssvm::verbose;
+                  py_params["max_iter"] = self.max_iter.value_or(-1);
+                  // py_params["decision_function_shape"];
+                  // py_params["break_ties"];
+                  // py_params["random_state"];
 
-                return py_params;
-            },
-            "Get parameters for this estimator.")
+                  return py_params;
+              },
+              "Get parameters for this estimator.")
         .def(
             "predict", [](svc &self, py::array_t<typename svc::real_type> data) {
                 if (self.model_ == nullptr) {
@@ -249,8 +221,45 @@ void init_sklearn(py::module_ &m) {
             throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" };
         });
 #if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
-        py_svc.def(
-            "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+    py_svc.def(
+        "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+            if (sample_weight.has_value()) {
+                throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
+            }
+
+            if (self.model_ == nullptr) {
+                throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
+            } else {
+                const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
+                return self.svm_->score(*self.model_, data_to_score);
+            }
+        },
+        "Return the mean accuracy on the given test data and labels.",
+        py::arg("X"),
+        py::arg("y"),
+        py::pos_only(),
+        py::arg("sample_weight") = std::nullopt);
+#else
+    py_svc.def(
+              "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+                  if (sample_weight.has_value()) {
+                      throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
+                  }
+
+                  if (self.model_ == nullptr) {
+                      throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
+                  } else {
+                      const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), pyarray_to_string_vector(labels) };
+                      return self.svm_->score(*self.model_, data_to_score);
+                  }
+              },
+              "Return the mean accuracy on the given test data and labels.",
+              py::arg("X"),
+              py::arg("y"),
+              py::pos_only(),
+              py::arg("sample_weight") = std::nullopt)
+        .def(
+            "score", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
@@ -258,7 +267,7 @@ void init_sklearn(py::module_ &m) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
                 } else {
-                    const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
+                    const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), pylist_to_string_vector(labels) };
                     return self.svm_->score(*self.model_, data_to_score);
                 }
             },
@@ -267,60 +276,6 @@ void init_sklearn(py::module_ &m) {
             py::arg("y"),
             py::pos_only(),
             py::arg("sample_weight") = std::nullopt);
-#else
-        py_svc.def(
-                  "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
-                      if (sample_weight.has_value()) {
-                          throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
-                      }
-
-                      if (self.model_ == nullptr) {
-                          throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
-                      } else {
-                          // check dimensions
-                          if (labels.ndim() != 1) {
-                              throw py::value_error{ fmt::format("the provided labels array must have exactly one dimension but has {}!", labels.ndim()) };
-                          }
-
-                          // convert labels to strings
-                          std::vector<std::string> tmp(labels.shape(0));
-                          for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-                              tmp[i] = fmt::format("{}", *labels.data(i));
-                          }
-
-                          const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), std::move(tmp) };
-                          return self.svm_->score(*self.model_, data_to_score);
-                      }
-                  },
-                  "Return the mean accuracy on the given test data and labels.",
-                  py::arg("X"),
-                  py::arg("y"),
-                  py::pos_only(),
-                  py::arg("sample_weight") = std::nullopt)
-            .def(
-                "score", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
-                    if (sample_weight.has_value()) {
-                        throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
-                    }
-
-                    if (self.model_ == nullptr) {
-                        throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
-                    } else {
-                        // convert a Python list containing strings to a std::vector<std::string>
-                        std::vector<std::string> tmp(py::len(labels));
-                        for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-                            tmp[i] = labels[i].cast<py::str>().cast<std::string>();
-                        }
-
-                        const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), std::move(tmp) };
-                        return self.svm_->score(*self.model_, data_to_score);
-                    }
-                },
-                "Return the mean accuracy on the given test data and labels.",
-                py::arg("X"),
-                py::arg("y"),
-                py::pos_only(),
-                py::arg("sample_weight") = std::nullopt);
 #endif
     py_svc.def(
               "set_params", [](svc &self, py::kwargs args) {

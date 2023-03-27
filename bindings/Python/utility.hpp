@@ -7,7 +7,7 @@
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/numpy.h"     // py::array_t, py::buffer_info
-#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception
+#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception, py::str
 #include "pybind11/stl.h"       // support for STL types
 
 #include <exception>    // std::exception_ptr, std::rethrow_exception
@@ -71,6 +71,43 @@ template <typename T>
 
     // convert py::array to std::vector
     return std::vector<T>(vec.data(0), vec.data(0) + vec.shape(0));
+}
+
+/**
+ * @brief Convert a Python Numpy array to a `std::vector<std::string>`.
+ * @tparam T the type in the array
+ * @param[in] vec the Python Numpy array to convert
+ * @return the `std::vector<std::string>` (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] std::vector<std::string> pyarray_to_string_vector(py::array_t<T> vec) {
+    // check dimensions
+    if (vec.ndim() != 1) {
+        throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
+    }
+
+    // convert labels to strings
+    std::vector<std::string> tmp(vec.shape(0));
+    for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
+        tmp[i] = fmt::format("{}", *vec.data(i));
+    }
+
+    return tmp;
+}
+
+/**
+ * @brief Convert a Python List to a `std::vector<std::string>`.
+ * @param[in] list the Python List to convert
+ * @return the `std::vector<std::string>` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::vector<std::string> pylist_to_string_vector(py::list list) {
+    // convert a Python list containing strings to a std::vector<std::string>
+    std::vector<std::string> tmp(py::len(list));
+    for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
+        tmp[i] = list[i].cast<py::str>().cast<std::string>();
+    }
+
+    return tmp;
 }
 
 /**
