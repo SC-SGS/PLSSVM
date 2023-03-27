@@ -6,6 +6,7 @@
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "fmt/format.h"         // fmt::format
+#include "pybind11/numpy.h"     // py::array_t, py::buffer_info
 #include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception
 #include "pybind11/stl.h"       // support for STL types
 
@@ -15,6 +16,84 @@
 #include <vector>       // std::vector
 
 namespace py = pybind11;
+
+/**
+ * @brief Convert a `std::vector<T>` to a Python Numpy array.
+ * @tparam T the type in the array
+ * @param[in] vec the vector to convert
+ * @return the Python Numpy array (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] py::array_t<T> vector_to_pyarray(const std::vector<T> &vec) {
+    py::array_t<T> py_array(vec.size());
+    py::buffer_info buffer = py_array.request();
+    T *ptr = static_cast<T *>(buffer.ptr);
+    for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+        ptr[i] = vec[i];
+    }
+    return py_array;
+}
+
+/**
+ * @brief Convert a `std::vector<std::vector<T>>` to a Python Numpy array.
+ * @tparam T the type in the array
+ * @param[in] mat the 2D vector to convert
+ * @return the Python Numpy array (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] py::array_t<T> matrix_to_pyarray(const std::vector<std::vector<T>> &mat) {
+    const std::size_t num_data_points = mat.size();
+    const std::size_t num_features = mat.front().size();
+
+    py::array_t<T> py_array({ num_data_points, num_features });
+    py::buffer_info buffer = py_array.request();
+    T *ptr = static_cast<T *>(buffer.ptr);
+    for (typename std::vector<std::vector<T>>::size_type i = 0; i < num_data_points; ++i) {
+        for (typename std::vector<std::vector<T>>::size_type j = 0; j < num_features; ++j) {
+            ptr[i * num_features + j] = mat[i][j];
+        }
+    }
+    return py_array;
+}
+
+/**
+ * @brief Convert a Python Numpy array to a `std::vector<T>`.
+ * @tparam T the type in the array
+ * @param[in] vec the Python Numpy array to convert
+ * @return the `std::vector<T>` (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] std::vector<T> pyarray_to_vector(py::array_t<T> vec) {
+    // check dimensions
+    if (vec.ndim() != 1) {
+        throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
+    }
+
+    // convert py::array to std::vector
+    return std::vector<T>(vec.data(0), vec.data(0) + vec.shape(0));
+}
+
+/**
+ * @brief Convert a Python Numpy array to a `std::vector<std::vector<T>>`.
+ * @tparam T the type in the array
+ * @param[in] mat the 2D Python Numpy matrix to convert
+ * @return to 2D matrix of `std::vector<std::vector<T>>` (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] std::vector<std::vector<T>> pyarray_to_matrix(py::array_t<T> mat) {
+    // check dimensions
+    if (mat.ndim() != 2) {
+        throw py::value_error{ fmt::format("the provided matrix must have exactly two dimensions but has {}!", mat.ndim()) };
+    }
+
+    // convert py::array to std::vector<std::vector<T>>
+    std::vector<std::vector<T>> tmp(mat.shape(0));
+    for (typename std::vector<std::vector<T>>::size_type i = 0; i < tmp.size(); ++i) {
+        tmp[i] = std::vector<T>(mat.data(i, 0), mat.data(i, 0) + mat.shape(1));
+    }
+
+    return tmp;
+}
 
 /**
  * @brief Check that the Python kwargs @p args only contain keyword arguments with names present in @p valid_named_args.

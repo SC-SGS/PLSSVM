@@ -1,7 +1,7 @@
 #include "plssvm/model.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // assemble_unique_class_name
+#include "utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 
 #include "fmt/core.h"           // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
@@ -20,16 +20,18 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
 
     const std::string class_name = assemble_unique_class_name<real_type, label_type>("Model");
 
-    // TODO: change def to def_property_readonly based on sklearn.svm.SVC?
-
     py::class_<model_type>(m, class_name.c_str())
         .def(py::init<const std::string &>(), "load a previously learned model from a file")
         .def("save", &model_type::save, "save the current model to a file")
         .def("num_support_vectors", &model_type::num_support_vectors, "the number of support vectors (note: all training points become support vectors for LSSVMs)")
         .def("num_features", &model_type::num_features, "the number of features of the support vectors")
         .def("get_params", &model_type::get_params, py::return_value_policy::reference_internal, "the SVM parameter used to learn this model")
-        .def("support_vectors", &model_type::support_vectors, py::return_value_policy::reference_internal, "the support vectors (note: all training points become support vectors for LSSVMs)")
-        .def("weights", &model_type::weights, py::return_value_policy::reference_internal, "the weights learned for each support vector")
+        .def("support_vectors", [](const model_type &model) {
+            return matrix_to_pyarray(model.support_vectors());
+        }, "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def("weights", [](const model_type &model) {
+            return vector_to_pyarray(model.weights());
+        }, "the weights learned for each support vector")
         .def("rho", &model_type::rho, "the bias value after learning")
         .def("__repr__", [class_name](const model_type &model) {
             return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {} }}>",

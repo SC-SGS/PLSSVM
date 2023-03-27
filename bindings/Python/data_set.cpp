@@ -1,7 +1,7 @@
 #include "plssvm/data_set.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name
+#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
 
 #include "fmt/core.h"           // fmt::format
 #include "fmt/format.h"         // fmt::join
@@ -17,39 +17,11 @@
 
 namespace py = pybind11;
 
-template <typename T>
-std::vector<std::vector<T>> pyarray_to_vector_of_vector(py::array_t<T> data) {
-    // check dimensions
-    if (data.ndim() != 2) {
-        throw py::value_error{ fmt::format("the provided array must have exactly two dimensions but has {}!", data.ndim()) };
-    }
-
-    // convert py::array to std::vector<std::vector<>>
-    std::vector<std::vector<T>> tmp(data.shape(0));
-    for (std::size_t i = 0; i < tmp.size(); ++i) {
-        tmp[i] = std::vector<T>(data.data(i, 0), data.data(i, 0) + data.shape(1));
-    }
-
-    return tmp;
-}
-
-template <typename T>
-std::vector<T> pyarray_to_vector(py::array_t<T> data) {
-    // check dimensions
-    if (data.ndim() != 1) {
-        throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", data.ndim()) };
-    }
-
-    // convert py::array to std::vector
-    return std::vector<T>(data.data(0), data.data(0) + data.shape(0));
-}
-
 template <typename real_type, typename label_type>
 void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
     using data_set_type = plssvm::data_set<real_type, label_type>;
     using size_type = typename data_set_type::size_type;
 
-    // TODO: change def to def_property_readonly based on sklearn.svm.SVC?
     // create the Python type names based on the provided real_type and label_type
     const std::string class_name_scaling_factors = assemble_unique_class_name<real_type, label_type>("DataSetScalingFactors");
     const std::string class_name_scaling = assemble_unique_class_name<real_type, label_type>("DataSetScaling");
@@ -75,7 +47,11 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
         .def(py::init<const std::string &>(), "read the scaling factors from the file")
         .def("save", &data_set_type::scaling::save, "save the scaling factors to a file")
         .def_readonly("scaling_interval", &data_set_type::scaling::scaling_interval, "the interval to which the data points are scaled")
-        .def_readonly("scaling_factors", &data_set_type::scaling::scaling_factors, "the scaling factors for each feature")
+        .def_property_readonly(
+            "scaling_factors", [](const typename data_set_type::scaling &scaling) {
+                return vector_to_pyarray(scaling.scaling_factors);
+            },
+            "the scaling factors for each feature")
         .def("__repr__", [class_name_scaling](const typename data_set_type::scaling &scaling) {
             return fmt::format("<plssvm.{} with {{ lower: {}, upper: {}, #factors: {} }}>",
                                class_name_scaling,
@@ -109,9 +85,9 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         check_kwargs_for_correctness(args, { "scaling" });
 
                         if (args.contains("scaling")) {
-                            return data_set_type{ pyarray_to_vector_of_vector(data), args["scaling"].cast<typename data_set_type::scaling>() };
+                            return data_set_type{ pyarray_to_matrix(data), args["scaling"].cast<typename data_set_type::scaling>() };
                         } else {
-                            return data_set_type{ pyarray_to_vector_of_vector(data) };
+                            return data_set_type{ pyarray_to_matrix(data) };
                         }
                     }),
                     "create a new data set without labels given additional optional parameters");
@@ -122,9 +98,9 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             check_kwargs_for_correctness(args, { "scaling" });
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_vector_of_vector(data), pyarray_to_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
                             } else {
-                                return data_set_type{ pyarray_to_vector_of_vector(data), pyarray_to_vector(labels) };
+                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
                             }
                         }),
                         "create a new data set with labels from a numpy array given additional optional parameters");
@@ -146,9 +122,9 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             }
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_vector_of_vector(data), std::move(tmp), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp), args["scaling"].cast<typename data_set_type::scaling>() };
                             } else {
-                                return data_set_type{ pyarray_to_vector_of_vector(data), std::move(tmp) };
+                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp) };
                             }
                         }),
                         "create a new data set with labels from a numpy array given additional optional parameters");
@@ -164,9 +140,9 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             }
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_vector_of_vector(data), std::move(tmp), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp), args["scaling"].cast<typename data_set_type::scaling>() };
                             } else {
-                                return data_set_type{ pyarray_to_vector_of_vector(data), std::move(tmp) };
+                                return data_set_type{ pyarray_to_matrix(data), std::move(tmp) };
                             }
                         }),
                         "create a new data set with labels from a Python list given additional optional parameters");
@@ -176,12 +152,41 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
         .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")
+        .def("data", [](const data_set_type &data) {
+                return matrix_to_pyarray(data.data());
+            }, "the data saved as 2D vector")
         .def("has_labels", &data_set_type::has_labels, "check whether the data set has labels")
-        .def("labels", &data_set_type::labels, py::return_value_policy::reference_internal, "the labels")
+        .def("labels", [](const data_set_type &data) {
+                if (!data.has_labels()) {
+                    throw py::attribute_error{ "'DataSet' object has no function 'labels'. Maybe this DataSet was created without labels?" };
+                } else {
+                    if constexpr (std::is_same_v<label_type, std::string>) {
+                        return data.labels()->get();
+                    } else {
+                        return vector_to_pyarray(data.labels()->get());
+                    }
+                }
+            }, "the labels")
         .def("num_different_labels", &data_set_type::num_different_labels, "the number of different labels")
-        .def("different_labels", &data_set_type::different_labels, "the different labels")
+        .def("different_labels", [](const data_set_type &data) {
+                if (!data.has_labels()) {
+                    throw py::attribute_error{ "'DataSet' object has no function 'different_labels'. Maybe this DataSet was created without labels?" };
+                } else {
+                    if constexpr (std::is_same_v<label_type, std::string>) {
+                        return data.different_labels().value();
+                    } else {
+                        return vector_to_pyarray(data.different_labels().value());
+                    }
+                }
+            }, "the different labels")
         .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
-        .def("scaling_factors", &data_set_type::scaling_factors, py::return_value_policy::reference_internal, "the factors used to scale this data set")
+        .def("scaling_factors", [](const data_set_type &data) {
+                if (!data.is_scaled()) {
+                    throw py::attribute_error{ "'DataSet' object has no function 'scaling_factors'. Maybe this DataSet has not been scaled?" };
+                } else {
+                    return data.scaling_factors().value();
+                }
+            }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
         .def("__repr__", [class_name](const data_set_type &data) {
             std::string optional_repr{};
             if (data.has_labels()) {
