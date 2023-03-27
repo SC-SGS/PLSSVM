@@ -19,27 +19,33 @@ void init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::exception> &b
     py::module_ hipsycl_module = m.def_submodule("hipsycl", "a module containing all hipSYCL SYCL backend specific functionality");
 
     // bind the CSVM using the hipSYCL backend
-    py::class_<plssvm::hipsycl::csvm, plssvm::csvm>(hipsycl_module, "Csvm")
-        .def(py::init<>(), "create an SVM with the automatic target platform and default parameters")
-        .def(py::init<plssvm::target_platform>(), "create an SVM with the default parameters")
-        .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform")
-        .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create a new SVM with the provided target platform and parameters")
+    py::class_<plssvm::hipsycl::csvm, plssvm::csvm>(hipsycl_module, "CSVM")
+        .def(py::init<>(), "create an SVM with the automatic target platform and default parameter object")
+        .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform and provided parameter object")
+        .def(py::init<plssvm::target_platform>(), "create an SVM with the provided target platform and default parameter object")
+        .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create an SVM with the provided target platform and parameter object")
         .def(py::init([](py::kwargs args) {
-            // check for valid keys
-            check_kwargs_for_correctness(args, { "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
-
-            // if one of the value named parameter is provided, set the respective value
-            const plssvm::parameter params = convert_kwargs_to_parameter(args);
-
-            // set target platform
-            const plssvm::target_platform target = args.contains("target_platform") ? args["target_platform"].cast<plssvm::target_platform>() : plssvm::target_platform::automatic;
-
-            if (args.contains("sycl_kernel_invocation_type")) {
-                return std::make_unique<plssvm::hipsycl::csvm>(target, params, plssvm::sycl_kernel_invocation_type = args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>());
-            } else {
-                return std::make_unique<plssvm::hipsycl::csvm>(target, params);
-            }
-        }), "create an SVM using keyword arguments");
+                 // check for valid keys
+                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
+                 // if one of the value named parameter is provided, set the respective value
+                 const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 // set SYCL kernel invocation type
+                 const plssvm::sycl::kernel_invocation_type invoc = args.contains("sycl_kernel_invocation_type") ? args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>() : plssvm::sycl::kernel_invocation_type::automatic;
+                 // create CSVM with the default target platform
+                 return std::make_unique<plssvm::hipsycl::csvm>(params, plssvm::sycl_kernel_invocation_type = invoc);
+             }),
+             "create an SVM with the default target platform and keyword arguments")
+        .def(py::init([](const plssvm::target_platform target, py::kwargs args) {
+                 // check for valid keys
+                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_kernel_invocation_type" });
+                 // if one of the value named parameter is provided, set the respective value
+                 const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 // set SYCL kernel invocation type
+                 const plssvm::sycl::kernel_invocation_type invoc = args.contains("sycl_kernel_invocation_type") ? args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>() : plssvm::sycl::kernel_invocation_type::automatic;
+                 // create CSVM with the default target platform
+                 return std::make_unique<plssvm::hipsycl::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
+             }),
+             "create an SVM with the provided target platform and keyword arguments");
 
     // register hipSYCL backend specific exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::hipsycl::backend_exception, hipsycl_module, BackendError, base_exception)

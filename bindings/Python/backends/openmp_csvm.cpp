@@ -19,24 +19,29 @@ void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
     py::module_ openmp_module = m.def_submodule("openmp", "a module containing all OpenMP backend specific functionality");
 
     // bind the CSVM using the OpenMP backend
-    py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_module, "Csvm")
-        .def(py::init<>(), "create an SVM with the automatic target platform and default parameters")
-        .def(py::init<plssvm::target_platform>(), "create an SVM with the default parameters")
-        .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform")
-        .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create a new SVM with the provided target platform and parameters")
+    py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_module, "CSVM")
+        .def(py::init<>(), "create an SVM with the automatic target platform and default parameter object")
+        .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform and provided parameter object")
+        .def(py::init<plssvm::target_platform>(), "create an SVM with the provided target platform and default parameter object")
+        .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create an SVM with the provided target platform and parameter object")
         .def(py::init([](py::kwargs args) {
-            // check for valid keys
-            check_kwargs_for_correctness(args, { "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost" });
-
-            // if one of the value named parameter is provided, set the respective value
-            const plssvm::parameter params = convert_kwargs_to_parameter(args);
-
-            if (args.contains("target_platform")) {
-                return std::make_unique<plssvm::openmp::csvm>(args["target_platform"].cast<plssvm::target_platform>(), params);
-            } else {
-                return std::make_unique<plssvm::openmp::csvm>(params);
-            }
-        }), "create an SVM using keyword arguments");
+                 // check for valid keys
+                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 // if one of the value named parameter is provided, set the respective value
+                 const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 // create CSVM with the default target platform
+                 return std::make_unique<plssvm::openmp::csvm>(params);
+             }),
+             "create an SVM with the default target platform and keyword arguments")
+        .def(py::init([](const plssvm::target_platform target, py::kwargs args) {
+                 // check for valid keys
+                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 // if one of the value named parameter is provided, set the respective value
+                 const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 // create CSVM with the provided target platform
+                 return std::make_unique<plssvm::openmp::csvm>(target, params);
+             }),
+             "create an SVM with the provided target platform and keyword arguments");
 
     // register OpenMP backend specific exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::openmp::backend_exception, openmp_module, BackendError, base_exception)
