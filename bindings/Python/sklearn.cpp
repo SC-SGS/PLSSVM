@@ -62,7 +62,8 @@ void parse_provided_params(svc &self, py::kwargs args) {
         self.svm_->set_params(plssvm::degree = args["degree"].cast<int>());
     }
     if (args.contains("gamma")) {
-        self.svm_->set_params(plssvm::gamma = args["gamma"].cast<typename svc::real_type>());  // TODO: scale, auto, value
+        // TODO: correctly reflect sklearn's scale, auto, and value options
+        self.svm_->set_params(plssvm::gamma = args["gamma"].cast<typename svc::real_type>());
     }
     if (args.contains("coef0")) {
         self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<typename svc::real_type>());
@@ -192,7 +193,8 @@ void init_sklearn(py::module_ &m) {
                   py_params["C"] = params.cost.value();
                   py_params["kernel"] = fmt::format("{}", params.kernel_type);
                   py_params["degree"] = params.degree.value();
-                  py_params["gamma"] = params.gamma.value();  // TODO: scale, auto, value
+                  // TODO: correctly reflect sklearn's scale, auto, and value options
+                  py_params["gamma"] = params.gamma.value();
                   py_params["coef0"] = params.coef0.value();
                   // py_params["shrinking"];
                   // py_params["probability"];
