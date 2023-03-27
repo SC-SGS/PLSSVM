@@ -29,6 +29,8 @@
 
 namespace py = pybind11;
 
+// TODO: implement missing functionality
+
 // dummy
 struct svc {
     // the types
@@ -84,7 +86,6 @@ void parse_provided_params(svc &self, py::kwargs args) {
         throw py::attribute_error{ "The 'class_weight' parameter for a call to the 'SVC' constructor is not implemented yet!" };
     }
     if (args.contains("verbose")) {
-        // TODO: doesn't currently not work!
         plssvm::verbose = args["verbose"].cast<bool>();
     }
     if (args.contains("max_iter")) {
@@ -116,13 +117,11 @@ void fit(svc &self) {
 
 void init_sklearn(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
-
     py::class_<svc> py_svc(m, "SVC");
     py_svc.def(py::init([](py::kwargs args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
-                       // TODO: doesn't currently not work!
-                       plssvm::verbose = args["verbose"].cast<bool>();
+                       ::plssvm::verbose = args["verbose"].cast<bool>();
                    }
 
                    // create SVC class

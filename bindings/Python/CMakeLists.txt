@@ -78,7 +78,7 @@ set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
 
 # set default real and label types
-# TODO: supported values?
+# TODO: supported values?, string vs std::string?
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE "double" CACHE STRING "The preferred type of the data points for the Python bindings.")
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE "std::string" CACHE STRING "The preferred type of the labels for the Python bindings.")
 
