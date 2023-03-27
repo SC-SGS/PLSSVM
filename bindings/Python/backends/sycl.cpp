@@ -9,6 +9,9 @@
 
 namespace py = pybind11;
 
+void init_hipsycl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+void init_dpcpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+
 void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the SYCL specific bindings
     py::module_ sycl_module = m.def_submodule("sycl", "a module containing all SYCL backend specific functionality");
@@ -28,4 +31,12 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
         .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
         .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type")
         .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical, "use the hierarchical kernel invocation type");
+
+// initialize SYCL binding classes
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    init_hipsycl_csvm(m, base_exception);
+#endif
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    init_dpcpp_csvm(m, base_exception);
+#endif
 }
