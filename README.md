@@ -545,7 +545,7 @@ try:
     test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
   
     # create C-SVM using the default backend and the previously defined parameter
-    svm = plssvm.Csvm(params)
+    svm = plssvm.CSVM(params)
   
     # fit using the training data, (optionally) set the termination criterion
     model = svm.fit(train_data, epsilon=10e-6)
