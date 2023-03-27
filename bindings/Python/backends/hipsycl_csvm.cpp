@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-void init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
+py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the hipSYCL CSVM bindings
     py::module_ hipsycl_module = m.def_submodule("hipsycl", "a module containing all hipSYCL SYCL backend specific functionality");
 
@@ -49,4 +49,6 @@ void init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::exception> &b
 
     // register hipSYCL backend specific exceptions
     PLSSVM_REGISTER_EXCEPTION(plssvm::hipsycl::backend_exception, hipsycl_module, BackendError, base_exception)
+
+    return hipsycl_module;
 }

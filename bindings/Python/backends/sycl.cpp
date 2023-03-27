@@ -7,10 +7,13 @@
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
 
+#define PLSSVM_CONCATENATE_DETAIL(x, y) x##y
+#define PLSSVM_CONCATENATE(x, y)        PLSSVM_CONCATENATE_DETAIL(x, y)
+
 namespace py = pybind11;
 
-void init_hipsycl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_dpcpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+py::module_ init_hipsycl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+py::module_ init_dpcpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 
 void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the SYCL specific bindings
@@ -34,9 +37,12 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
 
 // initialize SYCL binding classes
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    init_hipsycl_csvm(m, base_exception);
+    const py::module_ hipsycl_module = init_hipsycl_csvm(m, base_exception);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    init_dpcpp_csvm(m, base_exception);
+    const py::module_ dpcpp_module = init_dpcpp_csvm(m, base_exception);
 #endif
+
+    // "alias" one of the DPC++ or hipSYCL CSVMs to be the default SYCL CSVM
+    sycl_module.attr("CSVM") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVM");
 }
