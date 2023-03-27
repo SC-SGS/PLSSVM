@@ -15,6 +15,7 @@ void init_parameter(py::module_ &m) {
     // bind parameter class
     py::class_<plssvm::parameter>(m, "Parameter")
         .def(py::init<>())
+        .def(py::init<plssvm::kernel_function_type, int, double, double, double>())
         .def(py::init([](py::kwargs args) {
             // check for valid keys
             check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
