@@ -1,3 +1,11 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
+
 #include "plssvm/model.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
@@ -26,12 +34,16 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
         .def("num_support_vectors", &model_type::num_support_vectors, "the number of support vectors (note: all training points become support vectors for LSSVMs)")
         .def("num_features", &model_type::num_features, "the number of features of the support vectors")
         .def("get_params", &model_type::get_params, py::return_value_policy::reference_internal, "the SVM parameter used to learn this model")
-        .def("support_vectors", [](const model_type &model) {
-            return matrix_to_pyarray(model.support_vectors());
-        }, "the support vectors (note: all training points become support vectors for LSSVMs)")
-        .def("weights", [](const model_type &model) {
-            return vector_to_pyarray(model.weights());
-        }, "the weights learned for each support vector")
+        .def(
+            "support_vectors", [](const model_type &model) {
+                return matrix_to_pyarray(model.support_vectors());
+            },
+            "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def(
+            "weights", [](const model_type &model) {
+                return vector_to_pyarray(model.weights());
+            },
+            "the weights learned for each support vector")
         .def("rho", &model_type::rho, "the bias value after learning")
         .def("__repr__", [class_name](const model_type &model) {
             return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {} }}>",

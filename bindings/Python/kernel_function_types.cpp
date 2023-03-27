@@ -1,3 +1,11 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
+
 #include "plssvm/kernel_function_types.hpp"
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
@@ -26,7 +34,8 @@ void init_kernel_function_types(py::module_ &m) {
     m.def(
         "polynomial_kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, const int degree, const std::optional<double> gamma, const double coef0) {
             return plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x, y, degree, gamma.has_value() ? gamma.value() : 1.0 / x.size(), coef0);
-        }, "apply the polynomial kernel function to two vectors",
+        },
+        "apply the polynomial kernel function to two vectors",
         py::arg("x"),
         py::arg("y"),
         py::pos_only(),
@@ -36,17 +45,20 @@ void init_kernel_function_types(py::module_ &m) {
     m.def(
         "rbf_kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, const std::optional<double> gamma) {
             return plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x, y, gamma.has_value() ? gamma.value() : 1.0 / x.size());
-        }, "apply the radial basis function kernel function to two vectors",
+        },
+        "apply the radial basis function kernel function to two vectors",
         py::arg("x"),
         py::arg("y"),
         py::pos_only(),
         py::arg("gamma") = std::nullopt);
 
-    m.def("kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, plssvm::parameter params) {
-        // set default gamma value
-        if (params.gamma.is_default()) {
-            params.gamma = 1.0 / x.size();
-        }
-        return plssvm::kernel_function(x, y, params);
-    }, "apply the kernel function defined in the parameter object to two vectors");
+    m.def(
+        "kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, plssvm::parameter params) {
+            // set default gamma value
+            if (params.gamma.is_default()) {
+                params.gamma = 1.0 / x.size();
+            }
+            return plssvm::kernel_function(x, y, params);
+        },
+        "apply the kernel function defined in the parameter object to two vectors");
 }

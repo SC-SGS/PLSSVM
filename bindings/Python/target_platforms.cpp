@@ -1,3 +1,11 @@
+/**
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
+
 #include "plssvm/target_platforms.hpp"
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
@@ -16,6 +24,5 @@ void init_target_platforms(py::module_ &m) {
 
     // bind free functions
     m.def("list_available_target_platforms", &plssvm::list_available_target_platforms, "list the available target platforms (as defined during CMake configuration)");
-    m.def("determine_default_target_platform", &plssvm::determine_default_target_platform, "determine the default target platform given the list of available target platforms",
-          py::arg("platform_device_list") = plssvm::list_available_target_platforms());
+    m.def("determine_default_target_platform", &plssvm::determine_default_target_platform, "determine the default target platform given the list of available target platforms", py::arg("platform_device_list") = plssvm::list_available_target_platforms());
 }
