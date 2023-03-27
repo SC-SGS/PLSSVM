@@ -153,11 +153,14 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
         .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")
-        .def("data", [](const data_set_type &data) {
+        .def(
+            "data", [](const data_set_type &data) {
                 return matrix_to_pyarray(data.data());
-            }, "the data saved as 2D vector")
+            },
+            "the data saved as 2D vector")
         .def("has_labels", &data_set_type::has_labels, "check whether the data set has labels")
-        .def("labels", [](const data_set_type &data) {
+        .def(
+            "labels", [](const data_set_type &data) {
                 if (!data.has_labels()) {
                     throw py::attribute_error{ "'DataSet' object has no function 'labels'. Maybe this DataSet was created without labels?" };
                 } else {
@@ -167,9 +170,11 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         return vector_to_pyarray(data.labels()->get());
                     }
                 }
-            }, "the labels")
+            },
+            "the labels")
         .def("num_different_labels", &data_set_type::num_different_labels, "the number of different labels")
-        .def("different_labels", [](const data_set_type &data) {
+        .def(
+            "different_labels", [](const data_set_type &data) {
                 if (!data.has_labels()) {
                     throw py::attribute_error{ "'DataSet' object has no function 'different_labels'. Maybe this DataSet was created without labels?" };
                 } else {
@@ -179,15 +184,19 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         return vector_to_pyarray(data.different_labels().value());
                     }
                 }
-            }, "the different labels")
+            },
+            "the different labels")
         .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
-        .def("scaling_factors", [](const data_set_type &data) {
+        .def(
+            "scaling_factors", [](const data_set_type &data) {
                 if (!data.is_scaled()) {
                     throw py::attribute_error{ "'DataSet' object has no function 'scaling_factors'. Maybe this DataSet has not been scaled?" };
                 } else {
                     return data.scaling_factors().value();
                 }
-            }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
+            },
+            py::return_value_policy::reference_internal,
+            "the factors used to scale this data set")
         .def("__repr__", [class_name](const data_set_type &data) {
             std::string optional_repr{};
             if (data.has_labels()) {
