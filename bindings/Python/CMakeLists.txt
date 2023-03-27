@@ -78,12 +78,16 @@ set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
 
 # set default real and label types
+# TODO: supported values?
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE "double" CACHE STRING "The preferred type of the data points for the Python bindings.")
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE "std::string" CACHE STRING "The preferred type of the labels for the Python bindings.")
 
 # add necessary compile definitions for the default real_type and label_type
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE})
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE})
+if (PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE STREQUAL "std::string")
+    target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
+endif ()
 
 # add necessary compile options
 target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
