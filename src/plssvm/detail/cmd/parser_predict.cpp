@@ -126,8 +126,8 @@ parser_predict::parser_predict(int argc, char **argv) {
     if (result.count("output")) {
         predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
-        std::filesystem::path input_path{ input_filename };
-        predict_filename = input_path.replace_filename(input_path.filename().string() + ".predict").string();
+        const std::filesystem::path input_path{ input_filename };
+        predict_filename = input_path.filename().string() + ".predict";
     }
 }
 

@@ -33,7 +33,28 @@ int main(int argc, char *argv[]) {
         // create data set and scale
         std::visit([&](auto &&data) {
             // write scaled data to output file
-            data.save(cmd_parser.scaled_filename, cmd_parser.format);
+            if (!cmd_parser.scaled_filename.empty()) {
+                data.save(cmd_parser.scaled_filename, cmd_parser.format);
+            } else {
+                fmt::print("\n");
+                using real_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::real_type;
+                using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
+
+                // output to console if no output filename is provided
+                const std::vector<std::vector<real_type>>& matrix = data.data();
+                const plssvm::optional_ref<const std::vector<label_type>> label = data.labels();
+                for (std::size_t row = 0; row < matrix.size(); ++row) {
+                    if (label.has_value()) {
+                        fmt::print(FMT_COMPILE("{} "), label.value().get()[row]);
+                    }
+                    for (std::size_t col = 0; col < matrix[row].size(); ++col) {
+                        if (matrix[row][col] != real_type{ 0.0 }) {
+                            fmt::print(FMT_COMPILE("{}:{:.10e} "), col + 1, matrix[row][col]);
+                        }
+                    }
+                    fmt::print("\n");
+                }
+            }
 
             // save scaling parameters if requested
             if (!cmd_parser.save_filename.empty() && data.scaling_factors().has_value()) {

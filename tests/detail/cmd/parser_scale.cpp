@@ -43,7 +43,7 @@ TEST_F(ParserScale, minimal) {
     EXPECT_FALSE(parser.strings_as_labels);
     EXPECT_FALSE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
-    EXPECT_EQ(parser.scaled_filename, "data.libsvm.scaled");
+    EXPECT_EQ(parser.scaled_filename, "");
     EXPECT_EQ(parser.save_filename, "");
     EXPECT_EQ(parser.restore_filename, "");
 }
@@ -62,7 +62,7 @@ TEST_F(ParserScale, minimal_output) {
         "real_type: double (default)\n"
         "output file format: libsvm\n"
         "input file: 'data.libsvm'\n"
-        "scaled file: 'data.libsvm.scaled'\n"
+        "scaled file: ''\n"
         "save file (scaling factors): ''\n"
         "restore file (scaling factors): ''\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);

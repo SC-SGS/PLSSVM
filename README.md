@@ -196,6 +196,17 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
 
 If the SYCL backend is available additional options can be set.
+
+- `PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for hipSYCL as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for hipSYCL as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for hipSYCL as implementation for the SYCL backend
+
+- `PLSSVM_ENABLE_SYCL_DPCPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for DPC++ as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for DPC++ as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for DPC++ as implementation for the SYCL backend
+
 To use DPC++ for SYCL simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
 
 If the SYCL implementation is DPC++ the following additional options are available:

@@ -40,6 +40,7 @@ pipeline {
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        TMPDIR = "/data/argon-fs/sgs/jenkins/tmp"
 
         // DPCPP
         DPCPP_PATH = "/data/argon-fs/sgs/jenkins/workspace/PLSSVM_Github-Multi-GPU_jenkins/llvm/build"
@@ -143,7 +144,7 @@ pipeline {
                             module load cuda/11.2.2 &&\
                             if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then \
                                 rm -rf llvm && \
-                                git clone --dept 1 --branch sycl-nightly/20230110  https://github.com/intel/llvm.git llvm  || true; \
+                                git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm  || true; \
                                 cd llvm &&\
                                 python buildbot/configure.py --cuda --llvm-external-projects=\"clang-tools-extra,compiler-rt,openmp\" --cmake-opt=\"-DENABLE_LIBOMPTARGET=OFF\" &&\
                                 python buildbot/compile.py &&\
@@ -171,7 +172,7 @@ pipeline {
                                     mkdir $HIPSYCL_PATH && \
                                     git clone https://github.com/illuhad/hipSYCL.git hipSYCL && \
                                     cd hipSYCL && \
-                                    git checkout eb67fc46d6732b5c4f137ce5564f6adfba57eaa1 && \
+                                    git checkout 012e16d6d3d57330c176d7d536f657b0d8a9a197 && \
                                     mkdir build && \
                                     cd build && \
                                     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ .. && \

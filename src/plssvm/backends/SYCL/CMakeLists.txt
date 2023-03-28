@@ -4,6 +4,8 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
+include(CMakeDependentOption)
+
 list(APPEND CMAKE_MESSAGE_INDENT "SYCL:  ")
 
 message(CHECK_START "Checking for SYCL backend")
@@ -20,16 +22,28 @@ set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 
 # check if SYCL can be enabled
 ## add hipSYCL
-add_subdirectory(hipSYCL)
+set(PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND ${PLSSVM_ENABLE_SYCL_BACKEND} CACHE STRING "Enable hipSYCL as SYCL Backend")
+set_property(CACHE PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND)
+    add_subdirectory(hipSYCL)
+endif ()
 ## add DPC++
-add_subdirectory(DPCPP)
+set(PLSSVM_ENABLE_SYCL_DPCPP_BACKEND ${PLSSVM_ENABLE_SYCL_BACKEND} CACHE STRING "Enable DPC++ as SYCL Backend")
+set_property(CACHE PLSSVM_ENABLE_SYCL_DPCPP_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_SYCL_DPCPP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_DPCPP_BACKEND)
+    add_subdirectory(DPCPP)
+endif ()
 
 
 ## check if ANY SYCL implementation has been found
 if (NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
     message(CHECK_FAIL "not found")
     if (PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
-        message(SEND_ERROR "Cannot find requested backend: SYCL!")
+        if (PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND MATCHES "OFF" AND PLSSVM_ENABLE_SYCL_DPCPP_BACKEND MATCHES "OFF")
+            message(SEND_ERROR "Set \"PLSSVM_ENABLE_SYCL_BACKEND\" to \"ON\" but disabled all supported SYCL implementations!")
+        else ()
+            message(SEND_ERROR "Cannot find requested backend: SYCL!")
+        endif ()
     endif ()
     return()
 endif ()

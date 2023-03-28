@@ -79,11 +79,11 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<std::vector<float>, float> solve_system_of_linear_equations(const parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    [[nodiscard]] std::pair<std::vector<float>, float> solve_system_of_linear_equations(const parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(b), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<std::vector<double>, double> solve_system_of_linear_equations(const parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, b, eps, max_iter); }
+    [[nodiscard]] std::pair<std::vector<double>, double> solve_system_of_linear_equations(const parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(b), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */

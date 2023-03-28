@@ -32,7 +32,8 @@ namespace plssvm::detail::cmd {
 class parser_train {
   public:
     /**
-     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly. Parse the given data file.
+     * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly.
+     * @details If no model filename is given, uses the input filename and appends a ".model". The model file is than saved in the current working directory.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
