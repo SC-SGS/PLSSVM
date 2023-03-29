@@ -77,7 +77,7 @@ void parse_provided_params(svc &self, py::kwargs args) {
         throw py::attribute_error{ "The 'probability' parameter for a call to the 'SVC' constructor is not implemented yet!" };
     }
     if (args.contains("tol")) {
-        self.epsilon.value() = args["tol"].cast<typename svc::real_type>();
+        self.epsilon = args["tol"].cast<typename svc::real_type>();
     }
     if (args.contains("cache_size")) {
         throw py::attribute_error{ "The 'cache_size' parameter for a call to the 'SVC' constructor is not implemented yet!" };
@@ -89,7 +89,7 @@ void parse_provided_params(svc &self, py::kwargs args) {
         plssvm::verbose = args["verbose"].cast<bool>();
     }
     if (args.contains("max_iter")) {
-        self.max_iter.value() = args["max_iter"].cast<long long>();
+        self.max_iter = args["max_iter"].cast<long long>();
     }
     if (args.contains("decision_function_shape")) {
         throw py::attribute_error{ "The 'decision_function_shape' parameter for a call to the 'SVC' constructor is not implemented yet!" };
