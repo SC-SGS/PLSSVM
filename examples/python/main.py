@@ -6,7 +6,7 @@ try:
 
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.DataSet("train_data.libsvm", scaling=plssvm.DataSetScaling(-1.0, 1.0))
+    train_data = plssvm.DataSet("train_data.libsvm", scaling=(-1.0, 1.0))
     test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
 
     # create C-SVM using the default backend and the previously defined parameter
