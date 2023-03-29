@@ -53,8 +53,8 @@ template <typename T>
  */
 template <typename T>
 [[nodiscard]] py::array_t<T> matrix_to_pyarray(const std::vector<std::vector<T>> &mat) {
-    const std::size_t num_data_points = mat.size();
-    const std::size_t num_features = mat.front().size();
+    const typename std::vector<std::vector<T>>::size_type num_data_points = mat.size();
+    const typename std::vector<std::vector<T>>::size_type num_features = mat.front().size();
 
     py::array_t<T> py_array({ num_data_points, num_features });
     py::buffer_info buffer = py_array.request();
