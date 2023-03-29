@@ -537,7 +537,7 @@ import plssvm
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
-    params = plssvm.Parameter(kernel_type = plssvm.KernelFunctionType.POLYNOMIAL)
+    params = plssvm.Parameter(kernel_type=plssvm.KernelFunctionType.POLYNOMIAL)
   
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
@@ -567,6 +567,9 @@ except RuntimeError as e:
 
 **Note:** it may be necessary to set `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
 
+We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the  [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
+Note that currently not all functionality has been implemented in PLSSVM.
+The respective functions will throw a Python `AttributeError` if called.
 
 ## Citing PLSSVM
 
