@@ -25,8 +25,8 @@ namespace plssvm::opencl::detail {
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const command_queue &queue) :
     base_type{ size, &queue } {
-    error_code err;
-    cl_context cont;
+    error_code err{};
+    cl_context cont{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr));
     data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, size_ * sizeof(value_type), nullptr, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err);
