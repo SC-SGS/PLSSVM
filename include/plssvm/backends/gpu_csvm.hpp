@@ -472,7 +472,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     using namespace plssvm::operators;
 
     const std::size_t dept = A.size() - 1;
-    constexpr std::size_t boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
     const std::size_t num_features = A.front().size();
 
     const std::size_t num_used_devices = this->select_num_used_devices(params.kernel_type, num_features);
@@ -659,7 +659,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(cons
     const std::size_t num_support_vectors = support_vectors.size();
     const std::size_t num_predict_points = predict_points.size();
     const std::size_t num_features = predict_points.front().size();
-    const std::size_t boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
 
     const std::size_t num_used_devices = this->select_num_used_devices(params.kernel_type, num_features);
 

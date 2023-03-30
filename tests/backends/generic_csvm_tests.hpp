@@ -333,7 +333,7 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
     // perform the data setup on the device
-    constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE);
     const std::size_t num_used_devices = svm.select_num_used_devices(params.kernel_type, data.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(data.data(), data.num_data_points() - 1, data.num_features(), boundary_size, num_used_devices);
 
@@ -366,7 +366,7 @@ TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(TypeParam::additional_arguments);
 
     // perform the data setup on the device
-    constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE);
     const std::size_t num_support_vectors = support_vectors.num_data_points();
     const std::size_t num_used_devices = svm.select_num_used_devices(kernel, support_vectors.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(support_vectors.data(), num_support_vectors - 1, support_vectors.num_features(), boundary_size, num_used_devices);
@@ -407,7 +407,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_device_kernel) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
     // perform the data setup on the device
-    constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE);
     const std::size_t num_used_devices = svm.select_num_used_devices(kernel, data.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(data.data(), dept, data.num_features(), boundary_size, num_used_devices);
     std::vector<device_ptr_type> q_d{};
