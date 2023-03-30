@@ -33,10 +33,10 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
 
   public:
     // Be able to use overloaded base class functions.
+    using base_type::memset;
+    using base_type::fill;
     using base_type::copy_to_device;
     using base_type::copy_to_host;
-    using base_type::fill;
-    using base_type::memset;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -77,7 +77,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::~gpu_device_ptr()
      */
-    ~device_ptr();
+    ~device_ptr() override;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
