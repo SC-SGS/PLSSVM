@@ -43,7 +43,7 @@ TEST(SYCLImplementationType, from_string) {
 TEST(SYCLImplementationType, from_string_unknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };
-    plssvm::sycl::implementation_type impl;
+    plssvm::sycl::implementation_type impl{};
     input >> impl;
     EXPECT_TRUE(input.fail());
 }

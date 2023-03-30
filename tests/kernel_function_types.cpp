@@ -53,7 +53,7 @@ TEST(KernelType, from_string) {
 TEST(KernelType, from_string_unknown) {
     // foo isn't a valid kernel_type
     std::istringstream input{ "foo" };
-    plssvm::kernel_function_type kernel;
+    plssvm::kernel_function_type kernel{};
     input >> kernel;
     EXPECT_TRUE(input.fail());
 }

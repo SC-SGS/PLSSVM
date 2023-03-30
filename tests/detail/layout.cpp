@@ -45,7 +45,7 @@ TEST(Layout, from_string) {
 TEST(Layout, from_string_unknown) {
     // foo isn't a valid layout_type
     std::istringstream input{ "foo" };
-    plssvm::detail::layout_type layout;
+    plssvm::detail::layout_type layout{};
     input >> layout;
     EXPECT_TRUE(input.fail());
 }
