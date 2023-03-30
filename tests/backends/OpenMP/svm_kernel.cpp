@@ -64,7 +64,7 @@ TYPED_TEST(OpenMPSVMKernelDeathTest, device_kernel) {
         { real_type{ 2.0 }, real_type{ 3.0 } },
         { real_type{ 4.0 }, real_type{ 5.0 } }
     };
-    std::vector<real_type> correct_q(correct_data.size() - 1);
+    const std::vector<real_type> correct_q(correct_data.size() - 1);
     std::vector<real_type> correct_ret(correct_data.size() - 1);
     const std::vector<real_type> correct_d(correct_data.size() - 1);
 

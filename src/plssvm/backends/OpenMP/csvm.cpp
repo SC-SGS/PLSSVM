@@ -108,8 +108,8 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     std::chrono::milliseconds average_iteration_time{};
     std::chrono::steady_clock::time_point iteration_start_time{};
     const auto output_iteration_duration = [&]() {
-        std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
-        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
+        const std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
+        const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
         std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
         average_iteration_time += iteration_duration;
     };
