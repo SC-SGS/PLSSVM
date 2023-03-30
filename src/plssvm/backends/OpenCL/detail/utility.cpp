@@ -147,8 +147,8 @@ void device_assert(const error_code ec, const std::string_view msg) {
     std::vector<context> contexts;
     for (auto &[platform, devices] : platform_devices) {
         // create context and associated OpenCL platform with it
-        cl_context_properties context_properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties) platform.first, 0 };
-        cl_context cont = clCreateContext(context_properties, static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
+        std::array<cl_context_properties, 3> context_properties = { CL_CONTEXT_PLATFORM, (cl_context_properties) platform.first, 0 };
+        cl_context cont = clCreateContext(context_properties.data(), static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context");
         // add OpenCL context to vector of context wrappers
         contexts.emplace_back(cont, platform.first, std::move(devices));
