@@ -203,7 +203,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             // allocate memory for the log
             std::string log(log_size, ' ');
             // get the log
-            error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+            const error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
             // print the log
             PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program on device {} ({})", device_idx, log));
         }
@@ -336,7 +336,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             // touch all characters in file
             f.ignore(std::numeric_limits<std::streamsize>::max());
             // get number of visited characters
-            std::streamsize num_bytes = f.gcount();
+            const std::streamsize num_bytes = f.gcount();
             // since ignore will have set eof
             f.clear();
             // jump to file start
