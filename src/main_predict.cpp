@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create model
-            plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
+            const plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
             // create default csvm
             auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
@@ -57,12 +57,12 @@ int main(int argc, char *argv[]) {
 
             // write prediction file
             {
-                std::chrono::time_point start_time = std::chrono::steady_clock::now();
+                const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
                 fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
                 out.print("{}", fmt::join(predicted_labels, "\n"));
 
-                std::chrono::time_point end_time = std::chrono::steady_clock::now();
+                const std::chrono::time_point end_time = std::chrono::steady_clock::now();
                 if (plssvm::verbose) {
                     fmt::print("Write {} predictions in {} to the file '{}'.\n",
                                predicted_labels.size(),
