@@ -177,7 +177,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         throw file_reader_exception{ "This file_reader is currently not associated to a file!" };
     }
     // create view from buffer
-    std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
+    const std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
     std::string_view::size_type pos = 0;
     while (true) {
         // find newline
