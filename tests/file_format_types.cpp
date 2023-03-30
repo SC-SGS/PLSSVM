@@ -38,7 +38,7 @@ TEST(FileFormatType, from_string) {
 TEST(FileFormatType, from_string_unknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };
-    plssvm::file_format_type file_format;
+    plssvm::file_format_type file_format{};
     input >> file_format;
     EXPECT_TRUE(input.fail());
 }
