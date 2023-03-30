@@ -20,7 +20,7 @@ struct device_ptr_test_type {
     using queue_type = int;
 
     static const queue_type &default_queue() {
-        static queue_type queue = 0;
+        static const queue_type queue = 0;
         return queue;
     }
 };

@@ -22,7 +22,7 @@ struct dpcpp_device_ptr_test_type {
     using queue_type = typename device_ptr_type::queue_type;
 
     static const queue_type &default_queue() {
-        static queue_type queue = plssvm::dpcpp::detail::get_default_queue();
+        static const queue_type queue = plssvm::dpcpp::detail::get_default_queue();
         return queue;
     }
 };
