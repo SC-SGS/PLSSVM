@@ -49,7 +49,7 @@ TEST(TargetPlatform, from_string) {
 TEST(TargetPlatform, from_string_unknown) {
     // foo isn't a valid target_platform
     std::istringstream input{ "foo" };
-    plssvm::target_platform platform;
+    plssvm::target_platform platform{};
     input >> platform;
     EXPECT_TRUE(input.fail());
 }

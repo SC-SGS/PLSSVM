@@ -73,7 +73,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     // iterate over all platforms and save all available devices
     std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
     // get number of platforms
-    cl_uint num_platforms;
+    cl_uint num_platforms{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(0, nullptr, &num_platforms), "error retrieving the number of available platforms");
     // get platforms
     std::vector<cl_platform_id> platform_ids(num_platforms);
@@ -85,7 +85,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     // enumerate all available platforms and retrieve the associated devices
     for (const cl_platform_id &platform : platform_ids) {
         // get devices associated with current platform
-        cl_uint num_devices;
+        cl_uint num_devices{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices), "error retrieving the number of devices");
         // get devices
         std::vector<cl_device_id> device_ids(num_devices);
@@ -93,7 +93,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
 
         for (const cl_device_id &device : device_ids) {
             // get device type
-            cl_device_type device_type;
+            cl_device_type device_type{};
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type");
 
             if (device_type == CL_DEVICE_TYPE_CPU) {
@@ -105,7 +105,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
                 // the current device is a GPU
                 // get vendor string
-                std::size_t vendor_string_size;
+                std::size_t vendor_string_size{};
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size");
                 std::string vendor_string(vendor_string_size, '\0');
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string_size, vendor_string.data(), nullptr), "error retrieving device vendor name");
@@ -162,10 +162,10 @@ void device_synchronize(const command_queue &queue) {
 
 std::string get_device_name(const command_queue &queue) {
     // get device
-    cl_device_id device_id;
+    cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
     // get device name
-    std::size_t name_length;
+    std::size_t name_length{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size");
     std::string device_name(name_length, '\0');
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name");
@@ -196,7 +196,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
 
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
-        std::size_t log_size;
+        std::size_t log_size{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size");
         if (log_size > 0) {
             // allocate memory for the log
