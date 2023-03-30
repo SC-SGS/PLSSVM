@@ -523,7 +523,7 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
         throw data_set_exception{ "Data vector is empty!" };
     }
     // check that all data points have the same number of features
-    if (!std::all_of(X_ptr_->cbegin(), X_ptr_->cend(), [&](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
+    if (!std::all_of(X_ptr_->cbegin(), X_ptr_->cend(), [this](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
         throw data_set_exception{ "All points in the data vector must have the same number of features!" };
     }
     // check that the data points have at least one feature
