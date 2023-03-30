@@ -119,7 +119,7 @@ void csvm::init(const target_platform target) {
 csvm::~csvm() {
     try {
         // be sure that all operations on the SYCL queues have finished before destruction
-        for (queue_type &q : devices_) {
+        for (const queue_type &q : devices_) {
             device_synchronize(q);
         }
     } catch (const plssvm::exception &e) {
@@ -151,16 +151,16 @@ template <std::size_t I>
     };
 
     if constexpr (I == 1) {
-        ::sycl::range<1> grid{ fill_grid(0) };
-        ::sycl::range<1> block{ range.block[0] };
+        const ::sycl::range<1> grid{ fill_grid(0) };
+        const ::sycl::range<1> block{ range.block[0] };
         return ::sycl::nd_range<1>{ grid, block };
     } else if constexpr (I == 2) {
-        ::sycl::range<2> grid{ fill_grid(0), fill_grid(1) };
-        ::sycl::range<2> block{ range.block[0], range.block[1] };
+        const ::sycl::range<2> grid{ fill_grid(0), fill_grid(1) };
+        const ::sycl::range<2> block{ range.block[0], range.block[1] };
         return ::sycl::nd_range<2>{ grid, block };
     } else if constexpr (I == 3) {
-        ::sycl::range<3> grid{ fill_grid(0), fill_grid(1), fill_grid(2) };
-        ::sycl::range<3> block{ range.block[0], range.block[1], range.block[2] };
+        const ::sycl::range<3> grid{ fill_grid(0), fill_grid(1), fill_grid(2) };
+        const ::sycl::range<3> block{ range.block[0], range.block[1], range.block[2] };
         return ::sycl::nd_range<3>{ grid, block };
     } else {
         static_assert(I <= 3, "Illegal nd_range size!");
