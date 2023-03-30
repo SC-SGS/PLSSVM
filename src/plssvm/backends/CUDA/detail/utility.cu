@@ -21,7 +21,7 @@ void gpu_assert(const cudaError_t code) {
 }
 
 [[nodiscard]] int get_device_count() {
-    int count;
+    int count{};
     PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceCount(&count));
     return count;
 }
