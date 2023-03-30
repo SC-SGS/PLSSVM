@@ -20,17 +20,17 @@
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 
-#include "fmt/format.h"  // fmt::format, fmt::join
-#include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/format.h"                         // fmt::format, fmt::join
+#include "fmt/os.h"                             // fmt::ostream, fmt::output_file
 
-#include <cstddef>      // std::size_t
-#include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <set>          // std::set
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::make_tuple
-#include <utility>      // std::move
-#include <vector>       // std::vector
+#include <cstddef>                              // std::size_t
+#include <exception>                            // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <set>                                  // std::set
+#include <string>                               // std::string
+#include <string_view>                          // std::string_view
+#include <tuple>                                // std::tuple, std::make_tuple
+#include <utility>                              // std::move
+#include <vector>                               // std::vector
 
 namespace plssvm::detail::io {
 
@@ -123,7 +123,7 @@ template <typename label_type>
 
             // remove attribute from string
             std::string_view sv{ line };
-            sv.remove_prefix(10);  // @ATTRIBUTE is 10 chars long
+            sv.remove_prefix(std::string_view{ "@ATTRIBUTE" }.size());
             sv = trim_left(sv);
 
             // if the line is valid, it must now start with CLASS
@@ -133,7 +133,7 @@ template <typename label_type>
                     throw invalid_file_format_exception{ "A nominal attribute with the name CLASS may only be provided once!" };
                 }
                 // check if the nominal attribute ist enclosed in curly braces
-                sv.remove_prefix(5);  // CLASS is 5 chars long
+                sv.remove_prefix(std::string_view{ "CLASS" }.size());
                 sv = detail::trim(sv);
                 // the class labels must be given
                 if (sv.empty()) {
