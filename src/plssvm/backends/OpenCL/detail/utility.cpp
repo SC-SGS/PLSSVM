@@ -129,6 +129,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     if (target == target_platform::automatic) {
         // get the target_platforms available on this system from the platform_devices map
         std::vector<target_platform> system_devices;
+        system_devices.reserve(platform_devices.size());
         for (const auto &[key, value] : platform_devices) {
             system_devices.push_back(key.second);
         }
