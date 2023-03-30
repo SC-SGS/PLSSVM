@@ -69,10 +69,10 @@ void csvm::init(const target_platform target) {
     if (plssvm::verbose) {
         // print found HIP devices
         std::cout << fmt::format("Found {} HIP device(s):\n", devices_.size());
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        for (const queue_type &device : devices_) {
             hipDeviceProp_t prop{};
-            PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[device]));
-            std::cout << fmt::format("  [{}, {}, {}.{}]\n", devices_[device], prop.name, prop.major, prop.minor);
+            PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device));
+            std::cout << fmt::format("  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
         }
         std::cout << std::endl;
     }
