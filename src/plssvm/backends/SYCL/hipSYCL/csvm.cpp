@@ -193,30 +193,30 @@ void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail:
     const ::sycl::nd_range execution_range = execution_range_to_native<2>(range, invocation_type_);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            devices_[device].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                if (invocation_type_ == sycl::kernel_invocation_type::nd_range) {
+            devices_[device].impl->sycl_queue.submit([&, invocation_type = invocation_type_](::sycl::handler &cgh) {
+                if (invocation_type == sycl::kernel_invocation_type::nd_range) {
                     cgh.parallel_for(execution_range, sycl::detail::nd_range_device_kernel_linear(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device)));
-                } else if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                } else if (invocation_type == sycl::kernel_invocation_type::hierarchical) {
                     cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical_device_kernel_linear(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device)));
                 }
             });
             break;
         case kernel_function_type::polynomial:
             PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            devices_[device].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                if (invocation_type_ == sycl::kernel_invocation_type::nd_range) {
+            devices_[device].impl->sycl_queue.submit([&, invocation_type = invocation_type_](::sycl::handler &cgh) {
+                if (invocation_type == sycl::kernel_invocation_type::nd_range) {
                     cgh.parallel_for(execution_range, sycl::detail::nd_range_device_kernel_polynomial(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value()));
-                } else if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                } else if (invocation_type == sycl::kernel_invocation_type::hierarchical) {
                     cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical_device_kernel_polynomial(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value()));
                 }
             });
             break;
         case kernel_function_type::rbf:
             PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            devices_[device].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                if (invocation_type_ == sycl::kernel_invocation_type::nd_range) {
+            devices_[device].impl->sycl_queue.submit([&, invocation_type = invocation_type_](::sycl::handler &cgh) {
+                if (invocation_type == sycl::kernel_invocation_type::nd_range) {
                     cgh.parallel_for(execution_range, sycl::detail::nd_range_device_kernel_rbf(cgh, q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value()));
-                } else if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                } else if (invocation_type == sycl::kernel_invocation_type::hierarchical) {
                     cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical_device_kernel_rbf(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value()));
                 }
             });
