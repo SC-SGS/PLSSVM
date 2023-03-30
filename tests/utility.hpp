@@ -52,11 +52,26 @@ class redirect_output {
     /**
      * @brief Redirect the output and store the original output location of @p out.
      */
-    redirect_output() {
+    redirect_output() : sbuf_{ out->rdbuf() } {
         // capture the output from the out stream
-        sbuf_ = out->rdbuf();
         out->rdbuf(buffer_.rdbuf());
     }
+    /**
+     * @brief Copy-construction is unnecessary.
+     */
+    redirect_output(const redirect_output &) = delete;
+    /**
+     * @brief Move-construction is unnecessary.
+     */
+    redirect_output(redirect_output &&) = delete;
+    /**
+     * @brief Copy-assignment is unnecessary.
+     */
+    redirect_output &operator=(const redirect_output &) = delete;
+    /**
+     * @brief Move-assignment is unnecessary.
+     */
+    redirect_output &operator=(redirect_output &&) = delete;
     /**
      * @brief Restore the original output location of @p out.
      */
@@ -112,6 +127,22 @@ class temporary_file {
         std::ofstream{ std::filesystem::temp_directory_path() / filename };
 #endif
     }
+    /**
+     * @brief Copy-construction is unnecessary.
+     */
+    temporary_file(const temporary_file &) = delete;
+    /**
+     * @brief Move-construction is unnecessary.
+     */
+    temporary_file(temporary_file &&) = delete;
+    /**
+     * @brief Copy-assignment is unnecessary.
+     */
+    temporary_file &operator=(const temporary_file &) = delete;
+    /**
+     * @brief Move-assignment is unnecessary.
+     */
+    temporary_file &operator=(temporary_file &&) = delete;
     /**
      * @brief Remove the temporary file if it exists.
      */
