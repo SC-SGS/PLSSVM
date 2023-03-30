@@ -37,7 +37,7 @@ command_queue::command_queue(cl_context context, cl_device_id device) {
 command_queue::command_queue(command_queue &&other) noexcept :
     queue{ std::exchange(other.queue, nullptr) }, float_kernels{ std::move(other.float_kernels) }, double_kernels{ std::move(other.double_kernels) } {}
 
-command_queue &command_queue::operator=(command_queue &&other) {
+command_queue &command_queue::operator=(command_queue &&other) noexcept {
     if (this != std::addressof(other)) {
         queue = std::exchange(other.queue, nullptr);
         float_kernels = std::move(other.float_kernels);

@@ -56,7 +56,7 @@ class command_queue {
      * @param[in,out] other the command_queue to move the resources from
      * @return `*this`
      */
-    command_queue &operator=(command_queue &&other);
+    command_queue &operator=(command_queue &&other) noexcept;
 
     /**
      * @brief Release the cl_command_queue resources on destruction.
