@@ -76,7 +76,7 @@ void csvm::init(const target_platform target) {
     }
 
     // get all available devices wrt the requested target platform
-    target_platform used_target;
+    target_platform used_target{};
     std::tie(devices_, used_target) = detail::get_device_list(target);
 
     // set correct kernel invocation type if "automatic" has been provided

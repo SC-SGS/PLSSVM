@@ -77,7 +77,7 @@ void csvm::init(const target_platform target) {
     const kernel_function_type kernel = base_type::get_params().kernel_type;
 
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
-    target_platform used_target;
+    target_platform used_target{};
     std::tie(contexts_, used_target) = detail::get_contexts(target);
 
     // currently, only a single context is allowed
