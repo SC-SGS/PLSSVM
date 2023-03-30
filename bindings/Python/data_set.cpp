@@ -9,27 +9,26 @@
 #include "plssvm/data_set.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
-                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
+#include "utility.hpp"                  // check_kwargs_for_correctness, assemble_unique_class_name,
+                                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
-#include "fmt/core.h"           // fmt::format
-#include "fmt/format.h"         // fmt::join
-#include "pybind11/numpy.h"     // py::array_t
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
-#include "pybind11/stl.h"       // support for STL types
+#include "fmt/core.h"                   // fmt::format
+#include "fmt/format.h"                 // fmt::join
+#include "pybind11/numpy.h"             // py::array_t
+#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
+#include "pybind11/stl.h"               // support for STL types
 
-#include <array>        // std::array
-#include <cstddef>      // std::size_t
-#include <string>       // std::string
-#include <tuple>        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>  // std::is_same_v
-#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
-#include <vector>       // std::vector
+#include <array>                        // std::array
+#include <cstddef>                      // std::size_t
+#include <string>                       // std::string
+#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>                  // std::is_same_v
+#include <utility>                      // std::move, std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
 template <typename data_set_type>
-typename data_set_type::scaling create_scaling_object(py::kwargs args) {
+typename data_set_type::scaling create_scaling_object(const py::kwargs &args) {
     using real_type = typename data_set_type::real_type;
 
     if (args.contains("scaling")) {
@@ -42,7 +41,7 @@ typename data_set_type::scaling create_scaling_object(py::kwargs args) {
             // can't cast to plssvm::data_set_type::scaling
             // -> try an std::array<real_type, 2> instead!
             try {
-                const std::array<real_type, 2> interval = args["scaling"].cast<std::array<real_type, 2>>();
+                const auto interval = args["scaling"].cast<std::array<real_type, 2>>();
                 scaling = typename data_set_type::scaling{ interval[0], interval[1] };
             } catch (...) {
                 // rethrow exception if this also did not succeed
@@ -160,7 +159,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         }),
                         "create a new data set with labels from a numpy array given additional optional parameters");
         // if the requested label_type is std::string, accept a python list (which can contain py::str) and convert them to a std::string internally
-        py_data_set.def(py::init([](py::array_t<real_type> data, py::list labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<real_type> data, const py::list &labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 

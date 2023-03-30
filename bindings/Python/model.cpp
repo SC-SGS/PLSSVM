@@ -9,16 +9,16 @@
 #include "plssvm/model.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
+#include "utility.hpp"                  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 
-#include "fmt/core.h"           // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "fmt/core.h"                   // fmt::format
+#include "pybind11/pybind11.h"          // py::module_, py::class_, py::return_value_policy
+#include "pybind11/stl.h"               // support for STL types: std::vector
 
-#include <cstddef>  // std::size_t
-#include <string>   // std::string
-#include <tuple>    // std::tuple_element_t, std::tuple_size_v
-#include <utility>  // std::integer_sequence, std::make_integer_sequence
+#include <cstddef>                      // std::size_t
+#include <string>                       // std::string
+#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
+#include <utility>                      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 

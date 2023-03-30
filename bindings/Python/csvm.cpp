@@ -9,23 +9,23 @@
 #include "plssvm/csvm.hpp"
 #include "plssvm/csvm_factory.hpp"
 
-#include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
+#include "utility.hpp"          // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 #include "pybind11/stl.h"       // support for STL types
 
-#include <cstddef>      // std::size_t
-#include <string>       // std::string
-#include <tuple>        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>  // std::is_same_v
-#include <utility>      // std::integer_sequence, std::make_integer_sequence
+#include <cstddef>              // std::size_t
+#include <string>               // std::string
+#include <tuple>                // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>          // std::is_same_v
+#include <utility>              // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
 template <typename real_type, typename label_type>
 void instantiate_csvm_functions(py::class_<plssvm::csvm> &c, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
     c.def(
-         "fit", [](const plssvm::csvm &self, const plssvm::data_set<real_type, label_type> &data, py::kwargs args) {
+         "fit", [](const plssvm::csvm &self, const plssvm::data_set<real_type, label_type> &data, const py::kwargs &args) {
              // check keyword arguments
              check_kwargs_for_correctness(args, { "epsilon", "max_iter" });
 
@@ -63,7 +63,7 @@ void instantiate_model_bindings(py::class_<plssvm::csvm> &c) {
     instantiate_csvm_functions<T>(c, std::make_integer_sequence<std::size_t, std::tuple_size_v<T>>{});
 }
 
-std::unique_ptr<plssvm::csvm> assemble_csvm(const plssvm::backend_type backend, const plssvm::target_platform target, py::kwargs args) {
+std::unique_ptr<plssvm::csvm> assemble_csvm(const plssvm::backend_type backend, const plssvm::target_platform target, const py::kwargs &args) {
     // check keyword arguments
     check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
     // if one of the value keyword parameter is provided, set the respective value
@@ -87,7 +87,7 @@ std::unique_ptr<plssvm::csvm> assemble_csvm(const plssvm::backend_type backend, 
 }
 
 void init_csvm(py::module_ &m) {
-    py::module_ pure_virtual_model = m.def_submodule("__pure_virtual");
+    const py::module_ pure_virtual_model = m.def_submodule("__pure_virtual");
 
     py::class_<plssvm::csvm> pycsvm(pure_virtual_model, "__pure_virtual_base_CSVM");
     pycsvm.def("get_params", &plssvm::csvm::get_params, "get the parameter used for this SVM")
@@ -97,7 +97,7 @@ void init_csvm(py::module_ &m) {
             },
             "update the parameter used for this SVM using a plssvm.Parameter object")
         .def(
-            "set_params", [](plssvm::csvm &self, py::kwargs args) {
+            "set_params", [](plssvm::csvm &self, const py::kwargs &args) {
                 // check keyword arguments
                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                 // convert kwargs to parameter and update csvm internal parameter
@@ -127,12 +127,12 @@ void init_csvm(py::module_ &m) {
                  return plssvm::make_csvm(target, params);
              }),
              "create an SVM with the default backend, provided target platform and provided parameter object")
-        .def(py::init([](py::kwargs args) {
+        .def(py::init([](const py::kwargs &args) {
                  // assemble CSVM
                  return assemble_csvm(plssvm::determine_default_backend(), plssvm::determine_default_target_platform(), args);
              }),
              "create an SVM with the default backend, default target platform and provided keyword arguments")
-        .def(py::init([](const plssvm::target_platform target, py::kwargs args) {
+        .def(py::init([](const plssvm::target_platform target, const py::kwargs &args) {
                  // assemble CSVM
                  return assemble_csvm(plssvm::determine_default_backend(), target, args);
              }),
@@ -154,12 +154,12 @@ void init_csvm(py::module_ &m) {
                  return plssvm::make_csvm(backend, target, params);
              }),
              "create an SVM with the provided backend, provided target platform and provided parameter object")
-        .def(py::init([](const plssvm::backend_type backend, py::kwargs args) {
+        .def(py::init([](const plssvm::backend_type backend, const py::kwargs &args) {
                  // assemble CSVM
                  return assemble_csvm(backend, plssvm::determine_default_target_platform(), args);
              }),
              "create an SVM with the provided backend, default target platform and provided keyword arguments")
-        .def(py::init([](const plssvm::backend_type backend, const plssvm::target_platform target, py::kwargs args) {
+        .def(py::init([](const plssvm::backend_type backend, const plssvm::target_platform target, const py::kwargs &args) {
                  // assemble CSVM
                  return assemble_csvm(backend, target, args);
              }),

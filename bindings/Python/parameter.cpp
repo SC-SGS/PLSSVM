@@ -15,8 +15,6 @@
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
 #include "pybind11/stl.h"        // support for STL types
 
-#include <sstream>
-
 namespace py = pybind11;
 
 void init_parameter(py::module_ &m) {
@@ -24,7 +22,7 @@ void init_parameter(py::module_ &m) {
     py::class_<plssvm::parameter>(m, "Parameter")
         .def(py::init<>())
         .def(py::init<plssvm::kernel_function_type, int, double, double, double>())
-        .def(py::init([](py::kwargs args) {
+        .def(py::init([](const py::kwargs &args) {
                  // check for valid keys
                  check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value named parameter is provided, set the respective value

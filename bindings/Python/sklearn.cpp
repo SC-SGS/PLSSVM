@@ -8,7 +8,7 @@
 
 #include "plssvm/core.hpp"
 
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
+#include "utility.hpp"           // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
 
 #include "fmt/core.h"            // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
@@ -16,16 +16,16 @@
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
 #include "pybind11/stl.h"        // support for STL types
 
-#include <cstddef>   // std::size_t
-#include <cstdint>   // std::int32_t
-#include <map>       // std::map
-#include <memory>    // std::unique_ptr, std::make_unique
-#include <numeric>   // std::iota
-#include <optional>  // std::optional, std::nullopt
-#include <sstream>   // std::stringstream
-#include <string>    // std::string
-#include <tuple>     // std::tuple
-#include <vector>    // std::vector
+#include <cstddef>               // std::size_t
+#include <cstdint>               // std::int32_t
+#include <map>                   // std::map
+#include <memory>                // std::unique_ptr, std::make_unique
+#include <numeric>               // std::iota
+#include <optional>              // std::optional, std::nullopt
+#include <sstream>               // std::stringstream
+#include <string>                // std::string
+#include <tuple>                 // std::tuple
+#include <vector>                // std::vector
 
 namespace py = pybind11;
 
@@ -47,7 +47,7 @@ struct svc {
     std::unique_ptr<model_type> model_{};
 };
 
-void parse_provided_params(svc &self, py::kwargs args) {
+void parse_provided_params(svc &self, const py::kwargs &args) {
     // check keyword arguments
     check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "probability", "tol", "cache_size", "class_weight", "verbose", "max_iter", "decision_function_shape", "break_ties", "random_state" });
 
@@ -56,7 +56,7 @@ void parse_provided_params(svc &self, py::kwargs args) {
     }
     if (args.contains("kernel")) {
         std::stringstream ss{ args["kernel"].cast<std::string>() };
-        plssvm::kernel_function_type kernel;
+        plssvm::kernel_function_type kernel{};
         ss >> kernel;
         self.svm_->set_params(plssvm::kernel_type = kernel);
     }
@@ -118,7 +118,7 @@ void fit(svc &self) {
 void init_sklearn(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
     py::class_<svc> py_svc(m, "SVC");
-    py_svc.def(py::init([](py::kwargs args) {
+    py_svc.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
                        ::plssvm::verbose = args["verbose"].cast<bool>();
@@ -153,7 +153,7 @@ void init_sklearn(py::module_ &m) {
         py::arg("sample_weight") = std::nullopt);
 #else
     py_svc.def(
-              "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+              "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                   if (sample_weight.has_value()) {
                       throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                   }
@@ -168,7 +168,7 @@ void init_sklearn(py::module_ &m) {
               py::pos_only(),
               py::arg("sample_weight") = std::nullopt)
         .def(
-            "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+            "fit", [](svc &self, py::array_t<typename svc::real_type> data, const py::list &labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
@@ -250,7 +250,7 @@ void init_sklearn(py::module_ &m) {
         py::arg("sample_weight") = std::nullopt);
 #else
     py_svc.def(
-              "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+              "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                   if (sample_weight.has_value()) {
                       throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                   }
@@ -268,7 +268,7 @@ void init_sklearn(py::module_ &m) {
               py::pos_only(),
               py::arg("sample_weight") = std::nullopt)
         .def(
-            "score", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+            "score", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
@@ -287,7 +287,7 @@ void init_sklearn(py::module_ &m) {
             py::arg("sample_weight") = std::nullopt);
 #endif
     py_svc.def(
-              "set_params", [](svc &self, py::kwargs args) {
+              "set_params", [](svc &self, const py::kwargs &args) {
                   parse_provided_params(self, args);
               },
               "Set the parameters of this estimator.")
@@ -350,7 +350,7 @@ void init_sklearn(py::module_ &m) {
                     // all data points are support vectors
                     const auto size = static_cast<int>(self.model_->num_support_vectors());
                     py::array_t<int> py_array(size);
-                    py::buffer_info buffer = py_array.request();
+                    const py::buffer_info buffer = py_array.request();
                     int *ptr = static_cast<int *>(buffer.ptr);
                     for (int i = 0; i < size; ++i) {
                         ptr[i] = i;

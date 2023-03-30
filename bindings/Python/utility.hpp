@@ -74,7 +74,7 @@ template <typename T>
  * @return the `std::vector<T>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<T> pyarray_to_vector(py::array_t<T> vec) {
+[[nodiscard]] std::vector<T> pyarray_to_vector(const py::array_t<T> &vec) {
     // check dimensions
     if (vec.ndim() != 1) {
         throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
@@ -91,7 +91,7 @@ template <typename T>
  * @return the `std::vector<std::string>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<std::string> pyarray_to_string_vector(py::array_t<T> vec) {
+[[nodiscard]] std::vector<std::string> pyarray_to_string_vector(const py::array_t<T> &vec) {
     // check dimensions
     if (vec.ndim() != 1) {
         throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
@@ -111,7 +111,7 @@ template <typename T>
  * @param[in] list the Python List to convert
  * @return the `std::vector<std::string>` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::vector<std::string> pylist_to_string_vector(py::list list) {
+[[nodiscard]] inline std::vector<std::string> pylist_to_string_vector(const py::list &list) {
     // convert a Python list containing strings to a std::vector<std::string>
     std::vector<std::string> tmp(py::len(list));
     for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
@@ -128,7 +128,7 @@ template <typename T>
  * @return to 2D matrix of `std::vector<std::vector<T>>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<std::vector<T>> pyarray_to_matrix(py::array_t<T> mat) {
+[[nodiscard]] std::vector<std::vector<T>> pyarray_to_matrix(const py::array_t<T> &mat) {
     // check dimensions
     if (mat.ndim() != 2) {
         throw py::value_error{ fmt::format("the provided matrix must have exactly two dimensions but has {}!", mat.ndim()) };
@@ -149,7 +149,7 @@ template <typename T>
  * @param[in] valid_named_args the valid keyword arguments
  * @throws pybind11::value_error if an illegal keyword arguments has been provided
  */
-inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std::string_view> valid_named_args) {
+inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vector<std::string_view> &valid_named_args) {
     for (const auto &[key, value] : args) {
         if (!plssvm::detail::contains(valid_named_args, key.cast<std::string_view>())) {
             throw py::value_error(fmt::format("Invalid argument \"{}={}\" provided!", key.cast<std::string_view>(), value.cast<std::string_view>()));
@@ -163,7 +163,7 @@ inline void check_kwargs_for_correctness(py::kwargs args, const std::vector<std:
  * @param[in] params the baseline parameter
  * @return the `plssvm::parameter` object filled with the keyword @p args (`[[nodiscard]]`)
  */
-[[nodiscard]] inline plssvm::parameter convert_kwargs_to_parameter(py::kwargs args, plssvm::parameter params = {}) {
+[[nodiscard]] inline plssvm::parameter convert_kwargs_to_parameter(const py::kwargs &args, plssvm::parameter params = {}) {
     if (args.contains("kernel_type")) {
         params.kernel_type = args["kernel_type"].cast<typename decltype(params.kernel_type)::value_type>();
     }
