@@ -153,8 +153,8 @@ model<T, U>::model(const std::string &filename) {
     reader.read_lines('#');
 
     // parse the libsvm model header
-    std::vector<label_type> labels;
-    std::size_t num_header_lines;
+    std::vector<label_type> labels{};
+    std::size_t num_header_lines{};
     std::tie(params_, rho_, labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // create empty support vectors and alpha vector
