@@ -12,31 +12,29 @@
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_device_list, plssvm::hipsycl::device_synchronize
 
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::hipsycl::backend_exception
-#include "plssvm/backends/SYCL/predict_kernel.hpp"           // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/backends/SYCL/q_kernel.hpp"                 // plssvm::sycl::detail::{device_kernel_q_linear, device_kernel_q_polynomial, device_kernel_q_rbf}
-#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"  // plssvm::sycl::detail::{hierarchical_device_kernel_linear, hierarchical_device_kernel_polynomial, hierarchical_device_kernel_rbf}
-#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"      // plssvm::sycl::detail::{nd_range_device_kernel_linear, nd_range_device_kernel_polynomial, nd_range_device_kernel_rbf}
-#include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                              // plssvm::kernel_index_type
-#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"                 // plssvm::detail::execution_range
-#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
-
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"
+#include "plssvm/backends/SYCL/exceptions.hpp"                 // plssvm::hipsycl::backend_exception
+#include "plssvm/backends/SYCL/predict_kernel.hpp"             // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/backends/SYCL/q_kernel.hpp"                   // plssvm::sycl::detail::{device_kernel_q_linear, device_kernel_q_polynomial, device_kernel_q_rbf}
+#include "plssvm/backends/SYCL/svm_kernel_hierarchical.hpp"    // plssvm::sycl::detail::{hierarchical_device_kernel_linear, hierarchical_device_kernel_polynomial, hierarchical_device_kernel_rbf}
+#include "plssvm/backends/SYCL/svm_kernel_nd_range.hpp"        // plssvm::sycl::detail::{nd_range_device_kernel_linear, nd_range_device_kernel_polynomial, nd_range_device_kernel_rbf}
+#include "plssvm/backends/gpu_csvm.hpp"                        // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                                // plssvm::kernel_index_type
+#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
+#include "plssvm/detail/execution_range.hpp"                   // plssvm::detail::execution_range
+#include "plssvm/exceptions/exceptions.hpp"                    // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                                // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                         // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 #include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
 
-#include <cstddef>    // std::size_t
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
-#include <tuple>      // std::tie
-#include <vector>     // std::vector
+#include <cstddef>        // std::size_t
+#include <exception>      // std::terminate
+#include <iostream>       // std::cout, std::endl
+#include <tuple>          // std::tie
+#include <vector>         // std::vector
 
 namespace plssvm::hipsycl {
 

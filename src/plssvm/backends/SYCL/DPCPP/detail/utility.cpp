@@ -13,14 +13,14 @@
 #include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform
 
-#include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+#include "sycl/sycl.hpp"                                     // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
 
-#include <map>      // std::multimap
-#include <memory>   // std::make_shared
-#include <sstream>  // std::ostringstream
-#include <string>   // std::string
-#include <utility>  // std::pair, std::make_pair, std::move
-#include <vector>   // std::vector
+#include <map>                                               // std::multimap
+#include <memory>                                            // std::make_shared
+#include <sstream>                                           // std::ostringstream
+#include <string>                                            // std::string
+#include <utility>                                           // std::pair, std::make_pair, std::move
+#include <vector>                                            // std::vector
 
 namespace plssvm::dpcpp::detail {
 

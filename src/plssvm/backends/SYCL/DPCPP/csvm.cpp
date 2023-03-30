@@ -26,15 +26,15 @@
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "fmt/core.h"     // fmt::print, fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
-#include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
+#include "fmt/core.h"                                        // fmt::print, fmt::format
+#include "fmt/ostream.h"                                     // can use fmt using operator<< overloads
+#include "sycl/sycl.hpp"                                     // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
 
-#include <cstddef>    // std::size_t
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
-#include <tuple>      // std::tie
-#include <vector>     // std::vector
+#include <cstddef>                                           // std::size_t
+#include <exception>                                         // std::terminate
+#include <iostream>                                          // std::cout, std::endl
+#include <tuple>                                             // std::tie
+#include <vector>                                            // std::vector
 
 namespace plssvm::dpcpp {
 

@@ -16,9 +16,9 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <stdexcept>    // std::runtime_error
-#include <string>       // std::string
-#include <string_view>  // std::string_view
+#include <stdexcept>                              // std::runtime_error
+#include <string>                                 // std::string
+#include <string_view>                            // std::string_view
 
 namespace plssvm {
 
@@ -51,7 +51,7 @@ class exception : public std::runtime_error {
 
   private:
     /// The name of the thrown exception class.
-    const std::string_view class_name_;
+    std::string_view class_name_;
     /// The call side source location information.
     source_location loc_;
 };

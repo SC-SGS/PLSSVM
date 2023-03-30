@@ -10,21 +10,21 @@
 
 #include "plssvm/model.hpp"
 
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/parameter.hpp"    // plssvm::parameter
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
 #include "types_to_test.hpp"       // util::real_type_label_type_combination_gtest
 #include "utility.hpp"             // util::{temporary_file, redirect_output}
 
-#include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
-                          // ::testing::{StaticAssertTypeEq, Test, TestWithParam, Values}
+#include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
+                                   // ::testing::{StaticAssertTypeEq, Test, TestWithParam, Values}
 
-#include <cstddef>      // std::size_t
-#include <regex>        // std::regex, std::regex_match, std::regex::extended
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <vector>       // std::vector
+#include <cstddef>                 // std::size_t
+#include <regex>                   // std::regex, std::regex_match, std::regex::extended
+#include <string>                  // std::string
+#include <string_view>             // std::string_view
+#include <vector>                  // std::vector
 
 template <typename T>
 class Model : public ::testing::Test, private util::redirect_output<> {};

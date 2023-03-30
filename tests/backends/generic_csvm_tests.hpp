@@ -21,23 +21,23 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::cost, plssvm::kernel_type, plssvm::parameter, plssvm::detail::parameter
 
-#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_EQ
-#include "../utility.hpp"             // util::{redirect_output, generate_random_vector, construct_from_tuple}
-#include "compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
+#include "../custom_test_macros.hpp"         // EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_EQ
+#include "../utility.hpp"                    // util::{redirect_output, generate_random_vector, construct_from_tuple}
+#include "compare.hpp"                       // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
 
-#include "fmt/format.h"   // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
-#include "gmock/gmock.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
-                          // ::testing::Test
+#include "fmt/format.h"                      // fmt::format
+#include "fmt/ostream.h"                     // can use fmt using operator<< overloads
+#include "gmock/gmock.h"                     // ::testing::HasSubstr
+#include "gtest/gtest.h"                     // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
+                                             // ::testing::Test
 
-#include <cmath>        // std::sqrt, std::abs
-#include <cstddef>      // std::size_t
-#include <fstream>      // std::ifstream
-#include <iterator>     // std::istream_iterator
-#include <limits>       // std::numeric_limits::epsilon
-#include <tuple>        // std::ignore
-#include <vector>       // std::vector
+#include <cmath>                             // std::sqrt, std::abs
+#include <cstddef>                           // std::size_t
+#include <fstream>                           // std::ifstream
+#include <iterator>                          // std::istream_iterator
+#include <limits>                            // std::numeric_limits::epsilon
+#include <tuple>                             // std::ignore
+#include <vector>                            // std::vector
 
 //*************************************************************************************************************************************//
 //                                                                 CSVM                                                                //

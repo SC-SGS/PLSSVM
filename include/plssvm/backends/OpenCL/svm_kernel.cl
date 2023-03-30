@@ -9,7 +9,7 @@
  * @brief Defines the kernel functions for the C-SVM using the CUDA backend.
  */
 
-//#include "detail/atomics.cl"  // atomicAdd -> included via string concatenation when building the device kernels
+// #include "detail/atomics.cl"  // atomicAdd -> included via string concatenation when building the device kernels
 
 /**
  * @brief Calculates the C-SVM kernel using the linear kernel function.
@@ -41,7 +41,7 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
         // cache data
         for (kernel_index_type vec_index = 0; vec_index < feature_range * num_rows; vec_index += num_rows) {
             barrier(CLK_LOCAL_MEM_FENCE);
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type block_id = 0; block_id < INTERNAL_BLOCK_SIZE; ++block_id) {
                 const kernel_index_type idx = block_id % THREAD_BLOCK_SIZE;
                 if (get_local_id(1) == idx) {
@@ -54,25 +54,25 @@ __kernel void device_kernel_linear(__global const real_type *q, __global real_ty
             }
             barrier(CLK_LOCAL_MEM_FENCE);
 
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type data_index = 0; data_index < INTERNAL_BLOCK_SIZE; ++data_index) {
                 data_j[data_index] = data_intern_j[get_local_id(1)][data_index];
             }
 
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type l = 0; l < INTERNAL_BLOCK_SIZE; ++l) {
                 const real_type data_i = data_intern_i[get_local_id(0)][l];
-                #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
                 for (kernel_index_type k = 0; k < INTERNAL_BLOCK_SIZE; ++k) {
                     matr[k][l] += data_i * data_j[k];
                 }
             }
         }
 
-        #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
         for (kernel_index_type x = 0; x < INTERNAL_BLOCK_SIZE; ++x) {
             real_type ret_jx = 0.0;
-            #pragma unroll INTERNAL_BLOCK_SIZE
+#pragma unroll INTERNAL_BLOCK_SIZE
             for (kernel_index_type y = 0; y < INTERNAL_BLOCK_SIZE; ++y) {
                 real_type temp;
                 if (id == 0) {

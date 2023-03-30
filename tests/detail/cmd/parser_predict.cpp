@@ -10,21 +10,21 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::verbose
+#include "plssvm/constants.hpp"          // plssvm::verbose
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "../../utility.hpp"             // util::convert_from_string
 #include "utility.hpp"                   // util::ParameterBase
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
-#include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
+#include "fmt/core.h"                    // fmt::format
+#include "gmock/gmock-matchers.h"        // ::testing::{StartsWith, HasSubstr}
+#include "gtest/gtest.h"                 // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
+                                         // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
-#include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILRE
-#include <string>  // std::string
-#include <tuple>   // std::tuple
+#include <cstdlib>                       // EXIT_SUCCESS, EXIT_FAILURE
+#include <string>                        // std::string
+#include <tuple>                         // std::tuple
 
 class ParserPredict : public util::ParameterBase {};
 class ParserPredictDeathTest : public util::ParameterBase {};

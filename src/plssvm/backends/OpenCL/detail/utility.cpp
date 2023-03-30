@@ -22,28 +22,29 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
-                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
-                          // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
-                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
-#include "fmt/core.h"     // fmt::print, fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "CL/cl.h"                                          // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
+                                                            // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
+                                                            // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
+                                                            //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
+#include "fmt/core.h"                                       // fmt::print, fmt::format
+#include "fmt/ostream.h"                                    // can use fmt using operator<< overloads
 
-#include <algorithm>    // std::count_if
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
-#include <fstream>      // std::ifstream, std::ofstream
-#include <functional>   // std::hash
-#include <ios>          // std::ios_base, std::streamsize
-#include <iostream>     // std::cout, std::endl
-#include <iterator>     // std::istreambuf_iterator
-#include <limits>       // std::numeric_limits
-#include <map>          // std::map
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tie
-#include <utility>      // std::pair, std::make_pair, std::move
-#include <vector>       // std::vector
+#include <algorithm>                                        // std::count_if
+#include <array>                                            // std::array
+#include <cstddef>                                          // std::size_t
+#include <filesystem>                                       // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
+#include <fstream>                                          // std::ifstream, std::ofstream
+#include <functional>                                       // std::hash
+#include <ios>                                              // std::ios_base, std::streamsize
+#include <iostream>                                         // std::cout, std::endl
+#include <iterator>                                         // std::istreambuf_iterator
+#include <limits>                                           // std::numeric_limits
+#include <map>                                              // std::map
+#include <string>                                           // std::string
+#include <string_view>                                      // std::string_view
+#include <tuple>                                            // std::tie
+#include <utility>                                          // std::pair, std::make_pair, std::move
+#include <vector>                                           // std::vector
 
 namespace plssvm::opencl::detail {
 

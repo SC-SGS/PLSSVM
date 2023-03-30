@@ -15,10 +15,10 @@
 
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "gtest/gtest.h"  // ::testing::Types
+#include "gtest/gtest.h"                     // ::testing::Types
 
-#include <string>  // std::string
-#include <tuple>   // std::tuple
+#include <string>                            // std::string
+#include <tuple>                             // std::tuple
 
 namespace util {
 

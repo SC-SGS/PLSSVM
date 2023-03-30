@@ -15,10 +15,10 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"               // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 
-#include "CL/cl.h"     // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
-#include "fmt/core.h"  // fmt::format
+#include "CL/cl.h"                                          // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
+#include "fmt/core.h"                                       // fmt::format
 
-#include <algorithm>  // std::min
+#include <algorithm>                                        // std::min
 
 namespace plssvm::opencl::detail {
 

@@ -16,16 +16,16 @@
 #include "plssvm/constants.hpp"      // plssvm::verbose
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 
-#include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // format types with a user defined operator<<
+#include "fmt/chrono.h"              // format std::chrono types
+#include "fmt/core.h"                // fmt::format
+#include "fmt/ostream.h"             // format types with a user defined operator<<
 
-#include <algorithm>  // std::all_of
-#include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast}
-#include <cstddef>    // std::size_t
-#include <iosfwd>     // forward declare std::ostream and std::istream
-#include <iostream>   // std::cout, std::endl
-#include <vector>     // std::vector
+#include <algorithm>                 // std::all_of
+#include <chrono>                    // std::chrono::{time_point, steady_clock, duration_cast}
+#include <cstddef>                   // std::size_t
+#include <iosfwd>                    // forward declare std::ostream and std::istream
+#include <iostream>                  // std::cout, std::endl
+#include <vector>                    // std::vector
 
 namespace plssvm::detail {
 

@@ -10,7 +10,7 @@
 
 #include "backends/generic_device_ptr_tests.h"  // plssvm::cuda::detail::device_ptr
 
-#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "gtest/gtest.h"                        // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::device_ptr
@@ -46,7 +46,7 @@ struct hipsycl_device_ptr_test_type {
     using queue_type = typename device_ptr_type::queue_type;
 
     static const queue_type &default_queue() {
-        static queue_type queue = plssvm::hipsycl::detail::get_default_queue();
+        static const queue_type queue = plssvm::hipsycl::detail::get_default_queue();
         return queue;
     }
 };

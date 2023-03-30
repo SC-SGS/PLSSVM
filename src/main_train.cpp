@@ -16,10 +16,10 @@
 #include "fmt/core.h"     // std::format
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
-#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>  // std::exception
-#include <iostream>   // std::cerr, std::clog, std::endl
-#include <variant>    // std::visit
+#include <cstdlib>        // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>      // std::exception
+#include <iostream>       // std::cerr, std::clog, std::endl
+#include <variant>        // std::visit
 
 int main(int argc, char *argv[]) {
     try {

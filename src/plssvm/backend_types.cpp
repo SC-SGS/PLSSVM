@@ -12,16 +12,16 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
 
-#include "fmt/format.h"   // fmt::format, fmt::join
-#include "fmt/ostream.h"  // be able to format types with an operator<< overload
+#include "fmt/format.h"                      // fmt::format, fmt::join
+#include "fmt/ostream.h"                     // be able to format types with an operator<< overload
 
-#include <array>      // std::array
-#include <ios>        // std::ios::failbit
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
-#include <utility>    // std::pair
-#include <vector>     // std::vector
+#include <array>                             // std::array
+#include <ios>                               // std::ios::failbit
+#include <istream>                           // std::istream
+#include <ostream>                           // std::ostream
+#include <string>                            // std::string
+#include <utility>                           // std::pair
+#include <vector>                            // std::vector
 
 namespace plssvm {
 

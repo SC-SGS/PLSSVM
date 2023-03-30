@@ -15,14 +15,14 @@
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"     // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "cxxopts.hpp"                                   // cxxopts::{Options, value, ParseResult}
+#include "fmt/core.h"                                    // fmt::format, fmt::join
+#include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
 
-#include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // std::exception
-#include <filesystem>  // std::filesystem::path
-#include <iostream>    // std::cout, std::cerr, std::endl
+#include <cstdlib>                                       // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>                                     // std::exception
+#include <filesystem>                                    // std::filesystem::path
+#include <iostream>                                      // std::cout, std::cerr, std::endl
 
 namespace plssvm::detail::cmd {
 

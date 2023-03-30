@@ -22,16 +22,15 @@
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
-#include "hip/hip_runtime_api.h"
+#include "fmt/core.h"                                     // fmt::format
+#include "fmt/ostream.h"                                  // can use fmt using operator<< overloads
+#include "hip/hip_runtime_api.h"                          // HIP runtime functions
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
-
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
-#include <numeric>    // std::iota
-#include <utility>    // std::pair, std::make_pair
-#include <vector>     // std::vector
+#include <exception>                                      // std::terminate
+#include <iostream>                                       // std::cout, std::endl
+#include <numeric>                                        // std::iota
+#include <utility>                                        // std::pair, std::make_pair
+#include <vector>                                         // std::vector
 
 namespace plssvm::hip {
 

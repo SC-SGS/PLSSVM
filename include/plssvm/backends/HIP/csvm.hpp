@@ -18,9 +18,9 @@
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
-#include <cstddef>      // std::size_t
-#include <type_traits>  // std::true_type
-#include <utility>      // std::forward
+#include <cstddef>                                        // std::size_t
+#include <type_traits>                                    // std::true_type
+#include <utility>                                        // std::forward
 
 namespace plssvm {
 

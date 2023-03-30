@@ -16,7 +16,7 @@
 #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 #include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
-#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::range, sycl::pow, sycl::exp
+#include "sycl/sycl.hpp"                            // sycl::nd_item, sycl::range, sycl::pow, sycl::exp
 
 namespace plssvm::sycl::detail {
 

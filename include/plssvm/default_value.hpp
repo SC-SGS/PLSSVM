@@ -47,7 +47,7 @@ struct default_init {
         value{ std::move_if_noexcept(val) } {}
 
     /// The explicit default initialization value.
-    T value;
+    T value{};
 };
 
 //*************************************************************************************************************************************//

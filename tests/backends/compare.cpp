@@ -13,10 +13,10 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"              // plssvm::detail::parameter
 
-#include <algorithm>  // std::min
-#include <cmath>      // std::pow, std::exp, std::fma
-#include <cstddef>    // std::size_t
-#include <vector>     // std::vector
+#include <algorithm>                         // std::min
+#include <cmath>                             // std::pow, std::exp, std::fma
+#include <cstddef>                           // std::size_t
+#include <vector>                            // std::vector
 
 namespace compare {
 

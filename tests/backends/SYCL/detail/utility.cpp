@@ -10,7 +10,7 @@
 
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
+#include "gtest/gtest.h"                // TEST, EXPECT_NE, EXPECT_FALSE
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::get_device_list

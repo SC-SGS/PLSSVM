@@ -15,9 +15,9 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue
 
-#include "sycl/sycl.hpp"  // sycl::queue
+#include "sycl/sycl.hpp"                                // sycl::queue
 
-#include <utility>  // std::forward
+#include <utility>                                      // std::forward
 
 namespace plssvm::dpcpp::detail {
 

@@ -18,18 +18,18 @@
 #include "plssvm/detail/layout.hpp"           // plssvm::detail::{transform_to_layout, layout_type}
 #include "plssvm/parameter.hpp"               // plssvm::parameter
 
-#include "fmt/chrono.h"  // output std::chrono times using {fmt}
-#include "fmt/core.h"    // fmt::format
+#include "fmt/chrono.h"                       // output std::chrono times using {fmt}
+#include "fmt/core.h"                         // fmt::format
 
-#include <algorithm>   // std::min, std::all_of, std::adjacent_find
-#include <chrono>      // std::chrono::{milliseconds, steady_clock, duration_cast}
-#include <cmath>       // std::ceil
-#include <cstddef>     // std::size_t
-#include <iostream>    // std::clog, std::cout, std::endl
-#include <functional>  // std::less_equal
-#include <tuple>       // std::tuple, std::make_tuple
-#include <utility>     // std::forward, std::pair, std::move, std::make_pair
-#include <vector>      // std::vector
+#include <algorithm>                          // std::min, std::all_of, std::adjacent_find
+#include <chrono>                             // std::chrono::{milliseconds, steady_clock, duration_cast}
+#include <cmath>                              // std::ceil
+#include <cstddef>                            // std::size_t
+#include <functional>                         // std::less_equal
+#include <iostream>                           // std::clog, std::cout, std::endl
+#include <tuple>                              // std::tuple, std::make_tuple
+#include <utility>                            // std::forward, std::pair, std::move, std::make_pair
+#include <vector>                             // std::vector
 
 namespace plssvm::detail {
 
@@ -263,7 +263,7 @@ class gpu_csvm : public ::plssvm::csvm {
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type kernel, const std::size_t num_features) const noexcept {
-    PLSSVM_ASSERT(num_features > 0 , "At lest one feature must be given!");
+    PLSSVM_ASSERT(num_features > 0, "At lest one feature must be given!");
 
     // polynomial and rbf kernel currently only support single GPU execution
     if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {

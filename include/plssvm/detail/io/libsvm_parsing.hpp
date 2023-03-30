@@ -14,23 +14,23 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
+#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "fmt/compile.h"  // FMT_COMPILE
-#include "fmt/format.h"   // fmt::format, fmt::format_to
-#include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/compile.h"                        // FMT_COMPILE
+#include "fmt/format.h"                         // fmt::format, fmt::format_to
+#include "fmt/os.h"                             // fmt::ostream, fmt::output_file
 
-#include <algorithm>    // std::max, std::min
-#include <cstddef>      // std::size_t
-#include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::make_tuple
-#include <utility>      // std::move
-#include <vector>       // std::vector
+#include <algorithm>                            // std::max, std::min
+#include <cstddef>                              // std::size_t
+#include <exception>                            // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <string>                               // std::string
+#include <string_view>                          // std::string_view
+#include <tuple>                                // std::tuple, std::make_tuple
+#include <utility>                              // std::move
+#include <vector>                               // std::vector
 
 namespace plssvm::detail::io {
 

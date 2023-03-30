@@ -14,10 +14,10 @@
 #include "../naming.hpp"              // naming::real_type_to_name
 #include "../types_to_test.hpp"       // util::real_type_gtest
 
-#include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
+#include "gtest/gtest.h"              // TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
 
-#include <tuple>   // std::ignore
-#include <vector>  // std::vector
+#include <tuple>                      // std::ignore
+#include <vector>                     // std::vector
 
 // make all operator overloads available in all tests
 using namespace plssvm::operators;

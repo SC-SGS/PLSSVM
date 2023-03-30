@@ -28,12 +28,12 @@
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                        // fmt::format
 
-#include <algorithm>  // std::min
-#include <memory>     // std::addressof
-#include <utility>    // std::exchange, std::swap
-#include <vector>     // std::vector
+#include <algorithm>                         // std::min
+#include <memory>                            // std::addressof
+#include <utility>                           // std::exchange, std::swap
+#include <vector>                            // std::vector
 
 namespace plssvm::detail {
 

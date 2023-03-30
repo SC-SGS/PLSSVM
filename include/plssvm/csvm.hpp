@@ -24,15 +24,15 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 
-#include "fmt/core.h"     // fmt::format
-#include "igor/igor.hpp"  // igor::parser
+#include "fmt/core.h"                        // fmt::format
+#include "igor/igor.hpp"                     // igor::parser
 
-#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
-#include <iostream>     // std::cout, std::endl
-#include <tuple>        // std::tie
-#include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
-#include <utility>      // std::pair, std::forward
-#include <vector>       // std::vector
+#include <chrono>                            // std::chrono::{time_point, steady_clock, duration_cast}
+#include <iostream>                          // std::cout, std::endl
+#include <tuple>                             // std::tie
+#include <type_traits>                       // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
+#include <utility>                           // std::pair, std::forward
+#include <vector>                            // std::vector
 
 namespace plssvm {
 
@@ -69,6 +69,14 @@ class csvm {
      * @brief Default move-constructor since a virtual destructor has been declared.
      */
     csvm(csvm &&) noexcept = default;
+    /**
+     * @brief Default copy-assignment operator since a virtual destructor has been declared.
+     */
+    csvm &operator=(const csvm &) = default;
+    /**
+     * @brief Default move-assignment operator since a virtual destructor has been declared.
+     */
+    csvm &operator=(csvm &&) noexcept = default;
     /**
      * @brief Virtual destructor to enable safe inheritance.
      */

@@ -17,8 +17,8 @@
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // FAIL
+#include "fmt/core.h"                        // fmt::format
+#include "gtest/gtest.h"                     // FAIL
 
 #ifdef __unix__
     #include <cstdlib>  // mkstemp

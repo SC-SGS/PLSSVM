@@ -13,21 +13,20 @@
 #include "plssvm/backend_types.hpp"                         // plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::hipsycl::backend_exception
 #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"            // plssvm::hipsycl::csvm
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../../../utility.hpp"             // util::redirect_output
-#include "../../generic_csvm_tests.hpp"     // generic CSVM tests to instantiate
+#include "../../../custom_test_macros.hpp"                  // EXPECT_THROW_WHAT
+#include "../../../utility.hpp"                             // util::redirect_output
+#include "../../generic_csvm_tests.hpp"                     // generic CSVM tests to instantiate
 
-#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
+#include "gtest/gtest.h"                                    // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
-#include <tuple>    // std::make_tuple, std::get
-#include <utility>  // std::make_pair
+#include <tuple>                                            // std::make_tuple, std::get
+#include <utility>                                          // std::make_pair
 
 class hipSYCLCSVM : public ::testing::Test, private util::redirect_output<> {};
 

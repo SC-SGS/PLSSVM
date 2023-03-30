@@ -14,15 +14,15 @@
 #include "naming.hpp"              // naming::label_type_to_name
 #include "types_to_test.hpp"       // util::label_type_gtest
 
-#include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
-                          // ::testing::{Test, WithParamInterface, Values}
+#include "gtest/gtest.h"           // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
+                                   // ::testing::{Test, WithParamInterface, Values}
 
-#include <functional>   // std::hash
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::make_tuple, std::get
-#include <utility>      // std::move, std::swap
-#include <vector>       // std::vector
+#include <functional>              // std::hash
+#include <string>                  // std::string
+#include <string_view>             // std::string_view
+#include <tuple>                   // std::tuple, std::make_tuple, std::get
+#include <utility>                 // std::move, std::swap
+#include <vector>                  // std::vector
 
 //*************************************************************************************************************************************//
 //                                                            default_init                                                             //

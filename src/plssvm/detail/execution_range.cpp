@@ -10,12 +10,12 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/format.h"              // fmt::format, fmt::join
 
-#include <algorithm>         // std::copy
-#include <cstddef>           // std::size_t
-#include <initializer_list>  // std::initializer_list
-#include <ostream>           // std::ostream
+#include <algorithm>                 // std::copy
+#include <cstddef>                   // std::size_t
+#include <initializer_list>          // std::initializer_list
+#include <ostream>                   // std::ostream
 
 namespace plssvm::detail {
 

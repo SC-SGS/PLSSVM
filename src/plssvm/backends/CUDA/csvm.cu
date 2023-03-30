@@ -21,17 +21,17 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
-#include "cuda.h"              // cuda runtime functions
-#include "cuda_runtime_api.h"  // cuda runtime functions
+#include "cuda.h"                                      // cuda runtime functions
+#include "cuda_runtime_api.h"                          // cuda runtime functions
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"                                  // fmt::format
+#include "fmt/ostream.h"                               // can use fmt using operator<< overloads
 
-#include <cstddef>    // std::size_t
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
-#include <numeric>    // std::iota
-#include <utility>    // std::pair, std::make_pair
+#include <cstddef>                                     // std::size_t
+#include <exception>                                   // std::terminate
+#include <iostream>                                    // std::cout, std::endl
+#include <numeric>                                     // std::iota
+#include <utility>                                     // std::pair, std::make_pair
 
 namespace plssvm::cuda {
 

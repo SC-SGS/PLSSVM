@@ -15,8 +15,8 @@
 
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include <iosfwd>  // forward declare std::ostream
-#include <string>  // std::string
+#include <iosfwd>                        // forward declare std::ostream
+#include <string>                        // std::string
 
 namespace plssvm::detail::cmd {
 

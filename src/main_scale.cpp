@@ -14,11 +14,11 @@
 
 #include "fmt/core.h"  // fmt::print, fmt::format
 
-#include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>  // std::exception
-#include <iostream>   // std::cerr, std::clog, std::endl
-#include <utility>    // std::pair
-#include <variant>    // std::visit
+#include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>   // std::exception
+#include <iostream>    // std::cerr, std::clog, std::endl
+#include <utility>     // std::pair
+#include <variant>     // std::visit
 
 int main(int argc, char *argv[]) {
     try {
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
 
                 // output to console if no output filename is provided
-                const std::vector<std::vector<real_type>>& matrix = data.data();
+                const std::vector<std::vector<real_type>> &matrix = data.data();
                 const plssvm::optional_ref<const std::vector<label_type>> label = data.labels();
                 for (std::size_t row = 0; row < matrix.size(); ++row) {
                     if (label.has_value()) {

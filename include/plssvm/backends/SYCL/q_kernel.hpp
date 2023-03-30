@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
 
-#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
+#include "sycl/sycl.hpp"         // sycl::nd_item, sycl::pow, sycl::exp
 
 namespace plssvm::sycl::detail {
 
@@ -162,6 +162,6 @@ class device_kernel_q_rbf {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_Q_KERNEL_HPP_

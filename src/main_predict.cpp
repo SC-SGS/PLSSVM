@@ -17,13 +17,12 @@
 #include "fmt/format.h"   // fmt::format, fmt::print
 #include "fmt/ostream.h"  // use operator<< to output enum class
 
-#include <chrono>     // std::chrono
-#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>  // std::exception
-#include <fstream>    // std::ofstream
-#include <iostream>   // std::cerr, std::clog, std::endl
-#include <variant>    // std::visit
-#include <vector>     // std::vector
+#include <chrono>         // std::chrono
+#include <cstdlib>        // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>      // std::exception
+#include <iostream>       // std::cerr, std::clog, std::endl
+#include <variant>        // std::visit
+#include <vector>         // std::vector
 
 int main(int argc, char *argv[]) {
     try {

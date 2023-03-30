@@ -17,10 +17,10 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
-#include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
+#include "gmock/gmock.h"                     // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
 
-#include <utility>  // std::pair, std::forward
-#include <vector>   // std::vector
+#include <utility>                           // std::pair, std::forward
+#include <vector>                            // std::vector
 
 template <typename real_type>
 const std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_fake_return{ { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } }, real_type{ 3.1415 } };

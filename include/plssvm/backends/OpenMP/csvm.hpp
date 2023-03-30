@@ -18,9 +18,9 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
-#include <type_traits>  // std::true_type
-#include <utility>      // std::forward, std::pair
-#include <vector>       // std::vector
+#include <type_traits>                    // std::true_type
+#include <utility>                        // std::forward, std::pair
+#include <vector>                         // std::vector
 
 namespace plssvm {
 

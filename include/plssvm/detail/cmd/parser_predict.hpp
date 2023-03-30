@@ -17,8 +17,8 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
-#include <iosfwd>  // forward declare std::ostream
-#include <string>  // std::string
+#include <iosfwd>                                        // forward declare std::ostream
+#include <string>                                        // std::string
 
 namespace plssvm::detail::cmd {
 

@@ -18,14 +18,14 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // be able to output custom types with an operator<< overload using fmt
-#include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
+#include "fmt/core.h"                        // fmt::format
+#include "fmt/ostream.h"                     // be able to output custom types with an operator<< overload using fmt
+#include "igor/igor.hpp"                     // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <iostream>     // std::clog, std::endl, std::ostream
-#include <string_view>  // std::string_view
-#include <type_traits>  // std::is_same_v, std::is_convertible_v
-#include <utility>      // std::forward
+#include <iostream>                          // std::clog, std::endl, std::ostream
+#include <string_view>                       // std::string_view
+#include <type_traits>                       // std::is_same_v, std::is_convertible_v
+#include <utility>                           // std::forward
 
 namespace plssvm {
 

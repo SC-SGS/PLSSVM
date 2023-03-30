@@ -14,9 +14,9 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"           // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                                   // fmt::format
 
-#include <algorithm>  // std::min
+#include <algorithm>                                    // std::min
 
 namespace plssvm::cuda::detail {
 

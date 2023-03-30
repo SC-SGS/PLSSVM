@@ -18,16 +18,16 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/chrono.h"                           // directly print std::chrono literals with fmt
+#include "fmt/core.h"                             // fmt::format
+#include "fmt/ostream.h"                          // can use fmt using operator<< overloads
 
-#include <algorithm>  // std::fill, std::all_of, std::min
-#include <chrono>     // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
-#include <cmath>      // std::fma
-#include <iostream>   // std::cout, std::endl
-#include <utility>    // std::pair, std::make_pair, std::move
-#include <vector>     // std::vector
+#include <algorithm>                              // std::fill, std::all_of, std::min
+#include <chrono>                                 // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
+#include <cmath>                                  // std::fma
+#include <iostream>                               // std::cout, std::endl
+#include <utility>                                // std::pair, std::make_pair, std::move
+#include <vector>                                 // std::vector
 
 namespace plssvm::openmp {
 

@@ -12,18 +12,18 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
-#include "../naming.hpp"  // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
+#include "../naming.hpp"             // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
 
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "gmock/gmock-matchers.h"    // EXPECT_THAT, ::testing::HasSubstr
+#include "gtest/gtest.h"             // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
-#include <map>            // std::map
-#include <regex>          // std::regex, std::regex::extended, std::regex_match
-#include <set>            // std::set
-#include <string>         // std::string
-#include <unordered_map>  // std::unordered_map
-#include <unordered_set>  // std::unordered_set
-#include <vector>         // std::vector
+#include <map>                       // std::map
+#include <regex>                     // std::regex, std::regex::extended, std::regex_match
+#include <set>                       // std::set
+#include <string>                    // std::string
+#include <unordered_map>             // std::unordered_map
+#include <unordered_set>             // std::unordered_set
+#include <vector>                    // std::vector
 
 TEST(Utility, get) {
     EXPECT_EQ(plssvm::detail::get<0>(0, 1, 2, 3, 4), 0);

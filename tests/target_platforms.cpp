@@ -12,11 +12,11 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_GE
+#include "gmock/gmock.h"           // EXPECT_THAT, ::testing::Contains
+#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_GE
 
-#include <sstream>  // std::istringstream
-#include <vector>   // std::vector
+#include <sstream>                 // std::istringstream
+#include <vector>                  // std::vector
 
 // check whether the plssvm::target_platform -> std::string conversions are correct
 TEST(TargetPlatform, to_string) {

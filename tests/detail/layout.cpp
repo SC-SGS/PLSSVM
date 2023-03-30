@@ -15,13 +15,13 @@
 #include "../types_to_test.hpp"       // util::real_type_gtest
 #include "../utility.hpp"             // util::redirect_output
 
-#include "fmt/format.h"   // fmt::format, fmt::join
-#include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
+#include "fmt/format.h"               // fmt::format, fmt::join
+#include "gtest/gtest.h"              // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
 
-#include <cstddef>  // std::size_t
-#include <sstream>  // std::istringstream
-#include <tuple>    // std::ignore
-#include <vector>   // std::vector
+#include <cstddef>                    // std::size_t
+#include <sstream>                    // std::istringstream
+#include <tuple>                      // std::ignore
+#include <vector>                     // std::vector
 
 // check whether the plssvm::detail::layout_type -> std::string conversions are correct
 TEST(Layout, to_string) {

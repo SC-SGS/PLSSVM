@@ -13,20 +13,20 @@
 #define PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
+#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"       // plssvm::hipsycl::detail::queue (PImpl)
 
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"     // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/gpu_csvm.hpp"                        // plssvm::detail::gpu_csvm
+#include "plssvm/detail/type_traits.hpp"                       // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"                                // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                         // plssvm::target_platform
 
-#include "igor/igor.hpp"  // igor::parser
+#include "igor/igor.hpp"                                       // igor::parser
 
-#include <cstddef>      // std::size_t
-#include <type_traits>  // std::is_same_v, std::true_type
-#include <utility>      // std::forward
+#include <cstddef>                                             // std::size_t
+#include <type_traits>                                         // std::is_same_v, std::true_type
+#include <utility>                                             // std::forward
 
 namespace plssvm {
 

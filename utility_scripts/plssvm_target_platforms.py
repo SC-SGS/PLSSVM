@@ -11,10 +11,10 @@
 import argparse
 import re
 
-import cpuinfo       # get CPU SIMD information
-import GPUtil        # get NVIDIA GPU information
+import cpuinfo  # get CPU SIMD information
+import GPUtil  # get NVIDIA GPU information
 import pyamdgpuinfo  # get AMD GPU information
-import pylspci       # get Intel GPU information
+import pylspci  # get Intel GPU information
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -224,7 +224,6 @@ intel_arch_to_name_mapping = {
     "Gen12LP": "Intel Processor Graphics Gen12 (Lower Power)",
 }
 
-
 # construct PLSSVM_TARGET_PLATFORMS string
 plssvm_target_platforms = ""
 
@@ -254,7 +253,6 @@ for key in simd_version_support:
         break
 plssvm_target_platforms += "cpu" + ("" if "".__eq__(newest_simd_version) else ":") + newest_simd_version
 
-
 # NVIDIA GPU information
 nvidia_gpu_names = [gpu.name for gpu in GPUtil.getGPUs()]
 nvidia_num_gpus = len(nvidia_gpu_names)
@@ -280,7 +278,6 @@ if nvidia_num_gpus > 0:
     cond_print()
 
     plssvm_target_platforms += ";nvidia:" + ",".join({str(sm) for sm in nvidia_gpu_sm.values()})
-
 
 # AMD GPU information
 amd_gpu_names = [pyamdgpuinfo.get_gpu(gpu_id).name for gpu_id in range(pyamdgpuinfo.detect_gpus())]
@@ -310,7 +307,6 @@ if amd_num_gpus > 0:
 
     plssvm_target_platforms += ";amd:" + ",".join({str(sm) for sm in amd_gpu_arch.values()})
 
-
 # Intel GPU information
 intel_gpu_names = []
 for device in pylspci.parsers.SimpleParser().run():
@@ -338,7 +334,6 @@ if intel_num_gpus > 0:
     cond_print()
 
     plssvm_target_platforms += ";intel:" + ",".join({str(sm) for sm in intel_gpu_arch.values()})
-
 
 cond_print("Possible -DPLSSVM_TARGET_PLATFORMS entries:")
 print("{}".format(plssvm_target_platforms))
