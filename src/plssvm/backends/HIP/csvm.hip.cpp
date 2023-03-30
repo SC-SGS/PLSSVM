@@ -95,8 +95,8 @@ void csvm::device_synchronize(const queue_type &queue) const {
 }
 
 std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
-    dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
-    dim3 block(range.block[0], range.block[1], range.block[2]);
+    const dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
+    const dim3 block(range.block[0], range.block[1], range.block[2]);
     return std::make_pair(grid, block);
 }
 
