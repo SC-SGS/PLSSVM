@@ -169,7 +169,7 @@ template <std::size_t I>
 
 template <typename real_type>
 void csvm::run_q_kernel_impl(const std::size_t device, [[maybe_unused]] const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &q_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points_padded, const std::size_t num_features) const {
-    constexpr std::size_t boundary_size = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             devices_[device].impl->sycl_queue.parallel_for(::sycl::range<1>{ num_data_points_padded - boundary_size }, sycl::detail::device_kernel_q_linear(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features)));
