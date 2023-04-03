@@ -108,6 +108,22 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     }
 
     /**
+     * @brief Delete copy-constructor since a CSVM is a move-only type.
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @brief Default move-constructor since a CSVM is a move-only type.
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @brief Delete copy-assignment operator since a CSVM is a move-only type.
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @brief Default move-assignment operator since a CSVM is a move-only type.
+     */
+    csvm &operator=(csvm &&) noexcept = default;
+    /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
      * @details Terminates the program, if any asynchronous exception is thrown.
      */

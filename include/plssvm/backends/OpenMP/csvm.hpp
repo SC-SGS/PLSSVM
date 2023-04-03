@@ -76,6 +76,27 @@ class csvm : public ::plssvm::csvm {
         this->init(target);
     }
 
+    /**
+     * @brief Delete copy-constructor since a CSVM is a move-only type.
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @brief Default move-constructor since a CSVM is a move-only type.
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @brief Delete copy-assignment operator since a CSVM is a move-only type.
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @brief Default move-assignment operator since a CSVM is a move-only type.
+     */
+    csvm &operator=(csvm &&) noexcept = default;
+    /**
+     * @brief Default destructor since the copy and move constructors and copy- and move-assignment operators are defined.
+     */
+     ~csvm() override = default;
+
   protected:
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations

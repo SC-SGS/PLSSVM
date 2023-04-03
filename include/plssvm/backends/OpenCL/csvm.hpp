@@ -98,6 +98,22 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     }
 
     /**
+     * @brief Delete copy-constructor since a CSVM is a move-only type.
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @brief Default move-constructor since a CSVM is a move-only type.
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @brief Delete copy-assignment operator since a CSVM is a move-only type.
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @brief Default move-assignment operator since a CSVM is a move-only type.
+     */
+    csvm &operator=(csvm &&) noexcept = default;
+    /**
      * @brief Wait for all operations on all OpenCL devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */

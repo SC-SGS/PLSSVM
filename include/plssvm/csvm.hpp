@@ -62,17 +62,17 @@ class csvm {
     explicit csvm(Args &&...args);
 
     /**
-     * @brief Default copy-constructor since a virtual destructor has been declared.
+     * @brief Delete copy-constructor since a CSVM is a move-only type.
      */
-    csvm(const csvm &) = default;
+    csvm(const csvm &) = delete;
     /**
      * @brief Default move-constructor since a virtual destructor has been declared.
      */
     csvm(csvm &&) noexcept = default;
     /**
-     * @brief Default copy-assignment operator since a virtual destructor has been declared.
+     * @brief Delete copy-assignment operator since a CSVM is a move-only type.
      */
-    csvm &operator=(const csvm &) = default;
+    csvm &operator=(const csvm &) = delete;
     /**
      * @brief Default move-assignment operator since a virtual destructor has been declared.
      */
