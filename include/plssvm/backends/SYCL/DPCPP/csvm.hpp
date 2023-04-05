@@ -127,6 +127,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     ~csvm() override;
 
+    /**
+     * @brief Return the kernel invocation type (nd_range or the SYCL specific hierarchical kernel) used in this SYCL SVM.
+     * @return the SYCL kernel invocation type (`[[nodiscard]]`)
+     */
+    [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
+
   protected:
     /**
      * @copydoc plssvm::detail::gpu_csvm::device_synchronize
