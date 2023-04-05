@@ -77,8 +77,7 @@ void csvm::init(const target_platform target) {
     const kernel_function_type kernel = base_type::get_params().kernel_type;
 
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
-    target_platform used_target{};
-    std::tie(contexts_, used_target) = detail::get_contexts(target);
+    std::tie(contexts_, target_) = detail::get_contexts(target);
 
     // currently, only a single context is allowed
     if (contexts_.size() != 1) {
@@ -94,7 +93,7 @@ void csvm::init(const target_platform target) {
     if (verbose) {
         std::cout << fmt::format("\nUsing OpenCL as backend.\n");
         if (target == target_platform::automatic) {
-            std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
+            std::cout << fmt::format("Using {} as automatic target platform.\n", target_);
         }
         std::cout << std::endl;
     }
@@ -105,7 +104,7 @@ void csvm::init(const target_platform target) {
     // get kernel names
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel);
     // compile all kernels for float and double
-    devices_ = detail::create_command_queues(contexts_, used_target, kernel_names);
+    devices_ = detail::create_command_queues(contexts_, target_, kernel_names);
 
     auto jit_end_time = std::chrono::steady_clock::now();
     if (verbose) {
@@ -114,7 +113,7 @@ void csvm::init(const target_platform target) {
 
     if (verbose) {
         // print found OpenCL devices
-        std::cout << fmt::format("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), used_target);
+        std::cout << fmt::format("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             std::cout << fmt::format("  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
         }

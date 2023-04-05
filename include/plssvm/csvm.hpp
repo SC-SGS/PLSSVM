@@ -23,6 +23,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 #include "fmt/core.h"                        // fmt::format
 #include "igor/igor.hpp"                     // igor::parser
@@ -82,6 +83,11 @@ class csvm {
      */
     virtual ~csvm() = default;
 
+    /**
+     * @brief Return the target platform (i.e, CPU or GPU including the vendor) this SVM runs on.
+     * @return the target platform (`[[nodiscard]]`)
+     */
+    [[nodiscard]] target_platform get_target_platform() const noexcept { return target_;}
     /**
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
@@ -198,6 +204,8 @@ class csvm {
      */
     [[nodiscard]] virtual std::vector<double> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const = 0;
 
+    /// The target platform of this SVM.
+    target_platform target_{ plssvm::target_platform::automatic };
   private:
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.

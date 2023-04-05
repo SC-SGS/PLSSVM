@@ -74,12 +74,11 @@ void csvm::init(const target_platform target) {
     }
 
     // get all available devices wrt the requested target platform
-    target_platform used_target{};
-    std::tie(devices_, used_target) = detail::get_device_list(target);
+    std::tie(devices_, target_) = detail::get_device_list(target);
 
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        if (used_target != target_platform::cpu) {
+        if (target_ != target_platform::cpu) {
             // always use nd_range on GPUs
             invocation_type_ = sycl::kernel_invocation_type::nd_range;
         } else {
@@ -95,18 +94,18 @@ void csvm::init(const target_platform target) {
     if (plssvm::verbose) {
         std::cout << fmt::format("\nUsing hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", ::hipsycl::sycl::detail::version_string(), invocation_type_);
         if (target == target_platform::automatic) {
-            std::cout << fmt::format("Using {} as automatic target platform.\n", used_target);
+            std::cout << fmt::format("Using {} as automatic target platform.\n", target_);
         }
     }
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
-        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", used_target) };
+        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
     }
 
     if (plssvm::verbose) {
         // print found SYCL devices
-        std::cout << fmt::format("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), used_target);
+        std::cout << fmt::format("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), target_);
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             std::cout << fmt::format("  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
         }

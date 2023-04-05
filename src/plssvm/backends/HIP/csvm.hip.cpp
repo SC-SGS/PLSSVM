@@ -56,6 +56,9 @@ void csvm::init(const target_platform target) {
         std::cout << fmt::format("\nUsing HIP as backend.") << std::endl;
     }
 
+    // update the target platform
+    target_ = plssvm::target_platform::gpu_amd;
+
     // get all available devices wrt the requested target platform
     devices_.resize(detail::get_device_count());
     std::iota(devices_.begin(), devices_.end(), 0);

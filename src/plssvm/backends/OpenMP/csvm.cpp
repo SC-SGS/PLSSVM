@@ -60,6 +60,9 @@ void csvm::init(const target_platform target) {
     if (verbose) {
         std::cout << fmt::format("\nUsing OpenMP as backend with {} threads.\n\n", num_omp_threads) << std::endl;
     }
+
+    // update the target platform
+    target_ = plssvm::target_platform::cpu;
 }
 
 template <typename real_type>
