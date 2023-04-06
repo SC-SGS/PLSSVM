@@ -196,7 +196,7 @@ class data_set {
      * @note Must not return a optional reference, since it would bind to a temporary!
      * @return if this data set contains labels, returns a reference to all **different** labels, otherwise returns a `std::nullopt` (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const noexcept;
+    [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const;
 
     /**
      * @brief Returns the number of data points in this data set.
@@ -615,7 +615,7 @@ auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<l
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::different_labels() const noexcept -> std::optional<std::vector<label_type>> {
+auto data_set<T, U>::different_labels() const -> std::optional<std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(mapping_->labels());
     }
