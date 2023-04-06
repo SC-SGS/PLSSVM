@@ -106,19 +106,19 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     }
 
     /**
-     * @brief Delete copy-constructor since a CSVM is a move-only type.
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
      */
     csvm(const csvm &) = delete;
     /**
-     * @brief Default move-constructor since a CSVM is a move-only type.
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
      */
     csvm(csvm &&) noexcept = default;
     /**
-     * @brief Delete copy-assignment operator since a CSVM is a move-only type.
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
      */
     csvm &operator=(const csvm &) = delete;
     /**
-     * @brief Default move-assignment operator since a CSVM is a move-only type.
+     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
      */
     csvm &operator=(csvm &&) noexcept = default;
     /**

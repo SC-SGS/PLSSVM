@@ -72,10 +72,12 @@ class csvm {
     csvm(csvm &&) noexcept = default;
     /**
      * @brief Delete copy-assignment operator since a CSVM is a move-only type.
+     * @return `*this`
      */
     csvm &operator=(const csvm &) = delete;
     /**
      * @brief Default move-assignment operator since a virtual destructor has been declared.
+     * @return `*this`
      */
     csvm &operator=(csvm &&) noexcept = default;
     /**

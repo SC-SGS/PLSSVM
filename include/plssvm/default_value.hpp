@@ -245,14 +245,14 @@ template <typename T>
     return lhs.value() == rhs.value();
 }
 /**
- * @copydoc constexpr bool operator==(const default_value<T>, const default_value<T>)
+ * @copydoc operator==(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator==(const default_value<T> &lhs, const T &rhs) noexcept {
     return lhs.value() == rhs;
 }
 /**
- * @copydoc constexpr bool operator==(const default_value<T>, const default_value<T>)
+ * @copydoc operator==(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator==(const T &lhs, const default_value<T> &rhs) noexcept {
@@ -271,14 +271,14 @@ template <typename T>
     return !(lhs == rhs);
 }
 /**
- * @copydoc constexpr bool operator!=(const default_value<T>, const default_value<T>)
+ * @copydoc operator!=(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator!=(const default_value<T> &lhs, const T &rhs) noexcept {
     return !(lhs == rhs);
 }
 /**
- * @copydoc constexpr bool operator!=(const default_value<T>, const default_value<T>)
+ * @copydoc operator!=(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator!=(const T &lhs, const default_value<T> &rhs) noexcept {
@@ -297,14 +297,14 @@ template <typename T>
     return lhs.value() < rhs.value();
 }
 /**
- * @copydoc constexpr bool operator<(const default_value<T>, const default_value<T>)
+ * @copydoc operator<(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator<(const default_value<T> &lhs, const T &rhs) noexcept {
     return lhs.value() < rhs;
 }
 /**
- * @copydoc constexpr bool operator<(const default_value<T>, const default_value<T>)
+ * @copydoc operator<(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator<(const T &lhs, const default_value<T> &rhs) noexcept {
@@ -324,7 +324,7 @@ template <typename T>
 }
 
 /**
- * @copydoc constexpr bool operator>(const default_value<T>, const default_value<T>)
+ * @copydoc operator>(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator>(const default_value<T> &lhs, const T &rhs) noexcept {
@@ -332,7 +332,7 @@ template <typename T>
 }
 
 /**
- * @copydoc constexpr bool operator>(const default_value<T>, const default_value<T>)
+ * @copydoc operator>(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator>(const T &lhs, const default_value<T> &rhs) noexcept {
@@ -351,14 +351,14 @@ template <typename T>
     return !(lhs > rhs);
 }
 /**
- * @copydoc constexpr bool operator<=(const default_value<T>, const default_value<T>)
+ * @copydoc operator<=(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator<=(const default_value<T> &lhs, const T &rhs) noexcept {
     return !(lhs.value() > rhs);
 }
 /**
- * @copydoc constexpr bool operator<=(const default_value<T>, const default_value<T>)
+ * @copydoc operator<=(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator<=(const T &lhs, const default_value<T> &rhs) noexcept {
@@ -377,14 +377,14 @@ template <typename T>
     return !(lhs < rhs);
 }
 /**
- * @copydoc constexpr bool operator>=(const default_value<T>, const default_value<T>)
+ * @copydoc operator>=(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const T &rhs) noexcept {
     return !(lhs.value() < rhs);
 }
 /**
- * @copydoc constexpr bool operator>=(const default_value<T>, const default_value<T>)
+ * @copydoc operator>=(const default_value<T> &, const default_value<T> &)
  */
 template <typename T>
 [[nodiscard]] constexpr bool operator>=(const T &lhs, const default_value<T> &rhs) noexcept {

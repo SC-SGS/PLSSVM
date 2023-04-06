@@ -58,20 +58,20 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
     explicit device_ptr(size_type size, queue_type device = 0);
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr(device_ptr &&other) noexcept = default;
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr &operator=(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr &operator=(device_ptr &&other) noexcept = default;
 
