@@ -181,6 +181,7 @@ pipeline {
                         builders[label] = {
                             node(label) {
                                 sh '''
+                                    . /usr/local.nfs/Modules/latest/init/sh
                                     module load cuda/11.4.3
 #                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         #rm -rf llvm
