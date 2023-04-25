@@ -28,7 +28,7 @@
 #include "fmt/format.h"                      // fmt::format
 #include "fmt/ostream.h"                     // can use fmt using operator<< overloads
 #include "gmock/gmock.h"                     // ::testing::HasSubstr
-#include "gtest/gtest.h"                     // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
+#include "gtest/gtest.h"                     // ASSERT_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
                                              // ::testing::Test
 
 #include <cmath>                             // std::sqrt, std::abs
@@ -46,6 +46,16 @@
 template <typename T>
 class GenericCSVM : public ::testing::Test, protected util::redirect_output<> {};
 TYPED_TEST_SUITE_P(GenericCSVM);
+
+TYPED_TEST_P(GenericCSVM, get_target_platform) {
+    using csvm_type = typename TypeParam::csvm_type;
+
+    // create C-SVM
+    const csvm_type svm = util::construct_from_tuple<csvm_type>(TypeParam::additional_arguments);
+
+    // after construction: get_target_platform must refer to a plssvm::target_platform that is not automatic
+    EXPECT_NE(svm.get_target_platform(), plssvm::target_platform::automatic);
+}
 
 TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
@@ -199,6 +209,7 @@ TYPED_TEST_P(GenericCSVM, score) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
+                            get_target_platform,
                             solve_system_of_linear_equations_trivial, solve_system_of_linear_equations, solve_system_of_linear_equations_with_correction,
                             predict_values, predict, score);
 // clang-format on

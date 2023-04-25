@@ -23,7 +23,7 @@
 #include "../../../utility.hpp"                             // util::redirect_output
 #include "../../generic_csvm_tests.hpp"                     // generic CSVM tests to instantiate
 
-#include "gtest/gtest.h"                                    // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
+#include "gtest/gtest.h"                                    // TEST_F, EXPECT_NO_THROW, EXPECT_NE, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
 
 #include <tuple>                                            // std::make_tuple, std::get
 #include <utility>                                          // std::make_pair
@@ -123,6 +123,14 @@ TEST_F(DPCPPCSVM, construct_target_and_named_args) {
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
+}
+
+TEST_F(DPCPPCSVM, get_kernel_invocation_type) {
+    // construct default CSVM
+    const plssvm::dpcpp::csvm svm{ plssvm::parameter{} };
+
+    // after construction: get_kernel_invocation_type must refer to a plssvm::sycl::kernel_invocation_type that is not automatic
+    EXPECT_NE(svm.get_kernel_invocation_type(), plssvm::sycl::kernel_invocation_type::automatic);
 }
 
 template <typename T, plssvm::kernel_function_type kernel, plssvm::sycl::kernel_invocation_type invocation>
