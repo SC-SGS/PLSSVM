@@ -47,6 +47,45 @@ template <typename T>
 class GenericCSVM : public ::testing::Test, protected util::redirect_output<> {};
 TYPED_TEST_SUITE_P(GenericCSVM);
 
+TYPED_TEST_P(GenericCSVM, move_constructor) {
+    using csvm_type = typename TypeParam::csvm_type;
+
+    // create default CSVM
+    csvm_type svm{};
+
+    // get current state
+    const plssvm::parameter params = svm.get_params();
+    const plssvm::target_platform target = svm.get_target_platform();
+
+    // move construct new CSVM
+    const csvm_type new_svm{ std::move(svm) };
+
+    // check that the state of the newly constructed CSVM matches the old state of the moved-from CSVM
+    EXPECT_EQ(new_svm.get_params(), params);
+    EXPECT_EQ(new_svm.get_target_platform(), target);
+}
+
+TYPED_TEST_P(GenericCSVM, move_assignment) {
+    using csvm_type = typename TypeParam::csvm_type;
+
+    // create default CSVM
+    csvm_type svm{};
+
+    // get current state
+    const plssvm::parameter params = svm.get_params();
+    const plssvm::target_platform target = svm.get_target_platform();
+
+    // construct new CSVM with a non-default state
+    csvm_type new_svm{ plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial } };
+
+    // move assign old CSVM to the new one
+    new_svm = std::move(svm);
+
+    // check that the state of the newly constructed CSVM matches the old state of the moved-from CSVM
+    EXPECT_EQ(new_svm.get_params(), params);
+    EXPECT_EQ(new_svm.get_target_platform(), target);
+}
+
 TYPED_TEST_P(GenericCSVM, get_target_platform) {
     using csvm_type = typename TypeParam::csvm_type;
 
@@ -209,6 +248,7 @@ TYPED_TEST_P(GenericCSVM, score) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
+                            move_constructor, move_assignment,
                             get_target_platform,
                             solve_system_of_linear_equations_trivial, solve_system_of_linear_equations, solve_system_of_linear_equations_with_correction,
                             predict_values, predict, score);
