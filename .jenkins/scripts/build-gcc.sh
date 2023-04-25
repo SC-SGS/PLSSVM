@@ -6,7 +6,7 @@ set -e
 GCC_VERSION=12.2.0
 GCC_PATH=$1
 
-if [ -z "$1" ] ; then
+if [ -n "$1" ] ; then
   GCC_ROOT_DIR=$1
 else
   GCC_ROOT_DIR=gcc-${GCC_VERSION}_install
