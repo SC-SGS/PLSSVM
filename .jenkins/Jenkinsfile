@@ -143,7 +143,7 @@ pipeline {
                                 node(label) {
                                     sh '''
                                     if [ ! -d "$GCC_PATH" ] || [ "$GCC_FORCE_REBUILD" = "TRUE" ]; then
-                                        sh $WORKSPACE/plssvm/.jenkins/scripts/build-gcc.sh $GCC_PATH
+                                        $WORKSPACE/plssvm/.jenkins/scripts/build-gcc.sh $GCC_PATH
                                    fi
                                 '''
                             }
