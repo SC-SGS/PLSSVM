@@ -78,9 +78,9 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
         -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized
         -fPIC>
-        $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459>>
         )
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC'")
 
@@ -95,7 +95,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
         )
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
         )
 
 
