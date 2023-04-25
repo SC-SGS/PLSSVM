@@ -97,6 +97,20 @@ class model {
      * @return the support vectors (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::vector<real_type>> &support_vectors() const noexcept { return data_.data(); }
+
+    /**
+     * @brief Returns the labels of the support vectors.
+     * @details If the labels are present, they can be retrieved as `std::vector` using: `dataset.labels()->%get()`.
+     * @return the labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
+    /**
+     * @brief Returns the **different** labels of the support vectors.
+     * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the labels `{ -1, 1 }`.
+     * @return all **different** labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<label_type> different_labels() const { return data_.different_labels().value(); }
+
     /**
      * @brief The learned weights for the support vectors.
      * @details It is of size `num_support_vectors()`.
