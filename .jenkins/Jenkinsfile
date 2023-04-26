@@ -60,7 +60,7 @@ pipeline {
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
-        HIPSYCL_FORCE_REBUILD = "TRUE"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
 
         // install path
         MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
@@ -317,7 +317,7 @@ pipeline {
                                         cd pocl-3.1
                                         mkdir -p build
                                         cd build
-                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF -DLLVM_PATH=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs ..
+                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs/bin/clang++  -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF -DLLVM_PATH=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs ..
                                         make -j 4 install
                                         cd ../..
                                         rm pocl.tar.gz*
