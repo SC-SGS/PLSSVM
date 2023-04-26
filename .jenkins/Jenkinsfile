@@ -191,13 +191,10 @@ pipeline {
                                         cd llvm
                                         rm -rf build
                                         whereis g++
-                                        python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp,libcxx,libcxxabi" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
-                                        sed -i 's/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(100)))/define _LIBCPP_INIT_PRIORITY_MAX __attribute__((__init_priority__(101)))/g' libcxx/include/__config
+                                        python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
                                         python buildbot/compile.py
                                         cmake --build build -- omp
-
                                         cmake --build build -- install
-
                                         rm -rf "$HIPSYCL_PATH"
 #                                    fi
 
