@@ -158,7 +158,7 @@ pipeline {
                                     if [ ! -d "$GCC_PATH" ] || [ "$GCC_FORCE_REBUILD" = "TRUE" ]; then
                                         $WORKSPACE/plssvm/.jenkins/scripts/build-gcc.sh $GCC_PATH
                                    fi
-                                   ls -l $GCC_PATH
+
                                 '''
                             }
 
@@ -183,6 +183,7 @@ pipeline {
                             node(label) {
                                 sh '''
                                     . /usr/local.nfs/Modules/latest/init/sh
+                                    echo $PATH
                                     module load cuda/11.4.3
 #                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
