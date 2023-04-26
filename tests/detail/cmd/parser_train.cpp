@@ -11,7 +11,7 @@
 #include "plssvm/detail/cmd/parser_train.hpp"
 #include "plssvm/detail/logger.hpp"
 
-#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
+#include "plssvm/detail/logger.hpp"      // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
@@ -163,7 +163,8 @@ class ParserTrainDegree : public ParserTrain, public ::testing::WithParamInterfa
 TEST_P(ParserTrainDegree, parsing) {
     const auto &[flag, degree] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", degree), "data.libsvm" });;
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", degree), "data.libsvm" });
+    ;
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
     // test for correctness
