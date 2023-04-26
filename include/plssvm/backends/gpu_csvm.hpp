@@ -637,7 +637,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
-                detail::tracking_entry{ "cg", "iterations", max_iter },
+                detail::tracking_entry{ "cg", "max_iterations", max_iter },
                 detail::tracking_entry{ "cg", "residuum", delta },
                 detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
                 detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
