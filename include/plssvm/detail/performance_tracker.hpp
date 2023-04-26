@@ -156,6 +156,20 @@ class performance_tracker {
      */
     void save(const std::string &filename);
 
+    /**
+     * @brief Pause the current tracking, i.e., all calls to `add_tracking_entry` do nothing.
+     */
+    void pause_tracking() noexcept { is_tracking_ = false; }
+    /**
+     * @brief Resume the tracking, i.e., all calls to `add_tracking_entry` do track the values again.
+     */
+    void resume_tracking() noexcept { is_tracking_ = true; }
+    /**
+     * @brief Check whether tracking is currently active or paused.
+     * @return `true` if tracking is enabled, `false` if it is currently paused (`[[nodiscard]]`)
+     */
+    [[nodiscard]] bool is_tracking() const noexcept { return is_tracking_; }
+
   private:
     /**
      * @brief Default construct a performance_tracker.
@@ -165,12 +179,24 @@ class performance_tracker {
 
     /// All performance statistics grouped by their specified categories.
     std::unordered_multimap<std::string, std::string> tracking_statistics{};
+    /// The tracking is enabled by default.
+    bool is_tracking_{ true };
 };
 
 /**
+ * @def PLSSVM_PERFORMANCE_TRACKER_PAUSE
+ * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_PAUSE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Pause the tracking functionality if tracking is currently enabled.
+ */
+/**
+ * @def PLSSVM_PERFORMANCE_TRACKER_RESUME
+ * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_RESUME` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Resume the tracking functionality if tracking is currently enabled.
+ */
+/**
  * @def PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
  * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
- * @details Adds the provided entry to the plssvm::detail::performance_tracker singleton.
+ * @details Adds the provided entry to the plssvm::detail::performance_tracker singleton if tracking is currently enabled.
  */
 /**
  * @def PLSSVM_PERFORMANCE_TRACKER_SAVE
@@ -179,16 +205,25 @@ class performance_tracker {
  */
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
-    #define PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
-        plssvm::detail::performance_tracker::instance().add_tracking_entry(entry)
+    #define PLSSVM_PERFORMANCE_TRACKER_PAUSE() \
+        plssvm::detail::performance_tracker::instance().pause_tracking()
+
+    #define PLSSVM_PERFORMANCE_TRACKER_RESUME() \
+        plssvm::detail::performance_tracker::instance().resume_tracking()
 
     #define PLSSVM_PERFORMANCE_TRACKER_SAVE() \
         plssvm::detail::performance_tracker::instance().save(PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE)
 
+    #define PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)                       \
+        if (plssvm::detail::performance_tracker::instance().is_tracking()) {           \
+            plssvm::detail::performance_tracker::instance().add_tracking_entry(entry); \
+        }
 #else
 
-    #define PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
+    #define PLSSVM_PERFORMANCE_TRACKER_PAUSE()
+    #define PLSSVM_PERFORMANCE_TRACKER_RESUME()
     #define PLSSVM_PERFORMANCE_TRACKER_SAVE()
+    #define PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
 
 #endif
 
