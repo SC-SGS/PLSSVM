@@ -307,6 +307,7 @@ pipeline {
                         builders[label] = {
                             node(label) {
                                 sh '''
+                                    rm -rf pocl-3.1
                                     if [ -f pocl.tar.gz* ]; then
                                         rm pocl.tar.gz*
                                         rm -rf pocl.tar.gz*
