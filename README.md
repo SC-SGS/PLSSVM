@@ -187,7 +187,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_OPENMP_BLOCK_SIZE` (default: `64`): set a specific block size used in the OpenMP kernels
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
-- `PLSSVM_ENABLE_PERFORMANCE_TRACKER` (default: `""`, i.e., `OFF`): enable gathering performance characteristics for the three executables using the specified YAML file; an example Python3 script to process the YAML file can be found in the `utility_scripts/` directory (requires the Python3 modules [`pyyaml`](https://pyyaml.org/) and [`pint`](https://pint.readthedocs.io/en/stable/))
+- `PLSSVM_PERFORMANCE_TRACKER`: enable gathering performance characteristics for the three executables using the specified YAML file; an example Python3 script to process the YAML file can be found in the `utility_scripts/` directory (requires the Python3 modules [`pyyaml`](https://pyyaml.org/) and [`pint`](https://pint.readthedocs.io/en/stable/))
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
