@@ -19,15 +19,15 @@
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
 
-#include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // format types with an operator<< overload
+#include "fmt/chrono.h"                          // format std::chrono types
+#include "fmt/core.h"                            // fmt::format
+#include "fmt/ostream.h"                         // format types with an operator<< overload
 
-#include <string>         // std::string
-#include <string_view>    // std::string_view
-#include <type_traits>    // std::false_type, std::true_type
-#include <unordered_map>  // std::unordered_multimap
-#include <utility>        // std::move
+#include <string>                                // std::string
+#include <string_view>                           // std::string_view
+#include <type_traits>                           // std::false_type, std::true_type
+#include <unordered_map>                         // std::unordered_multimap
+#include <utility>                               // std::move
 
 namespace plssvm::detail {
 
@@ -74,7 +74,7 @@ namespace impl {
 template <typename T>
 struct is_tracking_entry : std::false_type {};
 /**
- * @brief Sets the `value` to `false` since it **is** a tracking entry.
+ * @brief Sets the `value` to `true` since it **is** a tracking entry.
  */
 template <typename T>
 struct is_tracking_entry<tracking_entry<T>> : std::true_type {};
@@ -101,7 +101,7 @@ constexpr bool is_tracking_entry_v = is_tracking_entry<T>::value;
 class performance_tracker {
   public:
     /**
-     * @brief Singleton getter since only one instance of a performance_tracker should exist.
+     * @brief Singleton getter since only one instance of a performance_tracker should ever exist.
      * @return the singleton instance (`[[nodiscard]]`)
      */
     [[nodiscard]] static performance_tracker &instance() {
@@ -117,13 +117,13 @@ class performance_tracker {
      */
     template <typename T>
     void add_tracking_entry(const tracking_entry<T> &entry) {
-        tracking_statistics.insert({ entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value) });
+        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
     }
 
     /**
      * @brief Add a tracking_entry encapsulating a std::string to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
-     *          Adds quotes around the entry's value
+     *          Adds quotes around the entry's value.
      * @param[in] entry the entry to add
      */
     void add_tracking_entry(const tracking_entry<std::string> &entry);
