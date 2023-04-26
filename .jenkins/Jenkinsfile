@@ -313,7 +313,7 @@ pipeline {
                                         cd pocl-3.1
                                         mkdir -p build
                                         cd build
-                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH  -DCMAKE_C_COMPILER=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs/bin/clang -DCMAKE_CXX_COMPILER=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs/bin/clang++  -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF -DLLVM_PATH=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs ..
+                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH  -DCMAKE_C_COMPILER=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs/bin/clang -DCMAKE_CXX_COMPILER=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs/bin/clang++  -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF -DLLVM_PATH=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs -DWITH_LLVM_CONFIG=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs/bin/llvm-config ..
                                         make -j 4 install
                                         cd ../..
                                         rm pocl.tar.gz*
