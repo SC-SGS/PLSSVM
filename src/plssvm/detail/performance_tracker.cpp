@@ -21,7 +21,7 @@
 #include "fmt/ostream.h"                                 // format types with an operator<< overload
 
 #include <fstream>                                       // std::ofstream
-#include <iostream>                                      // std::ostream, std::ios_base::app
+#include <iostream>                                      // std::ios_base::app
 #include <string>                                        // std::string
 #include <unordered_map>                                 // std::unordered_multimap
 #include <utility>                                       // std::pair
