@@ -190,7 +190,7 @@ model<T, U>::model(const std::string &filename) {
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
-    PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", rho_ }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", rho_ }));
 }
 
 template <typename T, typename U>
@@ -211,7 +211,7 @@ void model<T, U>::save(const std::string &filename) const {
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });
-    PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", rho_ }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", rho_ }));
 }
 
 }  // namespace plssvm

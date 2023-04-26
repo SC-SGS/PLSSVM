@@ -184,46 +184,46 @@ class performance_tracker {
 };
 
 /**
- * @def PLSSVM_PERFORMANCE_TRACKER_PAUSE
- * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_PAUSE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE
+ * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Pause the tracking functionality if tracking is currently enabled.
  */
 /**
- * @def PLSSVM_PERFORMANCE_TRACKER_RESUME
- * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_RESUME` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME
+ * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Resume the tracking functionality if tracking is currently enabled.
  */
 /**
- * @def PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
- * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
- * @details Adds the provided entry to the plssvm::detail::performance_tracker singleton if tracking is currently enabled.
+ * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
+ * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Save the previously tracked performance statistics.
  */
 /**
- * @def PLSSVM_PERFORMANCE_TRACKER_SAVE
- * @brief Defines the `PLSSVM_PERFORMANCE_TRACKER_SAVE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
- * @details Save the previously tracked performance statistics.
+ * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+ * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Adds the provided entry to the plssvm::detail::performance_tracker singleton if tracking is currently enabled.
  */
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
-    #define PLSSVM_PERFORMANCE_TRACKER_PAUSE() \
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE() \
         plssvm::detail::performance_tracker::instance().pause_tracking()
 
-    #define PLSSVM_PERFORMANCE_TRACKER_RESUME() \
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME() \
         plssvm::detail::performance_tracker::instance().resume_tracking()
 
-    #define PLSSVM_PERFORMANCE_TRACKER_SAVE() \
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE() \
         plssvm::detail::performance_tracker::instance().save(PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE)
 
-    #define PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)                       \
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)                \
         if (plssvm::detail::performance_tracker::instance().is_tracking()) {           \
             plssvm::detail::performance_tracker::instance().add_tracking_entry(entry); \
         }
 #else
 
-    #define PLSSVM_PERFORMANCE_TRACKER_PAUSE()
-    #define PLSSVM_PERFORMANCE_TRACKER_RESUME()
-    #define PLSSVM_PERFORMANCE_TRACKER_SAVE()
-    #define PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME()
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE()
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
 
 #endif
 

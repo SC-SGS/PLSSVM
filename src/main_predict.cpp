@@ -13,7 +13,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logger.hpp"                 // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_PERFORMANCE_TRACKER_SAVE, plssvm::detail::tracking_entry
+#include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, plssvm::detail::tracking_entry
 
 #include "fmt/format.h"  // fmt::print, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
@@ -96,6 +96,6 @@ int main(int argc, char *argv[]) {
                         "\nTotal runtime: {}\n",
                         plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
-    PLSSVM_PERFORMANCE_TRACKER_SAVE();
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE();
     return EXIT_SUCCESS;
 }

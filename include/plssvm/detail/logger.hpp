@@ -14,7 +14,7 @@
 #define PLSSVM_DETAIL_LOGGER_HPP_
 #pragma once
 
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 
 #include "fmt/chrono.h"                           // format std::chrono types
 #include "fmt/format.h"                           // fmt::format
@@ -116,7 +116,7 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
     // if performance tracking has been enabled, add tracking entries
     ([](auto &&arg) {
         if constexpr (detail::is_tracking_entry_v<decltype(arg)>) {
-            PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(std::forward<decltype(arg)>(arg));
+            PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(std::forward<decltype(arg)>(arg));
         }
     }(std::forward<Args>(args)),
      ...);

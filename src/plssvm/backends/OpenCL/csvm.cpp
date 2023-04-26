@@ -98,7 +98,7 @@ void csvm::init(const target_platform target) {
         plssvm::detail::log(verbosity_level::full,
                             "Using {} as automatic target platform.\n", target_);
     }
-    PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
 
     // create command_queues and JIT compile OpenCL kernels
     const auto jit_start_time = std::chrono::steady_clock::now();
