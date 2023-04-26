@@ -56,7 +56,7 @@ pipeline {
 
         // DPCPP
         DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
-        DPCPP_FORCE_REBUILD = "TRUE"
+        DPCPP_FORCE_REBUILD = "FALSE"
 
         // hipSYCL
         HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
@@ -185,9 +185,10 @@ pipeline {
                                     . /usr/local.nfs/Modules/latest/init/sh
                                     echo $PATH
                                     module load cuda/11.4.3
+                                    rm $DPCPP_PATH
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
-                                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
+                                        git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
                                         cd llvm
                                         rm -rf build
                                         whereis g++
@@ -317,7 +318,7 @@ pipeline {
                                         cd pocl-3.1
                                         mkdir -p build
                                         cd build
-                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF ..
+                                        cmake -DCMAKE_INSTALL_PREFIX=$POCL_PATH -DCMAKE_CXX_COMPILER=clang++ -DENABLE_TESTS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CUDA=OFF -DENABLE_TCE=OFF -DENABLE_HSA=OFF -DLLVM_PATH=/import/sgs.scratch/vancraar/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-9.4.0/llvm-14.0.6-s7bbf6lgiqt47pxskcquoxj7fpttlyxs..
                                         make -j 4 install
                                         cd ../..
                                         rm pocl.tar.gz*
