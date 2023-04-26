@@ -14,10 +14,11 @@
 #include "../types_to_test.hpp"  // util::label_type_gtest
 #include "../utility.hpp"        // util::redirect_output
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
+#include "fmt/core.h"            // fmt::format
+#include "gtest/gtest.h"         // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
-#include <iostream>  // std::cout
+#include <iostream>              // std::cout
+#include <string>                // std::string
 
 template <typename T>
 class TrackingEntry : public ::testing::Test, public util::redirect_output<> {};
@@ -27,7 +28,7 @@ TYPED_TEST(TrackingEntry, construct) {
     using type = TypeParam;
 
     // construct a tracking entry
-    plssvm::detail::tracking_entry e{ "category", "name", type{} };
+    const plssvm::detail::tracking_entry e{ "category", "name", type{} };
 
     // check the values
     EXPECT_EQ(e.entry_category, "category");
@@ -39,7 +40,7 @@ TYPED_TEST(TrackingEntry, output_operator) {
     using type = TypeParam;
 
     // construct a tracking entry
-    plssvm::detail::tracking_entry e{ "category", "name", type{} };
+    const plssvm::detail::tracking_entry e{ "category", "name", type{} };
 
     // output the value
     std::cout << e;
@@ -56,7 +57,8 @@ TEST(TrackingEntry, is_tracking_entry) {
     EXPECT_TRUE(plssvm::detail::is_tracking_entry_v<plssvm::detail::tracking_entry<const int &>>);
     EXPECT_TRUE(plssvm::detail::is_tracking_entry<plssvm::detail::tracking_entry<std::string>>::value);
     EXPECT_TRUE(plssvm::detail::is_tracking_entry_v<plssvm::detail::tracking_entry<std::string>>);
-
+}
+TEST(TrackingEntry, is_no_tracking_entry) {
     // the following types are NOT tracking entries
     EXPECT_FALSE(plssvm::detail::is_tracking_entry<int>::value);
     EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<int>);
