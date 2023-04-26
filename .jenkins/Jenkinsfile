@@ -188,7 +188,7 @@ pipeline {
                                     rm -r $DPCPP_PATH
                                     if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
                                         rm -rf llvm
-                                        git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
                                         cd llvm
                                         rm -rf build
                                         whereis g++
