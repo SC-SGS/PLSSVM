@@ -10,17 +10,14 @@
 
 #include "plssvm/detail/logger.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::verbose
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::to_underlying
 
 #include "../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
-#include "../utility.hpp"  // util::redirect_output
+#include "../utility.hpp"             // util::redirect_output
 
-#include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
+#include "gtest/gtest.h"              // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
-#include <sstream>  // std::istringstream
-
-// TODO: new tests for verbosity_level
+#include <sstream>                    // std::istringstream
 
 // check whether the plssvm::verbosity_level values are power of twos
 TEST(VerbosityLevel, values) {
@@ -65,6 +62,14 @@ TEST(VerbosityLevel, from_string) {
     EXPECT_CONVERSION_FROM_STRING("full", plssvm::verbosity_level::full);
     EXPECT_CONVERSION_FROM_STRING("FULL", plssvm::verbosity_level::full);
 }
+TEST(VerbosityLevel, from_string_concatenation) {
+    // check conversion from std::string
+    EXPECT_CONVERSION_FROM_STRING("quiet|libsvm|timing|full", plssvm::verbosity_level::quiet);
+    EXPECT_CONVERSION_FROM_STRING("libsvm|timing|full", plssvm::verbosity_level::full | plssvm::verbosity_level::timing | plssvm::verbosity_level::libsvm);
+    EXPECT_CONVERSION_FROM_STRING("timing|full", plssvm::verbosity_level::full | plssvm::verbosity_level::timing);
+    EXPECT_CONVERSION_FROM_STRING("libsvm|full", plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm);
+    EXPECT_CONVERSION_FROM_STRING("libsvm|timing", plssvm::verbosity_level::timing | plssvm::verbosity_level::libsvm);
+}
 TEST(VerbosityLevel, from_string_unknown) {
     // foo isn't a valid backend_type
     std::istringstream input{ "foo" };
@@ -79,6 +84,11 @@ TEST(VerbosityLevel, bitwise_or) {
     EXPECT_EQ(plssvm::detail::to_underlying(plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm), 0b101);
     EXPECT_EQ(plssvm::detail::to_underlying(plssvm::verbosity_level::timing | plssvm::verbosity_level::libsvm), 0b011);
 }
+TEST(VerbosityLevel, compound_bitwise_or) {
+    plssvm::verbosity_level verb = plssvm::verbosity_level::full;
+    verb |= plssvm::verbosity_level::timing | plssvm::verbosity_level::libsvm;
+    EXPECT_EQ(plssvm::detail::to_underlying(verb), 0b111);
+}
 TEST(VerbosityLevel, bitwise_and) {
     EXPECT_EQ(plssvm::detail::to_underlying(plssvm::verbosity_level::full & plssvm::verbosity_level::full), 0b100);
     const plssvm::verbosity_level verb = plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm;
@@ -86,6 +96,11 @@ TEST(VerbosityLevel, bitwise_and) {
     EXPECT_EQ(plssvm::detail::to_underlying(verb & plssvm::verbosity_level::libsvm), 0b001);
     EXPECT_EQ(plssvm::detail::to_underlying(verb & plssvm::verbosity_level::timing), 0b000);
     EXPECT_EQ(plssvm::detail::to_underlying(verb & plssvm::verbosity_level::full), 0b100);
+}
+TEST(VerbosityLevel, compound_bitwise_and) {
+    plssvm::verbosity_level verb = plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm;
+    verb &= plssvm::verbosity_level::full;
+    EXPECT_EQ(plssvm::detail::to_underlying(verb), 0b100);
 }
 
 class Logger : public ::testing::Test, public util::redirect_output<> {};

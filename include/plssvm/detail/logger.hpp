@@ -16,13 +16,14 @@
 
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 
-#include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/format.h"   // fmt::format
-#include "fmt/ostream.h"  // format types with an operator<< overload
+#include "fmt/chrono.h"                           // format std::chrono types
+#include "fmt/format.h"                           // fmt::format
+#include "fmt/ostream.h"                          // format types with an operator<< overload
 
-#include <iostream>     // std::cout
-#include <string_view>  // std::string_view
-#include <utility>      // std::forward
+#include <iosfwd>                                 // std::istream, std::ostream
+#include <iostream>                               // std::cout
+#include <string_view>                            // std::string_view
+#include <utility>                                // std::forward
 
 namespace plssvm {
 
@@ -45,7 +46,8 @@ inline verbosity_level verbosity = verbosity_level::full;
 
 /**
  * @brief Output the @p verb to the given output-stream @p out.
- * @param[in,out] out the output-stream to write the backend type to
+ * @details If more than one verbosity level is provided, outputs all of them, e.g., "libsvm | timing".
+ * @param[in,out] out the output-stream to write the verbosity level to
  * @param[in] verb the verbosity level
  * @return the output-stream
  */
@@ -53,7 +55,9 @@ std::ostream &operator<<(std::ostream &out, verbosity_level verb);
 
 /**
  * @brief Use the input-stream @p in to initialize the @p verb level.
- * @param[in,out] in input-stream to extract the backend type from
+ * @details If more than one verbosity level is provided, e.g., "libsvm | timing" returns a bitwise-or of the respective enum values.
+ *          If any of the values is "quiet", the result will always be `plssvm::verbosity_level::quiet`.
+ * @param[in,out] in input-stream to extract the verbosity level from
  * @param[in] verb the verbosity level
  * @return the input-stream
  */
@@ -66,6 +70,13 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb);
  * @return the logical-or of the two verbosity levels (`[[nodiscard]]`)
  */
 [[nodiscard]] verbosity_level operator|(verbosity_level lhs, verbosity_level rhs);
+/**
+ * @brief Bitwise-or to set multiple verbosity levels at once for a logging message.
+ * @param[in] lhs the first verbosity level
+ * @param[in] rhs the second verbosity level
+ * @return the logical-or of the two verbosity levels
+ */
+verbosity_level operator|=(verbosity_level &lhs, verbosity_level rhs);
 
 /**
  * @brief Bitwise-and to check verbosity levels for a logging message.
@@ -74,6 +85,13 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb);
  * @return the logical-and of the two verbosity levels (`[[nodiscard]]`)
  */
 [[nodiscard]] verbosity_level operator&(verbosity_level lhs, verbosity_level rhs);
+/**
+ * @brief Bitwise-and to check verbosity levels for a logging message.
+ * @param[in] lhs the first verbosity level
+ * @param[in] rhs the second verbosity level
+ * @return the logical-and of the two verbosity levels
+ */
+verbosity_level operator&=(verbosity_level &lhs, verbosity_level rhs);
 
 namespace detail {
 

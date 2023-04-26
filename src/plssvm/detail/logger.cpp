@@ -8,16 +8,17 @@
 
 #include "plssvm/detail/logger.hpp"
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{to_lower_case, split, trim}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/format.h"                      // fmt::format, fmt::join
 
-#include <ios>      // std::ios::failbit
-#include <istream>  // std::istream
-#include <ostream>  // std::ostream
-#include <string>   // std::string
-#include <vector>   // std::vector
+#include <ios>                               // std::ios::failbit
+#include <istream>                           // std::istream
+#include <ostream>                           // std::ostream
+#include <string>                            // std::string
+#include <string_view>                       // std::string_view
+#include <vector>                            // std::vector
 
 namespace plssvm {
 
@@ -30,13 +31,13 @@ std::ostream &operator<<(std::ostream &out, const verbosity_level verb) {
 
     // check bit-flags
     if ((verb & verbosity_level::libsvm) != verbosity_level::quiet) {
-        level_names.push_back("libsvm");
+        level_names.emplace_back("libsvm");
     }
     if ((verb & verbosity_level::timing) != verbosity_level::quiet) {
-        level_names.push_back("timing");
+        level_names.emplace_back("timing");
     }
     if ((verb & verbosity_level::full) != verbosity_level::quiet) {
-        level_names.push_back("full");
+        level_names.emplace_back("full");
     }
 
     if (level_names.empty()) {
@@ -51,25 +52,43 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb) {
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "full") {
-        verb = verbosity_level::full;
-    } else if (str == "timing") {
-        verb = verbosity_level::timing;
-    } else if (str == "libsvm") {
-        verb = verbosity_level::libsvm;
-    } else if (str == "quiet") {
-        verb = verbosity_level::quiet;
-    } else {
-        in.setstate(std::ios::failbit);
+    verb = verbosity_level::quiet;
+
+    // split the input string by "|"
+    const std::vector<std::string_view> verbs = detail::split(str, '|');
+    for (std::string_view verb_str : verbs) {
+        verb_str = detail::trim(verb_str);
+        if (verb_str == "full") {
+            verb |= verbosity_level::full;
+        } else if (verb_str == "timing") {
+            verb |= verbosity_level::timing;
+        } else if (verb_str == "libsvm") {
+            verb |= verbosity_level::libsvm;
+        } else if (verb_str == "quiet") {
+            verb = verbosity_level::quiet;
+            break;
+        } else {
+            in.setstate(std::ios::failbit);
+            break;
+        }
     }
+
     return in;
 }
 
 verbosity_level operator|(const verbosity_level lhs, const verbosity_level rhs) {
     return static_cast<verbosity_level>(detail::to_underlying(lhs) | detail::to_underlying(rhs));
 }
+verbosity_level operator|=(verbosity_level &lhs, const verbosity_level rhs) {
+    const verbosity_level verb = lhs | rhs;
+    return lhs = verb;
+}
 verbosity_level operator&(const verbosity_level lhs, const verbosity_level rhs) {
     return static_cast<verbosity_level>(detail::to_underlying(lhs) & detail::to_underlying(rhs));
+}
+verbosity_level operator&=(verbosity_level &lhs, const verbosity_level rhs) {
+    const verbosity_level verb = lhs & rhs;
+    return lhs = verb;
 }
 
 }  // namespace plssvm
