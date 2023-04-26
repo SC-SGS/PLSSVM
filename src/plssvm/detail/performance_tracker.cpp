@@ -48,7 +48,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                   "  strings_as_labels:           {}\n"
                                                                   "  float_as_real_type:          {}\n"
                                                                   "  input_filename:              \"{}\"\n"
-                                                                  "  model_filename:              \"{}\"\n\n",
+                                                                  "  model_filename:              \"{}\"\n",
                                                                   entry.entry_value.csvm_params.kernel_type.value(),
                                                                   entry.entry_value.csvm_params.degree.value(),
                                                                   entry.entry_value.csvm_params.gamma.value(),
@@ -75,7 +75,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
                                                                   "  float_as_real_type:       {}\n"
                                                                   "  input_filename:           \"{}\"\n"
                                                                   "  model_filename:           \"{}\"\n"
-                                                                  "  predict_filename:         \"{}\"\n\n",
+                                                                  "  predict_filename:         \"{}\"\n",
                                                                   entry.entry_value.backend,
                                                                   entry.entry_value.target,
                                                                   entry.entry_value.sycl_implementation_type,
@@ -96,7 +96,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
                                                                   "  input_filename:     \"{}\"\n"
                                                                   "  scaled_filename:    \"{}\"\n"
                                                                   "  save_filename:      \"{}\"\n"
-                                                                  "  restore_filename:   \"{}\"\n\n",
+                                                                  "  restore_filename:   \"{}\"\n",
                                                                   entry.entry_value.lower,
                                                                   entry.entry_value.upper,
                                                                   entry.entry_value.format,
