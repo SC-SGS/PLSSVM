@@ -170,6 +170,12 @@ class performance_tracker {
      */
     [[nodiscard]] bool is_tracking() const noexcept { return is_tracking_; }
 
+    /**
+     * @brief Return the currently available tracking entries.
+     * @return the previously added tracking entries (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::unordered_multimap<std::string, std::string> &get_tracking_entries() const noexcept { return tracking_statistics; }
+
   private:
     /**
      * @brief Default construct a performance_tracker.
