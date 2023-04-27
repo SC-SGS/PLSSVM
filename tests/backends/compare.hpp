@@ -15,7 +15,7 @@
 
 #include "plssvm/parameter.hpp"  // plssvm::detail::parameter
 
-#include <vector>  // std::vector
+#include <vector>                // std::vector
 
 namespace compare {
 

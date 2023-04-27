@@ -13,10 +13,10 @@
 #include "../../naming.hpp"         // naming::real_type_to_name
 #include "../../types_to_test.hpp"  // util::real_type_gtest
 
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_DEATH, ::testing::Test
+#include "gmock/gmock-matchers.h"   // ::testing::HasSubstr
+#include "gtest/gtest.h"            // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_DEATH, ::testing::Test
 
-#include <vector>  // std::vector
+#include <vector>                   // std::vector
 
 template <typename T>
 class OpenMPQKernelDeathTest : public ::testing::Test {};

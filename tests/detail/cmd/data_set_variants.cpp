@@ -14,16 +14,16 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include "../../naming.hpp"   // naming::pretty_print_data_set_factory
-#include "../../utility.hpp"  // util::{temporary_file, instantiate_template_file}
-#include "utility.hpp"        // util::ParameterBase
+#include "../../naming.hpp"                      // naming::pretty_print_data_set_factory
+#include "../../utility.hpp"                     // util::{temporary_file, instantiate_template_file}
+#include "utility.hpp"                           // util::ParameterBase
 
-#include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
+#include "fmt/core.h"                            // fmt::format
+#include "gtest/gtest.h"                         // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
 
-#include <cstddef>  // std::size_t
-#include <string>   // std::string
-#include <tuple>    // std::tuple, std::make_tuple
+#include <cstddef>                               // std::size_t
+#include <string>                                // std::string
+#include <tuple>                                 // std::tuple, std::make_tuple
 
 // the variant order is: <float, int>, <float, std::string>, <double, int>, <double, std::string>
 
@@ -42,10 +42,10 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     // assemble command line strings
     std::vector<std::string> cmd_args = { "./plssvm-predict" };
     if (strings_as_labels) {
-        cmd_args.push_back("--use_strings_as_labels");
+        cmd_args.emplace_back("--use_strings_as_labels");
     }
     if (float_as_real_type) {
-        cmd_args.push_back("--use_float_as_real_type");
+        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.insert(cmd_args.end(), { this->filename, "data.libsvm.model" });
 
@@ -71,10 +71,10 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     // assemble command line strings
     std::vector<std::string> cmd_args = { "./plssvm-scale" };
     if (strings_as_labels) {
-        cmd_args.push_back("--use_strings_as_labels");
+        cmd_args.emplace_back("--use_strings_as_labels");
     }
     if (float_as_real_type) {
-        cmd_args.push_back("--use_float_as_real_type");
+        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.push_back(this->filename);
 
@@ -100,10 +100,10 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // assemble command line strings
     std::vector<std::string> cmd_args = { "./plssvm-scale", "-r", PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt" };
     if (strings_as_labels) {
-        cmd_args.push_back("--use_strings_as_labels");
+        cmd_args.emplace_back("--use_strings_as_labels");
     }
     if (float_as_real_type) {
-        cmd_args.push_back("--use_float_as_real_type");
+        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.push_back(this->filename);
 
@@ -129,10 +129,10 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     // assemble command line strings
     std::vector<std::string> cmd_args = { "./plssvm-train" };
     if (strings_as_labels) {
-        cmd_args.push_back("--use_strings_as_labels");
+        cmd_args.emplace_back("--use_strings_as_labels");
     }
     if (float_as_real_type) {
-        cmd_args.push_back("--use_float_as_real_type");
+        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.push_back(this->filename);
 

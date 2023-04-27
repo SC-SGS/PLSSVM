@@ -15,19 +15,19 @@
 #include "../types_to_test.hpp"       // util::real_type_gtest
 #include "../utility.hpp"             // util::redirect_output
 
-#include "fmt/format.h"   // fmt::format, fmt::join
-#include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
+#include "fmt/format.h"               // fmt::format, fmt::join
+#include "gtest/gtest.h"              // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ::testing::{Test, Types}
 
-#include <cstddef>  // std::size_t
-#include <sstream>  // std::istringstream
-#include <tuple>    // std::ignore
-#include <vector>   // std::vector
+#include <cstddef>                    // std::size_t
+#include <sstream>                    // std::istringstream
+#include <tuple>                      // std::ignore
+#include <vector>                     // std::vector
 
 // check whether the plssvm::detail::layout_type -> std::string conversions are correct
 TEST(Layout, to_string) {
     // check conversion to std::string
-    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::aos, "Array-of-Structs (AoS)");
-    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::soa, "Struct-of-Arrays (SoA)");
+    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::aos, "Array-of-Structs");
+    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::soa, "Struct-of-Arrays");
 }
 TEST(Layout, to_string_unknown) {
     // check conversions to std::string from unknown layout_type
@@ -45,7 +45,7 @@ TEST(Layout, from_string) {
 TEST(Layout, from_string_unknown) {
     // foo isn't a valid layout_type
     std::istringstream input{ "foo" };
-    plssvm::detail::layout_type layout;
+    plssvm::detail::layout_type layout{};
     input >> layout;
     EXPECT_TRUE(input.fail());
 }

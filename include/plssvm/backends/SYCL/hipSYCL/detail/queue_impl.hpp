@@ -15,9 +15,9 @@
 
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::sycl::detail::queue
 
-#include "sycl/sycl.hpp"  // sycl::queue
+#include "sycl/sycl.hpp"                                  // sycl::queue
 
-#include <utility>  // std::forward
+#include <utility>                                        // std::forward
 
 namespace plssvm::hipsycl::detail {
 

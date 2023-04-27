@@ -17,16 +17,16 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT_MATCHER
-#include "utility.hpp"             // util::redirect_output
+#include "custom_test_macros.hpp"            // EXPECT_THROW_WHAT_MATCHER
+#include "utility.hpp"                       // util::redirect_output
 
-#include "fmt/core.h"              // fmt::format
-#include "fmt/ostream.h"           // be able to format a plssvm::backend_type using fmt
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
+#include "fmt/core.h"                        // fmt::format
+#include "fmt/ostream.h"                     // be able to format a plssvm::backend_type using fmt
+#include "gmock/gmock-matchers.h"            // ::testing::StartsWith
+#include "gtest/gtest.h"                     // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
 
-#include <string>  // std::string
-#include <tuple>   // std::ignore
+#include <string>                            // std::string
+#include <tuple>                             // std::ignore
 
 namespace util {
 
@@ -200,7 +200,7 @@ TEST(CSVMFactory, invalid_backend) {
                       plssvm::unsupported_backend_exception,
                       "Unrecognized backend provided!");
 }
- TEST(CSVMFactory, invalid_constructor_parameter) {
+TEST(CSVMFactory, invalid_constructor_parameter) {
     if constexpr (plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>) {
         EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(plssvm::backend_type::cuda, plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::automatic),
                           plssvm::unsupported_backend_exception,
@@ -210,7 +210,7 @@ TEST(CSVMFactory, invalid_backend) {
                           plssvm::unsupported_backend_exception,
                           "No cuda backend available!");
     }
- }
+}
 
 template <typename T>
 class SYCLCSVMFactory : public CSVMFactory<T> {};
@@ -289,13 +289,11 @@ TYPED_TEST(SYCLCSVMFactory, factory_backend_target_and_named_parameter) {
     const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        const auto csvm = plssvm::make_csvm(backend, target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
-                                            plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        const auto csvm = plssvm::make_csvm(backend, target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
-        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
-                                                          plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
                           plssvm::unsupported_backend_exception,
                           fmt::format("No {} backend available!", backend));
     }
@@ -307,13 +305,11 @@ TYPED_TEST(SYCLCSVMFactory, factory_backend_named_parameter) {
     const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
     if constexpr (plssvm::csvm_backend_exists_v<TypeParam>) {
         // create csvm
-        const auto csvm = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
-                                            plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
+        const auto csvm = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl);
         // check whether the created csvm has the same type as the expected one
         EXPECT_INSTANCE_OF(TypeParam, csvm);
     } else {
-        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01,
-                                                          plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
+        EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(backend, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01, plssvm::sycl_implementation_type = plssvm::csvm_to_backend_type<TypeParam>::impl),
                           plssvm::unsupported_backend_exception,
                           fmt::format("No {} backend available!", backend));
     }

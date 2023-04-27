@@ -24,7 +24,7 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
 
   public:
     template <typename... Args>
-    explicit mock_openmp_csvm(Args&&... args) :
+    explicit mock_openmp_csvm(Args &&...args) :
         base_type{ std::forward<Args>(args)... } {}
 
     // make protected member functions public

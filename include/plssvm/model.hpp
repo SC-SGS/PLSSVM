@@ -13,25 +13,27 @@
 #define PLSSVM_MODEL_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                       // plssvm::verbose
 #include "plssvm/data_set.hpp"                        // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, write_libsvm_model_data}
 #include "plssvm/detail/io/libsvm_parsing.hpp"        // plssvm::detail::io::parse_libsvm_data
+#include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
-#include "fmt/chrono.h"  // format std::chrono types using fmt
-#include "fmt/core.h"    // fmt::format
+#include "fmt/chrono.h"                               // format std::chrono types using fmt
+#include "fmt/core.h"                                 // fmt::format
 
-#include <chrono>    // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
-#include <cstddef>   // std::size_t
-#include <iostream>  // std::cout, std::endl
-#include <memory>    // std::shared_ptr, std::make_shared
-#include <string>    // std::string
-#include <tuple>     // std::tie
-#include <utility>   // std::move
-#include <vector>    // std::vector
+#include <chrono>                                     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
+#include <cstddef>                                    // std::size_t
+#include <iostream>                                   // std::cout, std::endl
+#include <memory>                                     // std::shared_ptr, std::make_shared
+#include <string>                                     // std::string
+#include <tuple>                                      // std::tie
+#include <type_traits>                                // std::is_same_v, std::is_arithmetic_v
+#include <utility>                                    // std::move
+#include <vector>                                     // std::vector
 
 namespace plssvm {
 
@@ -97,6 +99,20 @@ class model {
      * @return the support vectors (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::vector<real_type>> &support_vectors() const noexcept { return data_.data(); }
+
+    /**
+     * @brief Returns the labels of the support vectors.
+     * @details If the labels are present, they can be retrieved as `std::vector` using: `dataset.labels()->%get()`.
+     * @return the labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
+    /**
+     * @brief Returns the **different** labels of the support vectors.
+     * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the labels `{ -1, 1 }`.
+     * @return all **different** labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<label_type> different_labels() const { return data_.different_labels().value(); }
+
     /**
      * @brief The learned weights for the support vectors.
      * @details It is of size `num_support_vectors()`.
@@ -153,8 +169,8 @@ model<T, U>::model(const std::string &filename) {
     reader.read_lines('#');
 
     // parse the libsvm model header
-    std::vector<label_type> labels;
-    std::size_t num_header_lines;
+    std::vector<label_type> labels{};
+    std::size_t num_header_lines{};
     std::tie(params_, rho_, labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // create empty support vectors and alpha vector
@@ -169,14 +185,13 @@ model<T, U>::model(const std::string &filename) {
     alpha_ptr_ = std::make_shared<decltype(alphas)>(std::move(alphas));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n",
-                                 num_support_vectors_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
+                detail::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
+                detail::tracking_entry{ "model_read", "num_features", num_features_ },
+                detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "model_read", "filename", filename });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", rho_ }));
 }
 
 template <typename T, typename U>
@@ -191,14 +206,13 @@ void model<T, U>::save(const std::string &filename) const {
     detail::io::write_libsvm_model_data(filename, params_, rho_, *alpha_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Write {} support vectors with {} features in {} to the libsvm model file '{}'.",
-                                 num_support_vectors_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Write {} support vectors with {} features in {} to the libsvm model file '{}'.\n",
+                detail::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
+                detail::tracking_entry{ "model_write", "num_features", num_features_ },
+                detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "model_write", "filename", filename });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", rho_ }));
 }
 
 }  // namespace plssvm

@@ -10,19 +10,19 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
-#include <ios>      // std::ios::failbit
-#include <istream>  // std::istream
-#include <ostream>  // std::ostream
-#include <string>   // std::string
+#include <ios>                               // std::ios::failbit
+#include <istream>                           // std::istream
+#include <ostream>                           // std::ostream
+#include <string>                            // std::string
 
 namespace plssvm::detail {
 
 std::ostream &operator<<(std::ostream &out, const layout_type layout) {
     switch (layout) {
         case layout_type::aos:
-            return out << "Array-of-Structs (AoS)";
+            return out << "Array-of-Structs";
         case layout_type::soa:
-            return out << "Struct-of-Arrays (SoA)";
+            return out << "Struct-of-Arrays";
     }
     return out << "unknown";
 }

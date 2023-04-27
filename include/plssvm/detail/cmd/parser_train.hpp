@@ -20,9 +20,9 @@
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include <cstddef>  // std::size_t
-#include <iosfwd>   // forward declare std::ostream
-#include <string>   // std::string
+#include <cstddef>                                          // std::size_t
+#include <iosfwd>                                           // forward declare std::ostream
+#include <string>                                           // std::string
 
 namespace plssvm::detail::cmd {
 

@@ -21,15 +21,15 @@
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
+#include "CL/cl.h"                                          // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                                       // fmt::format
 
-#include <cstddef>      // std::size_t
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <utility>      // std::forward, std::pair
-#include <vector>       // std::vector
+#include <cstddef>                                          // std::size_t
+#include <string>                                           // std::string
+#include <string_view>                                      // std::string_view
+#include <utility>                                          // std::forward, std::pair
+#include <vector>                                           // std::vector
 
 /**
  * @def PLSSVM_OPENCL_ERROR_CHECK

@@ -10,3 +10,5 @@ pandas
 arff
 matplotlib
 humanize
+pyyaml
+pint

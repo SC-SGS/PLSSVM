@@ -19,9 +19,9 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::get
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 
-#include <cmath>   // std::pow, std::exp, std::fma
-#include <iosfwd>  // forward declare std::ostream and std::istream
-#include <vector>  // std::vector
+#include <cmath>                             // std::pow, std::exp, std::fma
+#include <iosfwd>                            // forward declare std::ostream and std::istream
+#include <vector>                            // std::vector
 
 namespace plssvm {
 

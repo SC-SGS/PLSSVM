@@ -10,11 +10,11 @@
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 
-#include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "../../custom_test_macros.hpp"                  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest.h"  // TEST, EXPECT_TRUE
+#include "gtest/gtest.h"                                 // TEST, EXPECT_TRUE
 
-#include <sstream>  // std::istringstream
+#include <sstream>                                       // std::istringstream
 
 // check whether the plssvm::sycl::implementation_type -> std::string conversions are correct
 TEST(SYCLImplementationType, to_string) {
@@ -43,7 +43,7 @@ TEST(SYCLImplementationType, from_string) {
 TEST(SYCLImplementationType, from_string_unknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };
-    plssvm::sycl::implementation_type impl;
+    plssvm::sycl::implementation_type impl{};
     input >> impl;
     EXPECT_TRUE(input.fail());
 }

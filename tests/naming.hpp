@@ -17,17 +17,17 @@
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::{always_false_v, is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_v}
 
-#include "exceptions/utility.hpp"  // util::exception_type_name
+#include "exceptions/utility.hpp"                  // util::exception_type_name
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
-#include "gtest/gtest.h"  // ::testing::TestParamInfo
+#include "fmt/core.h"                              // fmt::format
+#include "fmt/ostream.h"                           // directly output types with an operator<< overload using fmt
+#include "gtest/gtest.h"                           // ::testing::TestParamInfo
 
-#include <filesystem>   // std::filesystem::path
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::get
-#include <type_traits>  // std::is_same_v, std::true_type, std::false_type
+#include <filesystem>                              // std::filesystem::path
+#include <string>                                  // std::string
+#include <string_view>                             // std::string_view
+#include <tuple>                                   // std::tuple, std::get
+#include <type_traits>                             // std::is_same_v, std::true_type, std::false_type
 
 namespace naming {
 

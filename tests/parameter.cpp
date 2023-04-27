@@ -13,14 +13,14 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
-#include "naming.hpp"              // naming::real_type_to_name
-#include "types_to_test.hpp"       // util::real_type_gtest
+#include "custom_test_macros.hpp"                           // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
+#include "naming.hpp"                                       // naming::real_type_to_name
+#include "types_to_test.hpp"                                // util::real_type_gtest
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                                       // fmt::format
 
-#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, TEST, EXPECT_EQ, EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, EXPECT_TRUE, EXPECT_FALSE
-                          // ::testing::{Test, Types}
+#include "gtest/gtest.h"                                    // TYPED_TEST, TYPED_TEST_SUITE, TEST, EXPECT_EQ, EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, EXPECT_TRUE, EXPECT_FALSE
+                                                            // ::testing::{Test, Types}
 
 template <typename T>
 class Parameter : public ::testing::Test {};

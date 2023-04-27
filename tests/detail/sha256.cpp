@@ -15,9 +15,9 @@
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, ASSERT_EQ, EXPECT_EQ, ::testing::{TestWithParam, Values}
 
-#include <string>   // std::string
-#include <utility>  // std::pair, std::make_pair
-#include <vector>   // std::vector
+#include <string>         // std::string
+#include <utility>        // std::pair, std::make_pair
+#include <vector>         // std::vector
 
 class Sha256 : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> {};
 

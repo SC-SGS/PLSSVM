@@ -13,35 +13,37 @@
 #define PLSSVM_DATA_SET_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                          // plssvm::verbose
 #include "plssvm/detail/io/arff_parsing.hpp"             // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
 #include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
+#include "plssvm/detail/logger.hpp"                      // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
 #include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
 
-#include "fmt/chrono.h"   // directly output std::chrono times via fmt
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
+#include "fmt/chrono.h"                                  // directly output std::chrono times via fmt
+#include "fmt/core.h"                                    // fmt::format
+#include "fmt/ostream.h"                                 // directly output objects with operator<< overload via fmt
 
-#include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
-#include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
-#include <cstddef>     // std::size_t
-#include <functional>  // std::reference_wrapper, std::cref
-#include <iostream>    // std::cout, std::endl
-#include <limits>      // std::numeric_limits::{max, lowest}
-#include <map>         // std::map
-#include <memory>      // std::shared_ptr, std::make_shared
-#include <optional>    // std::optional, std::make_optional, std::nullopt
-#include <set>         // std::set
-#include <string>      // std::string
-#include <tuple>       // std::tie
-#include <utility>     // std::move, std::pair, std::make_pair
-#include <vector>      // std::vector
+#include <algorithm>                                     // std::all_of, std::max, std::min, std::sort, std::adjacent_find
+#include <chrono>                                        // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
+#include <cstddef>                                       // std::size_t
+#include <functional>                                    // std::reference_wrapper, std::cref
+#include <iostream>                                      // std::cout, std::endl
+#include <limits>                                        // std::numeric_limits::{max, lowest}
+#include <map>                                           // std::map
+#include <memory>                                        // std::shared_ptr, std::make_shared
+#include <optional>                                      // std::optional, std::make_optional, std::nullopt
+#include <set>                                           // std::set
+#include <string>                                        // std::string
+#include <tuple>                                         // std::tie
+#include <type_traits>                                   // std::is_same_v, std::is_arithmetic_v
+#include <utility>                                       // std::move, std::pair, std::make_pair
+#include <vector>                                        // std::vector
 
 namespace plssvm {
 
@@ -196,7 +198,7 @@ class data_set {
      * @note Must not return a optional reference, since it would bind to a temporary!
      * @return if this data set contains labels, returns a reference to all **different** labels, otherwise returns a `std::nullopt` (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const noexcept;
+    [[nodiscard]] std::optional<std::vector<label_type>> different_labels() const;
 
     /**
      * @brief Returns the number of data points in this data set.
@@ -367,13 +369,11 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
     detail::io::write_scaling_factors(filename, scaling_interval, scaling_factors);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Write {} scaling factors in {} to the file '{}'.",
-                                 scaling_factors.size(),
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Write {} scaling factors in {} to the file '{}'.\n",
+                detail::tracking_entry{ "scaling_factors_write", "num_scaling_factors", scaling_factors.size() },
+                detail::tracking_entry{ "scaling_factors_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "scaling_factors_write", "filename", filename });
 }
 
 //*************************************************************************************************************************************//
@@ -523,7 +523,7 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
         throw data_set_exception{ "Data vector is empty!" };
     }
     // check that all data points have the same number of features
-    if (!std::all_of(X_ptr_->cbegin(), X_ptr_->cend(), [&](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
+    if (!std::all_of(X_ptr_->cbegin(), X_ptr_->cend(), [this](const std::vector<real_type> &point) { return point.size() == X_ptr_->front().size(); })) {
         throw data_set_exception{ "All points in the data vector must have the same number of features!" };
     }
     // check that the data points have at least one feature
@@ -595,15 +595,13 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Write {} data points with {} features in {} to the {} file '{}'.",
-                                 num_data_points_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 format,
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Write {} data points with {} features in {} to the {} file '{}'.\n",
+                detail::tracking_entry{ "data_set_write", "num_data_points", num_data_points_ },
+                detail::tracking_entry{ "data_set_write", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "data_set_write", "format", format },
+                detail::tracking_entry{ "data_set_write", "filename", filename });
 }
 
 template <typename T, typename U>
@@ -615,7 +613,7 @@ auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<l
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::different_labels() const noexcept -> std::optional<std::vector<label_type>> {
+auto data_set<T, U>::different_labels() const -> std::optional<std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(mapping_->labels());
     }
@@ -712,13 +710,11 @@ void data_set<T, U>::scale() {
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Scaled the data set to the range [{}, {}] in {}.",
-                                 lower,
-                                 upper,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time))
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Scaled the data set to the range [{}, {}] in {}.\n",
+                detail::tracking_entry{ "data_set_scale", "lower", lower },
+                detail::tracking_entry{ "data_set_scale", "upper", upper },
+                detail::tracking_entry{ "data_set_scale", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 }
 
 template <typename T, typename U>
@@ -768,15 +764,13 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Read {} data points with {} features in {} using the {} parser from file '{}'.",
-                                 num_data_points_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 format,
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Read {} data points with {} features in {} using the {} parser from file '{}'.\n",
+                detail::tracking_entry{ "data_set_read", "num_data_points", num_data_points_ },
+                detail::tracking_entry{ "data_set_read", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "data_set_read", "format", format },
+                detail::tracking_entry{ "data_set_read", "filename", filename });
 }
 
 }  // namespace plssvm

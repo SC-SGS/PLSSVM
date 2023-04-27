@@ -91,7 +91,7 @@ template <typename real_type, typename factors_type>
                     throw invalid_file_format_exception{ fmt::format("Each line must contain exactly three values, but {} were given!", values.size()) };
                 }
                 // set the scaling factor based on the parsed values
-                auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
+                const auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
                 // check if we are one-based, i.e., no 0 must be read as feature value
                 if (feature == 0) {
                     throw invalid_file_format_exception{ "The scaling factors must be provided one-based, but are zero-based!" };

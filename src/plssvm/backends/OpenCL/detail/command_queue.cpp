@@ -14,11 +14,11 @@
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::always_false_v
 
-#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clCreateCommandQueueWithProperties, clCreateCommandQueue, clReleaseCommandQueue
+#include "CL/cl.h"                                       // cl_context, cl_command_queue, cl_device_id, clCreateCommandQueueWithProperties, clCreateCommandQueue, clReleaseCommandQueue
 
-#include <memory>       // std::addressof
-#include <type_traits>  // std::is_same_v
-#include <utility>      // std::exchange, std::move
+#include <memory>                                        // std::addressof
+#include <type_traits>                                   // std::is_same_v
+#include <utility>                                       // std::exchange, std::move
 
 namespace plssvm::opencl::detail {
 
@@ -37,7 +37,7 @@ command_queue::command_queue(cl_context context, cl_device_id device) {
 command_queue::command_queue(command_queue &&other) noexcept :
     queue{ std::exchange(other.queue, nullptr) }, float_kernels{ std::move(other.float_kernels) }, double_kernels{ std::move(other.double_kernels) } {}
 
-command_queue &command_queue::operator=(command_queue &&other) {
+command_queue &command_queue::operator=(command_queue &&other) noexcept {
     if (this != std::addressof(other)) {
         queue = std::exchange(other.queue, nullptr);
         float_kernels = std::move(other.float_kernels);

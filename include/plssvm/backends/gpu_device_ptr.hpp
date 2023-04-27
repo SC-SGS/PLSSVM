@@ -109,7 +109,7 @@ class gpu_device_ptr {
         return data_;
     }
     /**
-     * @copydoc device_ptr::get()
+     * @copydoc plssvm::detail::gpu_device_ptr::get()
      */
     [[nodiscard]] device_pointer_type get() const noexcept {
         return data_;

@@ -92,6 +92,7 @@ else:
 if rawfile.endswith(args.format):
     rawfile = rawfile[:-(len(args.format) + 1)]
 file = rawfile + "." + args.format
+test_file = ""
 if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
@@ -181,6 +182,5 @@ if args.plot:
     elif args.features == 3:
         fig = plt.figure()
         ax = Axes3D(fig)
-        ax.scatter(samples[:args.samples, 0], samples[:args.samples,
-                                              1], samples[:args.samples, 2], c=labels)
+        ax.scatter(samples[:args.samples, 0], samples[:args.samples, 1], samples[:args.samples, 2], c=labels)
     plt.show()

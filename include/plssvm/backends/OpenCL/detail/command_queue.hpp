@@ -15,9 +15,9 @@
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
 
-#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
+#include "CL/cl.h"                                   // cl_context, cl_command_queue, cl_device_id
 
-#include <map>  // std::map
+#include <map>                                       // std::map
 
 namespace plssvm::opencl::detail {
 
@@ -56,7 +56,7 @@ class command_queue {
      * @param[in,out] other the command_queue to move the resources from
      * @return `*this`
      */
-    command_queue &operator=(command_queue &&other);
+    command_queue &operator=(command_queue &&other) noexcept;
 
     /**
      * @brief Release the cl_command_queue resources on destruction.

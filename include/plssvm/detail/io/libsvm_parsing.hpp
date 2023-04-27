@@ -14,23 +14,23 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
+#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "fmt/compile.h"  // FMT_COMPILE
-#include "fmt/format.h"   // fmt::format, fmt::format_to
-#include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/compile.h"                        // FMT_COMPILE
+#include "fmt/format.h"                         // fmt::format, fmt::format_to
+#include "fmt/os.h"                             // fmt::ostream, fmt::output_file
 
-#include <algorithm>    // std::max, std::min
-#include <cstddef>      // std::size_t
-#include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::make_tuple
-#include <utility>      // std::move
-#include <vector>       // std::vector
+#include <algorithm>                            // std::max, std::min
+#include <cstddef>                              // std::size_t
+#include <exception>                            // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <string>                               // std::string
+#include <string_view>                          // std::string_view
+#include <tuple>                                // std::tuple, std::make_tuple
+#include <utility>                              // std::move
+#include <vector>                               // std::vector
 
 namespace plssvm::detail::io {
 
@@ -267,17 +267,17 @@ inline void write_libsvm_data_impl(const std::string &filename, const std::vecto
         static constexpr std::size_t BLOCK_SIZE = 64;
         static constexpr std::size_t CHARS_PER_BLOCK = 128;
         static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
-        static char buffer[BUFFER_SIZE];
+        static std::array<char, BUFFER_SIZE> buffer;
         #pragma omp threadprivate(buffer)
 
         for (typename std::vector<real_type>::size_type j = 0; j < data_point.size(); j += BLOCK_SIZE) {
-            char *ptr = buffer;
+            char *ptr = buffer.data();
             for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, data_point.size() - j); ++i) {
                 if (data_point[j + i] != real_type{ 0.0 }) {
                     ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, data_point[j + i]);
                 }
             }
-            output.append(buffer, ptr - buffer);
+            output.append(buffer.data(), ptr - buffer.data());
         }
         output.push_back('\n');
     };

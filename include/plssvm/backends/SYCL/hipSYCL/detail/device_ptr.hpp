@@ -33,10 +33,10 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
 
   public:
     // Be able to use overloaded base class functions.
+    using base_type::memset;
+    using base_type::fill;
     using base_type::copy_to_device;
     using base_type::copy_to_host;
-    using base_type::fill;
-    using base_type::memset;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -57,27 +57,27 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
     device_ptr(size_type size, const queue &q);
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr(device_ptr &&other) noexcept = default;
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr &operator=(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr &operator=(device_ptr &&other) noexcept = default;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::~gpu_device_ptr()
      */
-    ~device_ptr();
+    ~device_ptr() override;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)

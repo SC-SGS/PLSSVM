@@ -16,9 +16,9 @@
 #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 #include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
-#include "sycl/sycl.hpp"  // sycl::queue, sycl::handler, sycl::h_item, sycl::range, sycl::private_memory, sycl::pow, sycl::exp
+#include "sycl/sycl.hpp"                            // sycl::queue, sycl::handler, sycl::h_item, sycl::range, sycl::private_memory, sycl::pow, sycl::exp
 
-#include <cstddef>  // std::size_t (cant' use kernel_index_type because of comparisons with unsigned long values)
+#include <cstddef>                                  // std::size_t (cant' use kernel_index_type because of comparisons with unsigned long values)
 
 namespace plssvm::sycl::detail {
 

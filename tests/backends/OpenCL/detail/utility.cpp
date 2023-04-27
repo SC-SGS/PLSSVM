@@ -13,10 +13,10 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../../../custom_test_macros.hpp"                  // EXPECT_THROW_WHAT
 
-#include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+#include "CL/cl.h"                                          // CL_SUCCESS, CL_DEVICE_NOT_FOUND
+#include "gtest/gtest.h"                                    // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 
 TEST(OpenCLUtility, device_assert) {
     // CL_SUCCESS must not throw

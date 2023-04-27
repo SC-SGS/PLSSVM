@@ -21,23 +21,23 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::cost, plssvm::kernel_type, plssvm::parameter, plssvm::detail::parameter
 
-#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_EQ
-#include "../utility.hpp"             // util::{redirect_output, generate_random_vector, construct_from_tuple}
-#include "compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
+#include "../custom_test_macros.hpp"         // EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_EQ
+#include "../utility.hpp"                    // util::{redirect_output, generate_random_vector, construct_from_tuple}
+#include "compare.hpp"                       // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
 
-#include "fmt/format.h"   // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
-#include "gmock/gmock.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"  // ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
-                          // ::testing::Test
+#include "fmt/format.h"                      // fmt::format
+#include "fmt/ostream.h"                     // can use fmt using operator<< overloads
+#include "gmock/gmock.h"                     // ::testing::HasSubstr
+#include "gtest/gtest.h"                     // ASSERT_EQ, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P,
+                                             // ::testing::Test
 
-#include <cmath>        // std::sqrt, std::abs
-#include <cstddef>      // std::size_t
-#include <fstream>      // std::ifstream
-#include <iterator>     // std::istream_iterator
-#include <limits>       // std::numeric_limits::epsilon
-#include <tuple>        // std::ignore
-#include <vector>       // std::vector
+#include <cmath>                             // std::sqrt, std::abs
+#include <cstddef>                           // std::size_t
+#include <fstream>                           // std::ifstream
+#include <iterator>                          // std::istream_iterator
+#include <limits>                            // std::numeric_limits::epsilon
+#include <tuple>                             // std::ignore
+#include <vector>                            // std::vector
 
 //*************************************************************************************************************************************//
 //                                                                 CSVM                                                                //
@@ -46,6 +46,55 @@
 template <typename T>
 class GenericCSVM : public ::testing::Test, protected util::redirect_output<> {};
 TYPED_TEST_SUITE_P(GenericCSVM);
+
+TYPED_TEST_P(GenericCSVM, move_constructor) {
+    using csvm_type = typename TypeParam::csvm_type;
+
+    // create default CSVM
+    csvm_type svm{};
+
+    // get current state
+    const plssvm::parameter params = svm.get_params();
+    const plssvm::target_platform target = svm.get_target_platform();
+
+    // move construct new CSVM
+    const csvm_type new_svm{ std::move(svm) };
+
+    // check that the state of the newly constructed CSVM matches the old state of the moved-from CSVM
+    EXPECT_EQ(new_svm.get_params(), params);
+    EXPECT_EQ(new_svm.get_target_platform(), target);
+}
+
+TYPED_TEST_P(GenericCSVM, move_assignment) {
+    using csvm_type = typename TypeParam::csvm_type;
+
+    // create default CSVM
+    csvm_type svm{};
+
+    // get current state
+    const plssvm::parameter params = svm.get_params();
+    const plssvm::target_platform target = svm.get_target_platform();
+
+    // construct new CSVM with a non-default state
+    csvm_type new_svm{ plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial } };
+
+    // move assign old CSVM to the new one
+    new_svm = std::move(svm);
+
+    // check that the state of the newly constructed CSVM matches the old state of the moved-from CSVM
+    EXPECT_EQ(new_svm.get_params(), params);
+    EXPECT_EQ(new_svm.get_target_platform(), target);
+}
+
+TYPED_TEST_P(GenericCSVM, get_target_platform) {
+    using csvm_type = typename TypeParam::csvm_type;
+
+    // create C-SVM
+    const csvm_type svm = util::construct_from_tuple<csvm_type>(TypeParam::additional_arguments);
+
+    // after construction: get_target_platform must refer to a plssvm::target_platform that is not automatic
+    EXPECT_NE(svm.get_target_platform(), plssvm::target_platform::automatic);
+}
 
 TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
     using mock_csvm_type = typename TypeParam::mock_csvm_type;
@@ -199,6 +248,8 @@ TYPED_TEST_P(GenericCSVM, score) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
+                            move_constructor, move_assignment,
+                            get_target_platform,
                             solve_system_of_linear_equations_trivial, solve_system_of_linear_equations, solve_system_of_linear_equations_with_correction,
                             predict_values, predict, score);
 // clang-format on
@@ -333,7 +384,7 @@ TYPED_TEST_P(GenericGPUCSVM, generate_q) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
     // perform the data setup on the device
-    constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE);
     const std::size_t num_used_devices = svm.select_num_used_devices(params.kernel_type, data.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(data.data(), data.num_data_points() - 1, data.num_features(), boundary_size, num_used_devices);
 
@@ -366,7 +417,7 @@ TYPED_TEST_P(GenericGPUCSVM, calculate_w) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(TypeParam::additional_arguments);
 
     // perform the data setup on the device
-    constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE);
     const std::size_t num_support_vectors = support_vectors.num_data_points();
     const std::size_t num_used_devices = svm.select_num_used_devices(kernel, support_vectors.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(support_vectors.data(), num_support_vectors - 1, support_vectors.num_features(), boundary_size, num_used_devices);
@@ -407,7 +458,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_device_kernel) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
     // perform the data setup on the device
-    constexpr std::size_t boundary_size = plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE;
+    constexpr auto boundary_size = static_cast<std::size_t>(plssvm::THREAD_BLOCK_SIZE * plssvm::INTERNAL_BLOCK_SIZE);
     const std::size_t num_used_devices = svm.select_num_used_devices(kernel, data.num_features());
     auto [data_d, data_last_d, feature_ranges] = svm.setup_data_on_device(data.data(), dept, data.num_features(), boundary_size, num_used_devices);
     std::vector<device_ptr_type> q_d{};

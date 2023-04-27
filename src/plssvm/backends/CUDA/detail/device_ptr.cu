@@ -14,9 +14,9 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"           // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                                   // fmt::format
 
-#include <algorithm>  // std::min
+#include <algorithm>                                    // std::min
 
 namespace plssvm::cuda::detail {
 
@@ -61,7 +61,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
 
     // run GPU kernel
     const size_type rcount = std::min(count, size_ - pos);
-    int block_size = 512;
+    constexpr int block_size = 512;
     int grid_size = (rcount + block_size - 1) / block_size;
     detail::fill_array<<<grid_size, block_size>>>(data_, value, pos, rcount);
 

@@ -18,9 +18,9 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
-#include <type_traits>  // std::true_type
-#include <utility>      // std::forward, std::pair
-#include <vector>       // std::vector
+#include <type_traits>                    // std::true_type
+#include <utility>                        // std::forward, std::pair
+#include <vector>                         // std::vector
 
 namespace plssvm {
 
@@ -75,6 +75,27 @@ class csvm : public ::plssvm::csvm {
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         this->init(target);
     }
+
+    /**
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     */
+    csvm &operator=(csvm &&) noexcept = default;
+    /**
+     * @brief Default destructor since the copy and move constructors and copy- and move-assignment operators are defined.
+     */
+     ~csvm() override = default;
 
   protected:
     /**

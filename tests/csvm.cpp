@@ -8,7 +8,7 @@
  * @brief Tests for the base C-SVM functions through its mock class.
  */
 
-#include "mock_csvm.hpp"  // mock_csvm
+#include "mock_csvm.hpp"                     // mock_csvm
 
 #include "plssvm/core.hpp"                   // necessary for type_traits, plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v
 #include "plssvm/data_set.hpp"               // plssvm::data_set
@@ -17,20 +17,20 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
-#include "naming.hpp"              // naming::real_type_label_type_combination_to_name
-#include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, real_type_label_type_combination_gtest}
-#include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label}
+#include "custom_test_macros.hpp"            // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
+#include "naming.hpp"                        // naming::real_type_label_type_combination_to_name
+#include "types_to_test.hpp"                 // util::{real_type_label_type_combination_gtest, real_type_label_type_combination_gtest}
+#include "utility.hpp"                       // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label}
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_CALL, ::testing::{Test, An}
+#include "gtest/gtest.h"                     // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_CALL, ::testing::{Test, An}
 
-#include <iostream>   // std::clog
-#include <sstream>    // std::stringstream
-#include <streambuf>  // std::streambuf
-#include <string>     // std::string
-#include <tuple>      // std::ignore
-#include <utility>    // std::pair
-#include <vector>     // std::vector
+#include <iostream>                          // std::clog
+#include <sstream>                           // std::stringstream
+#include <streambuf>                         // std::streambuf
+#include <string>                            // std::string
+#include <tuple>                             // std::ignore
+#include <utility>                           // std::pair
+#include <vector>                            // std::vector
 
 class BaseCSVM : public ::testing::Test {};
 

@@ -13,10 +13,10 @@
 #include "../../naming.hpp"         // naming::real_type_to_name
 #include "../../types_to_test.hpp"  // util::real_type_gtest
 
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_DEATH, ::testing::Test
+#include "gmock/gmock-matchers.h"   // ::testing::HasSubstr
+#include "gtest/gtest.h"            // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_DEATH, ::testing::Test
 
-#include <vector>  // std::vector
+#include <vector>                   // std::vector
 
 template <typename T>
 class OpenMPSVMKernelDeathTest : public ::testing::Test {};
@@ -64,7 +64,7 @@ TYPED_TEST(OpenMPSVMKernelDeathTest, device_kernel) {
         { real_type{ 2.0 }, real_type{ 3.0 } },
         { real_type{ 4.0 }, real_type{ 5.0 } }
     };
-    std::vector<real_type> correct_q(correct_data.size() - 1);
+    const std::vector<real_type> correct_q(correct_data.size() - 1);
     std::vector<real_type> correct_ret(correct_data.size() - 1);
     const std::vector<real_type> correct_d(correct_data.size() - 1);
 
