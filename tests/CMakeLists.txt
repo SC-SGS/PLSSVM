@@ -123,7 +123,9 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/execution_range.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/layout.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp

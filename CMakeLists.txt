@@ -42,6 +42,8 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/layout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/logger.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
@@ -507,6 +509,15 @@ if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
     endif ()
 endif ()
 
+## enable or disable the performance tracker
+if (PLSSVM_PERFORMANCE_TRACKER)
+    message(STATUS "Enable performance tracking to the YAML file \"${PLSSVM_PERFORMANCE_TRACKER}\" for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
+
+    # add target definitions
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE="${PLSSVM_PERFORMANCE_TRACKER}")
+endif ()
+
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
 ########################################################################################################################
@@ -540,6 +551,11 @@ endif ()
 ########################################################################################################################
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
+    # issue a warning if performance tracking as well as tests are enabled simultaneously
+    if (PLSSVM_PERFORMANCE_TRACKER)
+        message(WARNING "Enabled testing AND performance tracking! Be aware that running ctest will add entries to the performance tracking .yaml file.")
+    endif ()
+
     enable_testing()
     add_subdirectory(tests)
 endif ()

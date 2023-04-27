@@ -13,23 +13,26 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"                    // plssvm::csvm
-#include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
-#include "plssvm/detail/layout.hpp"           // plssvm::detail::{transform_to_layout, layout_type}
-#include "plssvm/parameter.hpp"               // plssvm::parameter
+#include "plssvm/constants.hpp"                   // plssvm::{THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
+#include "plssvm/csvm.hpp"                        // plssvm::csvm
+#include "plssvm/detail/execution_range.hpp"      // plssvm::detail::execution_range
+#include "plssvm/detail/layout.hpp"               // plssvm::detail::{transform_to_layout, layout_type}
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 
-#include "fmt/chrono.h"                       // output std::chrono times using {fmt}
-#include "fmt/core.h"                         // fmt::format
+#include "fmt/chrono.h"                           // output std::chrono times using {fmt}
+#include "fmt/core.h"                             // fmt::format
 
-#include <algorithm>                          // std::min, std::all_of, std::adjacent_find
-#include <chrono>                             // std::chrono::{milliseconds, steady_clock, duration_cast}
-#include <cmath>                              // std::ceil
-#include <cstddef>                            // std::size_t
-#include <functional>                         // std::less_equal
-#include <iostream>                           // std::clog, std::cout, std::endl
-#include <tuple>                              // std::tuple, std::make_tuple
-#include <utility>                            // std::forward, std::pair, std::move, std::make_pair
-#include <vector>                             // std::vector
+#include <algorithm>                              // std::min, std::all_of, std::adjacent_find
+#include <chrono>                                 // std::chrono::{milliseconds, steady_clock, duration_cast}
+#include <cmath>                                  // std::ceil
+#include <cstddef>                                // std::size_t
+#include <functional>                             // std::less_equal
+#include <iostream>                               // std::clog, std::cout, std::endl
+#include <tuple>                                  // std::tuple, std::make_tuple
+#include <utility>                                // std::forward, std::pair, std::move, std::make_pair
+#include <vector>                                 // std::vector
 
 namespace plssvm::detail {
 
@@ -554,17 +557,17 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
     std::chrono::milliseconds average_iteration_time{};
     std::chrono::steady_clock::time_point iteration_start_time{};
     const auto output_iteration_duration = [&]() {
-        const std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
+        const auto iteration_end_time = std::chrono::steady_clock::now();
         const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Done in {}.\n", iteration_duration);
         average_iteration_time += iteration_duration;
     };
 
-    unsigned long long run = 0;
-    for (; run < max_iter; ++run) {
-        if (verbose) {
-            std::cout << fmt::format("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", run + 1, max_iter, delta, eps * eps * delta0);
-        }
+    unsigned long long iter = 0;
+    for (; iter < max_iter; ++iter) {
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * r (q = A * d)
@@ -589,7 +592,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
             x_d[device].copy_to_device(x, 0, dept);
         }
 
-        if (run % 50 == 49) {
+        if (iter % 50 == 49) {
             #pragma omp parallel for default(none) shared(devices_, r_d, b, q_d, x_d, params, data_d, feature_ranges) firstprivate(QA_cost, dept)
             for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
                 if (device == 0) {
@@ -614,9 +617,7 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
         delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
-            if (verbose) {
-                output_iteration_duration();
-            }
+            output_iteration_duration();
             break;
         }
 
@@ -631,18 +632,17 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
             r_d[device].copy_to_device(d, 0, dept);
         }
 
-        if (verbose) {
-            output_iteration_duration();
-        }
+        output_iteration_duration();
     }
-    if (verbose) {
-        std::cout << fmt::format("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.",
-                                 std::min(run + 1, max_iter),
-                                 delta,
-                                 eps * eps * delta0,
-                                 average_iteration_time / std::min(run + 1, max_iter))
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
+                detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
+                detail::tracking_entry{ "cg", "max_iterations", max_iter },
+                detail::tracking_entry{ "cg", "residuum", delta },
+                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
+                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
+    detail::log(verbosity_level::libsvm,
+                "optimization finished, #iter = {}\n", std::min(iter + 1, max_iter));
 
     // calculate bias
     std::vector<real_type> alpha(x.begin(), x.begin() + dept);

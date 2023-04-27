@@ -15,13 +15,6 @@
 
 namespace plssvm {
 
-// TODO: replace "verbose" flag with a dedicated logging library?!
-
-/// Per default use a verbose output of all information.
-constexpr bool verbose_default = true;
-/// If `true` use verbose output of information (e.g., runtimes). May be changed by a user.
-inline bool verbose = verbose_default;
-
 /// Integer type used inside kernels.
 using kernel_index_type = int;  // TODO: remove and replace by backend specific type?
 

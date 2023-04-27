@@ -18,6 +18,8 @@
 #include "plssvm/constants.hpp"                             // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"                // plssvm::detail::execution_range
+#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"            // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
@@ -90,35 +92,38 @@ void csvm::init(const target_platform target) {
     }
 
     // print OpenCL info
-    if (verbose) {
-        std::cout << fmt::format("\nUsing OpenCL as backend.\n");
-        if (target == target_platform::automatic) {
-            std::cout << fmt::format("Using {} as automatic target platform.\n", target_);
-        }
-        std::cout << std::endl;
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing OpenCL as backend.\n");
+    if (target == target_platform::automatic) {
+        plssvm::detail::log(verbosity_level::full,
+                            "Using {} as automatic target platform.\n", target_);
     }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
 
     // create command_queues and JIT compile OpenCL kernels
-    auto jit_start_time = std::chrono::steady_clock::now();
+    const auto jit_start_time = std::chrono::steady_clock::now();
 
     // get kernel names
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel);
     // compile all kernels for float and double
     devices_ = detail::create_command_queues(contexts_, target_, kernel_names);
 
-    auto jit_end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("OpenCL kernel JIT compilation done in {}.\n", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time)) << std::endl;
-    }
+    const auto jit_end_time = std::chrono::steady_clock::now();
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\nOpenCL kernel JIT compilation done in {}.\n",
+                        plssvm::detail::tracking_entry{ "backend", "jit_compilation_time", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time) });
 
-    if (verbose) {
-        // print found OpenCL devices
-        std::cout << fmt::format("Found {} OpenCL device(s) for the target platform {}:\n", devices_.size(), target_);
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            std::cout << fmt::format("  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
-        }
-        std::cout << std::endl;
+    // print found OpenCL devices
+    plssvm::detail::log(verbosity_level::full,
+                        "Found {} OpenCL device(s) for the target platform {}:\n",
+                        plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() },
+                        plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
+    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        plssvm::detail::log(verbosity_level::full,
+                            "  [{}, {}]\n", device, detail::get_device_name(devices_[device]));
     }
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 
     // sanity checks for the number of the float OpenCL kernels
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.float_kernels.size() == 3; }),

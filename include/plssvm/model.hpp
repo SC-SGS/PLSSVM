@@ -13,11 +13,12 @@
 #define PLSSVM_MODEL_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                       // plssvm::verbose
 #include "plssvm/data_set.hpp"                        // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, write_libsvm_model_data}
 #include "plssvm/detail/io/libsvm_parsing.hpp"        // plssvm::detail::io::parse_libsvm_data
+#include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
 #include "fmt/chrono.h"                               // format std::chrono types using fmt
@@ -183,14 +184,13 @@ model<T, U>::model(const std::string &filename) {
     alpha_ptr_ = std::make_shared<decltype(alphas)>(std::move(alphas));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n",
-                                 num_support_vectors_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
+                detail::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
+                detail::tracking_entry{ "model_read", "num_features", num_features_ },
+                detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "model_read", "filename", filename });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", rho_ }));
 }
 
 template <typename T, typename U>
@@ -205,14 +205,13 @@ void model<T, U>::save(const std::string &filename) const {
     detail::io::write_libsvm_model_data(filename, params_, rho_, *alpha_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    if (verbose) {
-        std::cout << fmt::format("Write {} support vectors with {} features in {} to the libsvm model file '{}'.",
-                                 num_support_vectors_,
-                                 num_features_,
-                                 std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time),
-                                 filename)
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Write {} support vectors with {} features in {} to the libsvm model file '{}'.\n",
+                detail::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
+                detail::tracking_entry{ "model_write", "num_features", num_features_ },
+                detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "model_write", "filename", filename });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", rho_ }));
 }
 
 }  // namespace plssvm

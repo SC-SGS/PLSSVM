@@ -21,12 +21,14 @@
 #include "plssvm/constants.hpp"                              // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"                 // plssvm::detail::execution_range
+#include "plssvm/detail/logger.hpp"                          // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"             // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "fmt/core.h"                                        // fmt::print, fmt::format
+#include "fmt/core.h"                                        // fmt::format
 #include "fmt/ostream.h"                                     // can use fmt using operator<< overloads
 #include "sycl/sycl.hpp"                                     // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
 
@@ -82,26 +84,33 @@ void csvm::init(const target_platform target) {
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
     }
 
-    if (plssvm::verbose) {
-        std::cout << fmt::format("\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n", __SYCL_COMPILER_VERSION, invocation_type_);
-        if (target == target_platform::automatic) {
-            std::cout << fmt::format("Using {} as automatic target platform.\n", target_);
-        }
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                        plssvm::detail::tracking_entry{ "backend", "version", __SYCL_COMPILER_VERSION },
+                        plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
+    if (target == target_platform::automatic) {
+        plssvm::detail::log(verbosity_level::full,
+                            "Using {} as automatic target platform.\n", target_);
     }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::dpcpp }));
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
         throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
     }
 
-    if (plssvm::verbose) {
-        // print found SYCL devices
-        std::cout << fmt::format("Found {} SYCL device(s) for the target platform {}:\n", devices_.size(), target_);
-        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            std::cout << fmt::format("  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
-        }
-        std::cout << std::endl;
+    // print found SYCL devices
+    plssvm::detail::log(verbosity_level::full,
+                        "\nFound {} SYCL device(s) for the target platform {}:\n",
+                        plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() },
+                        plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
+    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        plssvm::detail::log(verbosity_level::full,
+                            "  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
     }
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 }
 
 csvm::~csvm() {
@@ -111,7 +120,7 @@ csvm::~csvm() {
             device_synchronize(q);
         }
     } catch (const plssvm::exception &e) {
-        fmt::print("SYCL exception thrown: {}\n", e.what());
+        std::cout << e.what() << std::endl;
         std::terminate();
     }
 }
