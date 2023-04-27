@@ -106,6 +106,13 @@ class model {
      */
     [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
     /**
+     * @brief Returns the number of **different** labels in this data set.
+     * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
+     *          It is the same as: `model.different_labels().size()`
+     * @return the number of **different** labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] size_type num_different_labels() const noexcept { return data_.num_different_labels(); }
+    /**
      * @brief Returns the **different** labels of the support vectors.
      * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the labels `{ -1, 1 }`.
      * @return all **different** labels (`[[nodiscard]]`)

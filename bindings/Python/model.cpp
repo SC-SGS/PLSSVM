@@ -18,6 +18,7 @@
 #include <cstddef>                      // std::size_t
 #include <string>                       // std::string
 #include <tuple>                        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>                  // std::is_same_v
 #include <utility>                      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
@@ -39,6 +40,25 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
                 return matrix_to_pyarray(self.support_vectors());
             },
             "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def(
+            "labels", [](const model_type &self) {
+                if constexpr (std::is_same_v<label_type, std::string>) {
+                    return self.labels();
+                } else {
+                    return vector_to_pyarray(self.labels());
+                }
+            },
+            "the labels")
+        .def("num_different_labels", &model_type::num_different_labels, "the number of different labels")
+        .def(
+            "different_labels", [](const model_type &self) {
+                if constexpr (std::is_same_v<label_type, std::string>) {
+                    return self.different_labels();
+                } else {
+                    return vector_to_pyarray(self.different_labels());
+                }
+            },
+            "the different labels")
         .def(
             "weights", [](const model_type &self) {
                 return vector_to_pyarray(self.weights());

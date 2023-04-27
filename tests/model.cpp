@@ -145,6 +145,18 @@ TYPED_TEST(Model, labels) {
     // check labels getter
     EXPECT_EQ(model.labels(), correct_label);
 }
+TYPED_TEST(Model, num_different_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // instantiate a model file
+    const util::temporary_file model_file;
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const plssvm::model<real_type, label_type> model{ model_file.filename };
+
+    // check num_different_labels getter
+    EXPECT_EQ(model.num_different_labels(), 2);
+}
  TYPED_TEST(Model, different_labels) {
      using real_type = typename TypeParam::real_type;
      using label_type = typename TypeParam::label_type;
