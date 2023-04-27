@@ -74,7 +74,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = [  'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [  'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -103,7 +103,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -127,7 +127,7 @@ pipeline {
         stage('Checkout PLSSVM') {
             steps {
               script{
-                def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                 def builders = [: ]
                 for (x in labels){
                     def label = x
@@ -148,7 +148,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -175,7 +175,7 @@ pipeline {
             }
             steps{
                 script{
-                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11'] // 'pcsgs02'
+                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11'] // 'pcsgs02'
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -235,7 +235,7 @@ pipeline {
                     }
                     steps{
                         script{
-                            def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
+                            def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
                             def builders = [: ]
                             for (x in labels){
                                 def label = x
@@ -295,7 +295,7 @@ pipeline {
 
             steps{
                 script{
-                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs05', 'pcsgs09',  'pcsgs11']
+                    def labels = [ 'pcsgs03', 'pcsgs05', 'pcsgs09',  'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -341,7 +341,7 @@ pipeline {
                     }
                 }
 
-                agent { label "${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05'}"}
+                agent { label "${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs03 || pcsgs04 || pcsgs05'}"}
                 stages{
                     stage('Checkout PLSSVM') {
                         steps {
