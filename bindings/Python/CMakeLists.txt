@@ -34,10 +34,11 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
 
+        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
         ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp

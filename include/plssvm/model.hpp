@@ -31,7 +31,6 @@
 #include <memory>                                     // std::shared_ptr, std::make_shared
 #include <string>                                     // std::string
 #include <tuple>                                      // std::tie
-#include <type_traits>                                // std::is_same_v, std::is_arithmetic_v
 #include <utility>                                    // std::move
 #include <vector>                                     // std::vector
 

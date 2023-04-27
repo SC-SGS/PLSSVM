@@ -86,7 +86,11 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
         throw py::attribute_error{ "The 'class_weight' parameter for a call to the 'SVC' constructor is not implemented yet!" };
     }
     if (args.contains("verbose")) {
-        plssvm::verbose = args["verbose"].cast<bool>();
+        if (args["verbose"].cast<bool>()) {
+            plssvm::verbosity = plssvm::verbosity_level::full;
+        } else {
+            plssvm::verbosity = plssvm::verbosity_level::quiet;
+        }
     }
     if (args.contains("max_iter")) {
         self.max_iter = args["max_iter"].cast<long long>();
@@ -121,7 +125,11 @@ void init_sklearn(py::module_ &m) {
     py_svc.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
-                       ::plssvm::verbose = args["verbose"].cast<bool>();
+                       if (args["verbose"].cast<bool>()) {
+                           plssvm::verbosity = plssvm::verbosity_level::full;
+                       } else {
+                           plssvm::verbosity = plssvm::verbosity_level::quiet;
+                       }
                    }
 
                    // create SVC class
@@ -200,7 +208,7 @@ void init_sklearn(py::module_ &m) {
                   py_params["tol"] = self.epsilon.value_or(typename svc::real_type{ 1e-3 });
                   // py_params["cache_size"];
                   // py_params["class_weight"];
-                  py_params["verbose"] = plssvm::verbose;
+                  py_params["verbose"] = plssvm::verbosity != plssvm::verbosity_level::quiet;
                   py_params["max_iter"] = self.max_iter.value_or(-1);
                   // py_params["decision_function_shape"];
                   // py_params["break_ties"];

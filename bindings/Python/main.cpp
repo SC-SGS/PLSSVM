@@ -15,7 +15,7 @@
 namespace py = pybind11;
 
 // forward declare binding functions
-void init_constants(py::module_ &);
+void init_logger(py::module_ &);
 void init_target_platforms(py::module_ &);
 void init_backend_types(py::module_ &);
 void init_file_format_types(py::module_ &);
@@ -49,7 +49,7 @@ PYBIND11_MODULE(plssvm, m) {
     });
 
     // NOTE: the order matters. DON'T CHANGE IT!
-    init_constants(m);
+    init_logger(m);
     init_target_platforms(m);
     init_backend_types(m);
     init_file_format_types(m);

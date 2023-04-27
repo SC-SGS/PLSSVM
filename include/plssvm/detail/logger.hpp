@@ -42,7 +42,7 @@ enum class verbosity_level {
 };
 
 /// The verbosity level used in the logging function. My be changed by the user.
-inline verbosity_level verbosity = verbosity_level::full;
+extern verbosity_level verbosity;
 
 /**
  * @brief Output the @p verb to the given output-stream @p out.

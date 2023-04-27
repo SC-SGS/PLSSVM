@@ -22,6 +22,8 @@
 
 namespace plssvm {
 
+verbosity_level verbosity = verbosity_level::full;
+
 std::ostream &operator<<(std::ostream &out, const verbosity_level verb) {
     if (verb == verbosity_level::quiet) {
         return out << "quiet";

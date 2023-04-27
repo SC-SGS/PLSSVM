@@ -41,7 +41,6 @@
 #include <set>                                           // std::set
 #include <string>                                        // std::string
 #include <tuple>                                         // std::tie
-#include <type_traits>                                   // std::is_same_v, std::is_arithmetic_v
 #include <utility>                                       // std::move, std::pair, std::make_pair
 #include <vector>                                        // std::vector
 
