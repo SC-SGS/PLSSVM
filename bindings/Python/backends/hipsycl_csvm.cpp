@@ -53,7 +53,8 @@ py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::except
                  // create CSVM with the default target platform
                  return std::make_unique<plssvm::hipsycl::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
              }),
-             "create an SVM with the provided target platform and keyword arguments");
+             "create an SVM with the provided target platform and keyword arguments")
+        .def("get_kernel_invocation_type", &plssvm::hipsycl::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM");
 
     // register hipSYCL backend specific exceptions
     register_py_exception<plssvm::hipsycl::backend_exception>(hipsycl_module, "BackendError", base_exception);

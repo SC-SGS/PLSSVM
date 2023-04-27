@@ -103,7 +103,8 @@ void init_csvm(py::module_ &m) {
                 // convert kwargs to parameter and update csvm internal parameter
                 self.set_params(convert_kwargs_to_parameter(args, self.get_params()));
             },
-            "update the parameter used for this SVM using keyword arguments");
+            "update the parameter used for this SVM using keyword arguments")
+        .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this SVM runs on");
 
     // instantiate all functions using all available real_type x label_type combinations
     instantiate_model_bindings<plssvm::detail::real_type_label_type_combination_list>(pycsvm);
