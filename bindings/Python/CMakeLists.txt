@@ -35,6 +35,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
 

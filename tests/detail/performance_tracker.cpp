@@ -73,15 +73,15 @@ TEST(TrackingEntry, is_no_tracking_entry) {
 
 TEST(PerformanceTracker, pause_and_resume_macros) {
     // tracking is enabled per default
-    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().is_tracking());
+    EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
     // disable performance tracking
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE();
     // tracking should now be disabled
-    EXPECT_FALSE(plssvm::detail::performance_tracker::instance().is_tracking());
+    EXPECT_FALSE(plssvm::detail::performance_tracker::is_tracking());
     // re-enable performance tracking
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME();
     // tracking should now be enabled again
-    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().is_tracking());
+    EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
 }
 TEST(PerformanceTracker, add_entry_macro) {
     // add different tracking entries
@@ -90,7 +90,7 @@ TEST(PerformanceTracker, add_entry_macro) {
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "", "foobar", 'a' }));
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::instance().get_tracking_entries();
+    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entries.size(), 3);
@@ -112,24 +112,24 @@ TEST(PerformanceTracker, add_entry_macro) {
 
 TEST(PerformanceTracker, pause_and_resume) {
     // tracking is enabled per default
-    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().is_tracking());
+    EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
     // disable performance tracking
-    plssvm::detail::performance_tracker::instance().pause_tracking();
+    plssvm::detail::performance_tracker::pause_tracking();
     // tracking should now be disabled
-    EXPECT_FALSE(plssvm::detail::performance_tracker::instance().is_tracking());
+    EXPECT_FALSE(plssvm::detail::performance_tracker::is_tracking());
     // re-enable performance tracking
-    plssvm::detail::performance_tracker::instance().resume_tracking();
+    plssvm::detail::performance_tracker::resume_tracking();
     // tracking should now be enabled again
-    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().is_tracking());
+    EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
 }
 TEST(PerformanceTrackker, add_generic_tracking_entry) {
     // add different tracking entries
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::instance().get_tracking_entries();
+    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entries.size(), 3);
@@ -148,10 +148,10 @@ TEST(PerformanceTrackker, add_generic_tracking_entry) {
 }
 TEST(PerformanceTracker, add_string_tracking_entry) {
     // add a tracking entry
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", std::string{ "baz" } });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", std::string{ "baz" } });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::instance().get_tracking_entries();
+    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
@@ -169,10 +169,10 @@ TEST(PerformanceTracker, add_parser_train_tracking_entry) {
     const plssvm::detail::cmd::parser_train parser{ argc, argv };
 
     // save cmd::parser_train entry
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::performance_tracker::instance().get_tracking_entries();
+    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::performance_tracker::get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entry.size(), 1);
@@ -190,10 +190,10 @@ TEST(PerformanceTracker, add_parser_predict_tracking_entry) {
     const plssvm::detail::cmd::parser_predict parser{ argc, argv };
 
     // save cmd::parser_train entry
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::performance_tracker::instance().get_tracking_entries();
+    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::performance_tracker::get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entry.size(), 1);
@@ -211,10 +211,10 @@ TEST(PerformanceTracker, add_parser_scale_tracking_entry) {
     const plssvm::detail::cmd::parser_scale parser{ argc, argv };
 
     // save cmd::parser_train entry
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::performance_tracker::instance().get_tracking_entries();
+    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::performance_tracker::get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entry.size(), 1);
@@ -229,26 +229,26 @@ TEST(PerformanceTracker, save_no_additional_entries) {
     // create temporary file
     const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
     // save entries to file
-    plssvm::detail::performance_tracker::instance().save(tmp_file.filename);
+    plssvm::detail::performance_tracker::save(tmp_file.filename);
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
 
     // the tracking entries must be empty now
-    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().get_tracking_entries().empty());
+    EXPECT_TRUE(plssvm::detail::performance_tracker::get_tracking_entries().empty());
 }
 TEST(PerformanceTracker, save_entries) {
     // create temporary file
     const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
     // save entries to file
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
-    plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
-    plssvm::detail::performance_tracker::instance().save(tmp_file.filename);
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::performance_tracker::save(tmp_file.filename);
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
 
     // the tracking entries must be empty now
-    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().get_tracking_entries().empty());
+    EXPECT_TRUE(plssvm::detail::performance_tracker::get_tracking_entries().empty());
 }
