@@ -148,6 +148,9 @@ void performance_tracker::save(const std::string &filename) {
         }
         out << '\n';
     }
+
+    // clear tracking statistics
+    tracking_statistics.clear();
 }
 
 }  // namespace plssvm::detail

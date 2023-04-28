@@ -233,6 +233,9 @@ TEST(PerformanceTracker, save_no_additional_entries) {
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
+
+    // the tracking entries must be empty now
+    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().get_tracking_entries().empty());
 }
 TEST(PerformanceTracker, save_entries) {
     // create temporary file
@@ -245,4 +248,7 @@ TEST(PerformanceTracker, save_entries) {
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
+
+    // the tracking entries must be empty now
+    EXPECT_TRUE(plssvm::detail::performance_tracker::instance().get_tracking_entries().empty());
 }
