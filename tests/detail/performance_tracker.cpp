@@ -166,7 +166,7 @@ TEST(PerformanceTracker, add_parser_train_tracking_entry) {
     constexpr int argc = 3;
     char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/model" };
     char* argv[] { argv_arr[0], argv_arr[1], argv_arr[3] };
-    plssvm::detail::cmd::parser_train parser{ argc, argv };
+    const plssvm::detail::cmd::parser_train parser{ argc, argv };
 
     // save cmd::parser_train entry
     plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
@@ -187,7 +187,7 @@ TEST(PerformanceTracker, add_parser_predict_tracking_entry) {
     constexpr int argc = 4;
     char argv_arr[argc][20] = { "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
     char* argv[] { argv_arr[0], argv_arr[1], argv_arr[3], argv_arr[4] };
-    plssvm::detail::cmd::parser_predict parser{ argc, argv };
+    const plssvm::detail::cmd::parser_predict parser{ argc, argv };
 
     // save cmd::parser_train entry
     plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
@@ -208,7 +208,7 @@ TEST(PerformanceTracker, add_parser_scale_tracking_entry) {
     constexpr int argc = 3;
     char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/scaled" };
     char* argv[] { argv_arr[0], argv_arr[1], argv_arr[3] };
-    plssvm::detail::cmd::parser_scale parser{ argc, argv };
+    const plssvm::detail::cmd::parser_scale parser{ argc, argv };
 
     // save cmd::parser_train entry
     plssvm::detail::performance_tracker::instance().add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
