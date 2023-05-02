@@ -47,6 +47,7 @@ TEST_F(ParserScale, minimal) {
     EXPECT_EQ(parser.scaled_filename, "");
     EXPECT_EQ(parser.save_filename, "");
     EXPECT_EQ(parser.restore_filename, "");
+    EXPECT_EQ(parser.performance_tracking_filename, "");
 }
 TEST_F(ParserScale, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -65,13 +66,19 @@ TEST_F(ParserScale, minimal_output) {
         "input file: 'data.libsvm'\n"
         "scaled file: ''\n"
         "save file (scaling factors): ''\n"
-        "restore file (scaling factors): ''\n";
+        "restore file (scaling factors): ''\n"
+        "performance tracking file: ''\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
 TEST_F(ParserScale, all_arguments) {
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "full", "data.libsvm", "data.libsvm.scaled" });
+    std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+        cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+    #endif
+    cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.scaled" });
+    this->CreateCMDArgs(cmd_args);
 
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
@@ -86,11 +93,21 @@ TEST_F(ParserScale, all_arguments) {
     EXPECT_EQ(parser.scaled_filename, "data.libsvm.scaled");
     EXPECT_EQ(parser.save_filename, "data.libsvm.save");
     EXPECT_EQ(parser.restore_filename, "");
-    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
+#else
+    EXPECT_EQ(parser.performance_tracking_filename, "");
+#endif
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 TEST_F(ParserScale, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "full", "data.libsvm", "data.libsvm.scaled" });
+    std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+#endif
+    cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.scaled" });
+    this->CreateCMDArgs(cmd_args);
 
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
@@ -105,8 +122,14 @@ TEST_F(ParserScale, all_arguments_output) {
         "input file: 'data.libsvm'\n"
         "scaled file: 'data.libsvm.scaled'\n"
         "save file (scaling factors): 'data.libsvm.save'\n"
-        "restore file (scaling factors): ''\n";
+        "restore file (scaling factors): ''\n"
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+        "performance tracking file: 'tracking.yaml'\n";
+#else
+        "performance tracking file: ''\n";
+#endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
 // test all command line parameter separately
@@ -196,6 +219,27 @@ INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleRestoreFilename, ::testing::Com
                 ::testing::Values("data.libsvm.weights", "output.txt")),
                 naming::pretty_print_parameter_flag_and_value<ParserScaleRestoreFilename>);
 // clang-format on
+
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+
+class ParserScalePerformanceTrackingFilename : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+TEST_P(ParserScalePerformanceTrackingFilename, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-scale", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    // test for correctness
+    EXPECT_EQ(parser.performance_tracking_filename, value);
+}
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScalePerformanceTrackingFilename, ::testing::Combine(
+                ::testing::Values("--performance_tracking"),
+                ::testing::Values("tracking.yaml", "test.txt")),
+                naming::pretty_print_parameter_flag_and_value<ParserScalePerformanceTrackingFilename>);
+// clang-format on
+
+#endif  // PLSSVM_PERFORMANCE_TRACKER_ENABLED
 
 class ParserScaleUseStringsAsLabels : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
 TEST_P(ParserScaleUseStringsAsLabels, parsing) {
