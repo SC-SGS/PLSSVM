@@ -390,6 +390,26 @@ pipeline {
                             }
                         }
                     }
+                    stage('Ctest PLSSVM'){
+                      environment {
+                            PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$DPCPP_PATH/bin:$POCL_DIR/bin:${env.PATH}"
+                            LIBRARY_PATH="$DPCPP_PATH/lib:$POCL_DIR/lib:${env.LIBRARY_PATH}"
+                            LD_LIBRARY_PATH="$DPCPP_PATH/lib:$POCL_DIR/lib:${env.LD_LIBRARY_PATH}"
+                            CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:$POCL_DIR/include:${env.CPLUS_INCLUDE_PATH}"
+                            CMAKE_PREFIX_PATH="$POCL_DIR:${env.CMAKE_PREFIX_PATH}"
+                        }
+
+                        steps{
+                            dir('plssvm/build') {
+                                sh '''
+                                    . /usr/local.nfs/Modules/latest/init/sh
+                                    module load cuda/12.0.1
+                                    cd build/${BUILD_TYPE}_${BACKEND}
+                                    ctest -j4 --output-on-failure --no-compress-output -T Test
+                                '''
+                            }
+                        }
+                    }
                 }
             }
         }
