@@ -426,10 +426,16 @@ pipeline {
 
             agent { label " pcsgs09" }
 
+            stages{
+              stage(Test){
+                }
+              }
+
           }
         }
 
-        stage('Build and Test dual GPU'){
+        stage(
+        }'Build and Test dual GPU'){
             matrix{
               axes {
                   axis {
@@ -444,6 +450,10 @@ pipeline {
               }
 
               agent { label " pcsgs11" }
+                          stages{
+                            stage(Test){
+                              }
+                            }
 
             }
           }
