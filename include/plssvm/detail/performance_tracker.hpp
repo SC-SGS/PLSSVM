@@ -117,7 +117,6 @@ class performance_tracker {
             tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
         }
     }
-    static void add_parameter_tracking_entry(const ::plssvm::parameter &params);
     /**
      * @brief Add a tracking_entry encapsulating a std::string to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
@@ -125,6 +124,13 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     static void add_tracking_entry(const tracking_entry<std::string> &entry);
+    /**
+     * @brief Add a tracking_entry encapsulating a plssvm::parameter to this performance tracker.
+     * @details Saves a string containing the entry name and value in a map with the entry category as key.
+     *          Adds all values stored in the plssvm::parameter as tracking entries.
+     * @param[in] entry the entry to add
+     */
+    static void add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.

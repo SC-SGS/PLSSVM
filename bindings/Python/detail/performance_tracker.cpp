@@ -20,7 +20,8 @@ void init_performance_tracker(py::module_ &m) {
 
     // bind the performance tracker
     py::class_<plssvm::detail::performance_tracker>(detail_module, "PerformanceTracker")
-        .def_static("add_parameter_tracking", &plssvm::detail::performance_tracker::add_parameter_tracking_entry, "track the parameter values")
+        .def_static("add_parameter_tracking_entry", [](const plssvm::parameter &params) { plssvm::detail::performance_tracker::add_tracking_entry(
+                                                                                              plssvm::detail::tracking_entry{ "parameter", "", params }); })
         .def_static("pause", &plssvm::detail::performance_tracker::pause_tracking, py::return_value_policy::reference, "pause performance tracking")
         .def_static("resume", &plssvm::detail::performance_tracker::resume_tracking, py::return_value_policy::reference, "resume performance tracking")
         .def_static(

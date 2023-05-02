@@ -12,6 +12,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
@@ -35,18 +36,20 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::string> &
     tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: \"{}\"\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
 }
 
-void performance_tracker::add_parameter_tracking_entry(const ::plssvm::parameter &params) {
+void performance_tracker::add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry) {
     if (is_tracking()) {
         tracking_statistics.emplace("parameter", fmt::format("  kernel_type: {}\n"
                                                              "  degree:      {}\n"
                                                              "  gamma:       {}\n"
                                                              "  coef0:       {}\n"
-                                                             "  cost:        {}\n",
-                                                             params.kernel_type.value(),
-                                                             params.degree.value(),
-                                                             params.gamma.is_default() ? std::string{ "#data_points" } : fmt::format("{}", params.gamma.value()),
-                                                             params.coef0.value(),
-                                                             params.cost.value()));
+                                                             "  cost:        {}\n"
+                                                             "  real_type:   {}\n",
+                                                             entry.entry_value.kernel_type.value(),
+                                                             entry.entry_value.degree.value(),
+                                                             entry.entry_value.gamma.is_default() ? std::string{ "#data_points" } : fmt::format("{}", entry.entry_value.gamma.value()),
+                                                             entry.entry_value.coef0.value(),
+                                                             entry.entry_value.cost.value(),
+                                                             arithmetic_type_name<typename decltype(entry.entry_value)::real_type>()));
     }
 }
 
