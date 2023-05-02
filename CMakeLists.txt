@@ -509,13 +509,14 @@ if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
 endif ()
 
 ## enable or disable the performance tracker
-if (PLSSVM_PERFORMANCE_TRACKER)
-    message(STATUS "Enable performance tracking to the YAML file \"${PLSSVM_PERFORMANCE_TRACKER}\" for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
 
     # add target definitions
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE="${PLSSVM_PERFORMANCE_TRACKER}")
 endif ()
+
 
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
@@ -551,7 +552,7 @@ endif ()
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
     # issue a warning if performance tracking as well as tests are enabled simultaneously
-    if (PLSSVM_PERFORMANCE_TRACKER)
+    if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
         message(WARNING "Enabled testing AND performance tracking! Be aware that running ctest will add entries to the performance tracking .yaml file.")
     endif ()
 
@@ -618,6 +619,7 @@ configure_file(
 ########################################################################################################################
 ##                                                 generate man pages                                                 ##
 ########################################################################################################################
+## assemble the SYCL manpage entry
 message(STATUS "Generating manpage files.")
 string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
@@ -635,6 +637,16 @@ choose the kernel invocation type when using SYCL as backend: automatic|nd_range
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+## assemble the performance tracker manpage entry
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "
+.TP
+.B --performance_tracking
+choose the output YAML file where the performance tracking entries should be stored; if not provided, the results are dumped to stdout
+")
+endif ()
+
+## configure the manpage files
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
@@ -644,6 +656,11 @@ set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}"
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        @ONLY
+)
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1
         @ONLY
 )
 

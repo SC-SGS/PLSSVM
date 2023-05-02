@@ -188,7 +188,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_OPENMP_BLOCK_SIZE` (default: `64`): set a specific block size used in the OpenMP kernels
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
-- `PLSSVM_PERFORMANCE_TRACKER`: enable gathering performance characteristics for the three executables using the specified YAML file; an example Python3 script to process the YAML file can be found in the `utility_scripts/` directory (requires the Python3 modules [`pyyaml`](https://pyyaml.org/) and [`pint`](https://pint.readthedocs.io/en/stable/))
+- `PLSSVM_ENABLE_PERFORMANCE_TRACKING`: enable gathering performance characteristics for the three executables using YAML files; an example Python3 script to process the YAML file can be found in the `utility_scripts/` directory (requires the Python3 modules [`pyyaml`](https://pyyaml.org/) and [`pint`](https://pint.readthedocs.io/en/stable/))
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 
@@ -341,10 +341,12 @@ Usage:
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
-  -q, --quiet                   quiet mode (no outputs)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
   -v, --version                 print version information
       --input training_set_file
@@ -406,10 +408,12 @@ Usage:
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
-  -q, --quiet                   quiet mode (no outputs)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
   -v, --version                 print version information
       --test test_file          
@@ -443,10 +447,12 @@ Usage:
   -f, --format arg              the file format to output the scaled data set to (default: libsvm)
   -s, --save_filename arg       the file to which the scaling factors should be saved
   -r, --restore_filename arg    the file from which previous scaling factors should be loaded
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
-  -q, --quiet                   quiet mode (no outputs)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
   -v, --version                 print version information
       --input input_file        

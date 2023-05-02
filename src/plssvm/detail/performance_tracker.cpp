@@ -136,9 +136,21 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 }
 
 void performance_tracker::save(const std::string &filename) {
+    if (filename.empty()) {
+        // write tracking entries to std::cout
+        // NOTE: the tracking entries are always dumped to stdout, even if the --quiet flag has been provided
+        std::cout << std::endl;
+        save(std::cout);
+    } else {
+        // write the tracking entries to the specified file
+        std::ofstream out{ filename, std::ios_base::app };
+        save(out);
+    }
+}
+
+void performance_tracker::save(std::ostream &out) {
     // append the current performance statistics to an already existing file if possible
-    std::ofstream out{ filename, std::ios_base::app };
-    PLSSVM_ASSERT(out.good(), fmt::format("Couldn't save performance tracking results in '{}'!", filename));
+    PLSSVM_ASSERT(out.good(), "Can't write to the provided output stream!");
 
     // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
     out << "---\n";

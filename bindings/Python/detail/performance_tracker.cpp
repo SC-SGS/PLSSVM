@@ -22,10 +22,10 @@ void init_performance_tracker(py::module_ &m) {
     py::class_<plssvm::detail::performance_tracker>(detail_module, "PerformanceTracker")
         .def_static("add_parameter_tracking_entry", [](const plssvm::parameter &params) { plssvm::detail::performance_tracker::add_tracking_entry(
                                                                                               plssvm::detail::tracking_entry{ "parameter", "", params }); })
-        .def_static("pause", &plssvm::detail::performance_tracker::pause_tracking, py::return_value_policy::reference, "pause performance tracking")
-        .def_static("resume", &plssvm::detail::performance_tracker::resume_tracking, py::return_value_policy::reference, "resume performance tracking")
+        .def_static("pause", &plssvm::detail::performance_tracker::pause_tracking, "pause performance tracking")
+        .def_static("resume", &plssvm::detail::performance_tracker::resume_tracking, "resume performance tracking")
         .def_static(
-            "save_to", &plssvm::detail::performance_tracker::save, py::return_value_policy::reference, "save the performance tracking results to the specified yaml file");
+            "save_to", py::overload_cast<const std::string &>(&plssvm::detail::performance_tracker::save), "save the performance tracking results to the specified yaml file");
 
 #endif
 }

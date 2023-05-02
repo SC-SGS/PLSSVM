@@ -44,10 +44,13 @@ parser_scale::parser_scale(int argc, char **argv) {
            ("f,format", "the file format to output the scaled data set to", cxxopts::value<decltype(format)>()->default_value(fmt::format("{}", format)))
            ("s,save_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
            ("r,restore_filename", "the file from which previous scaling factors should be loaded", cxxopts::value<decltype(restore_filename)>())
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout", cxxopts::value<decltype(performance_tracking_filename)>())
+#endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
-           ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
+           ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("v,version", "print version information", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "input_file")
@@ -157,6 +160,11 @@ parser_scale::parser_scale(int argc, char **argv) {
         }
         restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
     }
+
+    // parse performance tracking filename
+    if (result.count("performance_tracking")) {
+        performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
+    }
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
@@ -169,7 +177,8 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
                "input file: '{}'\n"
                "scaled file: '{}'\n"
                "save file (scaling factors): '{}'\n"
-               "restore file (scaling factors): '{}'\n",
+               "restore file (scaling factors): '{}'\n"
+               "performance tracking file: '{}'\n",
                params.lower,
                params.upper,
                params.strings_as_labels ? "std::string" : "int (default)",
@@ -178,7 +187,8 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
                params.input_filename,
                params.scaled_filename,
                params.save_filename,
-               params.restore_filename);
+               params.restore_filename,
+               params.performance_tracking_filename);
 }
 
 }  // namespace plssvm::detail::cmd

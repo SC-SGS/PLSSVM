@@ -47,10 +47,13 @@ parser_predict::parser_predict(int argc, char **argv) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
             ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout", cxxopts::value<decltype(performance_tracking_filename)>())
+#endif
             ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
             ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
             ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
+            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("v,version", "print version information", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -155,6 +158,11 @@ parser_predict::parser_predict(int argc, char **argv) {
         const std::filesystem::path input_path{ input_filename };
         predict_filename = input_path.filename().string() + ".predict";
     }
+
+    // parse performance tracking filename
+    if (result.count("performance_tracking")) {
+        performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
+    }
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
@@ -163,12 +171,14 @@ std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
                "real_type: {}\n"
                "input file (data set): '{}'\n"
                "input file (model): '{}'\n"
-               "output file (prediction): '{}'\n",
+               "output file (prediction): '{}'\n"
+               "performance tracking file: '{}'\n",
                params.strings_as_labels ? "std::string" : "int (default)",
                params.float_as_real_type ? "float" : "double (default)",
                params.input_filename,
                params.model_filename,
-               params.predict_filename);
+               params.predict_filename,
+               params.performance_tracking_filename);
 }
 
 }  // namespace plssvm::detail::cmd

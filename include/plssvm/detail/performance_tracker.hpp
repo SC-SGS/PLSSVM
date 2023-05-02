@@ -156,9 +156,15 @@ class performance_tracker {
     /**
      * @brief Write all stored tracking entries to the [YAML](https://yaml.org/) file @p filename.
      * @details Appends all entries at the end of the file creating a new YAML document.
+     *          If @p filename is empty, dumps the tracking entries to `std::cout` instead.
      * @param[in] filename the file to add the performance tracking results to
      */
     static void save(const std::string &filename);
+    /**
+     * @brief Write all stored tracking entries to the output stream @p out.
+     * @param[in] out the output stream to write the performance tracking results to
+     */
+    static void save(std::ostream &out);
 
     /**
      * @brief Pause the current tracking, i.e., all calls to `add_tracking_entry` do nothing.
@@ -215,9 +221,6 @@ class performance_tracker {
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME() \
         plssvm::detail::performance_tracker::resume_tracking()
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE() \
-        plssvm::detail::performance_tracker::save(PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE)
-
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(filename) \
         plssvm::detail::performance_tracker::save(filename)  // TODO: only use this and add cmd parameter?
 
@@ -227,7 +230,6 @@ class performance_tracker {
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME()
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE()
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(filename)
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
 
