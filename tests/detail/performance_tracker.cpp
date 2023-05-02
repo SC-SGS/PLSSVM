@@ -161,6 +161,21 @@ TEST(PerformanceTracker, add_string_tracking_entry) {
     EXPECT_EQ(r.first->first, "foo");
     EXPECT_EQ(r.first->second, "  bar: \"baz\"\n");
 }
+TEST(PerformanceTracker, add_parameter_tracking_entry) {
+    // add a tracking entry
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} });
+
+    // get the tracking entries
+    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::performance_tracker::get_tracking_entries();
+
+    // check entries for correctness
+    EXPECT_EQ(entries.size(), 1);
+
+    auto r = entries.equal_range("parameter");
+    ASSERT_EQ(std::distance(r.first, r.second), 1);
+    EXPECT_EQ(r.first->first, "parameter");
+    EXPECT_FALSE(r.first->second.empty());
+}
 TEST(PerformanceTracker, add_parser_train_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 3;
