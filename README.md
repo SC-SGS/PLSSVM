@@ -52,6 +52,7 @@ General dependencies:
 - [cxxopts ≥ v3.0.0](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float), [{fmt} ≥ v8.1.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.11.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
+- [Pybind11 ≥ v2.10.3](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
@@ -188,12 +189,22 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
+- `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
+
+If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
+
+- `PLSSVM_ENABLE_PYTHON_BINDINGS=ON|OFF` (default: `PLSSVM_ENABLE_LANGUAGE_BINDINGS`): enable Python bindings using Pybind11
+
+If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can also be set:
+
+- `PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE` (default: `double`): the default `real_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
+- `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
 
 If the SYCL backend is available additional options can be set.
 
@@ -516,6 +527,46 @@ add_executable(prog main.cpp)
 target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 ```
+
+### Using the Python bindings
+
+Roughly the same can be achieved using our Python bindings with the following Python script:
+
+```python
+import plssvm
+
+try:
+    # create a new C-SVM parameter set, explicitly overriding the default kernel function
+    params = plssvm.Parameter(kernel_type = plssvm.KernelFunctionType.POLYNOMIAL)
+  
+    # create two data sets: one with the training data scaled to [-1, 1]
+    # and one with the test data scaled like the training data
+    train_data = plssvm.DataSet("train_data.libsvm", scaling=plssvm.DataSetScaling(-1.0, 1.0))
+    test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
+  
+    # create C-SVM using the default backend and the previously defined parameter
+    svm = plssvm.CSVM(params)
+  
+    # fit using the training data, (optionally) set the termination criterion
+    model = svm.fit(train_data, epsilon=10e-6)
+  
+    # get accuracy of the trained model
+    model_accuracy = svm.score(model)
+    print("model accuracy: {}".format(model_accuracy))
+  
+    # predict labels
+    label = svm.predict(model, test_data)
+  
+    # write model file to disk
+    model.save("model_file.libsvm")
+except plssvm.PLSSVMError as e:
+    print(e)
+except RuntimeError as e:
+    print(e)
+```
+
+**Note:** it may be necessary to set `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
+
 
 ## Citing PLSSVM
 

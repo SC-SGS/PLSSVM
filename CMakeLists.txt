@@ -49,6 +49,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/version.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/constants.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
@@ -76,8 +77,8 @@ target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
-        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor
-        -Wextra-semi -Wunreachable-code -Wuninitialized>
+        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized
+        -fPIC>
         $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>
@@ -239,7 +240,6 @@ else ()
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installed {fmt} version ${PLSSVM_fmt_VERSION}.")
 endif ()
-set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
@@ -540,6 +540,15 @@ option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
+endif ()
+
+
+########################################################################################################################
+##                                              enable language bindings                                              ##
+########################################################################################################################
+option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
+if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
+    add_subdirectory(bindings)
 endif ()
 
 
