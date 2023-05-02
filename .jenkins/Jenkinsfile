@@ -404,7 +404,7 @@ pipeline {
                                 sh '''
                                     . /usr/local.nfs/Modules/latest/init/sh
                                     module load cuda/12.0.1
-                                    cd build/${BUILD_TYPE}_${BACKEND}
+                                    cd ${BUILD_TYPE}_${BACKEND}
                                     ctest -j4 --output-on-failure --no-compress-output -T Test
                                 '''
                             }
