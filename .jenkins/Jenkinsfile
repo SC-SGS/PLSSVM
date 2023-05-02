@@ -74,7 +74,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = [  'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -103,7 +103,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -127,7 +127,7 @@ pipeline {
         stage('Checkout PLSSVM') {
             steps {
               script{
-                def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                 def builders = [: ]
                 for (x in labels){
                     def label = x
@@ -148,7 +148,7 @@ pipeline {
         {
             steps{
                 script{
-                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -175,7 +175,7 @@ pipeline {
             }
             steps{
                 script{
-                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11'] // 'pcsgs02'
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -235,7 +235,7 @@ pipeline {
                     }
                     steps{
                         script{
-                            def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
+                            def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
                             def builders = [: ]
                             for (x in labels){
                                 def label = x
@@ -295,7 +295,7 @@ pipeline {
 
             steps{
                 script{
-                    def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09',  'pcsgs11']
+                    def labels = [ 'pcsgs02 || pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09',  'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
                         def label = x
@@ -327,7 +327,7 @@ pipeline {
             }
         }
 
-        stage('Build'){
+        stage('Build and Test NVIDIA Machines'){
             matrix{
                 axes {
                     axis {
@@ -337,12 +337,11 @@ pipeline {
                     }
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'SYCL'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'HIPSYCL'
                     }
                 }
 
-                //agent { label "${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs03 || pcsgs04 || pcsgs05'}"}
-                agent { label " pcsgs03 || pcsgs04 || pcsgs05" }
+                agent { label "pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05" }
 
                 stages{
                     stage('Checkout PLSSVM') {
@@ -367,9 +366,7 @@ pipeline {
                                 sh '''
                                     . /usr/local.nfs/Modules/latest/init/sh
                                     export PATH=${WORKSPACE}/cmake-3.25.2-linux-x86_64/bin:$PATH
-                                    #if [ $BACKEND == "CUDA" ] || [ $BACKEND == SYCL ] ; then
-                                        module load cuda/12.0.1
-                                    #fi
+                                    module load cuda/12.0.1
                                     mkdir -p build/${BUILD_TYPE}_${BACKEND}
                                     cd build/${BUILD_TYPE}_${BACKEND}
                                     rm -rf *
@@ -380,7 +377,7 @@ pipeline {
                                         -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || [[ $BACKEND == HIP ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
                                         -DPLSSVM_ENABLE_ASSERTS=ON \
                                         -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
-                                        -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == SYCL ]] && echo "ON" || echo "OFF") \
+                                        -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || echo "OFF") \
                                         -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
                                         -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
                                         -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
@@ -413,6 +410,44 @@ pipeline {
                 }
             }
         }
+        stage('Build and Test AMD Machines'){
+          matrix{
+            axes {
+                axis {
+                    name 'BUILD_TYPE'
+                    values 'Release', 'Debug', 'RelWithDebInfo'
+
+                }
+                axis {
+                    name 'BACKEND'
+                    values 'OPENCL', 'SYCL', 'HIP'
+                }
+            }
+
+            agent { label " pcsgs09" }
+
+          }
+        }
+
+        stage('Build and Test dual GPU'){
+            matrix{
+              axes {
+                  axis {
+                      name 'BUILD_TYPE'
+                      values 'Release', 'RelWithDebInfo'
+
+                  }
+                  axis {
+                      name 'BACKEND'
+                      values 'CUDA', 'OPENCL', 'SYCL'
+                  }
+              }
+
+              agent { label " pcsgs11" }
+
+            }
+          }
+
     }
 
     post {
