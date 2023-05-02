@@ -61,7 +61,7 @@ parser_train::parser_train(int argc, char **argv) {
            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout", cxxopts::value<decltype(performance_tracking_filename)>())
+           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))

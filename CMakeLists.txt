@@ -642,7 +642,7 @@ if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "
 .TP
 .B --performance_tracking
-choose the output YAML file where the performance tracking entries should be stored; if not provided, the results are dumped to stdout
+choose the output YAML file where the performance tracking entries should be stored; if not provided, the results are dumped to stderr
 ")
 endif ()
 

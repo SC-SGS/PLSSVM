@@ -68,7 +68,7 @@ TEST(TrackingEntry, is_no_tracking_entry) {
     EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<std::string>);
 }
 
-class PerformanceTracker : public ::testing::Test, public util::redirect_output<> {};
+class PerformanceTracker : public ::testing::Test, public util::redirect_output<&std::clog> {};
 
 // the macros are only available if PLSSVM_PERFORMANCE_TRACKER_ENABLED is defined!
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)

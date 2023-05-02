@@ -137,10 +137,10 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 
 void performance_tracker::save(const std::string &filename) {
     if (filename.empty()) {
-        // write tracking entries to std::cout
+        // write tracking entries to std::clog
         // NOTE: the tracking entries are always dumped to stdout, even if the --quiet flag has been provided
-        std::cout << std::endl;
-        save(std::cout);
+        std::clog << std::endl;
+        save(std::clog);
     } else {
         // write the tracking entries to the specified file
         std::ofstream out{ filename, std::ios_base::app };

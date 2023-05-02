@@ -45,7 +45,7 @@ parser_scale::parser_scale(int argc, char **argv) {
            ("s,save_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
            ("r,restore_filename", "the file from which previous scaling factors should be loaded", cxxopts::value<decltype(restore_filename)>())
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout", cxxopts::value<decltype(performance_tracking_filename)>())
+           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))

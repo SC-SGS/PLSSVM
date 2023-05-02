@@ -342,7 +342,7 @@ Usage:
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
       --performance_tracking arg
-                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
@@ -409,7 +409,7 @@ Usage:
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
       --performance_tracking arg
-                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
@@ -448,7 +448,7 @@ Usage:
   -s, --save_filename arg       the file to which the scaling factors should be saved
   -r, --restore_filename arg    the file from which previous scaling factors should be loaded
       --performance_tracking arg
-                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stdout
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
