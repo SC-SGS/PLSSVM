@@ -17,7 +17,7 @@
 #include "fmt/core.h"            // fmt::format
 #include "gtest/gtest.h"         // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
-#include <iostream>              // std::cout
+#include <iostream>              // std::cout, std::clog
 #include <string>                // std::string
 
 template <typename T>
@@ -68,10 +68,12 @@ TEST(TrackingEntry, is_no_tracking_entry) {
     EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<std::string>);
 }
 
+class PerformanceTracker : public ::testing::Test, public util::redirect_output<> {};
+
 // the macros are only available if PLSSVM_PERFORMANCE_TRACKER_ENABLED is defined!
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
-TEST(PerformanceTracker, pause_and_resume_macros) {
+TEST_F(PerformanceTracker, pause_and_resume_macros) {
     // tracking is enabled per default
     EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
     // disable performance tracking
@@ -83,7 +85,7 @@ TEST(PerformanceTracker, pause_and_resume_macros) {
     // tracking should now be enabled again
     EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
 }
-TEST(PerformanceTracker, add_entry_macro) {
+TEST_F(PerformanceTracker, add_entry_macro) {
     // add different tracking entries
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "bar", 42 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 }));
@@ -108,9 +110,26 @@ TEST(PerformanceTracker, add_entry_macro) {
     EXPECT_EQ(r2.first->second, "foobar: a\n");
 }
 
+TEST_F(PerformanceTracker, save_macro) {
+    // create temporary file
+    const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
+    // save entries to file
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(tmp_file.filename);
+
+    // the file must not be empty
+    EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
+    // TODO: must contain?
+
+    // the tracking entries must be empty now
+    EXPECT_TRUE(plssvm::detail::performance_tracker::get_tracking_entries().empty());
+}
+
 #endif
 
-TEST(PerformanceTracker, pause_and_resume) {
+TEST_F(PerformanceTracker, pause_and_resume) {
     // tracking is enabled per default
     EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
     // disable performance tracking
@@ -122,7 +141,7 @@ TEST(PerformanceTracker, pause_and_resume) {
     // tracking should now be enabled again
     EXPECT_TRUE(plssvm::detail::performance_tracker::is_tracking());
 }
-TEST(PerformanceTrackker, add_generic_tracking_entry) {
+TEST_F(PerformanceTracker, add_generic_tracking_entry) {
     // add different tracking entries
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
@@ -146,7 +165,7 @@ TEST(PerformanceTrackker, add_generic_tracking_entry) {
     EXPECT_EQ(r2.first->first, "");
     EXPECT_EQ(r2.first->second, "foobar: a\n");
 }
-TEST(PerformanceTracker, add_string_tracking_entry) {
+TEST_F(PerformanceTracker, add_string_tracking_entry) {
     // add a tracking entry
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", std::string{ "baz" } });
 
@@ -161,7 +180,7 @@ TEST(PerformanceTracker, add_string_tracking_entry) {
     EXPECT_EQ(r.first->first, "foo");
     EXPECT_EQ(r.first->second, "  bar: \"baz\"\n");
 }
-TEST(PerformanceTracker, add_parameter_tracking_entry) {
+TEST_F(PerformanceTracker, add_parameter_tracking_entry) {
     // add a tracking entry
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} });
 
@@ -176,7 +195,7 @@ TEST(PerformanceTracker, add_parameter_tracking_entry) {
     EXPECT_EQ(r.first->first, "parameter");
     EXPECT_FALSE(r.first->second.empty());
 }
-TEST(PerformanceTracker, add_parser_train_tracking_entry) {
+TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 3;
     char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/model" };
@@ -197,7 +216,7 @@ TEST(PerformanceTracker, add_parser_train_tracking_entry) {
     EXPECT_EQ(r.first->first, "parameter");
     EXPECT_FALSE(r.first->second.empty());
 }
-TEST(PerformanceTracker, add_parser_predict_tracking_entry) {
+TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 4;
     char argv_arr[argc][20] = { "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
@@ -218,7 +237,7 @@ TEST(PerformanceTracker, add_parser_predict_tracking_entry) {
     EXPECT_EQ(r.first->first, "parameter");
     EXPECT_FALSE(r.first->second.empty());
 }
-TEST(PerformanceTracker, add_parser_scale_tracking_entry) {
+TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 3;
     char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/scaled" };
@@ -240,7 +259,7 @@ TEST(PerformanceTracker, add_parser_scale_tracking_entry) {
     EXPECT_FALSE(r.first->second.empty());
 }
 
-TEST(PerformanceTracker, save_no_additional_entries) {
+TEST_F(PerformanceTracker, save_no_additional_entries) {
     // create temporary file
     const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
     // save entries to file
@@ -252,7 +271,7 @@ TEST(PerformanceTracker, save_no_additional_entries) {
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::performance_tracker::get_tracking_entries().empty());
 }
-TEST(PerformanceTracker, save_entries) {
+TEST_F(PerformanceTracker, save_entries_to_file) {
     // create temporary file
     const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
     // save entries to file
@@ -263,6 +282,22 @@ TEST(PerformanceTracker, save_entries) {
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
+    // TODO: must contain?
+
+    // the tracking entries must be empty now
+    EXPECT_TRUE(plssvm::detail::performance_tracker::get_tracking_entries().empty());
+}
+TEST_F(PerformanceTracker, save_entries_empty_file) {
+    // save entries to file
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    // save to empty file, i.e., dump the performance tracking entries to std::clog
+    plssvm::detail::performance_tracker::save("");
+
+    // the captured standard output must not be empty
+    EXPECT_FALSE(this->get_capture().empty());
+    // TODO: must contain?
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::performance_tracker::get_tracking_entries().empty());
