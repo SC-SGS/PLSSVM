@@ -366,7 +366,7 @@ pipeline {
                                     . /usr/local.nfs/Modules/latest/init/sh
                                     export PATH=${WORKSPACE}/cmake-3.25.2-linux-x86_64/bin:$PATH
                                     if [  $BACKEND == "CUDA" ]; then
-                                        module load cuda/11.4.3
+                                        module load cuda/12.0.1
                                     fi
                                     mkdir -p build/${BUILD_TYPE}_${BACKEND}
                                     cd build/${BUILD_TYPE}_${BACKEND}
