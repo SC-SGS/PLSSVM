@@ -155,7 +155,7 @@ pipeline {
                                 node(label) {
                                     sh '''
                                     if [ ! -d "$GCC_PATH" ] || [ "$GCC_FORCE_REBUILD" = "TRUE" ]; then
-                                        $WORKSPACE/plssvm/.jenkins/scripts/build-gcc.sh $GCC_PATH
+                                        .jenkins/scripts/build-gcc.sh $GCC_PATH
                                    fi
 
                                 '''
@@ -301,7 +301,7 @@ pipeline {
                         def label = x
                         builders[label] = {
                             node(label) {
-                                sh './$WORKSPACE/plssvm/.jenkins/scripts/build-pocl.sh'
+                                sh './.jenkins/scripts/build-pocl.sh'
                             }
 
                         }
