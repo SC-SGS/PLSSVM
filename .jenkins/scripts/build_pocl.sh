@@ -1,4 +1,4 @@
-
+#!/usr/bin/bash
 
 POCL_VERSION=3.1
 if [ -f pocl.tar.gz* ]; then
