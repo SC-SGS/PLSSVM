@@ -356,7 +356,7 @@ pipeline {
 
 
 
-                agent { label " ${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : env.BACKEND.equalsIgnoreCase('MULTI_GPU') ? 'pcsgs11' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }"}
+                agent { label " ${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }"}
 
                 stages{
                     stage('Checkout PLSSVM') {
