@@ -343,39 +343,40 @@ pipeline {
                         name 'ARCHITECTURE'
                         values 'NVIDIA', 'AMD', 'CPU', 'MULTI_GPU'
                     }
-                    excludes {
-                      exclude {
-                        axis{
-                          name 'BUILD_TYPE'
-                          values 'Debug', 'RelWithDebInfo'
-                        }
-                        axis{
-                          name 'ARCHITECTURE'
-                          values 'MULTI_GPU'
-                        }
+                  }
+                  excludes {
+                    exclude {
+                      axis{
+                        name 'BUILD_TYPE'
+                        values 'Debug', 'RelWithDebInfo'
                       }
-                      exclude {
-                        axis{
-                          name 'BACKEND'
-                          values 'HIP'
-                        }
-                        axis{
-                          name 'ARCHITECTURE'
-                          notValues 'AMD'
-                        }
-                      }
-                      exclude {
-                        axis{
-                          name 'BACKEND'
-                          values 'OPENMP'
-                        }
-                        axis{
-                          name 'ARCHITECTURE'
-                          notValues 'NVIDIA'
-                        }
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'MULTI_GPU'
                       }
                     }
-                }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'HIP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'AMD'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'OPENMP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'NVIDIA'
+                      }
+                    }
+                  }
+
 
 
                 agent { label " ${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : env.BACKEND.equalsIgnoreCase('MULTI_GPU') ? 'pcsgs11' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }"}
