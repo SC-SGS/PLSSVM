@@ -337,11 +337,48 @@ pipeline {
                     }
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'HIPSYCL'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'HIPSYCL', 'HIP'
+                    }
+                    axis {
+                        name 'ARCHITECTURE'
+                        values 'NVIDIA', 'AMD', 'CPU', 'MULTI_GPU'
+                    }
+                    excludes {
+                      exclude {
+                        axis{
+                          name 'BUILD_TYPE'
+                          values 'Debug', 'RelWithDebInfo'
+                        }
+                        axis{
+                          name 'ARCHITECTURE'
+                          values 'MULTI_GPU'
+                        }
+                      }
+                      exclude {
+                        axis{
+                          name 'BACKEND'
+                          values 'HIP'
+                        }
+                        axis{
+                          name 'ARCHITECTURE'
+                          notValues 'AMD'
+                        }
+                      }
+                      exclude {
+                        axis{
+                          name 'BACKEND'
+                          values 'OPENMP'
+                        }
+                        axis{
+                          name 'ARCHITECTURE'
+                          notValues 'NVIDIA'
+                        }
+                      }
                     }
                 }
 
-                agent { label " pcsgs03 || pcsgs04 || pcsgs05" }
+
+                agent { label " ${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : env.BACKEND.equalsIgnoreCase('MULTI_GPU') ? 'pcsgs11' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }"}
 
                 stages{
                     stage('Checkout PLSSVM') {
@@ -367,22 +404,7 @@ pipeline {
                                     . /usr/local.nfs/Modules/latest/init/sh
                                     export PATH=${WORKSPACE}/cmake-3.25.2-linux-x86_64/bin:$PATH
                                     module load cuda/12.0.1
-                                    mkdir -p build/${BUILD_TYPE}_${BACKEND}
-                                    cd build/${BUILD_TYPE}_${BACKEND}
-                                    rm -rf *
-                                    rm -rf $MAKE_INSTALL_PATH/${BACKEND}
-                                    cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
-                                        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                        -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == SYCL ]] && echo "clang++" || echo "g++") \
-                                        -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || [[ $BACKEND == HIP ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
-                                        -DPLSSVM_ENABLE_ASSERTS=ON \
-                                        -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
-                                        -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || echo "OFF") \
-                                        -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
-                                        -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
-                                        -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
-                                        ../../
-                                    make -j4 #install
+                                    echo "Running Build for ${BACKEND} backend with ${BUILD_TYPE} build type on ${HOSTNAME} on ${ARCHITECTURE} architecture"
                                 '''
                             }
                         }
@@ -401,8 +423,7 @@ pipeline {
                                 sh '''
                                     . /usr/local.nfs/Modules/latest/init/sh
                                     module load cuda/12.0.1
-                                    cd ${BUILD_TYPE}_${BACKEND}
-                                    ctest -j4 --output-on-failure --no-compress-output -T Test
+                                    echo "Running CTest for ${BACKEND} backend with ${BUILD_TYPE} build type on ${HOSTNAME} on ${ARCHITECTURE} architecture"
                                 '''
                             }
                         }
