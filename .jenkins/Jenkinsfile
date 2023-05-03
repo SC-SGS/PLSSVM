@@ -318,11 +318,6 @@ pipeline {
             matrix{
                 axes {
                     axis {
-                        name 'BUILD_TYPE'
-                        values 'Release', 'Debug', 'RelWithDebInfo'
-
-                    }
-                    axis {
                         name 'BACKEND'
                         values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'HIPSYCL', 'HIP'
                     }
