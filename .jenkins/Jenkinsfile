@@ -328,20 +328,10 @@ pipeline {
                     }
                     axis {
                         name 'ARCHITECTURE'
-                        values 'NVIDIA', 'AMD', 'CPU', 'MULTI_GPU'
+                        values 'NVIDIA', 'AMD', 'CPU'
                     }
                   }
                   excludes {
-                    exclude {
-                      axis{
-                        name 'BUILD_TYPE'
-                        values 'Debug', 'RelWithDebInfo'
-                      }
-                      axis{
-                        name 'ARCHITECTURE'
-                        values 'MULTI_GPU'
-                      }
-                    }
                     exclude {
                       axis{
                         name 'BACKEND'
