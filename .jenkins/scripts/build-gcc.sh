@@ -4,7 +4,6 @@ set -x
 set -e
 
 GCC_VERSION=12.2.0
-GCC_PATH=$1
 
 if [ -n "$1" ] ; then
   GCC_ROOT_DIR=$1
