@@ -301,7 +301,7 @@ pipeline {
                         def label = x
                         builders[label] = {
                             node(label) {
-                                sh './.jenkins/scripts/build-pocl.sh'
+                                sh '.jenkins/scripts/build-pocl.sh'
                             }
 
                         }
