@@ -294,7 +294,8 @@ pipeline {
         {
 
             steps{
-                script{
+
+               script{
                     def labels = [ 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09',  'pcsgs11']
                     def builders = [: ]
                     for (x in labels){
@@ -324,10 +325,12 @@ pipeline {
                     }
                     parallel builders
                 }
+
             }
         }
 
         stage('Build and Test NVIDIA Machines'){
+
             matrix{
                 axes {
                     axis {
