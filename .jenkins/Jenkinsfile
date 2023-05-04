@@ -397,11 +397,11 @@ pipeline {
 
                                       cd ${WORKSPACE}/plssvm
                                       export BUILD_TYPE=Release
-                                      mkdir -p build/${BUILD_TYPE}_${BACKEND}
-                                      cd build/${BUILD_TYPE}_${BACKEND}
+                                      mkdir -p build/${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
+                                      cd build/${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
                                       rm -rf *
-                                      rm -rf $MAKE_INSTALL_PATH/${BACKEND}
-                                      $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
+                                      rm -rf $MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                                      $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE} \
                                           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
                                           -DCMAKE_CXX_COMPILER=$COMPILER \
                                           -DPLSSVM_TARGET_PLATFORMS=${TARGET_PLATFORM}\
