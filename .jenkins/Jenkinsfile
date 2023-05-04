@@ -383,7 +383,7 @@ pipeline {
                                       rm -rf $MAKE_INSTALL_PATH/${BACKEND}
                                       cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                          -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == SYCL ]] && echo "clang++" || echo "g++") \
+                                          -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == DPCPP ]] && echo "clang++" || [[ $BACKEND == HIPSYCL ]] && echo "clang++" || echo "g++") \
                                           -DPLSSVM_TARGET_PLATFORMS=$([[ $ARCHITECTURE == CPU ]] && echo "cpu" || [[ $ARCHITECTURE == AMD ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
                                           -DPLSSVM_ENABLE_ASSERTS=ON \
                                           -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
