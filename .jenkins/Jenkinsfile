@@ -352,7 +352,6 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
-                                      export PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:${PATH}"
                                       if [ ! "$NODE_NAME" == "pcsgs09" ]; then
                                           . /usr/local.nfs/Modules/latest/init/sh
                                           module load cuda/12.0.1
@@ -387,7 +386,7 @@ pipeline {
                                       cd build/${BUILD_TYPE}_${BACKEND}
                                       rm -rf *
                                       rm -rf $MAKE_INSTALL_PATH/${BACKEND}
-                                      cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
+                                      $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
                                           -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == DPCPP ]] && echo "clang++" || [[ $BACKEND == HIPSYCL ]] && echo "clang++" || echo "g++") \
                                           -DPLSSVM_TARGET_PLATFORMS=$([[ $ARCHITECTURE == CPU ]] && echo "cpu" || [[ $ARCHITECTURE == AMD ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
