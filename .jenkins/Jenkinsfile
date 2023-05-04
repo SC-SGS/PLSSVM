@@ -135,7 +135,7 @@ pipeline {
                     def label = x
                         builders[label] = {
                             node(label) {
-                              dir('plssvm') {
+                              dir('${env.WORKSPACE}plssvm') {
                                checkout scm
                                }
                                checkout scm
