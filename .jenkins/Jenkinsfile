@@ -81,6 +81,7 @@ pipeline {
                         builders[label] = {
                             node(label) {
                                 sh '''
+                                    cd ${WORKSPACE}
                                     if [ -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
                                         rm cmake-3.25.2-linux-x86_64.tar.gz*
                                         rm -rf cmake-3.25.2-linux-x86_64
