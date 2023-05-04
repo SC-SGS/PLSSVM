@@ -356,6 +356,7 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
+                                      export COMPILER=g++
                                       if [ ! "$NODE_NAME" == "pcsgs09" ]; then
                                           . /usr/local.nfs/Modules/latest/init/sh
                                           module load cuda/12.0.1
@@ -365,6 +366,7 @@ pipeline {
                                           export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
                                           export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
                                           export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                                          export COMPILER=$DPCPP_PATH/bin/clang++
                                       fi
                                       if [ "$BACKEND" == "HIPSYCL" ]; then
                                           export PATH="$HIPSYCL_PATH/bin:${PATH}"
@@ -386,6 +388,9 @@ pipeline {
                                          export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
                                          export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
                                       fi
+                                      if [ "$BACKEND" == "HIP" ]; then
+                                        export COMPILER=hipcc
+                                      fi
 
                                       cd ${WORKSPACE}/plssvm
                                       export BUILD_TYPE=Release
@@ -395,7 +400,7 @@ pipeline {
                                       rm -rf $MAKE_INSTALL_PATH/${BACKEND}
                                       $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                          -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == DPCPP ]] && echo "clang++" || [[ $BACKEND == HIPSYCL ]] && echo "clang++" || echo "g++") \
+                                          -DCMAKE_CXX_COMPILER=$COMPILER \
                                           -DPLSSVM_TARGET_PLATFORMS=$([[ $ARCHITECTURE == CPU ]] && echo "cpu" || [[ $ARCHITECTURE == AMD ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
                                           -DPLSSVM_ENABLE_ASSERTS=ON \
                                           -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
