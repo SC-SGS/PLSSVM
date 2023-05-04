@@ -314,6 +314,10 @@ pipeline {
                         name 'ARCHITECTURE'
                         values 'NVIDIA', 'AMD', 'CPU'
                     }
+                    axis {
+                        name 'BUILD_TYPE'
+                        values 'Release', 'Debug'
+                    }
                   }
                   excludes {
                     exclude {
@@ -396,7 +400,6 @@ pipeline {
                                       fi
 
                                       cd ${WORKSPACE}/plssvm
-                                      export BUILD_TYPE=Release
                                       mkdir -p build/${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
                                       cd build/${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
                                       rm -rf *
