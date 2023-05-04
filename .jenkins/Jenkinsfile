@@ -360,12 +360,15 @@ pipeline {
                                           export PATH="$DPCPP_PATH/bin:${PATH}"
                                           export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
                                           export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                                          export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
                                       fi
                                       if [ "$BACKEND" == "HIPSYCL" ]; then
                                           export PATH="$HIPSYCL_PATH/bin:${PATH}"
                                           export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
                                           export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
                                           export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                                          export PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION="HIPSYCL"
+                                          export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
                                       fi
                                       if [ "$ARCHITECTURE" == "CPU" ]; then
                                           PATH="$POCL_DIR/bin:${PATH}"
@@ -397,6 +400,7 @@ pipeline {
                                           -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
+
                                           ../../
                                       make -j4 #install
                                 '''
