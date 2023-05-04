@@ -400,7 +400,6 @@ pipeline {
                                           -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
-
                                           ../../
                                       make -j4 #install
                                 '''
