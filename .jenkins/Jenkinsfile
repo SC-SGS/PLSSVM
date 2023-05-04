@@ -384,10 +384,10 @@ pipeline {
                                       cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
                                           -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == SYCL ]] && echo "clang++" || echo "g++") \
-                                          -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || [[ $BACKEND == HIP ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
+                                          -DPLSSVM_TARGET_PLATFORMS=$([[ $ARCHITECTURE == CPU ]] && echo "cpu" || [[ $ARCHITECTURE == AMD ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
                                           -DPLSSVM_ENABLE_ASSERTS=ON \
                                           -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
-                                          -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || [[ $BACKEND == HIPSYCL ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
