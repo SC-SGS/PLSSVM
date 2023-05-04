@@ -341,6 +341,7 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
+                                      export PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:${PATH}"
                                       if [ ! "$NODE_NAME" == "pcsgs09" ]; then
                                           . /usr/local.nfs/Modules/latest/init/sh
                                           module load cuda/12.0.1
