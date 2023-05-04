@@ -382,6 +382,7 @@ pipeline {
                                       fi
 
                                       cd ${WORKSPACE}
+                                      export BUILD_TYPE=Release
                                       mkdir -p build/${BUILD_TYPE}_${BACKEND}
                                       cd build/${BUILD_TYPE}_${BACKEND}
                                       rm -rf *
