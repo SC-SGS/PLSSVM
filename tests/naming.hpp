@@ -191,18 +191,30 @@ namespace detail {
 
 /**
  * @brief Escape some characters of the string such that GTest accepts it as test case name.
- * @details Replaces all "-" with "_M_" (for Minus), all " " with "_W_" (for Whitespace), "." with "_D_" (for dot), and "/" with "_".
+ * @details Replaces some special cases for better readability: "-" with "_M_" (for Minus), all " " with "_W_" (for Whitespace), "." with "_D_" (for dot),
+ *          ":" with "_C_" (for colon), "/" with "_", and "@" with "_A_" (for at).
+ *          Afterwards, if there are still non alphanumeric or underscore characters present, simply replaces them with "_".
  *          If the resulting string would be empty, returns a string containing "EMPTY".
  * @param[in] sv the string to escape for GTest
  * @return the escaped test case name (`[[nodiscard]]`)
  */
 [[nodiscard]] inline std::string escape_string(const std::string_view sv) {
     std::string str{ sv };
+    // replace some special cases for better readability
     plssvm::detail::replace_all(str, "-", "_M_");
     plssvm::detail::replace_all(str, " ", "_W_");
     plssvm::detail::replace_all(str, ".", "_D_");
     plssvm::detail::replace_all(str, ":", "_S_");
     plssvm::detail::replace_all(str, "/", "_");
+    plssvm::detail::replace_all(str, "@", "_A_");
+
+    // replace all remaining characters with '_' that are not alphanumeric values or underscores
+    for (char &c : str) {
+        if (!std::isalnum(c) && c != '_') {
+            c = '_';
+        }
+    }
+
     if (str.empty()) {
         str = "EMPTY";
     }
