@@ -356,7 +356,7 @@ pipeline {
                                           . /usr/local.nfs/Modules/latest/init/sh
                                           module load cuda/12.0.1
                                       fi
-                                      if [ "$BACKEND" == "DPCPP" ]; then
+                                      if [ "$BACKEND" == "DPCPP" ] OR [ "$BACKEND" == "HIPSYCL" ]; then
                                           export PATH="$DPCPP_PATH/bin:${PATH}"
                                           export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
                                           export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
