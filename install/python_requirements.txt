@@ -12,3 +12,4 @@ matplotlib
 humanize
 pyyaml
 pint
+wrapt-timeout-decorator
