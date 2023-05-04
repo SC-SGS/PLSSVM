@@ -338,21 +338,43 @@ pipeline {
                 agent { label " ${env.BACKEND.equalsIgnoreCase('HIP') ? 'pcsgs09' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }"}
 
                 stages{
-                    stage('Checkout PLSSVM') {
-                        steps {
-                            dir('plssvm') {
-                                checkout scm
-                            }
-                        }
-                    }
-
                     stage('Build PLSSVM'){
                         steps{
-                            dir('plssvm') {
                                 sh '''
-                                    echo "Running Build for ${BACKEND} backend with ${BUILD_TYPE} build type on ${HOSTNAME} on ${ARCHITECTURE} architecture"
+                                      if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                                          . /usr/local.nfs/Modules/latest/init/sh
+                                          module load cuda/12.0.1
+                                      fi
+                                      if [ "$BACKEND" == "DPCPP" ]; then
+                                          export PATH="$DPCPP_PATH/bin:${PATH}"
+                                          export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
+                                          export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                                      fi
+                                      if [ "$BACKEND" == "HIPSYCL" ]; then
+                                          export PATH="$HIPSYCL_PATH/bin:${PATH}"
+                                          export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
+                                          export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                                      fi
+
+                                      cd ${WORKSPACE}
+                                      mkdir -p build/${BUILD_TYPE}_${BACKEND}
+                                      cd build/${BUILD_TYPE}_${BACKEND}
+                                      rm -rf *
+                                      rm -rf $MAKE_INSTALL_PATH/${BACKEND}
+                                      cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
+                                          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+                                          -DCMAKE_CXX_COMPILER=$([[ $BACKEND == HIP ]] && echo "hipcc" || [[ $BACKEND == SYCL ]] && echo "clang++" || echo "g++") \
+                                          -DPLSSVM_TARGET_PLATFORMS=$([[ $BACKEND == OPENMP ]] && echo "cpu" || [[ $BACKEND == HIP ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
+                                          -DPLSSVM_ENABLE_ASSERTS=ON \
+                                          -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_SYCL_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
+                                          ../../
+                                      make -j4 #install
                                 '''
-                            }
+
                         }
                     }
                     stage('Ctest PLSSVM'){
