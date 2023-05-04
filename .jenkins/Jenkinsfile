@@ -368,7 +368,7 @@ pipeline {
                                           export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
                                           export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
                                       fi
-                                      if [ "$BACKEND" == "OPENCL"] AND [ "$ARCHITECTURE" == "CPU" ]; then
+                                      if [ "$ARCHITECTURE" == "CPU" ]; then
                                           PATH="$POCL_DIR/bin:${PATH}"
                                           CPLUS_INCLUDE_PATH="$POCL_DIR/include:${CPLUS_INCLUDE_PATH}"
                                           LIBRARY_PATH="$POCL_DIR/lib:${LIBRARY_PATH}"
