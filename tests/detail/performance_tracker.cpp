@@ -117,7 +117,7 @@ TEST_F(PerformanceTracker, save_macro) {
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
     plssvm::detail::performance_tracker::add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(tmp_file.filename);
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(tmp_file.filename);
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));

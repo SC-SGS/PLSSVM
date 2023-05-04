@@ -221,8 +221,8 @@ class performance_tracker {
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME() \
         plssvm::detail::performance_tracker::resume_tracking()
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(filename) \
-        plssvm::detail::performance_tracker::save(filename)  // TODO: only use this and add cmd parameter?
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(filename) \
+        plssvm::detail::performance_tracker::save(filename)
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
         plssvm::detail::performance_tracker::add_tracking_entry(entry);
@@ -230,7 +230,7 @@ class performance_tracker {
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME()
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(filename)
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(filename)
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
 
 #endif

@@ -13,7 +13,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logger.hpp"                 // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry,PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO
+#include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry,PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
 
 #include <chrono>                                   // std::chrono::{steady_clock, duration}
 #include <cstdlib>                                  // std::exit, EXIT_SUCCESS, EXIT_FAILURE
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
                             "\nTotal runtime: {}\n",
                             plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE_TO(cmd_parser.performance_tracking_filename);
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
