@@ -376,10 +376,10 @@ pipeline {
                                           CMAKE_PREFIX_PATH="$POCL_DIR:${CMAKE_PREFIX_PATH}"
                                       fi
                                       if [ "$ARCHITECTURE" == "AMD" ]; then
-                                         export ROCM_PATH = "/opt/rocm-5.4.2"
-                                         export LD_LIBRARY_PATH = "${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                         export CPLUS_INCLUDE_PATH = "${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
-                                         export CMAKE_PREFIX_PATH = "${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
+                                         export ROCM_PATH="/opt/rocm-5.4.2"
+                                         export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+                                         export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
+                                         export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
                                       fi
 
                                       cd ${WORKSPACE}
