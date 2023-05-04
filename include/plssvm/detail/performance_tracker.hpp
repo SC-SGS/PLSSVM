@@ -112,11 +112,7 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     template <typename T>
-    static void add_tracking_entry(const tracking_entry<T> &entry) {
-        if (is_tracking()) {
-            tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
-        }
-    }
+    static void add_tracking_entry(const tracking_entry<T> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a std::string to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
@@ -192,6 +188,13 @@ class performance_tracker {
     /// The tracking is enabled by default.
     static bool is_tracking_;
 };
+
+template <typename T>
+void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
+    if (is_tracking()) {
+        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
+    }
+}
 
 /**
  * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE
