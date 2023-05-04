@@ -357,6 +357,7 @@ pipeline {
                         steps{
                                 sh '''
                                       export COMPILER=g++
+                                      export TARGET_PLATFORM=nvidia:sm_86
                                       if [ ! "$NODE_NAME" == "pcsgs09" ]; then
                                           . /usr/local.nfs/Modules/latest/init/sh
                                           module load cuda/12.0.1
@@ -381,12 +382,14 @@ pipeline {
                                           LIBRARY_PATH="$POCL_DIR/lib:${LIBRARY_PATH}"
                                           LD_LIBRARY_PATH="$POCL_DIR/lib:${LD_LIBRARY_PATH}"
                                           CMAKE_PREFIX_PATH="$POCL_DIR:${CMAKE_PREFIX_PATH}"
+                                          export TARGET_PLATFORM=cpu
                                       fi
                                       if [ "$ARCHITECTURE" == "AMD" ]; then
                                          export ROCM_PATH="/opt/rocm-5.4.2"
                                          export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                          export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
                                          export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
+                                         export TARGET_PLATFORM=amd:gfx906
                                       fi
                                       if [ "$BACKEND" == "HIP" ]; then
                                         export COMPILER=hipcc
@@ -401,7 +404,7 @@ pipeline {
                                       $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND} \
                                           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
                                           -DCMAKE_CXX_COMPILER=$COMPILER \
-                                          -DPLSSVM_TARGET_PLATFORMS=$([[ $ARCHITECTURE == CPU ]] && echo "cpu" || [[ $ARCHITECTURE == AMD ]] && echo "amd:gfx906" || echo "nvidia:sm_86")  \
+                                          -DPLSSVM_TARGET_PLATFORMS=${TARGET_PLATFORM}\
                                           -DPLSSVM_ENABLE_ASSERTS=ON \
                                           -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
