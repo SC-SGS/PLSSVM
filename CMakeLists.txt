@@ -551,11 +551,6 @@ endif ()
 ########################################################################################################################
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
-    # issue a warning if performance tracking as well as tests are enabled simultaneously
-    if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-        message(WARNING "Enabled testing AND performance tracking! Be aware that running ctest will add entries to the performance tracking .yaml file.")
-    endif ()
-
     enable_testing()
     add_subdirectory(tests)
 endif ()
