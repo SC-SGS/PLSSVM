@@ -32,6 +32,8 @@ the file name to which the scaling factors should be saved
 .B -r, --restore_filename arg
 the file name from which previous scaling factors should be loaded
 
+@PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY@
+
 .TP
 .B --use_string_as_labels arg
 must be specified if the labels should be interpreted as strings instead of integers
@@ -41,8 +43,12 @@ must be specified if the labels should be interpreted as strings instead of inte
 must be specified if float should be used instead of double as floating point type
 
 .TP
+.B --verbosity arg
+choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+
+.TP
 .B -q, --quiet
-quiet mode (no outputs)
+quiet mode (no outputs regardless the provided verbosity level!)
 
 .TP
 .B -h, --help

@@ -12,7 +12,7 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::invalid_file_format_exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                        // fmt::format
 
 // check if memory mapping can be supported
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
@@ -21,9 +21,9 @@
     #include <sys/stat.h>  // fstat
     #include <unistd.h>    // close
 #elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
-    #include <windows.h>  // CreateFile, GetLastError, GetFileSizeEx, CreateFileMapping, MapViewOfFile, UnmapViewOfFile, CloseHandle
-                          // HANDLE, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY,l INVALID_HANDLE_VALUE, ERROR_FILE_NOT_FOUND,
-                          // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
+    #include <windows.h>   // CreateFile, GetLastError, GetFileSizeEx, CreateFileMapping, MapViewOfFile, UnmapViewOfFile, CloseHandle
+                           // HANDLE, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY,l INVALID_HANDLE_VALUE, ERROR_FILE_NOT_FOUND,
+                           // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
 #endif
 
 #include <algorithm>    // std::min
@@ -177,7 +177,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         throw file_reader_exception{ "This file_reader is currently not associated to a file!" };
     }
     // create view from buffer
-    std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
+    const std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
     std::string_view::size_type pos = 0;
     while (true) {
         // find newline

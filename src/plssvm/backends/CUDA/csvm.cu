@@ -16,22 +16,24 @@
 #include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
 #include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
+#include "plssvm/detail/logger.hpp"                    // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"       // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
-#include "cuda.h"              // cuda runtime functions
-#include "cuda_runtime_api.h"  // cuda runtime functions
+#include "cuda.h"                                      // cuda runtime functions
+#include "cuda_runtime_api.h"                          // cuda runtime functions
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"                                  // fmt::format
+#include "fmt/ostream.h"                               // can use fmt using operator<< overloads
 
-#include <cstddef>    // std::size_t
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
-#include <numeric>    // std::iota
-#include <utility>    // std::pair, std::make_pair
+#include <cstddef>                                     // std::size_t
+#include <exception>                                   // std::terminate
+#include <iostream>                                    // std::cout, std::endl
+#include <numeric>                                     // std::iota
+#include <utility>                                     // std::pair, std::make_pair
 
 namespace plssvm::cuda {
 
@@ -53,9 +55,13 @@ void csvm::init(const target_platform target) {
 #endif
     }
 
-    if (plssvm::verbose) {
-        std::cout << fmt::format("\nUsing CUDA as backend.") << std::endl;
-    }
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing CUDA as backend.\n");
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
+
+    // update the target platform
+    target_ = plssvm::target_platform::gpu_nvidia;
 
     // get all available devices wrt the requested target platform
     devices_.resize(detail::get_device_count());
@@ -66,16 +72,17 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ "CUDA backend selected but no CUDA capable devices were found!" };
     }
 
-    if (plssvm::verbose) {
-        // print found CUDA devices
-        std::cout << fmt::format("Found {} CUDA device(s):\n", devices_.size());
-        for (const queue_type &device : devices_) {
-            cudaDeviceProp prop{};
-            cudaGetDeviceProperties(&prop, device);
-            std::cout << fmt::format("  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor) << std::endl;
-        }
-        std::cout << std::endl;
+    // print found CUDA devices
+    plssvm::detail::log(verbosity_level::full,
+                        "Found {} CUDA device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+    for (const queue_type &device : devices_) {
+        cudaDeviceProp prop{};
+        cudaGetDeviceProperties(&prop, device);
+        plssvm::detail::log(verbosity_level::full,
+                            "  [{}, {}, {}.{}]\n\n", device, prop.name, prop.major, prop.minor);
     }
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 }
 
 csvm::~csvm() {
@@ -95,8 +102,8 @@ void csvm::device_synchronize(const queue_type &queue) const {
 }
 
 std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
-    dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
-    dim3 block(range.block[0], range.block[1], range.block[2]);
+    const dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
+    const dim3 block(range.block[0], range.block[1], range.block[2]);
     return std::make_pair(grid, block);
 }
 

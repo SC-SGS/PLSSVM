@@ -34,10 +34,12 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
 
+        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/constants.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
         ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
@@ -77,10 +79,23 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
 
-# set default real and label types
-# TODO: supported values?, string vs std::string?
+# set default real type
+set(PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE "float;double")
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE "double" CACHE STRING "The preferred type of the data points for the Python bindings.")
+set_property(CACHE PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE PROPERTY STRINGS ${PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE})
+if (NOT "${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE}" IN_LIST PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE)
+    message(FATAL_ERROR "The provided real_type \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE}\" is not one of the allowed values: \"${PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE}\"")
+endif ()
+message(STATUS "The preferred real_type for the Python bindings is \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE}\".")
+
+# set default label type
+set(PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE "bool;char;signed char;unsigned char;short;unsigned short;int;unsigned int;long;unsigned long;long long;unsigned long long;float;double;long double;std::string")
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE "std::string" CACHE STRING "The preferred type of the labels for the Python bindings.")
+set_property(CACHE PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE PROPERTY STRINGS ${PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE})
+if (NOT "${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}" IN_LIST PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE)
+    message(FATAL_ERROR "The provided label_type \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}\" is not one of the allowed values: \"${PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE}\"")
+endif ()
+message(STATUS "The preferred label_type for the Python bindings is \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}\".")
 
 # add necessary compile definitions for the default real_type and label_type
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE})
@@ -100,4 +115,4 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${PYTHON_INCLUDE_
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${GPU_SAMPLER_LIBRARY_NAME})
 
 # append pybind11 bindings library to installed targets
- append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
+append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})

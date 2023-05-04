@@ -16,7 +16,7 @@
 #include "plssvm/detail/type_list.hpp"       // plssvm::detail::{real_type_list, label_type_list, real_type_label_type_combination_list}
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "gtest/gtest.h"  // ::testing::Types
+#include "gtest/gtest.h"                     // ::testing::Types
 
 namespace util {
 

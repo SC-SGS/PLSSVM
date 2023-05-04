@@ -15,18 +15,18 @@
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::{always_false_v, remove_cvref_t}
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::StrEq
-#include "gtest/gtest.h"           // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, FAIL, EXPECT_LT, ASSERT_LT
+#include "fmt/core.h"                     // fmt::format
+#include "gmock/gmock-matchers.h"         // ::testing::StrEq
+#include "gtest/gtest.h"                  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, FAIL, EXPECT_LT, ASSERT_LT
 
-#include <algorithm>    // std::max, std::min
-#include <cmath>        // std::abs
-#include <limits>       // std::numeric_limits::{epsilon, max, min}
-#include <sstream>      // std::ostringstream
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <type_traits>  // std::is_same_v
-#include <vector>       // std::vector
+#include <algorithm>                      // std::max, std::min
+#include <cmath>                          // std::abs
+#include <limits>                         // std::numeric_limits::{epsilon, max, min}
+#include <sstream>                        // std::ostringstream
+#include <string>                         // std::string
+#include <string_view>                    // std::string_view
+#include <type_traits>                    // std::is_same_v
+#include <vector>                         // std::vector
 
 namespace detail {
 
@@ -386,7 +386,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] str the expected string representation of @p value
  */
 #define EXPECT_CONVERSION_TO_STRING(val, str) \
-    detail::convert_to_string<decltype(val), true>(val, str);
+    detail::convert_to_string<decltype(val), true>(val, str)
 /**
  * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.
  * @details Other tests in the test case are aborted if this test fails.
@@ -394,7 +394,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] str the expected string representation of @p value
  */
 #define ASSERT_CONVERSION_TO_STRING(val, str) \
-    detail::convert_to_string<decltype(val), false>(val, str);
+    detail::convert_to_string<decltype(val), false>(val, str)
 
 /**
  * @brief Tries to convert the string @p str to a value of type `decltype(T)`. If it succeeds, compares the value to @p val.
@@ -403,7 +403,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val the expected value after conversion
  */
 #define EXPECT_CONVERSION_FROM_STRING(str, val) \
-    detail::convert_from_string<decltype(val), true>(str, val);
+    detail::convert_from_string<decltype(val), true>(str, val)
 /**
  * @brief Tries to convert the string @p str to a value of type `decltype(T)`. If it succeeds, compares the value to @p val.
  * @details Other tests in the test case are aborted if this test fails.
@@ -411,7 +411,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val the expected value after conversion
  */
 #define ASSERT_CONVERSION_FROM_STRING(str, val) \
-    detail::convert_from_string<decltype(val), false>(str, val);
+    detail::convert_from_string<decltype(val), false>(str, val)
 
 /**
  * @brief Check whether @p statement throws an exception of type @p expected_exception and the exception's `what()` message matches the GTest @p matcher.

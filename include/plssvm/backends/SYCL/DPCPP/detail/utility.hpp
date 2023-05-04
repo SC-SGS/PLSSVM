@@ -16,8 +16,8 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
-#include <utility>  // std::pair
-#include <vector>   // std::vector
+#include <utility>                                      // std::pair
+#include <vector>                                       // std::vector
 
 namespace plssvm::dpcpp::detail {
 

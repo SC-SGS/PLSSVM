@@ -188,6 +188,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_OPENMP_BLOCK_SIZE` (default: `64`): set a specific block size used in the OpenMP kernels
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
+- `PLSSVM_ENABLE_PERFORMANCE_TRACKING`: enable gathering performance characteristics for the three executables using YAML files; example Python3 scripts to perform performance measurements and to process the resulting YAML files can be found in the `utility_scripts/` directory (requires the Python3 modules [wrapt-timeout-decorator](https://pypi.org/project/wrapt-timeout-decorator/), [`pyyaml`](https://pyyaml.org/), and [`pint`](https://pint.readthedocs.io/en/stable/))
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 
@@ -340,9 +341,12 @@ Usage:
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
-  -q, --quiet                   quiet mode (no outputs)
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
   -v, --version                 print version information
       --input training_set_file
@@ -404,9 +408,12 @@ Usage:
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
-  -q, --quiet                   quiet mode (no outputs)
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
   -v, --version                 print version information
       --test test_file          
@@ -440,9 +447,12 @@ Usage:
   -f, --format arg              the file format to output the scaled data set to (default: libsvm)
   -s, --save_filename arg       the file to which the scaling factors should be saved
   -r, --restore_filename arg    the file from which previous scaling factors should be loaded
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --use_float_as_real_type  use floats as real types instead of doubles
-  -q, --quiet                   quiet mode (no outputs)
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
   -v, --version                 print version information
       --input input_file        
@@ -537,11 +547,11 @@ import plssvm
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
-    params = plssvm.Parameter(kernel_type = plssvm.KernelFunctionType.POLYNOMIAL)
+    params = plssvm.Parameter(kernel_type=plssvm.KernelFunctionType.POLYNOMIAL)
   
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.DataSet("train_data.libsvm", scaling=plssvm.DataSetScaling(-1.0, 1.0))
+    train_data = plssvm.DataSet("train_data.libsvm", scaling=(-1.0, 1.0))
     test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
   
     # create C-SVM using the default backend and the previously defined parameter
@@ -567,6 +577,9 @@ except RuntimeError as e:
 
 **Note:** it may be necessary to set `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
 
+We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the  [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
+Note that currently not all functionality has been implemented in PLSSVM.
+The respective functions will throw a Python `AttributeError` if called.
 
 ## Citing PLSSVM
 

@@ -17,8 +17,8 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
-#include <iosfwd>  // forward declare std::ostream
-#include <string>  // std::string
+#include <iosfwd>                                        // forward declare std::ostream
+#include <string>                                        // std::string
 
 namespace plssvm::detail::cmd {
 
@@ -54,6 +54,9 @@ class parser_predict {
     std::string model_filename{};
     /// The name of the file to write the predicted labels to.
     std::string predict_filename{};
+
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    std::string performance_tracking_filename{};
 };
 
 /**

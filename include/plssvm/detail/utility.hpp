@@ -16,12 +16,12 @@
 #include "plssvm/default_value.hpp"       // plssvm::default_value
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::always_false_v
 
-#include <algorithm>    // std::remove_if, std::find
-#include <cstddef>      // std::size_t
-#include <iterator>     // std::distance
-#include <string>       // std::string
-#include <tuple>        // std::forward_as_tuple, std::get
-#include <type_traits>  // std::underlying_type_t, std::is_enum_v
+#include <algorithm>                      // std::remove_if, std::find
+#include <cstddef>                        // std::size_t
+#include <iterator>                       // std::distance
+#include <string>                         // std::string
+#include <tuple>                          // std::forward_as_tuple, std::get
+#include <type_traits>                    // std::underlying_type_t, std::is_enum_v
 
 namespace plssvm::detail {
 
@@ -33,7 +33,7 @@ namespace plssvm::detail {
     // Uses compiler specific extensions if possible.
     // Even if no extension is used, undefined behavior is still raised by
     // an empty function body and the noreturn attribute.
-#if defined(__GNUC__)  // GCC, Clang, ICC
+#if defined(__GNUC__)    // GCC, Clang, ICC
     __builtin_unreachable();
 #elif defined(_MSC_VER)  // MSVC
     __assume(false);

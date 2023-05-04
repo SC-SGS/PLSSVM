@@ -14,14 +14,14 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/parameter.hpp"              // plssvm::detail::parameter
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                        // fmt::format
 
-#include <ios>          // std::ios::failbit
-#include <istream>      // std::istream
-#include <ostream>      // std::ostream
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <vector>       // std::vector
+#include <ios>                               // std::ios::failbit
+#include <istream>                           // std::istream
+#include <ostream>                           // std::ostream
+#include <string>                            // std::string
+#include <string_view>                       // std::string_view
+#include <vector>                            // std::vector
 
 namespace plssvm {
 

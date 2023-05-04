@@ -9,8 +9,6 @@ set(PLSSVM_SYCL_TEST_NAME SYCL_tests)
 
 # list all necessary sources
 set(PLSSVM_SYCL_TEST_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
 ## is available these are also tested in the base library
@@ -20,11 +18,15 @@ set(PLSSVM_SYCL_TEST_SOURCES
 
 if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
     # add hipSYCL specific test files
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/detail/device_ptr.cpp)
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/detail/utility.cpp)
     list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/hipSYCL/sycl_csvm.cpp)
 endif ()
 
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     # add DPC++ specific test files
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/detail/device_ptr.cpp)
+    list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/detail/utility.cpp)
     list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/sycl_csvm.cpp)
 endif ()
 

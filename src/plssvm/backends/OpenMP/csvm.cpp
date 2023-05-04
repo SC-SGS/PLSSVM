@@ -13,21 +13,23 @@
 #include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_polynomial, plssvm::openmp::device_kernel_rbf
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/chrono.h"                           // directly print std::chrono literals with fmt
+#include "fmt/core.h"                             // fmt::format
+#include "fmt/ostream.h"                          // can use fmt using operator<< overloads
 
-#include <algorithm>  // std::fill, std::all_of, std::min
-#include <chrono>     // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
-#include <cmath>      // std::fma
-#include <iostream>   // std::cout, std::endl
-#include <utility>    // std::pair, std::make_pair, std::move
-#include <vector>     // std::vector
+#include <algorithm>                              // std::fill, std::all_of, std::min
+#include <chrono>                                 // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
+#include <cmath>                                  // std::fma
+#include <iostream>                               // std::cout, std::endl
+#include <utility>                                // std::pair, std::make_pair, std::move
+#include <vector>                                 // std::vector
 
 namespace plssvm::openmp {
 
@@ -57,9 +59,13 @@ void csvm::init(const target_platform target) {
         num_omp_threads = omp_get_num_threads();
     }
 
-    if (verbose) {
-        std::cout << fmt::format("\nUsing OpenMP as backend with {} threads.\n\n", num_omp_threads) << std::endl;
-    }
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing OpenMP as backend with {} threads.\n\n", plssvm::detail::tracking_entry{ "backend", "num_threads", num_omp_threads });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
+
+    // update the target platform
+    target_ = plssvm::target_platform::cpu;
 }
 
 template <typename real_type>
@@ -108,17 +114,17 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     std::chrono::milliseconds average_iteration_time{};
     std::chrono::steady_clock::time_point iteration_start_time{};
     const auto output_iteration_duration = [&]() {
-        std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
-        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
+        const std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
+        const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Done in {}.\n", iteration_duration);
         average_iteration_time += iteration_duration;
     };
 
     unsigned long long iter = 0;
     for (; iter < max_iter; ++iter) {
-        if (verbose) {
-            std::cout << fmt::format("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
-        }
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Ad = A * d (q = A * d)
@@ -147,9 +153,7 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
         delta = transposed{ r } * r;
         // if we are exact enough stop CG iterations
         if (delta <= eps * eps * delta0) {
-            if (verbose) {
-                output_iteration_duration();
-            }
+            output_iteration_duration();
             break;
         }
 
@@ -158,18 +162,18 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
         // d = beta * d + r
         d = beta * d + r;
 
-        if (verbose) {
-            output_iteration_duration();
-        }
+        output_iteration_duration();
     }
-    if (verbose) {
-        std::cout << fmt::format("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.",
-                                 std::min(iter + 1, max_iter),
-                                 delta,
-                                 eps * eps * delta0,
-                                 average_iteration_time / std::min(iter + 1, max_iter))
-                  << std::endl;
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
+                detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
+                detail::tracking_entry{ "cg", "max_iterations", max_iter },
+                detail::tracking_entry{ "cg", "epsilon", eps },
+                detail::tracking_entry{ "cg", "residuum", delta },
+                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
+                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
+    detail::log(verbosity_level::libsvm,
+                "optimization finished, #iter = {}\n", std::min(iter + 1, max_iter));
 
     // calculate bias
     const real_type bias = b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha);

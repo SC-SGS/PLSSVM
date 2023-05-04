@@ -13,12 +13,12 @@
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
-#include <map>            // std::map
-#include <set>            // std::set
-#include <type_traits>    // std::is_same_v
-#include <unordered_map>  // std::unordered_map
-#include <unordered_set>  // std::unordered_set
-#include <vector>         // std::vector
+#include <map>                     // std::map
+#include <set>                     // std::set
+#include <type_traits>             // std::is_same_v
+#include <unordered_map>           // std::unordered_map
+#include <unordered_set>           // std::unordered_set
+#include <vector>                  // std::vector
 
 TEST(TypeTraits, always_false) {
     EXPECT_FALSE(plssvm::detail::always_false_v<void>);

@@ -13,20 +13,20 @@
 #define PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
+#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"       // plssvm::hipsycl::detail::queue (PImpl)
 
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"     // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/gpu_csvm.hpp"                        // plssvm::detail::gpu_csvm
+#include "plssvm/detail/type_traits.hpp"                       // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"                                // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                         // plssvm::target_platform
 
-#include "igor/igor.hpp"  // igor::parser
+#include "igor/igor.hpp"                                       // igor::parser
 
-#include <cstddef>      // std::size_t
-#include <type_traits>  // std::is_same_v, std::true_type
-#include <utility>      // std::forward
+#include <cstddef>                                             // std::size_t
+#include <type_traits>                                         // std::is_same_v, std::true_type
+#include <utility>                                             // std::forward
 
 namespace plssvm {
 
@@ -108,10 +108,32 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     }
 
     /**
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     */
+    csvm &operator=(csvm &&) noexcept = default;
+    /**
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
      * @details Terminates the program, if any asynchronous exception is thrown.
      */
     ~csvm() override;
+
+    /**
+     * @brief Return the kernel invocation type (nd_range or the SYCL specific hierarchical kernel) used in this SYCL SVM.
+     * @return the SYCL kernel invocation type (`[[nodiscard]]`)
+     */
+    [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
 
   protected:
     /**

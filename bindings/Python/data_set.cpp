@@ -9,23 +9,50 @@
 #include "plssvm/data_set.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
-                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
+#include "utility.hpp"                  // check_kwargs_for_correctness, assemble_unique_class_name,
+                                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
-#include "fmt/core.h"           // fmt::format
-#include "fmt/format.h"         // fmt::join
-#include "pybind11/numpy.h"     // py::array_t
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
-#include "pybind11/stl.h"       // support for STL types
+#include "fmt/core.h"                   // fmt::format
+#include "fmt/format.h"                 // fmt::join
+#include "pybind11/numpy.h"             // py::array_t
+#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
+#include "pybind11/stl.h"               // support for STL types
 
-#include <cstddef>      // std::size_t
-#include <string>       // std::string
-#include <tuple>        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>  // std::is_same_v
-#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
-#include <vector>       // std::vector
+#include <array>                        // std::array
+#include <cstddef>                      // std::size_t
+#include <string>                       // std::string
+#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>                  // std::is_same_v
+#include <utility>                      // std::move, std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
+
+template <typename data_set_type>
+typename data_set_type::scaling create_scaling_object(const py::kwargs &args) {
+    using real_type = typename data_set_type::real_type;
+
+    if (args.contains("scaling")) {
+        typename data_set_type::scaling scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
+
+        // try to directly convert it to a plssvm::data_set_type::scaling object
+        try {
+            scaling = args["scaling"].cast<typename data_set_type::scaling>();
+        } catch (const py::cast_error &e) {
+            // can't cast to plssvm::data_set_type::scaling
+            // -> try an std::array<real_type, 2> instead!
+            try {
+                const auto interval = args["scaling"].cast<std::array<real_type, 2>>();
+                scaling = typename data_set_type::scaling{ interval[0], interval[1] };
+            } catch (...) {
+                // rethrow exception if this also did not succeed
+                throw;
+            }
+        }
+        return scaling;
+    } else {
+        throw py::attribute_error{ "Can't extract scaling information, no scaling keyword argument given!" };
+    }
+}
 
 template <typename real_type, typename label_type>
 void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
@@ -54,6 +81,10 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
     // bind the plssvm::data_set internal "scaling" struct
     py::class_<typename data_set_type::scaling>(m, class_name_scaling.c_str())
         .def(py::init<real_type, real_type>(), "create new scaling factors for the range [lower, upper]", py::arg("lower"), py::arg("upper"))
+        .def(py::init([](const std::array<real_type, 2> interval) {
+                 return typename data_set_type::scaling{ interval[0], interval[1] };
+             }),
+             "create new scaling factors for the range [lower, upper]")
         .def(py::init<const std::string &>(), "read the scaling factors from the file")
         .def("save", &data_set_type::scaling::save, "save the scaling factors to a file")
         .def_readonly("scaling_interval", &data_set_type::scaling::scaling_interval, "the interval to which the data points are scaled")
@@ -79,11 +110,11 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
 
                         // call the constructor corresponding to the provided keyword arguments
                         if (args.contains("file_format") && args.contains("scaling")) {
-                            return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), args["scaling"].cast<typename data_set_type::scaling>() };
+                            return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), create_scaling_object<data_set_type>(args) };
                         } else if (args.contains("file_format")) {
                             return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
                         } else if (args.contains("scaling")) {
-                            return data_set_type{ file_name, args["scaling"].cast<typename data_set_type::scaling>() };
+                            return data_set_type{ file_name, create_scaling_object<data_set_type>(args) };
                         } else {
                             return data_set_type{ file_name };
                         }
@@ -95,7 +126,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         check_kwargs_for_correctness(args, { "scaling" });
 
                         if (args.contains("scaling")) {
-                            return data_set_type{ pyarray_to_matrix(data), args["scaling"].cast<typename data_set_type::scaling>() };
+                            return data_set_type{ pyarray_to_matrix(data), create_scaling_object<data_set_type>(args) };
                         } else {
                             return data_set_type{ pyarray_to_matrix(data) };
                         }
@@ -108,7 +139,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             check_kwargs_for_correctness(args, { "scaling" });
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels), create_scaling_object<data_set_type>(args) };
                             } else {
                                 return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
                             }
@@ -121,19 +152,19 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                             check_kwargs_for_correctness(args, { "scaling" });
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels), create_scaling_object<data_set_type>(args) };
                             } else {
                                 return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels) };
                             }
                         }),
                         "create a new data set with labels from a numpy array given additional optional parameters");
         // if the requested label_type is std::string, accept a python list (which can contain py::str) and convert them to a std::string internally
-        py_data_set.def(py::init([](py::array_t<real_type> data, py::list labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<real_type> data, const py::list &labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels), args["scaling"].cast<typename data_set_type::scaling>() };
+                                return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels), create_scaling_object<data_set_type>(args) };
                             } else {
                                 return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels) };
                             }
@@ -141,7 +172,8 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         "create a new data set with labels from a Python list given additional optional parameters");
     }
 
-    py_data_set.def("save", &data_set_type::save, "save the data set to a file")
+    py_data_set.def("save", py::overload_cast<const std::string &, plssvm::file_format_type>(&data_set_type::save, py::const_), "save the data set to a file using the provided file format type")
+        .def("save", py::overload_cast<const std::string &>(&data_set_type::save, py::const_), "save the data set to a file automatically deriving the file format type from the file extension")
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
         .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")

@@ -15,15 +15,15 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::split
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../custom_test_macros.hpp"         // EXPECT_THROW_WHAT
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex}
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
+#include "fmt/core.h"                        // fmt::format
+#include "gmock/gmock-matchers.h"            // ::testing::{HasSubstr, ContainsRegex}
+#include "gtest/gtest.h"                     // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
 
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <vector>       // std::vector
+#include <string>                            // std::string
+#include <string_view>                       // std::string_view
+#include <vector>                            // std::vector
 
 // helper function returning an exception used to be able to name the source location function
 template <typename ExceptionType>

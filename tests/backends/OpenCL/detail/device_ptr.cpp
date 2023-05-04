@@ -13,11 +13,11 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
 
-#include "../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "../../generic_device_ptr_tests.h"                 // generic device pointer tests to instantiate
 
-#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "gtest/gtest.h"                                    // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
-#include <vector>  // std::vector
+#include <vector>                                           // std::vector
 
 template <typename T>
 struct device_ptr_test_type {
@@ -25,8 +25,8 @@ struct device_ptr_test_type {
     using queue_type = plssvm::opencl::detail::command_queue;
 
     static const queue_type &default_queue() {
-        static std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
-        static plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].devices[0] };
+        static const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
+        static const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].devices[0] };
         return queue;
     }
 };

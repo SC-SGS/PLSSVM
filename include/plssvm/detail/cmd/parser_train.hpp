@@ -20,9 +20,9 @@
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include <cstddef>  // std::size_t
-#include <iosfwd>   // forward declare std::ostream
-#include <string>   // std::string
+#include <cstddef>                                          // std::size_t
+#include <iosfwd>                                           // forward declare std::ostream
+#include <string>                                           // std::string
 
 namespace plssvm::detail::cmd {
 
@@ -66,6 +66,9 @@ class parser_train {
     std::string input_filename{};
     /// The name of the model file to write the learned support vectors to/to parse the saved model from.
     std::string model_filename{};
+
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    std::string performance_tracking_filename{};
 };
 
 /**

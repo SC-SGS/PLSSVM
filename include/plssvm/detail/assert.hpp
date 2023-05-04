@@ -15,13 +15,13 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "fmt/color.h"  // fmt::emphasis, fmt::fg, fmt::color
-#include "fmt/core.h"   // fmt::format
+#include "fmt/color.h"                            // fmt::emphasis, fmt::fg, fmt::color
+#include "fmt/core.h"                             // fmt::format
 
-#include <cstdlib>      // std::abort
-#include <iostream>     // std::cerr, std::endl
-#include <string_view>  // std::string_view
-#include <utility>      // std::forward
+#include <cstdlib>                                // std::abort
+#include <iostream>                               // std::cerr, std::endl
+#include <string_view>                            // std::string_view
+#include <utility>                                // std::forward
 
 namespace plssvm::detail {
 

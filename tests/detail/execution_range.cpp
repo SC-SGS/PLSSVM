@@ -10,13 +10,13 @@
 
 #include "plssvm/detail/execution_range.hpp"  // plssvm::detail::execution_range
 
-#include "../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+#include "../custom_test_macros.hpp"          // EXPECT_CONVERSION_TO_STRING
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_DEATH
+#include "gtest/gtest.h"                      // TEST, EXPECT_EQ, EXPECT_DEATH
 
-#include <array>             // std::array
-#include <cstddef>           // std::size_t
-#include <initializer_list>  // std::initializer_list
+#include <array>                              // std::array
+#include <cstddef>                            // std::size_t
+#include <initializer_list>                   // std::initializer_list
 
 /*
  * @brief Tests whether the grid and block in the plssvm::detail::execution_range @p range match the expected values.

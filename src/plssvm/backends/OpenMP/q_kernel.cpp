@@ -11,7 +11,7 @@
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
 
-#include <vector>  // std::vector
+#include <vector>                            // std::vector
 
 namespace plssvm::openmp {
 

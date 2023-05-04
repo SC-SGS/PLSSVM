@@ -15,8 +15,8 @@
 
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include <iosfwd>  // forward declare std::ostream
-#include <string>  // std::string
+#include <iosfwd>                        // forward declare std::ostream
+#include <string>                        // std::string
 
 namespace plssvm::detail::cmd {
 
@@ -34,9 +34,9 @@ class parser_scale {
     parser_scale(int argc, char **argv);
 
     /// The lower bound of the scaled data values.
-    double lower{ -1 };
+    double lower{ -1.0 };
     /// The upper bound of the scaled data values.
-    double upper{ +1 };
+    double upper{ +1.0 };
     /// The file type (currently either LIBSVM or ARFF) to which the scaled data should be written to.
     file_format_type format{ file_format_type::libsvm };
 
@@ -53,6 +53,9 @@ class parser_scale {
     std::string save_filename{};
     /// The name of the file from which the scaling factors should be restored.
     std::string restore_filename{};
+
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    std::string performance_tracking_filename{};
 };
 
 /**

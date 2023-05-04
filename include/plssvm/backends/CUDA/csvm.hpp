@@ -18,9 +18,9 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
-#include <cstddef>      // std::size_t
-#include <type_traits>  // std::true_type
-#include <utility>      // std::forward
+#include <cstddef>                                     // std::size_t
+#include <type_traits>                                 // std::true_type
+#include <utility>                                     // std::forward
 
 namespace plssvm {
 
@@ -94,6 +94,22 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
         this->init(target);
     }
 
+    /**
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     */
+    csvm &operator=(csvm &&) noexcept = default;
     /**
      * @brief Wait for all operations on all CUDA devices to finish.
      * @details Terminates the program, if any exception is thrown.

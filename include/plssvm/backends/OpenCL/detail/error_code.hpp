@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_OPENCL_DETAIL_ERROR_CODE_HPP_
 #pragma once
 
-#include "CL/cl.h"  // cl_int, CL_SUCCESS
+#include "CL/cl.h"      // cl_int, CL_SUCCESS
 
 #include <iosfwd>       // forward declare std::ostream
 #include <string_view>  // std::string_view

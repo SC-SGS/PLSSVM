@@ -15,7 +15,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include <string_view>  // std::string_view
+#include <string_view>                       // std::string_view
 
 /**
  * @def PLSSVM_CREATE_EXCEPTION_TYPE_NAME

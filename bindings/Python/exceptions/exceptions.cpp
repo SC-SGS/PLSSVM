@@ -8,7 +8,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"
 
-#include "utility.hpp"  // register_py_exception
+#include "utility.hpp"          // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::exception
 

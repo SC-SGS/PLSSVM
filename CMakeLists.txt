@@ -42,6 +42,8 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/layout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/logger.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
@@ -49,7 +51,6 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/version.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/constants.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
@@ -76,13 +77,15 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
+        $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
         -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized
         -fPIC>
-        $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /bigobj /wd4459>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459>>
         )
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC'")
+
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
@@ -94,7 +97,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
         )
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
         )
 
 
@@ -107,7 +110,7 @@ if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
@@ -505,6 +508,16 @@ if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
     endif ()
 endif ()
 
+## enable or disable the performance tracker
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
+
+    # add target definitions
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+endif ()
+
+
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
 ########################################################################################################################
@@ -601,6 +614,7 @@ configure_file(
 ########################################################################################################################
 ##                                                 generate man pages                                                 ##
 ########################################################################################################################
+## assemble the SYCL manpage entry
 message(STATUS "Generating manpage files.")
 string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
@@ -618,6 +632,16 @@ choose the kernel invocation type when using SYCL as backend: automatic|nd_range
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+## assemble the performance tracker manpage entry
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "
+.TP
+.B --performance_tracking
+choose the output YAML file where the performance tracking entries should be stored; if not provided, the results are dumped to stderr
+")
+endif ()
+
+## configure the manpage files
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
@@ -627,6 +651,11 @@ set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}"
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        @ONLY
+)
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1
         @ONLY
 )
 

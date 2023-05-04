@@ -10,10 +10,10 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+#include "../../../custom_test_macros.hpp"               // EXPECT_CONVERSION_TO_STRING
 
-#include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
-#include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW, EXPECT_TRUE, EXPECT_FALSE
+#include "CL/cl.h"                                       // CL_SUCCESS, CL_DEVICE_NOT_FOUND
+#include "gtest/gtest.h"                                 // TEST, EXPECT_GE, EXPECT_NO_THROW, EXPECT_TRUE, EXPECT_FALSE
 
 TEST(OpenCLErrorCode, default_construct) {
     // the default error code should signal success
@@ -50,13 +50,13 @@ TEST(OpenCLErrorCode, clear) {
 
 TEST(OpenCLErrorCode, value) {
     // default construct the error code
-    plssvm::opencl::detail::error_code errc{};
+    const plssvm::opencl::detail::error_code errc{};
     // get the value
     EXPECT_EQ(errc.value(), CL_SUCCESS);
 }
 TEST(OpenCLErrorCode, message) {
     // default construct the error code
-    plssvm::opencl::detail::error_code errc{};
+    const plssvm::opencl::detail::error_code errc{};
     // get the value as a string
     EXPECT_EQ(errc.message(), "CL_SUCCESS");
 }
@@ -90,9 +90,9 @@ TEST(OpenCLErrorCode, operator_ostream) {
 }
 TEST(OpenCLErrorCode, operator_equal) {
     // test two error codes for equality
-    plssvm::opencl::detail::error_code errc1{};
-    plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
-    plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
+    const plssvm::opencl::detail::error_code errc1{};
+    const plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
+    const plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
 
     EXPECT_TRUE(errc1 == errc1);
     EXPECT_TRUE(errc1 == errc2);
@@ -101,9 +101,9 @@ TEST(OpenCLErrorCode, operator_equal) {
 }
 TEST(OpenCLErrorCode, operator_unequal) {
     // test two error codes for equality
-    plssvm::opencl::detail::error_code errc1{};
-    plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
-    plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
+    const plssvm::opencl::detail::error_code errc1{};
+    const plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
+    const plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
 
     EXPECT_FALSE(errc1 != errc1);
     EXPECT_FALSE(errc1 != errc2);

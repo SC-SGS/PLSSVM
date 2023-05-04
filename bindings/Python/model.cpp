@@ -9,16 +9,17 @@
 #include "plssvm/model.hpp"
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
+#include "utility.hpp"                  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 
-#include "fmt/core.h"           // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "fmt/core.h"                   // fmt::format
+#include "pybind11/pybind11.h"          // py::module_, py::class_, py::return_value_policy
+#include "pybind11/stl.h"               // support for STL types: std::vector
 
-#include <cstddef>  // std::size_t
-#include <string>   // std::string
-#include <tuple>    // std::tuple_element_t, std::tuple_size_v
-#include <utility>  // std::integer_sequence, std::make_integer_sequence
+#include <cstddef>                      // std::size_t
+#include <string>                       // std::string
+#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>                  // std::is_same_v
+#include <utility>                      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
@@ -39,6 +40,25 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
                 return matrix_to_pyarray(self.support_vectors());
             },
             "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def(
+            "labels", [](const model_type &self) {
+                if constexpr (std::is_same_v<label_type, std::string>) {
+                    return self.labels();
+                } else {
+                    return vector_to_pyarray(self.labels());
+                }
+            },
+            "the labels")
+        .def("num_different_labels", &model_type::num_different_labels, "the number of different labels")
+        .def(
+            "different_labels", [](const model_type &self) {
+                if constexpr (std::is_same_v<label_type, std::string>) {
+                    return self.different_labels();
+                } else {
+                    return vector_to_pyarray(self.different_labels());
+                }
+            },
+            "the different labels")
         .def(
             "weights", [](const model_type &self) {
                 return vector_to_pyarray(self.weights());

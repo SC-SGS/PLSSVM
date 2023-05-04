@@ -10,9 +10,9 @@
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 
-#include "../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "../../generic_device_ptr_tests.h"               // generic device pointer tests to instantiate
 
-#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "gtest/gtest.h"                                  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
 
 template <typename T>
 struct device_ptr_test_type {
@@ -20,7 +20,7 @@ struct device_ptr_test_type {
     using queue_type = int;
 
     static const queue_type &default_queue() {
-        static queue_type queue = 0;
+        static const queue_type queue = 0;
         return queue;
     }
 };

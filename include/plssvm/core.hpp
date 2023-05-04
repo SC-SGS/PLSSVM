@@ -13,24 +13,24 @@
 #define PLSSVM_CORE_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"          // the base C-SVM every backend is inheriting from
-#include "plssvm/csvm_factory.hpp"  // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
+#include "plssvm/csvm.hpp"                                  // the base C-SVM every backend is inheriting from
+#include "plssvm/csvm_factory.hpp"                          // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 
-#include "plssvm/constants.hpp"  // verbosity flag und compile-time constants
-#include "plssvm/parameter.hpp"  // the C-SVM parameter
+#include "plssvm/constants.hpp"                             // verbosity flag und compile-time constants
+#include "plssvm/parameter.hpp"                             // the C-SVM parameter
 
-#include "plssvm/data_set.hpp"  // a data set used for training a C-SVM
-#include "plssvm/model.hpp"     // the model as a result of training a C-SVM
+#include "plssvm/data_set.hpp"                              // a data set used for training a C-SVM
+#include "plssvm/model.hpp"                                 // the model as a result of training a C-SVM
 
-#include "plssvm/backend_types.hpp"          // all supported backend types
-#include "plssvm/kernel_function_types.hpp"  // all supported kernel function types
-#include "plssvm/target_platforms.hpp"       // all supported target platforms
+#include "plssvm/backend_types.hpp"                         // all supported backend types
+#include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
+#include "plssvm/target_platforms.hpp"                      // all supported target platforms
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // the SYCL specific kernel invocation typ
 
-#include "plssvm/exceptions/exceptions.hpp"  // exception hierarchy
-#include "plssvm/version/version.hpp"        // version information
+#include "plssvm/exceptions/exceptions.hpp"                 // exception hierarchy
+#include "plssvm/version/version.hpp"                       // version information
 
 /// The main namespace containing all public API functions.
 namespace plssvm {}

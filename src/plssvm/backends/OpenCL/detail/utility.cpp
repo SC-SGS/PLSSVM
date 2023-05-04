@@ -15,6 +15,7 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::kernel_index_type, plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
@@ -22,28 +23,29 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
-                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
-                          // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
-                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
-#include "fmt/core.h"     // fmt::print, fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "CL/cl.h"                                          // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
+                                                            // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
+                                                            // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
+                                                            //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
+#include "fmt/core.h"                                       // fmt::print, fmt::format
+#include "fmt/ostream.h"                                    // can use fmt using operator<< overloads
 
-#include <algorithm>    // std::count_if
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
-#include <fstream>      // std::ifstream, std::ofstream
-#include <functional>   // std::hash
-#include <ios>          // std::ios_base, std::streamsize
-#include <iostream>     // std::cout, std::endl
-#include <iterator>     // std::istreambuf_iterator
-#include <limits>       // std::numeric_limits
-#include <map>          // std::map
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tie
-#include <utility>      // std::pair, std::make_pair, std::move
-#include <vector>       // std::vector
+#include <algorithm>                                        // std::count_if
+#include <array>                                            // std::array
+#include <cstddef>                                          // std::size_t
+#include <filesystem>                                       // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
+#include <fstream>                                          // std::ifstream, std::ofstream
+#include <functional>                                       // std::hash
+#include <ios>                                              // std::ios_base, std::streamsize
+#include <iostream>                                         // std::cout, std::endl
+#include <iterator>                                         // std::istreambuf_iterator
+#include <limits>                                           // std::numeric_limits
+#include <map>                                              // std::map
+#include <string>                                           // std::string
+#include <string_view>                                      // std::string_view
+#include <tuple>                                            // std::tie
+#include <utility>                                          // std::pair, std::make_pair, std::move
+#include <vector>                                           // std::vector
 
 namespace plssvm::opencl::detail {
 
@@ -73,7 +75,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     // iterate over all platforms and save all available devices
     std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
     // get number of platforms
-    cl_uint num_platforms;
+    cl_uint num_platforms{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(0, nullptr, &num_platforms), "error retrieving the number of available platforms");
     // get platforms
     std::vector<cl_platform_id> platform_ids(num_platforms);
@@ -85,7 +87,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     // enumerate all available platforms and retrieve the associated devices
     for (const cl_platform_id &platform : platform_ids) {
         // get devices associated with current platform
-        cl_uint num_devices;
+        cl_uint num_devices{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices), "error retrieving the number of devices");
         // get devices
         std::vector<cl_device_id> device_ids(num_devices);
@@ -93,7 +95,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
 
         for (const cl_device_id &device : device_ids) {
             // get device type
-            cl_device_type device_type;
+            cl_device_type device_type{};
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type");
 
             if (device_type == CL_DEVICE_TYPE_CPU) {
@@ -105,7 +107,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
                 // the current device is a GPU
                 // get vendor string
-                std::size_t vendor_string_size;
+                std::size_t vendor_string_size{};
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size");
                 std::string vendor_string(vendor_string_size, '\0');
                 PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string_size, vendor_string.data(), nullptr), "error retrieving device vendor name");
@@ -129,6 +131,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
     if (target == target_platform::automatic) {
         // get the target_platforms available on this system from the platform_devices map
         std::vector<target_platform> system_devices;
+        system_devices.reserve(platform_devices.size());
         for (const auto &[key, value] : platform_devices) {
             system_devices.push_back(key.second);
         }
@@ -146,8 +149,8 @@ void device_assert(const error_code ec, const std::string_view msg) {
     std::vector<context> contexts;
     for (auto &[platform, devices] : platform_devices) {
         // create context and associated OpenCL platform with it
-        cl_context_properties context_properties[] = { CL_CONTEXT_PLATFORM, (cl_context_properties) platform.first, 0 };
-        cl_context cont = clCreateContext(context_properties, static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
+        std::array<cl_context_properties, 3> context_properties = { CL_CONTEXT_PLATFORM, (cl_context_properties) platform.first, 0 };
+        cl_context cont = clCreateContext(context_properties.data(), static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context");
         // add OpenCL context to vector of context wrappers
         contexts.emplace_back(cont, platform.first, std::move(devices));
@@ -162,10 +165,10 @@ void device_synchronize(const command_queue &queue) {
 
 std::string get_device_name(const command_queue &queue) {
     // get device
-    cl_device_id device_id;
+    cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
     // get device name
-    std::size_t name_length;
+    std::size_t name_length{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size");
     std::string device_name(name_length, '\0');
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name");
@@ -196,13 +199,13 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
 
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
-        std::size_t log_size;
+        std::size_t log_size{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size");
         if (log_size > 0) {
             // allocate memory for the log
             std::string log(log_size, ' ');
             // get the log
-            error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+            const error_code err = clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
             // print the log
             PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error building OpenCL program on device {} ({})", device_idx, log));
         }
@@ -279,9 +282,8 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
     }
 
     if (use_cached_binaries != caching_status::success) {
-        if (verbose) {
-            std::cout << fmt::format("Building OpenCL kernels from source (reason: {}).", caching_status_to_string(use_cached_binaries)) << std::endl;
-        }
+        plssvm::detail::log(verbosity_level::full,
+                            "Building OpenCL kernels from source (reason: {}).", caching_status_to_string(use_cached_binaries));
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
@@ -316,18 +318,16 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
-        if (verbose) {
-            std::cout << fmt::format("Cached OpenCL kernel binaries in {}.", cache_dir_name) << std::endl;
-        }
+        plssvm::detail::log(verbosity_level::full,
+                            "Cached OpenCL kernel binaries in {}.", cache_dir_name);
 
         // release resource
         if (program) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources");
         }
     } else {
-        if (verbose) {
-            std::cout << fmt::format("Using cached OpenCL kernel binaries from {}.", cache_dir_name) << std::endl;
-        }
+        plssvm::detail::log(verbosity_level::full,
+                            "Using cached OpenCL kernel binaries from {}.", cache_dir_name);
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
             std::ifstream f{ file };
@@ -335,7 +335,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             // touch all characters in file
             f.ignore(std::numeric_limits<std::streamsize>::max());
             // get number of visited characters
-            std::streamsize num_bytes = f.gcount();
+            const std::streamsize num_bytes = f.gcount();
             // since ignore will have set eof
             f.clear();
             // jump to file start

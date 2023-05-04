@@ -69,7 +69,7 @@ docs/*
 !docs/CMakeLists.txt
 !docs/plssvm-train.1.in
 !docs/plssvm-predict.1.in
-!docs/plssvm-scale.1
+!docs/plssvm-scale.1.in
 
 # data in test folder
 !tests/data/

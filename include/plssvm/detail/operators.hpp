@@ -15,8 +15,8 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::fma
-#include <vector>  // std::vector
+#include <cmath>                     // std::fma
+#include <vector>                    // std::vector
 
 /**
  * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION

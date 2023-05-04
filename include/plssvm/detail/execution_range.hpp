@@ -15,11 +15,11 @@
 
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 
-#include <algorithm>         // std::copy
-#include <array>             // std::array
-#include <cstddef>           // std::size_t
-#include <initializer_list>  // std::initializer_list
-#include <iosfwd>            // forward declare std::ostream
+#include <algorithm>                      // std::copy
+#include <array>                          // std::array
+#include <cstddef>                        // std::size_t
+#include <initializer_list>               // std::initializer_list
+#include <iosfwd>                         // forward declare std::ostream
 
 namespace plssvm::detail {
 

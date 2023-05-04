@@ -9,7 +9,7 @@
  * @brief Defines the functions used for prediction for the C-SVM using the OpenCL backend.
  */
 
-//#include "detail/atomics.cl"  // atomicAdd -> included via string concatenation when building the device kernels
+// #include "detail/atomics.cl"  // atomicAdd -> included via string concatenation when building the device kernels
 
 /**
  * @brief Calculate the `w` vector to speed up the prediction of the labels for data points using the linear kernel function.

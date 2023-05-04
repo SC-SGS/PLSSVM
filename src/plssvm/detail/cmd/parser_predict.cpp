@@ -10,19 +10,20 @@
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
-#include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"     // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "cxxopts.hpp"                                   // cxxopts::{Options, value, ParseResult}
+#include "fmt/color.h"                                   // fmt::fg, fmt::color::orange
+#include "fmt/core.h"                                    // fmt::format, fmt::join
+#include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
 
-#include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // std::exception
-#include <filesystem>  // std::filesystem::path
-#include <iostream>    // std::cout, std::cerr, std::endl
+#include <cstdlib>                                       // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>                                     // std::exception
+#include <filesystem>                                    // std::filesystem::path
+#include <iostream>                                      // std::cout, std::cerr, std::clog, std::endl
 
 namespace plssvm::detail::cmd {
 
@@ -46,9 +47,13 @@ parser_predict::parser_predict(int argc, char **argv) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
             ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
+#endif
             ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
             ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
-            ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(fmt::format("{}", !verbose_default)))
+            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
+            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("v,version", "print version information", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -95,6 +100,14 @@ parser_predict::parser_predict(int argc, char **argv) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // parse SYCL implementation used in the SYCL backend
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+
+    // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
+    if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                 "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
+                                 sycl_implementation_type)
+                  << std::endl;
+    }
 #endif
 
     // parse whether strings should be used as labels
@@ -104,7 +117,23 @@ parser_predict::parser_predict(int argc, char **argv) {
     float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
 
     // parse whether output is quiet or not
-    plssvm::verbose = !result["quiet"].as<bool>();
+    const bool quiet = result["quiet"].as<bool>();
+
+    // -q/--quiet has precedence over --verbosity
+    if (result["verbosity"].count()) {
+        const verbosity_level verb = result["verbosity"].as<verbosity_level>();
+        if (quiet && verb != verbosity_level::quiet) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet",
+                                     verb)
+                      << std::endl;
+            verbosity = verbosity_level::quiet;
+        } else {
+            verbosity = verb;
+        }
+    } else if (quiet) {
+        verbosity = verbosity_level::quiet;
+    }
 
     // parse test data filename
     if (!result.count("test")) {
@@ -129,6 +158,11 @@ parser_predict::parser_predict(int argc, char **argv) {
         const std::filesystem::path input_path{ input_filename };
         predict_filename = input_path.filename().string() + ".predict";
     }
+
+    // parse performance tracking filename
+    if (result.count("performance_tracking")) {
+        performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
+    }
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
@@ -137,12 +171,14 @@ std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
                "real_type: {}\n"
                "input file (data set): '{}'\n"
                "input file (model): '{}'\n"
-               "output file (prediction): '{}'\n",
+               "output file (prediction): '{}'\n"
+               "performance tracking file: '{}'\n",
                params.strings_as_labels ? "std::string" : "int (default)",
                params.float_as_real_type ? "float" : "double (default)",
                params.input_filename,
                params.model_filename,
-               params.predict_filename);
+               params.predict_filename,
+               params.performance_tracking_filename);
 }
 
 }  // namespace plssvm::detail::cmd
