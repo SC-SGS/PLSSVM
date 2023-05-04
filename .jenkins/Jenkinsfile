@@ -110,6 +110,7 @@ pipeline {
                         builders[label] = {
                             node(label) {
                                 sh '''
+                                  pwd
                                    if [ ! -f ninja ]; then
                                        wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
                                        unzip ninja-linux.zip
@@ -234,15 +235,17 @@ pipeline {
                     }
                     steps{
                         script{
-                            def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
+                            def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs09' ,'pcsgs11']
                             def builders = [: ]
                             for (x in labels){
                                 def label = x
                                 builders[label] = {
                                     node(label) {
                                         sh '''
-                                            . /usr/local.nfs/Modules/latest/init/sh
-                                            module load cuda/11.4.3
+                                            if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                                                . /usr/local.nfs/Modules/latest/init/sh
+                                                module load cuda/11.4.3
+                                            fi
                                             if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
                                                 rm -rf hipSYCL
                                                 rm -rf "$HIPSYCL_PATH"
@@ -262,28 +265,6 @@ pipeline {
                                         '''
                                     }
                                 }
-                                 builders['pcsgs09'] = {
-                                     node('pcsgs09') {
-                                         sh '''
-                                             if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
-                                                 rm -rf hipSYCL
-                                                 rm -rf "$HIPSYCL_PATH"
-
-                                                 mkdir $HIPSYCL_PATH
-                                                 git clone https://github.com/illuhad/hipSYCL.git hipSYCL
-                                                 cd hipSYCL
-                                                 git checkout 012e16d6d3d57330c176d7d536f657b0d8a9a197
-                                                 mkdir build
-                                                 cd build
-                                                 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
-                                                 make -j
-                                                 make install
-                                                 cd $WORKSPACE
-                                                 rm -rf hipSYCL
-                                             fi
-                                         '''
-                                     }
-                                 }
                             }
                             parallel builders
                         }
