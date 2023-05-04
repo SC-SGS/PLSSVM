@@ -172,7 +172,8 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         "create a new data set with labels from a Python list given additional optional parameters");
     }
 
-    py_data_set.def("save", &data_set_type::save, "save the data set to a file")
+    py_data_set.def("save", py::overload_cast<const std::string &, plssvm::file_format_type>(&data_set_type::save, py::const_), "save the data set to a file using the provided file format type")
+        .def("save", py::overload_cast<const std::string &>(&data_set_type::save, py::const_), "save the data set to a file automatically deriving the file format type from the file extension")
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
         .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")

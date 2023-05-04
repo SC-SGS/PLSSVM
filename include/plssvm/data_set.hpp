@@ -174,6 +174,13 @@ class data_set {
      * @param[in] format the file format
      */
     void save(const std::string &filename, file_format_type format) const;
+    /**
+     * @brief Save the data points and potential labels of this data set to the file @p filename.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @param[in] filename the file to save the data points and labels to
+     * @throws plssvm::data_set_exception if the file extension isn't one of `libsvm` or `arff`
+     */
+    void save(const std::string &filename) const;
 
     /**
      * @brief Return the data points in this data set.
@@ -601,6 +608,17 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
                 detail::tracking_entry{ "data_set_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "data_set_write", "format", format },
                 detail::tracking_entry{ "data_set_write", "filename", filename });
+}
+
+template <typename T, typename U>
+void data_set<T, U>::save(const std::string &filename) const {
+    if (detail::ends_with(filename, ".libsvm")) {
+        this->save(filename, file_format_type::libsvm);
+    } else if (detail::ends_with(filename, ".arff")) {
+        this->save(filename, file_format_type::arff);
+    } else {
+        throw data_set_exception(fmt::format("Unrecognized file extension for file \"{}\" (must be one of: .libsvm or .arff)!", filename));
+    }
 }
 
 template <typename T, typename U>

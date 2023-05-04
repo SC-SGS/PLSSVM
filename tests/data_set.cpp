@@ -926,6 +926,19 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
 };
 TYPED_TEST_SUITE(DataSetSave, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
+TYPED_TEST(DataSetSave, save_invalid_automatic_format) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
+
+    // try to save to temporary file with an unrecognized extension
+    EXPECT_THROW_WHAT(data.save("test.txt");,
+                      plssvm::data_set_exception,
+                      "Unrecognized file extension for file \"test.txt\" (must be one of: .libsvm or .arff)!");
+}
+
 TYPED_TEST(DataSetSave, save_libsvm_with_label) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
@@ -934,6 +947,30 @@ TYPED_TEST(DataSetSave, save_libsvm_with_label) {
     const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
     // save to temporary file
     data.save(this->filename, plssvm::file_format_type::libsvm);
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('#');
+
+    // create regex to check for the correct output
+    ASSERT_EQ(reader.num_lines(), this->data_points.size());
+    const std::regex reg{ ".+ ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?){4}", std::regex::extended };
+    for (const std::string_view line : reader.lines()) {
+        EXPECT_TRUE(std::regex_match(std::string{ line }, reg));
+    }
+}
+TYPED_TEST(DataSetSave, save_libsvm_automatic_format) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
+    // rename temporary such that it ends with .libsvm
+    const std::string old_filename = this->filename;
+    this->filename += ".libsvm";
+    std::filesystem::rename(old_filename, this->filename);
+    // save to temporary file
+    data.save(this->filename);
 
     // read the file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -975,6 +1012,40 @@ TYPED_TEST(DataSetSave, save_arff_with_label) {
     const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
     // save to temporary file
     data.save(this->filename, plssvm::file_format_type::arff);
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ this->filename };
+    reader.read_lines('%');
+
+    // create regex to check for the correct output
+    const std::size_t num_features = this->data_points.front().size();
+    const std::size_t expected_header_size = num_features + 3;  // num_features + @RELATION + class + @DATA
+    ASSERT_EQ(reader.num_lines(), expected_header_size + this->data_points.size());
+    // check header
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(0)), ::testing::StartsWith("@relation"));
+    for (std::size_t i = 0; i < num_features; ++i) {
+        EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(i + 1)), ::testing::ContainsRegex("@attribute .* numeric"));
+    }
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features)), ::testing::ContainsRegex("@attribute class \\{.*,.*\\}"));
+    EXPECT_THAT(plssvm::detail::as_lower_case(reader.line(1 + num_features + 1)), ::testing::StartsWith("@data"));
+    // check data points
+    const std::regex reg{ "([-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?,){4}.+", std::regex::extended };
+    for (std::size_t i = expected_header_size; i < reader.num_lines(); ++i) {
+        EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
+    }
+}
+TYPED_TEST(DataSetSave, save_arff_automatic_format) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+
+    // create data set with labels
+    const plssvm::data_set<real_type, label_type> data{ this->data_points, this->label };
+    // rename temporary such that it ends with .arff
+    const std::string old_filename = this->filename;
+    this->filename += ".arff";
+    std::filesystem::rename(old_filename, this->filename);
+    // save to temporary file
+    data.save(this->filename);
 
     // read the file
     plssvm::detail::io::file_reader reader{ this->filename };
