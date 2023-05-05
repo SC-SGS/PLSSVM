@@ -9,8 +9,6 @@
  */
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
-#include "plssvm/detail/logger.hpp"
-
 #include "plssvm/detail/logger.hpp"      // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
@@ -74,9 +72,9 @@ TEST_F(ParserScale, minimal_output) {
 TEST_F(ParserScale, all_arguments) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
-    #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-        cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
-    #endif
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+#endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.scaled" });
     this->CreateCMDArgs(cmd_args);
 

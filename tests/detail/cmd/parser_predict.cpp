@@ -9,8 +9,6 @@
  */
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
-#include "plssvm/detail/logger.hpp"
-
 #include "plssvm/detail/logger.hpp"      // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
