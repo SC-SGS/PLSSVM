@@ -86,7 +86,6 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459>>
         )
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC'")
 
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -113,7 +112,6 @@ if (OpenMP_FOUND)
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC

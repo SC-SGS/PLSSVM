@@ -109,6 +109,9 @@ target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAK
 target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${PLSSVM_ALL_LIBRARY_NAME})
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
+# disable clang compiler warning
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
+
 # find required python libraries
 find_package(PythonLibs REQUIRED)
 target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${PYTHON_INCLUDE_DIRS})
