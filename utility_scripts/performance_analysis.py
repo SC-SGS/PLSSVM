@@ -158,7 +158,7 @@ try:
             plssvm.detail.PerformanceTracker.add_string_tracking_entry("", "accuracy", str(achieved_accuracy))
             plssvm.detail.PerformanceTracker.add_string_tracking_entry("", "total_runtime", "{}ms".format(
                 int((end_time - start_time) * 1000)))
-            plssvm.detail.PerformanceTracker.save_to(args.performance_tracking)
+            plssvm.detail.PerformanceTracker.save(args.performance_tracking)
 
 except plssvm.PLSSVMError as e:
     print(e)
