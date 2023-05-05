@@ -21,13 +21,18 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 ## set default CMake build type
 set(PLSSVM_DEFAULT_BUILD_TYPE "RelWithDebInfo")
+set(PLSSVM_ALLOWED_BUILD_TYPES "Debug;Release;MinSizeRel;RelWithDebInfo;Coverage")
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to '${PLSSVM_DEFAULT_BUILD_TYPE}' as none was specified.")
     set(CMAKE_BUILD_TYPE "${PLSSVM_DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Coverage")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${PLSSVM_ALLOWED_BUILD_TYPES})
 else ()
-    message(STATUS "The build type is '${CMAKE_BUILD_TYPE}'.")
+    if ("${CMAKE_BUILD_TYPE}" IN_LIST PLSSVM_ALLOWED_BUILD_TYPES)
+        message(STATUS "The build type is '${CMAKE_BUILD_TYPE}'.")
+    else ()
+        message(FATAL_ERROR "Unrecognized build type '${CMAKE_BUILD_TYPE}'! Allowed build types are: ${PLSSVM_ALLOWED_BUILD_TYPES}")
+    endif ()
 endif ()
 
 
