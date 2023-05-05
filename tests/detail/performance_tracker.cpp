@@ -10,15 +10,18 @@
 
 #include "plssvm/detail/performance_tracker.hpp"
 
-#include "../naming.hpp"         // naming::label_type_to_name
-#include "../types_to_test.hpp"  // util::label_type_gtest
-#include "../utility.hpp"        // util::redirect_output
+#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
-#include "fmt/core.h"            // fmt::format
-#include "gtest/gtest.h"         // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+#include "../naming.hpp"                     // naming::label_type_to_name
+#include "../types_to_test.hpp"              // util::label_type_gtest
+#include "../utility.hpp"                    // util::redirect_output
 
-#include <iostream>              // std::cout, std::clog
-#include <string>                // std::string
+#include "fmt/core.h"                        // fmt::format
+#include "gmock/gmock-matchers.h"            // EXPECT_THAT, ::testing::{HasSubstr}
+#include "gtest/gtest.h"                     // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+
+#include <iostream>                          // std::cout, std::clog
+#include <string>                            // std::string
 
 template <typename T>
 class TrackingEntry : public ::testing::Test, public util::redirect_output<> {};
@@ -121,7 +124,16 @@ TEST_F(PerformanceTracker, save_macro) {
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
-    // TODO: must contain?
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ tmp_file.filename };
+    reader.read_lines('#');
+
+    // test file contents
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("bar: 42"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: a"));
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
@@ -199,7 +211,7 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 3;
     char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/model" };
-    char* argv[] { argv_arr[0], argv_arr[1], argv_arr[3] };
+    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[3] };
     const plssvm::detail::cmd::parser_train parser{ argc, argv };
 
     // save cmd::parser_train entry
@@ -220,7 +232,7 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 4;
     char argv_arr[argc][20] = { "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
-    char* argv[] { argv_arr[0], argv_arr[1], argv_arr[3], argv_arr[4] };
+    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[3], argv_arr[4] };
     const plssvm::detail::cmd::parser_predict parser{ argc, argv };
 
     // save cmd::parser_train entry
@@ -241,7 +253,7 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     // create a parameter train object
     constexpr int argc = 3;
     char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/scaled" };
-    char* argv[] { argv_arr[0], argv_arr[1], argv_arr[3] };
+    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[3] };
     const plssvm::detail::cmd::parser_scale parser{ argc, argv };
 
     // save cmd::parser_train entry
@@ -282,7 +294,16 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
 
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
-    // TODO: must contain?
+
+    // read the file
+    plssvm::detail::io::file_reader reader{ tmp_file.filename };
+    reader.read_lines('#');
+
+    // test file contents
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("bar: 42"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: a"));
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
@@ -297,7 +318,12 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
 
     // the captured standard output must not be empty
     EXPECT_FALSE(this->get_capture().empty());
-    // TODO: must contain?
+
+    // test file contents
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foo:"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("bar: 42"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("baz: 3.1415"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: a"));
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
