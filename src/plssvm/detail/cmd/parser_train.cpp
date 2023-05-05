@@ -23,7 +23,7 @@
 
 #include "cxxopts.hpp"                                   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/color.h"                                   // fmt::fg, fmt::color::orange
-#include "fmt/core.h"                                    // ffmt::format, fmt::join
+#include "fmt/core.h"                                    // fmt::format, fmt::join
 #include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
 
 #include <cstdlib>                                       // std::exit, EXIT_SUCCESS, EXIT_FAILURE
