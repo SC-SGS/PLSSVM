@@ -150,7 +150,7 @@ else ()
             $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
-    message(STATUS "Installed cxxopts version ${PLSSVM_cxxopts_VERSION}.")
+    message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
 endif ()
 
 ## try finding fast_float
@@ -182,7 +182,7 @@ else ()
             $<INSTALL_INTERFACE:include>
             )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fast_float")
-    message(STATUS "Installed fast_float version ${PLSSVM_fast_float_VERSION}.")
+    message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif ()
 
 ## try finding igor
@@ -213,10 +213,11 @@ else ()
             $<INSTALL_INTERFACE:include>
             )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
+    message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
 endif ()
 
 ## try finding fmt
-find_package(fmt 8.0.0 QUIET)
+find_package(fmt 8.1.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
@@ -243,7 +244,7 @@ else ()
             )
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
-    message(STATUS "Installed {fmt} version ${PLSSVM_fmt_VERSION}.")
+    message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
