@@ -12,7 +12,7 @@
 
 namespace py = pybind11;
 
-void init_performance_tracker(py::module_ &m) {
+void init_performance_tracker([[maybe_unused]] py::module_ &m) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
     // use a detail.PerformanceTracker submodule for the performance tracking bindings
