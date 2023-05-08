@@ -194,7 +194,9 @@ pipeline {
                             node(label) {
                               sh '''
 
-                              cd ${WORKSPACE}plssvm/wokspace
+                              cd ${WORKSPACE}/plssvm/wokspace
+                              python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000
+                              python3 utility_scripts/generate_data.py --output tests/data/500x200.libsvm --format libsvm --problem planes --samples 500 --features 200
                               '''
                           }
                       }
