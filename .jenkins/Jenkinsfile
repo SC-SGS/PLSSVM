@@ -196,7 +196,7 @@ pipeline {
 
                               cd ${WORKSPACE}/plssvm
                               python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000
-                              python3 utility_scripts/generate_data.py --output tests/data/500x200.libsvm --format libsvm --problem planes --samples 500 --features 200
+                              python3 utility_scripts/generate_data.py --output tests/data/500x100.libsvm --format libsvm --problem planes --samples 500 --features 100
                               '''
                           }
                       }
@@ -458,7 +458,7 @@ pipeline {
                                           export NUM_FEATURES=2000
                                       else
                                           export NUM_DATA_POINTS=500
-                                          export NUM_FEATURES=200
+                                          export NUM_FEATURES=100
                                       fi
 
                                       cd ${WORKSPACE}/plssvm
