@@ -327,6 +327,13 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
 /// The public parameter type uses `double` to store the SVM parameters.
 using parameter = detail::parameter<double>;
 
+/**
+ * @copydoc plssvm::detail::equivalent
+ */
+[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) noexcept {
+    return detail::equivalent(lhs, rhs);
+}
+
 }  // namespace plssvm
 
 #endif  // PLSSVM_PARAMETER_HPP_

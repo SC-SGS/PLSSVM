@@ -23,6 +23,7 @@
 #include "fmt/core.h"                            // fmt::format
 #include "fmt/ostream.h"                         // format types with an operator<< overload
 
+#include <memory>                                // std::shared_ptr
 #include <string>                                // std::string
 #include <string_view>                           // std::string_view
 #include <type_traits>                           // std::false_type, std::true_type
@@ -101,13 +102,13 @@ constexpr bool is_tracking_entry_v = is_tracking_entry<T>::value;
 class performance_tracker {
   public:
     /**
-     * @brief Singleton getter since only one instance of a performance_tracker should ever exist.
-     * @return the singleton instance (`[[nodiscard]]`)
+     * @breif Default constructor. **Must** be implemented in .cpp file.
      */
-    [[nodiscard]] static performance_tracker &instance() {
-        static performance_tracker tracker{};
-        return tracker;
-    }
+    performance_tracker();
+    /**
+     * @brief Default destructor. **Must** be implemented in .cpp file.
+     */
+    ~performance_tracker();
 
     /**
      * @brief Add a tracking_entry to this performance tracker.
@@ -116,10 +117,7 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     template <typename T>
-    void add_tracking_entry(const tracking_entry<T> &entry) {
-        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
-    }
-
+    void add_tracking_entry(const tracking_entry<T> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a std::string to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
@@ -127,6 +125,13 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     void add_tracking_entry(const tracking_entry<std::string> &entry);
+    /**
+     * @brief Add a tracking_entry encapsulating a plssvm::parameter to this performance tracker.
+     * @details Saves a string containing the entry name and value in a map with the entry category as key.
+     *          Adds all values stored in the plssvm::parameter as tracking entries.
+     * @param[in] entry the entry to add
+     */
+    void add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
@@ -152,42 +157,52 @@ class performance_tracker {
     /**
      * @brief Write all stored tracking entries to the [YAML](https://yaml.org/) file @p filename.
      * @details Appends all entries at the end of the file creating a new YAML document.
+     *          If @p filename is empty, dumps the tracking entries to `std::cout` instead.
      * @param[in] filename the file to add the performance tracking results to
      */
     void save(const std::string &filename);
+    /**
+     * @brief Write all stored tracking entries to the output stream @p out.
+     * @param[in] out the output stream to write the performance tracking results to
+     */
+    void save(std::ostream &out);
 
     /**
      * @brief Pause the current tracking, i.e., all calls to `add_tracking_entry` do nothing.
      */
-    void pause_tracking() noexcept { is_tracking_ = false; }
+    void pause_tracking() noexcept;
     /**
      * @brief Resume the tracking, i.e., all calls to `add_tracking_entry` do track the values again.
      */
-    void resume_tracking() noexcept { is_tracking_ = true; }
+    void resume_tracking() noexcept;
     /**
      * @brief Check whether tracking is currently active or paused.
      * @return `true` if tracking is enabled, `false` if it is currently paused (`[[nodiscard]]`)
      */
-    [[nodiscard]] bool is_tracking() const noexcept { return is_tracking_; }
+    [[nodiscard]] bool is_tracking() noexcept;
 
     /**
      * @brief Return the currently available tracking entries.
      * @return the previously added tracking entries (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::unordered_multimap<std::string, std::string> &get_tracking_entries() const noexcept { return tracking_statistics; }
+    [[nodiscard]] const std::unordered_multimap<std::string, std::string> &get_tracking_entries() noexcept;
 
   private:
-    /**
-     * @brief Default construct a performance_tracker.
-     * @details This constructor is private to enable a save singleton usage of the performance_tracker class.
-     */
-    performance_tracker() = default;
-
     /// All performance statistics grouped by their specified categories.
     std::unordered_multimap<std::string, std::string> tracking_statistics{};
     /// The tracking is enabled by default.
     bool is_tracking_{ true };
 };
+
+template <typename T>
+void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
+    if (is_tracking()) {
+        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
+    }
+}
+
+/// The global performance tracker instance used for the default tracking.
+extern std::shared_ptr<performance_tracker> global_tracker;
 
 /**
  * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE
@@ -212,23 +227,21 @@ class performance_tracker {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE() \
-        plssvm::detail::performance_tracker::instance().pause_tracking()
+        ::plssvm::detail::global_tracker->pause_tracking()
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME() \
-        plssvm::detail::performance_tracker::instance().resume_tracking()
+        ::plssvm::detail::global_tracker->resume_tracking()
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE() \
-        plssvm::detail::performance_tracker::instance().save(PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE)
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(filename) \
+        ::plssvm::detail::global_tracker->save(filename)
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)                \
-        if (plssvm::detail::performance_tracker::instance().is_tracking()) {           \
-            plssvm::detail::performance_tracker::instance().add_tracking_entry(entry); \
-        }
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
+        ::plssvm::detail::global_tracker->add_tracking_entry(entry);
 #else
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME()
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE()
+    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(filename)
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
 
 #endif

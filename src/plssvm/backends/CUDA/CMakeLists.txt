@@ -39,11 +39,22 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     # use nvcc to compile CUDA code
-    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
-    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math -Wno-attributes")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe --diag_suppress=unsigned_compare_with_zero")
+    # build type specific flags
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -lineinfo -Xptxas=-v -Xptxas -dlcm=cg -Xcudafe --diag_suppress=unrecognized_gcc_pragma")
+    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -O3 --use_fast_math -Wno-attributes")
+    # set OpenMP specific flags
+    if (OpenMP_FOUND)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+    endif ()
 elseif (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     # use clang to compile CUDA code
+    # build type specific flags
     set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3 -ffast-math")
+    # set OpenMP specific flags
+    if (OpenMP_FOUND)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fopenmp")
+    endif ()
 endif ()
 
 # explicitly set sources
@@ -64,6 +75,9 @@ add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif ()
+if (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -fPIC)
+endif ()
 
 # prepare architectures for CMake's CUDA_ARCHITECTURES
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
@@ -83,7 +97,6 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_CUDA_BACKEND
 # mark backend library as install target
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_CUDA_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
-
 
 # generate summary string
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")

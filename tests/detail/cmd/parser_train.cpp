@@ -9,8 +9,6 @@
  */
 
 #include "plssvm/detail/cmd/parser_train.hpp"
-#include "plssvm/detail/logger.hpp"
-
 #include "plssvm/detail/logger.hpp"      // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
@@ -52,6 +50,7 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_FALSE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
+    EXPECT_EQ(parser.performance_tracking_filename, "");
 }
 TEST_F(ParserTrain, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -69,15 +68,19 @@ TEST_F(ParserTrain, minimal_output) {
         "label_type: int (default)\n"
         "real_type: double (default)\n"
         "input file (data set): 'data.libsvm'\n"
-        "output file (model): 'data.libsvm.model'\n";
+        "output file (model): 'data.libsvm.model'\n"
+        "performance tracking file: ''\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
 TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model" });
     this->CreateCMDArgs(cmd_args);
@@ -109,12 +112,21 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_TRUE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
+#else
+    EXPECT_EQ(parser.performance_tracking_filename, "");
+#endif
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model" });
     this->CreateCMDArgs(cmd_args);
@@ -134,8 +146,14 @@ TEST_F(ParserTrain, all_arguments_output) {
         "label_type: std::string\n"
         "real_type: float\n"
         "input file (data set): 'data.libsvm'\n"
-        "output file (model): 'data.libsvm.model'\n";
+        "output file (model): 'data.libsvm.model'\n"
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+        "performance tracking file: 'tracking.yaml'\n";
+#else
+        "performance tracking file: ''\n";
+#endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
 // test all command line parameter separately
@@ -377,6 +395,27 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::
 // clang-format on
 
 #endif  // PLSSVM_HAS_SYCL_BACKEND
+
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+
+class ParserTrainPerformanceTrackingFilename : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+TEST_P(ParserTrainPerformanceTrackingFilename, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    // test for correctness
+    EXPECT_EQ(parser.performance_tracking_filename, value);
+}
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainPerformanceTrackingFilename, ::testing::Combine(
+                ::testing::Values("--performance_tracking"),
+                ::testing::Values("tracking.yaml", "test.txt")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainPerformanceTrackingFilename>);
+// clang-format on
+
+#endif  // PLSSVM_PERFORMANCE_TRACKER_ENABLED
 
 class ParserTrainUseStringsAsLabels : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
 TEST_P(ParserTrainUseStringsAsLabels, parsing) {

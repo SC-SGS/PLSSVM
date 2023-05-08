@@ -141,7 +141,9 @@ template <typename real_type>
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Transformed dataset from 2D to 1D {} in {}.\n",
+                "Transformed {}x{} dataset from 2D to 1D {} in {}.\n",
+                detail::tracking_entry{ "transform", "num_data_points", num_points },
+                detail::tracking_entry{ "transform", "num_features", num_features },
                 detail::tracking_entry{ "transform", "layout", layout },
                 detail::tracking_entry{ "transform", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 

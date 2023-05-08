@@ -148,6 +148,7 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/type_list.cpp
         )
 
 # create test executable

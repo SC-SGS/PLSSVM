@@ -20,6 +20,7 @@
 #include "plssvm/detail/logger.hpp"                      // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
+#include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
@@ -40,7 +41,6 @@
 #include <set>                                           // std::set
 #include <string>                                        // std::string
 #include <tuple>                                         // std::tie
-#include <type_traits>                                   // std::is_same_v, std::is_arithmetic_v
 #include <utility>                                       // std::move, std::pair, std::make_pair
 #include <vector>                                        // std::vector
 
@@ -68,8 +68,8 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
 template <typename T, typename U = int>
 class data_set {
     // make sure only valid template types are used
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
-    static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
+    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::model needs the default constructor
     template <typename, typename>
@@ -174,6 +174,13 @@ class data_set {
      * @param[in] format the file format
      */
     void save(const std::string &filename, file_format_type format) const;
+    /**
+     * @brief Save the data points and potential labels of this data set to the file @p filename.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @param[in] filename the file to save the data points and labels to
+     * @throws plssvm::data_set_exception if the file extension isn't one of `libsvm` or `arff`
+     */
+    void save(const std::string &filename) const;
 
     /**
      * @brief Return the data points in this data set.
@@ -601,6 +608,17 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
                 detail::tracking_entry{ "data_set_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "data_set_write", "format", format },
                 detail::tracking_entry{ "data_set_write", "filename", filename });
+}
+
+template <typename T, typename U>
+void data_set<T, U>::save(const std::string &filename) const {
+    if (detail::ends_with(filename, ".libsvm")) {
+        this->save(filename, file_format_type::libsvm);
+    } else if (detail::ends_with(filename, ".arff")) {
+        this->save(filename, file_format_type::arff);
+    } else {
+        throw data_set_exception(fmt::format("Unrecognized file extension for file \"{}\" (must be one of: .libsvm or .arff)!", filename));
+    }
 }
 
 template <typename T, typename U>

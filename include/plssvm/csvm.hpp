@@ -334,7 +334,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(predicted_values.size());
 
-#pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
+    #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
     }
@@ -365,7 +365,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
 
     // calculate the accuracy
     typename std::vector<label_type>::size_type correct{ 0 };
-#pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
+    #pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
             ++correct;

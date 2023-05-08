@@ -74,10 +74,13 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
             if constexpr (std::is_floating_point_v<T>) {
                 // convert the string to a floating point value
                 return fast_float::from_chars(sv.data(), sv.data() + sv.size(), val);
-            } else if constexpr (std::is_integral_v<T>) {
+            } else {
                 // convert the string to an integral value
                 return std::from_chars(sv.data(), sv.data() + sv.size(), val);
             }
+            // unreachable, needed to silence a nvcc warning
+            // see also: https://stackoverflow.com/questions/64523302/cuda-missing-return-statement-at-end-of-non-void-function-in-constexpr-if-fun
+            return std::conditional_t<std::is_floating_point_v<T>, fast_float::from_chars_result, std::from_chars_result>{};
         };
 
         // remove leading whitespaces
@@ -91,6 +94,9 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         }
         return val;
     }
+    // unreachable, needed to silence a nvcc warning
+    // see also: https://stackoverflow.com/questions/64523302/cuda-missing-return-statement-at-end-of-non-void-function-in-constexpr-if-fun
+    return T{};
 }
 
 /**

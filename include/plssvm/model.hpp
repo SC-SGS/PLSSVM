@@ -19,6 +19,7 @@
 #include "plssvm/detail/io/libsvm_parsing.hpp"        // plssvm::detail::io::parse_libsvm_data
 #include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
+#include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
 #include "fmt/chrono.h"                               // format std::chrono types using fmt
@@ -30,7 +31,6 @@
 #include <memory>                                     // std::shared_ptr, std::make_shared
 #include <string>                                     // std::string
 #include <tuple>                                      // std::tie
-#include <type_traits>                                // std::is_same_v, std::is_arithmetic_v
 #include <utility>                                    // std::move
 #include <vector>                                     // std::vector
 
@@ -49,8 +49,8 @@ namespace plssvm {
 template <typename T, typename U = int>
 class model {
     // make sure only valid template types are used
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The first template type can only be 'float' or 'double'!");
-    static_assert(std::is_arithmetic_v<U> || std::is_same_v<U, std::string>, "The second template type can only be an arithmetic type or 'std::string'!");
+    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::csvm needs the private constructor
     friend class csvm;
@@ -105,6 +105,13 @@ class model {
      * @return the labels (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
+    /**
+     * @brief Returns the number of **different** labels in this data set.
+     * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
+     *          It is the same as: `model.different_labels().size()`
+     * @return the number of **different** labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] size_type num_different_labels() const noexcept { return data_.num_different_labels(); }
     /**
      * @brief Returns the **different** labels of the support vectors.
      * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the labels `{ -1, 1 }`.

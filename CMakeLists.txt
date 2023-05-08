@@ -21,11 +21,18 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 ## set default CMake build type
 set(PLSSVM_DEFAULT_BUILD_TYPE "RelWithDebInfo")
+set(PLSSVM_ALLOWED_BUILD_TYPES "Debug;Release;MinSizeRel;RelWithDebInfo;Coverage")
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to '${PLSSVM_DEFAULT_BUILD_TYPE}' as none was specified.")
     set(CMAKE_BUILD_TYPE "${PLSSVM_DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Coverage")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${PLSSVM_ALLOWED_BUILD_TYPES})
+else ()
+    if ("${CMAKE_BUILD_TYPE}" IN_LIST PLSSVM_ALLOWED_BUILD_TYPES)
+        message(STATUS "The build type is '${CMAKE_BUILD_TYPE}'.")
+    else ()
+        message(FATAL_ERROR "Unrecognized build type '${CMAKE_BUILD_TYPE}'! Allowed build types are: ${PLSSVM_ALLOWED_BUILD_TYPES}")
+    endif ()
 endif ()
 
 
@@ -84,7 +91,6 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459>>
         )
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC'")
 
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -111,7 +117,6 @@ if (OpenMP_FOUND)
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -148,7 +153,7 @@ else ()
             $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
             )
-    message(STATUS "Installed cxxopts version ${PLSSVM_cxxopts_VERSION}.")
+    message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
 endif ()
 
 ## try finding fast_float
@@ -180,7 +185,7 @@ else ()
             $<INSTALL_INTERFACE:include>
             )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fast_float")
-    message(STATUS "Installed fast_float version ${PLSSVM_fast_float_VERSION}.")
+    message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif ()
 
 ## try finding igor
@@ -211,10 +216,11 @@ else ()
             $<INSTALL_INTERFACE:include>
             )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
+    message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
 endif ()
 
 ## try finding fmt
-find_package(fmt 8.0.0 QUIET)
+find_package(fmt 8.1.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
@@ -241,9 +247,8 @@ else ()
             )
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
-    message(STATUS "Installed {fmt} version ${PLSSVM_fmt_VERSION}.")
+    message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
 endif ()
-set_property(TARGET ${PLSSVM_BASE_LIBRARY_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
@@ -510,13 +515,14 @@ if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
 endif ()
 
 ## enable or disable the performance tracker
-if (PLSSVM_PERFORMANCE_TRACKER)
-    message(STATUS "Enable performance tracking to the YAML file \"${PLSSVM_PERFORMANCE_TRACKER}\" for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
 
     # add target definitions
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_OUTPUT_FILE="${PLSSVM_PERFORMANCE_TRACKER}")
 endif ()
+
 
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
@@ -551,13 +557,17 @@ endif ()
 ########################################################################################################################
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
-    # issue a warning if performance tracking as well as tests are enabled simultaneously
-    if (PLSSVM_PERFORMANCE_TRACKER)
-        message(WARNING "Enabled testing AND performance tracking! Be aware that running ctest will add entries to the performance tracking .yaml file.")
-    endif ()
-
     enable_testing()
     add_subdirectory(tests)
+endif ()
+
+
+########################################################################################################################
+##                                              enable language bindings                                              ##
+########################################################################################################################
+option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
+if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
+    add_subdirectory(bindings)
 endif ()
 
 
@@ -610,6 +620,7 @@ configure_file(
 ########################################################################################################################
 ##                                                 generate man pages                                                 ##
 ########################################################################################################################
+## assemble the SYCL manpage entry
 message(STATUS "Generating manpage files.")
 string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
@@ -627,6 +638,16 @@ choose the kernel invocation type when using SYCL as backend: automatic|nd_range
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+## assemble the performance tracker manpage entry
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "
+.TP
+.B --performance_tracking
+choose the output YAML file where the performance tracking entries should be stored; if not provided, the results are dumped to stderr
+")
+endif ()
+
+## configure the manpage files
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
@@ -636,6 +657,11 @@ set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}"
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
+        @ONLY
+)
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1
         @ONLY
 )
 
