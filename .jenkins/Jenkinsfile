@@ -177,23 +177,10 @@ pipeline {
         stage('Dependency -- Python dependencies')
                 {
                     steps{
-                        script{
-                            def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
-                            def builders = [: ]
-                            for (x in labels){
-                                def label = x
-                                    builders[label] = {
-                                        node(label) {
-                                            sh '''
-                                            cd ${WORKSPACE}
-                                            python3 -m pip install --user -r  install/python_requirements.txt
-                                        '''
-                                    }
-
-                                }
-                            }
-                            parallel builders
-                        }
+                        sh '''
+                            cd ${WORKSPACE}
+                            python3 -m pip install --user -r  install/python_requirements.txt
+                        '''
                     }
                 }
         stage('Dependency -- DPC++')
