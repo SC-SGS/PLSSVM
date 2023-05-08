@@ -350,6 +350,16 @@ pipeline {
                         notValues 'CPU'
                       }
                     }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'DPCPP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        Values 'CPU'
+                      }
+                    }
                   }
 
 
