@@ -523,6 +523,7 @@ pipeline {
                          fi
                          cd $MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
                          export PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/bin:$PATH
+                         export LD_LIBRARY_PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/lib:$LD_LIBRARY_PATH
                          plssvm-scale -l -1.0 -u 1.0  ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
                          if [ $BACKEND == "DPCPP" ] || [ $BACKEND == "HIPSYCL" ]; then
                           plssvm-train --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm
