@@ -500,6 +500,7 @@ pipeline {
                                     export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 if [ "$ARCHITECTURE" == "CPU" ]; then
+                                    PATH="$POCL_DIR/bin:${PATH}"
                                     LD_LIBRARY_PATH="$POCL_DIR/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 if [ "$ARCHITECTURE" == "AMD" ]; then
