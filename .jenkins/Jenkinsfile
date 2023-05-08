@@ -405,8 +405,7 @@ pipeline {
                                          export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
                                          export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
                                          export TARGET_PLATFORM=amd:gfx906
-                                         export OpenCL_INCLUDE_DIR=$DPCPP_PATH/include/sycl
-                                         export OpenCL_LIBRARY=$DPCPP_PATH/lib
+                                         export LIBRARY_PATH=$LD_LIBRARY_PATH
                                       fi
                                       if [ "$BACKEND" == "HIP" ]; then
                                         export COMPILER=hipcc
