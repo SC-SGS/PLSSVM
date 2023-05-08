@@ -175,14 +175,35 @@ pipeline {
             }
         }
         stage('Dependency -- Python dependencies')
-                {
-                    steps{
-                        sh '''
-                            cd ${WORKSPACE}
-                            python3 -m pip install --user -r  install/python_requirements.txt
-                        '''
-                    }
+        {
+            steps{
+                sh '''
+                    cd ${WORKSPACE}
+                    python3 -m pip install --user -r  install/python_requirements.txt
+                '''
+            }
+        }
+        stage('Generate test files') {
+            steps {
+              script{
+                def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                def builders = [: ]
+                for (x in labels){
+                    def label = x
+                        builders[label] = {
+                            node(label) {
+                              sh '''
+
+                              cd ${WORKSPACE}plssvm/wokspace
+                              '''
+                          }
+                      }
+
+                  }
+                parallel builders
                 }
+            }
+        }
         stage('Dependency -- DPC++')
         {
             environment {
@@ -420,6 +441,14 @@ pipeline {
                                         export COMPILER=hipcc
                                       fi
 
+                                      if [ "$BUILD_TYPE" == Release ]; then
+                                          export NUM_DATA_POINTS=5000
+                                          export NUM_FEATURES=2000
+                                      else
+                                          export NUM_DATA_POINTS=500
+                                          export NUM_FEATURES=200
+                                      fi
+
                                       cd ${WORKSPACE}/plssvm
                                       mkdir -p build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
                                       cd build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
@@ -437,6 +466,8 @@ pipeline {
                                           -DPLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=$([[ $BACKEND == HIPSYCL ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_SYCL_DPCPP_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || echo "OFF") \
                                           -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON \
+                                          -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=$NUM_DATA_POINTS \
+                                          -DPLSSVM_TEST_FILE_NUM_FEATURES=$NUM_FEATURES \
                                           ../../
                                       make -j4 install
                                 '''
