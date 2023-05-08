@@ -357,7 +357,7 @@ pipeline {
                       }
                       axis{
                         name 'ARCHITECTURE'
-                        Values 'CPU'
+                        values 'CPU'
                       }
                     }
                   }
