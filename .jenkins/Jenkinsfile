@@ -392,6 +392,16 @@ pipeline {
                         values 'CPU'
                       }
                     }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        notValues 'OPENCL'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'CPU'
+                      }
+                    }
                   }
 
 
