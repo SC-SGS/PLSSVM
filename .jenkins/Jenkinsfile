@@ -394,14 +394,16 @@ pipeline {
                                          export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
                                          export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
                                          export TARGET_PLATFORM=amd:gfx906
+                                         export OpenCL_INCLUDE_DIR=$DPCPP_PATH/include/sycl
+                                         export OpenCL_LIBRARY=$DPCPP_PATH/lib
                                       fi
                                       if [ "$BACKEND" == "HIP" ]; then
                                         export COMPILER=hipcc
                                       fi
 
                                       cd ${WORKSPACE}/plssvm
-                                      mkdir -p build/${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
-                                      cd build/${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
+                                      mkdir -p build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                                      cd build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
                                       rm -rf *
                                       rm -rf $MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
                                       $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE} \
@@ -429,7 +431,7 @@ pipeline {
                                          . /usr/local.nfs/Modules/latest/init/sh
                                          module load cuda/12.0.1
                                      fi
-                                    cd ${BUILD_TYPE}_${BACKEND}_${ARCHITECTURE}
+                                    cd ${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
                                     ctest -j4 --output-on-failure --no-compress-output -T Test
                                 '''
                             }
