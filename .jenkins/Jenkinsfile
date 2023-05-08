@@ -476,13 +476,13 @@ pipeline {
                             export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                          fi
                          cd $MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
-                         plssvm-scale -l -1.0 -u 1.0  ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
+                         ./plssvm-scale -l -1.0 -u 1.0  ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
                          if [ $BACKEND == "DPCPP" ] || [ $BACKEND == "HIPSYCL" ]; then
-                          plssvm-train --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm
-                          plssvm-predict --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm scaled_5x4.libsvm.model
+                          ./plssvm-train --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm
+                          ./plssvm-predict --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm scaled_5x4.libsvm.model
                          else
-                          plssvm-train --backend $BACKEND  scaled_5x4.libsvm
-                          plssvm-predict --backend $BACKEND scaled_5x4.libsvm scaled_5x4.libsvm.model
+                          ./plssvm-train --backend $BACKEND  scaled_5x4.libsvm
+                          ./plssvm-predict --backend $BACKEND scaled_5x4.libsvm scaled_5x4.libsvm.model
                          fi
                         '''
                       }
