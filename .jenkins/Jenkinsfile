@@ -500,11 +500,11 @@ pipeline {
                                     export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 if [ "$ARCHITECTURE" == "CPU" ]; then
-                                    PATH="$POCL_DIR/bin:${PATH}"
-                                    LD_LIBRARY_PATH="$POCL_DIR/lib:${LD_LIBRARY_PATH}"
+                                    export PATH="$POCL_DIR/bin:${PATH}"
+                                    export LD_LIBRARY_PATH="$POCL_DIR/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 if [ "$ARCHITECTURE" == "AMD" ]; then
-                                   #export ROCM_PATH_="/opt/rocm"
+                                   export ROCM_PATH_="/opt/rocm"
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 cd ${WORKSPACE}/plssvm/build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
