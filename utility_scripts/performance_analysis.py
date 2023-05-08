@@ -99,7 +99,7 @@ try:
 
     # plssvm.set_verbosity(plssvm.VerbosityLevel.FULL)
     plssvm.detail.PerformanceTracker.resume()
-    achieved_accuracy = accuracies[int(abs(math.log(epsilon, 10))) + -1]
+    achieved_accuracy = accuracies[int(abs(math.log(epsilon, 10))) - 1]
     print("Using {} as epsilon value for an accuracy of {:.2f} %".format(epsilon, achieved_accuracy))
 
     # create a list of all available backends
@@ -113,9 +113,11 @@ try:
         if backend == plssvm.BackendType.SYCL:
             # special case SYCL backend
             # add all available SYCL implementation and both kernel invocation types
-            for sycl_impl in plssvm.sycl.list_available_sycl_implementations():
+            available_sycl_implementations = plssvm.sycl.list_available_sycl_implementations()
+            available_sycl_implementations.reverse()
+            for sycl_impl in available_sycl_implementations:
                 # skip the automatic type
-                if sycl_impl == plssvm.sycl.ImplementationType.AUTOMATIC or sycl_impl == plssvm.sycl.ImplementationType.HIPSYCL:  # TODO: fix hipSYCL bug
+                if sycl_impl == plssvm.sycl.ImplementationType.AUTOMATIC:
                     continue
                 available_backends.append((backend, {"sycl_implementation_type": sycl_impl,
                                                      "sycl_kernel_invocation_type": plssvm.sycl.KernelInvocationType.ND_RANGE}))
@@ -158,7 +160,7 @@ try:
             plssvm.detail.PerformanceTracker.add_string_tracking_entry("", "accuracy", str(achieved_accuracy))
             plssvm.detail.PerformanceTracker.add_string_tracking_entry("", "total_runtime", "{}ms".format(
                 int((end_time - start_time) * 1000)))
-            plssvm.detail.PerformanceTracker.save_to(args.performance_tracking)
+            plssvm.detail.PerformanceTracker.save(args.performance_tracking)
 
 except plssvm.PLSSVMError as e:
     print(e)

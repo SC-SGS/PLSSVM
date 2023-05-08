@@ -128,7 +128,7 @@ class csvm : public ::plssvm::csvm {
 
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
-     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
      * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
      * @param[in] data the data points used in the dimensional reduction.
      * @return the `q` vector (`[[nodiscard]]`)
@@ -137,7 +137,7 @@ class csvm : public ::plssvm::csvm {
     [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const;
     /**
      * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
-     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
      * @param[in] support_vectors the previously learned support vectors
      * @param[in] alpha the previously learned weights
      * @return the `w` vector (`[[nodiscard]]`)
@@ -147,7 +147,7 @@ class csvm : public ::plssvm::csvm {
 
     /**
      * @brief Select the correct kernel based on the value of plssvm::parameter::kernel_type and run it on the CPU using OpenMP.
-     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
      * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
      * @param[in] q the `q` vector used in the dimensional reduction
      * @param[out] ret the result vector

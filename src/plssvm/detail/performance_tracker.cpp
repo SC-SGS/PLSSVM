@@ -8,11 +8,11 @@
 
 #include "plssvm/detail/performance_tracker.hpp"
 
+#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
@@ -23,14 +23,15 @@
 
 #include <fstream>                                       // std::ofstream
 #include <iostream>                                      // std::ios_base::app
+#include <memory>                                        // std::shared_ptr
 #include <string>                                        // std::string
 #include <unordered_map>                                 // std::unordered_multimap
 #include <utility>                                       // std::pair
 
 namespace plssvm::detail {
 
-std::unordered_multimap<std::string, std::string> performance_tracker::tracking_statistics = std::unordered_multimap<std::string, std::string>{};
-bool performance_tracker::is_tracking_ = true;
+performance_tracker::performance_tracker() {}
+performance_tracker::~performance_tracker() {}
 
 void performance_tracker::add_tracking_entry(const tracking_entry<std::string> &entry) {
     tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: \"{}\"\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
@@ -191,5 +192,12 @@ void performance_tracker::save(std::ostream &out) {
     // clear tracking statistics
     tracking_statistics.clear();
 }
+
+void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }
+void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
+bool performance_tracker::is_tracking() noexcept { return is_tracking_; }
+const std::unordered_multimap<std::string, std::string> &performance_tracker::get_tracking_entries() noexcept { return tracking_statistics; }
+
+std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();
 
 }  // namespace plssvm::detail

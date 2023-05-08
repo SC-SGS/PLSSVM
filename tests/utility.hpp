@@ -123,8 +123,10 @@ class temporary_file {
         while (std::filesystem::exists(std::filesystem::temp_directory_path() / filename)) {
             filename = fmt::format("tmpfile_{}", dist(gen));
         }
+        // append tmp dir to filename
+        filename = std::filesystem::temp_directory_path().string() + filename;
         // create file
-        std::ofstream{ std::filesystem::temp_directory_path() / filename };
+        std::ofstream{ filename };
 #endif
     }
     /**

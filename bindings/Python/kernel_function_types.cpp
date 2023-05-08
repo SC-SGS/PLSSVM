@@ -27,7 +27,7 @@ void init_kernel_function_types(py::module_ &m) {
     // bind free functions
     m.def("kernel_function_type_to_math_string", &plssvm::kernel_function_type_to_math_string, "return the mathematical representation of a KernelFunctionType");
 
-    const plssvm::parameter params{};
+    const plssvm::parameter default_params{};
 
     m.def("linear_kernel_function", &plssvm::kernel_function<plssvm::kernel_function_type::linear, double>, "apply the linear kernel function to two vectors");
     m.def(
@@ -38,9 +38,9 @@ void init_kernel_function_types(py::module_ &m) {
         py::arg("x"),
         py::arg("y"),
         py::pos_only(),
-        py::arg("degree") = params.degree.value(),
+        py::arg("degree") = default_params.degree.value(),
         py::arg("gamma") = std::nullopt,
-        py::arg("coef0") = params.coef0.value());
+        py::arg("coef0") = default_params.coef0.value());
     m.def(
         "rbf_kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, const std::optional<double> gamma) {
             return plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x, y, gamma.has_value() ? gamma.value() : 1.0 / static_cast<double>(x.size()));
