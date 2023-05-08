@@ -1,8 +1,8 @@
 from sklearn.datasets import make_classification
 import plssvm
 
-num_samples = 2**16
-num_features = 2**14
+num_samples = 2**8
+num_features = 2**6
 
 samples, labels = make_classification(n_samples=num_samples, n_features=num_features, n_redundant=0,
                                       n_informative=2, n_clusters_per_class=1)
