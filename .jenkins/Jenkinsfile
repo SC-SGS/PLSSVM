@@ -659,10 +659,10 @@ when {
             steps {
                 dir('plssvm') {
                     sh '''
-                        mkdir -p build/Debug_cov
-                        cd build/Debug_cov
+                        mkdir -p $WORKSPACE/build/Debug_cov
+                        cd $WORKSPACE/build/Debug_cov
                         rm -rf *
-                        cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=100 ../../
+                        $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=500 -DPLSSVM_TEST_FILE_NUM_FEATURES=100 ../../
                         make -j4 coverage
                         wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
                         python lcov_cobertura.py test_clean.info
