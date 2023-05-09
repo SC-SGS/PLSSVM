@@ -151,6 +151,10 @@ pipeline {
         }
         stage('Dependency -- gcc')
         {
+          when {
+                        expression { false }
+                      }
+
             steps{
                 script{
                     def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
@@ -208,6 +212,10 @@ pipeline {
         }
         stage('Dependency -- DPC++')
         {
+          when {
+                        expression { false }
+                      }
+
             environment {
                 PATH="$WORKSPACE:$GCC_PATH/bin:$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:${env.PATH}"
             }
@@ -266,7 +274,9 @@ pipeline {
         }
 
         stage('Dependency -- hipSYCL')
-                {
+                {when {
+                               expression { false }
+                             }
                      environment {
                         PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$DPCPP_PATH/bin:${env.PATH}"
                         LIBRARY_PATH="$DPCPP_PATH/lib:${env.LIBRARY_PATH}"
@@ -313,7 +323,9 @@ pipeline {
                 }
         stage('Dependency -- PoCL')
         {
-
+when {
+              expression { false }
+            }
             steps{
 
                script{
