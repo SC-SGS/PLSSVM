@@ -334,7 +334,7 @@ pipeline {
             }
         }
 
-        stage('Build and Test NVIDIA Machines'){
+        stage('Build and Test'){
             when {
               expression { false }
             }
