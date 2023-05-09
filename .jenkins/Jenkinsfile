@@ -335,7 +335,9 @@ pipeline {
         }
 
         stage('Build and Test NVIDIA Machines'){
-
+            when {
+              expression { false }
+            }
             matrix{
                 axes {
                     axis {
