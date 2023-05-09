@@ -335,9 +335,7 @@ pipeline {
         }
 
         stage('Build and Test'){
-            when {
-              expression { false }
-            }
+
             matrix{
                 axes {
                     axis {
