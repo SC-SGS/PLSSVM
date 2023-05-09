@@ -53,6 +53,9 @@ target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_
 # set OpenCL target version (to silence compiler warnings)
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)
 
+# set current CMAKE_BUILD_TYPE included in the temp folder where the kernels are compiled to
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
 # needed to link the OpenCL backend to a third-party executable
 target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE)
 
