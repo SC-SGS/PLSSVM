@@ -392,6 +392,16 @@ pipeline {
                         values 'CPU'
                       }
                     }
+                    exclude {
+                      axis{
+                        name 'HIPSYCL'
+                        values 'DPCPP'
+                      }
+                      axis{
+                        name 'BUILD_TYPE'
+                        values 'Debug'
+                      }
+                    }
                   }
 
 
