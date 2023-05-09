@@ -334,7 +334,7 @@ pipeline {
             }
         }
 
-        stage('Build and Test NVIDIA Machines'){
+        stage('Build and Test'){
 
             matrix{
                 axes {
@@ -390,6 +390,16 @@ pipeline {
                       axis{
                         name 'ARCHITECTURE'
                         values 'CPU'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'HIPSYCL'
+                        values 'DPCPP'
+                      }
+                      axis{
+                        name 'BUILD_TYPE'
+                        values 'Debug'
                       }
                     }
                   }
@@ -631,6 +641,37 @@ pipeline {
                 }
             }
         }
+        stage('Coverage Analysis') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        echo $HOSTNAME
+                         . /usr/local.nfs/Modules/latest/init/sh
+                         module load cuda/12.0.1
+                         export PATH="$DPCPP_PATH/bin:${PATH}"
+                         export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
+                         export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                         export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                         export COMPILER=$DPCPP_PATH/bin/clang++
+                         export export CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${CPLUS_INCLUDE_PATH}"
+                         export PATH="$HIPSYCL_PATH/bin:${PATH}"
+                         export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
+                         export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                         export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                         export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+
+                        mkdir -p $WORKSPACE/build/Debug_cov
+                        cd $WORKSPACE/build/Debug_cov
+                        rm -rf *
+                        $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=10 ../../
+                        make -j36 coverage
+                        wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
+                        python lcov_cobertura.py test_clean.info
+                    '''
+                }
+                cobertura coberturaReportFile: "build/Debug_cov/coverage.xml"
+            }
+        } // end Coverage Analysis
 }
 
 
