@@ -311,8 +311,11 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
         if (!std::filesystem::exists(cache_dir_name)) {
             std::filesystem::create_directories(cache_dir_name);
         }
-        std::filesystem::permissions(std::filesystem::temp_directory_path() / "plssvm_opencl_cache", std::filesystem::perms::all, std::filesystem::perm_options::add);
-        std::filesystem::permissions(cache_dir_name, std::filesystem::perms::all, std::filesystem::perm_options::add);
+        const auto super_cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache";
+        std::filesystem::permissions(super_cache_dir_name, std::filesystem::perms::all, std::filesystem::perm_options::add);
+        for (const std::filesystem::path &path : std::filesystem::recursive_directory_iterator{ super_cache_dir_name }) {
+            std::filesystem::permissions(path, std::filesystem::perms::all);
+        }
 
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
