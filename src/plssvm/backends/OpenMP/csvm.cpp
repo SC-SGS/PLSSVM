@@ -15,7 +15,7 @@
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
@@ -168,10 +168,10 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
                 "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "max_iterations", max_iter },
-                detail::tracking_entry{ "cg", "epsilon", eps },
                 detail::tracking_entry{ "cg", "residuum", delta },
                 detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
                 detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
     detail::log(verbosity_level::libsvm,
                 "optimization finished, #iter = {}\n", std::min(iter + 1, max_iter));
 

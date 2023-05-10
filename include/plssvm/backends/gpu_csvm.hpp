@@ -18,7 +18,7 @@
 #include "plssvm/detail/execution_range.hpp"      // plssvm::detail::execution_range
 #include "plssvm/detail/layout.hpp"               // plssvm::detail::{transform_to_layout, layout_type}
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 
 #include "fmt/chrono.h"                           // output std::chrono times using {fmt}
@@ -638,10 +638,10 @@ std::pair<std::vector<real_type>, real_type> gpu_csvm<device_ptr_t, queue_t>::so
                 "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "max_iterations", max_iter },
-                detail::tracking_entry{ "cg", "epsilon", eps },
                 detail::tracking_entry{ "cg", "residuum", delta },
                 detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
                 detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
     detail::log(verbosity_level::libsvm,
                 "optimization finished, #iter = {}\n", std::min(iter + 1, max_iter));
 
