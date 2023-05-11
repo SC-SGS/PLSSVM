@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - documentation
   pull_request:
     branches:
       - main
@@ -21,7 +22,6 @@ jobs:
       # install dependencies
       - name: Dependancies
         run: |
-          echo "deb http://dk.archive.ubuntu.com/ubuntu/ hirsute main universe" | sudo tee -a /etc/apt/sources.list
           sudo apt update
           sudo apt-get install -y doxygen graphviz
       # configure project via CMake
