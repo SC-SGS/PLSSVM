@@ -40,7 +40,8 @@ TYPED_TEST_P(Exception, throwing_excpetion) {
     using exception_type = typename TypeParam::exception_type;
 
     // throw the specified exception
-    EXPECT_THROW_WHAT(throw exception_type{ "exception message" }, exception_type, "exception message");
+    const auto dummy = []() { throw exception_type{ "exception message" }; };
+    EXPECT_THROW_WHAT(dummy(), exception_type, "exception message");
 }
 
 // check whether the source location information are populated correctly
