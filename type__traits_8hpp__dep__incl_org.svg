@@ -46,7 +46,7 @@
 </g>
 </g>
 <!-- Node1&#45;&gt;Node4 -->
-<g id="edge45" class="edge">
+<g id="edge44" class="edge">
 <title>Node1&#45;&gt;Node4</title>
 <path fill="none" stroke="midnightblue" d="M849.23,-862.75C1097.67,-859.21 1915.5,-839.36 1915.5,-731.5 1915.5,-731.5 1915.5,-731.5 1915.5,-260.5 1915.5,-182.2 1828.21,-123.24 1782.18,-97.6"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="849.18,-859.25 839.23,-862.89 849.28,-866.25 849.18,-859.25"/>
@@ -70,10 +70,10 @@
 <!-- Node12 -->
 <g id="node12" class="node">
 <title>Node12</title>
-<g id="a_node12"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
+<g id="a_node12"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
 <polygon fill="white" stroke="black" points="0,-0.5 0,-30.5 139,-30.5 139,-0.5 0,-0.5"/>
 <text text-anchor="start" x="8" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="69.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
+<text text-anchor="middle" x="69.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
 </a>
 </g>
 </g>
@@ -86,10 +86,10 @@
 <!-- Node13 -->
 <g id="node13" class="node">
 <title>Node13</title>
-<g id="a_node13"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
+<g id="a_node13"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
 <polygon fill="white" stroke="black" points="157,-0.5 157,-30.5 296,-30.5 296,-0.5 157,-0.5"/>
 <text text-anchor="start" x="165" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="226.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
+<text text-anchor="middle" x="226.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
 </a>
 </g>
 </g>
@@ -109,7 +109,7 @@
 </g>
 </g>
 <!-- Node1&#45;&gt;Node14 -->
-<g id="edge44" class="edge">
+<g id="edge45" class="edge">
 <title>Node1&#45;&gt;Node14</title>
 <path fill="none" stroke="midnightblue" d="M707.89,-852.94C640.93,-838.46 550.5,-805.24 550.5,-731.5 550.5,-731.5 550.5,-731.5 550.5,-528.5 550.5,-339.61 638.36,-274.1 807.5,-190 842.37,-172.66 885.13,-160.74 916.41,-153.55"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="707.5,-856.43 718,-855.03 708.91,-849.58 707.5,-856.43"/>

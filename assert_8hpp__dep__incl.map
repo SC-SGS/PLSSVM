@@ -16,8 +16,8 @@
 <area shape="rect" id="node8" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="1842,1048,2027,1089"/>
 <area shape="rect" id="node9" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="2051,1048,2237,1089"/>
 <area shape="rect" id="node10" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="1214,1048,1399,1089"/>
-<area shape="rect" id="node11" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="1423,1048,1609,1089"/>
-<area shape="rect" id="node12" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="1633,1048,1818,1089"/>
+<area shape="rect" id="node11" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="1423,1048,1609,1089"/>
+<area shape="rect" id="node12" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="1633,1048,1818,1089"/>
 <area shape="rect" id="node16" href="$data__set_8hpp.html" title="Implements a data set class encapsulating all data points, features, and potential labels." alt="" coords="311,631,465,672"/>
 <area shape="rect" id="node17" href="$data__set__variants_8hpp.html" title="Implements utility functions to create a data set based on runtime parameters." alt="" coords="488,720,691,761"/>
 <area shape="rect" id="node21" href="$arff__parsing_8hpp.html" title="Implements parsing functions for the ARFF file format." alt="" coords="347,452,509,493"/>

@@ -4,8 +4,8 @@
 <area shape="rect" id="node3" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="1198,676,1383,717"/>
 <area shape="rect" id="node4" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="1130,765,1315,807"/>
 <area shape="rect" id="node5" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="1339,765,1525,807"/>
-<area shape="rect" id="node6" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="1549,765,1734,807"/>
-<area shape="rect" id="node7" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="1758,765,1943,807"/>
+<area shape="rect" id="node6" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="1549,765,1734,807"/>
+<area shape="rect" id="node7" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="1758,765,1943,807"/>
 <area shape="rect" id="node8" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="862,676,1047,717"/>
 <area shape="rect" id="node9" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="369,773,549,799"/>
 <area shape="rect" id="node10" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="656,601,843,628"/>

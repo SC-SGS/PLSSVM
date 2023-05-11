@@ -3,8 +3,8 @@
 <area shape="rect" id="node2" href="$backend__types_8hpp.html" title="Defines an enumeration holding all possible backends. Can also include backends not available on the ..." alt="" coords="2343,363,2522,404"/>
 <area shape="rect" id="node4" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM based on the provided plssvm::backend_type and potentia..." alt="" coords="2265,1048,2424,1089"/>
 <area shape="rect" id="node7" href="$performance__tracker_8hpp.html" title="Defines a performance tracker which can dump performance information in a YAML file." alt="" coords="1427,541,1615,583"/>
-<area shape="rect" id="node12" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="5,1137,191,1179"/>
-<area shape="rect" id="node13" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="215,1137,400,1179"/>
+<area shape="rect" id="node12" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="5,1137,191,1179"/>
+<area shape="rect" id="node13" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="215,1137,400,1179"/>
 <area shape="rect" id="node14" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="1191,973,1378,1000"/>
 <area shape="rect" id="node15" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="509,1048,695,1089"/>
 <area shape="rect" id="node22" href="$default__value_8hpp.html" title="Implements a class used to be able to distinguish between the default value of a variable and an assi..." alt="" coords="1321,95,1491,136"/>

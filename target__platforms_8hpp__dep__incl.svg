@@ -163,15 +163,15 @@ var sectionId = 'dynsection-0';
 <!-- Node12 -->
 <g id="node12" class="node">
 <title>Node12</title>
-<g id="a_node12"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
+<g id="a_node12"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
 <polygon fill="white" stroke="black" points="1051.5,-0.5 1051.5,-30.5 1190.5,-30.5 1190.5,-0.5 1051.5,-0.5"/>
 <text text-anchor="start" x="1059.5" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="1121" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
+<text text-anchor="middle" x="1121" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node12 -->
-<g id="edge46" class="edge">
+<g id="edge47" class="edge">
 <title>Node1&#45;&gt;Node12</title>
 <path fill="none" stroke="midnightblue" d="M1032.61,-641.87C1060.66,-618.32 1100,-577.01 1100,-530.5 1100,-530.5 1100,-530.5 1100,-143 1100,-101.81 1110.97,-54.09 1117.05,-30.79"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1030.24,-639.29 1024.68,-648.31 1034.65,-644.72 1030.24,-639.29"/>
@@ -179,10 +179,10 @@ var sectionId = 'dynsection-0';
 <!-- Node13 -->
 <g id="node13" class="node">
 <title>Node13</title>
-<g id="a_node13"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
+<g id="a_node13"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
 <polygon fill="white" stroke="black" points="1208.5,-0.5 1208.5,-30.5 1347.5,-30.5 1347.5,-0.5 1208.5,-0.5"/>
 <text text-anchor="start" x="1216.5" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="1278" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
+<text text-anchor="middle" x="1278" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
 </a>
 </g>
 </g>
@@ -266,7 +266,7 @@ var sectionId = 'dynsection-0';
 </g>
 </g>
 <!-- Node1&#45;&gt;Node23 -->
-<g id="edge47" class="edge">
+<g id="edge46" class="edge">
 <title>Node1&#45;&gt;Node23</title>
 <path fill="none" stroke="midnightblue" d="M1076.01,-650.93C1145.49,-639.61 1251.15,-622.4 1323.67,-610.59"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1075.34,-647.49 1066.03,-652.56 1076.47,-654.4 1075.34,-647.49"/>

@@ -46,7 +46,7 @@ if (edges && edges.length) {
         </defs>
 
 <script type="text/javascript">
-var viewWidth = 546;
+var viewWidth = 555;
 var viewHeight = 184;
 var sectionId = 'dynsection-0';
 </script>
@@ -54,88 +54,88 @@ var sectionId = 'dynsection-0';
 <svg id="graph" class="graph">
 <g id="viewport">
 <title>include/plssvm/backends/SYCL/hipSYCL/detail/queue.hpp</title>
-<polygon fill="white" stroke="transparent" points="-4,4 -4,-180 542,-180 542,4 -4,4"/>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-180 550.5,-180 550.5,4 -4,4"/>
 <!-- Node1 -->
 <g id="node1" class="node">
 <title>Node1</title>
 <g id="a_node1"><a xlink:title="PImpl class used to hide the &quot;sycl/sycl.hpp&quot; header from the public interface.">
-<polygon fill="#bfbfbf" stroke="black" points="144.5,-145.5 144.5,-175.5 313.5,-175.5 313.5,-145.5 144.5,-145.5"/>
-<text text-anchor="start" x="152.5" y="-163.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="229" y="-152.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/queue.hpp</text>
+<polygon fill="#bfbfbf" stroke="black" points="120,-145.5 120,-175.5 289,-175.5 289,-145.5 120,-145.5"/>
+<text text-anchor="start" x="128" y="-163.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="middle" x="204.5" y="-152.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/queue.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node2 -->
 <g id="node2" class="node">
 <title>Node2</title>
-<g id="a_node2"><a xlink:href="SYCL_2hipSYCL_2detail_2device__ptr_8hpp.html" target="_top" xlink:title="Small wrapper around a SYCL device pointer for the hipSYCL SYCL implementation.">
-<polygon fill="white" stroke="black" points="0,-67.5 0,-108.5 150,-108.5 150,-67.5 0,-67.5"/>
-<text text-anchor="start" x="8" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="start" x="8" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/device</text>
-<text text-anchor="middle" x="75" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">_ptr.hpp</text>
+<g id="a_node2"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
+<polygon fill="white" stroke="black" points="0,-0.5 0,-30.5 139,-30.5 139,-0.5 0,-0.5"/>
+<text text-anchor="start" x="8" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="middle" x="69.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node2 -->
 <g id="edge1" class="edge">
 <title>Node1&#45;&gt;Node2</title>
-<path fill="none" stroke="midnightblue" d="M188.87,-141.13C167.01,-131.12 139.95,-118.73 117.7,-108.55"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="187.66,-144.42 198.21,-145.4 190.57,-138.06 187.66,-144.42"/>
+<path fill="none" stroke="midnightblue" d="M110.01,-152.18C82.23,-145.09 54.7,-132.17 37.5,-109 19.57,-84.85 41.73,-49.88 57.12,-30.59"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="109.3,-155.61 119.83,-154.45 110.88,-148.79 109.3,-155.61"/>
 </g>
 <!-- Node3 -->
 <g id="node3" class="node">
 <title>Node3</title>
-<g id="a_node3"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
-<polygon fill="white" stroke="black" points="56.5,-0.5 56.5,-30.5 195.5,-30.5 195.5,-0.5 56.5,-0.5"/>
-<text text-anchor="start" x="64.5" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="126" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
+<g id="a_node3"><a xlink:href="SYCL_2hipSYCL_2detail_2device__ptr_8hpp.html" target="_top" xlink:title="Small wrapper around a SYCL device pointer for the hipSYCL SYCL implementation.">
+<polygon fill="white" stroke="black" points="46.5,-67.5 46.5,-108.5 196.5,-108.5 196.5,-67.5 46.5,-67.5"/>
+<text text-anchor="start" x="54.5" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="start" x="54.5" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/device</text>
+<text text-anchor="middle" x="121.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">_ptr.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node3 -->
-<g id="edge3" class="edge">
+<g id="edge2" class="edge">
 <title>Node1&#45;&gt;Node3</title>
-<path fill="none" stroke="midnightblue" d="M212.89,-137.14C191.45,-107.37 154.15,-55.58 136.21,-30.68"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="210.06,-139.2 218.75,-145.27 215.74,-135.11 210.06,-139.2"/>
+<path fill="none" stroke="midnightblue" d="M179.96,-138.66C168.76,-129.15 155.57,-117.94 144.56,-108.59"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="177.82,-141.43 187.7,-145.23 182.35,-136.09 177.82,-141.43"/>
 </g>
 <!-- Node4 -->
 <g id="node4" class="node">
 <title>Node4</title>
 <g id="a_node4"><a xlink:href="hipSYCL_2detail_2queue__impl_8hpp.html" target="_top" xlink:title="PImpl implementation encapsulating a single SYCL queue.">
-<polygon fill="white" stroke="black" points="206,-67.5 206,-108.5 354,-108.5 354,-67.5 206,-67.5"/>
-<text text-anchor="start" x="214" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="start" x="214" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/queue</text>
-<text text-anchor="middle" x="280" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">_impl.hpp</text>
+<polygon fill="white" stroke="black" points="214.5,-67.5 214.5,-108.5 362.5,-108.5 362.5,-67.5 214.5,-67.5"/>
+<text text-anchor="start" x="222.5" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="start" x="222.5" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/queue</text>
+<text text-anchor="middle" x="288.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">_impl.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node4 -->
 <g id="edge4" class="edge">
 <title>Node1&#45;&gt;Node4</title>
-<path fill="none" stroke="midnightblue" d="M245.29,-136.98C251.9,-127.85 259.46,-117.4 265.83,-108.59"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="242.35,-135.08 239.32,-145.23 248.02,-139.18 242.35,-135.08"/>
+<path fill="none" stroke="midnightblue" d="M229.33,-138.66C240.67,-129.15 254.01,-117.94 265.16,-108.59"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="226.91,-136.12 221.5,-145.23 231.41,-141.49 226.91,-136.12"/>
 </g>
 <!-- Node5 -->
 <g id="node5" class="node">
 <title>Node5</title>
 <g id="a_node5"><a xlink:href="backends_2SYCL_2hipSYCL_2detail_2utility_8hpp.html" target="_top" xlink:title="Utility functions specific to the SYCL backend using hipSYCL as SYCL implementation.">
-<polygon fill="white" stroke="black" points="372,-73 372,-103 538,-103 538,-73 372,-73"/>
-<text text-anchor="start" x="380" y="-91" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="455" y="-80" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/utility.hpp</text>
+<polygon fill="white" stroke="black" points="380.5,-73 380.5,-103 546.5,-103 546.5,-73 380.5,-73"/>
+<text text-anchor="start" x="388.5" y="-91" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="middle" x="463.5" y="-80" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/detail/utility.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node5 -->
 <g id="edge5" class="edge">
 <title>Node1&#45;&gt;Node5</title>
-<path fill="none" stroke="midnightblue" d="M283.95,-142.36C322.54,-130.32 373.54,-114.41 409.78,-103.11"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="282.42,-139.17 273.92,-145.49 284.51,-145.85 282.42,-139.17"/>
+<path fill="none" stroke="midnightblue" d="M265.79,-142.82C310.21,-130.73 369.61,-114.56 411.67,-103.11"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="264.71,-139.48 255.98,-145.49 266.55,-146.24 264.71,-139.48"/>
 </g>
-<!-- Node2&#45;&gt;Node3 -->
-<g id="edge2" class="edge">
-<title>Node2&#45;&gt;Node3</title>
-<path fill="none" stroke="midnightblue" d="M95.15,-59.14C102.15,-49.47 109.71,-39.02 115.59,-30.89"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="92.23,-57.21 89.21,-67.36 97.9,-61.31 92.23,-57.21"/>
+<!-- Node3&#45;&gt;Node2 -->
+<g id="edge3" class="edge">
+<title>Node3&#45;&gt;Node2</title>
+<path fill="none" stroke="midnightblue" d="M100.95,-59.14C93.82,-49.47 86.11,-39.02 80.12,-30.89"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="98.26,-61.39 107.02,-67.36 103.9,-57.24 98.26,-61.39"/>
 </g>
 </g>
 </svg>

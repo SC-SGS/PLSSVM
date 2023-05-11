@@ -85,10 +85,10 @@
 <!-- Node6 -->
 <g id="node6" class="node">
 <title>Node6</title>
-<g id="a_node6"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
+<g id="a_node6"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
 <polygon fill="white" stroke="black" points="1157.5,-0.5 1157.5,-30.5 1296.5,-30.5 1296.5,-0.5 1157.5,-0.5"/>
 <text text-anchor="start" x="1165.5" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="1227" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
+<text text-anchor="middle" x="1227" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
 </a>
 </g>
 </g>
@@ -101,10 +101,10 @@
 <!-- Node7 -->
 <g id="node7" class="node">
 <title>Node7</title>
-<g id="a_node7"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
+<g id="a_node7"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
 <polygon fill="white" stroke="black" points="1314.5,-0.5 1314.5,-30.5 1453.5,-30.5 1453.5,-0.5 1314.5,-0.5"/>
 <text text-anchor="start" x="1322.5" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="1384" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
+<text text-anchor="middle" x="1384" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
 </a>
 </g>
 </g>

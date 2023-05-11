@@ -1,20 +1,20 @@
 <map id="include/plssvm/constants.hpp" name="include/plssvm/constants.hpp">
-<area shape="rect" id="node1" title="Global type definitions and compile&#45;time constants." alt="" coords="1151,5,1366,32"/>
+<area shape="rect" id="node1" title="Global type definitions and compile&#45;time constants." alt="" coords="1154,5,1369,32"/>
 <area shape="rect" id="node2" href="$predict__kernel_8cuh.html" title="Defines the functions used for prediction for the C&#45;SVM using the CUDA backend." alt="" coords="5,80,192,121"/>
 <area shape="rect" id="node3" href="$q__kernel_8cuh.html" title="Defines CUDA functions for generating the q vector." alt="" coords="217,80,402,121"/>
 <area shape="rect" id="node4" href="$svm__kernel_8cuh.html" title="Defines the kernel functions for the C&#45;SVM using the CUDA backend." alt="" coords="426,80,611,121"/>
 <area shape="rect" id="node5" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="635,80,821,121"/>
-<area shape="rect" id="node11" href="$q__kernel_8hip_8hpp.html" title="Defines HIP functions for generating the q vector." alt="" coords="845,80,1030,121"/>
-<area shape="rect" id="node12" href="$predict__kernel_8hip_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the HIP backend." alt="" coords="1054,80,1250,121"/>
+<area shape="rect" id="node11" href="$predict__kernel_8hip_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the HIP backend." alt="" coords="845,80,1041,121"/>
+<area shape="rect" id="node12" href="$q__kernel_8hip_8hpp.html" title="Defines HIP functions for generating the q vector." alt="" coords="1065,80,1250,121"/>
 <area shape="rect" id="node13" href="$svm__kernel_8hip_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the HIP backend." alt="" coords="1274,80,1459,121"/>
-<area shape="rect" id="node14" href="$predict__kernel_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the SYCL backend." alt="" coords="1483,80,1669,121"/>
-<area shape="rect" id="node15" href="$SYCL_2q__kernel_8hpp.html" title="Defines SYCL functions for generating the q vector." alt="" coords="1693,80,1878,121"/>
-<area shape="rect" id="node16" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="1902,80,2149,121"/>
-<area shape="rect" id="node17" href="$svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="2173,80,2403,121"/>
+<area shape="rect" id="node14" href="$SYCL_2q__kernel_8hpp.html" title="Defines SYCL functions for generating the q vector." alt="" coords="1483,80,1669,121"/>
+<area shape="rect" id="node15" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="1693,80,1939,121"/>
+<area shape="rect" id="node16" href="$svm__kernel__nd__range_8hpp.html" title="Defines the kernel functions for the C&#45;SVM in the nd_range formulation using the SYCL backend." alt="" coords="1963,80,2194,121"/>
+<area shape="rect" id="node17" href="$predict__kernel_8hpp.html" title="Defines the functions used for prediction for the C&#45;SVM using the SYCL backend." alt="" coords="2218,80,2403,121"/>
 <area shape="rect" id="node18" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="2427,87,2607,114"/>
 <area shape="rect" id="node6" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="217,169,402,211"/>
 <area shape="rect" id="node7" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="426,169,611,211"/>
 <area shape="rect" id="node8" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="635,169,821,211"/>
-<area shape="rect" id="node9" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="845,169,1030,211"/>
-<area shape="rect" id="node10" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="1054,169,1239,211"/>
+<area shape="rect" id="node9" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="845,169,1030,211"/>
+<area shape="rect" id="node10" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="1054,169,1239,211"/>
 </map>

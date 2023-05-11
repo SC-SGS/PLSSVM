@@ -445,10 +445,10 @@ var sectionId = 'dynsection-0';
 <!-- Node17 -->
 <g id="node17" class="node">
 <title>Node17</title>
-<g id="a_node17"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
+<g id="a_node17"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
 <polygon fill="white" stroke="black" points="2257,-0.5 2257,-30.5 2396,-30.5 2396,-0.5 2257,-0.5"/>
 <text text-anchor="start" x="2265" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="2326.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
+<text text-anchor="middle" x="2326.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
 </a>
 </g>
 </g>
@@ -461,10 +461,10 @@ var sectionId = 'dynsection-0';
 <!-- Node18 -->
 <g id="node18" class="node">
 <title>Node18</title>
-<g id="a_node18"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
+<g id="a_node18"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
 <polygon fill="white" stroke="black" points="2414,-0.5 2414,-30.5 2553,-30.5 2553,-0.5 2414,-0.5"/>
 <text text-anchor="start" x="2422" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="2483.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
+<text text-anchor="middle" x="2483.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
 </a>
 </g>
 </g>
@@ -844,13 +844,13 @@ var sectionId = 'dynsection-0';
 <polygon fill="midnightblue" stroke="midnightblue" points="805.54,-706.32 811.1,-715.34 812.37,-704.82 805.54,-706.32"/>
 </g>
 <!-- Node33&#45;&gt;Node12 -->
-<g id="edge78" class="edge">
+<g id="edge79" class="edge">
 <title>Node33&#45;&gt;Node12</title>
 <path fill="none" stroke="midnightblue" d="M830.6,-707.09C836.35,-698.54 842.61,-688.55 847.5,-679 956.71,-465.73 871.38,-317.1 1074.5,-190 1109.03,-168.39 1215.17,-156.02 1287.19,-149.9"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="827.67,-705.18 824.87,-715.4 833.43,-709.16 827.67,-705.18"/>
 </g>
 <!-- Node33&#45;&gt;Node20 -->
-<g id="edge79" class="edge">
+<g id="edge78" class="edge">
 <title>Node33&#45;&gt;Node20</title>
 <path fill="none" stroke="midnightblue" d="M820.06,-705.49C825.67,-679.15 833.5,-635.55 833.5,-597.5 833.5,-597.5 833.5,-597.5 833.5,-260.5 833.5,-180.24 1090.38,-118.91 1209.79,-94.73"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="816.63,-704.82 817.9,-715.34 823.46,-706.32 816.63,-704.82"/>

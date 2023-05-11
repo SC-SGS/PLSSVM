@@ -149,47 +149,47 @@ var sectionId = 'dynsection-0';
 <g id="node7" class="node">
 <title>Node7</title>
 <g id="a_node7"><a xlink:href="core_8hpp.html" target="_top" xlink:title="Core header including all other necessary headers.">
-<polygon fill="white" stroke="black" points="933,-6 933,-25 1068,-25 1068,-6 933,-6"/>
-<text text-anchor="middle" x="1000.5" y="-13" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/core.hpp</text>
+<polygon fill="white" stroke="black" points="1056,-6 1056,-25 1191,-25 1191,-6 1056,-6"/>
+<text text-anchor="middle" x="1123.5" y="-13" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/core.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node7 -->
 <g id="edge6" class="edge">
 <title>Node1&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M824.23,-705.82C803.96,-651.85 757.5,-515.19 757.5,-396.5 757.5,-396.5 757.5,-396.5 757.5,-143 757.5,-63.57 860.91,-33.94 932.81,-22.94"/>
+<path fill="none" stroke="midnightblue" d="M824.23,-705.82C803.96,-651.85 757.5,-515.19 757.5,-396.5 757.5,-396.5 757.5,-396.5 757.5,-143 757.5,-100.78 778.39,-88.88 814.5,-67 854.02,-43.06 977.31,-28.65 1055.69,-21.66"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="821.08,-707.38 827.91,-715.48 827.62,-704.89 821.08,-707.38"/>
 </g>
 <!-- Node8 -->
 <g id="node8" class="node">
 <title>Node8</title>
-<g id="a_node8"><a xlink:href="csvm_8hpp.html" target="_top" xlink:title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them.">
-<polygon fill="white" stroke="black" points="1457.5,-134.5 1457.5,-153.5 1597.5,-153.5 1597.5,-134.5 1457.5,-134.5"/>
-<text text-anchor="middle" x="1527.5" y="-141.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/csvm.hpp</text>
+<g id="a_node8"><a xlink:href="csvm__factory_8hpp.html" target="_top" xlink:title="Factory function for constructing a new C&#45;SVM based on the provided plssvm::backend_type and potentia...">
+<polygon fill="white" stroke="black" points="1064,-67.5 1064,-97.5 1183,-97.5 1183,-67.5 1064,-67.5"/>
+<text text-anchor="start" x="1072" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/csvm</text>
+<text text-anchor="middle" x="1123.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">_factory.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node1&#45;&gt;Node8 -->
 <g id="edge7" class="edge">
 <title>Node1&#45;&gt;Node8</title>
-<path fill="none" stroke="midnightblue" d="M917.08,-723.31C1052.65,-710.95 1305.5,-677.21 1305.5,-597.5 1305.5,-597.5 1305.5,-597.5 1305.5,-461.5 1305.5,-314.51 1467.97,-187.39 1514.93,-153.71"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="916.38,-719.86 906.73,-724.24 917,-726.83 916.38,-719.86"/>
+<path fill="none" stroke="midnightblue" d="M833.5,-704.99C833.5,-678.49 833.5,-635 833.5,-597.5 833.5,-597.5 833.5,-597.5 833.5,-260.5 833.5,-153.59 978.87,-109.34 1063.76,-92.61"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="830,-705.24 833.5,-715.24 837,-705.24 830,-705.24"/>
 </g>
-<!-- Node16 -->
-<g id="node16" class="node">
-<title>Node16</title>
-<g id="a_node16"><a xlink:href="csvm__factory_8hpp.html" target="_top" xlink:title="Factory function for constructing a new C&#45;SVM based on the provided plssvm::backend_type and potentia...">
-<polygon fill="white" stroke="black" points="941,-67.5 941,-97.5 1060,-97.5 1060,-67.5 941,-67.5"/>
-<text text-anchor="start" x="949" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/csvm</text>
-<text text-anchor="middle" x="1000.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">_factory.hpp</text>
+<!-- Node9 -->
+<g id="node9" class="node">
+<title>Node9</title>
+<g id="a_node9"><a xlink:href="csvm_8hpp.html" target="_top" xlink:title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them.">
+<polygon fill="white" stroke="black" points="1457.5,-134.5 1457.5,-153.5 1597.5,-153.5 1597.5,-134.5 1457.5,-134.5"/>
+<text text-anchor="middle" x="1527.5" y="-141.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node1&#45;&gt;Node16 -->
-<g id="edge18" class="edge">
-<title>Node1&#45;&gt;Node16</title>
-<path fill="none" stroke="midnightblue" d="M833.5,-704.99C833.5,-678.49 833.5,-635 833.5,-597.5 833.5,-597.5 833.5,-597.5 833.5,-260.5 833.5,-181.07 923.56,-122.85 971.41,-97.52"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="830,-705.24 833.5,-715.24 837,-705.24 830,-705.24"/>
+<!-- Node1&#45;&gt;Node9 -->
+<g id="edge9" class="edge">
+<title>Node1&#45;&gt;Node9</title>
+<path fill="none" stroke="midnightblue" d="M917.08,-723.31C1052.65,-710.95 1305.5,-677.21 1305.5,-597.5 1305.5,-597.5 1305.5,-597.5 1305.5,-461.5 1305.5,-314.51 1467.97,-187.39 1514.93,-153.71"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="916.38,-719.86 906.73,-724.24 917,-726.83 916.38,-719.86"/>
 </g>
 <!-- Node17 -->
 <g id="node17" class="node">
@@ -272,144 +272,144 @@ var sectionId = 'dynsection-0';
 <polygon fill="midnightblue" stroke="midnightblue" points="916.55,-720.52 906.8,-724.67 917.01,-727.5 916.55,-720.52"/>
 </g>
 <!-- Node8&#45;&gt;Node7 -->
-<g id="edge15" class="edge">
+<g id="edge8" class="edge">
 <title>Node8&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M1491.33,-131.27C1441.21,-115.3 1347.65,-86.47 1266.5,-67 1193.25,-49.43 1107.48,-34.07 1053.56,-25.03"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1490.46,-134.67 1501.05,-134.38 1492.59,-128 1490.46,-134.67"/>
+<path fill="none" stroke="midnightblue" d="M1123.5,-57.25C1123.5,-46.02 1123.5,-33.38 1123.5,-25.19"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1120,-57.4 1123.5,-67.4 1127,-57.4 1120,-57.4"/>
 </g>
-<!-- Node9 -->
-<g id="node9" class="node">
-<title>Node9</title>
-<g id="a_node9"><a xlink:href="gpu__csvm_8hpp.html" target="_top" xlink:title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction.">
+<!-- Node9&#45;&gt;Node7 -->
+<g id="edge17" class="edge">
+<title>Node9&#45;&gt;Node7</title>
+<path fill="none" stroke="midnightblue" d="M1494.61,-130.89C1451.79,-115.3 1374.51,-87.75 1307.5,-67 1255.45,-50.88 1194.31,-34.63 1157.27,-25.07"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1493.63,-134.26 1504.22,-134.4 1496.03,-127.68 1493.63,-134.26"/>
+</g>
+<!-- Node9&#45;&gt;Node8 -->
+<g id="edge18" class="edge">
+<title>Node9&#45;&gt;Node8</title>
+<path fill="none" stroke="midnightblue" d="M1459.49,-132.98C1382.13,-121.59 1257,-103.16 1183.25,-92.3"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1459.21,-136.48 1469.62,-134.48 1460.23,-129.56 1459.21,-136.48"/>
+</g>
+<!-- Node10 -->
+<g id="node10" class="node">
+<title>Node10</title>
+<g id="a_node10"><a xlink:href="gpu__csvm_8hpp.html" target="_top" xlink:title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction.">
 <polygon fill="white" stroke="black" points="1880,-67.5 1880,-97.5 2019,-97.5 2019,-67.5 1880,-67.5"/>
 <text text-anchor="start" x="1888" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
 <text text-anchor="middle" x="1949.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">/gpu_csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node8&#45;&gt;Node9 -->
-<g id="edge8" class="edge">
-<title>Node8&#45;&gt;Node9</title>
+<!-- Node9&#45;&gt;Node10 -->
+<g id="edge10" class="edge">
+<title>Node9&#45;&gt;Node10</title>
 <path fill="none" stroke="midnightblue" d="M1598.21,-133.03C1676.46,-122 1801.77,-104.33 1879.67,-93.35"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1597.38,-129.61 1587.96,-134.48 1598.35,-136.54 1597.38,-129.61"/>
 </g>
-<!-- Node15 -->
-<g id="node15" class="node">
-<title>Node15</title>
-<g id="a_node15"><a xlink:href="backends_2OpenMP_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the OpenMP backend.">
-<polygon fill="white" stroke="black" points="1576,-67.5 1576,-97.5 1715,-97.5 1715,-67.5 1576,-67.5"/>
-<text text-anchor="start" x="1584" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="1645.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">/OpenMP/csvm.hpp</text>
+<!-- Node16 -->
+<g id="node16" class="node">
+<title>Node16</title>
+<g id="a_node16"><a xlink:href="backends_2OpenMP_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the OpenMP backend.">
+<polygon fill="white" stroke="black" points="1601,-67.5 1601,-97.5 1740,-97.5 1740,-67.5 1601,-67.5"/>
+<text text-anchor="start" x="1609" y="-85.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="middle" x="1670.5" y="-74.5" font-family="Helvetica,sans-Serif" font-size="10.00">/OpenMP/csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node8&#45;&gt;Node15 -->
-<g id="edge14" class="edge">
-<title>Node8&#45;&gt;Node15</title>
-<path fill="none" stroke="midnightblue" d="M1553.4,-129.94C1572.43,-120.35 1598.23,-107.33 1617.69,-97.52"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1551.76,-126.85 1544.41,-134.48 1554.91,-133.1 1551.76,-126.85"/>
-</g>
-<!-- Node8&#45;&gt;Node16 -->
+<!-- Node9&#45;&gt;Node16 -->
 <g id="edge16" class="edge">
-<title>Node8&#45;&gt;Node16</title>
-<path fill="none" stroke="midnightblue" d="M1447.19,-133.93C1340.65,-121.9 1155.02,-100.95 1060.1,-90.23"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1446.92,-137.42 1457.25,-135.07 1447.7,-130.47 1446.92,-137.42"/>
+<title>Node9&#45;&gt;Node16</title>
+<path fill="none" stroke="midnightblue" d="M1557.33,-130.59C1580.51,-120.94 1612.68,-107.56 1636.8,-97.52"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1555.88,-127.4 1547.99,-134.48 1558.57,-133.86 1555.88,-127.4"/>
 </g>
-<!-- Node10 -->
-<g id="node10" class="node">
-<title>Node10</title>
-<g id="a_node10"><a xlink:href="backends_2CUDA_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the CUDA backend.">
+<!-- Node11 -->
+<g id="node11" class="node">
+<title>Node11</title>
+<g id="a_node11"><a xlink:href="backends_2CUDA_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the CUDA backend.">
 <polygon fill="white" stroke="black" points="1829,-0.5 1829,-30.5 1968,-30.5 1968,-0.5 1829,-0.5"/>
 <text text-anchor="start" x="1837" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
 <text text-anchor="middle" x="1898.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/CUDA/csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node9&#45;&gt;Node10 -->
-<g id="edge9" class="edge">
-<title>Node9&#45;&gt;Node10</title>
+<!-- Node10&#45;&gt;Node11 -->
+<g id="edge11" class="edge">
+<title>Node10&#45;&gt;Node11</title>
 <path fill="none" stroke="midnightblue" d="M1932.2,-59.45C1924.71,-49.9 1916.16,-39 1909.54,-30.58"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1929.51,-61.69 1938.43,-67.4 1935.01,-57.37 1929.51,-61.69"/>
 </g>
-<!-- Node11 -->
-<g id="node11" class="node">
-<title>Node11</title>
-<g id="a_node11"><a xlink:href="backends_2HIP_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the HIP backend.">
+<!-- Node12 -->
+<g id="node12" class="node">
+<title>Node12</title>
+<g id="a_node12"><a xlink:href="backends_2HIP_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the HIP backend.">
 <polygon fill="white" stroke="black" points="1986,-0.5 1986,-30.5 2125,-30.5 2125,-0.5 1986,-0.5"/>
 <text text-anchor="start" x="1994" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
 <text text-anchor="middle" x="2055.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/HIP/csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node9&#45;&gt;Node11 -->
-<g id="edge10" class="edge">
-<title>Node9&#45;&gt;Node11</title>
+<!-- Node10&#45;&gt;Node12 -->
+<g id="edge12" class="edge">
+<title>Node10&#45;&gt;Node12</title>
 <path fill="none" stroke="midnightblue" d="M1981.28,-62.02C1997.77,-51.9 2017.55,-39.77 2032.54,-30.58"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1979.2,-59.18 1972.5,-67.4 1982.85,-65.15 1979.2,-59.18"/>
 </g>
-<!-- Node12 -->
-<g id="node12" class="node">
-<title>Node12</title>
-<g id="a_node12"><a xlink:href="backends_2OpenCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the OpenCL backend.">
+<!-- Node13 -->
+<g id="node13" class="node">
+<title>Node13</title>
+<g id="a_node13"><a xlink:href="backends_2OpenCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a C&#45;SVM using the OpenCL backend.">
 <polygon fill="white" stroke="black" points="2143,-0.5 2143,-30.5 2282,-30.5 2282,-0.5 2143,-0.5"/>
 <text text-anchor="start" x="2151" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
 <text text-anchor="middle" x="2212.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/OpenCL/csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node9&#45;&gt;Node12 -->
-<g id="edge11" class="edge">
-<title>Node9&#45;&gt;Node12</title>
+<!-- Node10&#45;&gt;Node13 -->
+<g id="edge13" class="edge">
+<title>Node10&#45;&gt;Node13</title>
 <path fill="none" stroke="midnightblue" d="M2016.05,-65.05C2059.05,-54.43 2114.42,-40.74 2155.41,-30.61"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="2015.11,-61.68 2006.24,-67.48 2016.79,-68.47 2015.11,-61.68"/>
-</g>
-<!-- Node13 -->
-<g id="node13" class="node">
-<title>Node13</title>
-<g id="a_node13"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
-<polygon fill="white" stroke="black" points="2300,-0.5 2300,-30.5 2439,-30.5 2439,-0.5 2300,-0.5"/>
-<text text-anchor="start" x="2308" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="2369.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
-</a>
-</g>
-</g>
-<!-- Node9&#45;&gt;Node13 -->
-<g id="edge12" class="edge">
-<title>Node9&#45;&gt;Node13</title>
-<path fill="none" stroke="midnightblue" d="M2029.04,-70.61C2098.44,-60.9 2201.78,-45.96 2291.5,-31 2294.22,-30.55 2296.99,-30.08 2299.78,-29.59"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="2028.47,-67.15 2019.05,-72 2029.44,-74.09 2028.47,-67.15"/>
 </g>
 <!-- Node14 -->
 <g id="node14" class="node">
 <title>Node14</title>
 <g id="a_node14"><a xlink:href="backends_2SYCL_2hipSYCL_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation.">
-<polygon fill="white" stroke="black" points="1672,-0.5 1672,-30.5 1811,-30.5 1811,-0.5 1672,-0.5"/>
-<text text-anchor="start" x="1680" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
-<text text-anchor="middle" x="1741.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
+<polygon fill="white" stroke="black" points="2300,-0.5 2300,-30.5 2439,-30.5 2439,-0.5 2300,-0.5"/>
+<text text-anchor="start" x="2308" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="middle" x="2369.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/hipSYCL/csvm.hpp</text>
 </a>
 </g>
 </g>
-<!-- Node9&#45;&gt;Node14 -->
-<g id="edge13" class="edge">
-<title>Node9&#45;&gt;Node14</title>
+<!-- Node10&#45;&gt;Node14 -->
+<g id="edge14" class="edge">
+<title>Node10&#45;&gt;Node14</title>
+<path fill="none" stroke="midnightblue" d="M2029.04,-70.61C2098.44,-60.9 2201.78,-45.96 2291.5,-31 2294.22,-30.55 2296.99,-30.08 2299.78,-29.59"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="2028.47,-67.15 2019.05,-72 2029.44,-74.09 2028.47,-67.15"/>
+</g>
+<!-- Node15 -->
+<g id="node15" class="node">
+<title>Node15</title>
+<g id="a_node15"><a xlink:href="backends_2SYCL_2DPCPP_2csvm_8hpp.html" target="_top" xlink:title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation.">
+<polygon fill="white" stroke="black" points="1672,-0.5 1672,-30.5 1811,-30.5 1811,-0.5 1672,-0.5"/>
+<text text-anchor="start" x="1680" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/backends</text>
+<text text-anchor="middle" x="1741.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00">/SYCL/DPCPP/csvm.hpp</text>
+</a>
+</g>
+</g>
+<!-- Node10&#45;&gt;Node15 -->
+<g id="edge15" class="edge">
+<title>Node10&#45;&gt;Node15</title>
 <path fill="none" stroke="midnightblue" d="M1894.92,-64.44C1861.2,-53.91 1818.46,-40.55 1786.65,-30.61"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1894.03,-67.83 1904.62,-67.48 1896.12,-61.15 1894.03,-67.83"/>
-</g>
-<!-- Node16&#45;&gt;Node7 -->
-<g id="edge17" class="edge">
-<title>Node16&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M1000.5,-57.25C1000.5,-46.02 1000.5,-33.38 1000.5,-25.19"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="997,-57.4 1000.5,-67.4 1004,-57.4 997,-57.4"/>
 </g>
 <!-- Node17&#45;&gt;Node7 -->
 <g id="edge20" class="edge">
 <title>Node17&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M1021.87,-317.31C957.86,-303.37 871.5,-271.51 871.5,-201 871.5,-201 871.5,-201 871.5,-143 871.5,-82.93 943.69,-41.95 980.06,-25.1"/>
+<path fill="none" stroke="midnightblue" d="M1021.87,-317.31C957.86,-303.37 871.5,-271.51 871.5,-201 871.5,-201 871.5,-201 871.5,-143 871.5,-60.27 981.32,-31.64 1055.97,-21.74"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1021.44,-320.79 1031.94,-319.39 1022.86,-313.94 1021.44,-320.79"/>
 </g>
-<!-- Node17&#45;&gt;Node8 -->
+<!-- Node17&#45;&gt;Node9 -->
 <g id="edge21" class="edge">
-<title>Node17&#45;&gt;Node8</title>
+<title>Node17&#45;&gt;Node9</title>
 <path fill="none" stroke="midnightblue" d="M1031.29,-308.95C1016.77,-301.41 1002.95,-291.05 994.5,-277 987.4,-265.19 985.85,-256.73 994.5,-246 1051.62,-175.15 1326.23,-153.71 1457.42,-147.46"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1029.85,-312.14 1040.38,-313.28 1032.86,-305.82 1029.85,-312.14"/>
 </g>
@@ -469,12 +469,12 @@ var sectionId = 'dynsection-0';
 <!-- Node20&#45;&gt;Node7 -->
 <g id="edge25" class="edge">
 <title>Node20&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M1309.69,-185.44C1244.45,-149.79 1069.44,-54.17 1016.13,-25.04"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1308.38,-188.72 1318.84,-190.44 1311.74,-182.58 1308.38,-188.72"/>
+<path fill="none" stroke="midnightblue" d="M1318.32,-183C1292.34,-157.55 1239.38,-106.69 1191.5,-67 1172.71,-51.42 1149.69,-34.81 1135.84,-25.06"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1316.18,-185.8 1325.76,-190.32 1321.09,-180.81 1316.18,-185.8"/>
 </g>
-<!-- Node20&#45;&gt;Node8 -->
+<!-- Node20&#45;&gt;Node9 -->
 <g id="edge26" class="edge">
-<title>Node20&#45;&gt;Node8</title>
+<title>Node20&#45;&gt;Node9</title>
 <path fill="none" stroke="midnightblue" d="M1374.89,-187.7C1411.32,-177.51 1464.09,-162.74 1497.06,-153.52"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1373.77,-184.38 1365.08,-190.44 1375.65,-191.12 1373.77,-184.38"/>
 </g>
@@ -505,12 +505,12 @@ var sectionId = 'dynsection-0';
 <!-- Node24&#45;&gt;Node7 -->
 <g id="edge37" class="edge">
 <title>Node24&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M1747.69,-659.34C1514.81,-647.15 795.5,-593.55 795.5,-396.5 795.5,-396.5 795.5,-396.5 795.5,-143 795.5,-70.75 888.85,-38.41 949.56,-25.01"/>
+<path fill="none" stroke="midnightblue" d="M1747.69,-659.34C1514.81,-647.15 795.5,-593.55 795.5,-396.5 795.5,-396.5 795.5,-396.5 795.5,-143 795.5,-91.99 835.9,-89.86 881.5,-67 936.36,-39.49 1005.45,-26.96 1055.74,-21.25"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1747.58,-662.84 1757.75,-659.85 1747.94,-655.84 1747.58,-662.84"/>
 </g>
-<!-- Node24&#45;&gt;Node8 -->
+<!-- Node24&#45;&gt;Node9 -->
 <g id="edge38" class="edge">
-<title>Node24&#45;&gt;Node8</title>
+<title>Node24&#45;&gt;Node9</title>
 <path fill="none" stroke="midnightblue" d="M1819.5,-637.99C1819.5,-611.49 1819.5,-568 1819.5,-530.5 1819.5,-530.5 1819.5,-530.5 1819.5,-327.5 1819.5,-216.31 1665.36,-170.35 1581.06,-153.53"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1816,-638.24 1819.5,-648.24 1823,-638.24 1816,-638.24"/>
 </g>
@@ -548,55 +548,55 @@ var sectionId = 'dynsection-0';
 <!-- Node26&#45;&gt;Node7 -->
 <g id="edge47" class="edge">
 <title>Node26&#45;&gt;Node7</title>
-<path fill="none" stroke="midnightblue" d="M1931.96,-576.72C1932.55,-551.12 1933.5,-503.85 1933.5,-463.5 1933.5,-463.5 1933.5,-463.5 1933.5,-327.5 1933.5,-179.07 1859.58,-128.54 1724.5,-67 1665.74,-40.23 1236.82,-23.95 1068.26,-18.53"/>
+<path fill="none" stroke="midnightblue" d="M1931.96,-576.72C1932.55,-551.12 1933.5,-503.85 1933.5,-463.5 1933.5,-463.5 1933.5,-463.5 1933.5,-327.5 1933.5,-185.75 1875.42,-132.09 1749.5,-67 1700.83,-41.84 1342.68,-25.06 1191.03,-19.01"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1928.46,-576.77 1931.72,-586.85 1935.46,-576.94 1928.46,-576.77"/>
 </g>
-<!-- Node26&#45;&gt;Node8 -->
+<!-- Node26&#45;&gt;Node9 -->
 <g id="edge48" class="edge">
-<title>Node26&#45;&gt;Node8</title>
+<title>Node26&#45;&gt;Node9</title>
 <path fill="none" stroke="midnightblue" d="M1912.09,-580.07C1901.69,-570.88 1889.42,-558.41 1881.5,-545 1862.3,-512.49 1857.5,-501.26 1857.5,-463.5 1857.5,-463.5 1857.5,-463.5 1857.5,-327.5 1857.5,-260.46 1851.92,-226.2 1795.5,-190 1763.54,-169.49 1665.78,-156.98 1597.62,-150.52"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1910.02,-582.9 1919.91,-586.69 1914.54,-577.56 1910.02,-582.9"/>
 </g>
-<!-- Node26&#45;&gt;Node9 -->
+<!-- Node26&#45;&gt;Node10 -->
 <g id="edge41" class="edge">
-<title>Node26&#45;&gt;Node9</title>
+<title>Node26&#45;&gt;Node10</title>
 <path fill="none" stroke="midnightblue" d="M1952.16,-580.63C1963.48,-571.51 1976.91,-558.93 1985.5,-545 2005.32,-512.86 2009.5,-501.26 2009.5,-463.5 2009.5,-463.5 2009.5,-463.5 2009.5,-199 2009.5,-158.55 1980.17,-118.2 1962.52,-97.58"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1949.82,-578.02 1944.04,-586.9 1954.09,-583.56 1949.82,-578.02"/>
 </g>
-<!-- Node26&#45;&gt;Node10 -->
+<!-- Node26&#45;&gt;Node11 -->
 <g id="edge40" class="edge">
-<title>Node26&#45;&gt;Node10</title>
+<title>Node26&#45;&gt;Node11</title>
 <path fill="none" stroke="midnightblue" d="M1958.59,-582.17C1974.41,-573.34 1993.87,-560.53 2007.5,-545 2034.11,-514.67 2047.5,-503.85 2047.5,-463.5 2047.5,-463.5 2047.5,-463.5 2047.5,-143 2047.5,-108.18 2051.53,-93.12 2028.5,-67 2012.89,-49.29 1990.31,-37.75 1968.34,-30.24"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1956.93,-579.09 1949.77,-586.91 1960.23,-585.26 1956.93,-579.09"/>
 </g>
-<!-- Node26&#45;&gt;Node11 -->
+<!-- Node26&#45;&gt;Node12 -->
 <g id="edge42" class="edge">
-<title>Node26&#45;&gt;Node11</title>
+<title>Node26&#45;&gt;Node12</title>
 <path fill="none" stroke="midnightblue" d="M1966.8,-583.21C2012.26,-564.87 2085.5,-525.67 2085.5,-463.5 2085.5,-463.5 2085.5,-463.5 2085.5,-143 2085.5,-101.24 2069.83,-53.78 2061.14,-30.66"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1965.33,-580.03 1957.28,-586.91 1967.86,-586.55 1965.33,-580.03"/>
 </g>
-<!-- Node26&#45;&gt;Node12 -->
+<!-- Node26&#45;&gt;Node13 -->
 <g id="edge43" class="edge">
-<title>Node26&#45;&gt;Node12</title>
+<title>Node26&#45;&gt;Node13</title>
 <path fill="none" stroke="midnightblue" d="M1970.13,-583.92C2040.53,-561.66 2182.5,-510.9 2182.5,-463.5 2182.5,-463.5 2182.5,-463.5 2182.5,-143 2182.5,-101.24 2198.17,-53.78 2206.86,-30.66"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1968.79,-580.67 1960.29,-587 1970.88,-587.36 1968.79,-580.67"/>
 </g>
-<!-- Node26&#45;&gt;Node13 -->
+<!-- Node26&#45;&gt;Node14 -->
 <g id="edge45" class="edge">
-<title>Node26&#45;&gt;Node13</title>
+<title>Node26&#45;&gt;Node14</title>
 <path fill="none" stroke="midnightblue" d="M1993.21,-585.16C2093.18,-566.65 2279.5,-524.02 2279.5,-463.5 2279.5,-463.5 2279.5,-463.5 2279.5,-143 2279.5,-94.75 2323.5,-52.13 2349.97,-30.85"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1992.43,-581.75 1983.22,-586.98 1993.69,-588.63 1992.43,-581.75"/>
 </g>
-<!-- Node26&#45;&gt;Node14 -->
+<!-- Node26&#45;&gt;Node15 -->
 <g id="edge46" class="edge">
-<title>Node26&#45;&gt;Node14</title>
+<title>Node26&#45;&gt;Node15</title>
 <path fill="none" stroke="midnightblue" d="M1940.63,-577.55C1952.43,-552.63 1971.5,-505.82 1971.5,-463.5 1971.5,-463.5 1971.5,-463.5 1971.5,-327.5 1971.5,-195.21 1923.79,-157.71 1827.5,-67 1811.49,-51.92 1790.2,-39.38 1772.81,-30.56"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1937.34,-576.29 1936.09,-586.81 1943.63,-579.37 1937.34,-576.29"/>
 </g>
-<!-- Node26&#45;&gt;Node15 -->
+<!-- Node26&#45;&gt;Node16 -->
 <g id="edge44" class="edge">
-<title>Node26&#45;&gt;Node15</title>
-<path fill="none" stroke="midnightblue" d="M1923.29,-577.45C1912.66,-552.42 1895.5,-505.48 1895.5,-463.5 1895.5,-463.5 1895.5,-463.5 1895.5,-327.5 1895.5,-208.33 1748.21,-128.34 1679.74,-97.6"/>
+<title>Node26&#45;&gt;Node16</title>
+<path fill="none" stroke="midnightblue" d="M1923.29,-577.45C1912.66,-552.42 1895.5,-505.48 1895.5,-463.5 1895.5,-463.5 1895.5,-463.5 1895.5,-327.5 1895.5,-213.12 1760.22,-129.42 1699.45,-97.59"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1920.15,-579.01 1927.37,-586.76 1926.56,-576.2 1920.15,-579.01"/>
 </g>
 <!-- Node26&#45;&gt;Node19 -->
@@ -608,70 +608,70 @@ var sectionId = 'dynsection-0';
 <!-- Node26&#45;&gt;Node20 -->
 <g id="edge66" class="edge">
 <title>Node26&#45;&gt;Node20</title>
-<path fill="none" stroke="midnightblue" d="M1838.83,-594.81C1726.74,-592.3 1546.23,-582.36 1491.5,-545 1371.07,-462.8 1414.94,-379.58 1356.5,-246 1350.85,-233.09 1343.54,-218.5 1338.94,-209.53"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1839.05,-598.32 1849.12,-595.03 1839.2,-591.32 1839.05,-598.32"/>
+<path fill="none" stroke="midnightblue" d="M1839.15,-595.14C1725.99,-593 1542.51,-583.46 1487.5,-545 1368.6,-461.86 1414.65,-378.92 1356.5,-246 1350.85,-233.09 1343.54,-218.5 1338.94,-209.53"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1839.13,-598.64 1849.19,-595.32 1839.26,-591.65 1839.13,-598.64"/>
 </g>
 <!-- Node27 -->
 <g id="node27" class="node">
 <title>Node27</title>
 <g id="a_node27"><a xlink:href="parser__train_8hpp.html" target="_top" xlink:title="Implements a class encapsulating all necessary parameters for training the C&#45;SVM possibly provided th...">
-<polygon fill="white" stroke="black" points="1500,-514.5 1500,-544.5 1623,-544.5 1623,-514.5 1500,-514.5"/>
-<text text-anchor="start" x="1508" y="-532.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/detail</text>
-<text text-anchor="middle" x="1561.5" y="-521.5" font-family="Helvetica,sans-Serif" font-size="10.00">/cmd/parser_train.hpp</text>
+<polygon fill="white" stroke="black" points="1496,-514.5 1496,-544.5 1619,-544.5 1619,-514.5 1496,-514.5"/>
+<text text-anchor="start" x="1504" y="-532.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/detail</text>
+<text text-anchor="middle" x="1557.5" y="-521.5" font-family="Helvetica,sans-Serif" font-size="10.00">/cmd/parser_train.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node26&#45;&gt;Node27 -->
 <g id="edge49" class="edge">
 <title>Node26&#45;&gt;Node27</title>
-<path fill="none" stroke="midnightblue" d="M1872.61,-585.15C1804.44,-573.18 1692.7,-553.55 1623.32,-541.36"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1872.29,-588.65 1882.75,-586.94 1873.5,-581.76 1872.29,-588.65"/>
+<path fill="none" stroke="midnightblue" d="M1872.35,-585.22C1803.17,-573.2 1689.19,-553.39 1619.01,-541.19"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1871.77,-588.67 1882.22,-586.94 1872.97,-581.77 1871.77,-588.67"/>
 </g>
 <!-- Node27&#45;&gt;Node18 -->
 <g id="edge50" class="edge">
 <title>Node27&#45;&gt;Node18</title>
-<path fill="none" stroke="midnightblue" d="M1527.74,-509.47C1437.72,-458.74 1193.45,-321.08 1114.48,-276.58"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1526.03,-512.53 1536.46,-514.39 1529.46,-506.43 1526.03,-512.53"/>
+<path fill="none" stroke="midnightblue" d="M1523.76,-509.32C1434.28,-458.47 1192.49,-321.03 1114.27,-276.58"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1522.25,-512.49 1532.67,-514.39 1525.7,-506.4 1522.25,-512.49"/>
 </g>
 <!-- Node28 -->
 <g id="node28" class="node">
 <title>Node28</title>
 <g id="a_node28"><a xlink:href="performance__tracker_8hpp.html" target="_top" xlink:title="Defines a performance tracker which can dump performance information in a YAML file.">
-<polygon fill="white" stroke="black" points="1491,-447.5 1491,-477.5 1632,-477.5 1632,-447.5 1491,-447.5"/>
-<text text-anchor="start" x="1499" y="-465.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/detail</text>
-<text text-anchor="middle" x="1561.5" y="-454.5" font-family="Helvetica,sans-Serif" font-size="10.00">/performance_tracker.hpp</text>
+<polygon fill="white" stroke="black" points="1487,-447.5 1487,-477.5 1628,-477.5 1628,-447.5 1487,-447.5"/>
+<text text-anchor="start" x="1495" y="-465.5" font-family="Helvetica,sans-Serif" font-size="10.00">include/plssvm/detail</text>
+<text text-anchor="middle" x="1557.5" y="-454.5" font-family="Helvetica,sans-Serif" font-size="10.00">/performance_tracker.hpp</text>
 </a>
 </g>
 </g>
 <!-- Node27&#45;&gt;Node28 -->
 <g id="edge51" class="edge">
 <title>Node27&#45;&gt;Node28</title>
-<path fill="none" stroke="midnightblue" d="M1561.5,-504.11C1561.5,-495.15 1561.5,-485.32 1561.5,-477.58"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1558,-504.4 1561.5,-514.4 1565,-504.4 1558,-504.4"/>
-</g>
-<!-- Node28&#45;&gt;Node8 -->
-<g id="edge53" class="edge">
-<title>Node28&#45;&gt;Node8</title>
-<path fill="none" stroke="midnightblue" d="M1573.66,-438.33C1586.07,-412.51 1603.5,-369.16 1603.5,-329.5 1603.5,-329.5 1603.5,-329.5 1603.5,-260.5 1603.5,-213.69 1559.4,-171.18 1538.39,-153.58"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1570.51,-436.81 1569.2,-447.32 1576.78,-439.92 1570.51,-436.81"/>
+<path fill="none" stroke="midnightblue" d="M1557.5,-504.11C1557.5,-495.15 1557.5,-485.32 1557.5,-477.58"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1554,-504.4 1557.5,-514.4 1561,-504.4 1554,-504.4"/>
 </g>
 <!-- Node28&#45;&gt;Node9 -->
-<g id="edge52" class="edge">
+<g id="edge53" class="edge">
 <title>Node28&#45;&gt;Node9</title>
-<path fill="none" stroke="midnightblue" d="M1601.65,-443.02C1644.12,-422.38 1711.86,-386.25 1762.5,-344 1847.93,-272.72 1870.35,-250.63 1925.5,-154 1935.88,-135.81 1942.73,-112.41 1946.37,-97.68"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1599.97,-439.95 1592.47,-447.43 1603,-446.26 1599.97,-439.95"/>
+<path fill="none" stroke="midnightblue" d="M1571.42,-438.53C1576.09,-430.1 1580.99,-420.33 1584.5,-411 1597.6,-376.19 1603.5,-366.69 1603.5,-329.5 1603.5,-329.5 1603.5,-329.5 1603.5,-260.5 1603.5,-213.69 1559.4,-171.18 1538.39,-153.58"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1568.28,-436.97 1566.34,-447.39 1574.35,-440.45 1568.28,-436.97"/>
+</g>
+<!-- Node28&#45;&gt;Node10 -->
+<g id="edge52" class="edge">
+<title>Node28&#45;&gt;Node10</title>
+<path fill="none" stroke="midnightblue" d="M1598.58,-443.13C1641.92,-422.62 1710.97,-386.63 1762.5,-344 1848.23,-273.08 1870.35,-250.63 1925.5,-154 1935.88,-135.81 1942.73,-112.41 1946.37,-97.68"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1597.04,-439.99 1589.47,-447.4 1600.01,-446.33 1597.04,-439.99"/>
 </g>
 <!-- Node28&#45;&gt;Node17 -->
 <g id="edge54" class="edge">
 <title>Node28&#45;&gt;Node17</title>
-<path fill="none" stroke="midnightblue" d="M1501.8,-444.8C1407.91,-418.55 1227.44,-368.08 1139.76,-343.56"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1500.86,-448.18 1511.43,-447.5 1502.75,-441.43 1500.86,-448.18"/>
+<path fill="none" stroke="midnightblue" d="M1498.02,-444.72C1404.85,-418.45 1226.18,-368.05 1139.34,-343.56"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1497.28,-448.15 1507.86,-447.5 1499.18,-441.42 1497.28,-448.15"/>
 </g>
 <!-- Node28&#45;&gt;Node20 -->
 <g id="edge64" class="edge">
 <title>Node28&#45;&gt;Node20</title>
-<path fill="none" stroke="midnightblue" d="M1495.47,-443.76C1477.3,-436.17 1458.92,-425.59 1445.5,-411 1393.07,-354.01 1433.62,-309.65 1389.5,-246 1378.82,-230.59 1361.43,-217.61 1349.07,-209.62"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1494.34,-447.07 1504.93,-447.45 1496.89,-440.55 1494.34,-447.07"/>
+<path fill="none" stroke="midnightblue" d="M1494.72,-443.76C1476.85,-436.13 1458.69,-425.52 1445.5,-411 1393.44,-353.67 1433.62,-309.65 1389.5,-246 1378.82,-230.59 1361.43,-217.61 1349.07,-209.62"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1493.42,-447.01 1504.01,-447.48 1496.03,-440.51 1493.42,-447.01"/>
 </g>
 <!-- Node29 -->
 <g id="node29" class="node">
@@ -686,8 +686,8 @@ var sectionId = 'dynsection-0';
 <!-- Node28&#45;&gt;Node29 -->
 <g id="edge55" class="edge">
 <title>Node28&#45;&gt;Node29</title>
-<path fill="none" stroke="midnightblue" d="M1585.69,-440.57C1595.72,-431.66 1607.37,-421.03 1617.5,-411 1640.46,-388.27 1665.58,-360.28 1680.14,-343.71"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1583.23,-438.07 1578.04,-447.3 1587.86,-443.32 1583.23,-438.07"/>
+<path fill="none" stroke="midnightblue" d="M1583.24,-441.05C1594.09,-432.13 1606.68,-421.35 1617.5,-411 1640.98,-388.54 1666.15,-360.21 1680.54,-343.56"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1580.88,-438.45 1575.34,-447.48 1585.3,-443.88 1580.88,-438.45"/>
 </g>
 <!-- Node30 -->
 <g id="node30" class="node">
@@ -702,24 +702,24 @@ var sectionId = 'dynsection-0';
 <!-- Node28&#45;&gt;Node30 -->
 <g id="edge57" class="edge">
 <title>Node28&#45;&gt;Node30</title>
-<path fill="none" stroke="midnightblue" d="M1545.34,-439.16C1538.49,-429.68 1530.71,-418.92 1524.68,-410.58"/>
-<polygon fill="midnightblue" stroke="midnightblue" points="1542.61,-441.34 1551.3,-447.4 1548.28,-437.24 1542.61,-441.34"/>
+<path fill="none" stroke="midnightblue" d="M1542.53,-438.87C1536.3,-429.46 1529.27,-418.83 1523.81,-410.58"/>
+<polygon fill="midnightblue" stroke="midnightblue" points="1539.73,-440.99 1548.17,-447.4 1545.57,-437.12 1539.73,-440.99"/>
 </g>
-<!-- Node29&#45;&gt;Node9 -->
+<!-- Node29&#45;&gt;Node10 -->
 <g id="edge56" class="edge">
-<title>Node29&#45;&gt;Node9</title>
+<title>Node29&#45;&gt;Node10</title>
 <path fill="none" stroke="midnightblue" d="M1710.33,-305.47C1724.8,-288.28 1746.21,-264.33 1767.5,-246 1822.8,-198.39 1852.33,-206.03 1903.5,-154 1920.31,-136.91 1934.46,-112.78 1942.46,-97.65"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1707.52,-303.38 1703.82,-313.31 1712.9,-307.85 1707.52,-303.38"/>
 </g>
-<!-- Node30&#45;&gt;Node8 -->
+<!-- Node30&#45;&gt;Node9 -->
 <g id="edge59" class="edge">
-<title>Node30&#45;&gt;Node8</title>
+<title>Node30&#45;&gt;Node9</title>
 <path fill="none" stroke="midnightblue" d="M1515.76,-370.36C1518.56,-316.56 1525.22,-188.81 1527.03,-153.93"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1512.26,-370.2 1515.24,-380.37 1519.25,-370.57 1512.26,-370.2"/>
 </g>
-<!-- Node30&#45;&gt;Node9 -->
+<!-- Node30&#45;&gt;Node10 -->
 <g id="edge58" class="edge">
-<title>Node30&#45;&gt;Node9</title>
+<title>Node30&#45;&gt;Node10</title>
 <path fill="none" stroke="midnightblue" d="M1534.39,-373.05C1550.8,-355.9 1575.11,-331.71 1598.5,-313 1713.35,-221.13 1865.49,-131.35 1924.57,-97.56"/>
 <polygon fill="midnightblue" stroke="midnightblue" points="1531.77,-370.72 1527.44,-380.39 1536.86,-375.54 1531.77,-370.72"/>
 </g>
