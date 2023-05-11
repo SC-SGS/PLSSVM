@@ -24,7 +24,7 @@ cd ..
 mkdir -p build-gcc-$GCC_VERSION
 cd build-gcc-$GCC_VERSION
 ../gcc-$GCC_VERSION/configure --prefix="$GCC_ROOT_DIR" --disable-nls --enable-languages=c,c++ --disable-multilib
-make -j $(nproc)
+make -j "$(nproc)"
 make install
 cd ..
 rm -rf gcc-$GCC_VERSION

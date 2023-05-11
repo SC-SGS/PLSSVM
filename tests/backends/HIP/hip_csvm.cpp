@@ -48,10 +48,10 @@ TEST_F(HIPCSVM, construct_target_and_parameter) {
     EXPECT_NO_THROW((plssvm::hip::csvm{ plssvm::target_platform::automatic, params }));
     EXPECT_NO_THROW((plssvm::hip::csvm{ plssvm::target_platform::gpu_amd, params }));
 #else
-    EXPECT_THROW_WHAT(plssvm::hip::csvm{ plssvm::target_platform::automatic, params },
+    EXPECT_THROW_WHAT((plssvm::hip::csvm{ plssvm::target_platform::automatic, params }),
                       plssvm::hip::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::hip::csvm{ plssvm::target_platform::gpu_amd, params },
+    EXPECT_THROW_WHAT((plssvm::hip::csvm{ plssvm::target_platform::gpu_amd, params }),
                       plssvm::hip::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -73,10 +73,10 @@ TEST_F(HIPCSVM, construct_target_and_named_args) {
     EXPECT_NO_THROW((plssvm::hip::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::hip::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }));
 #else
-    EXPECT_THROW_WHAT(plssvm::hip::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 },
+    EXPECT_THROW_WHAT((plssvm::hip::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::hip::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 },
+    EXPECT_THROW_WHAT((plssvm::hip::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
