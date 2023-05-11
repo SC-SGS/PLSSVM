@@ -112,21 +112,21 @@ class BaseCSVMWarning : public BaseCSVM, protected util::redirect_output<&std::c
 
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     // start capture of std::clog
-    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
+    [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
     // end capture of std::clog
 
     EXPECT_EQ(this->get_capture(), "degree parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     // start capture of std::clog
-    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
+    [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
     // end capture of std::clog
 
     EXPECT_EQ(this->get_capture(), "gamma parameter provided, which is not used in the linear kernel (u'*v)!\n");
 }
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     // start capture of std::clog
-    const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
+    [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
     // end capture of std::clog
 
     EXPECT_EQ(this->get_capture(), "coef0 parameter provided, which is not used in the linear kernel (u'*v)!\n");
