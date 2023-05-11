@@ -1,0 +1,5 @@
+<map id="plssvm::dpcpp::csvm" name="plssvm::dpcpp::csvm">
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using DPC++ as SYCL backend." alt="" coords="9,184,168,211"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="5,80,172,136"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="33,5,145,32"/>
+</map>

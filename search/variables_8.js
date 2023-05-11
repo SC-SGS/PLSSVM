@@ -1,6 +1,28 @@
 var searchData=
 [
-  ['kernel_616',['kernel',['../classplssvm_1_1parameter.html#ae7cb696a13fcb8c87d97b1d3123e6e40',1,'plssvm::parameter']]],
-  ['kernel_5f_617',['kernel_',['../classplssvm_1_1csvm.html#a4fcc0c89bb50614cd634817f3c154f61',1,'plssvm::csvm']]],
-  ['kernels_618',['kernels',['../classplssvm_1_1opencl_1_1detail_1_1command__queue.html#a7db6f9a638686de3371cb66e55b3623a',1,'plssvm::opencl::detail::command_queue']]]
+  ['impl_1100',['impl',['../classplssvm_1_1hipsycl_1_1detail_1_1queue.html#a60cf6567317954e43a56f0302de4ad98',1,'plssvm::hipsycl::detail::queue::impl()'],['../classplssvm_1_1dpcpp_1_1detail_1_1queue.html#a88d01a396df9dfcb52eda7068cd28cb8',1,'plssvm::dpcpp::detail::queue::impl()']]],
+  ['input_5ffilename_1101',['input_filename',['../classplssvm_1_1detail_1_1cmd_1_1parser__predict.html#abdbe72f36461742b4c1ee79c2f037f57',1,'plssvm::detail::cmd::parser_predict::input_filename()'],['../classplssvm_1_1detail_1_1cmd_1_1parser__scale.html#a129cf669bfb3f93494fa1d7d22895b33',1,'plssvm::detail::cmd::parser_scale::input_filename()'],['../classplssvm_1_1detail_1_1cmd_1_1parser__train.html#a5216fe99414898852acad127e1012a89',1,'plssvm::detail::cmd::parser_train::input_filename()']]],
+  ['internal_5fblock_5fsize_1102',['INTERNAL_BLOCK_SIZE',['../namespaceplssvm.html#ac7c75fadcf6b7f3ea0d1bb831a70933d',1,'plssvm']]],
+  ['invocation_5ftype_5f_1103',['invocation_type_',['../classplssvm_1_1dpcpp_1_1csvm.html#a80e5678c87b2744630f498f68cd44dcc',1,'plssvm::dpcpp::csvm::invocation_type_()'],['../classplssvm_1_1hipsycl_1_1csvm.html#ac7239fee7de6ac6fb2cca76f36db5e06',1,'plssvm::hipsycl::csvm::invocation_type_()']]],
+  ['is_5farray_5fv_1104',['is_array_v',['../namespaceplssvm_1_1detail.html#ac5315c86b04b62909bdf310737246ac1',1,'plssvm::detail']]],
+  ['is_5fassociative_5fcontainer_5fv_1105',['is_associative_container_v',['../namespaceplssvm_1_1detail.html#afba28a6b8a21a1ddbc897639a7a93e44',1,'plssvm::detail']]],
+  ['is_5fcontainer_5fv_1106',['is_container_v',['../namespaceplssvm_1_1detail.html#a375424fa4e1db5a905841417abcf4dcc',1,'plssvm::detail']]],
+  ['is_5fdefault_5fvalue_5fv_1107',['is_default_value_v',['../namespaceplssvm.html#a155cdf72c54afd673ae8846f4eef6f5a',1,'plssvm']]],
+  ['is_5fdeque_5fv_1108',['is_deque_v',['../namespaceplssvm_1_1detail.html#adbfc4bcd3f5eda2d88d1eeaf1fe3f361',1,'plssvm::detail']]],
+  ['is_5fforward_5flist_5fv_1109',['is_forward_list_v',['../namespaceplssvm_1_1detail.html#a965a9df2560133dc8095c8653f5b9106',1,'plssvm::detail']]],
+  ['is_5flist_5fv_1110',['is_list_v',['../namespaceplssvm_1_1detail.html#ae04bba6acf7340fe3d03043b9897acfd',1,'plssvm::detail']]],
+  ['is_5fmap_5fv_1111',['is_map_v',['../namespaceplssvm_1_1detail.html#a026bceec09c2efe868fc42ca9f87f761',1,'plssvm::detail']]],
+  ['is_5fmultimap_5fv_1112',['is_multimap_v',['../namespaceplssvm_1_1detail.html#aa4dd40b5fcb70646c131e55c96c9ddd2',1,'plssvm::detail']]],
+  ['is_5fmultiset_5fv_1113',['is_multiset_v',['../namespaceplssvm_1_1detail.html#afef010b65d7602ce8a2a039e1d0b118c',1,'plssvm::detail']]],
+  ['is_5fopen_5f_1114',['is_open_',['../classplssvm_1_1detail_1_1io_1_1file__reader.html#aa299d26c8e7cba383a93589c120d4a58',1,'plssvm::detail::io::file_reader']]],
+  ['is_5fsequence_5fcontainer_5fv_1115',['is_sequence_container_v',['../namespaceplssvm_1_1detail.html#adf10c35ce0ac1c62a55fc30488b81a50',1,'plssvm::detail']]],
+  ['is_5fset_5fv_1116',['is_set_v',['../namespaceplssvm_1_1detail.html#a5a315aad622fa22e86dc9d72aa347136',1,'plssvm::detail']]],
+  ['is_5ftracking_5f_1117',['is_tracking_',['../classplssvm_1_1detail_1_1performance__tracker.html#a0599f512b5c4809ce67fe0b260086a58',1,'plssvm::detail::performance_tracker']]],
+  ['is_5ftracking_5fentry_5fv_1118',['is_tracking_entry_v',['../namespaceplssvm_1_1detail.html#acae9f1a71b834c150c9283de82555c44',1,'plssvm::detail']]],
+  ['is_5funordered_5fassociative_5fcontainer_5fv_1119',['is_unordered_associative_container_v',['../namespaceplssvm_1_1detail.html#a76b7272643b387b4d8d2f2203db306fd',1,'plssvm::detail']]],
+  ['is_5funordered_5fmap_5fv_1120',['is_unordered_map_v',['../namespaceplssvm_1_1detail.html#aad4493fc17a849eaf75a8d446843eea2',1,'plssvm::detail']]],
+  ['is_5funordered_5fmultimap_5fv_1121',['is_unordered_multimap_v',['../namespaceplssvm_1_1detail.html#a73196309ddf2352605918ec92c7dcd70',1,'plssvm::detail']]],
+  ['is_5funordered_5fmultiset_5fv_1122',['is_unordered_multiset_v',['../namespaceplssvm_1_1detail.html#a4670ea698a9626f7f0efe039f8d8664f',1,'plssvm::detail']]],
+  ['is_5funordered_5fset_5fv_1123',['is_unordered_set_v',['../namespaceplssvm_1_1detail.html#ae0688ad057eacf1cfc450d79dfa67633',1,'plssvm::detail']]],
+  ['is_5fvector_5fv_1124',['is_vector_v',['../namespaceplssvm_1_1detail.html#a7ab5c9853b297cec8b94e6fd0a181542',1,'plssvm::detail']]]
 ];

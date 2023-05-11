@@ -1,0 +1,6 @@
+<map id="plssvm::hipsycl::csvm" name="plssvm::hipsycl::csvm">
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using hipSYCL as SYCL backend." alt="" coords="17,291,184,317"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="17,185,184,241"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="45,109,157,136"/>
+<area shape="rect" id="node4" href="$structplssvm_1_1detail_1_1parameter.html" title=" " alt="" coords="5,5,196,47"/>
+</map>

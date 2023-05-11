@@ -1,0 +1,4 @@
+<map id="plssvm::hipsycl::detail::device_ptr&lt; T &gt;" name="plssvm::hipsycl::detail::device_ptr&lt; T &gt;">
+<area shape="rect" id="node1" title="Small wrapper class around a hipSYCL device pointer together with commonly used device functions." alt="" coords="13,95,181,136"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,188,47"/>
+</map>

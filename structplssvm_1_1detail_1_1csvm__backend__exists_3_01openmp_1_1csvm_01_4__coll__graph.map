@@ -1,0 +1,4 @@
+<map id="plssvm::detail::csvm_backend_exists&lt; openmp::csvm &gt;" name="plssvm::detail::csvm_backend_exists&lt; openmp::csvm &gt;">
+<area shape="rect" id="node1" title="Sets the value to true since C&#45;SVMs using the OpenMP backend are available." alt="" coords="5,80,203,136"/>
+<area shape="rect" id="node2" title=" " alt="" coords="48,5,160,32"/>
+</map>

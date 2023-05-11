@@ -1,14 +1,13 @@
 var searchData=
 [
-  ['data_5f_597',['data_',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a6d60a23b9417dfc3f489ff8ae345ba54',1,'plssvm::detail::gpu_device_ptr']]],
-  ['data_5fd_5f_598',['data_d_',['../classplssvm_1_1detail_1_1gpu__csvm.html#ac37aa662295e1a5d2c065527920904b2',1,'plssvm::detail::gpu_csvm']]],
-  ['data_5flast_5fd_5f_599',['data_last_d_',['../classplssvm_1_1detail_1_1gpu__csvm.html#a7667fad44f3560df281e167b7d3a1a46',1,'plssvm::detail::gpu_csvm']]],
-  ['data_5fptr_600',['data_ptr',['../classplssvm_1_1parameter.html#af5d5ec1b3d796b5af4100ae06daf2250',1,'plssvm::parameter']]],
-  ['data_5fptr_5f_601',['data_ptr_',['../classplssvm_1_1csvm.html#a585004988939ec75b503defcdf85b0d8',1,'plssvm::csvm']]],
-  ['degree_602',['degree',['../classplssvm_1_1parameter.html#a3b827ffd403dca9b208c1078b14e0ea3',1,'plssvm::parameter']]],
-  ['degree_5f_603',['degree_',['../classplssvm_1_1csvm.html#a2698b52ada4287e0521e6004620b6063',1,'plssvm::csvm']]],
-  ['dept_5f_604',['dept_',['../classplssvm_1_1detail_1_1gpu__csvm.html#a7219b67d6506e8aa056c4f9b5af7a363',1,'plssvm::detail::gpu_csvm']]],
-  ['device_5fcontext_605',['device_context',['../classplssvm_1_1opencl_1_1detail_1_1context.html#a16d9af6f4d6f4ea05a9889162ea5a38f',1,'plssvm::opencl::detail::context']]],
-  ['devices_606',['devices',['../classplssvm_1_1opencl_1_1detail_1_1context.html#adee2d75bd267c193fcc24bffc3207c0c',1,'plssvm::opencl::detail::context']]],
-  ['devices_5f_607',['devices_',['../classplssvm_1_1detail_1_1gpu__csvm.html#a1856f3ad4365915ca839de9c7aa5e2da',1,'plssvm::detail::gpu_csvm']]]
+  ['data_5f_1072',['data_',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a6d60a23b9417dfc3f489ff8ae345ba54',1,'plssvm::detail::gpu_device_ptr::data_()'],['../classplssvm_1_1model.html#a240e0758673cf71d345fca9be01ada57',1,'plssvm::model::data_()']]],
+  ['data_5fintern_5fi_5f_1073',['data_intern_i_',['../classplssvm_1_1sycl_1_1detail_1_1nd__range__device__kernel__linear.html#ae744e17cfe9d29cea097017c065adc4d',1,'plssvm::sycl::detail::nd_range_device_kernel_linear::data_intern_i_()'],['../classplssvm_1_1sycl_1_1detail_1_1nd__range__device__kernel__polynomial.html#afba0d0b2c5fb208ad1943a460a7e3242',1,'plssvm::sycl::detail::nd_range_device_kernel_polynomial::data_intern_i_()'],['../classplssvm_1_1sycl_1_1detail_1_1nd__range__device__kernel__rbf.html#ad27659c813004a7eb60aa16d229d9d5d',1,'plssvm::sycl::detail::nd_range_device_kernel_rbf::data_intern_i_()']]],
+  ['data_5fintern_5fj_5f_1074',['data_intern_j_',['../classplssvm_1_1sycl_1_1detail_1_1nd__range__device__kernel__linear.html#acddd445ee36398dba396efd0032049d4',1,'plssvm::sycl::detail::nd_range_device_kernel_linear::data_intern_j_()'],['../classplssvm_1_1sycl_1_1detail_1_1nd__range__device__kernel__polynomial.html#a1924ec6896f2dcc58f6cc3dfca4dc298',1,'plssvm::sycl::detail::nd_range_device_kernel_polynomial::data_intern_j_()'],['../classplssvm_1_1sycl_1_1detail_1_1nd__range__device__kernel__rbf.html#a66f173473051e9cf7e4be9f2cc096ecb',1,'plssvm::sycl::detail::nd_range_device_kernel_rbf::data_intern_j_()']]],
+  ['default_5finit_5f_1075',['default_init_',['../classplssvm_1_1default__value.html#ab640bf475c0dfc4710128ac536933d98',1,'plssvm::default_value']]],
+  ['degree_1076',['degree',['../structplssvm_1_1detail_1_1parameter.html#a592b02061315284cfc216e017cf6e608',1,'plssvm::detail::parameter']]],
+  ['device_5fcontext_1077',['device_context',['../classplssvm_1_1opencl_1_1detail_1_1context.html#a16d9af6f4d6f4ea05a9889162ea5a38f',1,'plssvm::opencl::detail::context']]],
+  ['devices_1078',['devices',['../classplssvm_1_1opencl_1_1detail_1_1context.html#adee2d75bd267c193fcc24bffc3207c0c',1,'plssvm::opencl::detail::context']]],
+  ['devices_5f_1079',['devices_',['../classplssvm_1_1detail_1_1gpu__csvm.html#a723115a038e518d4a1ec37bc0fa8b434',1,'plssvm::detail::gpu_csvm']]],
+  ['digest_5fsize_1080',['DIGEST_SIZE',['../classplssvm_1_1detail_1_1sha256.html#a543ac016289d6be0f9afe25b754b525e',1,'plssvm::detail::sha256']]],
+  ['double_5fkernels_1081',['double_kernels',['../classplssvm_1_1opencl_1_1detail_1_1command__queue.html#aa550d1dbb5330a50cef122a1bb2e0059',1,'plssvm::opencl::detail::command_queue']]]
 ];

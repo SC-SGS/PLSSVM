@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['dpcpp_670',['dpcpp',['../namespaceplssvm_1_1sycl__generic.html#ad39a7642eb6c2101121d4264e0a2b851ac71b3dd71ccceebc2259ccfcec28edbd',1,'plssvm::sycl_generic']]]
+  ['dpcpp_1215',['dpcpp',['../namespaceplssvm_1_1sycl.html#a221ab9f76624968323833c4175d994d0ac71b3dd71ccceebc2259ccfcec28edbd',1,'plssvm::sycl']]]
 ];

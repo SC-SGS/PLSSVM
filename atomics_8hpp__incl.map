@@ -1,4 +1,0 @@
-<map id="include/plssvm/backends/SYCL/detail/atomics.hpp" name="include/plssvm/backends/SYCL/detail/atomics.hpp">
-<area shape="rect" id="node1" title="Defines an atomic_ref wrapper for the SYCL backend." alt="" coords="5,5,191,47"/>
-<area shape="rect" id="node2" title=" " alt="" coords="45,95,151,121"/>
-</map>

@@ -1,0 +1,4 @@
+<map id="plssvm::detail::csvm_backend_exists&lt; hipsycl::csvm &gt;" name="plssvm::detail::csvm_backend_exists&lt; hipsycl::csvm &gt;">
+<area shape="rect" id="node1" title="Sets the value to true since C&#45;SVMs using the SYCL backend with hipSYCL as SYCL implementation are av..." alt="" coords="5,80,196,136"/>
+<area shape="rect" id="node2" title=" " alt="" coords="45,5,157,32"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="plssvm::dpcpp::backend_exception" name="plssvm::dpcpp::backend_exception">
+<area shape="rect" id="node1" title="Exception type thrown if a problem with the DPC++ SYCL backend occurs." alt="" coords="5,244,184,285"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="12,155,177,196"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="24,80,165,107"/>
+<area shape="rect" id="node4" title=" " alt="" coords="25,5,164,32"/>
+</map>

@@ -1,4 +1,9 @@
 <map id="include/plssvm/detail/execution_range.hpp" name="include/plssvm/detail/execution_range.hpp">
-<area shape="rect" id="node1" title="Implement a backend independent class used to specify the execution range for all kernel invocations." alt="" coords="48,5,209,47"/>
-<area shape="rect" id="node2" href="$svm__kernel__hierarchical_8hpp.html" title="Defines the kernel functions for the C&#45;SVM using the SYCL backend." alt="" coords="5,95,252,136"/>
+<area shape="rect" id="node1" title="Implement a backend independent class used to specify the execution range for all kernel invocations." alt="" coords="436,5,597,47"/>
+<area shape="rect" id="node2" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="424,95,609,136"/>
+<area shape="rect" id="node3" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="5,184,191,225"/>
+<area shape="rect" id="node4" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="215,184,400,225"/>
+<area shape="rect" id="node5" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="424,184,609,225"/>
+<area shape="rect" id="node6" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="633,184,819,225"/>
+<area shape="rect" id="node7" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="843,184,1028,225"/>
 </map>

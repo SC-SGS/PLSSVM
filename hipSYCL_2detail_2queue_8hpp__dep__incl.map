@@ -1,0 +1,7 @@
+<map id="include/plssvm/backends/SYCL/hipSYCL/detail/queue.hpp" name="include/plssvm/backends/SYCL/hipSYCL/detail/queue.hpp">
+<area shape="rect" id="node1" title="PImpl class used to hide the &quot;sycl/sycl.hpp&quot; header from the public interface." alt="" coords="198,5,423,47"/>
+<area shape="rect" id="node2" href="$SYCL_2hipSYCL_2detail_2device__ptr_8hpp.html" title="Small wrapper around a SYCL device pointer for the hipSYCL SYCL implementation." alt="" coords="5,95,205,151"/>
+<area shape="rect" id="node3" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="81,199,266,240"/>
+<area shape="rect" id="node4" href="$hipSYCL_2detail_2queue__impl_8hpp.html" title="PImpl implementation encapsulating a single SYCL queue." alt="" coords="280,95,477,151"/>
+<area shape="rect" id="node5" href="$backends_2SYCL_2hipSYCL_2detail_2utility_8hpp.html" title="Utility functions specific to the SYCL backend using hipSYCL as SYCL implementation." alt="" coords="501,102,723,143"/>
+</map>

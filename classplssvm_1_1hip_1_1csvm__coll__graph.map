@@ -1,5 +1,6 @@
-<map id="plssvm::hip::csvm&lt; T &gt;" name="plssvm::hip::csvm&lt; T &gt;">
-<area shape="rect" id="node1" title="A C&#45;SVM implementation using HIP as backend." alt="" coords="5,199,184,225"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="13,80,176,151"/>
-<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="19,5,170,32"/>
+<map id="plssvm::hip::csvm" name="plssvm::hip::csvm">
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using HIP as backend." alt="" coords="31,291,171,317"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="17,185,184,241"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="45,109,157,136"/>
+<area shape="rect" id="node4" href="$structplssvm_1_1detail_1_1parameter.html" title=" " alt="" coords="5,5,196,47"/>
 </map>

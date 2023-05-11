@@ -1,4 +1,4 @@
-<map id="plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;" name="plssvm::detail::gpu_csvm&lt; T, device_ptr_t, queue_t &gt;">
+<map id="plssvm::detail::gpu_csvm&lt; device_ptr_t, queue_t &gt;" name="plssvm::detail::gpu_csvm&lt; device_ptr_t, queue_t &gt;">
 <area shape="rect" id="node1" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="5,80,168,136"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="11,5,162,32"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="31,5,143,32"/>
 </map>

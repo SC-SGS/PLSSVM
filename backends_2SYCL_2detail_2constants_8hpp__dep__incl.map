@@ -1,0 +1,5 @@
+<map id="include/plssvm/backends/SYCL/detail/constants.hpp" name="include/plssvm/backends/SYCL/detail/constants.hpp">
+<area shape="rect" id="node1" title="Global compile&#45;time constants specific to the SYCL backend." alt="" coords="5,5,199,47"/>
+<area shape="rect" id="node2" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM based on the provided plssvm::backend_type and potentia..." alt="" coords="23,95,181,136"/>
+<area shape="rect" id="node3" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="12,184,192,211"/>
+</map>

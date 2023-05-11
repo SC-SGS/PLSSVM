@@ -1,5 +1,6 @@
 <map id="plssvm::hip::backend_exception" name="plssvm::hip::backend_exception">
-<area shape="rect" id="node1" title="Exception type thrown if a problem with the HIP backend occurs." alt="" coords="5,155,164,196"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="14,80,155,107"/>
-<area shape="rect" id="node3" title=" " alt="" coords="15,5,154,32"/>
+<area shape="rect" id="node1" title="Exception type thrown if a problem with the HIP backend occurs." alt="" coords="86,171,245,212"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="95,95,236,121"/>
+<area shape="rect" id="node3" title=" " alt="" coords="5,5,144,32"/>
+<area shape="rect" id="node4" href="$classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,..." alt="" coords="168,5,347,32"/>
 </map>

@@ -1,5 +1,5 @@
-<map id="plssvm::opencl::csvm&lt; T &gt;" name="plssvm::opencl::csvm&lt; T &gt;">
-<area shape="rect" id="node1" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="455,35,656,61"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="204,5,407,91"/>
-<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="5,35,156,61"/>
+<map id="plssvm::opencl::csvm" name="plssvm::opencl::csvm">
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="7,199,170,225"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="5,80,172,151"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="33,5,145,32"/>
 </map>

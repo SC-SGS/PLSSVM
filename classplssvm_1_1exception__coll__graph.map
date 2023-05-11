@@ -1,4 +1,5 @@
 <map id="plssvm::exception" name="plssvm::exception">
-<area shape="rect" id="node1" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="5,80,147,107"/>
-<area shape="rect" id="node2" title=" " alt="" coords="7,5,145,32"/>
+<area shape="rect" id="node1" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="95,95,236,121"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,5,144,32"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,..." alt="" coords="168,5,347,32"/>
 </map>

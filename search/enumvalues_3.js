@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['gpu_5famd_671',['gpu_amd',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500ad728f22a6cc35ec6cc635a7ffa220a45',1,'plssvm']]],
-  ['gpu_5fintel_672',['gpu_intel',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a14f5d066e6910bdb29ce61fcd1452598',1,'plssvm']]],
-  ['gpu_5fnvidia_673',['gpu_nvidia',['../namespaceplssvm.html#a10012a8132e88fb2c2ea2e2f1737c500a9ec77054f198cbc11e8a492869379be0',1,'plssvm']]]
+  ['full_1216',['full',['../namespaceplssvm.html#a30a9e7fd7e5c3e501fb0653f392f5741ae9dc924f238fa6cc29465942875fe8f0',1,'plssvm']]]
 ];

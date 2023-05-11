@@ -1,5 +1,7 @@
 <map id="plssvm::sycl::backend_exception" name="plssvm::sycl::backend_exception">
-<area shape="rect" id="node1" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="5,155,171,196"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="17,80,159,107"/>
-<area shape="rect" id="node3" title=" " alt="" coords="19,5,157,32"/>
+<area shape="rect" id="node1" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="115,155,280,196"/>
+<area shape="rect" id="node4" href="$classplssvm_1_1dpcpp_1_1backend__exception.html" title="Exception type thrown if a problem with the DPC++ SYCL backend occurs." alt="" coords="5,244,184,285"/>
+<area shape="rect" id="node5" href="$classplssvm_1_1hipsycl_1_1backend__exception.html" title="Exception type thrown if a problem with the hipSYCL SYCL backend occurs." alt="" coords="209,244,394,285"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="127,80,268,107"/>
+<area shape="rect" id="node3" title=" " alt="" coords="128,5,267,32"/>
 </map>

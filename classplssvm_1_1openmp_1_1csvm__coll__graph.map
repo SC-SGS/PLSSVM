@@ -1,4 +1,5 @@
-<map id="plssvm::openmp::csvm&lt; T &gt;" name="plssvm::openmp::csvm&lt; T &gt;">
-<area shape="rect" id="node1" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="5,80,216,107"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="35,5,186,32"/>
+<map id="plssvm::openmp::csvm" name="plssvm::openmp::csvm">
+<area shape="rect" id="node1" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="14,185,187,212"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1csvm.html" title="Base class for all C&#45;SVM backends." alt="" coords="45,109,157,136"/>
+<area shape="rect" id="node3" href="$structplssvm_1_1detail_1_1parameter.html" title=" " alt="" coords="5,5,196,47"/>
 </map>

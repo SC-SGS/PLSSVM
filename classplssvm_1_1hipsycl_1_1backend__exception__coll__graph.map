@@ -1,0 +1,7 @@
+<map id="plssvm::hipsycl::backend_exception" name="plssvm::hipsycl::backend_exception">
+<area shape="rect" id="node1" title="Exception type thrown if a problem with the hipSYCL SYCL backend occurs." alt="" coords="73,261,258,303"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="83,171,248,212"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="95,95,236,121"/>
+<area shape="rect" id="node4" title=" " alt="" coords="5,5,144,32"/>
+<area shape="rect" id="node5" href="$classplssvm_1_1source__location.html" title="The plssvm::source_location class represents certain information about the source code,..." alt="" coords="168,5,347,32"/>
+</map>

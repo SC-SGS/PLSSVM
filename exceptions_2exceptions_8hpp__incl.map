@@ -1,7 +1,0 @@
-<map id="include/plssvm/exceptions/exceptions.hpp" name="include/plssvm/exceptions/exceptions.hpp">
-<area shape="rect" id="node1" title="Implements custom exception classes derived from std::runtime_error including source location informa..." alt="" coords="177,5,371,47"/>
-<area shape="rect" id="node2" href="$source__location_8hpp.html" title="Implements a custom std::source_location implementation for C++17." alt="" coords="5,95,196,136"/>
-<area shape="rect" id="node3" title=" " alt="" coords="119,184,216,211"/>
-<area shape="rect" id="node4" title=" " alt="" coords="272,102,359,129"/>
-<area shape="rect" id="node5" title=" " alt="" coords="383,102,442,129"/>
-</map>

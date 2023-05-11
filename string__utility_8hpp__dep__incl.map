@@ -1,4 +1,21 @@
 <map id="include/plssvm/detail/string_utility.hpp" name="include/plssvm/detail/string_utility.hpp">
-<area shape="rect" id="node1" title="Implements utility functions for string manipulation and querying." alt="" coords="9,5,171,47"/>
-<area shape="rect" id="node2" href="$string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="5,95,175,136"/>
+<area shape="rect" id="node1" title="Implements utility functions for string manipulation and querying." alt="" coords="363,5,524,47"/>
+<area shape="rect" id="node2" href="$data__set_8hpp.html" title="Implements a data set class encapsulating all data points, features, and potential labels." alt="" coords="419,273,572,315"/>
+<area shape="rect" id="node16" href="$arff__parsing_8hpp.html" title="Implements parsing functions for the ARFF file format." alt="" coords="199,184,360,225"/>
+<area shape="rect" id="node17" href="$scaling__factors__parsing_8hpp.html" title="Implements parsing functions for the scaling factor file parsing." alt="" coords="384,184,607,225"/>
+<area shape="rect" id="node18" href="$string__conversion_8hpp.html" title="Implements a conversion function from a string to an arithmetic type." alt="" coords="200,95,369,136"/>
+<area shape="rect" id="node3" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="513,698,693,725"/>
+<area shape="rect" id="node4" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="706,527,893,553"/>
+<area shape="rect" id="node13" href="$data__set__variants_8hpp.html" title="Implements utility functions to create a data set based on runtime parameters." alt="" coords="70,363,273,404"/>
+<area shape="rect" id="node14" href="$libsvm__model__parsing_8hpp.html" title="Implements parsing functions for the LIBSVM model file." alt="" coords="297,363,515,404"/>
+<area shape="rect" id="node15" href="$model_8hpp.html" title="Implements a model class encapsulating the results of a SVM fit call." alt="" coords="372,452,565,479"/>
+<area shape="rect" id="node5" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="1111,601,1296,643"/>
+<area shape="rect" id="node11" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="641,601,827,643"/>
+<area shape="rect" id="node12" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM based on the provided plssvm::backend_type and potentia..." alt="" coords="903,601,1061,643"/>
+<area shape="rect" id="node6" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="1345,691,1531,732"/>
+<area shape="rect" id="node7" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="1555,691,1740,732"/>
+<area shape="rect" id="node8" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="717,691,903,732"/>
+<area shape="rect" id="node9" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="927,691,1112,732"/>
+<area shape="rect" id="node10" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="1136,691,1321,732"/>
+<area shape="rect" id="node19" href="$libsvm__parsing_8hpp.html" title="Implements parsing functions for the LIBSVM file format." alt="" coords="5,184,175,225"/>
 </map>

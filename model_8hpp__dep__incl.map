@@ -1,0 +1,13 @@
+<map id="include/plssvm/model.hpp" name="include/plssvm/model.hpp">
+<area shape="rect" id="node1" title="Implements a model class encapsulating the results of a SVM fit call." alt="" coords="947,5,1140,32"/>
+<area shape="rect" id="node2" href="$core_8hpp.html" title="Core header including all other necessary headers." alt="" coords="1052,251,1232,278"/>
+<area shape="rect" id="node3" href="$csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends and implements the functionality shared by all of them." alt="" coords="794,80,981,107"/>
+<area shape="rect" id="node4" href="$gpu__csvm_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="508,155,693,196"/>
+<area shape="rect" id="node10" href="$backends_2OpenMP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenMP backend." alt="" coords="795,155,980,196"/>
+<area shape="rect" id="node11" href="$csvm__factory_8hpp.html" title="Factory function for constructing a new C&#45;SVM based on the provided plssvm::backend_type and potentia..." alt="" coords="1004,155,1163,196"/>
+<area shape="rect" id="node5" href="$backends_2CUDA_2csvm_8hpp.html" title="Defines a C&#45;SVM using the CUDA backend." alt="" coords="5,244,191,285"/>
+<area shape="rect" id="node6" href="$backends_2HIP_2csvm_8hpp.html" title="Defines a C&#45;SVM using the HIP backend." alt="" coords="215,244,400,285"/>
+<area shape="rect" id="node7" href="$backends_2OpenCL_2csvm_8hpp.html" title="Defines a C&#45;SVM using the OpenCL backend." alt="" coords="424,244,609,285"/>
+<area shape="rect" id="node8" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="633,244,819,285"/>
+<area shape="rect" id="node9" href="$backends_2SYCL_2hipSYCL_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using hipSYCL as SYCL implementation." alt="" coords="843,244,1028,285"/>
+</map>

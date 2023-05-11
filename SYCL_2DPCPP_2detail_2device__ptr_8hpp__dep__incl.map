@@ -1,0 +1,4 @@
+<map id="include/plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp" name="include/plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp">
+<area shape="rect" id="node1" title="Small wrapper around a SYCL device pointer for the DPC++ SYCL implementation." alt="" coords="5,5,197,61"/>
+<area shape="rect" id="node2" href="$backends_2SYCL_2DPCPP_2csvm_8hpp.html" title="Defines a base C&#45;SVM used for the different SYCL backends using DPC++ as SYCL implementation." alt="" coords="9,109,194,151"/>
+</map>

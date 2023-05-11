@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['linear_677',['linear',['../namespaceplssvm.html#a13d04ccec8f2cd5794a5d2d73dd99703a9a932b3cb396238423eb2f33ec17d6aa',1,'plssvm']]]
+  ['hierarchical_1220',['hierarchical',['../namespaceplssvm_1_1sycl.html#aeb1466b20fd508be3035a330131ae4baa2c95b1531c95e0730d65f40da3b31778',1,'plssvm::sycl']]],
+  ['hip_1221',['hip',['../namespaceplssvm.html#abdb476fa824886f6d3ec438d86579c70a997f6b054d31252dfe32ef38f9dddb2a',1,'plssvm']]],
+  ['hipsycl_1222',['hipsycl',['../namespaceplssvm_1_1sycl.html#a221ab9f76624968323833c4175d994d0a5d4aefd61776646aaaf9e1b565fcb477',1,'plssvm::sycl']]]
 ];

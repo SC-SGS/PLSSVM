@@ -1,13 +1,13 @@
-<map id="plssvm::csvm&lt; T &gt;" name="plssvm::csvm&lt; T &gt;">
-<area shape="rect" id="node1" title="Base class for all C&#45;SVM backends." alt="" coords="5,236,156,263"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="222,5,397,61"/>
-<area shape="rect" id="node4" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="222,85,397,141"/>
-<area shape="rect" id="node6" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="208,166,411,237"/>
-<area shape="rect" id="node8" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="227,261,391,331"/>
-<area shape="rect" id="node10" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="236,355,383,397"/>
-<area shape="rect" id="node11" href="$classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="204,421,415,448"/>
-<area shape="rect" id="node3" href="$classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="469,20,658,47"/>
-<area shape="rect" id="node5" href="$classplssvm_1_1hip_1_1csvm.html" title="A C&#45;SVM implementation using HIP as backend." alt="" coords="474,100,653,127"/>
-<area shape="rect" id="node7" href="$classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="463,188,664,215"/>
-<area shape="rect" id="node9" href="$classplssvm_1_1sycl_1_1csvm.html" title="A C&#45;SVM implementation using SYCL as backend." alt="" coords="471,283,655,309"/>
+<map id="plssvm::csvm" name="plssvm::csvm">
+<area shape="rect" id="node1" title="Base class for all C&#45;SVM backends." alt="" coords="5,213,117,240"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="169,23,335,79"/>
+<area shape="rect" id="node5" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="169,103,335,174"/>
+<area shape="rect" id="node7" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title=" " alt="" coords="169,199,335,255"/>
+<area shape="rect" id="node10" href="$classplssvm_1_1detail_1_1gpu__csvm.html" title="A C&#45;SVM implementation for all GPU backends to reduce code duplication." alt="" coords="171,279,333,335"/>
+<area shape="rect" id="node11" href="$classplssvm_1_1openmp_1_1csvm.html" title="A C&#45;SVM implementation using OpenMP as backend." alt="" coords="165,359,339,385"/>
+<area shape="rect" id="node3" href="$classplssvm_1_1cuda_1_1csvm.html" title="A C&#45;SVM implementation using CUDA as backend." alt="" coords="395,5,545,32"/>
+<area shape="rect" id="node4" href="$classplssvm_1_1hip_1_1csvm.html" title="A C&#45;SVM implementation using HIP as backend." alt="" coords="400,56,540,83"/>
+<area shape="rect" id="node6" href="$classplssvm_1_1opencl_1_1csvm.html" title="A C&#45;SVM implementation using OpenCL as backend." alt="" coords="389,125,551,152"/>
+<area shape="rect" id="node8" href="$classplssvm_1_1dpcpp_1_1csvm.html" title="A C&#45;SVM implementation using DPC++ as SYCL backend." alt="" coords="391,195,549,221"/>
+<area shape="rect" id="node9" href="$classplssvm_1_1hipsycl_1_1csvm.html" title="A C&#45;SVM implementation using hipSYCL as SYCL backend." alt="" coords="387,245,553,272"/>
 </map>

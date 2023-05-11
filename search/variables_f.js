@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['size_5f_637',['size_',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a5e51dce2c925f41b106c502204fc5a1e',1,'plssvm::detail::gpu_device_ptr']]],
-  ['string_638',['string',['../namespaceplssvm_1_1version.html#acbfea9704390b4a4d348dd4ee3557700',1,'plssvm::version']]],
-  ['sycl_5fimplementation_5ftype_639',['sycl_implementation_type',['../classplssvm_1_1parameter.html#aac70755fb791daeef214669042ff4f39',1,'plssvm::parameter']]],
-  ['sycl_5fkernel_5finvocation_5ftype_640',['sycl_kernel_invocation_type',['../classplssvm_1_1parameter.html#a6a3542887a62b89b454e9cc1d2697273',1,'plssvm::parameter']]]
+  ['queue_1150',['queue',['../classplssvm_1_1opencl_1_1detail_1_1command__queue.html#aa3d68fd0ff6378e10c3ca3f5d3891f28',1,'plssvm::opencl::detail::command_queue']]],
+  ['queue_5f_1151',['queue_',['../classplssvm_1_1detail_1_1gpu__device__ptr.html#a1e0d5ede98c680da08390568c11a2e8a',1,'plssvm::detail::gpu_device_ptr']]]
 ];

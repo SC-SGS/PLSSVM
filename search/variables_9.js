@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['major_619',['major',['../namespaceplssvm_1_1version.html#aecca6bbb4d5d322bf92bca9a6f0c90de',1,'plssvm::version']]],
-  ['minor_620',['minor',['../namespaceplssvm_1_1version.html#a7161629d1a049ebeefea22a45e2b4216',1,'plssvm::version']]],
-  ['model_5ffilename_621',['model_filename',['../classplssvm_1_1parameter.html#afb86c1ce2f5f62428a229d17d2477994',1,'plssvm::parameter']]]
+  ['k_5f_1125',['k_',['../classplssvm_1_1detail_1_1sha256.html#a0436ae0595f44d4f84da33fc78f9710e',1,'plssvm::detail::sha256']]],
+  ['kernel_5ftype_1126',['kernel_type',['../structplssvm_1_1detail_1_1parameter.html#af4ab7baef882761ac61a7f353ed8a655',1,'plssvm::detail::parameter']]]
 ];

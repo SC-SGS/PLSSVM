@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['backend_587',['backend',['../classplssvm_1_1parameter.html#a002f0530bdb2a5e62cf4bf2111db5494',1,'plssvm::parameter']]],
-  ['bias_5f_588',['bias_',['../classplssvm_1_1csvm.html#ab105d7fae1bc097698d9821b7486862d',1,'plssvm::csvm']]],
-  ['block_589',['block',['../classplssvm_1_1detail_1_1execution__range.html#a97d30e4f493d45dace30bed616d8954a',1,'plssvm::detail::execution_range']]],
-  ['boundary_5fsize_5f_590',['boundary_size_',['../classplssvm_1_1detail_1_1gpu__csvm.html#ad81a37444de1aefa94c6f508ccf819a5',1,'plssvm::detail::gpu_csvm']]]
+  ['backend_1059',['backend',['../classplssvm_1_1detail_1_1cmd_1_1parser__predict.html#abf8051d2944d72b525c5bbe179fae9f6',1,'plssvm::detail::cmd::parser_predict::backend()'],['../classplssvm_1_1detail_1_1cmd_1_1parser__train.html#a6811b9f1ced03b982a7fed4616c6545c',1,'plssvm::detail::cmd::parser_train::backend()']]],
+  ['block_1060',['block',['../classplssvm_1_1detail_1_1execution__range.html#a97d30e4f493d45dace30bed616d8954a',1,'plssvm::detail::execution_range']]]
 ];

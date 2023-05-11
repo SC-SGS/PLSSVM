@@ -1,3 +1,4 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classplssvm_1_1sycl__generic_1_1nd__range__device__kernel__poly.html" title="Calculates the C&#45;SVM kernel using the nd_range formulation and the polynomial kernel function." alt="" coords="5,5,192,61"/>
+<area shape="rect" id="node1" href="$classplssvm_1_1detail_1_1gpu__device__ptr.html" title=" " alt="" coords="5,5,229,61"/>
+<area shape="rect" id="node2" href="$classplssvm_1_1opencl_1_1detail_1_1device__ptr.html" title="Small wrapper class around an OpenCL device pointer together with commonly used device functions." alt="" coords="277,13,443,54"/>
 </map>

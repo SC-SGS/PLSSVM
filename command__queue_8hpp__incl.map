@@ -1,6 +1,0 @@
-<map id="include/plssvm/backends/OpenCL/detail/command_queue.hpp" name="include/plssvm/backends/OpenCL/detail/command_queue.hpp">
-<area shape="rect" id="node1" title="Defines a very small RAII wrapper around a cl_command_queue including information about its associate..." alt="" coords="138,5,325,61"/>
-<area shape="rect" id="node2" href="$kernel_8hpp.html" title="Defines a very small RAII wrapper around a cl_kernel." alt="" coords="5,109,193,151"/>
-<area shape="rect" id="node3" title=" " alt="" coords="132,199,197,225"/>
-<area shape="rect" id="node4" title=" " alt="" coords="269,117,319,143"/>
-</map>

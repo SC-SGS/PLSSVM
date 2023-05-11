@@ -1,6 +1,19 @@
 var searchData=
 [
-  ['command_5fqueue_332',['command_queue',['../classplssvm_1_1opencl_1_1detail_1_1command__queue.html',1,'plssvm::opencl::detail']]],
-  ['context_333',['context',['../classplssvm_1_1opencl_1_1detail_1_1context.html',1,'plssvm::opencl::detail']]],
-  ['csvm_334',['csvm',['../classplssvm_1_1cuda_1_1csvm.html',1,'plssvm::cuda::csvm&lt; T &gt;'],['../classplssvm_1_1openmp_1_1csvm.html',1,'plssvm::openmp::csvm&lt; T &gt;'],['../classplssvm_1_1csvm.html',1,'plssvm::csvm&lt; T &gt;'],['../classplssvm_1_1sycl_1_1csvm.html',1,'plssvm::sycl::csvm&lt; T &gt;'],['../classplssvm_1_1opencl_1_1csvm.html',1,'plssvm::opencl::csvm&lt; T &gt;'],['../classplssvm_1_1hip_1_1csvm.html',1,'plssvm::hip::csvm&lt; T &gt;']]]
+  ['cartesian_5ftype_5fproduct_601',['cartesian_type_product',['../structplssvm_1_1detail_1_1cartesian__type__product.html',1,'plssvm::detail']]],
+  ['cartesian_5ftype_5fproduct_3c_20std_3a_3atuple_3c_20firsttupletype_2c_20firsttupleremainingtypes_2e_2e_2e_20_3e_2c_20std_3a_3atuple_3c_20secondtupletypes_2e_2e_2e_20_3e_20_3e_602',['cartesian_type_product&lt; std::tuple&lt; FirstTupleType, FirstTupleRemainingTypes... &gt;, std::tuple&lt; SecondTupleTypes... &gt; &gt;',['../structplssvm_1_1detail_1_1cartesian__type__product_3_01std_1_1tuple_3_01FirstTupleType_00_01Firs9e28378d631983deaffa12aeaa1add90.html',1,'plssvm::detail']]],
+  ['cartesian_5ftype_5fproduct_3c_20std_3a_3atuple_3c_3e_2c_20std_3a_3atuple_3c_20secondtupletypes_2e_2e_2e_20_3e_20_3e_603',['cartesian_type_product&lt; std::tuple&lt;&gt;, std::tuple&lt; SecondTupleTypes... &gt; &gt;',['../structplssvm_1_1detail_1_1cartesian__type__product_3_01std_1_1tuple_3_4_00_01std_1_1tuple_3_01SecondTupleTypes_8_8_8_01_4_01_4.html',1,'plssvm::detail']]],
+  ['command_5fqueue_604',['command_queue',['../classplssvm_1_1opencl_1_1detail_1_1command__queue.html',1,'plssvm::opencl::detail']]],
+  ['concat_5ftuple_5ftypes_605',['concat_tuple_types',['../structplssvm_1_1detail_1_1concat__tuple__types.html',1,'plssvm::detail']]],
+  ['concat_5ftuple_5ftypes_3c_20std_3a_3atuple_3c_20firsttupletypes_2e_2e_2e_20_3e_2c_20std_3a_3atuple_3c_20secondtupletypes_2e_2e_2e_20_3e_20_3e_606',['concat_tuple_types&lt; std::tuple&lt; FirstTupleTypes... &gt;, std::tuple&lt; SecondTupleTypes... &gt; &gt;',['../structplssvm_1_1detail_1_1concat__tuple__types_3_01std_1_1tuple_3_01FirstTupleTypes_8_8_8_01_4_029e40969b6a93347c74cb8d506c87718.html',1,'plssvm::detail']]],
+  ['context_607',['context',['../classplssvm_1_1opencl_1_1detail_1_1context.html',1,'plssvm::opencl::detail']]],
+  ['csvm_608',['csvm',['../classplssvm_1_1csvm.html',1,'plssvm::csvm'],['../classplssvm_1_1cuda_1_1csvm.html',1,'plssvm::cuda::csvm'],['../classplssvm_1_1dpcpp_1_1csvm.html',1,'plssvm::dpcpp::csvm'],['../classplssvm_1_1hip_1_1csvm.html',1,'plssvm::hip::csvm'],['../classplssvm_1_1hipsycl_1_1csvm.html',1,'plssvm::hipsycl::csvm'],['../classplssvm_1_1opencl_1_1csvm.html',1,'plssvm::opencl::csvm'],['../classplssvm_1_1openmp_1_1csvm.html',1,'plssvm::openmp::csvm']]],
+  ['csvm_5fbackend_5fexists_609',['csvm_backend_exists',['../structplssvm_1_1csvm__backend__exists.html',1,'plssvm']]],
+  ['csvm_5fbackend_5fexists_3c_20cuda_3a_3acsvm_20_3e_610',['csvm_backend_exists&lt; cuda::csvm &gt;',['../structplssvm_1_1detail_1_1csvm__backend__exists_3_01cuda_1_1csvm_01_4.html',1,'plssvm::detail']]],
+  ['csvm_5fbackend_5fexists_3c_20dpcpp_3a_3acsvm_20_3e_611',['csvm_backend_exists&lt; dpcpp::csvm &gt;',['../structplssvm_1_1detail_1_1csvm__backend__exists_3_01dpcpp_1_1csvm_01_4.html',1,'plssvm::detail']]],
+  ['csvm_5fbackend_5fexists_3c_20hip_3a_3acsvm_20_3e_612',['csvm_backend_exists&lt; hip::csvm &gt;',['../structplssvm_1_1detail_1_1csvm__backend__exists_3_01hip_1_1csvm_01_4.html',1,'plssvm::detail']]],
+  ['csvm_5fbackend_5fexists_3c_20hipsycl_3a_3acsvm_20_3e_613',['csvm_backend_exists&lt; hipsycl::csvm &gt;',['../structplssvm_1_1detail_1_1csvm__backend__exists_3_01hipsycl_1_1csvm_01_4.html',1,'plssvm::detail']]],
+  ['csvm_5fbackend_5fexists_3c_20opencl_3a_3acsvm_20_3e_614',['csvm_backend_exists&lt; opencl::csvm &gt;',['../structplssvm_1_1detail_1_1csvm__backend__exists_3_01opencl_1_1csvm_01_4.html',1,'plssvm::detail']]],
+  ['csvm_5fbackend_5fexists_3c_20openmp_3a_3acsvm_20_3e_615',['csvm_backend_exists&lt; openmp::csvm &gt;',['../structplssvm_1_1detail_1_1csvm__backend__exists_3_01openmp_1_1csvm_01_4.html',1,'plssvm::detail']]],
+  ['csvm_5fto_5fbackend_5ftype_616',['csvm_to_backend_type',['../structplssvm_1_1csvm__to__backend__type.html',1,'plssvm']]]
 ];

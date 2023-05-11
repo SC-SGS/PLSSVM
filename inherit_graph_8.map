@@ -1,13 +1,3 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classplssvm_1_1hip_1_1backend__exception.html" title="Exception type thrown if a problem with the HIP backend occurs." alt="" coords="5,267,164,308"/>
-<area shape="rect" id="node2" href="$classplssvm_1_1exception.html" title="Base class for all custom exception types. Forwards its message to std::runtime_error and saves the e..." alt="" coords="212,274,353,301"/>
-<area shape="rect" id="node3" href="$classplssvm_1_1cuda_1_1backend__exception.html" title="Exception type thrown if a problem with the CUDA backend occurs." alt="" coords="412,5,583,47"/>
-<area shape="rect" id="node4" href="$classplssvm_1_1file__not__found__exception.html" title="Exception type thrown if the provided file couldn&#39;t be found." alt="" coords="413,71,582,112"/>
-<area shape="rect" id="node5" href="$classplssvm_1_1gpu__device__ptr__exception.html" title="Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred." alt="" coords="422,136,573,177"/>
-<area shape="rect" id="node6" href="$classplssvm_1_1invalid__file__format__exception.html" title="Exception type thrown if the provided file has an invalid format for the selected parser (e...." alt="" coords="423,201,571,243"/>
-<area shape="rect" id="node7" href="$classplssvm_1_1opencl_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenCL backend occurs." alt="" coords="406,267,589,308"/>
-<area shape="rect" id="node8" href="$classplssvm_1_1openmp_1_1backend__exception.html" title="Exception type thrown if a problem with the OpenMP backend occurs." alt="" coords="401,332,593,373"/>
-<area shape="rect" id="node9" href="$classplssvm_1_1sycl_1_1backend__exception.html" title="Exception type thrown if a problem with the SYCL backend occurs." alt="" coords="415,397,580,439"/>
-<area shape="rect" id="node10" href="$classplssvm_1_1unsupported__backend__exception.html" title="Exception type thrown if the requested backend is not supported on the target machine." alt="" coords="418,463,577,504"/>
-<area shape="rect" id="node11" href="$classplssvm_1_1unsupported__kernel__type__exception.html" title="Exception type thrown if the requested kernel type is not supported." alt="" coords="409,528,585,569"/>
+<area shape="rect" id="node1" href="$structplssvm_1_1default__init.html" title="This class denotes an explicit default value initialization used to distinguish between the default v..." alt="" coords="5,5,195,32"/>
 </map>

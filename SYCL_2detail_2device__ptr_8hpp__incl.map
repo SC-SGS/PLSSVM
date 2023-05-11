@@ -1,9 +1,0 @@
-<map id="include/plssvm/backends/SYCL/detail/device_ptr.hpp" name="include/plssvm/backends/SYCL/detail/device_ptr.hpp">
-<area shape="rect" id="node1" title="Small wrapper around a SYCL device pointer." alt="" coords="278,5,475,47"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,95,271,151"/>
-<area shape="rect" id="node3" href="$gpu__device__ptr_8hpp.html" title="Defines the base class for all C&#45;SVM backends using a GPU. Used for code duplication reduction." alt="" coords="295,102,458,143"/>
-<area shape="rect" id="node7" title=" " alt="" coords="482,109,589,136"/>
-<area shape="rect" id="node4" title=" " alt="" coords="236,199,307,225"/>
-<area shape="rect" id="node5" title=" " alt="" coords="331,199,423,225"/>
-<area shape="rect" id="node6" title=" " alt="" coords="447,199,509,225"/>
-</map>
