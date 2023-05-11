@@ -660,8 +660,8 @@ pipeline {
                          export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
                          export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
 
-                        mkdir -p $WORKSPACE/build/Debug_cov
-                        cd $WORKSPACE/build/Debug_cov
+                        mkdir -p $WORKSPACE/plssvm/build/Debug_cov
+                        cd $WORKSPACE/plssvm/build/Debug_cov
                         rm -rf *
                         $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=10 ../../
                         make -j36 coverage
@@ -669,7 +669,7 @@ pipeline {
                         python lcov_cobertura.py test_clean.info
                     '''
                 }
-                cobertura coberturaReportFile: "build/Debug_cov/coverage.xml"
+                cobertura coberturaReportFile: "plssvm/build/Debug_cov/coverage.xml"
             }
         } // end Coverage Analysis
 }
